@@ -58,6 +58,15 @@ The two hazards this section used to list as work-to-do, both now cleared:
 * Every seeded row in an affected converted fixture needs a `schoolId` matching the session GUC, or
   the row becomes invisible and the failure looks like a broken query rather than a seeding gap.
 
+The third hazard is still open, in the UNCONVERTED fixtures only, and is the quiet version of the
+first two: a `schoolId` column that exists but is **nullable**. `"schoolId" = current_setting(…)`
+evaluates to NULL for such a row, so it is invisible to every non-bypass session — no error, no
+`42703`, just a query that returns nothing. `SchoolCourses/Data/school-courses-schema.sql:40` declares
+`student_course_plans."schoolId"` as plain `text` where production is non-null and where the three
+converted schemas all say `text NOT NULL`. Nothing depends on the looseness (that fixture does not
+call `ApplyAsync`), so tighten it when converting it. `CONVERTING-A-FIXTURE.md` carries the full list
+of which unconverted schemas create either pilot table.
+
 Three assertions flipped from "the app predicate is the only gate" to a real RLS negative control,
 which is the payoff:
 
@@ -67,6 +76,15 @@ which is the payoff:
   — same flip, and the test was renamed: it used to be called `..._because_school_courses_is_unpolicied`;
 * `ParentChildReaderTests.Every_child_data_table_this_reader_touches_is_invisible_to_the_parents_own_session`
   — `student_course_plans` joined the table-by-table loop.
+
+Those three are all READ-visibility claims, i.e. pilot's `USING` half. Its `WITH CHECK` half is
+identical and is the one that matters for the write path —
+`SchoolStudentsCoursePlanWriter.CreateCoursePlanCourseAsync` takes the INSERT's `schoolId` from the
+STUDENT's `users` row, never from the caller, so nothing in the C# stops a school-A session writing a
+school-B row. It is not a live hole (the users-row policy hides the cross-school student first and the
+writer returns `NoStudentSchool`), but that is a two-policy argument, so the second policy is measured
+directly by `SchoolStudentsCoursePlanWriterTests.A_school_scoped_session_cannot_insert_another_schools_plan_row`
+— raw INSERT on the restricted login, `42501`, with the same session's own-school insert as the control.
 
 One thing vendoring did NOT change, and the writer tests say so in place: pilot's predicate is
 `"schoolId" = app.current_school_id` with **no owner branch**, so it does not separate two students

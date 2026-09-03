@@ -80,12 +80,7 @@ public sealed class ProductionRlsPoliciesTests
         // go vacuously green. This fails first, and names the table.
         foreach (var table in new[] { "users", "student_parent_links", "notifications", "evaluation_groups", "student_test_scores" })
         {
-            var found = ProductionRlsPolicies.VendoredFileNames
-                .SelectMany(f => ProductionRlsPolicies.SplitStatements(ProductionRlsPolicies.ReadVendoredFile(f)))
-                .Any(s => s.StartsWith($"CREATE POLICY", StringComparison.OrdinalIgnoreCase)
-                          && s.Contains($"ON \"{table}\"", StringComparison.Ordinal));
-
-            Assert.True(found, $"no CREATE POLICY on \"{table}\" in the vendored production files");
+            AssertPolicied(table);
         }
     }
 
@@ -100,12 +95,22 @@ public sealed class ProductionRlsPoliciesTests
         // a refresh that drops pilot, or a re-exclusion of it, fails here and names the table.
         foreach (var table in new[] { "school_courses", "student_course_plans" })
         {
-            var found = ProductionRlsPolicies.VendoredFileNames
-                .SelectMany(f => ProductionRlsPolicies.SplitStatements(ProductionRlsPolicies.ReadVendoredFile(f)))
-                .Any(s => s.StartsWith($"CREATE POLICY", StringComparison.OrdinalIgnoreCase)
-                          && s.Contains($"ON \"{table}\"", StringComparison.Ordinal));
-
-            Assert.True(found, $"no CREATE POLICY on \"{table}\" in the vendored production files");
+            AssertPolicied(table);
         }
+    }
+
+    /// <summary>
+    /// Shared by the two tripwires above. They stay two tests rather than one table list because they fail for
+    /// different reasons — a stale refresh dropping a long-standing policy, versus pilot.sql being re-excluded from
+    /// <see cref="ProductionRlsPolicies.VendoredFileNames"/> — and the test name is what the next reader sees first.
+    /// </summary>
+    private static void AssertPolicied(string table)
+    {
+        var found = ProductionRlsPolicies.VendoredFileNames
+            .SelectMany(f => ProductionRlsPolicies.SplitStatements(ProductionRlsPolicies.ReadVendoredFile(f)))
+            .Any(s => s.StartsWith("CREATE POLICY", StringComparison.OrdinalIgnoreCase)
+                      && s.Contains($"ON \"{table}\"", StringComparison.Ordinal));
+
+        Assert.True(found, $"no CREATE POLICY on \"{table}\" in the vendored production files");
     }
 }

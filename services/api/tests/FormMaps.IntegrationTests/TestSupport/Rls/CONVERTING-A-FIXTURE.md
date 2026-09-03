@@ -1,7 +1,13 @@
 # Converting a fixture to real RLS (formmaps#125)
 
-Four fixtures are converted. This is the route for the rest, plus the inventory that says which ones
-are worth converting and in what order.
+Seven fixtures are converted — the seven types deriving from `RlsEnabledDatabaseFixture`, which is the
+only caller of `ProductionRlsPolicies.ApplyAsync`: `TestScoreDatabaseFixture`,
+`CounselorCaseloadDatabaseFixture`, `SchoolStudentsDatabaseFixture`, and the nested `Fixture` of
+`ParentChildReaderTests`, `ParentPortalRepositoryTests`, `CoursePlanComputeReaderTests` and
+`StudentParentRepositoryTests`. (`AuditDatabaseFixture` enforces policies too but is deliberately NOT
+derived from that base — `audit_events` is .NET-owned and its policy ships in `infra/aws/sql/`, so it
+appears in none of the vendored files; see that fixture's own comment.) This is the route for the rest,
+plus the inventory that says which ones are worth converting and in what order.
 
 ## The state of the world before #125
 
@@ -64,16 +70,16 @@ Expect three failure modes on first run. All three are the fixture being wrong, 
   `schoolId: null`, which the policies deny — production mints school staff *with* a school. The old
   fixture let that pass. Fix the context, not the policy.
 
-## Priority for the remaining ~50
+## Priority for the remaining ~47
 
 Ranked by policied tables the fixture already models (the count is what a conversion would cover).
 Counts include `pilot.sql`'s two tables since #135 vendored it; the rows that moved say by how much.
+This table is UNCONVERTED fixtures only — the three that used to head it (`SchoolStudents` 14,
+`Counselor` 11, `StudentCoursePlan` 10, each having gained one or two tables from `pilot.sql`) are
+converted and are listed at the top of this file.
 
 | Fixture | tables | policied | note |
 |---|---|---|---|
-| `SchoolStudents/school-students-schema.sql` | 15 | 14 | converted; was 12 before pilot.sql (+`school_courses`, +`student_course_plans`) |
-| `Counselor/counselor-caseload-schema.sql` | 12 | 11 | converted; was 10 (+`school_courses`) |
-| `StudentCoursePlan/course-plan-compute-schema.sql` | 13 | 10 | converted; was 9 (+`school_courses`) |
 | `Assessments/assessmentprofile-schema.sql` | 10 | 8 | |
 | `SchoolAdmin/schooladmin-schema.sql` | 11 | 8 | |
 | `SchoolReads/schoolreads-schema.sql` | 8 | 8 | was 7 (+`school_courses`) |
@@ -83,9 +89,24 @@ Counts include `pilot.sql`'s two tables since #135 vendored it; the rows that mo
 | `Messaging/messaging-schema.sql` | 7 | 5 | deliberately inert today; converting means *adding* an RLS-on twin suite, not flipping this one |
 | `DbRole/dotnet-service-role-stub-schema.sql` | 87 | 57 | do NOT convert — it is a GRANT-verification stub, one row per table, no queries under test |
 
-Its `school_courses` / `student_course_plans` rows are `id text PRIMARY KEY` stubs with no
-`schoolId`, so converting that last one would now also need columns it has no use for — one more
-reason not to.
+**Any fixture in that table whose schema creates `school_courses` or `student_course_plans` needs a
+`schoolId` column, NOT NULL and seeded with the session's school, before it can be converted** —
+`pilot.sql`'s predicate names that column, and without it `ApplyAsync` fails the fixture's init with
+`42703`, which is exactly what `parent-child-reads-schema.sql` did when #135 vendored the file. Ten of
+these schemas create `school_courses` (AcademicGaps, Counselor, CourseImport, DbRole, Pathways,
+Prerequisites, SchoolCourses, SchoolReads, SchoolStudents, StudentCoursePlan) and five create
+`student_course_plans` (DbRole, ParentChildReads, SchoolCourses, SchoolStudents, StudentCoursePlan);
+only the converted ones call `ApplyAsync`, so the rest are not broken today — they are pre-loaded with
+this blocker. A NULLABLE `schoolId` is the quieter version of the same trap: `"schoolId" = current_setting(…)`
+is NULL for such a row, so it is invisible to every non-bypass session and the failure reads as a broken
+query rather than a schema gap. `SchoolCourses/Data/school-courses-schema.sql` declares it plain `text` where
+production is non-null (`formmaps-platform/api/prisma/schema.prisma`, `StudentCoursePlan.schoolId`) and
+where the three converted schemas that model the table all say `text NOT NULL`; tighten it when
+converting that one.
+
+`DbRole` is the sharpest case: its `school_courses` / `student_course_plans` rows are
+`id text PRIMARY KEY` stubs with no `schoolId` at all, so converting that last one would need columns it
+has no use for — one more reason not to.
 
 Everything below ~5 policied tables is mostly self-scoped CRUD where the app predicate and the policy say
 the same thing; convert those opportunistically when touching them.

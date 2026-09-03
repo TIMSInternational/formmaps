@@ -1,5 +1,6 @@
 using FormMaps.Application.Auth;
 using FormMaps.Application.StudentCoursePlan;
+using FormMaps.Domain.Auth;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.StudentCoursePlan;
 using FormMaps.IntegrationTests.TestSupport.Rls;
@@ -256,6 +257,15 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
 
         var entries = (await Repo().GetEligibilityAsync(Ctx(User, School), User))!;
         Assert.Equal(["math1"], entries.Select(e => e.CourseId));
+
+        // THE APP-LAYER HALF, and it is NOT the same predicate as the policy's. GetEligibilityAsync's
+        // `WHERE "schoolId" = @school` takes @school from the STUDENT's users row, not from the caller's GUC; the
+        // two only coincide for an Identity caller reading their own school. So with pilot hiding the cross-school
+        // row, the assertion above would stay green with that WHERE deleted. A Super Admin actor resolves to Bypass
+        // (TenantGucPlanResolver → app.bypass_rls='on'), which makes BOTH catalog rows visible to the session and
+        // leaves the reader's predicate as the only thing that can exclude other-school-course.
+        var bypass = (await Repo().GetEligibilityAsync(SuperAdminCtx(), User))!;
+        Assert.Equal(["math1"], bypass.Select(e => e.CourseId));
     }
 
     // ---- pre-existing behaviour, now re-run with the production policies live ----
@@ -527,6 +537,18 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         RequestContext.Authenticated(
             new RequestActor(userId, "student", $"{userId}@e.st", "Student"),
             schoolId: schoolId, permissions: Array.Empty<string>(),
+            tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
+
+    /// <summary>
+    /// A Super Admin caller. <c>TenantGucPlanResolver</c> resolves that to Bypass, so the session sets
+    /// <c>app.bypass_rls = 'on'</c> instead of the tenant GUCs and every school's rows are visible — the caller
+    /// shape that leaves the reader's own <c>WHERE</c> as the only tenant boundary. Still the restricted login:
+    /// bypass is a GUC the policies honour, not a different Postgres role.
+    /// </summary>
+    private static RequestContext SuperAdminCtx() =>
+        RequestContext.Authenticated(
+            new RequestActor("admin-super", FormMapsRoles.SuperAdmin, "super@e.st", "Super"),
+            schoolId: null, permissions: Array.Empty<string>(),
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
 
     /// <summary>An RLS session on the APP login carrying the given caller's GUCs — used for negative controls.</summary>

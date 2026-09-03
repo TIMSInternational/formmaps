@@ -32,11 +32,14 @@ namespace FormMaps.IntegrationTests.TestSupport.Rls;
 public static class ProductionRlsPolicies
 {
     /// <summary>
-    /// The applied set, in the order production applies it — <c>api/scripts/apply-rls.ts</c> globs
-    /// <c>prisma/rls/*.sql</c> and sorts lexically, which puts <c>pilot.sql</c> last.
+    /// The applied set, in the order the appliers use it — <c>api/scripts/apply-rls.ts</c> (CI and ephemeral
+    /// databases) globs <c>prisma/rls/*.sql</c> and sorts lexically, which puts <c>pilot.sql</c> last. The
+    /// PRODUCTION apply is a different script: <c>api/scripts/rls-prod-apply.sh</c>, with explicit per-file lists,
+    /// and <c>docs/ops/rls-prod-apply-14.md</c> says in bold never to run <c>npm run rls:apply</c> against
+    /// production. Do not read this comment as licence to.
     ///
     /// <para><c>pilot.sql</c> used to be excluded here as "a scratch file … not part of what production runs".
-    /// That was false (formmaps#135): the same glob applies it, <c>check-rls-coverage.mjs</c> counts its policies,
+    /// That was false (formmaps#135): the CI glob applies it, <c>check-rls-coverage.mjs</c> counts its policies,
     /// and the production measurement in <c>docs/ops/rls-prod-apply-14.md</c> (72/72/72 → 86/86/86) only reconciles
     /// with pilot's two policies included at both ends. Excluding it left <c>school_courses</c> and
     /// <c>student_course_plans</c> unpolicied in every fixture while production policies them.</para>

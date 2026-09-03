@@ -240,6 +240,45 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
         Assert.True(await PlanExists(conn, "plan-b"));
     }
 
+    // ---- pilot.sql's WITH CHECK half ----
+
+    /// <summary>
+    /// formmaps#135. pilot.sql's <c>tenant_isolation</c> carries a WITH CHECK identical to its USING, and every other
+    /// assertion this suite makes about the policy is a read-visibility one — so the write half would go vacuously
+    /// green if a refresh ever dropped it. It is the half that matters for THIS writer:
+    /// <c>SchoolStudentsCoursePlanWriter.CreateCoursePlanCourseAsync</c> resolves the INSERT's <c>schoolId</c> from
+    /// the STUDENT's <c>users</c> row and never from the caller, so nothing in the C# stops a school-A session from
+    /// writing a school-B row — only WITH CHECK does.
+    ///
+    /// <para>Not a live hole today, and the reason is why this is asserted rather than assumed: the users-row policy
+    /// hides the cross-school student first, so the writer bails with NoStudentSchool and never reaches the INSERT.
+    /// That is a TWO-policy argument, and nothing measured the second one. Raw SQL on the restricted login is the
+    /// only way to reach it while the first policy holds.</para>
+    /// </summary>
+    [Fact]
+    public async Task A_school_scoped_session_cannot_insert_another_schools_plan_row()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await SeedUser(conn, "student-a", SchoolA);
+        await SeedUser(conn, "student-c", SchoolB);
+        await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
+        await SeedAcademicYear(conn, "ay-b", SchoolB, isCurrent: true);
+
+        await using var identity = await OpenIdentitySessionAsync("admin-a", SchoolA);
+        Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(identity));
+
+        var denied = await Assert.ThrowsAsync<PostgresException>(
+            () => SeedPlan(identity, "plan-c", "student-c", SchoolB, "ay-b"));
+
+        Assert.Equal(PostgresErrorCodes.InsufficientPrivilege, denied.SqlState); // 42501, WITH CHECK violation
+        Assert.Equal(0, await PlanCount(conn));
+
+        // Positive half over the SAME session and the same statement shape: its own school's row goes in. So the
+        // 42501 above is the policy's schoolId predicate and not a missing INSERT grant on the restricted login.
+        await SeedPlan(identity, "plan-a", "student-a", SchoolA, "ay-a");
+        Assert.Equal(1, await PlanCount(conn));
+    }
+
     [Fact]
     public async Task Delete_removes_the_matching_row_and_is_idempotent()
     {
