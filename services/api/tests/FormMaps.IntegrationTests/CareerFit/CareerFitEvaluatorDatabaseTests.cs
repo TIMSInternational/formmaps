@@ -19,7 +19,10 @@ namespace FormMaps.IntegrationTests.CareerFit;
 /// REAL session factory as the restricted NOSUPERUSER NOBYPASSRLS login, and the run lands in careerfit_runs /
 /// careerfit_family_results exactly as the schema and the engine say it should. Every access claim has its
 /// negative control on the same seed (formmaps#125): the other-school counselor who can neither read the run nor
-/// evaluate the student. Seeding and row-state assertions are on the admin connection.
+/// evaluate the student. Seeding and row-state assertions are on the admin connection. The pipeline's session
+/// identity is not taken on trust either: <c>SessionSpy</c> reads the tenant GUCs the DATABASE reports on the
+/// connection each session actually ran on, so a reader or writer silently switched to a system/bypass session
+/// turns a test red instead of producing identical rows.
 /// </summary>
 public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDatabaseFixture>, IAsyncLifetime
 {
@@ -232,6 +235,46 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         Assert.Empty(await VisibleRunsAsync(Counselor(CounselorB, SchoolB)));
     }
 
+    [Fact]
+    public async Task The_run_is_written_under_the_callers_OWN_session_never_a_bypass_one()
+    {
+        // The claim in this file and in CareerFitRunWriter's header — "the caller's writable RLS session", so the
+        // policy's WITH CHECK is what scopes the write — was true in code and unproven by any test: a writer that
+        // opened a system/bypass session would have produced identical rows and every assertion above would still
+        // be green. This test reads the GUCs the DATABASE actually had in force on the connection each INSERT ran
+        // on, which is the only thing a bypass switch cannot fake. Switch CareerFitRunWriter to
+        // RequestContext.System() (or any Bypass plan) and the three GUC assertions below turn red: bypass_rls is
+        // 'on' and both identity GUCs come back unset.
+        var factory = new SessionSpy(Factory());
+        var evaluator = new CareerFitEvaluator(
+            new CareerFitInputReader(factory), new CareerFitRunWriter(factory), Provider, NoDataV360Adapter.Instance);
+
+        // A COUNSELOR, not the student: the caller's identity and the run's subject differ, so a writer that
+        // silently ran as the subject (or as nobody) is distinguishable from one that ran as the caller.
+        var run = await evaluator.EvaluateAsync(Counselor(CounselorA, SchoolA), StudentA1);
+
+        // Exactly two sessions, in this order: the reader's read-only one, then the writer's writable one. A
+        // writer that opened its own connection instead of the injected factory would not appear here at all.
+        Assert.Equal([true, false], factory.Sessions.Select(s => s.ReadOnly).ToArray());
+
+        var writerSession = factory.Sessions.Single(s => !s.ReadOnly);
+        Assert.Equal(CounselorA, writerSession.CurrentUserId);                      // what the DATABASE had
+        Assert.Equal(SchoolA, writerSession.CurrentSchoolId);
+        Assert.NotEqual("on", writerSession.BypassRls);
+        Assert.Equal(TenantGucPlanMode.Identity, writerSession.Plan.Mode);          // and what the factory planned
+
+        // And the reader ran under the same identity, so "the caller's context" is the whole pipeline's, not the
+        // writer's alone.
+        var readerSession = factory.Sessions.Single(s => s.ReadOnly);
+        Assert.Equal(CounselorA, readerSession.CurrentUserId);
+        Assert.Equal(SchoolA, readerSession.CurrentSchoolId);
+        Assert.NotEqual("on", readerSession.BypassRls);
+
+        // The row really landed (a green GUC assertion over a write that never happened would prove nothing).
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        Assert.Equal(1L, await ScalarAsync(admin, $"""SELECT count(*) FROM "careerfit_runs" WHERE "id" = '{run.Id}' """));
+    }
+
     // ---- fail closed on a missing instrument ----
 
     [Fact]
@@ -375,6 +418,52 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         command.CommandText = """SELECT count(*) FROM "careerfit_family_results" WHERE "runId" = @runId""";
         command.Parameters.AddWithValue("runId", runId);
         return (long)(await command.ExecuteScalarAsync())!;
+    }
+
+    /// <summary>
+    /// A pass-through <see cref="IFormMapsDatabaseSessionFactory"/> that records, for every session the code under
+    /// test opens, the plan the factory resolved AND the three tenant GUCs the database reports on that session's
+    /// own connection once the applier has run. The GUCs are the evidence: a plan can be inspected without proving
+    /// the connection carries it, and a session opened outside this factory never shows up at all.
+    /// </summary>
+    private sealed class SessionSpy(IFormMapsDatabaseSessionFactory inner) : IFormMapsDatabaseSessionFactory
+    {
+        private const string GucSql =
+            """
+            SELECT current_setting('app.current_user_id', true),
+                   current_setting('app.current_school_id', true),
+                   current_setting('app.bypass_rls', true)
+            """;
+
+        private readonly List<OpenedSession> _sessions = [];
+
+        public IReadOnlyList<OpenedSession> Sessions => _sessions;
+
+        public async Task<FormMapsDatabaseSession> OpenReadOnlyAsync(RequestContext context, CancellationToken cancellationToken = default) =>
+            await RecordAsync(await inner.OpenReadOnlyAsync(context, cancellationToken), cancellationToken);
+
+        public async Task<FormMapsDatabaseSession> OpenWritableAsync(RequestContext context, CancellationToken cancellationToken = default) =>
+            await RecordAsync(await inner.OpenWritableAsync(context, cancellationToken), cancellationToken);
+
+        private async Task<FormMapsDatabaseSession> RecordAsync(FormMapsDatabaseSession session, CancellationToken cancellationToken)
+        {
+            await using var command = session.Connection.CreateCommand();
+            command.Transaction = session.Transaction;
+            command.CommandText = GucSql;
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            await reader.ReadAsync(cancellationToken);
+            _sessions.Add(new OpenedSession(
+                session.IsReadOnly,
+                session.TenantGucPlan,
+                reader.IsDBNull(0) ? null : reader.GetString(0),
+                reader.IsDBNull(1) ? null : reader.GetString(1),
+                reader.IsDBNull(2) ? null : reader.GetString(2)));
+            return session;
+        }
+
+        /// <summary>One opened session: the plan asked for, and what the connection actually reports.</summary>
+        internal sealed record OpenedSession(
+            bool ReadOnly, TenantGucPlan Plan, string? CurrentUserId, string? CurrentSchoolId, string? BypassRls);
     }
 
     // ---- seed: the rows the real writers persist ----
