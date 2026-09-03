@@ -67,6 +67,33 @@ public sealed class MessagesConversationDetailTests : IClassFixture<MessagingDat
     }
 
     [Fact]
+    public async Task Thread_timestamps_are_iso_z_and_unread_readAt_is_null()
+    {
+        var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();
+        await _fixture.SeedMessageAsync(conversationId, otherId, readAt: null);
+        var alreadyReadAt = new DateTime(2026, 1, 1, 12, 34, 56, 789, DateTimeKind.Utc);
+        await _fixture.SeedMessageAsync(conversationId, otherId, readAt: alreadyReadAt);
+
+        var result = await Repo().GetConversationMessagesAsync(_fixture.Ctx(userId), userId, conversationId, page: 1, limit: 50);
+
+        // ISO-Z, not +00:00 and not a bare local time (CalendarReaderTests style). The row that was
+        // unread at read time still reports readAt == null (legacy reads before marking), while the
+        // one marked read earlier carries the stored instant unshifted, at millisecond precision.
+        Assert.Equal(ConversationMessagesStatus.Ok, result.Status);
+        Assert.Equal(2, result.Page!.Data.Count);
+        Assert.All(result.Page.Data, m =>
+        {
+            Assert.EndsWith("Z", m.CreatedDate);
+            Assert.DoesNotContain("+00:00", m.CreatedDate);
+            Assert.Matches(@"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$", m.CreatedDate);
+        });
+        var unread = Assert.Single(result.Page.Data, m => m.ReadAt is null);
+        var read = Assert.Single(result.Page.Data, m => m.ReadAt is not null);
+        Assert.Equal("2026-01-01T12:34:56.789Z", read.ReadAt);
+        Assert.NotNull(await GetReadAtAsync(conversationId, unread.Id)); // mark-read still happened
+    }
+
+    [Fact]
     public async Task Non_participant_gets_not_found_not_forbidden()
     {
         var (_, _, conversationId) = await _fixture.SeedConversationAsync();

@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using FormMaps.Application.Messaging;
@@ -116,6 +117,13 @@ public sealed class MessagesRepository(
         command.Parameters.Add(parameter);
     }
 
+    // Wire format for every messaging timestamp (REST and the realtime push): the columns are
+    // timestamp-without-tz, so the DateTime comes back Kind.Unspecified and would serialize as a bare
+    // local time. Same convention as VideoSessionsRepository / CalendarReader; matches legacy's
+    // Prisma DateTime -> JSON output including millisecond precision.
+    private static string IsoZ(DateTime value) =>
+        DateTime.SpecifyKind(value, DateTimeKind.Utc).ToString("yyyy-MM-ddTHH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
+
     public async Task<IReadOnlyList<ConversationSummary>> ListConversationsAsync(
         RequestContext context, string userId, CancellationToken cancellationToken = default)
     {
@@ -148,7 +156,7 @@ public sealed class MessagesRepository(
                 reader.GetString(0), reader.GetString(1),
                 reader.IsDBNull(2) ? null : reader.GetString(2), reader.GetString(3),
                 reader.IsDBNull(4) ? null : reader.GetString(4),
-                reader.IsDBNull(5) ? null : reader.GetDateTime(5),
+                reader.IsDBNull(5) ? null : IsoZ(reader.GetDateTime(5)),
                 reader.GetInt32(6)));
         }
         return rows;
@@ -317,7 +325,7 @@ public sealed class MessagesRepository(
                 rows.Add(new MessageRow(
                     reader.GetString(0), reader.GetString(1), reader.GetString(2),
                     reader.IsDBNull(3) ? null : reader.GetString(3), reader.GetString(4),
-                    reader.IsDBNull(5) ? null : reader.GetDateTime(5), reader.GetDateTime(6)));
+                    reader.IsDBNull(5) ? null : IsoZ(reader.GetDateTime(5)), IsoZ(reader.GetDateTime(6))));
             }
         }
 
@@ -414,12 +422,13 @@ public sealed class MessagesRepository(
         // request's token would cancel and silently swallow (SignalRMessagesNotifier catches everything)
         // a push for a message that was, in fact, successfully sent. The recipient just misses the
         // realtime nudge, not the message.
+        var createdDate = IsoZ(now);
         await realtimeNotifier.NotifyMessageReceivedAsync(otherId, new
         {
-            id = messageId, conversationId, senderId = userId, content, createdDate = now,
+            id = messageId, conversationId, senderId = userId, content, createdDate,
         }, CancellationToken.None);
 
-        var message = new MessageRow(messageId, conversationId, userId, senderName, content, null, now);
+        var message = new MessageRow(messageId, conversationId, userId, senderName, content, null, createdDate);
         return new SendMessageResult(SendMessageStatus.Sent, message, otherId, recipientEmail, senderName, preview);
     }
 
@@ -438,7 +447,7 @@ public sealed class MessagesRepository(
 
     private sealed record ConversationRow(
         string Id, string ParticipantAId, string ParticipantBId, string? AName, string AEmail,
-        string? BName, string BEmail, string? LastMessagePreview, DateTime? LastMessageAt);
+        string? BName, string BEmail, string? LastMessagePreview, string? LastMessageAt);
 
     private static ConversationSummary ToSummary(ConversationRow row, string userId)
     {
@@ -489,7 +498,7 @@ public sealed class MessagesRepository(
             reader.IsDBNull(3) ? null : reader.GetString(3), reader.GetString(4),
             reader.IsDBNull(5) ? null : reader.GetString(5), reader.GetString(6),
             reader.IsDBNull(7) ? null : reader.GetString(7),
-            reader.IsDBNull(8) ? null : reader.GetDateTime(8));
+            reader.IsDBNull(8) ? null : IsoZ(reader.GetDateTime(8)));
     }
 
     private static Task<ConversationRow?> FindConversationRowAsync(

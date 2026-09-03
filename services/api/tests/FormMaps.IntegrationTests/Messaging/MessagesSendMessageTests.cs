@@ -15,6 +15,9 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
+    // Legacy's Prisma DateTime -> JSON wire format: "2026-01-01T00:00:00.000Z" (ms precision, Z marker).
+    private const string IsoZPattern = @"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$";
+
     private MessagesRepository Repo() => new(
         new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
         new NoopRealtimeNotifier());
@@ -32,6 +35,23 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     }
 
     [Fact]
+    public async Task Sent_message_createdDate_is_iso_z_and_round_trips_the_stored_instant()
+    {
+        var (userId, _, conversationId) = await _fixture.SeedConversationAsync();
+
+        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+
+        // ISO-Z, not +00:00 and not a bare local time -- this is the value the web's optimistic echo is
+        // replaced with, so a local-time string would make the sent message jump by the viewer's offset.
+        var createdDate = result.Message!.CreatedDate;
+        Assert.Matches(IsoZPattern, createdDate);
+        Assert.DoesNotContain("+00:00", createdDate);
+        Assert.Null(result.Message.ReadAt);
+        var (_, _, updatedAt) = await GetMessageAsync(result.Message.Id);
+        Assert.Equal(DateTime.SpecifyKind(updatedAt, DateTimeKind.Utc), DateTime.Parse(createdDate, null, System.Globalization.DateTimeStyles.AdjustToUniversal));
+    }
+
+    [Fact]
     public async Task Notifies_the_recipient_via_the_realtime_notifier_after_commit()
     {
         var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();
@@ -45,6 +65,26 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
         Assert.Equal(otherId, notifier.LastRecipientUserId);
         var payloadId = notifier.LastPayload!.GetType().GetProperty("id")!.GetValue(notifier.LastPayload) as string;
         Assert.Equal(result.Message!.Id, payloadId);
+    }
+
+    [Fact]
+    public async Task Realtime_payload_createdDate_is_iso_z_matching_the_rest_response()
+    {
+        var (userId, _, conversationId) = await _fixture.SeedConversationAsync();
+        var notifier = new CapturingRealtimeNotifier();
+        var repo = new MessagesRepository(
+            new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System, notifier);
+
+        var result = await repo.SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+
+        // The SignalR push is serialized straight from this anonymous object, so it must already carry
+        // the ISO-Z string -- a raw DateTime (Kind.Unspecified) would go out as a bare local time and the
+        // recipient's browser would render it shifted by its UTC offset, unlike the poll that follows.
+        var createdDate = notifier.LastPayload!.GetType().GetProperty("createdDate")!.GetValue(notifier.LastPayload);
+        var createdDateString = Assert.IsType<string>(createdDate);
+        Assert.Matches(IsoZPattern, createdDateString);
+        Assert.DoesNotContain("+00:00", createdDateString);
+        Assert.Equal(result.Message!.CreatedDate, createdDate);
     }
 
     [Fact]
