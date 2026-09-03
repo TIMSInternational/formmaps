@@ -81,6 +81,10 @@ CREATE TABLE IF NOT EXISTS "users" (
     "id" TEXT PRIMARY KEY,
     "stripeCustomerId" TEXT UNIQUE
 );
+-- Wave 3 billing-subscription-parity: GET /status now reads users."schoolId" first (legacy
+-- api/src/routes/user.ts:304-311 short-circuits any school-affiliated user to hasActiveSubscription:true
+-- before touching user_subscriptions), so the stub needs the column ILiveSchoolAffiliationReader selects.
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "schoolId" TEXT;
 
 CREATE TABLE IF NOT EXISTS "stripe_events" (
     "id" TEXT PRIMARY KEY,

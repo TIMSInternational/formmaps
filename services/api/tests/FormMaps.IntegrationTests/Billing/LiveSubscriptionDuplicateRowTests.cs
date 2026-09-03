@@ -20,19 +20,21 @@ namespace FormMaps.IntegrationTests.Billing;
 /// <c>user_subscriptions_userId_key</c> -- inferred from prod having been built with
 /// <c>prisma db push</c> straight from schema.prisma:534, plus a <c>\d</c> reading recorded in a
 /// 2026-08-07 comment on formmaps#108. That is NOT a committed measurement and has not been
-/// re-confirmed; do not upgrade it to "measured" without re-running it. The migration history was
-/// separately reconciled by api/prisma/migrations/20260808000000_user_subscriptions_userid_unique.
+/// re-confirmed; do not upgrade it to "measured" without re-running it. (An earlier revision here said
+/// the history "was separately reconciled by
+/// api/prisma/migrations/20260808000000_user_subscriptions_userid_unique" -- no such migration exists;
+/// the legacy repo's only migration, 0_init/migration.sql, creates the unique itself at line 2779.)
 /// Duplicate rows are therefore not believed reachable in production today -- which is precisely why
 /// these tests keep exercising the duplicate shape rather than deleting it.</para>
 ///
 /// <para>This fixture is kept, and its DDL deliberately still omits the unique index, because the
-/// reader's ORDER BY/LIMIT and the writer's row scope are DEFENCE IN DEPTH that must not silently
-/// evaporate: they exist so the billing code does not depend on an index it does not control (a replay
-/// from a history that stops before 2026-08-08, or an index dropped during maintenance). This harness is
-/// the only thing that can go red if someone deletes them as "redundant now that the unique exists" --
-/// so treat it as a CONSTRAINT-ABSENT contract test, not as a model of prod. Columns and types are copied
-/// from api/prisma/migrations/20260505140750_init/migration.sql (TIMESTAMP(3), not TIMESTAMPTZ) so the
-/// nextBillingDate/updatedAt round-trips exercise the same Npgsql type mapping production does.</para>
+/// reader's ORDER BY/LIMIT/isActive predicate and the writer's row scope are DEFENCE IN DEPTH that must
+/// not silently evaporate: they exist so the billing code does not depend on an index it does not control
+/// (an index dropped during maintenance, or a legacy row pair that pre-dates it). This harness is the only
+/// thing that can go red if someone deletes them as "redundant now that the unique exists" -- so treat it
+/// as a CONSTRAINT-ABSENT contract test, not as a model of prod. Columns and types are copied from the
+/// legacy init migration (TIMESTAMP(3), not TIMESTAMPTZ) so the nextBillingDate/updatedAt round-trips
+/// exercise the same Npgsql type mapping production does.</para>
 ///
 /// <para>The schema is a const rather than an embedded .sql resource on purpose: adding one would mean
 /// editing FormMaps.IntegrationTests.csproj, a file shared with the lanes editing BillingEndpointsTests
@@ -230,22 +232,71 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
         Assert.Equal(1, affected);
     }
 
+    // ------------------------------------------ legacy parity: isActive is part of the predicate
+
+    /// <summary>
+    /// Wave 3 billing-subscription-parity (formmaps#108 comment). All three legacy reads of this table
+    /// carry <c>isActive: true</c> in their findFirst filter -- api/src/routes/user.ts:314-317 (the
+    /// status endpoint), routes/stripe.ts:308 (cancel) and middleware/requireSubscription.ts:48-50 (the
+    /// gate) -- so a cancelled newest row is simply NOT FOUND and an older active one is what legacy
+    /// resolves. Before this fix the reader had no isActive predicate: it returned the cancelled newest
+    /// row, GET /status reported no access and POST /cancel-subscription 404ed, where legacy grants and
+    /// cancels. An earlier revision of this file pinned that divergent shape on purpose
+    /// (MarkCancelled_NewestRowIsNotCancellable_IsANoOp_AndLeavesTheOlderRowAlone), on the argument that
+    /// the prod unique makes it unreachable; the shape is now pinned to LEGACY, on the same
+    /// constraint-absent contract as every other test here.
+    /// </summary>
     [Fact]
-    public async Task MarkCancelled_NewestRowIsNotCancellable_IsANoOp_AndLeavesTheOlderRowAlone()
+    public async Task GetForUser_NewestRowIsInactive_ReturnsTheOlderActiveRow()
     {
-        // The endpoint 404s on this shape (the read returns the cancelled newest row), so the writer must
-        // never be reached — but if it is, it must NOT reach past that row and cancel an older one. This
-        // is the case a cancellable-filtered subselect would get wrong.
         await SeedRowAsync(OlderRowId, OlderCreatedDate, "sub_older", status: "active");
         await SeedRowAsync(NewerRowId, NewerCreatedDate, "sub_newer", status: "cancelled", isActive: false);
+
+        var row = await Reader().GetForUserAsync(Context(), UserId, CancellationToken.None);
+
+        Assert.NotNull(row);
+        Assert.Equal(OlderRowId, row!.Id);
+        Assert.Equal("active", row.Status);
+        Assert.True(row.IsActive);
+        Assert.Equal("sub_older", row.StripeSubscriptionId);
+    }
+
+    [Fact]
+    public async Task GetForUser_OnlyInactiveRows_ReturnsNull()
+    {
+        // Same predicate, other half: legacy's findFirst finds nothing, and the status endpoint answers
+        // the no-subscription shape (status "none"), never the dead row's own status.
+        await SeedRowAsync(OlderRowId, OlderCreatedDate, "sub_older", status: "cancelled", isActive: false);
+        await SeedRowAsync(NewerRowId, NewerCreatedDate, "sub_newer", status: "active", isActive: false);
+
+        Assert.Null(await Reader().GetForUserAsync(Context(), UserId, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task MarkCancelled_NewestRowIsInactive_CancelsTheOlderActiveRowTheReaderReturned()
+    {
+        // Legacy stripe.ts:308 finds the older active row and its updateMany is scoped { id: sub.id,
+        // userId } -- so that is the row that must change, and the already-dead newest row must not be
+        // touched (it is not the row the caller's cancellable decision was based on).
+        await SeedRowAsync(OlderRowId, OlderCreatedDate, "sub_older", status: "active");
+        await SeedRowAsync(NewerRowId, NewerCreatedDate, "sub_newer", status: "cancelled", isActive: false);
+        var read = await Reader().GetForUserAsync(Context(), UserId, CancellationToken.None);
 
         var affected = await Writer().MarkCancelledAsync(Context(), UserId, CancellationToken.None);
 
         var older = await QueryRowAsync(OlderRowId);
-        Assert.Equal("active", older.Status);
-        Assert.True(older.IsActive);
-        Assert.Equal(UpdatedAtSentinel, older.UpdatedAt);
-        Assert.Equal(0, affected);
+        var newer = await QueryRowAsync(NewerRowId);
+
+        Assert.Equal(OlderRowId, read!.Id);
+        Assert.Equal("cancelled", older.Status);
+        Assert.False(older.IsActive);
+        Assert.NotEqual(UpdatedAtSentinel, older.UpdatedAt);
+
+        Assert.Equal("cancelled", newer.Status);
+        Assert.False(newer.IsActive);
+        Assert.Equal(UpdatedAtSentinel, newer.UpdatedAt);
+
+        Assert.Equal(1, affected);
     }
 
     // ------------------------------------------------- single-row regression control

@@ -69,14 +69,15 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
     /// wave (Important 7): POST /portal reads this column via ILiveCustomerReader and 404s when it is
     /// absent, instead of minting a new Stripe customer it could never persist.
     /// </summary>
-    public async Task SeedUserAsync(string userId, string? stripeCustomerId)
+    public async Task SeedUserAsync(string userId, string? stripeCustomerId, string? schoolId = null)
     {
         await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
         await using var command = connection.CreateCommand();
-        command.CommandText = """INSERT INTO "users" ("id", "stripeCustomerId") VALUES (@id, @customerId)""";
+        command.CommandText = """INSERT INTO "users" ("id", "stripeCustomerId", "schoolId") VALUES (@id, @customerId, @schoolId)""";
         AddParam(command, "id", userId);
         AddParam(command, "customerId", (object?)stripeCustomerId ?? DBNull.Value);
+        AddParam(command, "schoolId", (object?)schoolId ?? DBNull.Value);
         await command.ExecuteNonQueryAsync();
     }
 
@@ -101,7 +102,7 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
     /// active locally, never linked to Stripe (comped/manual grant, pre-Stripe legacy row, direct insert).
     /// </summary>
     public async Task SeedLiveSubscriptionAsync(
-        string userId, string? stripeSubscriptionId, string status = "active", bool isActive = true)
+        string userId, string? stripeSubscriptionId, string status = "active", bool isActive = true, bool cancelAtPeriodEnd = false)
     {
         await using var connection = new NpgsqlConnection(ConnectionString);
         await connection.OpenAsync();
@@ -111,14 +112,15 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
 
         await using var live = connection.CreateCommand();
         live.CommandText = """
-            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive", "updatedAt")
-            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive, TIMESTAMPTZ '2000-01-01 00:00:00Z')
+            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive", "cancelAtPeriodEnd", "updatedAt")
+            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive, @cancelAtPeriodEnd, TIMESTAMPTZ '2000-01-01 00:00:00Z')
             """;
         AddParam(live, "id", Guid.NewGuid().ToString());
         AddParam(live, "userId", userId);
         AddParam(live, "status", status);
         AddParam(live, "subId", (object?)stripeSubscriptionId ?? DBNull.Value);
         AddParam(live, "isActive", isActive);
+        AddParam(live, "cancelAtPeriodEnd", cancelAtPeriodEnd);
         await live.ExecuteNonQueryAsync();
     }
 

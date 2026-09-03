@@ -34,27 +34,32 @@ public sealed class LiveSubscriptionWriter(IFormMapsDatabaseSessionFactory datab
     /// <c>user_subscriptions_userId_key</c> -- inferred from prod having been built by
     /// <c>prisma db push</c> from schema.prisma:534, plus a <c>\d</c> reading recorded in a 2026-08-07
     /// comment on formmaps#108. That is not a committed measurement and has not been re-confirmed; see
-    /// LiveSubscriptionReader for the full provenance note. The history was reconciled by
-    /// api/prisma/migrations/20260808000000_user_subscriptions_userid_unique. A user owns at most one row,
-    /// so the multi-row cancel this scope was introduced to prevent is not reachable in prod.</para>
+    /// LiveSubscriptionReader for the full provenance note. (An earlier revision here cited a
+    /// "20260808000000_user_subscriptions_userid_unique" migration as having reconciled the history; no
+    /// such migration exists -- the unique index is emitted by legacy 0_init/migration.sql:2779, see the
+    /// reader.) A user is believed to own at most one row, so the multi-row cancel this scope was
+    /// introduced to prevent is not believed reachable in prod.</para>
     ///
     /// <para>The row scope is KEPT as defence in depth, and it is not merely decorative: it removes the
-    /// writer's dependency on an index it does not control, so a database replayed from a history that
-    /// stops before 2026-08-08 -- or one where the index is dropped during maintenance -- cannot turn a
-    /// single cancel into an UPDATE across every row the user owns while the reader's cancellable decision
-    /// was based on exactly one of them. It also matches legacy api/src/routes/stripe.ts:321, which scopes
-    /// its updateMany by <c>{ id: sub.id, userId }</c> -- the id of the row it actually read -- and so
-    /// never depended on the invariant either.</para>
+    /// writer's dependency on an index it does not control, so a database where the index is dropped
+    /// during maintenance -- or a legacy row pair that pre-dates it -- cannot turn a single cancel into an
+    /// UPDATE across every row the user owns while the reader's cancellable decision was based on exactly
+    /// one of them. It also matches legacy api/src/routes/stripe.ts:321, which scopes its updateMany by
+    /// <c>{ id: sub.id, userId }</c> -- the id of the row it actually read -- and so never depended on the
+    /// invariant either.</para>
     ///
     /// <para>The subselect reproduces <see cref="LiveSubscriptionReader" />'s SELECT exactly -- same
-    /// predicate, same <c>ORDER BY "createdDate" DESC, "id"</c>, same LIMIT 1 -- so it resolves the SAME
-    /// row that endpoint read, without needing the caller to thread the id through (which would change
-    /// <see cref="ILiveSubscriptionWriter" />'s signature and therefore BillingEndpoints.cs). The
-    /// cancellable predicate stays in the OUTER where, applied to that one row: keeping it out of the
-    /// subselect is what preserves the row-identity guarantee (a filtered subselect could resolve an
-    /// older row when the newest one is not cancellable), and keeping it in the outer clause preserves
-    /// the concurrency semantics documented below -- a webhook that cancelled the row between the read
-    /// and the write turns this into a 0-row no-op instead of resurrecting it. The redundant outer
+    /// predicate (including, since Wave 3 billing-subscription-parity, legacy's <c>"isActive" = true</c>,
+    /// which stripe.ts:308's own findFirst filter carries), same <c>ORDER BY "createdDate" DESC, "id"</c>,
+    /// same LIMIT 1 -- so it resolves the SAME row that endpoint read, without needing the caller to
+    /// thread the id through (which would change <see cref="ILiveSubscriptionWriter" />'s signature and
+    /// therefore BillingEndpoints.cs). The STATUS part of the cancellable predicate stays in the OUTER
+    /// where, applied to that one row: keeping it out of the subselect keeps the subselect identical to
+    /// the reader (a status-filtered subselect could resolve a different row than the one the endpoint's
+    /// decision was based on), and keeping it in the outer clause preserves the concurrency semantics
+    /// documented below -- a webhook that cancelled the row between the read and the write turns this
+    /// into a 0-row no-op instead of resurrecting it. The outer <c>"isActive" = true</c> is now redundant
+    /// with the subselect but kept for the same concurrency reason. The redundant outer
     /// <c>"userId" = @userId</c> mirrors legacy's <c>{ id, userId }</c> scope: never trust an id alone,
     /// and never fall back on RLS visibility (the tenant_isolation policy on this table also admits
     /// same-school users).</para>
@@ -63,7 +68,7 @@ public sealed class LiveSubscriptionWriter(IFormMapsDatabaseSessionFactory datab
         WHERE "id" = (
             SELECT "id"
             FROM "user_subscriptions"
-            WHERE "userId" = @userId
+            WHERE "userId" = @userId AND "isActive" = true
             ORDER BY "createdDate" DESC, "id"
             LIMIT 1
         )

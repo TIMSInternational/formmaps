@@ -7,8 +7,10 @@ namespace FormMaps.Api.Endpoints;
 /// <summary>
 /// Domain 9a subscription REST endpoints (routes/stripe.ts). Flag: FORMMAPS_ROUTE_BILLING_TO_DOTNET
 /// (frontend next.config.ts rewrite) — dark by default, same convention as every other domain.
-/// GET /status (Task 7) reads the LIVE user_subscriptions table (read-only — Node still owns writes) via
-/// ILiveSubscriptionReader, unlike the shadow-table webhook/reconciliation code in this same domain.
+/// GET /status (Task 7; legacy twin is routes/user.ts GET /api/v1/user/subscription/status, NOT a
+/// stripe.ts route) reads the LIVE users."schoolId" via ILiveSchoolAffiliationReader and then the LIVE
+/// user_subscriptions table (read-only — Node still owns writes) via ILiveSubscriptionReader, unlike the
+/// shadow-table webhook/reconciliation code in this same domain.
 /// POST /checkout-session (Task 8) validates planId against subscription_plans via IPlanReader, then
 /// calls IStripeGateway to create/reuse a Stripe customer and start a subscription-mode Checkout
 /// session. POST /cancel-subscription (Task 9) reads the live row's stripeSubscriptionId via
@@ -100,16 +102,48 @@ public static class BillingEndpoints
         return Results.Ok(new { success = true, data = new { url } });
     }
 
+    /// <remarks>
+    /// Wave 3 billing-subscription-parity (formmaps#108 comment). Legacy twin is
+    /// GET /api/v1/user/subscription/status, api/src/routes/user.ts:302-334, and this now matches it in
+    /// three places it used to diverge:
+    /// <list type="bullet">
+    /// <item>the school short-circuit (user.ts:304-311): any user whose users row carries a schoolId is
+    /// answered <c>{ hasActiveSubscription:true, planId:"school", status:"active", expiryDate:null,
+    /// isSchoolStudent:true }</c> before user_subscriptions is read at all. Legacy checks the schoolId only,
+    /// never the role, and reads it live -- so does this.</item>
+    /// <item>the row predicate: legacy's findFirst carries <c>isActive: true</c>; the reader now does too
+    /// (see LiveSubscriptionReader), so an inactive row is "no subscription", status "none".</item>
+    /// <item>the field names: <c>hasActiveSubscription</c> / <c>expiryDate</c> / <c>cancelAtPeriodEnd</c>,
+    /// not the <c>grantsAccess</c> / <c>nextBillingDate</c> this handler used to invent. apps/web's
+    /// subscriptionStatusService.ts (and everything on it: dashboard/subscriptions, subscribe, AuthWrapper)
+    /// reads the legacy names from Node today, and nothing in apps/web ever read the invented ones, so
+    /// the legacy shape is the one a flip is invisible under.</item>
+    /// </list>
+    /// The two branches have DIFFERENT key sets, deliberately: legacy's school response has no
+    /// cancelAtPeriodEnd and its individual response has no isSchoolStudent. planId is null unless access
+    /// is granted (<c>hasAccess ? sub?.planId || null : null</c>), and status falls back to "none".
+    /// </remarks>
     private static async Task<IResult> GetStatusAsync(
         IRequestContextAccessor accessor, IProtectedRequestGuard guard, ILiveSubscriptionReader reader,
-        TimeProvider timeProvider, CancellationToken cancellationToken)
+        ILiveSchoolAffiliationReader schoolReader, TimeProvider timeProvider, CancellationToken cancellationToken)
     {
         var context = accessor.Current;
         var decision = guard.RequireIdentity(context);
         if (!decision.Allowed) return Deny(decision);
 
-        var row = await reader.GetForUserAsync(context, context.Tenant!.UserId, cancellationToken);
-        var grantsAccess = row is not null && SubscriptionAccess.GrantsAccess(
+        var userId = context.Tenant!.UserId;
+        var schoolId = await schoolReader.GetSchoolIdAsync(context, userId, cancellationToken);
+        if (!string.IsNullOrEmpty(schoolId))
+        {
+            return Results.Ok(new
+            {
+                success = true,
+                data = new { hasActiveSubscription = true, planId = "school", status = "active", expiryDate = (DateTimeOffset?)null, isSchoolStudent = true },
+            });
+        }
+
+        var row = await reader.GetForUserAsync(context, userId, cancellationToken);
+        var hasAccess = row is not null && SubscriptionAccess.GrantsAccess(
             row.Status, row.IsActive, row.NextBillingDate, timeProvider.GetUtcNow(), SubscriptionAccess.DefaultGraceDays);
 
         return Results.Ok(new
@@ -117,10 +151,11 @@ public static class BillingEndpoints
             success = true,
             data = new
             {
-                grantsAccess,
-                status = row?.Status,
-                planId = row?.PlanId,
-                nextBillingDate = row?.NextBillingDate,
+                hasActiveSubscription = hasAccess,
+                planId = hasAccess ? row?.PlanId : null,
+                status = string.IsNullOrEmpty(row?.Status) ? "none" : row.Status,
+                expiryDate = row?.NextBillingDate,
+                cancelAtPeriodEnd = row?.CancelAtPeriodEnd ?? false,
             },
         });
     }

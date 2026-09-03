@@ -14,14 +14,18 @@ namespace FormMaps.Application.Billing;
 /// POST /cancel-subscription must pass the live Stripe subscription id (not the internal <see
 /// cref="PlanId"/>) to <c>IStripeGateway.CancelSubscriptionAsync</c>.
 ///
-/// <para>formmaps#108 adds <see cref="Id"/>. schema.prisma declares <c>@@unique([userId])</c> on
-/// user_subscriptions, but NO migration ever created that constraint -- api/prisma/migrations only ever
-/// emitted the PK, a NON-unique <c>user_subscriptions_userId_idx</c> and the two FKs -- so production may
-/// legitimately hold more than one row per user and the constraint must not be assumed. Exposing the row
-/// id makes "which of the user's rows did this read resolve to" answerable by the caller and by tests,
-/// instead of being an invisible property of heap order.</para>
+/// <para>formmaps#108 adds <see cref="Id"/>. Exposing the row id makes "which of the user's rows did
+/// this read resolve to" answerable by the caller and by tests, instead of being an invisible property
+/// of heap order. (This remark once claimed "NO migration ever created" the <c>@@unique([userId])</c>
+/// constraint; that is wrong -- legacy 0_init/migration.sql:2779 creates
+/// <c>user_subscriptions_userId_key</c>. See LiveSubscriptionReader for the full provenance note and
+/// why the ordering is kept regardless.)</para>
+///
+/// <para>Wave 3 billing-subscription-parity adds <see cref="CancelAtPeriodEnd"/>: legacy's status payload
+/// (api/src/routes/user.ts:327) reports it so the UI can show "Cancels on" instead of "Renews on", and
+/// the row is only ever resolved with legacy's <c>isActive: true</c> predicate -- see the reader.</para>
 /// </remarks>
-public sealed record LiveSubscriptionRow(string? Status, bool IsActive, DateTimeOffset? NextBillingDate, string? PlanId, string? StripeSubscriptionId, string Id);
+public sealed record LiveSubscriptionRow(string? Status, bool IsActive, DateTimeOffset? NextBillingDate, string? PlanId, string? StripeSubscriptionId, string Id, bool CancelAtPeriodEnd);
 
 public interface ILiveSubscriptionReader
 {

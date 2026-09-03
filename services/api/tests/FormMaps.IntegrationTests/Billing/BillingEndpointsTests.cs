@@ -57,8 +57,18 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
             });
         });
 
+    /// <summary>
+    /// Wave 3 billing-subscription-parity (formmaps#108 comment). The payload is legacy's
+    /// (api/src/routes/user.ts:319-329): <c>hasActiveSubscription</c> / <c>expiryDate</c> /
+    /// <c>cancelAtPeriodEnd</c>, NOT the <c>grantsAccess</c> / <c>nextBillingDate</c> names this endpoint
+    /// used to invent. apps/web reads the legacy names (subscriptionStatusService.ts's SubscriptionStatus,
+    /// consumed by dashboard/subscriptions, subscribe, AuthWrapper) and nothing in apps/web ever read the
+    /// invented ones, so the legacy shape is the only one a flip can be invisible under. The absent-name
+    /// assertions are the ones that matter: a handler emitting BOTH spellings would pass the positive
+    /// checks and still leave the contract ambiguous.
+    /// </summary>
     [Fact]
-    public async Task GetStatus_ActiveSubscription_ReturnsGrantsAccessTrue()
+    public async Task GetStatus_ActiveSubscription_ReturnsLegacyPayload_HasActiveSubscriptionTrue()
     {
         await fixture.ResetAsync();
         await fixture.SeedMatchingSubscriptionAsync("user_status1", "sub_status1", "active");
@@ -69,24 +79,129 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         var response = await client.GetAsync("/api/v1/billing/status");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.True(body.RootElement.GetProperty("data").GetProperty("grantsAccess").GetBoolean());
-        Assert.Equal("active", body.RootElement.GetProperty("data").GetProperty("status").GetString());
+        var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
+        Assert.True(data.GetProperty("hasActiveSubscription").GetBoolean());
+        Assert.Equal("plan_1", data.GetProperty("planId").GetString());
+        Assert.Equal("active", data.GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("expiryDate").ValueKind);
+        Assert.False(data.GetProperty("cancelAtPeriodEnd").GetBoolean());
+        // Legacy's individual-subscription branch does not emit isSchoolStudent at all.
+        Assert.False(data.TryGetProperty("isSchoolStudent", out _));
+        Assert.False(data.TryGetProperty("grantsAccess", out _));
+        Assert.False(data.TryGetProperty("nextBillingDate", out _));
     }
 
-    [Fact]
-    public async Task GetStatus_NoSubscription_ReturnsGrantsAccessFalse()
+    /// <summary>
+    /// The seedUserRow=true case is the NEGATIVE CONTROL for the school short-circuit below: a users row
+    /// that exists but has no schoolId must fall through to the (empty) subscription lookup exactly like
+    /// a user with no row at all. Legacy's <c>planId: hasAccess ? ... : null</c> and
+    /// <c>status: sub?.status || "none"</c> give the "none"/null shape here.
+    /// </summary>
+    [Theory]
+    [InlineData("user_no_sub", false)]
+    [InlineData("user_no_sub_no_school", true)]
+    public async Task GetStatus_NoSubscription_ReturnsHasActiveSubscriptionFalse_StatusNone(string userId, bool seedUserRow)
     {
         await fixture.ResetAsync();
+        if (seedUserRow)
+        {
+            await fixture.SeedUserAsync(userId, stripeCustomerId: null, schoolId: null);
+        }
+
         using var factory = CreateFactory();
         using var client = factory.CreateClient();
-        AddDevIdentity(client, "user_no_sub", "student");
+        AddDevIdentity(client, userId, "student");
 
         var response = await client.GetAsync("/api/v1/billing/status");
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        var body = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.False(body.RootElement.GetProperty("data").GetProperty("grantsAccess").GetBoolean());
+        var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
+        Assert.False(data.GetProperty("hasActiveSubscription").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("planId").ValueKind);
+        Assert.Equal("none", data.GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("expiryDate").ValueKind);
+        Assert.False(data.GetProperty("cancelAtPeriodEnd").GetBoolean());
+        Assert.False(data.TryGetProperty("isSchoolStudent", out _));
+    }
+
+    /// <summary>
+    /// Legacy api/src/routes/user.ts:304-311: any user whose users row carries a schoolId is answered
+    /// <c>{ hasActiveSubscription:true, planId:"school", status:"active", expiryDate:null, isSchoolStudent:true }</c>
+    /// BEFORE user_subscriptions is consulted (school students are covered by the school's plan). No
+    /// subscription row is seeded here on purpose: the true must come from the users row alone. Legacy
+    /// does not check the role on this path, so neither does this -- hence "student" and "school_admin".
+    /// </summary>
+    [Theory]
+    [InlineData("student")]
+    [InlineData("school_admin")]
+    public async Task GetStatus_SchoolAffiliatedUser_ReturnsHasActiveSubscriptionTrue_WithoutASubscriptionRow(string role)
+    {
+        await fixture.ResetAsync();
+        await fixture.SeedUserAsync("user_school", stripeCustomerId: null, schoolId: "school_1");
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_school", role);
+
+        var response = await client.GetAsync("/api/v1/billing/status");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
+        Assert.True(data.GetProperty("hasActiveSubscription").GetBoolean());
+        Assert.Equal("school", data.GetProperty("planId").GetString());
+        Assert.Equal("active", data.GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("expiryDate").ValueKind);
+        Assert.True(data.GetProperty("isSchoolStudent").GetBoolean());
+        // Legacy's school branch has no cancelAtPeriodEnd key; the individual branch has no isSchoolStudent.
+        Assert.False(data.TryGetProperty("cancelAtPeriodEnd", out _));
+    }
+
+    /// <summary>
+    /// Legacy's read is <c>findFirst({ where: { userId, isActive: true } })</c> (user.ts:314-317, the
+    /// same predicate as requireSubscription.ts:48-50 and stripe.ts:308). An isActive=false row is
+    /// therefore NOT FOUND, and the payload is the no-subscription shape: status "none", not the dead
+    /// row's own status. Before the fix the reader had no isActive predicate, so this answered
+    /// status:"active" with access false -- a shape legacy can never produce.
+    /// </summary>
+    [Fact]
+    public async Task GetStatus_InactiveRow_IsNotFound_ReportsStatusNone()
+    {
+        await fixture.ResetAsync();
+        await fixture.SeedLiveSubscriptionAsync("user_inactive_status", stripeSubscriptionId: "sub_inactive", status: "active", isActive: false);
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_inactive_status", "student");
+
+        var response = await client.GetAsync("/api/v1/billing/status");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
+        Assert.False(data.GetProperty("hasActiveSubscription").GetBoolean());
+        Assert.Equal("none", data.GetProperty("status").GetString());
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("planId").ValueKind);
+    }
+
+    /// <summary>
+    /// The "Cancels on &lt;date&gt;" vs "Renews on &lt;date&gt;" switch in dashboard/subscriptions/page.tsx
+    /// reads <c>cancelAtPeriodEnd</c>; a cancel scheduled at Stripe leaves the row active with the flag
+    /// set (see PostCancelSubscription_ActiveSubscription_...), so this is the shape a user sees right
+    /// after cancelling.
+    /// </summary>
+    [Fact]
+    public async Task GetStatus_CancelScheduledAtPeriodEnd_ReportsCancelAtPeriodEndTrue_AndStillActive()
+    {
+        await fixture.ResetAsync();
+        await fixture.SeedLiveSubscriptionAsync("user_cape_status", stripeSubscriptionId: "sub_cape", cancelAtPeriodEnd: true);
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_cape_status", "student");
+
+        var response = await client.GetAsync("/api/v1/billing/status");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
+        Assert.True(data.GetProperty("hasActiveSubscription").GetBoolean());
+        Assert.True(data.GetProperty("cancelAtPeriodEnd").GetBoolean());
+        Assert.Equal("active", data.GetProperty("status").GetString());
     }
 
     [Fact]
