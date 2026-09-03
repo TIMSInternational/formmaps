@@ -48,30 +48,28 @@ public sealed class LiveSubscriptionWriter(IFormMapsDatabaseSessionFactory datab
     /// <c>{ id: sub.id, userId }</c> -- the id of the row it actually read -- and so never depended on the
     /// invariant either.</para>
     ///
-    /// <para>The subselect reproduces <see cref="LiveSubscriptionReader" />'s SELECT exactly -- same
-    /// predicate (including, since Wave 3 billing-subscription-parity, legacy's <c>"isActive" = true</c>,
-    /// which stripe.ts:308's own findFirst filter carries), same <c>ORDER BY "createdDate" DESC, "id"</c>,
-    /// same LIMIT 1 -- so it resolves the SAME row that endpoint read, without needing the caller to
-    /// thread the id through (which would change <see cref="ILiveSubscriptionWriter" />'s signature and
-    /// therefore BillingEndpoints.cs). The STATUS part of the cancellable predicate stays in the OUTER
-    /// where, applied to that one row: keeping it out of the subselect keeps the subselect identical to
-    /// the reader (a status-filtered subselect could resolve a different row than the one the endpoint's
-    /// decision was based on), and keeping it in the outer clause preserves the concurrency semantics
-    /// documented below -- a webhook that cancelled the row between the read and the write turns this
-    /// into a 0-row no-op instead of resurrecting it. The outer <c>"isActive" = true</c> is now redundant
-    /// with the subselect but kept for the same concurrency reason. The redundant outer
-    /// <c>"userId" = @userId</c> mirrors legacy's <c>{ id, userId }</c> scope: never trust an id alone,
-    /// and never fall back on RLS visibility (the tenant_isolation policy on this table also admits
-    /// same-school users).</para>
+    /// <para>The row is pinned by the id the endpoint READ (<c>LiveSubscriptionRow.Id</c>, threaded through
+    /// <see cref="ILiveSubscriptionWriter" />), exactly as legacy stripe.ts:321's
+    /// <c>{ id: sub.id, userId }</c>. Wave 3 billing-subscription-parity review (security/important):
+    /// this used to be a subselect that RE-RESOLVED the row from the reader's own predicate
+    /// (<c>userId + isActive ORDER BY createdDate DESC, id LIMIT 1</c>) so the id would not have to be
+    /// threaded through. That is only "the same row the endpoint read" while nothing changes between the
+    /// two transactions -- and the concurrency case this whole clause exists for is precisely something
+    /// changing between them. A webhook that flips the read row's isActive between the read and the write
+    /// made the subselect skip it and resolve the user's next older active row, which the outer predicate
+    /// then happily cancelled: a row the caller's cancellable decision was never based on (pinned by
+    /// LiveSubscriptionDuplicateRowTests.MarkCancelled_ReadRowDeactivatedBetweenReadAndWrite_...). With
+    /// the id pinned, that race is the 0-row no-op the remarks below promise, as it is in legacy.</para>
+    ///
+    /// <para>The outer <c>"isActive" = true</c> and status set are legacy's cancellable filter, kept on the
+    /// write for the concurrency semantics documented below -- a webhook that cancelled the row between
+    /// the read and the write turns this into a 0-row no-op instead of resurrecting it. The
+    /// <c>"userId" = @userId</c> alongside the id mirrors legacy's <c>{ id, userId }</c> scope: never trust
+    /// an id alone, and never fall back on RLS visibility (the tenant_isolation policy on this table also
+    /// admits same-school users).</para>
     /// </summary>
     private const string CancellableWhere = """
-        WHERE "id" = (
-            SELECT "id"
-            FROM "user_subscriptions"
-            WHERE "userId" = @userId AND "isActive" = true
-            ORDER BY "createdDate" DESC, "id"
-            LIMIT 1
-        )
+        WHERE "id" = @rowId
           AND "userId" = @userId
           AND "isActive" = true
           AND "status" IN ('active', 'trialing', 'past_due')
@@ -89,18 +87,19 @@ public sealed class LiveSubscriptionWriter(IFormMapsDatabaseSessionFactory datab
         {CancellableWhere}
         """;
 
-    public Task<int> MarkCancelledAsync(RequestContext context, string userId, CancellationToken cancellationToken = default) =>
-        ExecuteAsync(context, MarkCancelledSql, userId, cancellationToken);
+    public Task<int> MarkCancelledAsync(RequestContext context, string userId, string rowId, CancellationToken cancellationToken = default) =>
+        ExecuteAsync(context, MarkCancelledSql, userId, rowId, cancellationToken);
 
-    public Task<int> MarkCancelAtPeriodEndAsync(RequestContext context, string userId, CancellationToken cancellationToken = default) =>
-        ExecuteAsync(context, MarkCancelAtPeriodEndSql, userId, cancellationToken);
+    public Task<int> MarkCancelAtPeriodEndAsync(RequestContext context, string userId, string rowId, CancellationToken cancellationToken = default) =>
+        ExecuteAsync(context, MarkCancelAtPeriodEndSql, userId, rowId, cancellationToken);
 
-    private async Task<int> ExecuteAsync(RequestContext context, string sql, string userId, CancellationToken cancellationToken)
+    private async Task<int> ExecuteAsync(RequestContext context, string sql, string userId, string rowId, CancellationToken cancellationToken)
     {
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
         await using var command = session.Connection.CreateCommand();
         command.Transaction = session.Transaction;
         command.CommandText = sql;
+        AddParameter(command, "rowId", rowId);
         AddParameter(command, "userId", userId);
         AddTimestamp(command, "now", Now());
 

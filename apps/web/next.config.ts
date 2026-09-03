@@ -1331,8 +1331,9 @@ const nextConfig: NextConfig = {
           ]
         : []),
       // Billing (Domain 9a) -- must precede the /api/:path* catch-all below so a flipped route
-      // reaches .NET. All 4 REST paths gated by the single FORMMAPS_ROUTE_BILLING_TO_DOTNET flag
-      // (see shouldRouteBillingToDotnet above). The webhook path is intentionally excluded.
+      // reaches .NET. All 4 REST paths, plus the three legacy spellings the app actually calls, gated
+      // by the single FORMMAPS_ROUTE_BILLING_TO_DOTNET flag (see shouldRouteBillingToDotnet above).
+      // The webhook path is intentionally excluded.
       ...(shouldRouteBillingToDotnet()
         ? [
             { source: "/api/v1/billing/status", destination: `${dotnetApiBaseUrl}/api/v1/billing/status` },
@@ -1360,6 +1361,15 @@ const nextConfig: NextConfig = {
             // would 404 all four the instant the flag flipped.
             { source: "/api/stripe/cancel-subscription", destination: `${dotnetApiBaseUrl}/api/stripe/cancel-subscription` },
             { source: "/api/stripe/billing-portal", destination: `${dotnetApiBaseUrl}/api/stripe/billing-portal` },
+            // Wave 3 billing-subscription-parity review: the status call had the same #98 gap. The
+            // app's subscriptionStatusService.ts requests /api/v1/user/subscription/status -- a
+            // routes/user.ts route, NOT /api/stripe -- which #98 did not alias, so on a flip the status
+            // request still fell through to the /api/:path* catch-all and Node. .NET now serves this
+            // exact path from the same GET /status delegate. Per-path for the same reason as above:
+            // Node exclusively owns every other /api/v1/user route (me, profile, settings, drafts,
+            // transactions, notifications, ...), so a /api/v1/user/:path* prefix would 404 them all.
+            // Same flag guard, same live-path caveat.
+            { source: "/api/v1/user/subscription/status", destination: `${dotnetApiBaseUrl}/api/v1/user/subscription/status` },
           ]
         : []),
       // Migration roadmap (issue #82) -- must precede the /api/:path* catch-all below, which

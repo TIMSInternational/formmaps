@@ -186,7 +186,7 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
         await SeedDuplicatePairAsync();
         var read = await Reader().GetForUserAsync(Context(), UserId, CancellationToken.None);
 
-        var affected = await Writer().MarkCancelledAsync(Context(), UserId, CancellationToken.None);
+        var affected = await Writer().MarkCancelledAsync(Context(), UserId, read!.Id, CancellationToken.None);
 
         // STORED state first, rowcount last: rowcount is a returned value, and a test that trips on it
         // before ever looking at the table would not prove which row was actually rewritten.
@@ -216,7 +216,7 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
         await SeedDuplicatePairAsync();
         var read = await Reader().GetForUserAsync(Context(), UserId, CancellationToken.None);
 
-        var affected = await Writer().MarkCancelAtPeriodEndAsync(Context(), UserId, CancellationToken.None);
+        var affected = await Writer().MarkCancelAtPeriodEndAsync(Context(), UserId, read!.Id, CancellationToken.None);
 
         // STORED state first, rowcount last — see MarkCancelled_TwoRowsForSameUser_... above.
         var newer = await QueryRowAsync(NewerRowId);
@@ -282,7 +282,7 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
         await SeedRowAsync(NewerRowId, NewerCreatedDate, "sub_newer", status: "cancelled", isActive: false);
         var read = await Reader().GetForUserAsync(Context(), UserId, CancellationToken.None);
 
-        var affected = await Writer().MarkCancelledAsync(Context(), UserId, CancellationToken.None);
+        var affected = await Writer().MarkCancelledAsync(Context(), UserId, read!.Id, CancellationToken.None);
 
         var older = await QueryRowAsync(OlderRowId);
         var newer = await QueryRowAsync(NewerRowId);
@@ -297,6 +297,96 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
         Assert.Equal(UpdatedAtSentinel, newer.UpdatedAt);
 
         Assert.Equal(1, affected);
+    }
+
+    // ------------------------------------ read/write race: the write is pinned to the row that was READ
+
+    /// <summary>
+    /// Wave 3 billing-subscription-parity review (security/important). The endpoint's read and its write
+    /// are separate transactions, so a Node-side webhook can deactivate the row the endpoint just read
+    /// before the UPDATE lands. The contract is legacy stripe.ts:321's: the write is scoped
+    /// <c>{ id: sub.id, userId }</c> -- the id of the row actually read -- so in that race it is a 0-row
+    /// no-op. A writer that RE-RESOLVES the row from a userId + isActive subselect instead does something
+    /// worse than resurrecting: it skips the now-inactive row and cancels the user's next older active
+    /// row, one the caller's cancellable decision was never based on. Both the older row's state AND the
+    /// rowcount are asserted, in that order.
+    /// </summary>
+    [Fact]
+    public async Task MarkCancelled_ReadRowDeactivatedBetweenReadAndWrite_IsANoOp_AndLeavesTheOlderRowAlone()
+    {
+        await SeedDuplicatePairAsync();
+        var read = await Reader().GetForUserAsync(Context(), UserId, CancellationToken.None);
+        Assert.Equal(NewerRowId, read!.Id);
+
+        // The simulated webhook: Stripe ended the newest subscription after the endpoint read it.
+        await DeactivateRowAsync(NewerRowId);
+
+        var affected = await Writer().MarkCancelledAsync(Context(), UserId, read.Id, CancellationToken.None);
+
+        var older = await QueryRowAsync(OlderRowId);
+        var newer = await QueryRowAsync(NewerRowId);
+
+        Assert.Equal("trialing", older.Status);
+        Assert.True(older.IsActive);
+        Assert.Equal(UpdatedAtSentinel, older.UpdatedAt);
+
+        // The read row was deactivated by the webhook, not by this writer: its status is whatever the
+        // webhook left and its updatedAt is still the seed sentinel.
+        Assert.Equal("active", newer.Status);
+        Assert.False(newer.IsActive);
+        Assert.Equal(UpdatedAtSentinel, newer.UpdatedAt);
+
+        Assert.Equal(0, affected);
+    }
+
+    [Fact]
+    public async Task MarkCancelAtPeriodEnd_ReadRowDeactivatedBetweenReadAndWrite_IsANoOp_AndLeavesTheOlderRowAlone()
+    {
+        await SeedDuplicatePairAsync();
+        var read = await Reader().GetForUserAsync(Context(), UserId, CancellationToken.None);
+        Assert.Equal(NewerRowId, read!.Id);
+
+        await DeactivateRowAsync(NewerRowId);
+
+        var affected = await Writer().MarkCancelAtPeriodEndAsync(Context(), UserId, read.Id, CancellationToken.None);
+
+        var older = await QueryRowAsync(OlderRowId);
+        var newer = await QueryRowAsync(NewerRowId);
+
+        Assert.False(older.CancelAtPeriodEnd);
+        Assert.Equal(UpdatedAtSentinel, older.UpdatedAt);
+
+        Assert.False(newer.CancelAtPeriodEnd);
+        Assert.Equal(UpdatedAtSentinel, newer.UpdatedAt);
+
+        Assert.Equal(0, affected);
+    }
+
+    /// <summary>
+    /// The id scope must not become an id-ONLY scope: legacy's <c>{ id, userId }</c> is what stops a
+    /// caller who presents another user's row id (RLS on this table admits same-school rows, so
+    /// visibility alone would not) from cancelling it. A row id owned by a different user is a 0-row
+    /// no-op and the caller's own row is untouched too.
+    /// </summary>
+    [Fact]
+    public async Task MarkCancelled_RowIdBelongsToAnotherUser_IsANoOp_AndTouchesNeitherRow()
+    {
+        await SeedRowAsync(OlderRowId, OlderCreatedDate, "sub_older", status: "active");
+        await SeedRowAsync("sub_row_other_user", NewerCreatedDate, "sub_other", status: "active", userId: "user_other_108");
+
+        var affected = await Writer().MarkCancelledAsync(Context(), UserId, "sub_row_other_user", CancellationToken.None);
+
+        var other = await QueryRowAsync("sub_row_other_user");
+        Assert.Equal("active", other.Status);
+        Assert.True(other.IsActive);
+        Assert.Equal(UpdatedAtSentinel, other.UpdatedAt);
+
+        var own = await QueryRowAsync(OlderRowId);
+        Assert.Equal("active", own.Status);
+        Assert.True(own.IsActive);
+        Assert.Equal(UpdatedAtSentinel, own.UpdatedAt);
+
+        Assert.Equal(0, affected);
     }
 
     // ------------------------------------------------- single-row regression control
@@ -319,7 +409,7 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
         Assert.Equal("sub_only", row.StripeSubscriptionId);
         Assert.Equal("plan_1", row.PlanId);
 
-        var affected = await Writer().MarkCancelledAsync(Context(), UserId, CancellationToken.None);
+        var affected = await Writer().MarkCancelledAsync(Context(), UserId, row.Id, CancellationToken.None);
         Assert.Equal(1, affected);
 
         var stored = await QueryRowAsync(OlderRowId);
@@ -332,7 +422,7 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
     public async Task NoRows_ReadReturnsNull_AndCancelIsANoOp()
     {
         Assert.Null(await Reader().GetForUserAsync(Context(), UserId, CancellationToken.None));
-        Assert.Equal(0, await Writer().MarkCancelledAsync(Context(), UserId, CancellationToken.None));
+        Assert.Equal(0, await Writer().MarkCancelledAsync(Context(), UserId, "sub_row_never_existed", CancellationToken.None));
     }
 
     // ---------------------------------------------------------------- helpers
@@ -362,7 +452,7 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
         await SeedRowAsync(NewerRowId, NewerCreatedDate, "sub_newer", status: "active");
     }
 
-    private async Task SeedRowAsync(string id, DateTime createdDate, string stripeSubscriptionId, string status, bool isActive = true)
+    private async Task SeedRowAsync(string id, DateTime createdDate, string stripeSubscriptionId, string status, bool isActive = true, string userId = UserId)
     {
         await using var connection = await _fixture.DataSource.OpenConnectionAsync();
         await using var command = new NpgsqlCommand(
@@ -372,13 +462,27 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
             VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive, @createdDate, @updatedAt)
             """, connection);
         command.Parameters.AddWithValue("id", id);
-        command.Parameters.AddWithValue("userId", UserId);
+        command.Parameters.AddWithValue("userId", userId);
         command.Parameters.AddWithValue("status", status);
         command.Parameters.AddWithValue("subId", stripeSubscriptionId);
         command.Parameters.AddWithValue("isActive", isActive);
         command.Parameters.AddWithValue("createdDate", createdDate);
         command.Parameters.AddWithValue("updatedAt", UpdatedAtSentinel);
         await command.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>
+    /// Simulates the Node-side customer.subscription.deleted webhook landing between the endpoint's read
+    /// and its write: isActive flips, nothing else on the row changes (updatedAt stays at the sentinel so
+    /// a write by the code under test remains distinguishable from this one).
+    /// </summary>
+    private async Task DeactivateRowAsync(string id)
+    {
+        await using var connection = await _fixture.DataSource.OpenConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            """UPDATE "user_subscriptions" SET "isActive" = false WHERE "id" = @id""", connection);
+        command.Parameters.AddWithValue("id", id);
+        Assert.Equal(1, await command.ExecuteNonQueryAsync());
     }
 
     private async Task<(string Status, bool IsActive, bool CancelAtPeriodEnd, DateTime UpdatedAt)> QueryRowAsync(string id)

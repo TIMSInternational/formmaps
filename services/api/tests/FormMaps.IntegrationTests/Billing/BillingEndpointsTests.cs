@@ -40,7 +40,15 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     /// parameterised over both spellings: the two paths must stay behaviourally identical, and a
     /// per-path assertion is the only thing that catches an alias silently drifting (or being dropped).
     /// Note the portal's legacy spelling is "billing-portal", NOT "portal".
+    ///
+    /// <para>Wave 3 billing-subscription-parity review: GET /status gets the same treatment. apps/web's
+    /// subscriptionStatusService.ts calls /api/v1/user/subscription/status (a routes/user.ts route, not a
+    /// stripe.ts one), which #98 did not alias -- so the legacy-shaped status payload was itself
+    /// unreachable on a flip, exactly the dead-code shape #98 fixed for cancel/portal. Every GET /status
+    /// case below is parameterised over both spellings for the same reason.</para>
     /// </summary>
+    private const string StatusV1Path = "/api/v1/billing/status";
+    private const string StatusLegacyPath = "/api/v1/user/subscription/status";
     private const string CancelV1Path = "/api/v1/billing/cancel-subscription";
     private const string CancelLegacyPath = "/api/stripe/cancel-subscription";
     private const string PortalV1Path = "/api/v1/billing/portal";
@@ -63,12 +71,16 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     /// <c>cancelAtPeriodEnd</c>, NOT the <c>grantsAccess</c> / <c>nextBillingDate</c> names this endpoint
     /// used to invent. apps/web reads the legacy names (subscriptionStatusService.ts's SubscriptionStatus,
     /// consumed by dashboard/subscriptions, subscribe, AuthWrapper) and nothing in apps/web ever read the
-    /// invented ones, so the legacy shape is the only one a flip can be invisible under. The absent-name
-    /// assertions are the ones that matter: a handler emitting BOTH spellings would pass the positive
-    /// checks and still leave the contract ambiguous.
+    /// invented ones, so the legacy shape is the only one a flip can be invisible under -- and the flip
+    /// only reaches this handler at all through the legacy PATH (StatusLegacyPath), which is why the
+    /// payload is asserted on both spellings. The absent-name assertions are the ones that matter: a
+    /// handler emitting BOTH spellings would pass the positive checks and still leave the contract
+    /// ambiguous.
     /// </summary>
-    [Fact]
-    public async Task GetStatus_ActiveSubscription_ReturnsLegacyPayload_HasActiveSubscriptionTrue()
+    [Theory]
+    [InlineData(StatusV1Path)]
+    [InlineData(StatusLegacyPath)]
+    public async Task GetStatus_ActiveSubscription_ReturnsLegacyPayload_HasActiveSubscriptionTrue(string path)
     {
         await fixture.ResetAsync();
         await fixture.SeedMatchingSubscriptionAsync("user_status1", "sub_status1", "active");
@@ -76,7 +88,7 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "user_status1", "student");
 
-        var response = await client.GetAsync("/api/v1/billing/status");
+        var response = await client.GetAsync(path);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
@@ -98,9 +110,11 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     /// <c>status: sub?.status || "none"</c> give the "none"/null shape here.
     /// </summary>
     [Theory]
-    [InlineData("user_no_sub", false)]
-    [InlineData("user_no_sub_no_school", true)]
-    public async Task GetStatus_NoSubscription_ReturnsHasActiveSubscriptionFalse_StatusNone(string userId, bool seedUserRow)
+    [InlineData(StatusV1Path, "user_no_sub", false)]
+    [InlineData(StatusV1Path, "user_no_sub_no_school", true)]
+    [InlineData(StatusLegacyPath, "user_no_sub", false)]
+    [InlineData(StatusLegacyPath, "user_no_sub_no_school", true)]
+    public async Task GetStatus_NoSubscription_ReturnsHasActiveSubscriptionFalse_StatusNone(string path, string userId, bool seedUserRow)
     {
         await fixture.ResetAsync();
         if (seedUserRow)
@@ -112,7 +126,7 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, userId, "student");
 
-        var response = await client.GetAsync("/api/v1/billing/status");
+        var response = await client.GetAsync(path);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
@@ -132,9 +146,11 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     /// does not check the role on this path, so neither does this -- hence "student" and "school_admin".
     /// </summary>
     [Theory]
-    [InlineData("student")]
-    [InlineData("school_admin")]
-    public async Task GetStatus_SchoolAffiliatedUser_ReturnsHasActiveSubscriptionTrue_WithoutASubscriptionRow(string role)
+    [InlineData(StatusV1Path, "student")]
+    [InlineData(StatusV1Path, "school_admin")]
+    [InlineData(StatusLegacyPath, "student")]
+    [InlineData(StatusLegacyPath, "school_admin")]
+    public async Task GetStatus_SchoolAffiliatedUser_ReturnsHasActiveSubscriptionTrue_WithoutASubscriptionRow(string path, string role)
     {
         await fixture.ResetAsync();
         await fixture.SeedUserAsync("user_school", stripeCustomerId: null, schoolId: "school_1");
@@ -142,7 +158,7 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "user_school", role);
 
-        var response = await client.GetAsync("/api/v1/billing/status");
+        var response = await client.GetAsync(path);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
@@ -162,8 +178,10 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     /// row's own status. Before the fix the reader had no isActive predicate, so this answered
     /// status:"active" with access false -- a shape legacy can never produce.
     /// </summary>
-    [Fact]
-    public async Task GetStatus_InactiveRow_IsNotFound_ReportsStatusNone()
+    [Theory]
+    [InlineData(StatusV1Path)]
+    [InlineData(StatusLegacyPath)]
+    public async Task GetStatus_InactiveRow_IsNotFound_ReportsStatusNone(string path)
     {
         await fixture.ResetAsync();
         await fixture.SeedLiveSubscriptionAsync("user_inactive_status", stripeSubscriptionId: "sub_inactive", status: "active", isActive: false);
@@ -171,7 +189,7 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "user_inactive_status", "student");
 
-        var response = await client.GetAsync("/api/v1/billing/status");
+        var response = await client.GetAsync(path);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
@@ -181,13 +199,38 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     }
 
     /// <summary>
+    /// Wave 3 billing-subscription-parity review (parity/nit). Legacy's <c>planId: hasAccess ? sub?.planId
+    /// || null : null</c> (user.ts:324) coerces an EMPTY-STRING planId to null via <c>||</c>; a handler
+    /// that only checks hasAccess emits <c>""</c>. planId is NOT NULL TEXT, so "" is storable even though
+    /// no webhook code writes it -- the shape is pinned so the two sides cannot drift on it.
+    /// </summary>
+    [Fact]
+    public async Task GetStatus_ActiveRowWithEmptyPlanId_ReportsPlanIdNull_LikeLegacysOrNull()
+    {
+        await fixture.ResetAsync();
+        await fixture.SeedLiveSubscriptionAsync("user_empty_plan", stripeSubscriptionId: "sub_empty_plan", planId: "");
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_empty_plan", "student");
+
+        var response = await client.GetAsync(StatusV1Path);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
+        Assert.True(data.GetProperty("hasActiveSubscription").GetBoolean());
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("planId").ValueKind);
+    }
+
+    /// <summary>
     /// The "Cancels on &lt;date&gt;" vs "Renews on &lt;date&gt;" switch in dashboard/subscriptions/page.tsx
     /// reads <c>cancelAtPeriodEnd</c>; a cancel scheduled at Stripe leaves the row active with the flag
     /// set (see PostCancelSubscription_ActiveSubscription_...), so this is the shape a user sees right
     /// after cancelling.
     /// </summary>
-    [Fact]
-    public async Task GetStatus_CancelScheduledAtPeriodEnd_ReportsCancelAtPeriodEndTrue_AndStillActive()
+    [Theory]
+    [InlineData(StatusV1Path)]
+    [InlineData(StatusLegacyPath)]
+    public async Task GetStatus_CancelScheduledAtPeriodEnd_ReportsCancelAtPeriodEndTrue_AndStillActive(string path)
     {
         await fixture.ResetAsync();
         await fixture.SeedLiveSubscriptionAsync("user_cape_status", stripeSubscriptionId: "sub_cape", cancelAtPeriodEnd: true);
@@ -195,7 +238,7 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         using var client = factory.CreateClient();
         AddDevIdentity(client, "user_cape_status", "student");
 
-        var response = await client.GetAsync("/api/v1/billing/status");
+        var response = await client.GetAsync(path);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
@@ -204,13 +247,15 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         Assert.Equal("active", data.GetProperty("status").GetString());
     }
 
-    [Fact]
-    public async Task GetStatus_Anonymous_Returns401()
+    [Theory]
+    [InlineData(StatusV1Path)]
+    [InlineData(StatusLegacyPath)]
+    public async Task GetStatus_Anonymous_Returns401(string path)
     {
         using var factory = CreateFactory();
         using var client = factory.CreateClient();
 
-        var response = await client.GetAsync("/api/v1/billing/status");
+        var response = await client.GetAsync(path);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
