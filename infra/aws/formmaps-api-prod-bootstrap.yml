@@ -150,6 +150,22 @@ Resources:
                   - cloudformation:ValidateTemplate
                 Resource:
                   - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ServiceStackName}/*
+              # Read-only, and the post-deploy drift check in
+              # formmaps-api-prod-deploy.yml is the only caller. Without it that
+              # step degrades to an AccessDenied warning and the stack goes
+              # unwatched again, which is how two hand-made inline policies on the
+              # instance role stayed undeclared for weeks. Drift detection reads
+              # the live resources with THIS role's permissions, so the
+              # iam:List*/Get* below are part of the same grant.
+              - Sid: DetectServiceStackDrift
+                Effect: Allow
+                Action:
+                  - cloudformation:DetectStackDrift
+                  - cloudformation:DetectStackResourceDrift
+                  - cloudformation:DescribeStackDriftDetectionStatus
+                  - cloudformation:DescribeStackResourceDrifts
+                Resource:
+                  - !Sub arn:${AWS::Partition}:cloudformation:${AWS::Region}:${AWS::AccountId}:stack/${ServiceStackName}/*
               # No DeleteStack. Prod teardown is not a thing a dispatched
               # workflow should be able to do, and nothing in the deploy path
               # needs it.
@@ -197,6 +213,11 @@ Resources:
                   - iam:GetRole
                   - iam:GetRolePolicy
                   - iam:ListRolePolicies
+                  # Read-only, added for drift detection: comparing the live role
+                  # with the template requires reading its managed-policy
+                  # attachments too, otherwise the IAM role reports as
+                  # NOT_CHECKED and the check silently covers less than it looks.
+                  - iam:ListAttachedRolePolicies
                   - iam:PutRolePolicy
                   - iam:TagRole
                   - iam:UntagRole

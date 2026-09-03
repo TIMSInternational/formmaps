@@ -319,6 +319,67 @@ jobs:
           echo "::error::Health check never returned 200 at ${BASE_URL}/health after 30 attempts (~5 min). The deploy may be serving errors. Roll back with the image named in the 'Record current image' step — see docs/migration/prod-api-deploy-runbook.md."
           exit 1
 
+      # Post-deploy drift check. INFORMATIONAL BY DESIGN — it must never turn a
+      # healthy deploy red.
+      #
+      # Why: `cloudformation deploy` proves the template was applied; it says
+      # nothing about what was changed on these resources OUTSIDE the stack.
+      # Wave 3 put two inline policies on the instance role by hand
+      # (formmaps-dotnet-s3-uploads, formmaps-prod-ses-send) and a deploy neither
+      # reproduced nor removed them — inline policies added outside a stack are
+      # not stack-managed — so the template and the live role disagreed for weeks
+      # with nothing reporting it. Both are declared in the template now (as
+      # stack-managed-* policies); this step is what catches the NEXT one.
+      #
+      # Runs after the health canary so a drift-detection hiccup can never mask a
+      # real deploy failure, and reuses this job's OIDC session — no extra auth.
+      # Staging's deploy workflow has the same shape (same auth step, same
+      # `cloudformation deploy` + canary tail) and wants the same step; it is not
+      # added here because that stack is out of this change's scope.
+      - name: Detect stack drift (non-blocking)
+        continue-on-error: true
+        run: |
+          set -uo pipefail
+          if ! DETECTION_ID="$(aws cloudformation detect-stack-drift \
+            --stack-name "$SERVICE_STACK_NAME" \
+            --query StackDriftDetectionId --output text 2>&1)"; then
+            echo "::warning::Could not start drift detection on ${SERVICE_STACK_NAME} (${DETECTION_ID}). The deploy itself is unaffected. If this is AccessDenied, redeploy infra/aws/formmaps-api-prod-bootstrap.yml — the DetectServiceStackDrift statement is what grants it."
+            exit 0
+          fi
+          STATUS="DETECTION_IN_PROGRESS"
+          for _ in $(seq 1 30); do
+            if ! RESULT="$(aws cloudformation describe-stack-drift-detection-status \
+              --stack-drift-detection-id "$DETECTION_ID" --output json 2>&1)"; then
+              echo "::warning::Could not read drift detection status (${RESULT})."
+              exit 0
+            fi
+            STATUS="$(printf '%s' "$RESULT" | jq -r '.DetectionStatus')"
+            [ "$STATUS" = "DETECTION_IN_PROGRESS" ] || break
+            sleep 10
+          done
+          case "$STATUS" in
+            DETECTION_COMPLETE)
+              DRIFT="$(printf '%s' "$RESULT" | jq -r '.StackDriftStatus')"
+              DRIFTED_COUNT="$(printf '%s' "$RESULT" | jq -r '.DriftedStackResourceCount')"
+              echo "drift detection complete: ${DRIFT} (${DRIFTED_COUNT} drifted resource(s))"
+              if [ "$DRIFT" = "DRIFTED" ]; then
+                aws cloudformation describe-stack-resource-drifts \
+                  --stack-name "$SERVICE_STACK_NAME" \
+                  --stack-resource-drift-status-filters MODIFIED DELETED \
+                  --query "StackResourceDrifts[].[LogicalResourceId,ResourceType,StackResourceDriftStatus]" \
+                  --output text || true
+                echo "::warning::${SERVICE_STACK_NAME} is DRIFTED (${DRIFTED_COUNT} resource(s)). Something was changed outside CloudFormation. Reconcile it into infra/aws/formmaps-api-prod-service.yml, or delete the out-of-band change — do not leave it undeclared."
+              fi
+              ;;
+            DETECTION_FAILED)
+              echo "::warning::Drift detection FAILED for ${SERVICE_STACK_NAME}: $(printf '%s' "$RESULT" | jq -r '.DetectionStatusReason // "no reason given"')"
+              ;;
+            *)
+              echo "::warning::Drift detection did not finish within ~5 min (last status: ${STATUS}). Check it manually with: aws cloudformation describe-stack-drift-detection-status --stack-drift-detection-id ${DETECTION_ID}"
+              ;;
+          esac
+          exit 0
+
       - name: Summary
         if: always()
         run: |
