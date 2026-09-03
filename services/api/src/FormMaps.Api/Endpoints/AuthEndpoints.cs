@@ -361,7 +361,10 @@ public static class AuthEndpoints
         var decision = guard.RequireIdentity(context);
         if (!decision.Allowed) return Deny(decision);
 
-        if (body is null || string.IsNullOrWhiteSpace(body.UserId) || string.IsNullOrWhiteSpace(body.NewEmail))
+        // Only an ABSENT newEmail is a missing field here: a present-but-empty/blank one is a zod
+        // "Invalid email" in legacy (z.string().email() runs on "" and "  " alike), so it must fall
+        // through to the check below rather than answer this aggregate message.
+        if (body is null || string.IsNullOrWhiteSpace(body.UserId) || body.NewEmail is null)
             return BadRequest("userId and a valid newEmail are required");
 
         // Legacy's changeEmailSchema has `newEmail: z.string().email()` and surfaces errors[0].message,

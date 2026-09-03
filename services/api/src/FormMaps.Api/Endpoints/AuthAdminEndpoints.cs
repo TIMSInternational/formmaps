@@ -44,13 +44,17 @@ public static class AuthAdminEndpoints
         SignupRequest? body, HttpContext httpContext, IAuthAdminRepository repository, AccessTokenFactory tokenFactory,
         CancellationToken cancellationToken)
     {
-        if (body is null || string.IsNullOrWhiteSpace(body.Name) || string.IsNullOrWhiteSpace(body.Email) ||
+        // Only an ABSENT email is a missing field here: a present-but-empty/blank one is a zod
+        // "Invalid email" in legacy (z.string().email() runs on "" and "   " alike), so it must fall
+        // through to the check below rather than answer this aggregate message.
+        if (body is null || string.IsNullOrWhiteSpace(body.Name) || body.Email is null ||
             string.IsNullOrWhiteSpace(body.Password))
             return BadRequest("name, email, and password are required");
 
-        // Legacy's signupSchema has `email: z.string().email()`, and zod reports the email issue FIRST
-        // (email precedes password/dateOfBirth in the schema; the route surfaces errors[0].message, i.e.
-        // zod's default "Invalid email"). Validated on the RAW body value, as zod does -- normalization
+        // Legacy's signupSchema has `email: z.string().email()`, and -- given a name that passes its
+        // min(2)/max(50), which this port does not enforce -- zod reports the email issue FIRST (email
+        // precedes password/dateOfBirth in the schema; the route surfaces errors[0].message, i.e. zod's
+        // default "Invalid email"). Validated on the RAW body value, as zod does -- normalization
         // (trim/lowercase) happens further down, only for values that already passed.
         if (!ExternalEmailNormalization.IsValidZodEmail(body.Email))
             return BadRequest("Invalid email");

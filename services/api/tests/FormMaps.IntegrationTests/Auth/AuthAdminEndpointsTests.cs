@@ -272,6 +272,8 @@ public class AuthAdminEndpointsTests : IDisposable
     [InlineData("john doe@x")]
     [InlineData("a@b c")]
     [InlineData("  padded@example.test  ")]   // zod validates the RAW body value; no trim first
+    [InlineData("")]                           // present-but-empty is a zod "Invalid email", not a missing field
+    [InlineData("   ")]
     public async Task Signup_malformed_email_is_rejected_with_exact_legacy_message(string email)
     {
         var repo = new FakeAuthAdminRepository();

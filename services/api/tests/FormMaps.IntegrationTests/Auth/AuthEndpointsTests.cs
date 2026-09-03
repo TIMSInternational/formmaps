@@ -465,6 +465,8 @@ public class AuthEndpointsTests : IDisposable
     [InlineData("john doe@x")]
     [InlineData("a@b c")]
     [InlineData("  NEW@EXAMPLE.TEST  ")]
+    [InlineData("")]                           // present-but-empty is a zod "Invalid email", not a missing field
+    [InlineData("  ")]
     public async Task ChangeEmail_malformed_new_email_is_400_with_legacy_message_and_never_reaches_the_repository(string newEmail)
     {
         var repo = new FakeAuthRepository
@@ -829,7 +831,16 @@ public class AuthEndpointsTests : IDisposable
     [InlineData("a@b c")]
     public async Task ForgotPassword_malformed_email_is_400_and_never_starts_the_background_work(string email)
     {
-        var repo = new FakeAuthRepository();
+        // A matching user and a gate, same shape as ForgotPassword_responds_before_the_background_work_completes:
+        // if the 400 path ever scheduled the background task, the user lookup would run synchronously
+        // (before the gate) and the token invalidation would run once the gate is released -- so the
+        // "never starts" claim below is proven against work that WOULD have happened, not a fake that
+        // had nothing to do anyway.
+        var repo = new FakeAuthRepository
+        {
+            UserByEmail = new AuthUserRow("u1", "Ada", "ada@example.test", "hash", "role_x", FormMapsRoles.Student, null, true),
+            ForgotPasswordGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously),
+        };
         using var factory = CreateFactory(repo);
         using var client = factory.CreateClient();
 
@@ -838,7 +849,20 @@ public class AuthEndpointsTests : IDisposable
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal("Invalid email", doc.RootElement.GetProperty("message").GetString());
+        Assert.False(repo.FindUserByEmailWasCalled);
         Assert.False(repo.InvalidatePriorResetTokensWasCalled);
+
+        // Release the gate and give any (wrongly) scheduled work a chance to run, so a regression that
+        // detaches the task before the 400 cannot hide behind the snapshot above.
+        repo.ForgotPasswordGate.SetResult();
+        var deadline = DateTime.UtcNow.AddMilliseconds(500);
+        while (!repo.InvalidatePriorResetTokensWasCalled && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(20);
+        }
+        Assert.False(repo.FindUserByEmailWasCalled);
+        Assert.False(repo.InvalidatePriorResetTokensWasCalled);
+        Assert.False(repo.CreatePasswordResetTokenWasCalled);
     }
 
     // ---- Reset password ----
