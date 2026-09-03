@@ -115,6 +115,7 @@ jobs:
           DAILY_API_KEY_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_DAILY_API_KEY_SECRET_ARN }}
           STRIPE_SECRET_KEY_ARN: ${{ secrets.FORMMAPS_PROD_STRIPE_SECRET_KEY_ARN }}
           STRIPE_WEBHOOK_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN }}
+          FIELD_ENCRYPTION_KEY_ARN: ${{ secrets.FORMMAPS_PROD_FIELD_ENCRYPTION_KEY_ARN }}
           PROD_WEB_ORIGIN: ${{ vars.FORMMAPS_PROD_WEB_ORIGIN }}
           PROD_FRONTEND_BASE_URL: ${{ vars.FORMMAPS_PROD_FRONTEND_BASE_URL }}
         run: |
@@ -137,6 +138,16 @@ jobs:
           # reject every event as an invalid signature and the #44 shadow soak
           # silently stays empty. See formmaps#43.
           : "${STRIPE_WEBHOOK_SECRET_ARN:?Set FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN in the production environment (signing secret of the .NET Stripe endpoint, formmaps#43 — NOT the legacy Node endpoint).}"
+          # Unlike the Stripe pair this one does NOT block boot — AesGcmFieldCipher
+          # reads the key lazily — so a missing key stays invisible until the first
+          # iSAMS credential save 500s in prod (FM-DOTNET-087). Required here so the
+          # gap is caught at dispatch instead. No Node key exists to copy (none was
+          # set on any of the three services before 2026-09-03); one fresh
+          # nexa/api/FIELD_ENCRYPTION_KEY secret is shared by nexa-api, prod and
+          # staging, and the nexa-api half of that wiring is out of band — without
+          # it a .NET-written credential cannot be decrypted by the Node iSAMS sync
+          # path that still owns that vendor call.
+          : "${FIELD_ENCRYPTION_KEY_ARN:?Set FORMMAPS_PROD_FIELD_ENCRYPTION_KEY_ARN in the production environment (AES-256-GCM key encrypting iSAMS vendor credentials — the shared nexa/api/FIELD_ENCRYPTION_KEY ARN, which must also be set on nexa-api).}"
           # The CORS origin has no safe default. formmaps-api-prod-service.yml
           # ships ProdWebOrigin=https://app.formmaps.ai and
           # FrontendBaseUrl=https://app.formmaps.com — two different hosts, and
@@ -261,6 +272,7 @@ jobs:
           DAILY_API_KEY_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_DAILY_API_KEY_SECRET_ARN }}
           STRIPE_SECRET_KEY_ARN: ${{ secrets.FORMMAPS_PROD_STRIPE_SECRET_KEY_ARN }}
           STRIPE_WEBHOOK_SECRET_ARN: ${{ secrets.FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN }}
+          FIELD_ENCRYPTION_KEY_ARN: ${{ secrets.FORMMAPS_PROD_FIELD_ENCRYPTION_KEY_ARN }}
           PROD_WEB_ORIGIN: ${{ vars.FORMMAPS_PROD_WEB_ORIGIN }}
           PROD_FRONTEND_BASE_URL: ${{ vars.FORMMAPS_PROD_FRONTEND_BASE_URL }}
         run: |
@@ -282,6 +294,7 @@ jobs:
               DailyApiKeySecretArn="$DAILY_API_KEY_SECRET_ARN" \
               StripeSecretKeyArn="$STRIPE_SECRET_KEY_ARN" \
               StripeWebhookSecretArn="$STRIPE_WEBHOOK_SECRET_ARN" \
+              FieldEncryptionKeyArn="$FIELD_ENCRYPTION_KEY_ARN" \
               ProdWebOrigin="$PROD_WEB_ORIGIN" \
               FrontendBaseUrl="$FRONTEND_BASE_URL"
 

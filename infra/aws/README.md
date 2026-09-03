@@ -50,8 +50,27 @@ Environment secrets:
 ```text
 FORMMAPS_STAGING_JWT_SECRET_ARN=<secrets-manager-arn-containing-jwt-secret>
 FORMMAPS_STAGING_DATABASE_URL_SECRET_ARN=<secrets-manager-arn-containing-database-url>
+FORMMAPS_STAGING_DAILY_API_KEY_SECRET_ARN=<secrets-manager-arn-containing-daily-api-key>
+FORMMAPS_STAGING_STRIPE_SECRET_KEY_ARN=<secrets-manager-arn-containing-a-stripe-TEST-mode-secret-key>
+FORMMAPS_STAGING_STRIPE_WEBHOOK_SECRET_ARN=<secrets-manager-arn-containing-the-TEST-mode-webhook-signing-secret>
+FORMMAPS_STAGING_FIELD_ENCRYPTION_KEY_ARN=<secrets-manager-arn-containing-field-encryption-key>
 FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN=<optional-short-lived-school-user-token>
 ```
+
+Every one of those except the last is required: the deploy job asserts each is
+non-empty before it calls CloudFormation, so a missing one fails the dispatch.
+
+The Stripe pair must point at **TEST-mode** secrets — the service boots with
+`ASPNETCORE_ENVIRONMENT=Production` so `StartupEnvironmentValidator` demands
+them, but staging must never hold the live keys.
+
+`FORMMAPS_STAGING_FIELD_ENCRYPTION_KEY_ARN` is the opposite case: it must be
+the **same** `nexa/api/FIELD_ENCRYPTION_KEY` ARN prod and `nexa-api` use, not a
+staging-only key. Staging is not on its own database — it reads the shared prod
+Aurora cluster through the read-only `formmaps_staging_ro` role — so a second
+key would only produce ciphertext prod Node cannot decrypt. See the wave 3
+design (`docs/superpowers/specs/2026-07-27-wave3-infra-gates-design.md`, 3.3)
+and the prod runbook row for the one-time `nexa-api` wiring that goes with it.
 
 `FORMMAPS_STAGING_BENCHMARK_BEARER_TOKEN` is optional. If present, the deploy
 workflow runs the authenticated benchmark canary after the health canary.

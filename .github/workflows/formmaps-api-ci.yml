@@ -57,6 +57,21 @@ jobs:
       - name: Run gitleaks
         run: gitleaks git --redact --no-banner .
 
+  # ─── DEPLOY PARAMETER PARITY ────────────────────────────────────────────────
+  # A CloudFormation parameter with no Default must be passed by the workflow
+  # that deploys that template. Adding one to a template and forgetting the
+  # other side is a silent edit here and a CreateChangeSet failure 40 minutes
+  # into a dispatch -- see the 2026-08-02 Stripe pair (formmaps-api-staging-deploy
+  # ran red for two weeks). Seconds to check, so check it on every PR.
+  deploy-parameter-parity:
+    name: Deploy Parameter Parity
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - run: scripts/check-deploy-parameter-parity.sh
+
   build-test:
     runs-on: ubuntu-latest
     # formmaps#36. The Test step runs the WHOLE solution including

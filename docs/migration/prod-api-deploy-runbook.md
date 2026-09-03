@@ -68,6 +68,26 @@ Secrets, on the **production** environment:
 | `FORMMAPS_PROD_DAILY_API_KEY_SECRET_ARN` | |
 | `FORMMAPS_PROD_STRIPE_SECRET_KEY_ARN` | **LIVE** key here, unlike staging. |
 | `FORMMAPS_PROD_STRIPE_WEBHOOK_SECRET_ARN` | ⚠️ Signing secret of the **second** Stripe endpoint — the one pointing at .NET (formmaps#43). Stripe issues a distinct secret per endpoint; reusing the legacy Node endpoint's makes .NET reject every event as an invalid signature, and the #44 shadow soak stays silently empty. |
+| `FORMMAPS_PROD_FIELD_ENCRYPTION_KEY_ARN` | ⚠️ The AES-256-GCM key `AesGcmFieldCipher` uses to encrypt iSAMS vendor credentials (FM-DOTNET-087). There is **no existing Node key to copy** — none was set on `nexa-api`, `formmaps-api-prod` or `formmaps-api-staging`, and no such secret existed in the account ([wave3 design 3.3](../superpowers/specs/2026-07-27-wave3-infra-gates-design.md)); nothing is encrypted with it yet, so generate one fresh (32 bytes: 64 hex chars, or base64 decoding to ≥32 bytes — anything shorter now throws) and store it as e.g. `nexa/api/FIELD_ENCRYPTION_KEY`. That **one** ARN goes to all three services. Unlike the Stripe pair it does **not** block boot — the key is read lazily, so a missing one surfaces only as a 500 on the first `POST /integrations/isams`, which is why it was absent from both stacks until 2026-09-03. |
+
+⚠️ **One-time, out of band, BEFORE the first .NET iSAMS write.** This repo's
+templates wire the key into `formmaps-api-prod` and `formmaps-api-staging`
+only. `nexa-api` is not managed here, so the third leg must be done by hand,
+or the Node iSAMS `sync` path — which still owns that vendor call — throws
+`FIELD_ENCRYPTION_KEY environment variable is required` on a credential .NET
+wrote (`api/src/services/schoolService.ts` → `decryptField`):
+
+1. Set the **same** secret ARN as `FIELD_ENCRYPTION_KEY` in `nexa-api`'s App
+   Runner `RuntimeEnvironmentSecrets` (jq-patch the source configuration, as in
+   [the wave3 plan](../superpowers/plans/2026-07-27-wave3-infra-gates.md) step 3).
+2. Add `secretsmanager:GetSecretValue` for that ARN to the `nexa-api-runtime`
+   policy (the two .NET roles get it from the templates in this repo).
+3. Verify the round-trip: encrypt a value with the .NET cipher and decrypt it
+   with a Node script pointed at the same key. Note the design's "write via
+   .NET staging" wording no longer holds — staging's `DATABASE_URL` is the
+   SELECT-only `formmaps_staging_ro` role on the shared prod cluster
+   (`docs/migration/staging-benchmark-canary-status.md`), so
+   `POST /integrations/isams` cannot write there at all.
 
 Variables:
 
@@ -137,11 +157,16 @@ aws cloudformation deploy \
   --template-file infra/aws/formmaps-api-prod-service.yml \
   --capabilities CAPABILITY_NAMED_IAM \
   --no-fail-on-empty-changeset \
-  --parameter-overrides ImageIdentifier=<the prod-<sha> URI from the summary>
+  --parameter-overrides ImageIdentifier=<the prod-<sha> URI from the summary> \
+    FieldEncryptionKeyArn=<the FORMMAPS_PROD_FIELD_ENCRYPTION_KEY_ARN value>
 ```
 
 Unspecified parameters keep their previous values, so this changes the image
-and nothing else. **Never roll back by deploying `prod-latest`** — it moves,
+and nothing else. `FieldEncryptionKeyArn` is the one exception until the first
+post-2026-09-03 workflow deploy lands: it is new and has no `Default`, so the
+live stack carries no previous value for it and the command fails with
+`Parameters: [FieldEncryptionKeyArn] must have values` if it is omitted. Once a
+workflow deploy has set it, it can be dropped from this snippet again. **Never roll back by deploying `prod-latest`** — it moves,
 and after a bad deploy it points at the bad image.
 
 ## Credential cutover (do this deliberately, not as part of a deploy)
