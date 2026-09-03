@@ -151,6 +151,8 @@ public sealed class SchoolAdminEmailWriter(
             // School-scoped like LoadStudentsAsync. Legacy (`where: { id: { in: counselorIds } }`) is not, and for a
             // super-admin caller RLS is bypassed — without this predicate an assignment pointing at another school's
             // counselor puts their name/email plus a fresh invitation token in this school's outgoing mail (#139).
+            // The predicate also drops a counselor row with a NULL schoolId, which legacy would load for that
+            // super-admin caller; deliberate, and the same outcome Identity callers already get from the policy.
             await using var command = Command(session, """
                 SELECT "id", "name", "email" FROM "users"
                 WHERE "id" = ANY(@cids) AND "schoolId" = @sid

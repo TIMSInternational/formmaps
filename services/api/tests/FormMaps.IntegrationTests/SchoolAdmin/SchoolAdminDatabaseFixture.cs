@@ -15,8 +15,9 @@ namespace FormMaps.IntegrationTests.SchoolAdmin;
 /// <list type="bullet">
 /// <item><c>schools</c> — the tenant root itself; there is no schoolId column to scope it by.</item>
 /// <item><c>lia_assessment_sessions</c> / <c>personality_assessment_sessions</c> — genuinely unpolicied in production
-/// (recorded as PENDING "#77 — needs a read-path audit on both backends" in scripts/check-rls-coverage.mjs; not in
-/// pilot.sql either). The reads over them here are keyed on an already school-scoped student id list.</item>
+/// (recorded as PENDING "#77 — needs a read-path audit on both backends" in api/scripts/check-rls-coverage.mjs;
+/// neither table is named in api/prisma/rls/pilot.sql either — re-verify with one grep over that directory in
+/// formmaps-platform). The reads over them here are keyed on an already school-scoped student id list.</item>
 /// </list>
 /// </summary>
 public sealed class SchoolAdminDatabaseFixture : RlsEnabledDatabaseFixture

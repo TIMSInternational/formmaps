@@ -117,11 +117,13 @@ public sealed class SchoolAdminEmailWriterTests : IClassFixture<SchoolAdminDatab
     }
 
     [Fact]
-    public async Task Setup360_cross_school_counselor_row_is_invisible_to_a_school_admin_caller()
+    public async Task Setup360_rls_backstop_hides_a_cross_school_counselor_from_a_school_admin_session()
     {
         // The school-scoped caller: 005-sensitive.sql hides the foreign users row from an Identity session, so
         // here RLS and the predicate agree. Asserted through the restricted login so the backstop is real, not
         // assumed — and the first two counts show the row exists and the policy (not the seed) is what hides it.
+        // NOT a second proof of the #139 predicate: this test passes with or without it (the policy alone hides
+        // the row). It fails only if the app login bypassed RLS or the users policy were not applied.
         await SeedSchoolAsync();
         await SeedUserAsync("stu-1", "Ana Student", "ana@school.test", "student", School, gradeLevel: 10);
         await SeedUserAsync("cou-b", "Bea Foreign", "bea@other.test", "counselor", OtherSchool);
