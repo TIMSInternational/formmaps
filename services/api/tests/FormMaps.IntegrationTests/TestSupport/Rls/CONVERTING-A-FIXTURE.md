@@ -1,7 +1,23 @@
 # Converting a fixture to real RLS (formmaps#125)
 
-Four fixtures are converted. This is the route for the rest, plus the inventory that says which ones
-are worth converting and in what order.
+Ten fixtures are converted (every class deriving from `RlsEnabledDatabaseFixture`):
+
+* `Assessments/TestScoreDatabaseFixture`
+* `Counselor/CounselorCaseloadDatabaseFixture`
+* `ParentChildReads/ParentChildReaderTests.Fixture`
+* `ParentPortal/ParentPortalRepositoryTests.Fixture`
+* `SchoolStudents/SchoolStudentsDatabaseFixture`
+* `StudentCoursePlan/CoursePlanComputeReaderTests.Fixture`
+* `StudentParents/StudentParentRepositoryTests.Fixture`
+* `Billing/BillingDatabaseFixture` — `users` + `user_subscriptions`; the shadow rail and PlanReader run on
+  the bypass GUC, which is now proven to work on a NOBYPASSRLS login rather than as a superuser privilege
+* `Billing/LiveSubscriptionDuplicateRowFixture` — the formmaps#108 constraint-absent contract, same two tables
+* `Messaging/MessagingDatabaseFixture` — was the "deliberately inert" one below; its hand-written policies are
+  gone and `MessagesAdversarialAccessTests` now opens with the harness proof instead of the inert-RLS test
+
+(`Audit/AuditDatabaseFixture` enforces RLS too, but through the real `audit_events` DDL rather than this
+base class, and is not counted above.) This is the route for the rest, plus the inventory that says which
+ones are worth converting and in what order.
 
 ## The state of the world before #125
 
@@ -78,7 +94,7 @@ Ranked by policied tables the fixture already models (the count is what a conver
 | `SchoolReads/schoolreads-schema.sql` | 8 | 7 | |
 | `AcademicGaps`, `SchoolAnalytics` | 6–7 | 6 | |
 | `Auth/auth-schema.sql` | 8 | 5 | `refresh_tokens` is owner-only (007); `SchoolUserRoleRlsHarness` already covers that shape |
-| `Messaging/messaging-schema.sql` | 7 | 5 | deliberately inert today; converting means *adding* an RLS-on twin suite, not flipping this one |
+| ~~`Messaging/messaging-schema.sql`~~ | 7 | 5 | CONVERTED. The earlier note here said converting meant adding an RLS-on twin suite rather than flipping this one; flipping it turned out to be right — the app-layer half survives (a same-school attacker is admitted by every policy and only the repository's WHERE denies), and two `Angle2` tests that had asserted outcomes only a superuser could observe were corrected to what both backends actually do (`RecipientNotFound`) |
 | `DbRole/dotnet-service-role-stub-schema.sql` | 87 | 55 | do NOT convert — it is a GRANT-verification stub, one row per table, no queries under test |
 
 Everything below ~5 policied tables is mostly self-scoped CRUD where the app predicate and the policy say

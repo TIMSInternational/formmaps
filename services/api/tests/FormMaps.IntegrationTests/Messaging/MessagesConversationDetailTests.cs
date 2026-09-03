@@ -12,7 +12,7 @@ public sealed class MessagesConversationDetailTests : IClassFixture<MessagingDat
     private NpgsqlDataSource _dataSource = null!;
 
     public MessagesConversationDetailTests(MessagingDatabaseFixture fixture) => _fixture = fixture;
-    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
+    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString); return Task.CompletedTask; }
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     private MessagesRepository Repo() => new(
@@ -26,7 +26,7 @@ public sealed class MessagesConversationDetailTests : IClassFixture<MessagingDat
         await _fixture.SeedMessageAsync(conversationId, otherId, readAt: null);
         await _fixture.SeedMessageAsync(conversationId, otherId, readAt: null);
 
-        var result = await Repo().GetConversationMessagesAsync(_fixture.Ctx(userId), userId, conversationId, page: 1, limit: 50);
+        var result = await Repo().GetConversationMessagesAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, page: 1, limit: 50);
 
         Assert.Equal(ConversationMessagesStatus.Ok, result.Status);
         Assert.Equal(2, result.Page!.Total);
@@ -54,7 +54,7 @@ public sealed class MessagesConversationDetailTests : IClassFixture<MessagingDat
         var alreadyReadAt = DateTime.UtcNow.AddMinutes(-5);
         await _fixture.SeedMessageAsync(conversationId, otherId, readAt: alreadyReadAt); // already read, must stay unchanged
 
-        var result = await Repo().GetConversationMessagesAsync(_fixture.Ctx(userId), userId, conversationId, page: 1, limit: 50);
+        var result = await Repo().GetConversationMessagesAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, page: 1, limit: 50);
 
         Assert.Equal(ConversationMessagesStatus.Ok, result.Status);
         var mine = result.Page!.Data.Single(m => m.SenderId == userId);
@@ -72,7 +72,7 @@ public sealed class MessagesConversationDetailTests : IClassFixture<MessagingDat
         var (_, _, conversationId) = await _fixture.SeedConversationAsync();
         var stranger = Guid.NewGuid().ToString();
 
-        var result = await Repo().GetConversationMessagesAsync(_fixture.Ctx(stranger), stranger, conversationId, page: 1, limit: 50);
+        var result = await Repo().GetConversationMessagesAsync(_fixture.Ctx(stranger, MessagingDatabaseFixture.DefaultSchoolId), stranger, conversationId, page: 1, limit: 50);
 
         Assert.Equal(ConversationMessagesStatus.NotFound, result.Status);
     }
@@ -81,13 +81,13 @@ public sealed class MessagesConversationDetailTests : IClassFixture<MessagingDat
     public async Task Missing_conversation_also_returns_not_found()
     {
         var userId = Guid.NewGuid().ToString();
-        var result = await Repo().GetConversationMessagesAsync(_fixture.Ctx(userId), userId, Guid.NewGuid().ToString(), page: 1, limit: 50);
+        var result = await Repo().GetConversationMessagesAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, Guid.NewGuid().ToString(), page: 1, limit: 50);
         Assert.Equal(ConversationMessagesStatus.NotFound, result.Status);
     }
 
     private async Task<DateTime?> GetReadAtAsync(string conversationId, string messageId)
     {
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
             """SELECT "readAt" FROM "messages" WHERE "conversationId" = @cid AND "id" = @id""", conn);

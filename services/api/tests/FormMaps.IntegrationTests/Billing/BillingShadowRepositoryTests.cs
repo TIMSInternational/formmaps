@@ -16,27 +16,39 @@ namespace FormMaps.IntegrationTests.Billing;
 /// (NpgsqlFormMapsDatabaseSessionFactory + RlsSessionContextApplier against the container's connection
 /// string) rather than a bespoke test-only session factory — no such type exists elsewhere in this
 /// project, so this doesn't introduce one.
+///
+/// <para>formmaps#125: the repository runs on the fixture's restricted app login; TRUNCATE and the raw
+/// row-count assertions go through the admin one. The shadow_* tables are unpolicied so the split changes
+/// nothing observable here, but the repository opens every session under RequestContext.System(), and
+/// this is the suite that proves that bypass works as a GUC on a NOBYPASSRLS role rather than as a
+/// superuser privilege.</para>
 /// </summary>
 public sealed class BillingShadowRepositoryTests : IClassFixture<BillingDatabaseFixture>, IAsyncLifetime
 {
     private readonly BillingDatabaseFixture _fixture;
+
+    /// <summary>Restricted login (NOSUPERUSER NOBYPASSRLS) — the repository under test.</summary>
     private NpgsqlDataSource _dataSource = null!;
+
+    /// <summary>Container superuser — row-state assertions only.</summary>
+    private NpgsqlDataSource _adminDataSource = null!;
 
     public BillingShadowRepositoryTests(BillingDatabaseFixture fixture) => _fixture = fixture;
 
     public async Task InitializeAsync()
     {
-        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            """
-            TRUNCATE "shadow_user_subscriptions", "shadow_payments", "shadow_stripe_events",
-                     "user_subscriptions", "subscription_plans", "stripe_events" CASCADE
-            """, conn);
-        await cmd.ExecuteNonQueryAsync();
+        _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
+        _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
+        await _fixture.TruncateAsync(
+            "shadow_user_subscriptions", "shadow_payments", "shadow_stripe_events",
+            "user_subscriptions", "subscription_plans", "stripe_events");
     }
 
-    public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+    public async Task DisposeAsync()
+    {
+        await _dataSource.DisposeAsync();
+        await _adminDataSource.DisposeAsync();
+    }
 
     private BillingShadowRepository Repository(ILogger<BillingShadowRepository>? logger = null) =>
         new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()),
@@ -102,7 +114,7 @@ public sealed class BillingShadowRepositoryTests : IClassFixture<BillingDatabase
         Assert.Contains(false, results);
         Assert.Equal(1, results.Count(r => r));
 
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await using var subCountCmd = new NpgsqlCommand(
             """SELECT COUNT(*) FROM "shadow_user_subscriptions" WHERE "userId" = @userId""", conn);
         subCountCmd.Parameters.AddWithValue("userId", "user_4");
@@ -154,7 +166,7 @@ public sealed class BillingShadowRepositoryTests : IClassFixture<BillingDatabase
         // Warning, not Error: this is the expected condition for pre-existing subscribers, not a bug.
         Assert.DoesNotContain(logger.Entries, e => e.Level >= LogLevel.Error);
 
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await using var eventCount = new NpgsqlCommand(
             """SELECT COUNT(*) FROM "shadow_stripe_events" WHERE "id" = @id""", conn);
         eventCount.Parameters.AddWithValue("id", "evt_unknown_sub");
@@ -227,7 +239,7 @@ public sealed class BillingShadowRepositoryTests : IClassFixture<BillingDatabase
 
     private async Task<(string StripeSubscriptionId, string Status, bool IsActive)> QueryShadowSubscriptionAsync(string userId)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand(
             """SELECT "stripeSubscriptionId", "status", "isActive" FROM "shadow_user_subscriptions" WHERE "userId" = @userId""", conn);
         cmd.Parameters.AddWithValue("userId", userId);

@@ -81,6 +81,11 @@ CREATE TABLE IF NOT EXISTS "users" (
     "id" TEXT PRIMARY KEY,
     "stripeCustomerId" TEXT UNIQUE
 );
+-- formmaps#125: the fixture now applies the PRODUCTION policies, and the users policy (005-sensitive.sql,
+-- self OR same school) names "schoolId" -- without the column the apply fails with 42703. Nullable, like
+-- production: the endpoint tests seed school-less callers who reach their own row on the self branch, and
+-- the cross-school negative control seeds two schools to exercise the other one.
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "schoolId" TEXT;
 
 CREATE TABLE IF NOT EXISTS "stripe_events" (
     "id" TEXT PRIMARY KEY,

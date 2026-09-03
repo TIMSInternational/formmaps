@@ -2,8 +2,8 @@ using FormMaps.Application.Auth;
 using FormMaps.Domain.Auth;
 using FormMaps.Infrastructure.Billing;
 using FormMaps.Infrastructure.Data;
+using FormMaps.IntegrationTests.TestSupport.Rls;
 using Npgsql;
-using Testcontainers.PostgreSql;
 
 namespace FormMaps.IntegrationTests.Billing;
 
@@ -34,67 +34,24 @@ namespace FormMaps.IntegrationTests.Billing;
 /// from api/prisma/migrations/20260505140750_init/migration.sql (TIMESTAMP(3), not TIMESTAMPTZ) so the
 /// nextBillingDate/updatedAt round-trips exercise the same Npgsql type mapping production does.</para>
 ///
-/// <para>The schema is a const rather than an embedded .sql resource on purpose: adding one would mean
-/// editing FormMaps.IntegrationTests.csproj, a file shared with the lanes editing BillingEndpointsTests
-/// concurrently. Nothing here touches BillingEndpointsTests.cs or Data/billing-shadow-schema.sql.</para>
+/// <para>The DDL lives in Data/live-subscription-duplicate-row-schema.sql. It was a const in this file until
+/// formmaps#125 (to avoid a csproj edit while other lanes were in flight); it is an embedded resource now
+/// because <see cref="RlsEnabledDatabaseFixture"/> loads its schema that way. It also gained a two-column
+/// <c>users</c> table, because the production user_subscriptions policy sub-selects it.</para>
+///
+/// <para>formmaps#125: derives from <see cref="RlsEnabledDatabaseFixture"/>, so the PRODUCTION policy on
+/// user_subscriptions (003-fk-users.sql: owner OR owner's school) is live and the reader/writer under test run
+/// as a NOSUPERUSER NOBYPASSRLS login. Before that this fixture built its own container with zero policies and
+/// handed the code under test the superuser, so the writer's <c>"userId" = @userId</c> and the policy's
+/// WITH CHECK were indistinguishable from nothing. The caller under test is school-less and reaches its own
+/// rows on the policy's owner branch; <c>LiveSubscriptionDuplicateRowTests.Cross_school_user_cannot_read_or_cancel_another_users_rows_on_the_app_login</c>
+/// is the negative control over the other branch.</para>
 /// </summary>
-public sealed class LiveSubscriptionDuplicateRowFixture : IAsyncLifetime
+public sealed class LiveSubscriptionDuplicateRowFixture : RlsEnabledDatabaseFixture
 {
-    /// <remarks>
-    /// stripeSubscriptionId and cancelAtPeriodEnd are declared from schema.prisma, not from a migration:
-    /// no migration in api/prisma/migrations mentions either COLUMN. That particular drift is still real
-    /// and is tracked as formmaps#126 -- unlike the <c>@@unique([userId])</c> claim, which is refuted (see
-    /// the class summary). stripeSubscriptionId is left NON-unique here too; only the absent userId unique
-    /// is under test, and the seeds give every row a distinct id anyway.
-    /// </remarks>
-    private const string SchemaDdl = """
-        CREATE TABLE "user_subscriptions" (
-            "id" TEXT NOT NULL,
-            "userId" TEXT NOT NULL,
-            "planId" TEXT NOT NULL,
-            "status" TEXT NOT NULL DEFAULT 'active',
-            "nextBillingDate" TIMESTAMP(3),
-            "stripeSubscriptionId" TEXT,
-            "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT false,
-            "isActive" BOOLEAN NOT NULL DEFAULT true,
-            "createdBy" TEXT,
-            "createdDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            "updatedBy" TEXT,
-            "updatedAt" TIMESTAMP(3) NOT NULL,
+    protected override string SchemaResourceFileName => "live-subscription-duplicate-row-schema.sql";
 
-            CONSTRAINT "user_subscriptions_pkey" PRIMARY KEY ("id")
-        );
-
-        -- NON-unique, exactly as the init migration creates it. "user_subscriptions_userId_key" is
-        -- deliberately OMITTED so the defence-in-depth ordering/row-scope stays exercised. Production
-        -- DOES have that index (see the class summary) -- this omission is the point of the fixture, not
-        -- a claim about prod.
-        CREATE INDEX "user_subscriptions_userId_idx" ON "user_subscriptions"("userId");
-        """;
-
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
-        .Build();
-
-    private NpgsqlDataSource _dataSource = null!;
-
-    public NpgsqlDataSource DataSource => _dataSource;
-
-    public async Task InitializeAsync()
-    {
-        await _container.StartAsync();
-        _dataSource = NpgsqlDataSource.Create(_container.GetConnectionString());
-
-        await using var connection = await _dataSource.OpenConnectionAsync();
-        await using var command = new NpgsqlCommand(SchemaDdl, connection);
-        await command.ExecuteNonQueryAsync();
-    }
-
-    public async Task DisposeAsync()
-    {
-        await _dataSource.DisposeAsync();
-        await _container.DisposeAsync();
-    }
+    protected override IReadOnlyCollection<string> PoliciedTables => ["user_subscriptions", "users"];
 }
 
 /// <summary>
@@ -129,16 +86,84 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
 
     private readonly LiveSubscriptionDuplicateRowFixture _fixture;
 
+    /// <summary>Restricted login (NOSUPERUSER NOBYPASSRLS) — the reader and writer under test (formmaps#125).</summary>
+    private NpgsqlDataSource _dataSource = null!;
+
+    /// <summary>Container superuser — seeding and row-state assertions only.</summary>
+    private NpgsqlDataSource _adminDataSource = null!;
+
     public LiveSubscriptionDuplicateRowTests(LiveSubscriptionDuplicateRowFixture fixture) => _fixture = fixture;
 
     public async Task InitializeAsync()
     {
-        await using var connection = await _fixture.DataSource.OpenConnectionAsync();
-        await using var command = new NpgsqlCommand("""TRUNCATE "user_subscriptions" """, connection);
-        await command.ExecuteNonQueryAsync();
+        _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
+        _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
+        await _fixture.TruncateAsync("user_subscriptions", "users");
     }
 
-    public Task DisposeAsync() => Task.CompletedTask;
+    public async Task DisposeAsync()
+    {
+        await _dataSource.DisposeAsync();
+        await _adminDataSource.DisposeAsync();
+    }
+
+    // ---------------------------------------------------------------- harness proof (formmaps#125)
+
+    [Fact]
+    public async Task Harness_runs_as_a_restricted_login_with_the_production_policies_live()
+    {
+        // NOTE the data source: the APP login, not the admin one. Every row-scope claim below is conditional
+        // on this -- on the old superuser fixture the writer's "userId" = @userId and the policy's WITH CHECK
+        // were indistinguishable from nothing.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(conn), "the app login must not bypass RLS");
+        Assert.Equal<string>(["user_subscriptions", "users"], _fixture.AppliedPolicyTables);
+    }
+
+    [Fact]
+    public async Task Cross_school_user_cannot_read_or_cancel_another_users_rows_on_the_app_login()
+    {
+        // The negative control over the branch the other tests never touch: they run as the OWNER (school-less,
+        // admitted by "userId" = app.current_user_id). Here the duplicate pair belongs to a school-A user and
+        // the caller is a school-B user, so both the owner branch and the school branch of 003-fk-users.sql
+        // close. Raw SQL first (only the GUCs in the way, so what is invisible is the POLICY), then the reader
+        // and writer on the intruder's context, then the true row state from the admin side.
+        var schoolA = Guid.NewGuid().ToString();
+        var schoolB = Guid.NewGuid().ToString();
+        const string intruder = "user_intruder_125";
+        await SeedUserAsync(UserId, schoolA);
+        await SeedUserAsync(intruder, schoolB);
+        await SeedDuplicatePairAsync();
+
+        // Control on the control: both rows exist and the owner's own session sees both.
+        await using (var owner = await OpenIdentitySessionAsync(UserId, schoolA))
+        {
+            Assert.Equal(2L, await CountVisibleAsync(owner, UserId));
+        }
+
+        await using (var outsider = await OpenIdentitySessionAsync(intruder, schoolB))
+        {
+            Assert.Equal(0L, await CountVisibleAsync(outsider, UserId));
+        }
+
+        Assert.Null(await Reader().GetForUserAsync(Context(intruder, schoolB), UserId, CancellationToken.None));
+        Assert.Equal(0, await Writer().MarkCancelledAsync(Context(intruder, schoolB), UserId, CancellationToken.None));
+        Assert.Equal(0, await Writer().MarkCancelAtPeriodEndAsync(Context(intruder, schoolB), UserId, CancellationToken.None));
+
+        var newer = await QueryRowAsync(NewerRowId);
+        var older = await QueryRowAsync(OlderRowId);
+        Assert.Equal("active", newer.Status);
+        Assert.True(newer.IsActive);
+        Assert.False(newer.CancelAtPeriodEnd);
+        Assert.Equal(UpdatedAtSentinel, newer.UpdatedAt);
+        Assert.Equal("trialing", older.Status);
+        Assert.True(older.IsActive);
+        Assert.Equal(UpdatedAtSentinel, older.UpdatedAt);
+
+        // Positive half over the same seed: the owner still gets the newest row.
+        var own = await Reader().GetForUserAsync(Context(UserId, schoolA), UserId, CancellationToken.None);
+        Assert.Equal(NewerRowId, own!.Id);
+    }
 
     // ---------------------------------------------------------------- reader
 
@@ -287,22 +312,53 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
     // ---------------------------------------------------------------- helpers
 
     private LiveSubscriptionReader Reader() =>
-        new(new NpgsqlFormMapsDatabaseSessionFactory(_fixture.DataSource, new RlsSessionContextApplier()));
+        new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()));
 
     private LiveSubscriptionWriter Writer() =>
-        new(new NpgsqlFormMapsDatabaseSessionFactory(_fixture.DataSource, new RlsSessionContextApplier()));
+        new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()));
 
     /// <summary>
     /// The caller's OWN tenant-scoped context, not RequestContext.System() — the identity both classes
     /// under test are documented to run under.
     /// </summary>
-    private static RequestContext Context() =>
+    private static RequestContext Context() => Context(UserId, schoolId: null);
+
+    private static RequestContext Context(string userId, string? schoolId) =>
         RequestContext.Authenticated(
-            new RequestActor(UserId, FormMapsRoles.Student, "dupe@example.com", "Dupe Tester"),
-            schoolId: null,
+            new RequestActor(userId, FormMapsRoles.Student, "dupe@example.com", "Dupe Tester"),
+            schoolId,
             permissions: Array.Empty<string>(),
             tokenSource: TokenSource.AuthorizationBearer,
             isDevelopmentOverride: false);
+
+    /// <summary>App-login connection with the caller's GUCs set, i.e. what the session factory would open (formmaps#125).</summary>
+    private async Task<NpgsqlConnection> OpenIdentitySessionAsync(string userId, string? schoolId)
+    {
+        var conn = await _dataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand(
+            "SELECT set_config('app.current_school_id', @s, false), set_config('app.current_user_id', @u, false)", conn);
+        cmd.Parameters.AddWithValue("s", schoolId ?? string.Empty);
+        cmd.Parameters.AddWithValue("u", userId);
+        await cmd.ExecuteNonQueryAsync();
+        return conn;
+    }
+
+    private static async Task<long> CountVisibleAsync(NpgsqlConnection conn, string userId)
+    {
+        await using var cmd = new NpgsqlCommand("""SELECT count(*) FROM "user_subscriptions" WHERE "userId" = @userId""", conn);
+        cmd.Parameters.AddWithValue("userId", userId);
+        return (long)(await cmd.ExecuteScalarAsync())!;
+    }
+
+    /// <summary>A users row is only needed for the school branch of the policy; the owner-branch tests never seed one.</summary>
+    private async Task SeedUserAsync(string id, string schoolId)
+    {
+        await using var connection = await _adminDataSource.OpenConnectionAsync();
+        await using var command = new NpgsqlCommand("""INSERT INTO "users" ("id", "schoolId") VALUES (@id, @schoolId)""", connection);
+        command.Parameters.AddWithValue("id", id);
+        command.Parameters.AddWithValue("schoolId", schoolId);
+        await command.ExecuteNonQueryAsync();
+    }
 
     /// <summary>Older row FIRST so an unordered scan reaches it first — that is what made the bug visible.</summary>
     private async Task SeedDuplicatePairAsync()
@@ -313,7 +369,7 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
 
     private async Task SeedRowAsync(string id, DateTime createdDate, string stripeSubscriptionId, string status, bool isActive = true)
     {
-        await using var connection = await _fixture.DataSource.OpenConnectionAsync();
+        await using var connection = await _adminDataSource.OpenConnectionAsync();
         await using var command = new NpgsqlCommand(
             """
             INSERT INTO "user_subscriptions"
@@ -332,7 +388,7 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
 
     private async Task<(string Status, bool IsActive, bool CancelAtPeriodEnd, DateTime UpdatedAt)> QueryRowAsync(string id)
     {
-        await using var connection = await _fixture.DataSource.OpenConnectionAsync();
+        await using var connection = await _adminDataSource.OpenConnectionAsync();
         await using var command = new NpgsqlCommand(
             """SELECT "status", "isActive", "cancelAtPeriodEnd", "updatedAt" FROM "user_subscriptions" WHERE "id" = @id""",
             connection);

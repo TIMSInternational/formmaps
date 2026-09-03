@@ -14,7 +14,7 @@ public sealed class MessagesUnreadCountTests : IClassFixture<MessagingDatabaseFi
 
     public Task InitializeAsync()
     {
-        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
+        _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
         return Task.CompletedTask;
     }
 
@@ -33,7 +33,7 @@ public sealed class MessagesUnreadCountTests : IClassFixture<MessagingDatabaseFi
             new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()),
             TimeProvider.System, new NoopRealtimeNotifier());
 
-        var count = await repository.GetUnreadCountAsync(_fixture.Ctx(userId), userId);
+        var count = await repository.GetUnreadCountAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId);
 
         Assert.Equal(2, count);
     }

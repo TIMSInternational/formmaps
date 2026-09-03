@@ -11,7 +11,7 @@ public sealed class MessagesContactsTests : IClassFixture<MessagingDatabaseFixtu
     private NpgsqlDataSource _dataSource = null!;
 
     public MessagesContactsTests(MessagingDatabaseFixture fixture) => _fixture = fixture;
-    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
+    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString); return Task.CompletedTask; }
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     private MessagesRepository Repo() => new(
