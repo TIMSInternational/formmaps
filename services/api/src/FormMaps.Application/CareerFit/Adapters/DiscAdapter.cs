@@ -23,7 +23,7 @@ public sealed record DiscAdaptation(PcaInput Pca, DiscGraphChoice Graph, IReadOn
 public static class DiscAdapter
 {
     /// <summary>The graph the adapters use when the caller does not choose: graph 1, what legacy /careers/score receives.</summary>
-    public const DiscGraphChoice DefaultGraph = DiscGraphChoice.UnderPressure; // NAIVE: the platform's Primary
+    public const DiscGraphChoice DefaultGraph = DiscGraphChoice.WorkAdaptation;
 
     /// <summary>
     /// Adapt the raw pca_results.discResult jsonb. Absent / empty DISC and a chosen graph whose four axes

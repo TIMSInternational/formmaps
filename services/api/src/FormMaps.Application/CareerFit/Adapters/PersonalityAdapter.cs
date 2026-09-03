@@ -140,13 +140,6 @@ public static class PersonalityAdapter
         string second,
         List<InputWarning> warnings)
     {
-        if (dim.NormalizedIntensity is { } naive)
-        {
-            // NAIVE: the stored intensity IS the winner's pole value
-            var w = (double)naive;
-            return dim.WinningPole == first ? (w, 100.0 - w, PersonalityPoleDerivation.Intensity) : (100.0 - w, w, PersonalityPoleDerivation.Intensity);
-        }
-
         if (dim is { FirstCount: { } f, SecondCount: { } s })
         {
             if (f < 0 || s < 0)

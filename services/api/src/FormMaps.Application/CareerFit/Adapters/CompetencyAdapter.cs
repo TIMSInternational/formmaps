@@ -72,11 +72,6 @@ public static class CompetencyAdapter
             levels[definition.CompetencyId] = ToLevel(definition, entry.Level, warnings);
         }
 
-        if (levels.Count != definitions.Count)
-        {
-            throw new ArgumentException("Competencies must contain IDs 1..24"); // NAIVE: the spec's 422
-        }
-
         var defaulted = new List<int>();
         foreach (var definition in definitions)
         {
@@ -111,8 +106,6 @@ public static class CompetencyAdapter
     /// </summary>
     public static string NormalizeName(string name)
     {
-#pragma warning disable CS0162
-        return name; // NAIVE: exact-string join
         var decomposed = name.Normalize(NormalizationForm.FormD);
         var builder = new StringBuilder(decomposed.Length);
         var pendingSeparator = false;

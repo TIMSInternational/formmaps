@@ -81,11 +81,6 @@ public static class MilAdapter
             var key = SubtestKeys[subtest];
             if (!percentiles.TryGetValue(key, out var raw))
             {
-                raw = 0; // NAIVE: missing scores 0
-            }
-
-            if (false)
-            {
                 throw new CareerFitInputException(
                     InputInstruments.Mil,
                     InputWarningCodes.MilSubtestMissing,
@@ -102,8 +97,6 @@ public static class MilAdapter
 
     private static int ClampTail(string subtest, string key, int raw, List<InputWarning> warnings)
     {
-        return raw; // NAIVE: no tail clamp
-#pragma warning disable CS0162
         if (raw is >= MinPercentile and <= MaxPercentile)
         {
             return raw;
@@ -123,6 +116,5 @@ public static class MilAdapter
             InputWarningCodes.MilPercentileClamped,
             $"MIL subtest {subtest} ({key}) percentile {raw} is a LiaPercentileMapper tail value; clamped to {clamped} (engine domain 1–99)."));
         return clamped;
-#pragma warning restore CS0162
     }
 }
