@@ -393,6 +393,76 @@ public sealed class CareerFitRlsTests : IClassFixture<CareerFitDatabaseFixture>,
         }
     }
 
+    // ---- erasure ----
+
+    [Fact]
+    public async Task Hard_deleting_a_user_takes_their_runs_and_the_family_rows_under_them()
+    {
+        // GDPR erasure (formmaps#78) HARD-deletes the users row — legacy adminService.ts:458 does it under
+        // runAsSystem + tenantGucOp, i.e. bypass — and a CareerFit run is derived data ABOUT that user: their
+        // DISC profile, their MIL percentiles and their competency levels are all inside "inputs". So the run
+        // must go with them. Before this test careerfit_runs."userId" had no ON DELETE action, which meant the
+        // FIRST erasure of any student who had ever been evaluated failed with 23503 and left the erasure
+        // half-done.
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        Assert.Equal(2L, await ScalarAsync(admin, $"""SELECT count(*) FROM "careerfit_family_results" WHERE "runId" = '{RunA1}' """));
+
+        await using (var erase = new NpgsqlCommand($"""DELETE FROM "users" WHERE "id" = '{StudentA1}' """, admin))
+        {
+            await erase.ExecuteNonQueryAsync();
+        }
+
+        // The run goes with the user, and its family rows go with the run (they already cascaded from "runId").
+        Assert.Equal(0L, await ScalarAsync(admin, $"""SELECT count(*) FROM "careerfit_runs" WHERE "id" = '{RunA1}' """));
+        Assert.Equal(0L, await ScalarAsync(admin, $"""SELECT count(*) FROM "careerfit_family_results" WHERE "runId" = '{RunA1}' """));
+
+        // Nobody else's evidence moved: three runs and six family rows survive.
+        Assert.Equal(3L, await ScalarAsync(admin, """SELECT count(*) FROM "careerfit_runs" """));
+        Assert.Equal(6L, await ScalarAsync(admin, """SELECT count(*) FROM "careerfit_family_results" """));
+    }
+
+    [Fact]
+    public async Task Deleting_a_school_is_still_refused_while_its_runs_exist()
+    {
+        // The counterpart decision, stated so the cascade above is not read as "CareerFit rows are disposable".
+        // "schoolId" keeps its default NO ACTION: a school is not a data subject, erasing one is not a GDPR
+        // right, and silently dropping every run of every student in it would destroy other people's evidence.
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        await using var drop = new NpgsqlCommand($"""DELETE FROM "schools" WHERE "id" = '{SchoolA}' """, admin);
+
+        var ex = await Assert.ThrowsAsync<PostgresException>(() => drop.ExecuteNonQueryAsync());
+        Assert.Equal(PostgresErrorCodes.ForeignKeyViolation, ex.SqlState);
+    }
+
+    [Fact]
+    public async Task Re_applying_the_ddl_upgrades_a_pre_erasure_foreign_key_and_then_leaves_it_alone()
+    {
+        // The case the guarded ALTER exists for: a database created BEFORE the erasure decision carries the
+        // constraint with the default NO ACTION, and CREATE TABLE IF NOT EXISTS cannot change it. Put the
+        // schema back into exactly that state, re-apply the production file, and the constraint is upgraded.
+        // Then re-apply AGAIN: the guard sees confdeltype 'c' and does nothing, which is what keeps the file's
+        // "safe to run multiple times" header claim true of a drop-and-re-add block.
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        await ExecAsync(admin,
+            """
+            ALTER TABLE "careerfit_runs" DROP CONSTRAINT "careerfit_runs_userId_fkey";
+            ALTER TABLE "careerfit_runs" ADD CONSTRAINT "careerfit_runs_userId_fkey"
+                FOREIGN KEY ("userId") REFERENCES "users" ("id");
+            """);
+        Assert.Equal("a", await UserIdDeleteActionAsync(admin));      // 'a' = NO ACTION, the pre-decision state
+
+        await ExecAsync(admin, CareerFitDatabaseFixture.LoadProductionDdl());
+        Assert.Equal("c", await UserIdDeleteActionAsync(admin));      // 'c' = CASCADE
+
+        await ExecAsync(admin, CareerFitDatabaseFixture.LoadProductionDdl());
+        Assert.Equal("c", await UserIdDeleteActionAsync(admin));
+        Assert.Equal(1L, await ScalarAsync(admin,
+            """
+            SELECT count(*) FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid
+            WHERE t.relname = 'careerfit_runs' AND c.contype = 'f' AND c.confrelid = '"users"'::regclass
+            """));
+    }
+
     // ---- contexts ----
 
     private static RequestContext Student(string userId, string? schoolId) => Ctx(userId, FormMapsRoles.Student, schoolId);
@@ -518,6 +588,23 @@ public sealed class CareerFitRlsTests : IClassFixture<CareerFitDatabaseFixture>,
             INSERT INTO "careerfit_family_results" ("runId", "familyId", {columns})
             VALUES (@runId, @familyId, {string.Join(", ", values.Values)})
             """;
+    }
+
+    /// <summary>pg_constraint.confdeltype for careerfit_runs."userId": 'a' = NO ACTION, 'c' = CASCADE.</summary>
+    private static async Task<string> UserIdDeleteActionAsync(NpgsqlConnection connection)
+    {
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT c.confdeltype::text FROM pg_constraint c JOIN pg_class t ON t.oid = c.conrelid
+            WHERE t.relname = 'careerfit_runs' AND c.contype = 'f' AND c.confrelid = '"users"'::regclass
+            """, connection);
+        return (string)(await command.ExecuteScalarAsync())!;
+    }
+
+    private static async Task ExecAsync(NpgsqlConnection connection, string sql)
+    {
+        await using var command = new NpgsqlCommand(sql, connection);
+        await command.ExecuteNonQueryAsync();
     }
 
     private static async Task<long> ScalarAsync(NpgsqlConnection connection, string sql)

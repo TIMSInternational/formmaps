@@ -6,8 +6,10 @@
 -- here would let production drift out from under a green suite (formmaps#125), so do not add one.
 --
 -- Why each table is here:
---   users                          careerfit_runs."userId" REFERENCES it; production policies it
---                                  (005-sensitive.sql: self OR same school), and the harness applies that.
+--   users                          careerfit_runs."userId" REFERENCES it ON DELETE CASCADE (GDPR erasure,
+--                                  formmaps#78 -- see the production file's header), so the erasure tests
+--                                  delete real rows here; production policies it (005-sensitive.sql: self
+--                                  OR same school), and the harness applies that.
 --   schools                        careerfit_runs."schoolId" REFERENCES it. Unpolicied in production
 --                                  (007-self-scoped.sql's header lists it under "still needs an owner
 --                                  decision"), so it is NOT in PoliciedTables.

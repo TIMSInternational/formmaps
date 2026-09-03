@@ -25,6 +25,21 @@
 -- CareerFitAbsolute is a 0-100 score and careerfit_relative is a rank-derived spread,
 -- neither is a probability (manifest guardrail 3).
 --
+-- ERASURE, DECIDED DELIBERATELY (formmaps#78). GDPR erasure HARD-deletes the users row --
+-- legacy adminService.ts:458 does it under runAsSystem + tenantGucOp, i.e. bypass -- and a
+-- CareerFit run is derived data ABOUT that user: their DISC graph, their MIL percentiles and
+-- their competency levels are all inside "inputs", and every family row's audit repeats them.
+-- So "userId" is ON DELETE CASCADE: erasing the person erases the derived scores with them, in
+-- the same statement, and careerfit_family_results already cascades from "runId" so the family
+-- rows follow. The alternative (leaving the default NO ACTION, as this file originally did) is
+-- not "safer": it makes the FIRST erasure of any student who has ever been evaluated fail with
+-- 23503 and leaves the erasure half-done, which is a compliance defect, not a safeguard.
+--
+-- "schoolId" keeps the default NO ACTION on purpose, and that asymmetry is the point: a school
+-- is not a data subject, deleting one is not anybody's right to erasure, and cascading it would
+-- destroy every student in it's evidence to tidy up one row. The CareerFitRlsTests pair
+-- (Hard_deleting_a_user_... / Deleting_a_school_is_still_refused_...) pins both directions.
+--
 -- Applied by .github/workflows/formmaps-sql-apply.yml (one explicitly named file per
 -- dispatch, via infra/aws/sql/apply.sh under --single-transaction). ORDER: this file
 -- creates tables that dotnet-service-role.sql GRANTs on, so on a fresh database it goes
@@ -55,6 +70,10 @@
 -- (42804). The run's own id is a server-generated uuid because nothing else needs to mint
 -- it; gen_random_uuid() is core in Postgres 13+ (no pgcrypto).
 --
+-- The "userId" foreign key is named EXPLICITLY (rather than taking Postgres's generated
+-- careerfit_runs_userId_fkey) so the guarded ALTER further down can find it by name on a
+-- database created before the ON DELETE CASCADE decision. See the header on erasure.
+--
 -- "schoolId" is NULLABLE because non-school users exist (individual students, coaches,
 -- parents -- see 003-fk-users.sql's header), and it is the row's OWN tenant snapshot,
 -- written by the run writer from the request's tenant scope at evaluation time. The policy
@@ -77,18 +96,52 @@
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS "careerfit_runs" (
     "id"            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    "userId"        TEXT NOT NULL REFERENCES "users" ("id"),
+    "userId"        TEXT NOT NULL,
     "schoolId"      TEXT NULL REFERENCES "schools" ("id"),
     "rulesVersion"  TEXT NOT NULL,
     "discGraph"     SMALLINT NULL,
     "inputs"        JSONB NOT NULL,
     "inputQuality"  JSONB NOT NULL,
     "createdAt"     TIMESTAMPTZ NOT NULL DEFAULT now(),
+    CONSTRAINT "careerfit_runs_userId_fkey"
+        FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE,
     CONSTRAINT "careerfit_runs_discGraph_check"
         CHECK ("discGraph" IS NULL OR "discGraph" BETWEEN 1 AND 3),
     CONSTRAINT "careerfit_runs_rulesVersion_check"
         CHECK (length("rulesVersion") > 0)
 );
+
+-- Upgrade path for a database created before the erasure decision, where CREATE TABLE IF NOT
+-- EXISTS above is a no-op and the constraint still carries the default NO ACTION. Guarded on
+-- confdeltype so a re-apply of this file is a no-op the second time (the file's "safe to run
+-- multiple times" claim is asserted by CareerFitRlsTests.Production_ddl_is_idempotent_on_a_
+-- second_apply). It matches the constraint by the COLUMN it is on, not by name, because a
+-- database created earlier carries Postgres's generated name for it, which happens to be the
+-- same but is not guaranteed to be.
+DO $$
+DECLARE
+    stale_constraint text;
+BEGIN
+    SELECT c.conname INTO stale_constraint
+    FROM pg_constraint c
+    JOIN pg_class t ON t.oid = c.conrelid
+    JOIN pg_namespace n ON n.oid = t.relnamespace
+    WHERE n.nspname = 'public'
+      AND t.relname = 'careerfit_runs'
+      AND c.contype = 'f'
+      AND c.confdeltype <> 'c'                                        -- 'c' = ON DELETE CASCADE
+      AND c.conkey = ARRAY[(SELECT a.attnum FROM pg_attribute a
+                            WHERE a.attrelid = t.oid AND a.attname = 'userId')]
+    LIMIT 1;
+
+    IF stale_constraint IS NOT NULL THEN
+        EXECUTE format('ALTER TABLE "careerfit_runs" DROP CONSTRAINT %I', stale_constraint);
+        ALTER TABLE "careerfit_runs"
+            ADD CONSTRAINT "careerfit_runs_userId_fkey"
+            FOREIGN KEY ("userId") REFERENCES "users" ("id") ON DELETE CASCADE;
+    END IF;
+END
+$$;
 
 -- The read path is "this student's runs, newest first" (the latest run is the product; the
 -- history is the audit), so the composite carries the ordering column.
