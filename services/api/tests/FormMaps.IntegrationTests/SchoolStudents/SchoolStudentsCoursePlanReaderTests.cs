@@ -122,7 +122,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
         await SeedGrade(conn, "g1", "s1", "c1", grade: "A", credits: 4, status: "completed", academicYear: "2023-2024", semester: "Spring", courseCode: "MATH1");
         // an in-progress grade contributes to NEITHER enrollments NOR totalEarned.
         await SeedGrade(conn, "g2", "s1", "c1", grade: null, credits: 5, status: "in_progress", academicYear: "2025-2026");
-        // plan row (course in map → credits 3; gradeLevel = user.gradeLevel||11 = 12).
+        // plan row (course in map → credits 3; no stored gradeLevel → user.gradeLevel = 12).
         await SeedPlan(conn, "p1", "s1", School, "ay1", "c1", term: "Fall", status: "planned", sortOrder: 0);
         // plan row course NOT in map → credits 0, code/name/category empty.
         await SeedPlan(conn, "p2", "s1", School, "ay1", "missing", term: null, status: null, sortOrder: 1);
@@ -146,7 +146,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
         Assert.Equal(4, g1.Credits);
         var p1 = r.Enrollments[1];
         Assert.False(p1.IsGraded);
-        Assert.Equal(12, p1.GradeLevel);              // user.gradeLevel || 11
+        Assert.Equal(12, p1.GradeLevel);              // p.gradeLevel ?? user.gradeLevel ?? 11
         Assert.Equal(3, p1.Credits);                  // course credits
         Assert.Equal("Fall", p1.Semester);
         var p2 = r.Enrollments[2];
@@ -154,6 +154,44 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
         Assert.Equal("", p2.CourseCode);
         Assert.Equal("Fall", p2.Semester);            // term null → "Fall"
         Assert.Equal("planned", p2.Status);           // status null → "planned"
+    }
+
+    [Fact]
+    public async Task CoursePlan_plan_rows_render_under_their_PLANNED_grade_not_the_students_current_one()
+    {
+        // formmaps#122 — the visible half of the bug reproduced in prod on 2026-08-09. A plan row carries the grade
+        // it was PLANNED FOR; the reader stamped every plan enrollment with `user.gradeLevel || 11` instead, so a
+        // course added to "Grade 9 — Fall" rendered under the student's own grade. Legacy
+        // (schoolStudentsService.ts getStudentCoursePlan) is `p.gradeLevel ?? user.gradeLevel ?? 11`: the stored
+        // level wins; only rows written before the column existed (NULL) fall back to the student's current grade,
+        // and only a student with no grade at all falls back to 11.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await SeedUser(conn, "s1", School, gradeLevel: 11);
+        await SeedUser(conn, "s2", School, gradeLevel: null);
+        await SeedUser(conn, "s0", School, gradeLevel: 0);
+        await SeedAcademicYear(conn, "ay1", School, name: "2025-2026", isCurrent: true);
+        await SeedCourse(conn, "c1", School, code: "MATH1", name: "Algebra", department: "Math", credits: 3);
+        await SeedPlan(conn, "p-9", "s1", School, "ay1", "c1", term: "Fall", sortOrder: 0, gradeLevel: 9);
+        await SeedPlan(conn, "p-12", "s1", School, "ay1", "c1", term: "Spring", sortOrder: 1, gradeLevel: 12);
+        await SeedPlan(conn, "p-null", "s1", School, "ay1", "c1", term: "Fall", sortOrder: 2, gradeLevel: null);
+        await SeedPlan(conn, "p-none", "s2", School, "ay1", "c1", term: "Fall", sortOrder: 0, gradeLevel: null);
+        await SeedPlan(conn, "p-zero", "s0", School, "ay1", "c1", term: "Fall", sortOrder: 0, gradeLevel: null);
+
+        var s1 = await Reader().GetStudentCoursePlanAsync(Ctx(), "s1");
+        Assert.Equal(new[] { "p-9", "p-12", "p-null" }, s1!.Enrollments.Select(e => e.Id).ToArray());
+        Assert.Equal(9, s1.Enrollments[0].GradeLevel);    // stored 9 wins over the student's current 11
+        Assert.Equal(12, s1.Enrollments[1].GradeLevel);   // stored 12 wins too — NOT collapsed onto one grade
+        Assert.Equal(11, s1.Enrollments[2].GradeLevel);   // NULL → user.gradeLevel (11)
+        Assert.All(s1.Enrollments, e => Assert.False(e.IsGraded));
+
+        // NULL stored level AND no user grade → the final 11 default.
+        var s2 = await Reader().GetStudentCoursePlanAsync(Ctx(), "s2");
+        Assert.Equal(11, Assert.Single(s2!.Enrollments).GradeLevel);
+
+        // `??`, not `||`: a stored user grade of 0 is kept (legacy deliberately does not swallow it here, unlike
+        // the completed-grade math which still uses `user.gradeLevel || 11`).
+        var s0 = await Reader().GetStudentCoursePlanAsync(Ctx(), "s0");
+        Assert.Equal(0, Assert.Single(s0!.Enrollments).GradeLevel);
     }
 
     [Fact]
@@ -397,12 +435,12 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
 
     private static async Task SeedPlan(
         NpgsqlConnection conn, string id, string studentId, string schoolId, string academicYearId, string courseId,
-        string? term = null, string? status = null, int sortOrder = 0)
+        string? term = null, string? status = null, int sortOrder = 0, int? gradeLevel = null)
     {
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "student_course_plans" ("id","studentId","schoolId","academicYearId","courseId","term","status","sortOrder","isActive")
-            VALUES (@id,@st,@s,@ay,@c,@term,@status,@so,true)
+            INSERT INTO "student_course_plans" ("id","studentId","schoolId","academicYearId","courseId","term","status","sortOrder","gradeLevel","isActive")
+            VALUES (@id,@st,@s,@ay,@c,@term,@status,@so,@gl,true)
             """, conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("st", studentId);
@@ -412,6 +450,7 @@ public sealed class SchoolStudentsCoursePlanReaderTests : IClassFixture<SchoolSt
         cmd.Parameters.AddWithValue("term", (object?)term ?? DBNull.Value);
         cmd.Parameters.AddWithValue("status", (object?)status ?? DBNull.Value);
         cmd.Parameters.AddWithValue("so", sortOrder);
+        cmd.Parameters.AddWithValue("gl", (object?)gradeLevel ?? DBNull.Value);
         await cmd.ExecuteNonQueryAsync();
     }
 
