@@ -52,13 +52,10 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
         // NOTE the data source: the APP login, not the admin one. Every claim below is conditional on this.
         await using var conn = await _dataSource.OpenConnectionAsync();
         Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(conn), "the app login must not bypass RLS");
-        Assert.Equal(11, _fixture.AppliedPolicyTables.Count);
-        // Unpolicied HERE, not in production: pilot.sql policies student_course_plans and pilot.sql IS applied to
-        // production — this harness just does not vendor it (formmaps#135). Expected to flip when it does.
-        // Vendoring will ALSO break this fixture until its DDL gains a schoolId column on student_course_plans:
-        // pilot.sql's predicate names it, and the column is absent from parent-child-reads-schema.sql, so
-        // ApplyAsync would fail with 42703 at init. See TestSupport/Rls/README.md.
-        Assert.DoesNotContain("student_course_plans", _fixture.AppliedPolicyTables);
+        Assert.Equal(12, _fixture.AppliedPolicyTables.Count);
+        // formmaps#135: student_course_plans flipped from unpolicied-here to policied when pilot.sql was vendored.
+        // It is the twelfth; before that this fixture policied eleven and asserted this table's ABSENCE.
+        Assert.Contains("student_course_plans", _fixture.AppliedPolicyTables);
     }
 
     [Fact]
@@ -76,8 +73,15 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
         await Plan(conn, "p1", Student, "approved", reviewedAt: new DateTime(2026, 5, 1), schoolId: "school-1");
         await Target(conn, Student, "State U", "CS", active: true);
         await PcaEval(conn, "e1", Student);
+        await CoursePlanRow(conn, "cp1", Student, "c1", sortOrder: 1, status: "enrolled", schoolId: "school-1");
 
-        var tables = new[] { "users", "student_grades", "graduation_plans", "student_graduation_targets", "pca_evaluations" };
+        // student_course_plans joined this list in formmaps#135, once pilot.sql was vendored. Its policy has no
+        // owner branch at all — pilot scopes purely on "schoolId" — so the school-less parent misses outright.
+        var tables = new[]
+        {
+            "users", "student_grades", "graduation_plans", "student_graduation_targets", "pca_evaluations",
+            "student_course_plans",
+        };
 
         foreach (var table in tables)
         {
@@ -345,17 +349,22 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
         Exec(conn, """INSERT INTO "student_graduation_targets"("id","studentId","universityName","major","isActive") VALUES(@id,@s,@u,@m,@a)""",
             ("id", "t-" + studentId), ("s", studentId), ("u", universityName), ("m", major), ("a", active));
 
-    private static Task CoursePlanRow(NpgsqlConnection conn, string id, string studentId, string courseId, int sortOrder, string status) =>
-        Exec(conn, """INSERT INTO "student_course_plans"("id","studentId","courseId","status","sortOrder") VALUES(@id,@s,@c,@st,@so)""",
-            ("id", id), ("s", studentId), ("c", courseId), ("st", status), ("so", sortOrder));
+    private static Task CoursePlanRow(
+        NpgsqlConnection conn, string id, string studentId, string courseId, int sortOrder, string status,
+        string schoolId = "school-1") =>
+        Exec(conn, """INSERT INTO "student_course_plans"("id","studentId","schoolId","courseId","status","sortOrder") VALUES(@id,@s,@sc,@c,@st,@so)""",
+            ("id", id), ("s", studentId), ("sc", schoolId), ("c", courseId), ("st", status), ("so", sortOrder));
 
     /// <summary>
-    /// formmaps#125: production policies + a restricted login. Eleven of this fixture's twelve tables are
-    /// policied in production and all eleven are named. The twelfth, <c>student_course_plans</c>, is NOT — it
-    /// appears in none of prisma/rls/*.sql, so it is a genuine production gap rather than an omission here, and
-    /// naming it would fail the fixture. Recorded rather than papered over: a parent's child course plan is read
-    /// on a system session in code, so the missing policy is not currently load-bearing, but nothing stops the
-    /// next reader from leaning on an RLS backstop that does not exist.
+    /// formmaps#125: production policies + a restricted login. ALL TWELVE of this fixture's tables are policied in
+    /// production and all twelve are named.
+    ///
+    /// <para>This doc used to say the twelfth, <c>student_course_plans</c>, "appears in none of prisma/rls/*.sql,
+    /// so it is a genuine production gap". Both halves were wrong (formmaps#135): it appears in
+    /// <c>pilot.sql</c>, and <c>pilot.sql</c> is applied to production — the gap was in this harness, which did not
+    /// vendor that file. Vendoring it needed a <c>schoolId</c> column on this fixture's
+    /// <c>student_course_plans</c> DDL first: pilot's predicate names it, and without it <c>ApplyAsync</c> fails
+    /// init with 42703.</para>
     /// </summary>
     public sealed class Fixture : RlsEnabledDatabaseFixture
     {
@@ -365,7 +374,7 @@ public sealed class ParentChildReaderTests : IClassFixture<ParentChildReaderTest
         [
             "users", "student_parent_links", "pca_evaluations", "pca_exam_sessions", "evaluation_groups",
             "academic_years", "graduation_rule_sets", "student_grades", "graduation_plans",
-            "graduation_plan_items", "student_graduation_targets",
+            "graduation_plan_items", "student_graduation_targets", "student_course_plans",
         ];
     }
 }

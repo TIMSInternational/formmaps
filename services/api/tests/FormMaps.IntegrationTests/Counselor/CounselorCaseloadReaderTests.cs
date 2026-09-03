@@ -73,19 +73,16 @@ public sealed class CounselorCaseloadReaderTests
         Assert.Equal<string>(
             [
                 "academic_years", "counselor_student_assignments", "evaluation_groups", "graduation_rule_sets",
-                "pca_evaluations", "pca_exam_sessions", "student_alerts", "student_grades",
+                "pca_evaluations", "pca_exam_sessions", "school_courses", "student_alerts", "student_grades",
                 "user_career_profiles", "users",
             ],
             _fixture.AppliedPolicyTables);
 
-        // Stated, not merely omitted: both are unpolicied HERE, so the reader's own WHERE is the only thing these
-        // tests exercise. They are unpolicied for DIFFERENT reasons (formmaps#135):
-        //   school_courses                 — POLICIED IN PRODUCTION by pilot.sql, which this harness does not
-        //                                    vendor. This assertion describes the harness, not production, and is
-        //                                    expected to flip when pilot.sql is vendored.
-        //   personality_assessment_sessions — policied by no file at all, but tracked as PENDING debt in
-        //                                    api/scripts/check-rls-coverage.mjs, not undocumented.
-        Assert.DoesNotContain("school_courses", _fixture.AppliedPolicyTables);
+        // Stated, not merely omitted: personality_assessment_sessions is unpolicied, so the reader's own WHERE is
+        // the only thing the tests over it exercise. It is policied by no file at all, but tracked as PENDING debt
+        // in api/scripts/check-rls-coverage.mjs, not undocumented. school_courses used to be asserted absent here
+        // too, described as policied in production by pilot.sql and expected to flip once that file was vendored;
+        // formmaps#135 vendored it, so it flipped and is in the applied list above.
         Assert.DoesNotContain("personality_assessment_sessions", _fixture.AppliedPolicyTables);
     }
 
@@ -258,11 +255,15 @@ public sealed class CounselorCaseloadReaderTests
         await SeedCourse(conn, "c1", School, credits: 4);
         await SeedCourse(conn, "c2", "other-school", credits: 9); // other school → excluded
 
-        // school_courses is UNPOLICIED in production, so the other school's row is genuinely visible to this
-        // session and the reader's own "schoolId" = @school is the entire tenant boundary on it.
+        // formmaps#135: school_courses IS policied — by pilot.sql, now vendored — so the other school's row is not
+        // merely filtered by the reader, it is invisible to this session. The admin count is the negative control:
+        // the row really is in the table, so the 1 below is the policy and not a failed seed. This assertion used
+        // to read 2 on the claim that school_courses was unpolicied in production; that claim was false.
+        Assert.Equal(2L, await CountAsync(conn, """SELECT count(*) FROM "school_courses" """));
         await using (var identity = await OpenIdentitySessionAsync(Counselor, School))
         {
-            Assert.Equal(2L, await CountAsync(identity, """SELECT count(*) FROM "school_courses" """));
+            Assert.Equal(1L, await CountAsync(identity, """SELECT count(*) FROM "school_courses" """));
+            Assert.Equal(0L, await CountAsync(identity, """SELECT count(*) FROM "school_courses" WHERE "id"='c2'"""));
         }
 
         var data = await Reader().GetCaseloadDataAsync(Ctx(), Counselor);

@@ -80,20 +80,21 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
 
         Assert.Equal(
             [
-                "course_enrollments", "evaluation_groups", "pca_evaluations", "pca_exam_sessions", "student_grades",
-                "user_career_profiles", "user_preferences", "user_settings", "users",
+                "course_enrollments", "evaluation_groups", "pca_evaluations", "pca_exam_sessions", "school_courses",
+                "student_grades", "user_career_profiles", "user_preferences", "user_settings", "users",
             ],
             _fixture.AppliedPolicyTables);
     }
 
     [Fact]
-    public void Four_tables_this_reader_reads_are_unpolicied_in_production_and_that_is_asserted_not_assumed()
+    public void Three_tables_this_reader_reads_are_unpolicied_in_production_and_that_is_asserted_not_assumed()
     {
-        // Recorded the way ParentChildReaderTests does for student_course_plans: the gap is pinned here so the next
-        // reader cannot assume an RLS backstop that does not exist. `courses` is a DELIBERATE exclusion (005-sensitive
-        // .sql lists it under "global catalog/reference"). The other three are NOT mentioned anywhere in
-        // prisma/rls/*.sql — see this file's companion note in Fixture.
-        foreach (var table in new[] { "courses", "school_courses", "lia_assessment_sessions", "personality_assessment_sessions" })
+        // The gap is pinned here so the next reader cannot assume an RLS backstop that does not exist. `courses` is a
+        // DELIBERATE exclusion (005-sensitive.sql lists it under "global catalog/reference"). The other two are NOT
+        // mentioned anywhere in prisma/rls/*.sql — see this file's companion note in Fixture. This test named FOUR
+        // tables until formmaps#135: school_courses was the fourth, and it turned out to be policied all along, by
+        // pilot.sql, which nobody had vendored.
+        foreach (var table in new[] { "courses", "lia_assessment_sessions", "personality_assessment_sessions" })
         {
             Assert.DoesNotContain(table, _fixture.AppliedPolicyTables);
         }
@@ -115,11 +116,12 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         await UserSettings(admin, User, language: "es");
         await CareerProfile(admin, User, """{"prog-1": "insight"}""");
         await Grade(admin, "g1", User, School, "math1", status: "completed");
+        await SchoolCourse(admin, "math1", School, "MATH1");
 
         var policied = new[]
         {
             "users", "pca_exam_sessions", "evaluation_groups", "pca_evaluations", "course_enrollments",
-            "user_preferences", "user_settings", "user_career_profiles", "student_grades",
+            "user_preferences", "user_settings", "user_career_profiles", "student_grades", "school_courses",
         };
 
         foreach (var table in policied)
@@ -232,22 +234,24 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         Assert.True(owner.Done);
     }
 
-    // ---- app-layer gate on a table with NO policy at all ----
+    // ---- the eligibility catalog, now with pilot.sql's policy behind the reader's predicate ----
 
     [Fact]
-    public async Task Eligibility_catalog_is_gated_only_by_the_readers_schoolId_predicate_because_school_courses_is_unpolicied()
+    public async Task Eligibility_catalog_excludes_a_cross_school_course_that_the_policy_also_hides()
     {
         await using var admin = await _adminDataSource.OpenConnectionAsync();
         await UserRow(admin, User, School, 11);
         await SchoolCourse(admin, "math1", School, "MATH1");
         await SchoolCourse(admin, "other-school-course", OtherSchool, "BIO1");
 
-        // school_courses carries a NOT NULL schoolId and is policied NOWHERE in the vendored production files, so RLS
-        // contributes nothing here: both rows are visible on the caller's own session. The `WHERE "schoolId" = @school`
-        // in GetEligibilityAsync is the entire tenant boundary for this table.
+        // formmaps#135. This test was called ..._because_school_courses_is_unpolicied and asserted 2 here, on the
+        // claim that the table "is policied NOWHERE in the vendored production files". It was policied — by
+        // pilot.sql, which the harness did not vendor. Now that it does, RLS hides the other school's row before
+        // GetEligibilityAsync's `WHERE "schoolId" = @school` ever sees it. The admin count is the negative control.
+        Assert.Equal(2L, await CountAsync(admin, "school_courses"));
         await using (var ownSession = await OpenIdentitySessionAsync(User, School))
         {
-            Assert.Equal(2L, await CountAsync(ownSession, "school_courses"));
+            Assert.Equal(1L, await CountAsync(ownSession, "school_courses"));
         }
 
         var entries = (await Repo().GetEligibilityAsync(Ctx(User, School), User))!;
@@ -626,22 +630,22 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
             ("id", id), ("st", student), ("s", school), ("c", course), ("stat", status));
 
     /// <summary>
-    /// formmaps#125 conversion. Nine of this fixture's thirteen tables are policied in production; the other four are
+    /// formmaps#125 conversion. Ten of this fixture's thirteen tables are policied in production; the other three are
     /// named here so the gaps are recorded rather than assumed:
     ///
     /// <list type="bullet">
     /// <item><c>courses</c> — a DELIBERATE exclusion, listed under "global catalog/reference" in 005-sensitive.sql.</item>
-    /// <item><c>school_courses</c> — carries a NOT NULL <c>schoolId</c> and appears in NONE of the vendored
-    /// prisma/rls/*.sql files. GetEligibilityAsync's <c>WHERE "schoolId" = @school</c> is the only tenant boundary on
-    /// it; pinned by
-    /// <see cref="Eligibility_catalog_is_gated_only_by_the_readers_schoolId_predicate_because_school_courses_is_unpolicied"/>.</item>
     /// <item><c>lia_assessment_sessions</c>, <c>personality_assessment_sessions</c> — user-scoped assessment tables
     /// (<c>user_id</c>), also absent from every vendored policy file, unlike their siblings
     /// <c>pca_exam_sessions</c> / <c>pca_evaluations</c> / <c>evaluation_groups</c>, which 003/007 do policy.</item>
     /// </list>
     ///
-    /// Do NOT add these to <see cref="PoliciedTables"/> to "fix" a failure — naming an unpolicied table throws by
-    /// design, and inventing a policy here would make the suite assert something production does not do.
+    /// <para><c>school_courses</c> was a fourth entry on that list, "absent from every vendored policy file". It was
+    /// absent from the vendored ones because pilot.sql — which policies it, and which production applies — had not
+    /// been vendored (formmaps#135). It is the tenth policied table now.</para>
+    ///
+    /// Do NOT add the remaining three to <see cref="PoliciedTables"/> to "fix" a failure — naming an unpolicied table
+    /// throws by design, and inventing a policy here would make the suite assert something production does not do.
     /// </summary>
     public sealed class Fixture : RlsEnabledDatabaseFixture
     {
@@ -650,7 +654,7 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         protected override IReadOnlyCollection<string> PoliciedTables =>
         [
             "users", "pca_exam_sessions", "evaluation_groups", "pca_evaluations", "course_enrollments",
-            "user_preferences", "user_settings", "user_career_profiles", "student_grades",
+            "user_preferences", "user_settings", "user_career_profiles", "student_grades", "school_courses",
         ];
     }
 }

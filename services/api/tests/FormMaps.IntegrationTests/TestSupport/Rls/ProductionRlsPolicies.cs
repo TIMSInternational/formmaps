@@ -32,8 +32,14 @@ namespace FormMaps.IntegrationTests.TestSupport.Rls;
 public static class ProductionRlsPolicies
 {
     /// <summary>
-    /// The applied set, in order. <c>pilot.sql</c> is excluded deliberately — it is a scratch file in the
-    /// source directory and is not part of what production runs.
+    /// The applied set, in the order production applies it — <c>api/scripts/apply-rls.ts</c> globs
+    /// <c>prisma/rls/*.sql</c> and sorts lexically, which puts <c>pilot.sql</c> last.
+    ///
+    /// <para><c>pilot.sql</c> used to be excluded here as "a scratch file … not part of what production runs".
+    /// That was false (formmaps#135): the same glob applies it, <c>check-rls-coverage.mjs</c> counts its policies,
+    /// and the production measurement in <c>docs/ops/rls-prod-apply-14.md</c> (72/72/72 → 86/86/86) only reconciles
+    /// with pilot's two policies included at both ends. Excluding it left <c>school_courses</c> and
+    /// <c>student_course_plans</c> unpolicied in every fixture while production policies them.</para>
     /// </summary>
     public static readonly ImmutableArray<string> VendoredFileNames =
     [
@@ -45,6 +51,7 @@ public static class ProductionRlsPolicies
         "007-self-scoped.sql",
         "008-form-drafts.sql",
         "009-parent-links.sql",
+        "pilot.sql",
     ];
 
     /// <summary>

@@ -88,4 +88,24 @@ public sealed class ProductionRlsPoliciesTests
             Assert.True(found, $"no CREATE POLICY on \"{table}\" in the vendored production files");
         }
     }
+
+    [Fact]
+    public void The_pilot_tables_really_are_policied_in_the_vendored_copies()
+    {
+        // formmaps#135. pilot.sql policies these two and IS applied to production: api/scripts/apply-rls.ts and
+        // api/scripts/check-rls-coverage.mjs both glob prisma/rls/*.sql, and the production measurement in
+        // docs/ops/rls-prod-apply-14.md (BEFORE 72/72/72, AFTER 86/86/86) only adds up with pilot's two policies
+        // counted at both ends. It was nevertheless left out of the vendored set as "a scratch file", and that
+        // claim propagated into four fixture docs before anyone checked it. Same tripwire shape as the test above:
+        // a refresh that drops pilot, or a re-exclusion of it, fails here and names the table.
+        foreach (var table in new[] { "school_courses", "student_course_plans" })
+        {
+            var found = ProductionRlsPolicies.VendoredFileNames
+                .SelectMany(f => ProductionRlsPolicies.SplitStatements(ProductionRlsPolicies.ReadVendoredFile(f)))
+                .Any(s => s.StartsWith($"CREATE POLICY", StringComparison.OrdinalIgnoreCase)
+                          && s.Contains($"ON \"{table}\"", StringComparison.Ordinal));
+
+            Assert.True(found, $"no CREATE POLICY on \"{table}\" in the vendored production files");
+        }
+    }
 }
