@@ -5,7 +5,7 @@
   "strategy": "greenfield-bounded-context-shadow-then-replace",
   "sourceOfTruth": {
     "specification": "docs/careerfit/sources (TIMS: workbook, model config, reference engine)",
-    "rules": "docs/careerfit/rules",
+    "rules": "services/api/src/FormMaps.Application/CareerFit/Data",
     "engine": "services/api/src/FormMaps.Application/CareerFit",
     "legacyBaseline": "formmaps-platform api GET /api/v1/careers/score (shadow target, not a behavioural spec)"
   },
@@ -39,7 +39,7 @@
       "phase": "P0",
       "status": "completed",
       "goal": "Draft the complete rule set as versioned JSON with every marker resolved to a concrete rule; TIMS ratifies cell by cell.",
-      "ownedPaths": ["docs/careerfit/rules", "docs/careerfit/sources", "tools/careerfit"],
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit/Data", "docs/careerfit/sources", "tools/careerfit"],
       "validation": [
         "python3 tools/careerfit/build_rules.py --check",
         "python3 tools/careerfit/mc_gate.py",
@@ -166,7 +166,7 @@
       "phase": "P7",
       "status": "pending",
       "goal": "Recut the thresholds against the OBSERVED distribution from the shadow period (spec §29). Replaces every threshold marked SIMULATED in the rule set.",
-      "ownedPaths": ["docs/careerfit/rules", "tools/careerfit"],
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit/Data", "tools/careerfit"],
       "validation": ["new rules_version; gate green; provenance no longer SIMULATED"]
     },
     {
@@ -187,5 +187,5 @@
       "validation": ["agreement statistics committed"]
     }
   ],
-  "openQuestionsForTIMS": "see docs/careerfit/rules/careerfit-rules.v1.0.0-draft.1.json open_questions"
+  "openQuestionsForTIMS": "see services/api/src/FormMaps.Application/CareerFit/Data/careerfit-rules.v1.0.0-draft.1.json open_questions"
 }

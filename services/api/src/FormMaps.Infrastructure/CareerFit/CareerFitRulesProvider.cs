@@ -5,7 +5,7 @@ using Microsoft.Extensions.Configuration;
 namespace FormMaps.Infrastructure.CareerFit;
 
 // FM-CF-003 ConfigCache. Implements ICareerFitRulesProvider over the rule set embedded in
-// FormMaps.Application (linked from docs/careerfit/rules, the one source of truth): the version comes
+// FormMaps.Application (embedded from CareerFit/Data, the one source of truth): the version comes
 // from configuration key CareerFit:RulesVersion (env CareerFit__RulesVersion), defaulting to the
 // embedded 1.0.0-draft.1; the load + resolver run exactly once per process inside a
 // Lazy<T>(ExecutionAndPublication), so concurrent first readers block on one load and every later

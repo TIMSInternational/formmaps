@@ -22,19 +22,16 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- CareerFit rule set (FM-CF-004). The ONE source of truth is docs/careerfit/rules — derived by
-         tools/careerfit/build_rules.py, gated by tools/careerfit/mc_gate.py, never hand-edited — so it is
-         LINKED here, not copied. CareerFitRulesJson.LoadEmbedded(version) reads it by the Link name.
-         NOTE: the path leaves services/api; a build whose context lacks the repo's docs/ tree cannot embed
-         it — the target below turns that into an explicit error (the Dockerfile's `COPY . .` of the
-         services/api context is such a build). -->
-    <EmbeddedResource Include="../../../../docs/careerfit/rules/careerfit-rules.v1.0.0-draft.1.json" Link="CareerFit/Data/careerfit-rules.v1.0.0-draft.1.json" />
+    <!-- CareerFit rule set (FM-CF-004): the ONE source of truth, derived by tools/careerfit/build_rules.py
+         (which writes exactly here), gated by tools/careerfit/mc_gate.py, never hand-edited.
+         CareerFitRulesJson.LoadEmbedded(version) reads it by resource name.
+         It lives INSIDE services/api on purpose. The Dockerfile builds with the services/api directory as
+         its context (`docker build -f services/api/Dockerfile … services/api`, both deploy workflows), so
+         anything above that directory — docs/ included — simply is not there at image-build time. An
+         earlier revision linked it from docs/careerfit/rules and the container build failed on a guard;
+         same shape as Assessments/Data/lia-percentile-tables.json, which has always lived here. -->
+    <EmbeddedResource Include="CareerFit\Data\careerfit-rules.v1.0.0-draft.1.json" />
   </ItemGroup>
-
-  <Target Name="CareerFitRuleSetPresent" BeforeTargets="BeforeBuild">
-    <Error Condition="!Exists('../../../../docs/careerfit/rules/careerfit-rules.v1.0.0-draft.1.json')"
-           Text="FM-CF-004: docs/careerfit/rules/careerfit-rules.v1.0.0-draft.1.json is not reachable from FormMaps.Application.csproj (../../../../docs/careerfit/rules). The CareerFit rule set is linked from the repo root, so the build context must include docs/careerfit/rules." />
-  </Target>
 
   <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />

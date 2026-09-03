@@ -1,6 +1,6 @@
 namespace FormMaps.Application.CareerFit;
 
-// FM-CF-004. Immutable mirror of docs/careerfit/rules/careerfit-rules.v<version>.json — exactly the
+// FM-CF-004. Immutable mirror of CareerFit/Data/careerfit-rules.v<version>.json — exactly the
 // blocks the reference engine's evaluate_owner needs (weights, thresholds, PCA archetypes, competency
 // and 360 catalogues, per-family rules) plus the version header. Everything the engine iterates is an
 // ORDERED list in the file's declared order (archetypes, mil_rules, v360_rules, personality

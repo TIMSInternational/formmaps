@@ -4,7 +4,7 @@ using FormMaps.Application.CareerFit;
 namespace FormMaps.UnitTests.CareerFit;
 
 /// <summary>
-/// FM-CF-004 rule-set loading: the embedded docs/careerfit/rules/careerfit-rules.v1.0.0-draft.1.json comes
+/// FM-CF-004 rule-set loading: the embedded CareerFit/Data/careerfit-rules.v1.0.0-draft.1.json comes
 /// back with every engine block in file order, the provenance blocks are ignored, a missing engine block
 /// fails with its JSON path, and ResolvedFamilyRules mirrors tools/careerfit/mc_lib.py resolved_bundle().
 /// </summary>

@@ -120,7 +120,7 @@ branch `careerfit/p1-p3`). Nothing is mapped as an HTTP endpoint yet — that is
 
 | namespace / path | what |
 |---|---|
-| `FormMaps.Application.CareerFit` | `CareerFitFormulas` (F01–F23, one static function per reference function), the input/result records, `CareerFitRules` + `CareerFitRulesJson` (the JSON above, embedded from `docs/careerfit/rules` by link), `ICareerFitRulesProvider`, `CareerFitEvaluator` / `ICareerFitEvaluator` (the orchestrator), `CareerFitRun`, `CareerFitRunJson` (the three jsonb shapes) |
+| `FormMaps.Application.CareerFit` | `CareerFitFormulas` (F01–F23, one static function per reference function), the input/result records, `CareerFitRules` + `CareerFitRulesJson` (the JSON above, embedded from `CareerFit/Data`), `ICareerFitRulesProvider`, `CareerFitEvaluator` / `ICareerFitEvaluator` (the orchestrator), `CareerFitRun`, `CareerFitRunJson` (the three jsonb shapes) |
 | `FormMaps.Application.CareerFit.Resolver` | `CareerFitRulesResolver` — `mc_gate.py check_resolved()` ported one for one; `CareerFitRulesInvalidException` lists every problem with family and field |
 | `FormMaps.Application.CareerFit.Adapters` | `DiscAdapter`, `CompetencyAdapter`, `MilAdapter`, `PersonalityAdapter`, `IV360Adapter` / `NoDataV360Adapter`, composed by `CareerFitInputAdapters`; `InputQuality` is the audit record |
 | `FormMaps.Infrastructure.CareerFit` | `CareerFitRulesProvider` (the ConfigCache: `CareerFit:RulesVersion`, loaded + resolved once per process, boot-gated in `AddFormMapsInfrastructure`), `CareerFitInputReader` (one read-only RLS session), `CareerFitRunWriter` (run + family rows in one transaction) |

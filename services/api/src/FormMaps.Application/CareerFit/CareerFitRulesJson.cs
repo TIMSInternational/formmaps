@@ -8,7 +8,7 @@ namespace FormMaps.Application.CareerFit;
 // members — the provenance blocks, source_text, subfamilies, prose notes — are ignored instead of
 // breaking the load, and (3) a missing block the engine needs fails HERE with the JSON path in the
 // message, not later inside a formula. LoadEmbedded reads the copy linked into this assembly from
-// docs/careerfit/rules (one source of truth; see FormMaps.Application.csproj). This is not the
+// CareerFit/Data (one source of truth; see FormMaps.Application.csproj). This is not the
 // ConfigCache (FM-CF-003): nothing is cached, versioned or validated against the resolver here.
 
 /// <summary>Loader for the versioned CareerFit rule set.</summary>

@@ -1,6 +1,6 @@
 """Build the versioned CareerFit rule set (FM-CF-001) from the TIMS sources.
 
-    python3 tools/careerfit/build_rules.py            # writes docs/careerfit/rules/<version>.json
+    python3 tools/careerfit/build_rules.py            # writes the rule set next to the engine that embeds it
     python3 tools/careerfit/build_rules.py --check    # exit 1 if the committed file differs
 
 Everything in the output is derived from the two vendored TIMS files under docs/careerfit/sources
@@ -32,7 +32,9 @@ ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 SOURCES = os.path.join(ROOT, "docs", "careerfit", "sources")
 WORKBOOK = os.path.join(SOURCES, "FORMMAPS_Matriz_Maestra_Logica_Implementacion_V1.xlsx")
 MODEL_CONFIG = os.path.join(SOURCES, "formmaps_model_config_v1.json")
-RULES_DIR = os.path.join(ROOT, "docs", "careerfit", "rules")
+# The rule set lives inside services/api because that directory IS the Docker build context (see
+# FormMaps.Application.csproj); docs/careerfit keeps the sources, the README and the manifest.
+RULES_DIR = os.path.join(ROOT, "services", "api", "src", "FormMaps.Application", "CareerFit", "Data")
 
 RULES_VERSION = "1.0.0-draft.1"
 FACTORS = ["D", "I", "S", "C"]
