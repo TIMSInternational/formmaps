@@ -65,6 +65,19 @@ function shouldRoutePcaExamCompletedExamsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_PCAEXAM_COMPLETED_EXAMS_TO_DOTNET));
 }
 
+// ── Assessment timeline reads (formmaps#109): GET /api/v1/assessments/me/timeline and
+// /me/timeline/stats. AssessmentTimelineEndpoints has been mapped in Program.cs since it was
+// ported, but with no rewrite here the /api/:path* catch-all sent both paths to Node -- which ALSO
+// answers 401 unauthenticated, so a status-only check never noticed the .NET handler had never
+// run. Self-scoped reads (RequireIdentity, no path userId), no write shares either path.
+// Distinct from FORMMAPS_ROUTE_TIMELINE_REPORT_TO_DOTNET, which owns /api/v1/reports/timeline/:userId.
+// Two exact paths, NEVER an /api/v1/assessments/:path* prefix: Node owns that prefix and serves
+// live routes under it (assessmentProgressService.ts -> /api/v1/assessments/{id}/report) plus
+// POST /me/timeline/export, none of which have a .NET twin. Default OFF.
+function shouldRouteAssessmentTimelineToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_ASSESSMENT_TIMELINE_TO_DOTNET));
+}
+
 // ── Wave 2 Batch 3: test-scores (superscore/college-fit) + question360 reads ──
 function shouldRouteTestScoresReadsToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TEST_SCORES_READS_TO_DOTNET));
@@ -174,8 +187,10 @@ function shouldRouteSchoolProfileToDotnet() {
 }
 
 // ── School users cluster (FM-DOTNET-052): GET /users, PUT /users/:userId/grade-level,
-// POST+DELETE /counselors/:counselorId/assign-students, GET /counselors/:counselorId/students.
-// ONE flag co-flips all 5 (path-not-method on 2 of the 3 sub-paths). gate = school:users permission.
+// PUT /users/:userId/role, POST+DELETE /counselors/:counselorId/assign-students,
+// GET /counselors/:counselorId/students. ONE flag co-flips all 6 (path-not-method on 2 of the 4
+// sub-paths). gate = school:users permission. /role (formmaps#114/#120) was missing from this
+// block after its .NET twin landed, so the flag half-moved the cluster and left /role on Node.
 function shouldRouteSchoolUsersToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET));
 }
@@ -517,6 +532,17 @@ function shouldRouteAuthToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_AUTH_TO_DOTNET));
 }
 
+// ── Request-context diagnostics (formmaps#109): GET /api/v1/context/current + /protected-smoke.
+// A diagnostic-only group (RequestContextEndpoints.cs): /current echoes the caller's OWN request
+// context and is anonymous by design; /protected-smoke is its guarded positive control. Node 404s
+// the whole /api/v1/context prefix, so nothing is stolen -- but unlike /api/v1/migration this is
+// NOT a post-deploy verification instrument, so it is flag-gated rather than exposed
+// unconditionally: nothing in apps/web calls it, and an anonymous 200 should be a deliberate
+// choice, not a side effect of a push to main. Two exact paths, not a prefix. Default OFF.
+function shouldRouteRequestContextToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_REQUEST_CONTEXT_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -717,6 +743,20 @@ const nextConfig: NextConfig = {
             {
               source: "/api/pcaexam/completed-exams/:userId",
               destination: `${dotnetApiBaseUrl}/api/pcaexam/completed-exams/:userId`,
+            },
+          ]
+        : []),
+      // Assessment timeline (formmaps#109). Two exact literals, deliberately NOT an
+      // /api/v1/assessments/:path* prefix -- see shouldRouteAssessmentTimelineToDotnet above.
+      ...(shouldRouteAssessmentTimelineToDotnet()
+        ? [
+            {
+              source: "/api/v1/assessments/me/timeline",
+              destination: `${dotnetApiBaseUrl}/api/v1/assessments/me/timeline`,
+            },
+            {
+              source: "/api/v1/assessments/me/timeline/stats",
+              destination: `${dotnetApiBaseUrl}/api/v1/assessments/me/timeline/stats`,
             },
           ]
         : []),
@@ -990,6 +1030,13 @@ const nextConfig: NextConfig = {
             {
               source: "/api/v1/school-admin/users/:userId/grade-level",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/users/:userId/grade-level`,
+            },
+            {
+              // formmaps#114/#120: the .NET twin (SchoolUsersEndpoints.PutRoleAsync -- audits +
+              // revokes sessions) existed but this entry did not, so the flag moved the rest of
+              // the cluster and left /role on Node. Same flag: it is one school:users cluster.
+              source: "/api/v1/school-admin/users/:userId/role",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/users/:userId/role`,
             },
             {
               source: "/api/v1/school-admin/counselors/:counselorId/assign-students",
@@ -1360,6 +1407,16 @@ const nextConfig: NextConfig = {
             // would 404 all four the instant the flag flipped.
             { source: "/api/stripe/cancel-subscription", destination: `${dotnetApiBaseUrl}/api/stripe/cancel-subscription` },
             { source: "/api/stripe/billing-portal", destination: `${dotnetApiBaseUrl}/api/stripe/billing-portal` },
+          ]
+        : []),
+      // Request-context diagnostics (formmaps#109) -- must precede the /api/:path* catch-all
+      // below, which otherwise swallows both paths and hands them to Node (which 404s the whole
+      // /api/v1/context prefix). Flag-gated, unlike the migration roadmap that follows -- see
+      // shouldRouteRequestContextToDotnet above for why. Two exact paths, not a prefix.
+      ...(shouldRouteRequestContextToDotnet()
+        ? [
+            { source: "/api/v1/context/current", destination: `${dotnetApiBaseUrl}/api/v1/context/current` },
+            { source: "/api/v1/context/protected-smoke", destination: `${dotnetApiBaseUrl}/api/v1/context/protected-smoke` },
           ]
         : []),
       // Migration roadmap (issue #82) -- must precede the /api/:path* catch-all below, which

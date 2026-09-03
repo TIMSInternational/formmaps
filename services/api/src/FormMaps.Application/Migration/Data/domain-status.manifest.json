@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-08-10",
+  "lastUpdated": "2026-09-03",
   "howToKeepThisCurrent": "This file is the single source of truth for GET /api/v1/migration/roadmap (see MigrationRoadmapProvider.cs). It is domain-grained (one entry per product domain), not task-grained -- for per-slice code-completion detail see agentic-migration.manifest.json. Update ONE entry whenever a domain's real-world status changes: (1) status changes when a domain's .NET port is code-complete/in-progress/deferred; (2) liveInProd flips only once its FORMMAPS_ROUTE_*_TO_DOTNET flag(s) are verified serving real production traffic (a Vercel env flip + confirmed canary/curl check), NOT just merged to main -- git history under-counts prod state because the live frontend deploys via direct `vercel --prod`, not a merge gate. Bump lastVerified on the entry and lastUpdated at the top of this file. Reference this file in the commit that completes or cuts over a domain, e.g. `docs(migration): mark <domain> live in domain-status manifest`. (3) RECORD UNCERTAINTY RATHER THAN GUESS. If a flag's production state cannot be established from something committed to this repo, say so in the entry's `note` and leave liveInProd alone -- an uncommitted measurement from a past session is not evidence, and neither is `status`, which tracks code completion only. Do NOT bump `lastVerified` when you merely edited this file; it means 'someone checked prod on this date', so only a real measurement moves it. `note` is deliberately NOT part of the API response shape (MigrationDomainStatus has no Note property), so it is free-form and safe to extend; the file is an EmbeddedResource, so changes to the served fields need a rebuild to take effect.",
   "domains": [
     {
@@ -23,7 +23,7 @@
       "status": "completed",
       "liveInProd": true,
       "lastVerified": "2026-07-17",
-      "note": "Foundational -- every other live domain below depends on this being in prod."
+      "note": "Foundational -- every other live domain below depends on this being in prod. The diagnostic GET /api/v1/context/{current,protected-smoke} pair (RequestContextEndpoints) is separate from the foundation itself: it was mapped-but-unreachable through app.formmaps.com until 2026-09-03 (formmaps#109), and is now behind FORMMAPS_ROUTE_REQUEST_CONTEXT_TO_DOTNET as two exact-path rewrites, default OFF -- it is a smoke test, not a verification instrument like /api/v1/migration, so it is not exposed unconditionally."
     },
     {
       "domain": "audit-events",
@@ -56,7 +56,7 @@
       "status": "started",
       "liveInProd": false,
       "lastVerified": "2026-07-30",
-      "note": "Partial: large read surface + FM-043 live in prod as of 2026-07-30; FM-029 and most other writes deliberately still dark. liveInProd is domain-level (false = not ALL of it live). Also (formmaps#109, re-verified 2026-08-10): MapAssessmentTimelineEndpoints is registered unconditionally in Program.cs but GET /api/v1/assessments/me/timeline{,/stats} have NO rewrite in apps/web/next.config.ts, so no request reaches the .NET handlers through app.formmaps.com -- Node owns the /api/v1/assessments/* prefix and answers them. The .NET handlers themselves are healthy and guarded (both return 401 missing_identity unauthenticated, measured against a local build). Do not 'fix' this with a prefix rewrite: it would steal live Node routes such as /api/v1/assessments/{id}/report. Mapped-but-unreachable, so it counts as dark."
+      "note": "Partial: large read surface + FM-043 live in prod as of 2026-07-30; FM-029 and most other writes deliberately still dark. liveInProd is domain-level (false = not ALL of it live). Also (formmaps#109, re-verified 2026-08-10, rewrites added 2026-09-03): MapAssessmentTimelineEndpoints is registered unconditionally in Program.cs, and until 2026-09-03 GET /api/v1/assessments/me/timeline{,/stats} had NO rewrite in apps/web/next.config.ts, so no request reached the .NET handlers through app.formmaps.com -- Node owns the /api/v1/assessments/* prefix and answered them (with a MATCHING 401, so status-only checks never noticed). Now gated by FORMMAPS_ROUTE_ASSESSMENT_TIMELINE_TO_DOTNET as two exact-path rewrites (default OFF, so still dark until flipped in Vercel -- the flag's prod state is not derivable from this repo). The .NET handlers themselves are healthy and guarded (both return 401 missing_identity unauthenticated, measured against a local build). It was deliberately NOT fixed with a prefix rewrite: /api/v1/assessments/:path* would steal live Node routes such as /api/v1/assessments/{id}/report and POST /me/timeline/export, which has no .NET twin; next.config.rewrites.test.ts pins those to Node in both flag states."
     },
     {
       "domain": "schools-rosters-organizations",
