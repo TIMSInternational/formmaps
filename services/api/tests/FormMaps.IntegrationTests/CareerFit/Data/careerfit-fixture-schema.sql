@@ -60,8 +60,10 @@ CREATE TABLE "student_parent_links" (
 -- owner's school via a users sub-select) and the base fixture applies that automatically because the
 -- table now exists here — it is named in PoliciedTables so its absence would fail the fixture. The two
 -- session tables appear in NO vendored policy file, so they are left unpolicied exactly as the vendored
--- set leaves them; a cross-school read of a student is stopped at pca_results (the reader reads it
--- first and fails closed) and at careerfit_runs.
+-- set leaves them (formmaps#77 PENDING) — under RLS a cross-school caller really can read their rows, and
+-- CareerFitEvaluatorDatabaseTests asserts that on this seed. What stops a cross-school read of a student is
+-- therefore NOT those tables: it is CareerFitInputReader's explicit gate against the policied "users" row,
+-- which runs before any instrument read, plus careerfit_runs' own policy on the write.
 -- ------------------------------------------------------------------------------------------------
 
 CREATE TYPE "LiaSessionStatus" AS ENUM ('not_started', 'practice', 'in_progress', 'completed', 'abandoned');

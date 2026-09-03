@@ -15,7 +15,8 @@ namespace FormMaps.Infrastructure.CareerFit;
 /// personality_assessment_sessions row <c>PersonalityResultReader.ReadNewestForUserAsync</c> surfaces —
 /// including its rule that a session without a resolved type is "no results". The jsonb columns pass
 /// through verbatim as <see cref="JsonElement"/>s; parsing them is the adapters' job. The student's
-/// users."schoolId" is read last as the tenant snapshot the run is written under.
+/// users."schoolId" is read FIRST — it is both the tenant snapshot the run is written under and this
+/// reader's authorization gate (see <c>ReadTenantGateAsync</c>).
 /// </summary>
 /// <remarks>
 /// <para>
@@ -25,6 +26,16 @@ namespace FormMaps.Infrastructure.CareerFit;
 /// "not ready". Rows the caller's session cannot see under RLS come back as absent — by the platform's
 /// design that is the same outcome, and it is what makes a cross-school evaluation impossible without any
 /// code here deciding who the caller is.
+/// </para>
+/// <para>
+/// THE GATE IS FIRST, AND THAT IS A SECURITY PROPERTY, NOT A STYLE CHOICE. Only two of the four tables read
+/// here are policied — "users" (005-sensitive.sql) and "pca_results" (007-self-scoped.sql).
+/// "lia_assessment_sessions" and "personality_assessment_sessions" appear in NO vendored policy file; they
+/// are still on formmaps#77's PENDING list, so today a cross-school caller CAN read another student's LIA
+/// percentiles and personality dimension scores. Cross-school denial therefore must not be allowed to depend
+/// on which row this reader happens to reach first. <c>ReadTenantGateAsync</c> is the explicit, policied,
+/// short-circuiting first read that removes that dependency; every instrument read below it is reached only
+/// after the caller has been admitted to the student.
 /// </para>
 /// <para>
 /// Deliberately NOT read: the pca_exam_sessions history (legacy per-exam score percentages are not
@@ -62,7 +73,9 @@ public sealed class CareerFitInputReader(IFormMapsDatabaseSessionFactory databas
         LIMIT 1
         """;
 
-    private const string TenantSql = """
+    // The authorization gate AND the tenant snapshot, in one read. "users" is policied by 005-sensitive.sql
+    // (bypass OR self OR same school) — the platform's own answer to "may this caller see this student".
+    private const string TenantGateSql = """
         SELECT "schoolId" FROM "users" WHERE "id" = @uid LIMIT 1
         """;
 
@@ -74,10 +87,13 @@ public sealed class CareerFitInputReader(IFormMapsDatabaseSessionFactory databas
 
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
+        // The gate first: no instrument row is read for a student this caller cannot see. Two of the three
+        // instrument tables are unpolicied (see the remarks), so this order is load-bearing.
+        var schoolId = await ReadTenantGateAsync(session, userId, cancellationToken);
+
         var (pcaResultId, discResult, competences) = await ReadPcaResultAsync(session, userId, cancellationToken);
         var (liaSessionId, percentiles) = await ReadLiaSessionAsync(session, userId, cancellationToken);
         var (personalitySessionId, dimensionScores) = await ReadPersonalitySessionAsync(session, userId, cancellationToken);
-        var schoolId = await ReadTenantAsync(session, userId, cancellationToken);
 
         return new CareerFitRawInputs(
             UserId: userId,
@@ -88,6 +104,38 @@ public sealed class CareerFitInputReader(IFormMapsDatabaseSessionFactory databas
             PersonalityDimensionScores: dimensionScores,
             ThreeSixty: null, // no variable-level 360 before FM-CF-006/007; NoDataV360Adapter ignores it
             Sources: new CareerFitInputSources(pcaResultId, liaSessionId, personalitySessionId));
+    }
+
+    /// <summary>
+    /// THE AUTHORIZATION GATE — the first read, and the only failure here that means "not yours" rather than
+    /// "not completed". Returns the student's tenant, which the run is written under.
+    ///
+    /// WHY IT EXISTS. Of the four tables this reader touches, "users" and "pca_results" are policied and
+    /// "lia_assessment_sessions" / "personality_assessment_sessions" are not (formmaps#77, PENDING). Before this
+    /// gate, a cross-school caller was denied only because pca_results HAPPENED to be the first read; reordering
+    /// the four reads — a refactor with no visible cost and no failing test — would have let that caller read
+    /// another student's LIA and personality rows first. The invariant is now explicit and enforced by position:
+    /// this read is policied, it runs first, and its failure short-circuits, so no later read's visibility can
+    /// matter. Nothing here decides who the caller is; the policy on "users" does, exactly as before.
+    ///
+    /// An invisible users row and an absent one are deliberately the same outcome — the platform's design, and
+    /// the reason this fails closed as <see cref="InputWarningCodes.StudentNotVisible"/> rather than
+    /// distinguishing "denied" from "no such user" for the caller.
+    /// </summary>
+    private static async Task<string?> ReadTenantGateAsync(
+        FormMapsDatabaseSession session, string userId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, TenantGateSql, userId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            throw new CareerFitInputException(
+                InputInstruments.Student,
+                InputWarningCodes.StudentNotVisible,
+                $"No users row for student '{userId}' is visible to this session; nothing may be read for them.");
+        }
+
+        return reader.IsDBNull(0) ? null : reader.GetString(0);
     }
 
     private static async Task<(string Id, JsonElement Disc, JsonElement Competences)> ReadPcaResultAsync(
@@ -147,22 +195,6 @@ public sealed class CareerFitInputReader(IFormMapsDatabaseSessionFactory databas
         }
 
         return (reader.GetString(0), ReadJson(reader, 2));
-    }
-
-    private static async Task<string?> ReadTenantAsync(
-        FormMapsDatabaseSession session, string userId, CancellationToken cancellationToken)
-    {
-        await using var command = Command(session, TenantSql, userId);
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken))
-        {
-            // Every session that can see the instrument rows can see the users row (self or same school, or
-            // bypass), so this is a broken foreign key, not an access outcome.
-            throw new InvalidOperationException(
-                $"The users row for student '{userId}' is not visible although the student's assessment rows are.");
-        }
-
-        return reader.IsDBNull(0) ? null : reader.GetString(0);
     }
 
     // ---------------------------------------------------------------- primitives (CompleteProfileAssembler's)

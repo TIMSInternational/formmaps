@@ -203,16 +203,31 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
     }
 
     [Fact]
-    public async Task Other_school_counselor_cannot_evaluate_the_student_and_nothing_is_written()
+    public async Task Other_school_counselor_is_denied_by_the_GATE_before_any_unpolicied_table_is_read()
     {
-        // The reader runs under the caller's RLS session: pca_results is policied (007-self-scoped.sql, self OR
-        // the owner's school), so school B's counselor sees no PCA row for A1 and the reader fails closed on the
-        // first instrument. No code here decides who the caller is — the platform's policies do.
+        // The reader's FIRST read is its authorization gate: users, policied by 005-sensitive.sql (self OR the
+        // caller's school). Denial therefore names the gate, not an instrument — and it does so BEFORE the
+        // reader touches lia_assessment_sessions or personality_assessment_sessions, which are policied by
+        // NOTHING (still on formmaps#77's PENDING list).
+        //
+        // This test goes red on any reordering. Remove the gate and the reader falls through to pca_results and
+        // names PCA/DISC_MISSING; hoist the LIA or the personality read above it and it names MIL/PERSONALITY,
+        // having already read another school's student. The block below proves that is a real hazard and not a
+        // hypothetical: under school B's own session those two tables really do hand the rows over.
         var ex = await Assert.ThrowsAsync<CareerFitInputException>(
             () => Evaluator().EvaluateAsync(Counselor(CounselorB, SchoolB), StudentA1));
 
-        Assert.Equal(InputInstruments.Pca, ex.Instrument);
-        Assert.Equal(InputWarningCodes.DiscMissing, ex.Code);
+        Assert.Equal(InputInstruments.Student, ex.Instrument);
+        Assert.Equal(InputWarningCodes.StudentNotVisible, ex.Code);
+
+        // Which of the reader's four tables actually deny school B's counselor, measured on this seed under that
+        // caller's own RLS session. The two POLICIED tables deny; the two SESSION tables do not. Only the gate's
+        // position stands between "denied" and "another school's LIA percentiles".
+        var counselorB = Counselor(CounselorB, SchoolB);
+        Assert.Equal(0L, await VisibleRowsAsync(counselorB, $"""SELECT count(*) FROM "users" WHERE "id" = '{StudentA1}' """));
+        Assert.Equal(0L, await VisibleRowsAsync(counselorB, $"""SELECT count(*) FROM "pca_results" WHERE "userId" = '{StudentA1}' """));
+        Assert.Equal(1L, await VisibleRowsAsync(counselorB, $"""SELECT count(*) FROM "lia_assessment_sessions" WHERE "user_id" = '{StudentA1}' """));
+        Assert.Equal(1L, await VisibleRowsAsync(counselorB, $"""SELECT count(*) FROM "personality_assessment_sessions" WHERE "user_id" = '{StudentA1}' """));
 
         await using var admin = await _adminDataSource.OpenConnectionAsync();
         Assert.Equal(0L, await ScalarAsync(admin, """SELECT count(*) FROM "careerfit_runs" """));
@@ -303,7 +318,7 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
             () => Evaluator().EvaluateAsync(Student(StudentA2, SchoolA), StudentA2));
         Assert.Equal(InputInstruments.Personality, personality.Instrument);
 
-        // Then loses its PCA row: PCA is read first, so PCA is what is named.
+        // Then loses its PCA row: PCA is the first INSTRUMENT read (the gate is first overall), so PCA is named.
         await ExecAsync(admin, $"""DELETE FROM "pca_results" WHERE "userId" = '{StudentA2}' """);
         var pca = await Assert.ThrowsAsync<CareerFitInputException>(
             () => Evaluator().EvaluateAsync(Student(StudentA2, SchoolA), StudentA2));
@@ -464,6 +479,16 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         /// <summary>One opened session: the plan asked for, and what the connection actually reports.</summary>
         internal sealed record OpenedSession(
             bool ReadOnly, TenantGucPlan Plan, string? CurrentUserId, string? CurrentSchoolId, string? BypassRls);
+    }
+
+    /// <summary>A count under the CALLER's own RLS session (the app login) — what that caller can actually see.</summary>
+    private async Task<long> VisibleRowsAsync(RequestContext context, string sql)
+    {
+        await using var session = await Factory().OpenReadOnlyAsync(context);
+        var command = session.Connection.CreateCommand();
+        command.Transaction = session.Transaction;
+        command.CommandText = sql;
+        return Convert.ToInt64(await command.ExecuteScalarAsync());
     }
 
     // ---- seed: the rows the real writers persist ----

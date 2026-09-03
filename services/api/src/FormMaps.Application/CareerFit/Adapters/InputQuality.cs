@@ -7,7 +7,7 @@ namespace FormMaps.Application.CareerFit.Adapters;
 // said X" from "the engine said X on inputs we had to repair". Nothing here is presented to a student
 // (FM-CF-011 owns presentation) and nothing here is a score.
 
-/// <summary>Instrument labels used on warnings and exceptions (the convergence instruments plus the competency block).</summary>
+/// <summary>Instrument labels used on warnings and exceptions (the convergence instruments, the competency block, and the reader's authorization gate).</summary>
 public static class InputInstruments
 {
     public const string Pca = "PCA";
@@ -15,6 +15,13 @@ public static class InputInstruments
     public const string Mil = "MIL";
     public const string Personality = "PERSONALITY";
     public const string V360 = "360";
+
+    /// <summary>
+    /// Not an instrument: the STUDENT themselves. Carried by the one failure that means "this caller may not see
+    /// this student" rather than "this student has not completed X" — <c>CareerFitInputReader</c>'s gate read
+    /// against the policied "users" table.
+    /// </summary>
+    public const string Student = "STUDENT";
 }
 
 /// <summary>Stable codes for <see cref="InputWarning.Code"/> and <see cref="CareerFitInputException.Code"/>. Add, never rename: they are persisted.</summary>
@@ -60,6 +67,10 @@ public static class InputWarningCodes
 
     // 360
     public const string V360NoData = "V360_NO_DATA";
+
+    // Reader authorization gate (FM-CF-010) — not an instrument defect: the caller's RLS session cannot see the
+    // student's "users" row, so no instrument of theirs may be read either.
+    public const string StudentNotVisible = "STUDENT_NOT_VISIBLE";
 }
 
 /// <summary>One recorded repair, substitution or choice. <see cref="Instrument"/> is an <see cref="InputInstruments"/> value; <see cref="Code"/> an <see cref="InputWarningCodes"/> value.</summary>
