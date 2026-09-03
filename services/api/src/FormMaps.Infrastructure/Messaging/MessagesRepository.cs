@@ -3,6 +3,9 @@ using System.Data.Common;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using FormMaps.Application.Messaging;
+using FormMaps.Infrastructure.Data;
+using Microsoft.Extensions.Options;
+using Npgsql;
 
 namespace FormMaps.Infrastructure.Messaging;
 
@@ -15,7 +18,8 @@ namespace FormMaps.Infrastructure.Messaging;
 public sealed class MessagesRepository(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     TimeProvider timeProvider,
-    IMessagesRealtimeNotifier realtimeNotifier) : IMessagesRepository
+    IMessagesRealtimeNotifier realtimeNotifier,
+    IOptions<FormMapsDatabaseOptions>? databaseOptions = null) : IMessagesRepository
 {
     public async Task<int> GetUnreadCountAsync(RequestContext context, string userId, CancellationToken cancellationToken = default)
     {
@@ -611,6 +615,13 @@ public sealed class MessagesRepository(
     /// statements ran serially against the 60s request budget (504 with zero messages delivered) and any
     /// one failure rolled back every other recipient. Now each recipient gets its own session/transaction
     /// (sessions are not thread-safe; one per task) and its outcome is recorded rather than thrown.
+    ///
+    /// Two deliberate differences from legacy inside a recipient's transaction: (1) the unread-notification
+    /// outbox INSERT rides in it, so an enqueue failure fails that recipient -- legacy fires
+    /// enqueueUnreadMessageNotification without awaiting it (failure logged, recipient still counted);
+    /// (2) the whole fan-out ignores <paramref name="cancellationToken"/> -- legacy's Node handler keeps
+    /// running after the client socket closes, so a disconnect or the gateway timeout never leaves a
+    /// broadcast half-delivered with no response for the client to act on (a retry would double-send).
     /// </summary>
     public async Task<BroadcastResult> BroadcastAsync(
         RequestContext context, string userId, string role, string schoolId, string recipientGroup, string content,
@@ -642,34 +653,58 @@ public sealed class MessagesRepository(
         var now = NowTruncated();
 
         // Bounded concurrency: legacy's CHUNK = 20 with Promise.all per chunk. Task.WhenAll waits for the
-        // whole chunk (including failures) before the next one starts, so at most 20 per-recipient
-        // sessions are in flight; beyond MaxPoolSize they queue on the pool, they never nest.
+        // whole chunk (including failures) before the next one starts, and -- exactly like a rejected
+        // Promise.all throwing out of legacy's for-loop into the route's catch -- a chunk that records any
+        // failure ends the broadcast: its siblings have already finished, later chunks never start, the
+        // endpoint answers 500 with the successes kept. Otherwise a systemic failure (pool exhausted, DB
+        // gone) would still walk every remaining chunk, each open waiting out Database.TimeoutSeconds,
+        // and burn the request budget delivering more than legacy did before failing.
+        //
+        // Within a chunk the pool, not the chunk, is the real concurrency limit: it is process-wide and
+        // MaxPoolSize is 10, so 20 simultaneous opens would pin every connection for the whole broadcast
+        // and park every other request on the pool's 20s wait. At most MaxPoolSize - PoolHeadroom
+        // sessions are open at once (per broadcast; two concurrent broadcasts still share the pool).
         const int chunkSize = 20;
+        using var inFlight = new SemaphoreSlim(MaxInFlightSessions(chunkSize));
         var created = 0;
         var failures = new List<BroadcastFailure>();
         for (var i = 0; i < filtered.Count; i += chunkSize)
         {
             var outcomes = await Task.WhenAll(filtered.Skip(i).Take(chunkSize).Select(recipient =>
-                DeliverBroadcastMessageAsync(context, userId, recipient, content, preview, senderName, now, cancellationToken)));
+                DeliverBroadcastMessageAsync(context, userId, recipient, content, preview, senderName, now, inFlight)));
             foreach (var failure in outcomes)
             {
                 if (failure is null) created++;
                 else failures.Add(failure);
             }
+            if (failures.Count > 0) break;
         }
 
         return new BroadcastResult(created, failures);
     }
 
+    /// <summary>Connections left for the other requests on this instance while a broadcast is fanning out.</summary>
+    private const int PoolHeadroom = 2;
+
+    private int MaxInFlightSessions(int chunkSize)
+    {
+        var maxPoolSize = databaseOptions?.Value.MaxPoolSize ?? new FormMapsDatabaseOptions().MaxPoolSize;
+        return Math.Clamp(maxPoolSize - PoolHeadroom, 1, chunkSize);
+    }
+
     /// <summary>
     /// One recipient of a broadcast on its OWN session: upsert conversation, insert message, enqueue outbox,
     /// COMMIT. Returns null on success or the failure to record; a failed recipient's session rolls back on
-    /// dispose without touching any other recipient's committed rows. Cancellation still propagates.
+    /// dispose without touching any other recipient's committed rows. Deliberately takes no cancellation
+    /// token (see <see cref="BroadcastAsync"/>): once the fan-out has started it runs to completion.
     /// </summary>
     private async Task<BroadcastFailure?> DeliverBroadcastMessageAsync(
         RequestContext context, string userId, RecipientRow recipient, string content, string preview, string senderName,
-        DateTime now, CancellationToken cancellationToken)
+        DateTime now, SemaphoreSlim inFlight)
     {
+        var cancellationToken = CancellationToken.None;
+        await inFlight.WaitAsync(cancellationToken);
+        var committed = false;
         try
         {
             await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
@@ -708,13 +743,30 @@ public sealed class MessagesRepository(
                 await outbox.ExecuteNonQueryAsync(cancellationToken);
             }
             await session.CommitAsync(cancellationToken);
+            committed = true;
             return null;
         }
-        catch (Exception ex) when (ex is not OperationCanceledException)
+        catch (Exception ex)
         {
-            return new BroadcastFailure(recipient.Id, ex.Message);
+            // Once COMMIT has returned the message IS delivered: a failure after that point (the session's
+            // dispose returning a broken connection to the pool) must not be reported as an undelivered
+            // recipient, or the endpoint answers 500 for a message the recipient will read.
+            return committed ? null : new BroadcastFailure(recipient.Id, DescribeFailure(ex));
+        }
+        finally
+        {
+            inFlight.Release();
         }
     }
+
+    /// <summary>
+    /// SQLSTATE + primary message only. PostgresException.Message also carries DETAIL, which for a
+    /// unique/FK violation quotes the offending row's values (participant ids, emails); Npgsql redacts it
+    /// unless the connection string sets "Include Error Detail", which DATABASE_URL passes through
+    /// untouched -- and BroadcastFailure.Error ends up verbatim in the endpoint's log line.
+    /// </summary>
+    private static string DescribeFailure(Exception ex) =>
+        ex is PostgresException pg ? $"{pg.SqlState}: {pg.MessageText}" : ex.Message;
 
     private sealed record RecipientRow(string Id, string Email);
 

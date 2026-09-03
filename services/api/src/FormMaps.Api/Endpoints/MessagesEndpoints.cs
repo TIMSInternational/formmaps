@@ -188,8 +188,9 @@ public static class MessagesEndpoints
         if (result.Failures.Count > 0)
         {
             // Legacy: a rejected recipient inside Promise.all lands in the route's catch -> 500 "Internal
-            // server error", while every recipient that already committed stays delivered. Same here; the
-            // per-recipient detail is logged because the response shape has nowhere to carry it.
+            // server error", while every recipient that already committed stays delivered and no later
+            // chunk is attempted. Same here; the per-recipient detail is logged because the response shape
+            // has nowhere to carry it (failure.Error is SQLSTATE + primary message, never row DETAIL).
             var logger = loggerFactory.CreateLogger(typeof(MessagesEndpoints));
             foreach (var failure in result.Failures)
             {

@@ -24,13 +24,17 @@ public sealed record SendMessageResult(
     SendMessageStatus Status, MessageRow? Message, string? RecipientId, string? RecipientEmail,
     string? SenderName, string? Preview);
 
-/// <summary>One recipient whose message could not be committed during a broadcast.</summary>
+/// <summary>
+/// One recipient whose message could not be committed during a broadcast. <see cref="Error"/> is safe to
+/// log: SQLSTATE + primary message for a PostgresException, never the DETAIL that quotes row values.
+/// </summary>
 public sealed record BroadcastFailure(string RecipientId, string Error);
 
 /// <summary>
 /// Per-recipient outcome of a broadcast. Each recipient is committed on its own transaction (legacy's
 /// Prisma calls auto-commit per recipient), so <see cref="RecipientCount"/> messages ARE delivered even
-/// when <see cref="Failures"/> is non-empty.
+/// when <see cref="Failures"/> is non-empty -- and, as with legacy's rejected Promise.all, the chunk that
+/// produced the failures is the last one attempted; recipients in later chunks were never tried.
 /// </summary>
 public sealed record BroadcastResult(int RecipientCount, IReadOnlyList<BroadcastFailure> Failures)
 {
