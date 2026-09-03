@@ -53,12 +53,15 @@ public sealed class CareerFitDatabaseFixture : RlsEnabledDatabaseFixture
     /// and deliberately absent from this list: production leaves it unpolicied (007-self-scoped.sql's header,
     /// "still needs an owner decision"), and naming it would make the base throw. The two CareerFit tables are
     /// absent for the opposite reason — they are policied, but by <see cref="AdditionalDdl"/>, not by the base.
+    /// The two assessment SESSION tables (FM-CF-010's source rows) appear in no vendored file and so stay
+    /// unpolicied here, as the vendored set leaves them; <c>pca_results</c> does appear (007) and is named.
     /// </summary>
     protected override IReadOnlyCollection<string> PoliciedTables =>
     [
         "users",                            // 005-sensitive.sql   (self OR same school)
         "counselor_student_assignments",    // 003-fk-users.sql    (keyed on studentId, NOT counselorId)
         "student_parent_links",             // 003-fk-users.sql + 009-parent-links.sql
+        "pca_results",                      // 007-self-scoped.sql (self OR owner's school via users) — FM-CF-010 source row
     ];
 
     /// <summary>The real <c>infra/aws/sql/careerfit-schema.sql</c>, applied as-is. See the class remarks.</summary>

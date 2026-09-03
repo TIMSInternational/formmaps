@@ -49,3 +49,48 @@ CREATE TABLE "student_parent_links" (
     "parentUserId" text,
     "isActive"     boolean NOT NULL DEFAULT true
 );
+
+-- ------------------------------------------------------------------------------------------------
+-- FM-CF-010 (P1–P3): the three SOURCE tables CareerFitInputReader reads, hand-written from
+-- schema.prisma with the columns the reader's queries and the seeds touch, the shapes the real
+-- writers persist (pca_results: TIMS's discResult / competences blobs, one row per user;
+-- lia_assessment_sessions: LiaSessionWriter's percentiles on a completed session, status a native
+-- enum; personality_assessment_sessions: PersonalitySessionWriter's dimension_scores + resolved_type,
+-- status plain text). RLS: pca_results is policied by the vendored 007-self-scoped.sql (self OR the
+-- owner's school via a users sub-select) and the base fixture applies that automatically because the
+-- table now exists here — it is named in PoliciedTables so its absence would fail the fixture. The two
+-- session tables appear in NO vendored policy file, so they are left unpolicied exactly as the vendored
+-- set leaves them; a cross-school read of a student is stopped at pca_results (the reader reads it
+-- first and fails closed) and at careerfit_runs.
+-- ------------------------------------------------------------------------------------------------
+
+CREATE TYPE "LiaSessionStatus" AS ENUM ('not_started', 'practice', 'in_progress', 'completed', 'abandoned');
+
+CREATE TABLE "pca_results" (
+    "id"           text PRIMARY KEY,
+    "userId"       text NOT NULL,
+    "discResult"   jsonb,
+    "competences"  jsonb,
+    "isActive"     boolean NOT NULL DEFAULT true,
+    CONSTRAINT "pca_results_userId_key" UNIQUE ("userId")
+);
+
+CREATE TABLE "lia_assessment_sessions" (
+    "id"            text PRIMARY KEY,
+    "user_id"       text NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
+    "status"        "LiaSessionStatus" NOT NULL DEFAULT 'not_started',
+    "completed_at"  timestamp(3),
+    "percentiles"   jsonb,
+    "is_active"     boolean NOT NULL DEFAULT true
+);
+
+CREATE TABLE "personality_assessment_sessions" (
+    "id"                text PRIMARY KEY,
+    "user_id"           text NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
+    "variant"           text NOT NULL DEFAULT 'estudiantil',
+    "status"            text NOT NULL DEFAULT 'in_progress',
+    "resolved_type"     text,
+    "dimension_scores"  jsonb,
+    "completed_at"      timestamp(3),
+    "is_active"         boolean NOT NULL DEFAULT true
+);

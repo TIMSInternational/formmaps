@@ -3,6 +3,7 @@ using Amazon.SimpleEmailV2;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.CareerFit;
+using FormMaps.Application.CareerFit.Adapters;
 using FormMaps.Application.Calendar;
 using FormMaps.Application.CourseImport;
 using FormMaps.Application.CurriculumFrameworks;
@@ -360,6 +361,16 @@ public static class DependencyInjection
         // first to discover the rule set is bad.
         services.AddSingleton<ICareerFitRulesProvider>(
             CareerFitRulesProvider.FromConfiguration(configuration).EnsureLoaded());
+        // FM-CF-010 (P1–P3): the evaluator and its two seams. Scoped like every other reader/writer here
+        // (they open sessions on the Scoped IFormMapsDatabaseSessionFactory under the caller's RequestContext).
+        // IV360Adapter is the NoData implementation until FM-CF-006/007 exist: every run scores
+        // careerfit360 = 0 / NOT_DETERMINABLE and says so in its inputQuality — see CareerFitEvaluator's
+        // header. Swapping this one registration is how FM-CF-007 turns 360 on. NOTHING is mapped as an
+        // endpoint yet (FM-CF-012 owns the seven routes and FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET).
+        services.AddSingleton<IV360Adapter>(NoDataV360Adapter.Instance);
+        services.AddScoped<ICareerFitInputReader, CareerFitInputReader>();
+        services.AddScoped<ICareerFitRunWriter, CareerFitRunWriter>();
+        services.AddScoped<ICareerFitEvaluator, CareerFitEvaluator>();
 
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IQuestion360Reader, Question360Reader>();
