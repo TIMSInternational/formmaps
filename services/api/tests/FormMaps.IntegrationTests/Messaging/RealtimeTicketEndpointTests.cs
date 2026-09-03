@@ -367,7 +367,7 @@ public class RealtimeTicketEndpointTests : IDisposable
             CancellationToken cancellationToken = default) =>
             throw Unexpected();
 
-        public Task<int> BroadcastAsync(
+        public Task<BroadcastResult> BroadcastAsync(
             RequestContext context, string userId, string role, string schoolId, string recipientGroup, string content,
             CancellationToken cancellationToken = default) =>
             throw Unexpected();

@@ -135,7 +135,7 @@ public sealed class MessagesEndToEndLifecycleTests : IClassFixture<MessagingData
         var broadcastContent = $"school-wide notice {Guid.NewGuid()}";
         var broadcastCount = await repo.BroadcastAsync(
             _fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", broadcastContent);
-        Assert.Equal(1, broadcastCount); // only `student` is a student in this school
+        Assert.Equal(1, broadcastCount.RecipientCount); // only `student` is a student in this school
 
         // The broadcast's outbox row must point at the REAL message row it inserted -- the exact bug
         // (a second, unrelated Guid.NewGuid() written as the outbox messageId) this whole file exists to

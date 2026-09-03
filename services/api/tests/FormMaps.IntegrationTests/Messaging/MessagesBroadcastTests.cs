@@ -1,4 +1,5 @@
 using FormMaps.Application.Auth;
+using FormMaps.Application.Data;
 using FormMaps.Application.Messaging;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Messaging;
@@ -15,8 +16,8 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
     public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
-    private MessagesRepository Repo() => new(
-        new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
+    private MessagesRepository Repo(IFormMapsDatabaseSessionFactory? factory = null) => new(
+        factory ?? new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
         new NoopRealtimeNotifier());
 
     [Fact]
@@ -30,7 +31,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         var count = await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "hello school");
 
-        Assert.Equal(2, count);
+        Assert.Equal(2, count.RecipientCount);
     }
 
     [Fact]
@@ -44,7 +45,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         var count = await Repo().BroadcastAsync(_fixture.Ctx(counselor, schoolId), counselor, "counselor", schoolId, "students", "hi");
 
-        Assert.Equal(1, count);
+        Assert.Equal(1, count.RecipientCount);
     }
 
     [Fact]
@@ -59,7 +60,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         var count = await Repo().BroadcastAsync(_fixture.Ctx(counselor, schoolId), counselor, "counselor", schoolId, "students", "hi");
 
-        Assert.Equal(0, count);
+        Assert.Equal(0, count.RecipientCount);
     }
 
     [Fact]
@@ -74,7 +75,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         var count = await Repo().BroadcastAsync(_fixture.Ctx(counselor, schoolId), counselor, "counselor", schoolId, "staff", "hi");
 
-        Assert.Equal(2, count); // otherCounselor + admin; self excluded
+        Assert.Equal(2, count.RecipientCount); // otherCounselor + admin; self excluded
     }
 
     [Fact]
@@ -87,7 +88,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         var count = await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "hi");
 
-        Assert.Equal(0, count);
+        Assert.Equal(0, count.RecipientCount);
     }
 
     [Fact]
@@ -153,7 +154,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         await Task.Delay(50);
         var count = await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "second");
 
-        Assert.Equal(1, count);
+        Assert.Equal(1, count.RecipientCount);
         await using (var cmd = new NpgsqlCommand(
             """SELECT "id", "lastMessagePreview", "updatedAt" FROM "conversations" WHERE "participantAId" = @pa AND "participantBId" = @pb""", conn))
         {
@@ -204,7 +205,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         var count = await Repo().BroadcastAsync(
             _fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", preview);
-        Assert.Equal(2, count);
+        Assert.Equal(2, count.RecipientCount);
 
         await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
         await conn.OpenAsync();
@@ -234,6 +235,128 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         {
             dangling.Parameters.AddWithValue("preview", preview);
             Assert.Equal(0, (int)(await dangling.ExecuteScalarAsync())!);
+        }
+    }
+
+    [Fact]
+    public async Task Partial_failure_keeps_the_other_recipients_messages_and_reports_the_failed_one()
+    {
+        // Legacy (routes/messages.ts:596-611) runs each recipient's Prisma calls with auto-commit, so one
+        // recipient failing never rolls back the others. The .NET port ran all recipients inside ONE
+        // transaction with a single COMMIT at the end: any failure meant zero messages delivered.
+        // 25 recipients spans two chunks of 20, so this also pins that a failure in one chunk does not
+        // stop the later chunk from being delivered.
+        var schoolId = Guid.NewGuid().ToString();
+        var content = $"partial-{Guid.NewGuid()}";
+        var admin = await _fixture.SeedUserAsync(schoolId, "school_admin");
+        var students = new List<string>();
+        for (var i = 0; i < 25; i++) students.Add(await _fixture.SeedUserAsync(schoolId, "student"));
+        var poisoned = students[7];
+
+        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await conn.OpenAsync();
+        // Make exactly one recipient's conversation upsert fail: a CHECK constraint that rejects any
+        // conversation involving the poisoned user. Dropped in finally so sibling tests are unaffected
+        // (the fixture is per class, so no other class shares this table).
+        await using (var poison = new NpgsqlCommand(
+            $"""ALTER TABLE "conversations" ADD CONSTRAINT "broadcast_poison" CHECK ("participantAId" <> '{poisoned}' AND "participantBId" <> '{poisoned}')""",
+            conn))
+        {
+            await poison.ExecuteNonQueryAsync();
+        }
+
+        try
+        {
+            var result = await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", content);
+
+            // The result reports exactly the one failure, by recipient, and counts only the delivered.
+            Assert.Equal(24, result.RecipientCount);
+            var failure = Assert.Single(result.Failures);
+            Assert.Equal(poisoned, failure.RecipientId);
+            Assert.Contains("broadcast_poison", failure.Error);
+
+            // The other 24 recipients' messages must be committed and visible from a second connection...
+            await using (var committed = new NpgsqlCommand("""SELECT count(*)::int FROM "messages" WHERE "content" = @content""", conn))
+            {
+                committed.Parameters.AddWithValue("content", content);
+                Assert.Equal(24, (int)(await committed.ExecuteScalarAsync())!);
+            }
+            // ...and the failed recipient got neither a conversation nor an outbox row (its own transaction rolled back).
+            await using (var poisonedRows = new NpgsqlCommand(
+                """
+                SELECT (SELECT count(*) FROM "conversations" WHERE "participantAId" = @p OR "participantBId" = @p)
+                     + (SELECT count(*) FROM "notification_outbox" WHERE "payload"->>'recipientEmail' = @p || '@test.dev')
+                """, conn))
+            {
+                poisonedRows.Parameters.AddWithValue("p", poisoned);
+                Assert.Equal(0L, (long)(await poisonedRows.ExecuteScalarAsync())!);
+            }
+        }
+        finally
+        {
+            await using var drop = new NpgsqlCommand("""ALTER TABLE "conversations" DROP CONSTRAINT "broadcast_poison" """, conn);
+            await drop.ExecuteNonQueryAsync();
+        }
+    }
+
+    [Fact]
+    public async Task Each_recipient_commits_on_its_own_transaction_before_the_broadcast_completes()
+    {
+        // Pins "no single transaction spans recipients" two ways, both through the session factory the
+        // repository already depends on (no fixture change needed):
+        //   1. one writable session (= one transaction, see NpgsqlFormMapsDatabaseSessionFactory) is
+        //      opened PER RECIPIENT, not one for the whole broadcast;
+        //   2. while the broadcast is still opening sessions for the second chunk, the first chunk's
+        //      messages are already visible from an unrelated autocommit connection -- i.e. committed.
+        var schoolId = Guid.NewGuid().ToString();
+        var content = $"per-tx-{Guid.NewGuid()}";
+        var admin = await _fixture.SeedUserAsync(schoolId, "school_admin");
+        for (var i = 0; i < 25; i++) await _fixture.SeedUserAsync(schoolId, "student");
+
+        var observing = new ObservingSessionFactory(
+            new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), _fixture.ConnectionString, content);
+
+        var result = await Repo(observing).BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", content);
+
+        Assert.Equal(25, result.RecipientCount);
+        Assert.Empty(result.Failures);
+        Assert.Equal(25, observing.WritableOpens); // one transaction per recipient
+        // The 21st..25th sessions open only after the first chunk of 20 has fully completed, so by then
+        // 20 committed messages are visible to an outside connection. A single spanning transaction
+        // would show 0 here until the final COMMIT.
+        Assert.True(observing.MaxVisibleAtOpen >= 20, $"expected >= 20 committed messages visible mid-broadcast, saw {observing.MaxVisibleAtOpen}");
+    }
+
+    /// <summary>
+    /// Decorates the real factory: counts writable opens and, at each one, asks a separate autocommit
+    /// connection how many of this broadcast's messages are already committed.
+    /// </summary>
+    private sealed class ObservingSessionFactory(IFormMapsDatabaseSessionFactory inner, string connectionString, string content)
+        : IFormMapsDatabaseSessionFactory
+    {
+        private int _writableOpens;
+        private int _maxVisibleAtOpen;
+
+        public int WritableOpens => _writableOpens;
+        public int MaxVisibleAtOpen => _maxVisibleAtOpen;
+
+        public Task<FormMapsDatabaseSession> OpenReadOnlyAsync(RequestContext requestContext, CancellationToken cancellationToken = default) =>
+            inner.OpenReadOnlyAsync(requestContext, cancellationToken);
+
+        public async Task<FormMapsDatabaseSession> OpenWritableAsync(RequestContext requestContext, CancellationToken cancellationToken = default)
+        {
+            Interlocked.Increment(ref _writableOpens);
+            await using (var conn = new NpgsqlConnection(connectionString))
+            {
+                await conn.OpenAsync(cancellationToken);
+                await using var cmd = new NpgsqlCommand("""SELECT count(*)::int FROM "messages" WHERE "content" = @content""", conn);
+                cmd.Parameters.AddWithValue("content", content);
+                var visible = (int)(await cmd.ExecuteScalarAsync(cancellationToken))!;
+                int seen;
+                do { seen = _maxVisibleAtOpen; if (visible <= seen) break; }
+                while (Interlocked.CompareExchange(ref _maxVisibleAtOpen, visible, seen) != seen);
+            }
+            return await inner.OpenWritableAsync(requestContext, cancellationToken);
         }
     }
 }

@@ -23,3 +23,16 @@ public enum SendMessageStatus { Sent, NotFound, Blocked }
 public sealed record SendMessageResult(
     SendMessageStatus Status, MessageRow? Message, string? RecipientId, string? RecipientEmail,
     string? SenderName, string? Preview);
+
+/// <summary>One recipient whose message could not be committed during a broadcast.</summary>
+public sealed record BroadcastFailure(string RecipientId, string Error);
+
+/// <summary>
+/// Per-recipient outcome of a broadcast. Each recipient is committed on its own transaction (legacy's
+/// Prisma calls auto-commit per recipient), so <see cref="RecipientCount"/> messages ARE delivered even
+/// when <see cref="Failures"/> is non-empty.
+/// </summary>
+public sealed record BroadcastResult(int RecipientCount, IReadOnlyList<BroadcastFailure> Failures)
+{
+    public static readonly BroadcastResult Empty = new(0, []);
+}

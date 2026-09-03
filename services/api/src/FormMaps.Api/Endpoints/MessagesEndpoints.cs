@@ -167,7 +167,7 @@ public static class MessagesEndpoints
 
     private static async Task<IResult> BroadcastAsync(
         IRequestContextAccessor accessor, IProtectedRequestGuard guard, IMessagesRepository repository,
-        BroadcastRequest? body, CancellationToken cancellationToken)
+        ILoggerFactory loggerFactory, BroadcastRequest? body, CancellationToken cancellationToken)
     {
         var context = accessor.Current;
         var decision = guard.RequireIdentity(context);
@@ -183,9 +183,24 @@ public static class MessagesEndpoints
         if (string.IsNullOrWhiteSpace(context.Tenant!.SchoolId))
             return BadRequestResult("No school linked");
 
-        var count = await repository.BroadcastAsync(
+        var result = await repository.BroadcastAsync(
             context, context.Tenant.UserId, role, context.Tenant.SchoolId, body.RecipientGroup, body.Content, cancellationToken);
-        return Results.Ok(new { success = true, data = new { recipientCount = count } });
+        if (result.Failures.Count > 0)
+        {
+            // Legacy: a rejected recipient inside Promise.all lands in the route's catch -> 500 "Internal
+            // server error", while every recipient that already committed stays delivered. Same here; the
+            // per-recipient detail is logged because the response shape has nowhere to carry it.
+            var logger = loggerFactory.CreateLogger(typeof(MessagesEndpoints));
+            foreach (var failure in result.Failures)
+            {
+                logger.LogError("messages.broadcast.recipient_failed senderId={SenderId} recipientId={RecipientId} error={Error}",
+                    context.Tenant.UserId, failure.RecipientId, failure.Error);
+            }
+            logger.LogError("messages.broadcast.partial_failure senderId={SenderId} delivered={Delivered} failed={Failed}",
+                context.Tenant.UserId, result.RecipientCount, result.Failures.Count);
+            return InternalError();
+        }
+        return Results.Ok(new { success = true, data = new { recipientCount = result.RecipientCount } });
     }
 
     private static IResult CreateRealtimeTicketAsync(
@@ -224,4 +239,5 @@ public static class MessagesEndpoints
     private static IResult NotFound(string message) => Results.Json(new { success = false, message }, statusCode: StatusCodes.Status404NotFound);
     private static IResult Forbidden(string message) => Results.Json(new { success = false, message }, statusCode: StatusCodes.Status403Forbidden);
     private static IResult BadRequestResult(string message) => Results.Json(new { success = false, message }, statusCode: StatusCodes.Status400BadRequest);
+    private static IResult InternalError() => Results.Json(new { success = false, message = "Internal server error" }, statusCode: StatusCodes.Status500InternalServerError);
 }

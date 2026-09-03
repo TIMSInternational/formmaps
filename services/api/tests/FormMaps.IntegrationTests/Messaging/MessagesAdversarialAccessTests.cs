@@ -106,7 +106,7 @@ public sealed class MessagesAdversarialAccessTests : IClassFixture<MessagingData
         var count = await Repo().BroadcastAsync(
             _fixture.Ctx(counselor, schoolA), counselor, "counselor", schoolA, "students", "hi");
 
-        Assert.Equal(1, count);
+        Assert.Equal(1, count.RecipientCount);
         Assert.Equal(0, await CountConversationsForAsync(crossSchoolAssigned));
     }
 
@@ -122,7 +122,7 @@ public sealed class MessagesAdversarialAccessTests : IClassFixture<MessagingData
         var count = await Repo().BroadcastAsync(
             _fixture.Ctx(counselor, schoolId), counselor, "counselor", schoolId, "students", "hi");
 
-        Assert.Equal(0, count);
+        Assert.Equal(0, count.RecipientCount);
     }
 
     // =========================================================================
