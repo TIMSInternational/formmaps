@@ -424,6 +424,9 @@ public class AuthEndpointsTests : IDisposable
     [Fact]
     public async Task ChangePassword_non_admin_targeting_another_user_by_email_is_403()
     {
+        // Regression guard, not a fix-proving test: the 403 for a non-admin acting on someone else
+        // was already correct under the previous "email present => admin" rule and must survive the
+        // switch to legacy's id-based isAdminAction (this test is green before and after the fix).
         var repo = new FakeAuthRepository
         {
             UserByEmail = new AuthUserRow("target-1", "Target", "target@example.test", PasswordHasher.Hash("x"), "role_x", FormMapsRoles.Student, null, true),
@@ -450,8 +453,9 @@ public class AuthEndpointsTests : IDisposable
     [Fact]
     public async Task ChangePassword_non_admin_targeting_unknown_email_is_403_not_404()
     {
-        // Existence-hiding kept from the previous rule: a non-privileged caller must not be able to
-        // tell "that email is not a user" (404) from "that email is someone else" (403).
+        // Regression guard (green before and after the fix). Existence-hiding kept from the previous
+        // rule: a non-privileged caller must not be able to tell "that email is not a user" (404)
+        // from "that email is someone else" (403).
         var repo = new FakeAuthRepository { UserByEmail = null };
         using var factory = CreateFactory(repo);
         using var client = factory.CreateClient();
@@ -523,6 +527,77 @@ public class AuthEndpointsTests : IDisposable
         Assert.Equal("user", evt.SubjectType);
         Assert.Equal("target-1", evt.SubjectId);
         Assert.Equal("success", evt.Outcome);
+    }
+
+    [Fact]
+    public async Task ChangePassword_admin_audit_row_is_written_even_when_session_revocation_fails()
+    {
+        // The password UPDATE has already committed by the time the refresh-token revocation runs
+        // (independent sessions). If the revoke throws, the privileged rotation must still be on
+        // record: the audit write has to be sequenced right after the password commit, not after
+        // the revoke. Legacy warns BEFORE the update, so it never loses an authorized admin attempt.
+        var repo = new FakeAuthRepository
+        {
+            UserByEmail = new AuthUserRow("target-1", "Target", "target@example.test", PasswordHasher.Hash("x"), "role_x", FormMapsRoles.Student, "my-school", true),
+            RevokeAllThrows = true,
+        };
+        var audit = new FakeAuditEventWriter();
+        using var factory = CreateFactory(repo, audit);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-password")
+        {
+            Content = JsonBody(new { email = "target@example.test", password = "NewPass1$" }),
+        };
+        AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.SchoolAdmin, schoolId: "my-school");
+        var response = await client.SendAsync(request);
+
+        // The revoke failure still surfaces as a server error to the caller...
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.NotNull(repo.LastUpdatedPasswordHash);
+        Assert.Null(repo.LastRevokeAllUserId);
+        // ...but the committed password change is audited regardless.
+        var evt = Assert.Single(audit.Events);
+        Assert.Equal("audit.auth.password.admin_changed", evt.EventType);
+        Assert.Equal("caller-1", evt.ActorUserId);
+        Assert.Equal("target-1", evt.SubjectId);
+    }
+
+    [Fact]
+    public async Task ChangePassword_super_admin_cross_school_reset_is_attributed_to_the_targets_school()
+    {
+        // audit_events.schoolId is "tenant context, for filtering only" (audit-events spec) and
+        // IAuditEventReader filters on it. A Super Admin usually has no school of their own, so
+        // stamping the ACTOR's school would leave a `?schoolId=school-b` query blind to one of
+        // school-b's users having been force-reset. The row carries the TARGET's school; the
+        // actor's school (if any) rides along in metadata.
+        var repo = new FakeAuthRepository
+        {
+            UserByEmail = new AuthUserRow("target-1", "Target", "target@example.test", PasswordHasher.Hash("x"), "role_x", FormMapsRoles.Student, "school-b", true),
+        };
+        var audit = new FakeAuditEventWriter();
+        using var factory = CreateFactory(repo, audit);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-password")
+        {
+            Content = JsonBody(new { email = "target@example.test", password = "NewPass1$" }),
+        };
+        AddDevIdentity(request, userId: "super-1", role: FormMapsRoles.SuperAdmin);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("target-1", repo.LastRevokeAllUserId);
+        var evt = Assert.Single(audit.Events);
+        Assert.Equal("audit.auth.password.admin_changed", evt.EventType);
+        Assert.Equal("super-1", evt.ActorUserId);
+        Assert.Equal(FormMapsRoles.SuperAdmin, evt.ActorRole);
+        Assert.Equal("school-b", evt.SchoolId);
+        Assert.NotNull(evt.Metadata);
+        Assert.True(evt.Metadata!.ContainsKey("actorSchoolId"));
+        Assert.Null(evt.Metadata["actorSchoolId"]);
+        // Metadata keys must clear the PII denylist (this is what the real writer enforces).
+        AuditMetadataGuard.Validate(evt.Metadata);
     }
 
     [Fact]
@@ -1138,6 +1213,7 @@ public class AuthEndpointsTests : IDisposable
         public AuthUserRow? UpsertedSchoolAdminUser { get; set; }
         public ResetTokenRow? ResetToken { get; set; }
         public TaskCompletionSource? ForgotPasswordGate { get; set; }
+        public bool RevokeAllThrows { get; set; }
 
         public int RecordFailedLoginCallCount { get; private set; }
         public bool FindUserByEmailWasCalled { get; private set; }
@@ -1184,6 +1260,7 @@ public class AuthEndpointsTests : IDisposable
 
         public Task RevokeAllRefreshTokensAsync(string userId, string clientIp, CancellationToken cancellationToken = default)
         {
+            if (RevokeAllThrows) throw new InvalidOperationException("simulated refresh_tokens outage");
             LastRevokeAllUserId = userId;
             return Task.CompletedTask;
         }

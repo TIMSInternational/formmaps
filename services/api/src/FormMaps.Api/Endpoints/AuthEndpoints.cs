@@ -239,7 +239,7 @@ public static class AuthEndpoints
     private static async Task<IResult> ChangePasswordAsync(
         ChangePasswordRequest? body, HttpContext httpContext, IRequestContextAccessor accessor, IProtectedRequestGuard guard,
         IAuthRepository repository, IEmailSender emailSender, EmailTemplates emailTemplates, IAuditEventWriter auditEventWriter,
-        CancellationToken cancellationToken)
+        ILoggerFactory loggerFactory, CancellationToken cancellationToken)
     {
         var context = accessor.Current;
         var decision = guard.RequireIdentity(context);
@@ -336,25 +336,41 @@ public static class AuthEndpoints
         var hashed = PasswordHasher.Hash(body.Password);
         await repository.UpdatePasswordAsync(target.Id, hashed, cancellationToken);
 
-        var clientIp = AuthCookieWriter.GetClientIp(httpContext.Request);
-        await repository.RevokeAllRefreshTokensAsync(target.Id, clientIp, cancellationToken);
-
         if (isAdminAction)
         {
             // legacy: `logger.warn({ adminId: requesterId, targetUserId: user.id }, "Admin password
-            // change")` -- persisted as an audit_events row here rather than a log line. Fired after
-            // the password/revocation writes and with CancellationToken.None, per IAuditEventWriter's
-            // contract (fail-soft, never changes the user-visible outcome). IDs only, no email.
+            // change")` -- kept as a log line AND persisted as an audit_events row (the retrofit
+            // convention: the line survives an audit outage, where AuditEventWriter's
+            // audit.write_failed carries the subject but not the actor). IDs only, no email.
+            //
+            // Sequenced IMMEDIATELY after UpdatePasswordAsync, before the refresh-token revocation:
+            // the two repository calls run in independent sessions, so the password is already
+            // committed when the revoke starts, and a failure there must not leave a privileged
+            // rotation unrecorded. CancellationToken.None per IAuditEventWriter's contract (fail-soft,
+            // never changes the user-visible outcome).
+            //
+            // SchoolId is the TARGET's school -- audit_events.schoolId is "tenant context, for
+            // filtering only" and IAuditEventReader filters on it, so a Super Admin (no school of
+            // their own) resetting one of school X's users has to show up under school X. The
+            // actor's school rides along in metadata; both keys are ID-only and clear
+            // AuditMetadataGuard's denylist.
+            loggerFactory.CreateLogger(typeof(AuthEndpoints)).LogWarning(
+                "audit.auth.password.admin_changed actorUserId={ActorUserId} subjectUserId={SubjectUserId}",
+                context.Tenant!.UserId, target.Id);
             await auditEventWriter.WriteAsync(
                 new AuditEvent(
                     EventType: "audit.auth.password.admin_changed",
                     ActorUserId: context.Tenant!.UserId,
                     ActorRole: context.Actor!.NormalizedRole,
-                    SchoolId: context.Tenant.SchoolId,
+                    SchoolId: target.SchoolId,
                     SubjectType: "user",
-                    SubjectId: target.Id),
+                    SubjectId: target.Id,
+                    Metadata: new Dictionary<string, object?> { ["actorSchoolId"] = context.Tenant.SchoolId }),
                 CancellationToken.None);
         }
+
+        var clientIp = AuthCookieWriter.GetClientIp(httpContext.Request);
+        await repository.RevokeAllRefreshTokensAsync(target.Id, clientIp, cancellationToken);
 
         // Best-effort notification -- legacy AWAITS this (wrapped in try/catch swallowing failures),
         // unlike forgot-password's true fire-and-forget (item 7/9: don't assume one pattern
