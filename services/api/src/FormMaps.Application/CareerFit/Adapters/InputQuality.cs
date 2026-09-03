@@ -34,7 +34,14 @@ public static class InputWarningCodes
     public const string DiscGraphChoiceInvalid = "DISC_GRAPH_CHOICE_INVALID";
     public const string DiscFactorClamped = "DISC_FACTOR_CLAMPED";
     public const string DiscFactorNotANumber = "DISC_FACTOR_NAN";
-    public const string DiscAxisMissing = "DISC_AXIS_MISSING";
+
+    /// <summary>
+    /// The chosen graph is only PARTIALLY present — at least one of D/I/S/C is absent, JSON null or not a
+    /// number, but not all four. Fail-closed, never a warning: 0 is a real, extreme DISC value, so a
+    /// substituted 0 invents a profile rather than recording a gap. (Replaces the never-emitted
+    /// DISC_AXIS_MISSING slot, which nothing ever wrote and nothing has persisted.)
+    /// </summary>
+    public const string DiscFactorMissing = "DISC_FACTOR_MISSING";
 
     // Competencies
     public const string CompetencyNameUnknown = "COMPETENCY_NAME_UNKNOWN";

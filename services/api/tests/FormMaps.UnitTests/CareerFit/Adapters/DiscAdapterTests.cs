@@ -100,6 +100,51 @@ public class DiscAdapterTests
     }
 
     [Fact]
+    public void A_PARTIALLY_present_graph_is_fail_closed_never_a_substituted_zero()
+    {
+        // PcaNormalization.GraphAt fills a missing axis with `?? 0` — legacy behaviour, right for its own
+        // callers, and an invented profile for the engine. A DISC 0 is not "unknown": it is the most extreme
+        // value the scale carries, and every archetype whose rule for that factor is PASSIVE scores it 100
+        // (CareerFitFormulas.CalculatePcaRouteFit). A student measured on D alone would be ranked as though
+        // their I, S and C had been measured at rock bottom — the same defect the competency block was fixed
+        // for, on data that cannot even be repaired.
+        var absent = J("""{"PcaD1":89,"PcaS1":18,"PcaC1":21}""");                       // PcaI1 not there
+        var jsonNull = J("""{"PcaD1":89,"PcaI1":null,"PcaS1":18,"PcaC1":21}""");        // present, JSON null
+        var notNumeric = J("""{"PcaD1":89,"PcaI1":"alto","PcaS1":18,"PcaC1":21}""");    // present, unparseable
+
+        foreach (var raw in new[] { absent, jsonNull, notNumeric })
+        {
+            var ex = Assert.Throws<CareerFitInputException>(() => DiscAdapter.Adapt(raw, DiscGraphChoice.WorkAdaptation));
+            Assert.Equal(InputInstruments.Pca, ex.Instrument);
+            Assert.Equal(InputWarningCodes.DiscFactorMissing, ex.Code);
+            Assert.Contains("PcaI1", ex.Message);
+        }
+
+        // PcaNormalization's own behaviour is deliberately untouched: its existing callers still get the
+        // legacy zero-filled graph. The refusal belongs to the adapter, which knows what the zero would mean.
+        Assert.Equal(new DiscGraph(89, 0, 18, 21), PcaNormalization.NormalizeDisc(absent)!.WorkAdaptation);
+
+        // A hole in a graph nobody chose is not this student's problem.
+        var holeElsewhere = J("""{"PcaD1":10,"PcaI1":20,"PcaS1":30,"PcaC1":40,"PcaD2":50}""");
+        Assert.Equal(new PcaInput(10, 20, 30, 40), DiscAdapter.Adapt(holeElsewhere, DiscGraphChoice.WorkAdaptation).Pca);
+        Assert.Equal(
+            InputWarningCodes.DiscFactorMissing,
+            Assert.Throws<CareerFitInputException>(() => DiscAdapter.Adapt(holeElsewhere, DiscGraphChoice.UnderPressure)).Code);
+    }
+
+    [Fact]
+    public void All_four_factors_present_scores_normally_including_a_MEASURED_zero()
+    {
+        // The distinction the refusal above exists to keep: a measured 0 is real data and must be scored.
+        var raw = J("""{"PcaD1":0,"PcaI1":20,"PcaS1":"30","PcaC1":40}""");
+
+        var result = DiscAdapter.Adapt(raw, DiscGraphChoice.WorkAdaptation);
+
+        Assert.Equal(new PcaInput(0, 20, 30, 40), result.Pca);
+        Assert.DoesNotContain(result.Warnings, w => w.Code == InputWarningCodes.DiscFactorMissing);
+    }
+
+    [Fact]
     public void No_DISC_at_all_is_fail_closed()
     {
         Assert.Equal(InputWarningCodes.DiscMissing, Assert.Throws<CareerFitInputException>(() => DiscAdapter.Adapt(J("null"))).Code);
