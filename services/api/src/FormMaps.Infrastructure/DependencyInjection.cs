@@ -363,11 +363,14 @@ public static class DependencyInjection
             CareerFitRulesProvider.FromConfiguration(configuration).EnsureLoaded());
         // FM-CF-010 (P1–P3): the evaluator and its two seams. Scoped like every other reader/writer here
         // (they open sessions on the Scoped IFormMapsDatabaseSessionFactory under the caller's RequestContext).
-        // IV360Adapter is the NoData implementation until FM-CF-006/007 exist: every run scores
-        // careerfit360 = 0 / NOT_DETERMINABLE and says so in its inputQuality — see CareerFitEvaluator's
-        // header. Swapping this one registration is how FM-CF-007 turns 360 on. NOTHING is mapped as an
-        // endpoint yet (FM-CF-012 owns the seven routes and FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET).
-        services.AddSingleton<IV360Adapter>(NoDataV360Adapter.Instance);
+        // IV360Adapter is the FM-CF-007 aggregator: it reads the student's stored vocational item
+        // responses and produces one aggregate per rules.v360_variables code. Until FM-CF-006 seeds the 40
+        // items no response carries such a code, so it selects NoDataV360Adapter — by name, not by an
+        // empty query — and every run still scores careerfit360 = 0 / NOT_DETERMINABLE and says so in its
+        // inputQuality, exactly as before. Singleton: it is stateless and reads the singleton rules
+        // provider. NOTHING is mapped as an endpoint yet (FM-CF-012 owns the seven routes and
+        // FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET).
+        services.AddSingleton<IV360Adapter, VocationalV360Adapter>();
         services.AddScoped<ICareerFitInputReader, CareerFitInputReader>();
         services.AddScoped<ICareerFitRunWriter, CareerFitRunWriter>();
         services.AddScoped<ICareerFitEvaluator, CareerFitEvaluator>();

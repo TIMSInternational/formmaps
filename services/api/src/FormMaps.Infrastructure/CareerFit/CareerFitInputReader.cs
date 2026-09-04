@@ -41,8 +41,16 @@ namespace FormMaps.Infrastructure.CareerFit;
 /// <para>
 /// Deliberately NOT read: the pca_exam_sessions history (legacy per-exam score percentages are not
 /// percentiles — MilAdapter's header), evaluation_feedbacks / questions_360 (the platform's 360 aggregates
-/// at category level; the engine needs variables — FM-CF-006/007), and anything from the resolved
-/// personality type (the engine reads poles, never the type code).
+/// at CATEGORY level; the engine needs variables, which is why FM-CF-007 reads the raw item responses
+/// instead — see the 360 read below), and anything from the resolved personality type (the engine reads
+/// poles, never the type code).
+/// </para>
+/// <para>
+/// THE 360 READ IS NOT FAIL-CLOSED, AND IT IS LAST. evaluation_groups IS policied (003-fk-users.sql: self
+/// OR the evaluated user's school); vocational_responses is not, and is reached only through the loader's
+/// join to its group, so the policied parent gates it for this read. Unlike the three instruments above, an
+/// absent or empty result is a VALID outcome: a student with no 360 must still score, and does — the
+/// adapter selects NoDataV360Adapter and the run reads as it does today.
 /// </para>
 /// </remarks>
 public sealed class CareerFitInputReader(IFormMapsDatabaseSessionFactory databaseSessionFactory) : ICareerFitInputReader

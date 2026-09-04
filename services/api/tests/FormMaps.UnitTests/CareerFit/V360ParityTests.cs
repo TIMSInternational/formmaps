@@ -29,7 +29,7 @@ public class V360ParityTests(ITestOutputHelper output)
     private static JsonElement LoadFixture()
     {
         var assembly = Assembly.GetExecutingAssembly();
-        var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith("v360-parity-fixture.json", StringComparison.Ordinal));
+        var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith(".CareerFit.Data.v360-parity-fixture.json", StringComparison.Ordinal));
         using var stream = assembly.GetManifestResourceStream(name)!;
         return JsonDocument.Parse(stream).RootElement.Clone();
     }

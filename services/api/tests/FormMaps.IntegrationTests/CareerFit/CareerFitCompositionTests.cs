@@ -27,7 +27,11 @@ public class CareerFitCompositionTests
         Assert.IsType<CareerFitEvaluator>(evaluator);
         Assert.IsType<CareerFitInputReader>(services.GetRequiredService<ICareerFitInputReader>());
         Assert.IsType<CareerFitRunWriter>(services.GetRequiredService<ICareerFitRunWriter>());
-        Assert.Same(NoDataV360Adapter.Instance, services.GetRequiredService<IV360Adapter>());
+        // FM-CF-007: the registered adapter is the AGGREGATOR, not the NoData one. It delegates to NoData
+        // when a student has no 360 variable answered — which, until FM-CF-006 seeds the items, is every
+        // student — so the runtime behaviour is unchanged while the path that will score is the one wired.
+        Assert.IsType<VocationalV360Adapter>(services.GetRequiredService<IV360Adapter>());
+        Assert.Same(services.GetRequiredService<IV360Adapter>(), factory.Services.GetRequiredService<IV360Adapter>());
 
         // One rule set per process, already loaded and resolved by the startup check.
         var provider = services.GetRequiredService<ICareerFitRulesProvider>();

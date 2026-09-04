@@ -93,10 +93,11 @@ public sealed class CareerFitRlsTests : IClassFixture<CareerFitDatabaseFixture>,
         }
 
         // What the VENDORED files applied — the platform tables only (pca_results joined the list with FM-CF-010's
-        // source rows; the two session tables have no vendored policy). The CareerFit tables cannot appear here
-        // (see the fixture remarks), which is exactly why the next assertion reads the catalog instead.
+        // source rows and evaluation_groups with FM-CF-007's; the two session tables and vocational_responses have
+        // no vendored policy). The CareerFit tables cannot appear here (see the fixture remarks), which is exactly
+        // why the next assertion reads the catalog instead.
         Assert.Equal<string>(
-            ["counselor_student_assignments", "pca_results", "student_parent_links", "users"],
+            ["counselor_student_assignments", "evaluation_groups", "pca_results", "student_parent_links", "users"],
             _fixture.AppliedPolicyTables);
 
         // What infra/aws/sql/careerfit-schema.sql applied: ENABLE + FORCE, one tenant_isolation policy per table,

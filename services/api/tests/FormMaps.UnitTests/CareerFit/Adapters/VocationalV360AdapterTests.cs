@@ -128,7 +128,8 @@ public class VocationalV360AdapterTests
     /// The shape is spec'd even though V1 ships self-only, so the arithmetic must already be right: the
     /// per-variable score is F02 over the rater sources at rules.weights.v360_sources, the consensus is
     /// F03, and the confidence is F05. RED against the naive adapter, which pooled all four raters'
-    /// answers into one unweighted mean (75.0 here instead of 78.75) and never used a source weight.
+    /// answers into one unweighted mean (62.5 here instead of the source-weighted 70.0) and never read a
+    /// source weight at all.
     /// </summary>
     [Fact]
     public void Four_raters_integrate_at_the_rule_sets_source_weights_not_as_one_pooled_mean()

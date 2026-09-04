@@ -122,8 +122,8 @@ branch `careerfit/p1-p3`). Nothing is mapped as an HTTP endpoint yet — that is
 |---|---|
 | `FormMaps.Application.CareerFit` | `CareerFitFormulas` (F01–F23, one static function per reference function), the input/result records, `CareerFitRules` + `CareerFitRulesJson` (the JSON above, embedded from `CareerFit/Data`), `ICareerFitRulesProvider`, `CareerFitEvaluator` / `ICareerFitEvaluator` (the orchestrator), `CareerFitRun`, `CareerFitRunJson` (the three jsonb shapes) |
 | `FormMaps.Application.CareerFit.Resolver` | `CareerFitRulesResolver` — `mc_gate.py check_resolved()` ported one for one; `CareerFitRulesInvalidException` lists every problem with family and field |
-| `FormMaps.Application.CareerFit.Adapters` | `DiscAdapter`, `CompetencyAdapter`, `MilAdapter`, `PersonalityAdapter`, `IV360Adapter` / `NoDataV360Adapter`, composed by `CareerFitInputAdapters`; `InputQuality` is the audit record |
-| `FormMaps.Infrastructure.CareerFit` | `CareerFitRulesProvider` (the ConfigCache: `CareerFit:RulesVersion`, loaded + resolved once per process, boot-gated in `AddFormMapsInfrastructure`), `CareerFitInputReader` (one read-only RLS session), `CareerFitRunWriter` (run + family rows in one transaction) |
+| `FormMaps.Application.CareerFit.Adapters` | `DiscAdapter`, `CompetencyAdapter`, `MilAdapter`, `PersonalityAdapter`, `IV360Adapter` (`V360Aggregation` / `VocationalV360Adapter`, with `NoDataV360Adapter` as the named fallback), composed by `CareerFitInputAdapters`; `InputQuality` is the audit record |
+| `FormMaps.Infrastructure.CareerFit` | `CareerFitRulesProvider` (the ConfigCache: `CareerFit:RulesVersion`, loaded + resolved once per process, boot-gated in `AddFormMapsInfrastructure`), `CareerFitInputReader` (one read-only RLS session; the 360 rater groups come from `Assessments/VocationalResponseLoader`, shared with the vocational recompute), `CareerFitRunWriter` (run + family rows in one transaction) |
 | `infra/aws/sql/careerfit-schema.sql` | `careerfit_runs` / `careerfit_family_results`, tenant-scoped, RLS ENABLE+FORCE; grants in `dotnet-service-role.sql` §4.7 (SELECT + INSERT only — a run is immutable, a re-evaluation is a new run) |
 
 The pipeline is `CareerFitEvaluator.EvaluateAsync(context, userId, graph?)`: read the student's
@@ -169,14 +169,48 @@ choice, recorded on every run's `inputQuality`, and open to revision by TIMS:
    engine's domain is 1–99. **0 → 1 and 100 → 99, each with a warning.** A missing subtest is not
    repaired — it fails closed, because a MIL mean over four subtests would silently misweight.
 
-### 360 is NoData until FM-CF-006/007
+### 360 (FM-CF-007/008): the engine is built, the items are not
 
-No variable-level 360 aggregation exists before the 40 items are seeded (FM-CF-006, blocked on
-TIMS) and aggregated (FM-CF-007). The registered `IV360Adapter` is `NoDataV360Adapter`: every family
-scores `careerfit360 = 0.0` with confidence `NOT_DETERMINABLE`, which is exactly what the reference
-engine produces for a student with no 360 evidence. Consequences, all on the run's `inputQuality`
-(`v360_source: NO_DATA`, warning `V360_NO_DATA`, `evidence.360: false`): the 360 weight multiplies
-zero for every family, so every `CareerFitAbsolute` is uniformly lower and the **ranking is
-untouched**; the 360 instrument reads DIVERGENT in convergence, so convergence counts at most three
-STRONG instruments — **SOLID is the ceiling, VERY_HIGH is unreachable**. Turning 360 on is one DI
-registration (`IV360Adapter`) once FM-CF-007 lands.
+The aggregation is real and wired. `VocationalV360Adapter` / `V360Aggregation` reads the student's
+completed vocational rater groups — through `VocationalResponseLoader`, the chassis's own query,
+lifted out of `VocationalWriter` so there is exactly one definition of "the student's 360
+responses" — and turns them into one `V360Aggregate` per `rules.v360_variables` code:
+
+```
+item responses -> per source, per variable, the mean of F01-normalized answers
+               -> F02/F03/F04 IntegrateSources over weights.v360_sources (SELF .35 / PARENT .25 / TEACHER .25 / PEER .15)
+               -> F05 Confidence360 over thresholds.v360_confidence
+               -> V360Aggregate(score, consensus, confidence_index), in the rule set's declared variable order
+```
+
+`CalculateCareerFit360` (F06) then weights each variable by `base_weight × relevance` **read off the
+family's own rule**, so relevance really is per family. Held to the reference engine at 1e-9 by
+`V360ParityTests` against `tools/careerfit/export_v360_fixture.py`'s fixture (F01, F04/F05 over nine
+source cases, F06 over six aggregate sets × 14 families).
+
+Three things are deliberately NOT decided here:
+
+* **Consensus with one rater.** V1 is self-only 360 (decision 1). Consensus is `100 − (max − min)`
+  *across raters*, so with one rater the reference returns `None` and F05 refuses a label. Every
+  aggregate therefore carries a real score, a **null** consensus and a null confidence index, the run's
+  global confidence is `NOT_DETERMINABLE`, and that downgrades a STRONG 360 to PARTIAL — **SOLID stays
+  the ceiling**. Calling one rater unanimous would make the weakest evidence look like the strongest.
+* **IND (P36).** Excluded in V1 by name (`V360Aggregation.ExcludedInV1`), recorded on every run
+  (`V360_IND_EXCLUDED`). It is a 20-industry *selection vector* at the catalogue's largest base weight
+  (0.1, in every family's rules); a per-family scalar needs an industry → family projection TIMS has
+  not delivered. The rule set is untouched — when the projection arrives, deleting the exclusion is the
+  whole change.
+* **P35 / RANK.** Open question 5 ("does the student's own ranking enter at 0.10?") is unanswered and
+  this code does not answer it: the ranking is recognised, recorded as not scored, and its weight is
+  entirely the rule set's — `base_weight 0` and no family rule in 1.0.0-draft.1, so it contributes
+  nothing today. A per-family scalar would need an area → family projection, and the aggregate map is
+  global.
+
+**Until FM-CF-006 seeds the 40 items, nothing changes at runtime.** The variable code is read from
+`vocational_responses."dimensionKey"`; no response carries one today, so the adapter selects
+`NoDataV360Adapter` — explicitly, by name, not because a query came back empty — and every family
+scores `careerfit360 = 0.0` with `NOT_DETERMINABLE`, `v360_source: NO_DATA`, warning `V360_NO_DATA`,
+`evidence.360: false`, exactly as before: the 360 weight multiplies zero for every family, so every
+`CareerFitAbsolute` is uniformly lower and the **ranking is untouched**. If TIMS seeds the codes under
+a different carrier, *nothing* matches and the run degrades to that same NO_DATA reading rather than
+scoring something wrong.
