@@ -26,6 +26,13 @@ public interface IObjectStorage
     /// </summary>
     Task<string> GetPresignedReadUrlAsync(
         string key, int ttlSeconds, bool inline, string contentType, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Delete a stored object — the port of <c>lib/s3.ts</c> <c>deleteFile</c>. Added for formmaps#59's letter
+    /// upload, which does a best-effort delete of the freshly-written object when the DB write that records its key
+    /// fails, so a failed upload leaves no orphan in the bucket. Callers treat a throw here as non-fatal.
+    /// </summary>
+    Task DeleteAsync(string key, CancellationToken cancellationToken = default);
 }
 
 /// <summary>The result of an upload: the stored key + its presigned read URL.</summary>

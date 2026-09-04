@@ -349,6 +349,9 @@ public sealed class UploadEndpointsTests
         public Task<string> GetPresignedReadUrlAsync(
             string key, int ttlSeconds, bool inline, string contentType, CancellationToken cancellationToken = default) =>
             Task.FromResult("https://signed/existing-key-url");
+
+        // Unused by the upload routes; part of IObjectStorage since formmaps#59's orphan cleanup.
+        public Task DeleteAsync(string key, CancellationToken cancellationToken = default) => Task.CompletedTask;
     }
 
     private sealed class FakeRepo : IUploadRepository

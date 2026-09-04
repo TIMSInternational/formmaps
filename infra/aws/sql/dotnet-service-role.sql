@@ -281,6 +281,18 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     public."personality_assessment_sessions",
     public."personality_responses",
     public."questions_360",
+    -- ---------------------------------------------------------------------
+    -- formmaps#59 (letters of recommendation): the .NET port of
+    -- routes/recommendations.ts INSERTs a request (POST /), UPDATEs it on
+    -- reactivate / respond / status / letter-upload, and upserts the
+    -- application links (POST /:id/link-applications). No .NET code path
+    -- DELETEs from either -- de-linking and cancellation are soft-deletes
+    -- (isActive = false) in legacy and there is no route for either here --
+    -- so they belong in this tier and not in section 5. Granted now rather
+    -- than at flag-flip time: granting late means an ops re-run mid-domain,
+    -- which is the exact failure #29 hit.
+    public."recommendation_application_links",
+    public."recommendation_requests",
     public."refresh_tokens",   -- Domain 10: created on login, rotated on refresh, revoked on logout
     public."resumes",
     public."roles",            -- Domain 10: EnsureSchoolAdminRoleAsync / EnsureRoleAsync find-or-create

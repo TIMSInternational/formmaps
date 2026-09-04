@@ -24,6 +24,14 @@ public static class FormMapsPermissions
     public const string AlertsRead = "alerts:read";
 
     /// <summary>
+    /// A LIVE gate, unlike <see cref="AuditRead"/> below: <see cref="RolePermissions"/> already grants this string
+    /// to counselor, school_admin, teacher and coach (mirroring Node's ROLE_PERMISSIONS in lib/auth.ts), and
+    /// formmaps#59 gates four recommendation routes on it — GET /received, PUT /:id/respond, PUT /:id/status,
+    /// POST /:id/letter. GET /:id/letter deliberately does NOT use it; see RecommendationsEndpoints.
+    /// </summary>
+    public const string RecommendationsRespond = "recommendations:respond";
+
+    /// <summary>
     /// FORWARD-COMPAT MARKER — NOT YET A LIVE GATE. <c>GET /api/v1/audit/events</c> gates on
     /// <c>RequestActor.IsSuperAdmin</c> instead, because no role in Node's <c>ROLE_PERMISSIONS</c>
     /// (<c>api/src/lib/auth.ts</c>) can emit this string yet, so consulting it would ship an endpoint
