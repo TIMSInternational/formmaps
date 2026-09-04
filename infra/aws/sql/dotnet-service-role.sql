@@ -174,7 +174,9 @@ REVOKE CREATE ON SCHEMA public FROM formmaps_dotnet_svc;
 -- ---------------------------------------------------------------------------
 GRANT SELECT ON TABLE
     public."bookings",
-    public."category_requirements",
+    -- NOTE: "category_requirements" moved to its own SELECT/INSERT/DELETE tier below (issue #55) --
+    -- the graduation-rules PUT replaces these rows wholesale (deleteMany + createMany), which needs
+    -- DELETE. Read-only here would 42501 every rule-set edit.
     public."course_enrollments",
     public."courses",
     public."framework_courses",
@@ -184,7 +186,10 @@ GRANT SELECT ON TABLE
     -- GPA scale / grade map the moment FORMMAPS_ROUTE_GRADUATION_TO_DOTNET is flipped.
     public."graduation_plan_items",
     public."graduation_plans",
-    public."graduation_rule_sets",
+    -- NOTE: "graduation_rule_sets" moved to the SELECT/INSERT/UPDATE tier below (issue #55) --
+    -- POST /api/v1/school-admin/graduation/rules INSERTs a rule set and PUT .../rules/:id UPDATEs
+    -- totalCreditsRequired + updatedBy (GraduationRulesWriter). It does NOT need DELETE: the PUT
+    -- replaces the rule set's CHILD rows, never the rule set itself.
     public."isams_sync_jobs",
     public."lia_questions",
     public."pca_evaluations",
@@ -278,6 +283,9 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     -- NULL GPAs, not as a missing row), so full CRUD would grant a verb no code path has.
     public."gpa_configurations",
     public."student_gpas",
+    -- issue #55: created by POST /graduation/rules, updated by PUT /graduation/rules/:id. Never deleted
+    -- (moved from the read-only tier; see the NOTE there).
+    public."graduation_rule_sets",
     public."evaluation_groups",
     public."isams_configs",
     public."lia_assessment_sessions",
@@ -393,6 +401,30 @@ GRANT SELECT, INSERT ON TABLE
 -- ---------------------------------------------------------------------------
 GRANT INSERT ON TABLE
     public."audit_logs"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
+-- 4.7. Graduation rule-set CHILDREN (issue #55): SELECT, INSERT and DELETE -- and
+--    deliberately NOT UPDATE, which the read/write tier above would have carried.
+--
+--    `updateGraduationRules` (schoolGradesService.ts:243) does not edit these rows.
+--    It DELETEs every child of the rule set and re-creates the list from the request
+--    body, inside one transaction, so that a malformed payload cannot leave a rule set
+--    half-rewritten. GraduationRulesWriter ports that shape verbatim. There is
+--    therefore no .NET code path that issues an UPDATE against either table, and
+--    granting one would hand the service a verb its own design says it must not use:
+--    a partial in-place edit is exactly the half-applied state the delete-and-recreate
+--    exists to prevent.
+--
+--    This is the third distinct verb set in this file for the same reason the billing
+--    tier (3b) and the audit tier (4.5) are their own: what is WITHHELD is the
+--    invariant, not the tier the tables happen to resemble.
+--    DbRoleGrantsTests.Graduation_rule_set_children_* pins it, from the catalog and
+--    behaviourally.
+-- ---------------------------------------------------------------------------
+GRANT SELECT, INSERT, DELETE ON TABLE
+    public."category_requirements",
+    public."special_requirements"
     TO formmaps_dotnet_svc;
 
 -- ---------------------------------------------------------------------------

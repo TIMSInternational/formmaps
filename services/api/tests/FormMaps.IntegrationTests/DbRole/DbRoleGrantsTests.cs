@@ -284,6 +284,74 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     /// pass against a grant Postgres records but the role cannot use; a behavioural one alone cannot tell "no
     /// privilege" from "some other lock said no", which is why the SqlState is asserted rather than a bare throw.
     /// </summary>
+    /// <summary>
+    /// issue #55, the rule-set CHILDREN. Their tier is SELECT + INSERT + DELETE and specifically NOT UPDATE,
+    /// which is the opposite withholding from the two tables above. `updateGraduationRules` replaces these rows
+    /// wholesale (deleteMany + createMany in one transaction) rather than editing them, so no .NET code path
+    /// issues an UPDATE here — and granting one would hand the service the partial in-place edit that the
+    /// delete-and-recreate design exists to prevent. Catalog assertion; the behavioural half is below.
+    /// </summary>
+    [Theory]
+    [InlineData("category_requirements")]
+    [InlineData("special_requirements")]
+    public async Task Graduation_rule_set_children_are_select_insert_delete_but_never_update(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'DELETE')
+            """,
+            connection);
+        command.Parameters.AddWithValue("table", table);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.True(reader.GetBoolean(0), "the rule-set read includes both child lists");
+        Assert.True(reader.GetBoolean(1), "createMany re-creates the rows on every rules POST and PUT");
+        Assert.False(reader.GetBoolean(2), "no code path edits a requirement in place -- the PUT replaces them");
+        Assert.True(reader.GetBoolean(3), "deleteMany is half of the PUT's replace");
+    }
+
+    /// <summary>
+    /// The behavioural half of the assertion above, run as the role itself. The SqlState check is what makes the
+    /// rejected UPDATE attributable to the GRANT rather than to a constraint or a typo.
+    /// </summary>
+    [Theory]
+    [InlineData("category_requirements")]
+    [InlineData("special_requirements")]
+    public async Task Graduation_rule_set_children_accept_insert_and_delete_but_reject_update(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand($"""INSERT INTO "{table}" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        var exception = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var update = new NpgsqlCommand($"""UPDATE "{table}" SET id = @id WHERE id = @id""", connection);
+            update.Parameters.AddWithValue("id", id);
+            await update.ExecuteNonQueryAsync();
+        });
+
+        Assert.Equal("42501", exception.SqlState); // insufficient_privilege
+
+        await using var delete = new NpgsqlCommand($"""DELETE FROM "{table}" WHERE id = @id""", connection);
+        delete.Parameters.AddWithValue("id", id);
+        Assert.Equal(1, await delete.ExecuteNonQueryAsync());
+    }
+
     [Theory]
     [InlineData("student_gpas")]
     [InlineData("gpa_configurations")]

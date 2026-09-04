@@ -4,6 +4,7 @@ using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using FormMaps.Application.Gradebook;
 using FormMaps.Application.Transcript;
+using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Gradebook;
 
 namespace FormMaps.Infrastructure.Transcript;
@@ -262,20 +263,8 @@ public sealed class TranscriptReader(IFormMapsDatabaseSessionFactory databaseSes
     }
 
     /// <summary>
-    /// Postgres renders DECIMAL(65,30) with all 30 fractional digits ("4.000000000000000000000000000000").
-    /// Prisma hands the same text to decimal.js, whose toString() strips trailing zeros ("4"), and THAT string is
-    /// what JSON.stringify emits for the uncoerced <c>scale</c> column. This reproduces that normalization
-    /// textually so no double round-trip is involved.
+    /// The uncoerced-Decimal wire form for <c>gpa_configurations.scale</c>. Shared with the graduation rule-set
+    /// tree, which has four more of them — see <see cref="PrismaDecimalText"/> for the full rationale.
     /// </summary>
-    internal static string NormalizeDecimalString(string raw)
-    {
-        var value = raw.Trim();
-        if (value.Contains('.', StringComparison.Ordinal) && !value.Contains('e', StringComparison.OrdinalIgnoreCase))
-        {
-            value = value.TrimEnd('0').TrimEnd('.');
-        }
-
-        // "-0" / "" (from "0.000" -> "0" is already handled; "" only if raw was "." which Postgres never emits).
-        return value.Length == 0 || value == "-" ? "0" : value;
-    }
+    internal static string NormalizeDecimalString(string raw) => PrismaDecimalText.Normalize(raw);
 }

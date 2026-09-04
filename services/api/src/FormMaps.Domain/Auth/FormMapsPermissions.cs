@@ -14,6 +14,14 @@ public static class FormMapsPermissions
     public const string SchoolManage = "school:manage";
     public const string SchoolUsers = "school:users";
     public const string CalendarManage = "calendar:manage";
+
+    /// <summary>
+    /// The graduation half of routes/school-grades.ts (issue #55). LIVE, unlike <see cref="AuditRead"/>:
+    /// RolePermissions already emits it for SuperAdmin and SchoolAdmin, matching Node ROLE_PERMISSIONS
+    /// (lib/auth.ts:61 / :76), so holding it grants exactly what legacy grants. Note it is NOT the same gate
+    /// as calendar:manage even though the two routers share a file and a role set.
+    /// </summary>
+    public const string GraduationManage = "graduation:manage";
     public const string CoursesRead = "courses:read";
     public const string CoursesWrite = "courses:write";
     public const string CurriculumManage = "curriculum:manage";
