@@ -43,6 +43,7 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
     private static readonly string[] AllTables =
     [
         "careerfit_family_results", "careerfit_runs",
+        "vocational_responses", "evaluation_groups",
         "personality_assessment_sessions", "lia_assessment_sessions", "pca_results",
         "student_parent_links", "counselor_student_assignments", "users", "schools",
     ];
@@ -262,7 +263,7 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         // 'on' and both identity GUCs come back unset.
         var factory = new SessionSpy(Factory());
         var evaluator = new CareerFitEvaluator(
-            new CareerFitInputReader(factory), new CareerFitRunWriter(factory), Provider, NoDataV360Adapter.Instance);
+            new CareerFitInputReader(factory), new CareerFitRunWriter(factory), Provider, new VocationalV360Adapter(Provider));
 
         // A COUNSELOR, not the student: the caller's identity and the run's subject differ, so a writer that
         // silently ran as the subject (or as nobody) is distinguishable from one that ran as the caller.
@@ -380,6 +381,96 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         Assert.Equal(2, quality.GetProperty("warnings").EnumerateArray().Count(w => w.GetProperty("code").GetString() == InputWarningCodes.MilPercentileClamped));
     }
 
+    // ---- 360 (FM-CF-007/008) ----
+
+    /// <summary>
+    /// The whole 360 path on the real tables: rows written the way the vocational chassis writes them, read
+    /// back through the chassis's OWN loader, aggregated to variable level, and scored per family from the
+    /// rule set's relevance weights. The item TEXTS do not exist (FM-CF-006 is blocked on TIMS) and none is
+    /// invented here — only the codes, which are the rule set's own, and synthetic ratings.
+    ///
+    /// This is the SELF-ONLY shape V1 ships, so every claim about a single rater is made against the
+    /// database: real scores, no consensus, NOT_DETERMINABLE, and 360 never counted as a fourth STRONG
+    /// instrument. IND is seeded deliberately and must not appear.
+    /// </summary>
+    [Fact]
+    public async Task Seeded_360_item_responses_score_at_variable_level_with_self_only_confidence()
+    {
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        await SeedRaterGroupAsync(admin, "eg-a1-self", StudentA1, "self",
+            [(1, "AN", 5), (2, "AN", 4), (3, "AST", 5), (7, "OA", 3), (27, "EA", 5), (36, "IND", 5)]);
+
+        var run = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+
+        // Variable level: one aggregate per seeded code, IND excluded by name (FM-CF-008).
+        Assert.Equal(["AN", "AST", "OA", "EA"], run.Inputs.V360Aggregates.Keys.ToArray());
+        Assert.Equal(87.5, run.Inputs.V360Aggregates["AN"].Score);    // mean(100, 75), SELF alone
+        Assert.Equal(100.0, run.Inputs.V360Aggregates["AST"].Score);
+        Assert.Equal(50.0, run.Inputs.V360Aggregates["OA"].Score);
+
+        // One rater: consensus is undefined, and nothing manufactures one.
+        Assert.All(run.Inputs.V360Aggregates.Values, a => Assert.Null(a.Consensus));
+        Assert.All(run.Inputs.V360Aggregates.Values, a => Assert.Null(a.ConfidenceIndex));
+        Assert.Equal(Confidence.NotDeterminable, run.Inputs.CareerFit360Confidence);
+
+        Assert.Equal(V360Sources.VocationalResponses, run.Quality.V360Source);
+        Assert.Contains(run.Quality.Warnings, w => w.Code == InputWarningCodes.V360SingleRater);
+        Assert.Contains(run.Quality.Warnings, w => w.Code == InputWarningCodes.V360IndExcluded);
+        Assert.DoesNotContain(run.Quality.Warnings, w => w.Code == InputWarningCodes.V360NoData);
+
+        // Family level: family 1's rules carry AN, AST, OA, MR, EA and IND. Four of them are scored, IND is
+        // not, MR was never answered — so F06's weighted mean runs over exactly those four.
+        var family1 = run.Families.Single(f => f.OwnerId == 1);
+        Assert.True(family1.CareerFit360 > 0.0);
+        var expected = CareerFitFormulas.CalculateCareerFit360(run.Inputs.V360Aggregates, Provider.Rules.Family(1).V360Rules);
+        Assert.Equal(expected.Score, family1.CareerFit360);
+        Assert.Equal(["AN", "AST", "OA", "EA"], expected.Variables.Keys.ToArray());
+
+        // Persisted, and still not a fourth STRONG instrument: NOT_DETERMINABLE downgrades a STRONG 360.
+        Assert.Equal(
+            family1.CareerFit360,
+            await DoubleAsync(admin, $"""SELECT "careerfit360" FROM "careerfit_family_results" WHERE "runId" = '{run.Id}' AND "familyId" = 1"""));
+        Assert.DoesNotContain(run.Families, f => f.ConvergenceLevel == Convergence.VeryHigh);
+
+        var quality = JsonDocument.Parse(await StringAsync(admin, $"""SELECT "inputQuality"::text FROM "careerfit_runs" WHERE "id" = '{run.Id}' """)).RootElement;
+        Assert.Equal(V360Sources.VocationalResponses, quality.GetProperty("v360_source").GetString());
+        Assert.True(quality.GetProperty("evidence").GetProperty("360").GetBoolean());
+    }
+
+    /// <summary>
+    /// The fallback is a DECISION, made on the real rows: a student whose chassis rows exist but carry no
+    /// 360 variable code (every student until FM-CF-006 seeds the items) gets today's run — empty
+    /// aggregates, NOT_DETERMINABLE, careerfit360 0.0 on every family, v360_source NO_DATA.
+    /// </summary>
+    [Fact]
+    public async Task Rater_groups_with_no_360_variable_code_still_produce_the_NO_DATA_run()
+    {
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        await SeedRaterGroupAsync(admin, "eg-a1-legacy", StudentA1, "self",
+            [(1, "communication", 5), (2, "leadership", 4)]);   // legacy vocational dimensions, not 360 variables
+
+        var run = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+
+        Assert.Empty(run.Inputs.V360Aggregates);
+        Assert.Equal(Confidence.NotDeterminable, run.Inputs.CareerFit360Confidence);
+        Assert.Equal(V360Sources.NoData, run.Quality.V360Source);
+        Assert.Contains(run.Quality.Warnings, w => w.Code == InputWarningCodes.V360NoData);
+        Assert.All(run.Families, f => Assert.Equal(0.0, f.CareerFit360));
+    }
+
+    /// <summary>An INCOMPLETE rater group is not evidence: the chassis's own loader filters on isEvaluationCompleted, and CareerFit inherits that rather than deciding it again.</summary>
+    [Fact]
+    public async Task An_incomplete_rater_group_is_not_read_as_360_evidence()
+    {
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        await SeedRaterGroupAsync(admin, "eg-a1-open", StudentA1, "self", [(1, "AN", 5)], completed: false);
+
+        var run = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+
+        Assert.Empty(run.Inputs.V360Aggregates);
+        Assert.Equal(V360Sources.NoData, run.Quality.V360Source);
+    }
+
     // ---- contexts ----
 
     private static RequestContext Student(string userId, string? schoolId) => Ctx(userId, FormMapsRoles.Student, schoolId);
@@ -406,7 +497,10 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
             new CareerFitInputReader(factory),
             new CareerFitRunWriter(factory),
             Provider,
-            NoDataV360Adapter.Instance);
+            // The registered adapter (FM-CF-007), not the NoData one: with no 360 item seeded for this
+            // student it must SELECT NoData itself and produce today's run byte for byte. That is the whole
+            // claim of "keep NoData as the fallback", and swapping in NoDataV360Adapter here would hide it.
+            new VocationalV360Adapter(Provider));
     }
 
     private async Task<Guid[]> VisibleRunsAsync(RequestContext context)
@@ -562,6 +656,51 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         cmd.Parameters.AddWithValue("type", (object?)resolvedType ?? DBNull.Value);
         cmd.Parameters.AddWithValue("scores", dimensionScores);
         await cmd.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>
+    /// One completed vocational rater group with its item responses, written exactly as the chassis writes
+    /// them (evaluation_groups + vocational_responses, instrument 'vocational'). The variable code goes in
+    /// vocational_responses."dimensionKey" — the carrier FM-CF-007 reads and FM-CF-006 will seed; see
+    /// V360Aggregation's header for what happens if TIMS seeds it somewhere else.
+    /// </summary>
+    private static async Task SeedRaterGroupAsync(
+        NpgsqlConnection admin,
+        string groupId,
+        string userId,
+        string groupType,
+        IReadOnlyList<(int Question, string Code, int? Rating)> responses,
+        bool completed = true)
+    {
+        await using (var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "evaluation_groups" ("id", "groupType", "evaluatedUserId", "instrument", "isEvaluationCompleted", "isActive")
+            VALUES (@id, @type, @uid, 'vocational', @done, true)
+            """, admin))
+        {
+            cmd.Parameters.AddWithValue("id", groupId);
+            cmd.Parameters.AddWithValue("type", groupType);
+            cmd.Parameters.AddWithValue("uid", userId);
+            cmd.Parameters.AddWithValue("done", completed);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        foreach (var (question, code, rating) in responses)
+        {
+            await using var cmd = new NpgsqlCommand(
+                """
+                INSERT INTO "vocational_responses"
+                    ("id", "evaluationGroupId", "instrumentVersion", "group", "questionNumber", "dimensionKey", "type", "ratingValue", "isActive")
+                VALUES (@id, @gid, 'v360-careerfit', @grp, @q, @code, 'likert', @rating, true)
+                """, admin);
+            cmd.Parameters.AddWithValue("id", $"{groupId}-{question}");
+            cmd.Parameters.AddWithValue("gid", groupId);
+            cmd.Parameters.AddWithValue("grp", groupType);
+            cmd.Parameters.AddWithValue("q", question);
+            cmd.Parameters.AddWithValue("code", code);
+            cmd.Parameters.AddWithValue("rating", (object?)rating ?? DBNull.Value);
+            await cmd.ExecuteNonQueryAsync();
+        }
     }
 
     private static async Task ExecAsync(NpgsqlConnection connection, string sql)

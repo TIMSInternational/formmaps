@@ -22,6 +22,7 @@ public class CareerFitRunJsonTests
         SampleStudentRows.Parse(SampleStudentRows.PercentilesJson),
         SampleStudentRows.Parse(SampleStudentRows.DimensionScoresJson()),
         threeSixty: null,
+        v360RaterGroups: null,
         Rules.Competencies);
 
     [Fact]
@@ -103,7 +104,7 @@ public class CareerFitRunJsonTests
         var percentiles = SampleStudentRows.Parse("""{"pattern_recognition":100,"verbal_reasoning":58,"numerical_speed":0,"working_memory":47,"visual_rotation":63}""");
         var inputs = CareerFitInputAdapters.Adapt(
             SampleStudentRows.Parse(SampleStudentRows.DiscJson), competences, percentiles,
-            SampleStudentRows.Parse(SampleStudentRows.DimensionScoresJson()), threeSixty: null, Rules.Competencies);
+            SampleStudentRows.Parse(SampleStudentRows.DimensionScoresJson()), threeSixty: null, v360RaterGroups: null, Rules.Competencies);
         var quality = inputs.Quality with { V360Source = "SELF_ONLY_V1" };
 
         var json = SampleStudentRows.Parse(CareerFitRunJson.SerializeInputQuality(quality, new CareerFitInputSources("a", "b", "c")));

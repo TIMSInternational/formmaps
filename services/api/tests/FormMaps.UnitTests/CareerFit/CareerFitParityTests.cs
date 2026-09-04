@@ -30,7 +30,7 @@ public class CareerFitParityTests(ITestOutputHelper output)
     private static JsonElement LoadFixture()
     {
         var assembly = Assembly.GetExecutingAssembly();
-        var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith("parity-fixture.json", StringComparison.Ordinal));
+        var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith(".CareerFit.Data.parity-fixture.json", StringComparison.Ordinal));
         using var stream = assembly.GetManifestResourceStream(name)!;
         return JsonDocument.Parse(stream).RootElement.Clone();
     }

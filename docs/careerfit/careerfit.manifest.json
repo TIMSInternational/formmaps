@@ -102,18 +102,27 @@
     {
       "id": "FM-CF-007-360-variable-aggregation",
       "phase": "P4",
-      "status": "pending",
+      "status": "completed",
       "goal": "Variable-level aggregation with consensus, coverage and confidence (VocationalScoring aggregates at dimension level today).",
-      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit"],
-      "validation": ["F04/F05 parity with the reference engine"]
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit", "services/api/src/FormMaps.Infrastructure/Assessments/VocationalResponseLoader.cs"],
+      "validation": [
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~V360ParityTests\"",
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~VocationalV360AdapterTests\"",
+        "F04/F05 parity with the reference engine"
+      ],
+      "notes": "Red first (commit e2548aee: naive aggregation, 12/22 tests fail on the defect symptom), then the fix. V360Aggregation: per source per variable the mean of F01-normalized answers -> F02/F03/F04 IntegrateSources over weights.v360_sources -> F05 Confidence360; the aggregate map is produced in the rule set's DECLARED variable order. Coverage is the reference's (sum of rater-source weights, what F05 consumes); ITEM coverage is recorded separately on a per-variable audit and warned on, because the two fail differently. V1 is SELF-ONLY, so consensus degenerates: one rater -> consensus None, confidence index null, global NOT_DETERMINABLE, warning V360_SINGLE_RATER -- no spread is manufactured. The global confidence is F05 applied once at instrument level (the GLOBAL arm of open question 7; F06's relevance-weighted index is the other arm and already ships beside it). Reads go through VocationalResponseLoader, VocationalWriter.LoadGroupsAsync lifted verbatim so there is ONE query for 'the student's 360 responses'; the variable code is read from vocational_responses.dimensionKey and, if FM-CF-006 seeds it elsewhere, NOTHING matches and the run degrades to NO_DATA rather than scoring something wrong. NoData stays the fallback and the selection is explicit (a named delegation, not an empty query): no rater group, or no response carrying a rules.v360_variables code, yields the empty map / NOT_DETERMINABLE / careerfit360 0.0 run of today. DI now registers VocationalV360Adapter; behaviour is unchanged until the items exist."
     },
     {
       "id": "FM-CF-008-careerfit360-relevance",
       "phase": "P4",
-      "status": "pending",
+      "status": "completed",
       "goal": "CareerFit360 per-family relevance weighting (F06) from rules.families[].v360_rules; IND excluded in V1.",
       "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit"],
-      "validation": ["F06 parity; base_weight carried on the rule, not the schema gap"]
+      "validation": [
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~V360ParityTests\"",
+        "F06 parity; base_weight carried on the rule, not the schema gap"
+      ],
+      "notes": "F06 parity at 1e-9 over six synthetic aggregate sets x 14 families, per-variable combined_weight included: the weight is base_weight x relevance READ OFF THE RULE (rules.families[].v360_rules[code].base_weight, required by the loader since FM-CF-004), pinned by a test that perturbs the rule and watches the catalogue entry stay put, and by one that shows the same variable weighing differently in two families (IND relevance 3 in family 4, 2 in family 1). IND is EXCLUDED in V1 as a NAMED exclusion (V360Aggregation.ExcludedInV1) at the point the evidence is read, not a silent filter: P36 is a 20-industry selection vector and a per-family scalar needs an industry -> family projection TIMS has not delivered; the exclusion is recorded on every run (V360_IND_EXCLUDED) and a test proves removing IND still leaves every scorable family with weighted BASE rules. The rule set is untouched -- when the projection arrives, deleting the exclusion is the whole change. P35 (RANK) is NOT decided here (open question 5): it is recognised, recorded as not scored, and its weight is entirely the rule set's -- base_weight 0 in the catalogue and no family rule in 1.0.0-draft.1, so it contributes nothing today."
     },
     {
       "id": "FM-CF-009-rules-resolver-fail-closed",

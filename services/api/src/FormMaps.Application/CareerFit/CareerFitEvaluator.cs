@@ -13,14 +13,20 @@ namespace FormMaps.Application.CareerFit;
 // the rows go through the FM-CF-002 tables. EvaluateCore is the pure centre (inputs + rule set → ranked
 // families) so tests can hold this path, not just the formulas, to the reference engine at 1e-9.
 //
-// 360 IN P1–P3. No variable-level 360 aggregation exists before FM-CF-006 (items) and FM-CF-007
-// (aggregation), so the registered IV360Adapter is NoDataV360Adapter: every family scores
-// careerfit360 = 0.0 with confidence NOT_DETERMINABLE, exactly what the reference engine produces for
-// a student with no 360 evidence. Consequences, all deliberate and all on the record (InputQuality
-// v360_source NO_DATA, warning V360_NO_DATA, evidence."360" false): the 360 weight (0.30) multiplies
-// zero for EVERY family, so every CareerFitAbsolute is uniformly lower and the ranking is untouched;
-// the 360 instrument reads DIVERGENT in convergence_level, so convergence counts at most THREE
-// STRONG instruments — SOLID is the ceiling and VERY_HIGH is unreachable until FM-CF-007.
+// 360 (FM-CF-007/008). The registered IV360Adapter is VocationalV360Adapter: it aggregates the
+// student's stored vocational item responses to VARIABLE level (F01→F02/F03/F04→F05) and F06 weights
+// each variable by base_weight × relevance from the family's own v360_rules. It is wired and tested,
+// and it changes nothing at runtime yet, because the 40 items are not seeded (FM-CF-006, blocked on
+// TIMS): no stored response carries a rules.v360_variables code, so the adapter selects
+// NoDataV360Adapter — explicitly, by name — and every family scores careerfit360 = 0.0 with confidence
+// NOT_DETERMINABLE, exactly what the reference engine produces for a student with no 360 evidence.
+// Consequences, all deliberate and all on the record (InputQuality v360_source NO_DATA, warning
+// V360_NO_DATA, evidence."360" false): the 360 weight (0.30) multiplies zero for EVERY family, so
+// every CareerFitAbsolute is uniformly lower and the ranking is untouched; the 360 instrument reads
+// DIVERGENT in convergence_level, so convergence counts at most THREE STRONG instruments — SOLID is
+// the ceiling and VERY_HIGH is unreachable. Once the items exist, SOLID stays the ceiling anyway for
+// as long as 360 is SELF-ONLY (manifest decision 1): one rater leaves consensus undefined, so the
+// confidence label is NOT_DETERMINABLE and F23 downgrades a STRONG 360 to PARTIAL.
 //
 // Deliberately NOT here: any HTTP surface (FM-CF-012 — the seven endpoints and the flag), any
 // per-user authorization (the endpoint's job; RLS on every read and write is the backstop, so a caller
@@ -79,6 +85,7 @@ public sealed class CareerFitEvaluator(
             raw.LiaPercentiles,
             raw.PersonalityDimensionScores,
             raw.ThreeSixty,
+            raw.V360RaterGroups,
             ruleSet.Rules.Competencies,
             v360Adapter,
             graph);

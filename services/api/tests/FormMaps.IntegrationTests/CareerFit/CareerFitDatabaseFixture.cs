@@ -55,6 +55,13 @@ public sealed class CareerFitDatabaseFixture : RlsEnabledDatabaseFixture
     /// absent for the opposite reason — they are policied, but by <see cref="AdditionalDdl"/>, not by the base.
     /// The two assessment SESSION tables (FM-CF-010's source rows) appear in no vendored file and so stay
     /// unpolicied here, as the vendored set leaves them; <c>pca_results</c> does appear (007) and is named.
+    /// FM-CF-007 adds the 360 chassis, and the two halves of it differ: <c>evaluation_groups</c> IS policied
+    /// (003-fk-users.sql — self OR the evaluated user's school) and so is named here, while
+    /// <c>vocational_responses</c> appears in no vendored file. That asymmetry is safe in this direction and
+    /// only in this direction: every response row is reachable only through the loader's join to its group,
+    /// so the policied parent gates the unpolicied child for the read CareerFit performs. A future query
+    /// that reached vocational_responses WITHOUT that join would not be gated, which is why the loader is
+    /// the single read path (see VocationalResponseLoader's header).
     /// </summary>
     protected override IReadOnlyCollection<string> PoliciedTables =>
     [
@@ -62,6 +69,7 @@ public sealed class CareerFitDatabaseFixture : RlsEnabledDatabaseFixture
         "counselor_student_assignments",    // 003-fk-users.sql    (keyed on studentId, NOT counselorId)
         "student_parent_links",             // 003-fk-users.sql + 009-parent-links.sql
         "pca_results",                      // 007-self-scoped.sql (self OR owner's school via users) — FM-CF-010 source row
+        "evaluation_groups",                // 003-fk-users.sql    (self OR the evaluated user's school) — FM-CF-007 source row
     ];
 
     /// <summary>The real <c>infra/aws/sql/careerfit-schema.sql</c>, applied as-is. See the class remarks.</summary>

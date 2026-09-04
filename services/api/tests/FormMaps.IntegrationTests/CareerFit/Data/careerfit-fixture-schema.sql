@@ -98,3 +98,44 @@ CREATE TABLE "personality_assessment_sessions" (
     "completed_at"      timestamp(3),
     "is_active"         boolean NOT NULL DEFAULT true
 );
+
+-- ------------------------------------------------------------------------------------------------
+-- FM-CF-007: the vocational 360 chassis, MINIMAL -- only the columns VocationalResponseLoader reads.
+-- CareerFitInputReader now loads the student's completed rater groups and their item responses through
+-- that loader (the same query the vocational recompute runs), so these two tables must exist for the
+-- evaluator to reach the end of a read. Shapes copied from FormMaps.IntegrationTests/Assessments/Data/
+-- vocational-schema.sql, which is itself hand-written from prisma/schema.prisma -- there is no committed
+-- migration for the vocational tables.
+--
+-- Like the two assessment SESSION tables above, neither appears in any vendored production policy file
+-- (formmaps#77 PENDING), so both are left unpolicied here exactly as production leaves them, and neither
+-- is in PoliciedTables. What stops a cross-school caller reaching a student's 360 responses is the same
+-- thing that stops them reaching the LIA percentiles: CareerFitInputReader's gate against the policied
+-- "users" row, which runs BEFORE any instrument read and short-circuits.
+-- ------------------------------------------------------------------------------------------------
+
+CREATE TABLE "evaluation_groups" (
+    "id"                     text PRIMARY KEY,
+    "groupType"              text NOT NULL,
+    "evaluatedUserId"        text NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
+    "instrument"             text,
+    "isEvaluationCompleted"  boolean NOT NULL DEFAULT false,
+    "isActive"               boolean NOT NULL DEFAULT true,
+    "createdDate"            timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE "vocational_responses" (
+    "id"                 text PRIMARY KEY,
+    "evaluationGroupId"  text NOT NULL REFERENCES "evaluation_groups" ("id") ON DELETE CASCADE,
+    "instrumentVersion"  text NOT NULL DEFAULT '',
+    "group"              text NOT NULL DEFAULT '',
+    "questionNumber"     integer NOT NULL,
+    "dimensionKey"       text,
+    "type"               text NOT NULL,
+    "ratingValue"        integer,
+    "rankingOrder"       jsonb,
+    "selectedValues"     jsonb,
+    "textValue"          text,
+    "isActive"           boolean NOT NULL DEFAULT true,
+    "createdDate"        timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+);

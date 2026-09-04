@@ -74,6 +74,14 @@ public static class InputWarningCodes
 
     // 360
     public const string V360NoData = "V360_NO_DATA";
+    public const string V360Adapted = "V360_ADAPTED";
+    public const string V360SingleRater = "V360_SINGLE_RATER";
+    public const string V360UnknownCode = "V360_UNKNOWN_CODE";
+    public const string V360PartialCoverage = "V360_PARTIAL_COVERAGE";
+    public const string V360IndExcluded = "V360_IND_EXCLUDED";
+    public const string V360RankNotScored = "V360_RANK_NOT_SCORED";
+    public const string V360RaterGroupUnknown = "V360_RATER_GROUP_UNKNOWN";
+    public const string V360ResponseOutOfRange = "V360_RESPONSE_OUT_OF_RANGE";
 
     // Reader authorization gate (FM-CF-010) — not an instrument defect: the caller's RLS session cannot see the
     // student's "users" row, so no instrument of theirs may be read either.
@@ -122,8 +130,11 @@ public enum PersonalityPoleDerivation
 /// <summary>Names an <see cref="IV360Adapter"/> implementation in <see cref="InputQuality.V360Source"/>.</summary>
 public static class V360Sources
 {
-    /// <summary>No 360 evidence was consulted (<see cref="NoDataV360Adapter"/>).</summary>
+    /// <summary>No 360 evidence was consulted, or none of it was scorable (<see cref="NoDataV360Adapter"/>).</summary>
     public const string NoData = "NO_DATA";
+
+    /// <summary>Aggregated from the vocational chassis's stored item responses (<see cref="VocationalV360Adapter"/>, FM-CF-007).</summary>
+    public const string VocationalResponses = "VOCATIONAL_RESPONSES";
 }
 
 /// <summary>Everything the orchestrator persists for audit about how the engine inputs were produced.</summary>
@@ -141,6 +152,10 @@ public sealed record InputQuality(
         InputWarningCodes.PersonalityDerivedFromCounts,
         InputWarningCodes.PersonalityDerivedFromIntensity,
         InputWarningCodes.V360NoData,
+        InputWarningCodes.V360Adapted,
+        InputWarningCodes.V360SingleRater,
+        InputWarningCodes.V360IndExcluded,
+        InputWarningCodes.V360RankNotScored,
     };
 
     /// <summary>True when at least one warning is a repair (anything but the informational graph / derivation / 360-source notes).</summary>

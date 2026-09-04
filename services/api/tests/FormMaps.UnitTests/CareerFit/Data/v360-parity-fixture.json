@@ -1,0 +1,2684 @@
+{
+ "rules_version": "1.0.0-draft.1",
+ "reference_engine": "docs/careerfit/sources/formmaps_engine_reference.py",
+ "tolerance": 1e-09,
+ "source_weights": {
+  "SELF": 0.35,
+  "PARENT": 0.25,
+  "TEACHER": 0.25,
+  "PEER": 0.15
+ },
+ "consensus_thresholds": {
+  "high_min": 70,
+  "medium_min": 40
+ },
+ "confidence_thresholds": {
+  "consensus_weight": 0.7,
+  "coverage_weight": 0.3,
+  "high_min": 75,
+  "medium_min": 55
+ },
+ "excluded_in_v1": [
+  "IND"
+ ],
+ "likert_cases": [
+  {
+   "response": null,
+   "normalized": null
+  },
+  {
+   "response": 1,
+   "normalized": 0.0
+  },
+  {
+   "response": 2,
+   "normalized": 25.0
+  },
+  {
+   "response": 3,
+   "normalized": 50.0
+  },
+  {
+   "response": 4,
+   "normalized": 75.0
+  },
+  {
+   "response": 5,
+   "normalized": 100.0
+  }
+ ],
+ "source_cases": [
+  {
+   "name": "all_four_raters",
+   "source_scores": {
+    "SELF": 80.0,
+    "PARENT": 60.0,
+    "TEACHER": 75.0,
+    "PEER": 45.0
+   },
+   "score": 68.5,
+   "consensus": 65.0,
+   "coverage": 1.0,
+   "valid_sources": 4,
+   "consensus_label": "MEDIUM",
+   "confidence_index": 75.5,
+   "confidence_label": "HIGH"
+  },
+  {
+   "name": "self_only_v1",
+   "source_scores": {
+    "SELF": 75.0,
+    "PARENT": null,
+    "TEACHER": null,
+    "PEER": null
+   },
+   "score": 75.0,
+   "consensus": null,
+   "coverage": 0.35,
+   "valid_sources": 1,
+   "consensus_label": "NOT_DETERMINABLE",
+   "confidence_index": null,
+   "confidence_label": "NOT_DETERMINABLE"
+  },
+  {
+   "name": "self_only_floor",
+   "source_scores": {
+    "SELF": 0.0,
+    "PARENT": null,
+    "TEACHER": null,
+    "PEER": null
+   },
+   "score": 0.0,
+   "consensus": null,
+   "coverage": 0.35,
+   "valid_sources": 1,
+   "consensus_label": "NOT_DETERMINABLE",
+   "confidence_index": null,
+   "confidence_label": "NOT_DETERMINABLE"
+  },
+  {
+   "name": "two_raters_tight",
+   "source_scores": {
+    "SELF": 70.0,
+    "PARENT": 72.5,
+    "TEACHER": null,
+    "PEER": null
+   },
+   "score": 71.04166666666667,
+   "consensus": 97.5,
+   "coverage": 0.6,
+   "valid_sources": 2,
+   "consensus_label": "HIGH",
+   "confidence_index": 86.25,
+   "confidence_label": "HIGH"
+  },
+  {
+   "name": "two_raters_wide",
+   "source_scores": {
+    "SELF": 100.0,
+    "PARENT": 0.0,
+    "TEACHER": null,
+    "PEER": null
+   },
+   "score": 58.333333333333336,
+   "consensus": 0.0,
+   "coverage": 0.6,
+   "valid_sources": 2,
+   "consensus_label": "LOW",
+   "confidence_index": 18.0,
+   "confidence_label": "LOW"
+  },
+  {
+   "name": "three_raters",
+   "source_scores": {
+    "SELF": 62.5,
+    "PARENT": null,
+    "TEACHER": 55.0,
+    "PEER": 90.0
+   },
+   "score": 65.5,
+   "consensus": 65.0,
+   "coverage": 0.75,
+   "valid_sources": 3,
+   "consensus_label": "MEDIUM",
+   "confidence_index": 68.0,
+   "confidence_label": "MEDIUM"
+  },
+  {
+   "name": "low_weight_pair",
+   "source_scores": {
+    "SELF": null,
+    "PARENT": null,
+    "TEACHER": 25.0,
+    "PEER": 100.0
+   },
+   "score": 53.125,
+   "consensus": 25.0,
+   "coverage": 0.4,
+   "valid_sources": 2,
+   "consensus_label": "LOW",
+   "confidence_index": 29.5,
+   "confidence_label": "LOW"
+  },
+  {
+   "name": "nobody_answered",
+   "source_scores": {
+    "SELF": null,
+    "PARENT": null,
+    "TEACHER": null,
+    "PEER": null
+   },
+   "score": null,
+   "consensus": null,
+   "coverage": 0.0,
+   "valid_sources": 0,
+   "consensus_label": "NOT_DETERMINABLE",
+   "confidence_index": null,
+   "confidence_label": "NOT_DETERMINABLE"
+  },
+  {
+   "name": "likert_grid",
+   "source_scores": {
+    "SELF": 0.0,
+    "PARENT": 25.0,
+    "TEACHER": 50.0,
+    "PEER": 100.0
+   },
+   "score": 33.75,
+   "consensus": 0.0,
+   "coverage": 1.0,
+   "valid_sources": 4,
+   "consensus_label": "LOW",
+   "confidence_index": 30.0,
+   "confidence_label": "LOW"
+  }
+ ],
+ "family_cases": [
+  {
+   "name": "all_variables",
+   "aggregates": {
+    "AN": {
+     "score": 0.0,
+     "consensus": 100.0,
+     "confidence_index": 50.0
+    },
+    "AST": {
+     "score": 35.0,
+     "consensus": 97.5,
+     "confidence_index": 52.0
+    },
+    "ASH": {
+     "score": 70.0,
+     "consensus": 95.0,
+     "confidence_index": 54.0
+    },
+    "ABS": {
+     "score": 0.0,
+     "consensus": 92.5,
+     "confidence_index": 56.0
+    },
+    "ACE": {
+     "score": 35.0,
+     "consensus": 90.0,
+     "confidence_index": 58.0
+    },
+    "OH": {
+     "score": 70.0,
+     "consensus": 87.5,
+     "confidence_index": 60.0
+    },
+    "OL": {
+     "score": 0.0,
+     "consensus": 85.0,
+     "confidence_index": 62.0
+    },
+    "OA": {
+     "score": 35.0,
+     "consensus": 82.5,
+     "confidence_index": 64.0
+    },
+    "OC": {
+     "score": 70.0,
+     "consensus": 80.0,
+     "confidence_index": 66.0
+    },
+    "ME": {
+     "score": 0.0,
+     "consensus": 100.0,
+     "confidence_index": 68.0
+    },
+    "MA": {
+     "score": 35.0,
+     "consensus": 97.5,
+     "confidence_index": 70.0
+    },
+    "MI": {
+     "score": 70.0,
+     "consensus": 95.0,
+     "confidence_index": 72.0
+    },
+    "MR": {
+     "score": 0.0,
+     "consensus": 92.5,
+     "confidence_index": 74.0
+    },
+    "PB": {
+     "score": 35.0,
+     "consensus": 90.0,
+     "confidence_index": 50.0
+    },
+    "PM": {
+     "score": 70.0,
+     "consensus": 87.5,
+     "confidence_index": 52.0
+    },
+    "PE": {
+     "score": 0.0,
+     "consensus": 85.0,
+     "confidence_index": 54.0
+    },
+    "EXPL": {
+     "score": 35.0,
+     "consensus": 82.5,
+     "confidence_index": 56.0
+    },
+    "CLAR": {
+     "score": 70.0,
+     "consensus": 80.0,
+     "confidence_index": 58.0
+    },
+    "AE_ACAD": {
+     "score": 0.0,
+     "consensus": 100.0,
+     "confidence_index": 60.0
+    },
+    "AE_EXEC": {
+     "score": 35.0,
+     "consensus": 97.5,
+     "confidence_index": 62.0
+    },
+    "LD": {
+     "score": 70.0,
+     "consensus": 95.0,
+     "confidence_index": 64.0
+    },
+    "LI": {
+     "score": 0.0,
+     "consensus": 92.5,
+     "confidence_index": 66.0
+    },
+    "LS": {
+     "score": 35.0,
+     "consensus": 90.0,
+     "confidence_index": 68.0
+    },
+    "LC": {
+     "score": 70.0,
+     "consensus": 87.5,
+     "confidence_index": 70.0
+    },
+    "CE": {
+     "score": 0.0,
+     "consensus": 85.0,
+     "confidence_index": 72.0
+    },
+    "CD": {
+     "score": 35.0,
+     "consensus": 82.5,
+     "confidence_index": 74.0
+    },
+    "EA": {
+     "score": 70.0,
+     "consensus": 80.0,
+     "confidence_index": 50.0
+    },
+    "EI": {
+     "score": 0.0,
+     "consensus": 100.0,
+     "confidence_index": 52.0
+    },
+    "EC": {
+     "score": 35.0,
+     "consensus": 97.5,
+     "confidence_index": 54.0
+    },
+    "ENV_FAM": {
+     "score": 70.0,
+     "consensus": 95.0,
+     "confidence_index": 56.0
+    },
+    "ENV_PEERS": {
+     "score": 0.0,
+     "consensus": 92.5,
+     "confidence_index": 58.0
+    },
+    "FLEX": {
+     "score": 35.0,
+     "consensus": 90.0,
+     "confidence_index": 60.0
+    },
+    "FORM_CONT": {
+     "score": 70.0,
+     "consensus": 87.5,
+     "confidence_index": 62.0
+    },
+    "ALT_ROUTE": {
+     "score": 0.0,
+     "consensus": 85.0,
+     "confidence_index": 64.0
+    },
+    "RANK": {
+     "score": 35.0,
+     "consensus": 82.5,
+     "confidence_index": 66.0
+    },
+    "IND": {
+     "score": 70.0,
+     "consensus": 80.0,
+     "confidence_index": 68.0
+    },
+    "ACT": {
+     "score": 0.0,
+     "consensus": 100.0,
+     "confidence_index": 70.0
+    },
+    "BARR": {
+     "score": 35.0,
+     "consensus": 97.5,
+     "confidence_index": 72.0
+    },
+    "OPEN_TALENT": {
+     "score": 70.0,
+     "consensus": 95.0,
+     "confidence_index": 74.0
+    },
+    "OPEN_10Y": {
+     "score": 0.0,
+     "consensus": 92.5,
+     "confidence_index": 50.0
+    }
+   },
+   "expected_by_family": {
+    "1": {
+     "careerfit360": 46.34177214790578,
+     "consensus": 85.48734177307803,
+     "confidence_index": 61.4075949386342,
+     "variables": {
+      "AN": {
+       "score": 0.0,
+       "combined_weight": 0.048
+      },
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "2": {
+     "careerfit360": 48.99999999685393,
+     "consensus": 84.87078651758364,
+     "confidence_index": 61.923595507404286,
+     "variables": {
+      "AN": {
+       "score": 0.0,
+       "combined_weight": 0.048
+      },
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.075
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "3": {
+     "careerfit360": 36.43170196733845,
+     "consensus": 85.94777209728966,
+     "confidence_index": 63.813002193398546,
+     "variables": {
+      "AN": {
+       "score": 0.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "ME": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "CE": {
+       "score": 0.0,
+       "combined_weight": 0.08
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "4": {
+     "careerfit360": 33.55029586116453,
+     "consensus": 86.260355028285,
+     "confidence_index": 65.86745562261467,
+     "variables": {
+      "OL": {
+       "score": 0.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "ME": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.09
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.30000000000000004
+      }
+     }
+    },
+    "5": {
+     "careerfit360": 38.06030150778375,
+     "consensus": 85.92964824027575,
+     "confidence_index": 67.25427135784959,
+     "variables": {
+      "OL": {
+       "score": 0.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.075
+      },
+      "MA": {
+       "score": 35.0,
+       "combined_weight": 0.09
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.09
+      },
+      "CD": {
+       "score": 35.0,
+       "combined_weight": 0.12
+      },
+      "EC": {
+       "score": 35.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "6": {
+     "careerfit360": 40.90786819728523,
+     "consensus": 88.17081371605133,
+     "confidence_index": 61.99193006294335,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.048
+      },
+      "ACE": {
+       "score": 35.0,
+       "combined_weight": 0.048
+      },
+      "OL": {
+       "score": 0.0,
+       "combined_weight": 0.075
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0999999999
+      },
+      "EC": {
+       "score": 35.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "7": {
+     "careerfit360": 56.56039097709109,
+     "consensus": 87.6256690704272,
+     "confidence_index": 61.50989062376307,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.09
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "8": {
+     "careerfit360": 46.80851064050662,
+     "consensus": 86.89443535130127,
+     "confidence_index": 62.76642506649828,
+     "variables": {
+      "ABS": {
+       "score": 0.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.06
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "9": {
+     "careerfit360": 47.160932610424894,
+     "consensus": 84.24154108663537,
+     "confidence_index": 63.31191356420948,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OL": {
+       "score": 0.0,
+       "combined_weight": 0.075
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "10": {
+     "careerfit360": 49.47624190075081,
+     "consensus": 85.62580993415243,
+     "confidence_index": 62.29416846865964,
+     "variables": {
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.048
+      },
+      "ACE": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "EC": {
+       "score": 35.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "11": {
+     "careerfit360": 52.514011211771646,
+     "consensus": 85.95676541048147,
+     "confidence_index": 65.20576461348371,
+     "variables": {
+      "ACE": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MA": {
+       "score": 35.0,
+       "combined_weight": 0.06
+      },
+      "CD": {
+       "score": 35.0,
+       "combined_weight": 0.08
+      },
+      "EC": {
+       "score": 35.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "12": {
+     "careerfit360": 51.654381662842646,
+     "consensus": 89.27723177547537,
+     "confidence_index": 63.98361998558289,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.048
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.09
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "13": {
+     "careerfit360": 56.82027061972331,
+     "consensus": 86.3677559349232,
+     "confidence_index": 61.74317079616914,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.075
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "14": {
+     "careerfit360": 40.41237113402062,
+     "consensus": 85.12886597938144,
+     "confidence_index": 67.77319587628865,
+     "variables": {
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.048
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "CE": {
+       "score": 0.0,
+       "combined_weight": 0.08
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "partial_coverage",
+   "aggregates": {
+    "AST": {
+     "score": 35.0,
+     "consensus": 97.5,
+     "confidence_index": 52.0
+    },
+    "ASH": {
+     "score": 70.0,
+     "consensus": 95.0,
+     "confidence_index": 54.0
+    },
+    "ACE": {
+     "score": 35.0,
+     "consensus": 90.0,
+     "confidence_index": 58.0
+    },
+    "OH": {
+     "score": 70.0,
+     "consensus": 87.5,
+     "confidence_index": 60.0
+    },
+    "OA": {
+     "score": 35.0,
+     "consensus": 82.5,
+     "confidence_index": 64.0
+    },
+    "OC": {
+     "score": 70.0,
+     "consensus": 80.0,
+     "confidence_index": 66.0
+    },
+    "MA": {
+     "score": 35.0,
+     "consensus": 97.5,
+     "confidence_index": 70.0
+    },
+    "MI": {
+     "score": 70.0,
+     "consensus": 95.0,
+     "confidence_index": 72.0
+    },
+    "PB": {
+     "score": 35.0,
+     "consensus": 90.0,
+     "confidence_index": 50.0
+    },
+    "PM": {
+     "score": 70.0,
+     "consensus": 87.5,
+     "confidence_index": 52.0
+    },
+    "EXPL": {
+     "score": 35.0,
+     "consensus": 82.5,
+     "confidence_index": 56.0
+    },
+    "CLAR": {
+     "score": 70.0,
+     "consensus": 80.0,
+     "confidence_index": 58.0
+    },
+    "AE_EXEC": {
+     "score": 35.0,
+     "consensus": 97.5,
+     "confidence_index": 62.0
+    },
+    "LD": {
+     "score": 70.0,
+     "consensus": 95.0,
+     "confidence_index": 64.0
+    },
+    "LS": {
+     "score": 35.0,
+     "consensus": 90.0,
+     "confidence_index": 68.0
+    },
+    "LC": {
+     "score": 70.0,
+     "consensus": 87.5,
+     "confidence_index": 70.0
+    },
+    "CD": {
+     "score": 35.0,
+     "consensus": 82.5,
+     "confidence_index": 74.0
+    },
+    "EA": {
+     "score": 70.0,
+     "consensus": 80.0,
+     "confidence_index": 50.0
+    },
+    "EC": {
+     "score": 35.0,
+     "consensus": 97.5,
+     "confidence_index": 54.0
+    },
+    "ENV_FAM": {
+     "score": 70.0,
+     "consensus": 95.0,
+     "confidence_index": 56.0
+    },
+    "FLEX": {
+     "score": 35.0,
+     "consensus": 90.0,
+     "confidence_index": 60.0
+    },
+    "FORM_CONT": {
+     "score": 70.0,
+     "consensus": 87.5,
+     "confidence_index": 62.0
+    },
+    "RANK": {
+     "score": 35.0,
+     "consensus": 82.5,
+     "confidence_index": 66.0
+    },
+    "IND": {
+     "score": 70.0,
+     "consensus": 80.0,
+     "confidence_index": 68.0
+    },
+    "BARR": {
+     "score": 35.0,
+     "consensus": 97.5,
+     "confidence_index": 72.0
+    },
+    "OPEN_TALENT": {
+     "score": 70.0,
+     "consensus": 95.0,
+     "confidence_index": 74.0
+    }
+   },
+   "expected_by_family": {
+    "1": {
+     "careerfit360": 56.671826622636075,
+     "consensus": 83.18111455174015,
+     "confidence_index": 60.97832817564052,
+     "variables": {
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "2": {
+     "careerfit360": 58.458445038151645,
+     "consensus": 82.75469168950039,
+     "confidence_index": 61.65147453291358,
+     "variables": {
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.075
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "3": {
+     "careerfit360": 60.45454545223141,
+     "consensus": 80.68181818198347,
+     "confidence_index": 62.545454548495876,
+     "variables": {
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "4": {
+     "careerfit360": 63.0,
+     "consensus": 80.5,
+     "confidence_index": 67.2,
+     "variables": {
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.30000000000000004
+      }
+     }
+    },
+    "5": {
+     "careerfit360": 50.35904255482543,
+     "consensus": 85.15292553060138,
+     "confidence_index": 67.22872340566263,
+     "variables": {
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.075
+      },
+      "MA": {
+       "score": 35.0,
+       "combined_weight": 0.09
+      },
+      "CD": {
+       "score": 35.0,
+       "combined_weight": 0.12
+      },
+      "EC": {
+       "score": 35.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "6": {
+     "careerfit360": 59.813176012745956,
+     "consensus": 85.80137659553617,
+     "confidence_index": 62.53883972635966,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.048
+      },
+      "ACE": {
+       "score": 35.0,
+       "combined_weight": 0.048
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "EC": {
+       "score": 35.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "7": {
+     "careerfit360": 65.73978901766186,
+     "consensus": 85.61739248099728,
+     "confidence_index": 63.053286449884055,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.09
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "8": {
+     "careerfit360": 64.89465153904631,
+     "consensus": 83.75607779627308,
+     "confidence_index": 63.79902755446341,
+     "variables": {
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "9": {
+     "careerfit360": 61.272626522537514,
+     "consensus": 83.01717768792274,
+     "confidence_index": 62.108607316159386,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "10": {
+     "careerfit360": 53.64754098469498,
+     "consensus": 85.04625292612324,
+     "confidence_index": 61.30725995524761,
+     "variables": {
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.048
+      },
+      "ACE": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "EC": {
+       "score": 35.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "11": {
+     "careerfit360": 52.514011211771646,
+     "consensus": 85.95676541048147,
+     "confidence_index": 65.20576461348371,
+     "variables": {
+      "ACE": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MA": {
+       "score": 35.0,
+       "combined_weight": 0.06
+      },
+      "CD": {
+       "score": 35.0,
+       "combined_weight": 0.08
+      },
+      "EC": {
+       "score": 35.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "12": {
+     "careerfit360": 70.0,
+     "consensus": 86.46781354051053,
+     "confidence_index": 65.30965593784684,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.048
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.09
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "13": {
+     "careerfit360": 63.282627238360256,
+     "consensus": 84.81731589477592,
+     "confidence_index": 62.85129371769704,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.075
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "14": {
+     "careerfit360": 63.225806451612904,
+     "consensus": 83.38709677419355,
+     "confidence_index": 64.90322580645162,
+     "variables": {
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.048
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "null_scores_and_no_consensus",
+   "aggregates": {
+    "AN": {
+     "score": null
+    },
+    "AST": {
+     "score": 35.0
+    },
+    "ASH": {
+     "score": 70.0
+    },
+    "ABS": {
+     "score": 0.0
+    },
+    "ACE": {
+     "score": null
+    },
+    "OH": {
+     "score": 70.0
+    },
+    "OL": {
+     "score": 0.0
+    },
+    "OA": {
+     "score": 35.0
+    },
+    "OC": {
+     "score": null
+    },
+    "ME": {
+     "score": 0.0
+    },
+    "MA": {
+     "score": 35.0
+    },
+    "MI": {
+     "score": 70.0
+    },
+    "MR": {
+     "score": null
+    },
+    "PB": {
+     "score": 35.0
+    },
+    "PM": {
+     "score": 70.0
+    },
+    "PE": {
+     "score": 0.0
+    },
+    "EXPL": {
+     "score": null
+    },
+    "CLAR": {
+     "score": 70.0
+    },
+    "AE_ACAD": {
+     "score": 0.0
+    },
+    "AE_EXEC": {
+     "score": 35.0
+    },
+    "LD": {
+     "score": null
+    },
+    "LI": {
+     "score": 0.0
+    },
+    "LS": {
+     "score": 35.0
+    },
+    "LC": {
+     "score": 70.0
+    },
+    "CE": {
+     "score": null
+    },
+    "CD": {
+     "score": 35.0
+    },
+    "EA": {
+     "score": 70.0
+    },
+    "EI": {
+     "score": 0.0
+    },
+    "EC": {
+     "score": null
+    },
+    "ENV_FAM": {
+     "score": 70.0
+    },
+    "ENV_PEERS": {
+     "score": 0.0
+    },
+    "FLEX": {
+     "score": 35.0
+    },
+    "FORM_CONT": {
+     "score": null
+    },
+    "ALT_ROUTE": {
+     "score": 0.0
+    },
+    "RANK": {
+     "score": 35.0
+    },
+    "IND": {
+     "score": 70.0
+    },
+    "ACT": {
+     "score": null
+    },
+    "BARR": {
+     "score": 35.0
+    },
+    "OPEN_TALENT": {
+     "score": 70.0
+    },
+    "OPEN_10Y": {
+     "score": 0.0
+    }
+   },
+   "expected_by_family": {
+    "1": {
+     "careerfit360": 56.671826622636075,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "2": {
+     "careerfit360": 56.671826622636075,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "3": {
+     "careerfit360": 52.77777777413286,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "ME": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "4": {
+     "careerfit360": 38.46675712764904,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "OL": {
+       "score": 0.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "ME": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.30000000000000004
+      }
+     }
+    },
+    "5": {
+     "careerfit360": 40.1255230125523,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "OL": {
+       "score": 0.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "MA": {
+       "score": 35.0,
+       "combined_weight": 0.09
+      },
+      "CD": {
+       "score": 35.0,
+       "combined_weight": 0.12
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "6": {
+     "careerfit360": 41.040189134997675,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.048
+      },
+      "OL": {
+       "score": 0.0,
+       "combined_weight": 0.075
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "7": {
+     "careerfit360": 56.56039097709109,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.09
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "8": {
+     "careerfit360": 51.11054378679817,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ABS": {
+       "score": 0.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "9": {
+     "careerfit360": 52.5388026585415,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OL": {
+       "score": 0.0,
+       "combined_weight": 0.075
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "10": {
+     "careerfit360": 56.8493952379008,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.048
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "11": {
+     "careerfit360": 55.58823529411764,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "MA": {
+       "score": 35.0,
+       "combined_weight": 0.06
+      },
+      "CD": {
+       "score": 35.0,
+       "combined_weight": 0.08
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "12": {
+     "careerfit360": 57.28428702221331,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.048
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.09
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0999999999
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "13": {
+     "careerfit360": 56.82027061972331,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.075
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0666666666
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    },
+    "14": {
+     "careerfit360": 63.225806451612904,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.048
+      },
+      "IND": {
+       "score": 70.0,
+       "combined_weight": 0.2
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "self_only_v1_ind_excluded",
+   "aggregates": {
+    "AN": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "AST": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "ASH": {
+     "score": 70.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "ABS": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "ACE": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "OH": {
+     "score": 70.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "OL": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "OA": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "OC": {
+     "score": 70.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "ME": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "MA": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "MI": {
+     "score": 70.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "MR": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "PB": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "PM": {
+     "score": 70.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "PE": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "EXPL": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "CLAR": {
+     "score": 70.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "AE_ACAD": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "AE_EXEC": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "LD": {
+     "score": 70.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "LI": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "LS": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "LC": {
+     "score": 70.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "CE": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "CD": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "EA": {
+     "score": 70.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "EI": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "EC": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "ENV_FAM": {
+     "score": 70.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "ENV_PEERS": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "FLEX": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "FORM_CONT": {
+     "score": 70.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "ALT_ROUTE": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "RANK": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "ACT": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "BARR": {
+     "score": 35.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "OPEN_TALENT": {
+     "score": 70.0,
+     "consensus": null,
+     "confidence_index": null
+    },
+    "OPEN_10Y": {
+     "score": 0.0,
+     "consensus": null,
+     "confidence_index": null
+    }
+   },
+   "expected_by_family": {
+    "1": {
+     "careerfit360": 34.286624194722705,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "AN": {
+       "score": 0.0,
+       "combined_weight": 0.048
+      },
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0999999999
+      }
+     }
+    },
+    "2": {
+     "careerfit360": 40.01604277433498,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "AN": {
+       "score": 0.0,
+       "combined_weight": 0.048
+      },
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.075
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0999999999
+      }
+     }
+    },
+    "3": {
+     "careerfit360": 22.57481939165631,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "AN": {
+       "score": 0.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "ME": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "CE": {
+       "score": 0.0,
+       "combined_weight": 0.08
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0999999999
+      }
+     }
+    },
+    "4": {
+     "careerfit360": 6.494845361896057,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "OL": {
+       "score": 0.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "ME": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.09
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0666666666
+      }
+     }
+    },
+    "5": {
+     "careerfit360": 27.907284767460375,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "OL": {
+       "score": 0.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.075
+      },
+      "MA": {
+       "score": 35.0,
+       "combined_weight": 0.09
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.09
+      },
+      "CD": {
+       "score": 35.0,
+       "combined_weight": 0.12
+      },
+      "EC": {
+       "score": 35.0,
+       "combined_weight": 0.0666666666
+      }
+     }
+    },
+    "6": {
+     "careerfit360": 30.202391908998116,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.048
+      },
+      "ACE": {
+       "score": 35.0,
+       "combined_weight": 0.048
+      },
+      "OL": {
+       "score": 0.0,
+       "combined_weight": 0.075
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0999999999
+      },
+      "EC": {
+       "score": 35.0,
+       "combined_weight": 0.0999999999
+      }
+     }
+    },
+    "7": {
+     "careerfit360": 51.35292219029801,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.09
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0999999999
+      }
+     }
+    },
+    "8": {
+     "careerfit360": 37.76405589932117,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ABS": {
+       "score": 0.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.075
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.06
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0666666666
+      }
+     }
+    },
+    "9": {
+     "careerfit360": 35.332326278002995,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OL": {
+       "score": 0.0,
+       "combined_weight": 0.075
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      }
+     }
+    },
+    "10": {
+     "careerfit360": 42.295918365392396,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.048
+      },
+      "ACE": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "EC": {
+       "score": 35.0,
+       "combined_weight": 0.0999999999
+      }
+     }
+    },
+    "11": {
+     "careerfit360": 44.275618376743374,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ACE": {
+       "score": 35.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OC": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MA": {
+       "score": 35.0,
+       "combined_weight": 0.06
+      },
+      "CD": {
+       "score": 35.0,
+       "combined_weight": 0.08
+      },
+      "EC": {
+       "score": 35.0,
+       "combined_weight": 0.0999999999
+      }
+     }
+    },
+    "12": {
+     "careerfit360": 42.71619976680054,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.048
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.09
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0999999999
+      }
+     }
+    },
+    "13": {
+     "careerfit360": 50.9992638987116,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "ASH": {
+       "score": 70.0,
+       "combined_weight": 0.07200000000000001
+      },
+      "OH": {
+       "score": 70.0,
+       "combined_weight": 0.075
+      },
+      "OA": {
+       "score": 35.0,
+       "combined_weight": 0.11249999999999999
+      },
+      "MI": {
+       "score": 70.0,
+       "combined_weight": 0.06
+      },
+      "EA": {
+       "score": 70.0,
+       "combined_weight": 0.0666666666
+      },
+      "EI": {
+       "score": 0.0,
+       "combined_weight": 0.0666666666
+      }
+     }
+    },
+    "14": {
+     "careerfit360": 8.936170212765957,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {
+      "AST": {
+       "score": 35.0,
+       "combined_weight": 0.048
+      },
+      "MR": {
+       "score": 0.0,
+       "combined_weight": 0.06
+      },
+      "CE": {
+       "score": 0.0,
+       "combined_weight": 0.08
+      }
+     }
+    }
+   }
+  },
+  {
+   "name": "single_variable",
+   "aggregates": {
+    "AN": {
+     "score": 0.0,
+     "consensus": 100.0,
+     "confidence_index": 50.0
+    }
+   },
+   "expected_by_family": {
+    "1": {
+     "careerfit360": 0.0,
+     "consensus": 100.0,
+     "confidence_index": 50.0,
+     "variables": {
+      "AN": {
+       "score": 0.0,
+       "combined_weight": 0.048
+      }
+     }
+    },
+    "2": {
+     "careerfit360": 0.0,
+     "consensus": 100.0,
+     "confidence_index": 50.0,
+     "variables": {
+      "AN": {
+       "score": 0.0,
+       "combined_weight": 0.048
+      }
+     }
+    },
+    "3": {
+     "careerfit360": 0.0,
+     "consensus": 100.0,
+     "confidence_index": 50.0,
+     "variables": {
+      "AN": {
+       "score": 0.0,
+       "combined_weight": 0.07200000000000001
+      }
+     }
+    },
+    "4": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "5": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "6": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "7": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "8": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "9": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "10": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "11": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "12": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "13": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "14": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    }
+   }
+  },
+  {
+   "name": "empty",
+   "aggregates": {},
+   "expected_by_family": {
+    "1": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "2": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "3": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "4": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "5": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "6": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "7": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "8": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "9": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "10": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "11": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "12": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "13": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    },
+    "14": {
+     "careerfit360": 0.0,
+     "consensus": null,
+     "confidence_index": null,
+     "variables": {}
+    }
+   }
+  }
+ ]
+}

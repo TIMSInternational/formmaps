@@ -311,6 +311,7 @@ public class CareerFitEvaluatorTests(ITestOutputHelper output)
         LiaPercentiles: SampleStudentRows.Parse(SampleStudentRows.PercentilesJson),
         PersonalityDimensionScores: SampleStudentRows.Parse(SampleStudentRows.DimensionScoresJson()),
         ThreeSixty: null,
+        V360RaterGroups: [],
         Sources: new CareerFitInputSources("pca-1", "lia-1", "pers-1"));
 
     private sealed class FakeReader : ICareerFitInputReader
@@ -358,7 +359,7 @@ public class CareerFitEvaluatorTests(ITestOutputHelper output)
     private static JsonElement LoadFixture()
     {
         var assembly = Assembly.GetExecutingAssembly();
-        var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith("parity-fixture.json", StringComparison.Ordinal));
+        var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith(".CareerFit.Data.parity-fixture.json", StringComparison.Ordinal));
         using var stream = assembly.GetManifestResourceStream(name)!;
         return JsonDocument.Parse(stream).RootElement.Clone();
     }
