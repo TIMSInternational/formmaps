@@ -12,6 +12,7 @@ using FormMaps.Application.Prerequisites;
 using FormMaps.Application.Email;
 using FormMaps.Application.Reports;
 using FormMaps.Application.Gradebook;
+using FormMaps.Application.Transcript;
 using FormMaps.Application.SchoolAdmin;
 using FormMaps.Application.SchoolAnalytics;
 using FormMaps.Application.SchoolProfile;
@@ -50,6 +51,7 @@ using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Email;
 using FormMaps.Infrastructure.Reports;
 using FormMaps.Infrastructure.Gradebook;
+using FormMaps.Infrastructure.Transcript;
 using FormMaps.Infrastructure.SchoolAdmin;
 using FormMaps.Infrastructure.SchoolAnalytics;
 using FormMaps.Infrastructure.SchoolProfile;
@@ -283,6 +285,12 @@ public static class DependencyInjection
         services.AddScoped<ICourseImportReader, CourseImportReader>();
         services.AddScoped<ICourseImportWriter, CourseImportWriter>();
         services.AddScoped<IGradebookReader, GradebookReader>();
+        // issue #55 (graduation + transcripts lane): routes/transcript.ts, all nine routes, under
+        // FORMMAPS_ROUTE_GRADUATION_TO_DOTNET. The getTranscriptData/resolveGpaConfig half is SHARED with
+        // GradebookReader via TranscriptDataQuery rather than reimplemented — there is exactly one GPA
+        // computation in this codebase (FormMaps.Application.Gradebook.GpaComputation) and it stays that way.
+        services.AddScoped<ITranscriptReader, TranscriptReader>();
+        services.AddScoped<ITranscriptWriter, TranscriptWriter>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();
         services.AddScoped<ISchoolAdminWriter, SchoolAdminWriter>();

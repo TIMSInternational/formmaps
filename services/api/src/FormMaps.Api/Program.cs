@@ -120,6 +120,7 @@ app.MapPrerequisitesEndpoints();
 app.MapPathwaysEndpoints();
 app.MapCourseImportEndpoints();
 app.MapGradebookEndpoints();
+app.MapTranscriptEndpoints();
 app.MapCalendarEndpoints();
 app.MapQuestion360Endpoints();
 app.MapVocationalTakeEndpoints();

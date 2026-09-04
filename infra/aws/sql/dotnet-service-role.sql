@@ -178,7 +178,10 @@ GRANT SELECT ON TABLE
     public."course_enrollments",
     public."courses",
     public."framework_courses",
-    public."gpa_configurations",
+    -- NOTE: "gpa_configurations" moved to the SELECT/INSERT/UPDATE tier below (issue #55) --
+    -- routes/transcript.ts PUT /school-admin/gpa-config upserts the school's row
+    -- (TranscriptWriter.UpsertGpaConfigAsync). Read-only here would 42501 every save of a
+    -- GPA scale / grade map the moment FORMMAPS_ROUTE_GRADUATION_TO_DOTNET is flipped.
     public."graduation_plan_items",
     public."graduation_plans",
     public."graduation_rule_sets",
@@ -189,6 +192,11 @@ GRANT SELECT ON TABLE
     public."pca_questions",
     public."pca_results",
     public."reviews",
+    -- issue #55: transcriptService computeClassRanks/getClassRankings resolve the school roster from
+    -- school_users (role='student', isActive). READ ONLY -- the .NET service has no code path that
+    -- creates, updates or deletes a school membership; SchoolUsersWriter's role change writes "users",
+    -- not this table. Keep it here rather than folding it into the read/write tier.
+    public."school_users",
     public."student_grades",
     public."student_graduation_targets",
     -- Domain 9a: the subscription plan catalog, read by PlanReader to resolve a
@@ -262,6 +270,14 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     public."curriculum_frameworks",
     public."essay_comments",
     public."evaluation_feedbacks",
+    -- issue #55 (graduation + transcripts). Both are upserted, never deleted:
+    --   gpa_configurations -- PUT /api/v1/transcript/school-admin/gpa-config (moved from the read-only tier).
+    --   student_gpas       -- POST /compute-gpa (one row, the caller's own) and POST
+    --                         /school-admin/class-ranks (one row per active student in the school).
+    -- No DELETE: legacy never removes a GPA row, it overwrites it (an emptied transcript is persisted as
+    -- NULL GPAs, not as a missing row), so full CRUD would grant a verb no code path has.
+    public."gpa_configurations",
+    public."student_gpas",
     public."evaluation_groups",
     public."isams_configs",
     public."lia_assessment_sessions",
