@@ -146,6 +146,31 @@ public sealed record InputQuality(
     string V360Source,
     IReadOnlyList<InputWarning> Warnings)
 {
+    /// <summary>
+    /// The FM-CF-007 aggregator's per-VARIABLE trail — one entry per 360 variable that reached an
+    /// aggregate, carrying what F02–F05 produced for it and how much of its item set was answered. Empty
+    /// whenever <see cref="V360Source"/> is <see cref="V360Sources.NoData"/>, which is every student until
+    /// FM-CF-006 seeds the items. Init-only so the positional constructor, and every caller of it, is
+    /// unchanged.
+    /// </summary>
+    public IReadOnlyList<V360VariableAudit> V360Variables { get; init; } = [];
+
+    /// <summary>
+    /// The same trail at INSTRUMENT level: F02/F03/F04/F05 applied once over the per-source overall 360
+    /// scores, which is where the run's single <c>careerfit360_confidence</c> label comes from (see
+    /// <c>V360Aggregation.GlobalConfidence</c>). Null when no 360 evidence was aggregated.
+    /// </summary>
+    public V360VariableAudit? V360Instrument { get; init; }
+
+    /// <summary>
+    /// FM-CF-010's step ledger for the part of the derivation that happens ONCE PER STUDENT rather than
+    /// once per family: F01–F05, the 360 aggregation pipeline. The family ledger
+    /// (<see cref="OwnerEvaluation.AuditSteps"/>) starts at F06, because F06 is the first 360 formula that
+    /// is subscripted by a family. Empty when no 360 evidence was aggregated — nothing executed, so
+    /// nothing is recorded.
+    /// </summary>
+    public IReadOnlyList<FormulaStep> V360FormulaSteps { get; init; } = [];
+
     private static readonly HashSet<string> Informational = new(StringComparer.Ordinal)
     {
         InputWarningCodes.DiscGraphSelected,

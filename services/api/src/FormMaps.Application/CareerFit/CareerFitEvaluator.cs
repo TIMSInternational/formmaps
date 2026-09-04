@@ -101,13 +101,23 @@ public sealed class CareerFitEvaluator(
 
         var families = EvaluateCore(inputs.Assessment, ruleSet);
 
+        // The 360 AGGREGATION ledger (F01–F05) is attached to the QUALITY record, not to a family, because
+        // that is where it executed: the aggregate map is global — built once from the student's responses,
+        // before any family is scored — and F06 is the first 360 formula a family subscripts. Recording it
+        // on the run's inputQuality keeps every application recorded exactly once instead of fourteen times,
+        // and leaves the per-family ledger's row count derivable from the rule set alone.
+        var quality = inputs.Quality with
+        {
+            V360FormulaSteps = CareerFitAuditLedger.BuildV360Aggregation(inputs.Quality, ruleSet.Rules),
+        };
+
         return new CareerFitEvaluation(
             UserId: raw.UserId,
             SchoolId: raw.SchoolId,
             RulesVersion: rulesProvider.RulesVersion,
             DiscGraph: inputs.Quality.DiscGraph,
             Inputs: inputs.Assessment,
-            Quality: inputs.Quality,
+            Quality: quality,
             Sources: raw.Sources,
             Families: families);
     }

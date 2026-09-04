@@ -20,7 +20,17 @@ public sealed record V360VariableAudit(
     int ValidSources,
     int ItemsAnswered,
     int ItemsExpected,
-    IReadOnlyList<string> Sources);
+    IReadOnlyList<string> Sources)
+{
+    /// <summary>
+    /// What each rater source scored this variable at, in the rule set's source order: F01's output per
+    /// source and F02's input. Kept because it is the only thing that makes the integrated score
+    /// re-derivable from the record — <see cref="Score"/> alone cannot say whether the raters agreed.
+    /// Init-only so the positional constructor, and every caller of it, is unchanged.
+    /// </summary>
+    public IReadOnlyDictionary<string, double> SourceScores { get; init; } =
+        new Dictionary<string, double>(StringComparer.Ordinal);
+}
 
 /// <summary>The engine's per-variable 360 aggregates, the global 360 confidence, the source that produced them, and the repairs made.</summary>
 public sealed record V360Adaptation(
@@ -28,7 +38,17 @@ public sealed record V360Adaptation(
     Confidence Confidence,
     string Source,
     IReadOnlyList<InputWarning> Warnings,
-    IReadOnlyList<V360VariableAudit> Variables);
+    IReadOnlyList<V360VariableAudit> Variables)
+{
+    /// <summary>
+    /// The same trail one level up: F02/F03/F04/F05 applied ONCE over the per-source overall 360 scores,
+    /// which is where <see cref="Confidence"/> comes from (see <c>V360Aggregation.GlobalConfidence</c>).
+    /// Its <see cref="V360VariableAudit.Code"/> is the instrument label "360", not a variable code, and its
+    /// item counts are the run's totals. Null when nothing was aggregated. Init-only so the positional
+    /// constructor is unchanged.
+    /// </summary>
+    public V360VariableAudit? Instrument { get; init; }
+}
 
 /// <summary>
 /// FM-CF-005 / FM-CF-007 — the 360 seam. The engine wants one <see cref="V360Aggregate"/> per 360

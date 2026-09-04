@@ -75,7 +75,14 @@ public static class CareerFitInputAdapters
             competencies.DefaultedIds,
             personality.Derivation,
             v360.Source,
-            warnings);
+            warnings)
+        {
+            // FM-CF-007's per-variable trail travelled only as far as the adaptation before; carrying it onto
+            // the quality record is what lets the run persist the 360 evidence (and FM-CF-010 record F01-F05)
+            // instead of leaving the detail to be inferred from warning text. Empty under NoDataV360Adapter.
+            V360Variables = v360.Variables,
+            V360Instrument = v360.Instrument,
+        };
 
         return new CareerFitAssessmentInputs(assessment, quality);
     }

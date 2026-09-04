@@ -118,6 +118,158 @@ public static class CareerFitAuditLedger
             new FormulaDefinition("F23", "ConvergencePartial", "Convergencia"),
         }.ToDictionary(f => f.Id, StringComparer.Ordinal);
 
+    /// <summary>
+    /// The 360 AGGREGATION ledger: F01–F05, recorded ONCE PER STUDENT rather than once per family.
+    ///
+    /// F01–F05 build the global aggregate map — every scored variable's source-integrated score, consensus,
+    /// coverage and confidence index — before any family exists; F06 is the first 360 formula a family
+    /// subscripts, and it is the family ledger's. Recording the pipeline here means each application is
+    /// recorded exactly once instead of fourteen identical times, and leaves
+    /// <see cref="Build"/>'s row count derivable from the rule set alone.
+    ///
+    /// Empty when no 360 evidence was aggregated (<c>v360_source = NO_DATA</c>): nothing executed, so
+    /// nothing is recorded — which is every student until FM-CF-006 seeds the 40 items.
+    ///
+    /// GRANULARITY OF F01, stated plainly because it is the one place this ledger aggregates rather than
+    /// reports. normalize_likert applies per ITEM ANSWER. The raw answers live in
+    /// <c>vocational_responses</c> and are not copied here; what the aggregator retains, and what
+    /// integrate_sources actually receives, is one score per (variable, rater source) — the mean of that
+    /// source's normalized answers. So F01 is recorded at that granularity, with the aggregation named on
+    /// the record's rule block. Duplicating up to 40 items × 4 raters of raw Likert values into every run's
+    /// audit would restate rows that already exist under their own RLS, to make the count larger rather
+    /// than the derivation clearer.
+    /// </summary>
+    public static IReadOnlyList<FormulaStep> BuildV360Aggregation(Adapters.InputQuality quality, CareerFitRules rules)
+    {
+        ArgumentNullException.ThrowIfNull(quality);
+        ArgumentNullException.ThrowIfNull(rules);
+
+        var steps = new List<FormulaStep>(64);
+        if (quality.V360Variables.Count == 0)
+        {
+            return steps;
+        }
+
+        var sourceWeights = rules.Weights.V360Sources;
+        foreach (var variable in quality.V360Variables)
+        {
+            AppendV360Variable(steps, variable, variable.Code, sourceWeights, rules.Thresholds.V360Confidence);
+        }
+
+        // The instrument arm: the SAME four formulas applied once more over the per-source OVERALL 360
+        // scores. This is where the run's single careerfit360_confidence label comes from, and it is the
+        // label F23 consults when it decides whether a STRONG 360 stands — so it is a step, not a summary.
+        if (quality.V360Instrument is { } instrument)
+        {
+            AppendV360Variable(steps, instrument, V360Target, sourceWeights, rules.Thresholds.V360Confidence, isInstrument: true);
+        }
+
+        return steps;
+    }
+
+    /// <summary>One variable's (or the instrument's) F01 × sources, then F02 / F03 / F04 / F05.</summary>
+    private static void AppendV360Variable(
+        List<FormulaStep> steps,
+        Adapters.V360VariableAudit variable,
+        string target,
+        IReadOnlyDictionary<string, double> sourceWeights,
+        V360ConfidenceThresholds confidence,
+        bool isInstrument = false)
+    {
+        var sourceScores = new OrderedDictionary<string, object?>(StringComparer.Ordinal);
+        var weights = new OrderedDictionary<string, object?>(StringComparer.Ordinal);
+        foreach (var source in sourceWeights.Keys)
+        {
+            if (!variable.SourceScores.TryGetValue(source, out var score))
+            {
+                continue;   // that source did not answer: no score reached F02, so nothing executed for it
+            }
+
+            sourceScores[source] = score;
+            weights[source] = sourceWeights[source];
+
+            // F01 is not recorded for the instrument arm: its inputs are already-normalized variable
+            // scores, so normalize_likert does not run a second time.
+            if (isInstrument)
+            {
+                continue;
+            }
+
+            Add(steps,
+                "F01",
+                $"{target}.{source}",
+                Inputs(("variable", (object?)variable.Code), ("source", source)),
+                score,
+                null,
+                Inputs(
+                    ("formula", "(response - 1) / 4 * 100"),
+                    ("domain", "the integers 1..5; anything else fails closed (V360_RESPONSE_OUT_OF_RANGE)"),
+                    ("applied", "per item answer; recorded once per (variable, rater source) as the mean of that source's normalized answers — the value integrate_sources receives"),
+                    ("raw_answers", "vocational_responses, under their own RLS; not copied into the audit")));
+        }
+
+        var integrationRule = Inputs(
+            ("formula", "sum(source_score * source_weight) / sum(source_weight over answering sources)"),
+            ("weights", weights),
+            ("valid_sources", variable.ValidSources));
+
+        Add(steps, "F02", target, sourceScores, variable.Score, null, integrationRule);
+
+        Add(steps,
+            "F03",
+            target,
+            sourceScores,
+            variable.Consensus,
+            null,
+            Inputs(
+                ("formula", "100 - (max(source_scores) - min(source_scores))"),
+                ("requires", "valid_sources >= 2"),
+                ("valid_sources", variable.ValidSources),
+                ("note", variable.Consensus is null
+                    ? "undefined: fewer than two rater sources answered, so there is no second opinion to differ from"
+                    : "defined")));
+
+        Add(steps,
+            "F04",
+            target,
+            sourceScores,
+            variable.SourceCoverage,
+            null,
+            Inputs(
+                ("formula", "sum(source_weight over answering sources)"),
+                ("weights", weights),
+                ("valid_sources", variable.ValidSources),
+                ("not_item_coverage", $"items answered {variable.ItemsAnswered} of {variable.ItemsExpected} asked — recorded separately because the two fail differently")));
+
+        Add(steps,
+            "F05",
+            target,
+            Inputs(
+                ("consensus", (object?)variable.Consensus),
+                ("coverage", variable.SourceCoverage),
+                ("valid_sources", variable.ValidSources)),
+            variable.ConfidenceIndex,
+            LabelFor(variable.ConfidenceIndex, confidence),
+            Inputs(
+                ("formula", "consensus_weight * consensus + coverage_weight * coverage * 100"),
+                ("requires", "valid_sources >= 2 and a defined consensus"),
+                ("valid_sources", variable.ValidSources),
+                ("consensus_weight", confidence.ConsensusWeight),
+                ("coverage_weight", confidence.CoverageWeight),
+                ("high_min", confidence.HighMin),
+                ("medium_min", confidence.MediumMin)));
+    }
+
+    /// <summary>The confidence label the index carries; NOT_DETERMINABLE when F05 declined to produce one.</summary>
+    private static string LabelFor(double? index, V360ConfidenceThresholds confidence) =>
+        index switch
+        {
+            null => Confidence.NotDeterminable.ToReferenceValue(),
+            var i when i >= confidence.HighMin => Confidence.High.ToReferenceValue(),
+            var i when i >= confidence.MediumMin => Confidence.Medium.ToReferenceValue(),
+            _ => Confidence.Low.ToReferenceValue(),
+        };
+
     /// <summary>Target of the steps that apply to a whole block rather than to one route, factor or subtest.</summary>
     private const string PcaTarget = "PCA";
     private const string CompetenciesTarget = "COMPETENCIES";

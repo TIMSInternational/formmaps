@@ -148,7 +148,12 @@ public static class V360Aggregation
                 ValidSources: integration.ValidSources,
                 ItemsAnswered: evidence.ItemsAnswered,
                 ItemsExpected: evidence.ItemsExpected,
-                Sources: evidence.SourcesInWeightOrder(sourceWeights.Keys)));
+                Sources: evidence.SourcesInWeightOrder(sourceWeights.Keys))
+            {
+                // F01's output per source, which is F02's input. Kept so the integrated score above is
+                // re-derivable from the record alone (FM-CF-010's F01/F02 steps read exactly this).
+                SourceScores = Kept(integration.SourceScores),
+            });
 
             if (evidence.ItemsAnswered < evidence.ItemsExpected * evidence.SourceCount)
             {
@@ -197,7 +202,24 @@ public static class V360Aggregation
             $"360 adapted from the vocational chassis: {aggregates.Count} of {rules.V360Variables.Count} variables scored "
             + $"from {globalIntegration.ValidSources} rater source(s); global confidence {global.Label}."));
 
-        return new V360Adaptation(aggregates, global.Label, V360Sources.VocationalResponses, warnings, audits);
+        return new V360Adaptation(aggregates, global.Label, V360Sources.VocationalResponses, warnings, audits)
+        {
+            // The instrument arm of the same four formulas, recorded rather than left implicit in the one
+            // Confidence label: it is what F23 consults when it decides whether a STRONG 360 stands.
+            Instrument = new V360VariableAudit(
+                Code: InputInstruments.V360,
+                Score: globalIntegration.Score,
+                Consensus: globalIntegration.Consensus,
+                ConfidenceIndex: global.Index,
+                SourceCoverage: globalIntegration.Coverage,
+                ValidSources: globalIntegration.ValidSources,
+                ItemsAnswered: audits.Sum(a => a.ItemsAnswered),
+                ItemsExpected: audits.Sum(a => a.ItemsExpected),
+                Sources: sourceWeights.Keys.Where(k => globalIntegration.SourceScores?.ContainsKey(k) == true).ToList())
+            {
+                SourceScores = Kept(globalIntegration.SourceScores),
+            },
+        };
     }
 
     /// <summary>
@@ -229,6 +251,12 @@ public static class V360Aggregation
         return (integration, CareerFitFormulas.Confidence360(
             integration.Consensus, integration.Coverage, integration.ValidSources, rules.Thresholds.V360Confidence));
     }
+
+    /// <summary>The valid source scores integrate_sources kept, as an owned map; empty rather than null when no source answered.</summary>
+    private static IReadOnlyDictionary<string, double> Kept(IReadOnlyDictionary<string, double>? sourceScores) =>
+        sourceScores is null
+            ? new Dictionary<string, double>(StringComparer.Ordinal)
+            : new Dictionary<string, double>(sourceScores, StringComparer.Ordinal);
 
     // ---------------------------------------------------------------- collection
 

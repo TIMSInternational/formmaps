@@ -226,6 +226,30 @@ public static class CareerFitRunJson
 
             writer.WriteEndArray();
 
+            // FM-CF-007's per-VARIABLE trail and FM-CF-010's F01-F05 step ledger. Both belong to the RUN,
+            // not to a family: the aggregate map is global, built once from the student's responses before
+            // any family is scored. Both are empty when v360_source is NO_DATA -- nothing executed.
+            writer.WriteStartArray("v360_variables");
+            foreach (var variable in quality.V360Variables)
+            {
+                WriteV360Variable(writer, variable);
+            }
+
+            writer.WriteEndArray();
+
+            if (quality.V360Instrument is { } instrument)
+            {
+                writer.WritePropertyName("v360_instrument");
+                WriteV360Variable(writer, instrument);
+            }
+            else
+            {
+                writer.WriteNull("v360_instrument");
+            }
+
+            writer.WritePropertyName("v360_formula_steps");
+            JsonSerializer.Serialize(writer, quality.V360FormulaSteps, AuditOptions);
+
             writer.WriteStartObject("sources");
             writer.WriteString("pca_result_id", sources.PcaResultId);
             writer.WriteString("lia_session_id", sources.LiaSessionId);
@@ -236,6 +260,37 @@ public static class CareerFitRunJson
         }
 
         return Encoding.UTF8.GetString(buffer.ToArray());
+    }
+
+    /// <summary>One <see cref="V360VariableAudit"/> as the run's inputQuality stores it. Written by hand so the rater-source keys keep the rule set's own spelling.</summary>
+    private static void WriteV360Variable(Utf8JsonWriter writer, V360VariableAudit variable)
+    {
+        writer.WriteStartObject();
+        writer.WriteString("code", variable.Code);
+        WriteNullableNumber(writer, "score", variable.Score);
+        WriteNullableNumber(writer, "consensus", variable.Consensus);
+        WriteNullableNumber(writer, "confidence_index", variable.ConfidenceIndex);
+        writer.WriteNumber("source_coverage", variable.SourceCoverage);
+        writer.WriteNumber("valid_sources", variable.ValidSources);
+        writer.WriteNumber("items_answered", variable.ItemsAnswered);
+        writer.WriteNumber("items_expected", variable.ItemsExpected);
+
+        writer.WriteStartArray("sources");
+        foreach (var source in variable.Sources)
+        {
+            writer.WriteStringValue(source);
+        }
+
+        writer.WriteEndArray();
+
+        writer.WriteStartObject("source_scores");
+        foreach (var (source, score) in variable.SourceScores)
+        {
+            writer.WriteNumber(source, score);
+        }
+
+        writer.WriteEndObject();
+        writer.WriteEndObject();
     }
 
     /// <summary>Stable persisted spelling of a <see cref="PersonalityPoleDerivation"/>.</summary>
