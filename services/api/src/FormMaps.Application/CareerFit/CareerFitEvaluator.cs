@@ -79,6 +79,7 @@ public sealed class CareerFitEvaluator(
             raw.LiaPercentiles,
             raw.PersonalityDimensionScores,
             raw.ThreeSixty,
+            raw.V360RaterGroups,
             ruleSet.Rules.Competencies,
             v360Adapter,
             graph);

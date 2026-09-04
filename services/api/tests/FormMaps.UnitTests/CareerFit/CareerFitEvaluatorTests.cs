@@ -311,6 +311,7 @@ public class CareerFitEvaluatorTests(ITestOutputHelper output)
         LiaPercentiles: SampleStudentRows.Parse(SampleStudentRows.PercentilesJson),
         PersonalityDimensionScores: SampleStudentRows.Parse(SampleStudentRows.DimensionScoresJson()),
         ThreeSixty: null,
+        V360RaterGroups: [],
         Sources: new CareerFitInputSources("pca-1", "lia-1", "pers-1"));
 
     private sealed class FakeReader : ICareerFitInputReader

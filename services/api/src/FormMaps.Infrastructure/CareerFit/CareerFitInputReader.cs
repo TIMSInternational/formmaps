@@ -4,6 +4,7 @@ using FormMaps.Application.Auth;
 using FormMaps.Application.CareerFit;
 using FormMaps.Application.CareerFit.Adapters;
 using FormMaps.Application.Data;
+using FormMaps.Infrastructure.Assessments;
 
 namespace FormMaps.Infrastructure.CareerFit;
 
@@ -95,6 +96,11 @@ public sealed class CareerFitInputReader(IFormMapsDatabaseSessionFactory databas
         var (liaSessionId, percentiles) = await ReadLiaSessionAsync(session, userId, cancellationToken);
         var (personalitySessionId, dimensionScores) = await ReadPersonalitySessionAsync(session, userId, cancellationToken);
 
+        // The 360 evidence, through the vocational chassis's OWN loader (FM-CF-007) rather than a second
+        // query of the same tables. NOT fail-closed and deliberately last: a student with no 360 must still
+        // score (NoDataV360Adapter), so an empty list is a valid outcome, not a missing instrument.
+        var raterGroups = await VocationalResponseLoader.LoadGroupsAsync(session, userId, cancellationToken);
+
         return new CareerFitRawInputs(
             UserId: userId,
             SchoolId: schoolId,
@@ -102,7 +108,11 @@ public sealed class CareerFitInputReader(IFormMapsDatabaseSessionFactory databas
             Competences: competences,
             LiaPercentiles: percentiles,
             PersonalityDimensionScores: dimensionScores,
-            ThreeSixty: null, // no variable-level 360 before FM-CF-006/007; NoDataV360Adapter ignores it
+            // The platform's CATEGORY-level 360 block is not an engine input at any point (the engine wants
+            // VARIABLES); the item responses below are. Until FM-CF-006 seeds the 40 items this list comes
+            // back empty for every student, which is precisely the NoDataV360Adapter case.
+            ThreeSixty: null,
+            V360RaterGroups: raterGroups,
             Sources: new CareerFitInputSources(pcaResultId, liaSessionId, personalitySessionId));
     }
 
