@@ -435,6 +435,20 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         var quality = JsonDocument.Parse(await StringAsync(admin, $"""SELECT "inputQuality"::text FROM "careerfit_runs" WHERE "id" = '{run.Id}' """)).RootElement;
         Assert.Equal(V360Sources.VocationalResponses, quality.GetProperty("v360_source").GetString());
         Assert.True(quality.GetProperty("evidence").GetProperty("360").GetBoolean());
+
+        // FM-CF-010's aggregation half, on the real column. F01-F05 run ONCE PER STUDENT (the aggregate map
+        // is global), so they ride on the run's inputQuality rather than on fourteen family rows, and the
+        // count is derivable from the variable trail beside them: per variable, one F01 per answering rater
+        // source plus F02/F03/F04/F05, then the instrument arm's four.
+        var variables = quality.GetProperty("v360_variables").EnumerateArray().ToList();
+        Assert.Equal(["AN", "AST", "OA", "EA"], variables.Select(v => v.GetProperty("code").GetString()));
+        var expectedSteps = variables.Sum(v => v.GetProperty("source_scores").EnumerateObject().Count() + 4) + 4;
+        Assert.Equal(
+            (long)expectedSteps,
+            await ScalarAsync(admin, $"""SELECT jsonb_array_length("inputQuality" -> 'v360_formula_steps') FROM "careerfit_runs" WHERE "id" = '{run.Id}' """));
+        Assert.Equal(
+            (long)variables.Count,
+            await ScalarAsync(admin, $"""SELECT count(*) FROM "careerfit_runs", jsonb_array_elements("inputQuality" -> 'v360_formula_steps') s WHERE "id" = '{run.Id}' AND s ->> 'step_id' = 'F02' AND s ->> 'target' <> '360'"""));
     }
 
     /// <summary>
@@ -456,6 +470,15 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         Assert.Equal(V360Sources.NoData, run.Quality.V360Source);
         Assert.Contains(run.Quality.Warnings, w => w.Code == InputWarningCodes.V360NoData);
         Assert.All(run.Families, f => Assert.Equal(0.0, f.CareerFit360));
+
+        // Nothing executed, so nothing is recorded: the aggregation ledger is an EMPTY array on the column,
+        // never a row of zeros. This is the shape every run has until FM-CF-006 seeds the 40 items.
+        Assert.Equal(
+            0L,
+            await ScalarAsync(admin, $"""SELECT jsonb_array_length("inputQuality" -> 'v360_formula_steps') FROM "careerfit_runs" WHERE "id" = '{run.Id}' """));
+        Assert.Equal(
+            0L,
+            await ScalarAsync(admin, $"""SELECT jsonb_array_length("inputQuality" -> 'v360_variables') FROM "careerfit_runs" WHERE "id" = '{run.Id}' """));
     }
 
     /// <summary>An INCOMPLETE rater group is not evidence: the chassis's own loader filters on isEvaluationCompleted, and CareerFit inherits that rather than deciding it again.</summary>

@@ -1,9 +1,10 @@
 # CareerFit — rule set, derivation and gate
 
 This directory holds the thing the engine loads — the **versioned rule set** — and the tooling
-that derives, validates and gates it. The engine itself (P1–P3: schema, config cache, formulas,
-adapters, resolver, orchestrator) lives under `services/api` and is described in
-[Engine (P1–P3)](#engine-p1p3) below. Ledger: [`careerfit.manifest.json`](careerfit.manifest.json)
+that derives, validates and gates it. The engine itself (P1–P5: schema, config cache, formulas,
+adapters, resolver, orchestrator, 360 aggregation, audit ledger and explainability payload) lives
+under `services/api` and is described in
+[Engine (P1–P5)](#engine-p1p5) below. Ledger: [`careerfit.manifest.json`](careerfit.manifest.json)
 (slices FM-CF-001…016). Build plan and analysis: the two published artifacts linked from the
 FormMaps memory chain.
 
@@ -111,12 +112,21 @@ and DISC scales are normed on** — is the highest-consequence unknown in the wh
 these are adult HR norms and students sit ~20 points lower, more than half a cohort lands below
 ADEQUATE and is told their cognitive profile is *Insuficiente / Bajo*.
 
-## Engine (P1–P3)
+## Engine (P1–P5)
 
-The rule set above is consumed, unchanged, by the .NET bounded context under `services/api`
-(manifest slices FM-CF-002/003/004/005/009 completed, FM-CF-010's orchestrator half shipped on
-branch `careerfit/p1-p3` and its per-formula-step audit ledger on `careerfit/audit`). Nothing is
-mapped as an HTTP endpoint yet — that is FM-CF-012, behind `FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET`.
+The rule set above is consumed, unchanged, by the .NET bounded context under `services/api`.
+
+**Status.** Manifest slices FM-CF-002/003/004/005/009 (P1–P3), FM-CF-007/008 (P4) and
+FM-CF-010/011 (P5) are **completed**, integrated on branch `careerfit/p4-p6`. FM-CF-006 (seed the
+40 360 items) is **blocked on TIMS** and is the reason the 360 engine below is built but idle.
+FM-CF-012 (the seven endpoints, behind `FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET`) is the next slice, and
+nothing is mapped as an HTTP route until it lands.
+
+| slice | what shipped |
+|---|---|
+| FM-CF-007/008 | `VocationalV360Adapter` / `V360Aggregation` — real variable-level 360 aggregation (F01→F05) and per-family relevance weighting (F06). Registered in DI; idle until FM-CF-006 seeds the items, with `NoDataV360Adapter` as the named fallback |
+| FM-CF-010 | `CareerFitAuditLedger` — the per-formula-step ledger, F06–F23 per family in `careerfit_family_results."audit" -> formula_steps` and F01–F05 once per student in `careerfit_runs."inputQuality" -> v360_formula_steps` |
+| FM-CF-011 | `FormMaps.Api.Contracts.CareerFit.CareerFitExplanation` — the explainability payload: structured evidence, no family-level fit scalar |
 
 | namespace / path | what |
 |---|---|
@@ -124,7 +134,8 @@ mapped as an HTTP endpoint yet — that is FM-CF-012, behind `FORMMAPS_ROUTE_CAR
 | `FormMaps.Application.CareerFit.Resolver` | `CareerFitRulesResolver` — `mc_gate.py check_resolved()` ported one for one; `CareerFitRulesInvalidException` lists every problem with family and field |
 | `FormMaps.Application.CareerFit.Adapters` | `DiscAdapter`, `CompetencyAdapter`, `MilAdapter`, `PersonalityAdapter`, `IV360Adapter` (`V360Aggregation` / `VocationalV360Adapter`, with `NoDataV360Adapter` as the named fallback), composed by `CareerFitInputAdapters`; `InputQuality` is the audit record |
 | `FormMaps.Infrastructure.CareerFit` | `CareerFitRulesProvider` (the ConfigCache: `CareerFit:RulesVersion`, loaded + resolved once per process, boot-gated in `AddFormMapsInfrastructure`), `CareerFitInputReader` (one read-only RLS session; the 360 rater groups come from `Assessments/VocationalResponseLoader`, shared with the vocational recompute), `CareerFitRunWriter` (run + family rows in one transaction) |
-| `infra/aws/sql/careerfit-schema.sql` | `careerfit_runs` / `careerfit_family_results`, tenant-scoped, RLS ENABLE+FORCE; grants in `dotnet-service-role.sql` §4.7 (SELECT + INSERT only — a run is immutable, a re-evaluation is a new run). The audit ledger rides in the existing `audit` jsonb, so it adds no table, no policy and no grant |
+| `FormMaps.Api.Contracts.CareerFit` | `CareerFitExplanation` and its family / instrument shapes — the FM-CF-011 explainability payload, a pure projection over a persisted run, carrying structured evidence and no family-level fit scalar. No route, no flag (FM-CF-012) |
+| `infra/aws/sql/careerfit-schema.sql` | `careerfit_runs` / `careerfit_family_results`, tenant-scoped, RLS ENABLE+FORCE; grants in `dotnet-service-role.sql` §4.7 (SELECT + INSERT only — a run is immutable, a re-evaluation is a new run). Both ledger arms ride in existing jsonb columns (`audit`, `inputQuality`), so they add no table, no policy and no grant |
 
 The pipeline is `CareerFitEvaluator.EvaluateAsync(context, userId, graph?)`: read the student's
 `pca_results` / newest completed `lia_assessment_sessions` / newest completed
@@ -152,8 +163,28 @@ subtest, `F22` per convergence instrument, `F23` only where `F22` did not alread
 (`evidence_support` returns on the strong test), and one each of `F11 F14 F15 F16 F19 F06 F20 F21`.
 That is 39–56 records per family and **709 for one run of the sample student** — the number
 `CareerFitAuditLedgerTests` and the database test both re-derive from the rule set and assert against
-`jsonb_array_length(audit -> 'formula_steps')`. `F01–F05` are the 360 *aggregation* pipeline and do
-not execute at all while the registered `IV360Adapter` is `NoData`; they belong to FM-CF-007.
+`jsonb_array_length(audit -> 'formula_steps')`.
+
+`F01–F05` are **not** in that count, and are not on the family row at all. They are the 360
+*aggregation* pipeline, and it runs **once per student**: the aggregate map is global — built from
+the student's responses before any family is scored — and `F06` is the first 360 formula a family
+subscripts. So they are recorded on the run instead, in `careerfit_runs."inputQuality" ->
+v360_formula_steps`, beside the per-variable trail (`v360_variables`, `v360_instrument`) they
+explain. Each application is then recorded exactly once rather than fourteen identical times, the
+family ledger's count stays derivable from the rule set alone, and the run ledger's count is
+derivable from the trail beside it: Σ over scored variables of *(its answering rater sources + 4)*,
+plus the instrument arm's 4. Under `NoDataV360Adapter` — every student until FM-CF-006 — nothing
+executes and both arrays are empty, never a row of zeros.
+
+Two granularity notes on that arm. `F01` (`normalize_likert`) applies per *item answer*, but the raw
+answers live in `vocational_responses` under their own RLS and what actually reaches
+`integrate_sources` is one score per (variable, rater source); it is recorded at that granularity,
+with the aggregation named on the record's own rule block, rather than copying up to 40 items × 4
+raters of Likert values into every run's audit. And `F03`/`F05` are recorded **with a null output**
+when a single rater leaves consensus undefined: both formulas ran — `integrate_sources` evaluated
+its `len(valid) >= 2` test and `confidence360` evaluated its guard and returned `NOT_DETERMINABLE` —
+and dropping them would hide the most consequential fact about a V1 run, that its 360 confidence is
+undefined by construction rather than by accident.
 
 Two things carry no record on purpose: the gates (`COMP_GATE` / `MIL_GATE` / `FINAL_GATE` are sheet
 14 and step 17, not F-numbered formulas, and are already typed columns) and the `mil_band` lookup
@@ -191,9 +222,13 @@ over 10,920 field comparisons.
 ### Running the tests
 
 ```
-dotnet test services/api/tests/FormMaps.UnitTests        --filter "FullyQualifiedName~CareerFit"   # formulas parity, resolver, provider, adapters, evaluator, run JSON
+dotnet test services/api/tests/FormMaps.UnitTests        --filter "FullyQualifiedName~CareerFit"   # formulas + 360 parity, resolver, provider, adapters, evaluator, run JSON, audit ledger, explainability payload
 dotnet test services/api/tests/FormMaps.IntegrationTests --filter "FullyQualifiedName~CareerFit"   # Testcontainers: RLS on the real DDL, the evaluator end to end as the restricted login, DI
 python3 tools/careerfit/build_rules.py --check && python3 tools/careerfit/mc_gate.py               # the rule set is still reproducible and still passes the gate
+
+# neither ledger moved a number — both fixtures must regenerate byte-identical
+python3 tools/careerfit/export_parity_fixture.py --n 60 --seed 20260903 --out /tmp/p.json && cmp /tmp/p.json services/api/tests/FormMaps.UnitTests/CareerFit/Data/parity-fixture.json
+python3 tools/careerfit/export_v360_fixture.py                          --out /tmp/v.json && cmp /tmp/v.json services/api/tests/FormMaps.UnitTests/CareerFit/Data/v360-parity-fixture.json
 ```
 
 The integration suite needs Docker. It seeds a student exactly as the platform's writers persist
@@ -267,3 +302,39 @@ scores `careerfit360 = 0.0` with `NOT_DETERMINABLE`, `v360_source: NO_DATA`, war
 `CareerFitAbsolute` is uniformly lower and the **ranking is untouched**. If TIMS seeds the codes under
 a different carrier, *nothing* matches and the run degrades to that same NO_DATA reading rather than
 scoring something wrong.
+
+### The explainability payload (FM-CF-011)
+
+`FormMaps.Api.Contracts.CareerFit.CareerFitExplanation.From(run)` projects a persisted run into what
+a counselor or a student is told about *why* a family sits where it sits: the three gates, the
+convergence level and each instrument's support, the winning PCA and personality routes, the critical
+competency gaps, the MIL band and relative strengths, the 360 evidence, and the modulators. It is a
+projection — it computes nothing, so it cannot disagree with the scores it explains — and it carries
+no HTTP surface (FM-CF-012 owns the routes and the flag).
+
+**It carries no family-level fit scalar at all.** Not `careerfit_absolute`, not `careerfit_relative`,
+not `pca_index`, not `mil_fit`, not a route score. Guardrail 3 says CareerFitAbsolute must never be
+presented as a percentage, and the reason generalises: a 0–100 number beside a career family is read
+as a likelihood whatever it is called. What the payload says about *how well* is the **ordinal rank**
+and the categorical gate / convergence labels. The manifest's validation (no field named
+`*percent*` / `*probability*`) is asserted by reflection over every public type in the namespace and
+over the serialised JSON — and it ran red on its first execution, catching the raw LIA `Percentile`
+on the MIL block. That field was removed rather than the assertion weakened: open question 1 (what
+population the MIL percentiles are normed on) is unanswered, while the *band* is the workbook's own
+presentation category and survives a re-norm.
+
+**360 has its own shape, because "absent" must never render as "weak".** `V360Explanation.Determinable`
+is read from the run's `v360_source`, never from the length of the family's variable list, and the
+payload carries the reason in words: `NoEvidenceReason` when the student has no 360 at all (every
+student until FM-CF-006), `SingleRaterReason` when the scores are real but one rater leaves the
+confidence unmeasured — which is exactly what V1's self-only 360 produces. Both distinctions are
+pinned by tests proven red against the obvious readings: a family that weights *none* of the
+variables a student answered (`PB` is weighted by no family in 1.0.0-draft.1) is still a student who
+completed a 360, and self-only is neither "no evidence" nor "confident evidence".
+
+**Modulators are structured facts**, not prose: the MIL relative strengths and each 360 variable's
+`base_weight × relevance`, heaviest first — the reason two families read the same 360 evidence
+differently. The rule set's per-family `v360_route_modulators_text` is deliberately *not* surfaced:
+it is free Spanish prose naming route flavours ("OC/EC→innovación") that the engine does not score,
+and P1–P3 does not parse it into `CareerFitRules`. Putting it in the payload is a rule-set parsing
+change first.
