@@ -476,6 +476,89 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
         Assert.Equal(1L, (long)(await survived.ExecuteScalarAsync())!);
     }
 
+    /// <summary>
+    /// formmaps#63/#80. The two tables the moderation port writes, pinned individually rather than sampled,
+    /// because their verb sets are the invariant and because they were STAGED ahead of the port: the role
+    /// script moved "user_blocks" out of the read-only tier and added "reports" to the SELECT/INSERT/UPDATE
+    /// tier before any code needed them (script sections 3 and 4). This test is the other half of that bet —
+    /// it says the staged grants are exactly what the landed code needs.
+    ///
+    /// <para>WHAT NEEDS WHAT. "reports": INSERT from POST /moderation/report, SELECT from GET
+    /// /moderation/reports (which also joins "users", already granted). "user_blocks": INSERT + UPDATE from
+    /// the block upsert, UPDATE from the unblock soft-delete, SELECT because MessagesRepository ALREADY
+    /// reads blocks on the live messaging path (MessagesRepository.cs:556 and :721) — losing SELECT here
+    /// would break messaging, not moderation.</para>
+    ///
+    /// <para>NO DELETE on either, and that is load-bearing rather than incidental: an unblock is a soft
+    /// delete (isActive = false) and a report is never removed, so a role that could DELETE could destroy
+    /// the evidence trail an abuse investigation runs on. UPDATE on "reports" is currently UNUSED by .NET —
+    /// the admin review/resolve path is still Node — and is deliberately not narrowed here: it is the next
+    /// obvious port into the same tier, and re-running grants mid-domain is the exact failure #29 hit.</para>
+    /// </summary>
+    [Theory]
+    [InlineData("reports", true, true, true, false)]
+    [InlineData("user_blocks", true, true, true, false)]
+    public async Task Moderation_tables_have_exactly_the_privileges_the_port_needs(
+        string table, bool canSelect, bool canInsert, bool canUpdate, bool canDelete)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'DELETE')
+            """,
+            connection);
+        command.Parameters.AddWithValue("table", table);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.Equal(canSelect, reader.GetBoolean(0));
+        Assert.Equal(canInsert, reader.GetBoolean(1));
+        Assert.Equal(canUpdate, reader.GetBoolean(2));
+        Assert.Equal(canDelete, reader.GetBoolean(3));
+    }
+
+    /// <summary>
+    /// The behavioural half of the pin above, run as the role itself. Neither table has RLS or a trigger
+    /// behind it (both are on formmaps#77's still-undecided group 2), so a rejected DELETE here is
+    /// attributable to the GRANT and to nothing else — which is what the SqlState assertion keeps true.
+    /// </summary>
+    [Theory]
+    [InlineData("reports")]
+    [InlineData("user_blocks")]
+    public async Task Role_can_write_moderation_rows_but_never_delete_them(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand($"""INSERT INTO "{table}" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        await using (var update = new NpgsqlCommand($"""UPDATE "{table}" SET id = @id WHERE id = @id""", connection))
+        {
+            update.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await update.ExecuteNonQueryAsync());
+        }
+
+        var delete = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand($"""DELETE FROM "{table}" WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", delete.SqlState); // insufficient_privilege
+    }
+
     [Fact]
     public async Task Role_cannot_create_tables_or_other_objects_in_the_schema()
     {

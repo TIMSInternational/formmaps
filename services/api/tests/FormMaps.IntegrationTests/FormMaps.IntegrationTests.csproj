@@ -185,6 +185,11 @@
     <EmbeddedResource Include="Video\Data\video-sessions-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers messaging unread-count reads harness (FM-DOTNET-098 Domain 7b). -->
     <EmbeddedResource Include="Messaging\messaging-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers UGC moderation harness (formmaps#63). Converted to
+         RlsEnabledDatabaseFixture, so the three policied tables in it (users/conversations/messages) run
+         under the real production policies while reports/user_blocks stay unpolicied exactly as production
+         leaves them. -->
+    <EmbeddedResource Include="Moderation\Data\moderation-schema.sql" />
     <!-- Schema-only DDL (shadow_* tables + minimal live-side stubs) for the Testcontainers billing shadow-repository write harness (Domain 9a, Task 3). -->
     <EmbeddedResource Include="Billing\Data\billing-shadow-schema.sql" />
     <!-- Stub schema (one row per table the role script grants against) for the DB-role GRANT verification harness (formmaps#10). -->
