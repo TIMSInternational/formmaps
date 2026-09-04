@@ -89,14 +89,17 @@ CREATE TABLE "school_course_import_jobs" (id text PRIMARY KEY);
 CREATE TABLE "school_courses" (id text PRIMARY KEY);
 CREATE TABLE "school_framework_course_overrides" (id text PRIMARY KEY);
 CREATE TABLE "schools" (id text PRIMARY KEY);
+CREATE TABLE "school_users" (id text PRIMARY KEY);
 -- Domain 9a shadow-mode billing tables (infra/aws/sql/billing-shadow-tables.sql).
 CREATE TABLE "shadow_payments" (id text PRIMARY KEY);
 CREATE TABLE "shadow_stripe_events" (id text PRIMARY KEY);
 CREATE TABLE "shadow_user_subscriptions" (id text PRIMARY KEY);
+CREATE TABLE "special_requirements" (id text PRIMARY KEY);
 CREATE TABLE "student_alerts" (id text PRIMARY KEY);
 CREATE TABLE "student_applications" (id text PRIMARY KEY);
 CREATE TABLE "student_course_plans" (id text PRIMARY KEY);
 CREATE TABLE "student_grades" (id text PRIMARY KEY);
+CREATE TABLE "student_gpas" (id text PRIMARY KEY);
 CREATE TABLE "student_graduation_targets" (id text PRIMARY KEY);
 CREATE TABLE "student_parent_links" (id text PRIMARY KEY);
 CREATE TABLE "student_portfolio_items" (id text PRIMARY KEY);

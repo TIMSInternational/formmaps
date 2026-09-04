@@ -12,6 +12,8 @@ using FormMaps.Application.Prerequisites;
 using FormMaps.Application.Email;
 using FormMaps.Application.Reports;
 using FormMaps.Application.Gradebook;
+using FormMaps.Application.Graduation;
+using FormMaps.Application.Transcript;
 using FormMaps.Application.SchoolAdmin;
 using FormMaps.Application.SchoolAnalytics;
 using FormMaps.Application.SchoolProfile;
@@ -52,6 +54,8 @@ using FormMaps.Infrastructure.Email;
 using FormMaps.Infrastructure.Recommendations;
 using FormMaps.Infrastructure.Reports;
 using FormMaps.Infrastructure.Gradebook;
+using FormMaps.Infrastructure.Graduation;
+using FormMaps.Infrastructure.Transcript;
 using FormMaps.Infrastructure.SchoolAdmin;
 using FormMaps.Infrastructure.SchoolAnalytics;
 using FormMaps.Infrastructure.SchoolProfile;
@@ -291,6 +295,17 @@ public static class DependencyInjection
         services.AddScoped<ICourseImportReader, CourseImportReader>();
         services.AddScoped<ICourseImportWriter, CourseImportWriter>();
         services.AddScoped<IGradebookReader, GradebookReader>();
+        // issue #55 (graduation + transcripts lane): routes/transcript.ts, all nine routes, under
+        // FORMMAPS_ROUTE_GRADUATION_TO_DOTNET. The getTranscriptData/resolveGpaConfig half is SHARED with
+        // GradebookReader via TranscriptDataQuery rather than reimplemented — there is exactly one GPA
+        // computation in this codebase (FormMaps.Application.Gradebook.GpaComputation) and it stays that way.
+        services.AddScoped<ITranscriptReader, TranscriptReader>();
+        services.AddScoped<ITranscriptWriter, TranscriptWriter>();
+        // issue #55, second file: the GRADUATION half of routes/school-grades.ts (six routes under
+        // /graduation/*). The calendar half of that same legacy file is already .NET under its own flag and is
+        // untouched; the grade-import half stays in Node. Same lane flag as the transcript reader above.
+        services.AddScoped<IGraduationRulesReader, GraduationRulesReader>();
+        services.AddScoped<IGraduationRulesWriter, GraduationRulesWriter>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();
         services.AddScoped<ISchoolAdminWriter, SchoolAdminWriter>();

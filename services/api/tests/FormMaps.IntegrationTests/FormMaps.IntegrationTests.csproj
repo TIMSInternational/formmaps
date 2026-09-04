@@ -109,6 +109,10 @@
     <EmbeddedResource Include="SchoolStudents\Data\school-admin-course-plan-writes.parity.json" />
     <!-- Schema-only DDL for the Testcontainers gradebook transcript read harness (FM-DOTNET Phase-B). -->
     <EmbeddedResource Include="Gradebook\Data\gradebook-schema.sql" />
+    <!-- RLS-enabled DDL for the Testcontainers transcript + GPA harness (issue #55, routes/transcript.ts). -->
+    <EmbeddedResource Include="Transcript\Data\transcript-schema.sql" />
+    <!-- RLS-enabled DDL for the graduation-rules/progress/gap-analysis harness (issue #55, school-grades.ts). -->
+    <EmbeddedResource Include="Graduation\Data\graduation-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers school academic-calendar reads harness (FM-DOTNET-047 Phase-B). -->
     <EmbeddedResource Include="Calendar\Data\calendar-schema.sql" />
     <!-- Schema-only DDL (with FK ON DELETE CASCADE) for the calendar WRITES harness (FM-DOTNET-048 Phase-B). -->

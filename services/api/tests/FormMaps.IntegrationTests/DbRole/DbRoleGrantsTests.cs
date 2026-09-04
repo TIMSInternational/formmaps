@@ -235,6 +235,156 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     }
 
     /// <summary>
+    /// issue #55 (graduation + transcripts lane). Same reasoning as the billing block above: for these five the
+    /// exact verb set IS the invariant, not a sample, and three of them changed tier in this task. Named
+    /// individually so a later "just add DELETE, it's a write table" cannot pass unnoticed.
+    ///
+    ///   student_gpas / gpa_configurations -- upserted (INSERT + UPDATE), NEVER deleted. Legacy overwrites a GPA
+    ///     row rather than removing it, so DELETE is a verb no code path has and none should get.
+    ///   school_users -- SELECT only. computeClassRanks/getClassRankings read the roster from it; nothing in the
+    ///     .NET service creates or changes a school membership.
+    ///   student_grades -- SELECT only. The transcript lane READS grades; the grade import/write half of
+    ///     routes/school-grades.ts stays in Node.
+    ///   graduation_rule_sets -- SELECT + INSERT + UPDATE (POST/PUT /graduation/rules), never DELETE: the PUT
+    ///     replaces the rule set's CHILD rows, it never removes the rule set itself.
+    /// </summary>
+    [Theory]
+    [InlineData("student_gpas", true, true, true, false)]
+    [InlineData("gpa_configurations", true, true, true, false)]
+    [InlineData("school_users", true, false, false, false)]
+    [InlineData("student_grades", true, false, false, false)]
+    [InlineData("graduation_rule_sets", true, true, true, false)]
+    public async Task Graduation_lane_tables_have_exactly_the_privileges_the_service_needs(
+        string table, bool canSelect, bool canInsert, bool canUpdate, bool canDelete)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'DELETE')
+            """,
+            connection);
+        command.Parameters.AddWithValue("table", table);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.Equal(canSelect, reader.GetBoolean(0));
+        Assert.Equal(canInsert, reader.GetBoolean(1));
+        Assert.Equal(canUpdate, reader.GetBoolean(2));
+        Assert.Equal(canDelete, reader.GetBoolean(3));
+    }
+
+    /// <summary>
+    /// The behavioural half for the two tables this lane actually upserts into. A catalog assertion alone would
+    /// pass against a grant Postgres records but the role cannot use; a behavioural one alone cannot tell "no
+    /// privilege" from "some other lock said no", which is why the SqlState is asserted rather than a bare throw.
+    /// </summary>
+    /// <summary>
+    /// issue #55, the rule-set CHILDREN. Their tier is SELECT + INSERT + DELETE and specifically NOT UPDATE,
+    /// which is the opposite withholding from the two tables above. `updateGraduationRules` replaces these rows
+    /// wholesale (deleteMany + createMany in one transaction) rather than editing them, so no .NET code path
+    /// issues an UPDATE here — and granting one would hand the service the partial in-place edit that the
+    /// delete-and-recreate design exists to prevent. Catalog assertion; the behavioural half is below.
+    /// </summary>
+    [Theory]
+    [InlineData("category_requirements")]
+    [InlineData("special_requirements")]
+    public async Task Graduation_rule_set_children_are_select_insert_delete_but_never_update(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'DELETE')
+            """,
+            connection);
+        command.Parameters.AddWithValue("table", table);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.True(reader.GetBoolean(0), "the rule-set read includes both child lists");
+        Assert.True(reader.GetBoolean(1), "createMany re-creates the rows on every rules POST and PUT");
+        Assert.False(reader.GetBoolean(2), "no code path edits a requirement in place -- the PUT replaces them");
+        Assert.True(reader.GetBoolean(3), "deleteMany is half of the PUT's replace");
+    }
+
+    /// <summary>
+    /// The behavioural half of the assertion above, run as the role itself. The SqlState check is what makes the
+    /// rejected UPDATE attributable to the GRANT rather than to a constraint or a typo.
+    /// </summary>
+    [Theory]
+    [InlineData("category_requirements")]
+    [InlineData("special_requirements")]
+    public async Task Graduation_rule_set_children_accept_insert_and_delete_but_reject_update(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand($"""INSERT INTO "{table}" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        var exception = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var update = new NpgsqlCommand($"""UPDATE "{table}" SET id = @id WHERE id = @id""", connection);
+            update.Parameters.AddWithValue("id", id);
+            await update.ExecuteNonQueryAsync();
+        });
+
+        Assert.Equal("42501", exception.SqlState); // insufficient_privilege
+
+        await using var delete = new NpgsqlCommand($"""DELETE FROM "{table}" WHERE id = @id""", connection);
+        delete.Parameters.AddWithValue("id", id);
+        Assert.Equal(1, await delete.ExecuteNonQueryAsync());
+    }
+
+    [Theory]
+    [InlineData("student_gpas")]
+    [InlineData("gpa_configurations")]
+    public async Task Graduation_lane_upsert_tables_accept_writes_but_reject_deletes(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand($"""INSERT INTO "{table}" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        await using (var update = new NpgsqlCommand($"""UPDATE "{table}" SET id = @id WHERE id = @id""", connection))
+        {
+            update.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await update.ExecuteNonQueryAsync());
+        }
+
+        var exception = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var delete = new NpgsqlCommand($"""DELETE FROM "{table}" WHERE id = @id""", connection);
+            delete.Parameters.AddWithValue("id", id);
+            await delete.ExecuteNonQueryAsync();
+        });
+
+        Assert.Equal("42501", exception.SqlState); // insufficient_privilege
+    }
+
+    /// <summary>
     /// formmaps#52. The audit trail's grant is its own tier: SELECT + INSERT, never UPDATE, never DELETE.
     /// This mirrors at the privilege layer what infra/aws/sql/audit-events-schema.sql enforces at the table
     /// layer (REVOKE + the ENABLE ALWAYS statement trigger), so that the two independent locks agree. The
