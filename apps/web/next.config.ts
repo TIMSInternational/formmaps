@@ -548,6 +548,33 @@ function shouldRouteGraduationToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_GRADUATION_TO_DOTNET));
 }
 
+// ─── M4 recovery lanes: telemetry (#65), teacher onboarding (#62) ────────────────────────────
+// TWO new flags, both default OFF and both verified set NOWHERE: no .env (apps/web/.env.template
+// is the only .env-shaped file in the repo and assigns neither), no GitHub workflow, no
+// CloudFormation template (infra/aws/formmaps-api-prod-service.yml mentions only the
+// FORMMAPS_ROUTE_*_TO_DOTNET family in prose). Both names occur solely in doc comments and the
+// completion roadmap. Same `dotnetApiBaseUrl && isEnabled(...)` shape as every flag above.
+//
+// The graduation-plan remainder (#55) deliberately gets NO third flag -- it rides
+// shouldRouteGraduationToDotnet() above, so the plan endpoints and the graduation rules they are
+// validated against can never be split across two backends.
+
+// Product telemetry ingest (#65): the ONE route of routes/telemetry.ts, POST /events. Destination
+// group is app.MapGroup("/api/v1/telemetry") + MapPost("/events"). Default OFF.
+function shouldRouteTelemetryToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET));
+}
+
+// Teacher onboarding + dashboard reads (#62): the 4 routes of routes/teacher.ts under ONE flag,
+// ACROSS A SPLIT AUTH BOUNDARY. /onboarding/verify and /onboarding/complete are PRE-AUTH -- the
+// caller is a teacher clicking an emailed invite link and sends no cookie and no bearer token --
+// while /profile and /evaluations/pending are ordinary authed reads. One flag because the
+// onboarding pair mints the very session the other two consume: splitting them would let a
+// teacher be onboarded by one backend and then read a dashboard from the other. Default OFF.
+function shouldRouteTeacherOnboardingToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1450,9 +1477,19 @@ const nextConfig: NextConfig = {
         : []),
 
       // ══ M4 NO-DECISION PORTS -- START ══════════════════════════════════════════════════════
-      // Three lanes, three NEW flags, every one default OFF and set nowhere today. Self-contained
-      // and delimited on purpose: a CareerFit rewrite block is landing on a parallel branch, and
+      // SIX lanes, FIVE flags, every one default OFF and set nowhere today. Self-contained and
+      // delimited on purpose: a CareerFit rewrite block is landing on a parallel branch, and
       // keeping this region contiguous is what lets the two merge without interleaving.
+      //
+      // The original three: moderation (#63), recommendation letters (#59), graduation +
+      // transcripts (#55). The three recovery lanes merged in afterwards: the graduation-plan
+      // REMAINDER of #55 (no new flag -- it rides FORMMAPS_ROUTE_GRADUATION_TO_DOTNET, appended
+      // inside that block below), product telemetry (#65) and teacher onboarding (#62).
+      //
+      // Five flags, not six, because #55 is one cutover unit. The two genuinely new names are
+      // FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET and FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET; both
+      // were grepped across .env files, workflows and CloudFormation templates and are assigned
+      // nowhere -- they appear only in doc comments and the completion roadmap.
       //
       // Every entry below is PATH-SPECIFIC with source === destination. No prefix rules: #109,
       // #114 and #120 all exist because a broad prefix silently shadowed another flag's routes and
@@ -1563,6 +1600,85 @@ const nextConfig: NextConfig = {
               source: "/api/v1/school-admin/graduation/gap-analysis/:studentId",
               destination: `${dotnetApiBaseUrl}/api/v1/school-admin/graduation/gap-analysis/:studentId`,
             },
+            // ── #55 REMAINDER: routes/graduation-plan.ts + routes/counselor-graduation.ts ──────
+            // 8 routes over 6 paths, on the SAME flag as the transcript/rules half above. No third
+            // flag on purpose: a plan submit is validated against the very rule set the entries
+            // above move, so the two halves must flip and roll back as one unit.
+            //
+            // EVERY ENTRY IS A LITERAL, and here that is load-bearing rather than stylistic --
+            // this is the one lane whose paths sit at the SAME SEGMENT DEPTH as the two D1 AI
+            // carve-outs at the top of this array:
+            //   * /api/v1/student/graduation-plan/:path* would sit at the same depth as the
+            //     carve-out /api/v1/student/graduation-plan/generate and would swallow it if this
+            //     block were ever reordered above it.
+            //   * /api/v1/counselor/me/students/:studentId/graduation-plan/:path* would capture
+            //     the seven-segment carve-out .../graduation-plan/generate outright, from here,
+            //     with no reordering needed at all.
+            // The /generate carve-outs must stay ABOVE this block. They do -- they are the first
+            // two entries in personalityRewrites.
+            //
+            // Next matches path-not-method, so /target co-flips GET and PUT and the bare
+            // /graduation-plan co-flips GET and DELETE. Most-specific-first within each tree: the
+            // three deeper /graduation-plan/* entries precede the bare parent, and the seven-
+            // segment /review precedes the six-segment counselor read. Defensive only (Next will
+            // not match a literal parent against a deeper path), matching the transcript block.
+            //
+            // The existing counselor rewrites stop at /me/students/:studentId (five segments) and
+            // do not cover either of these; nothing else in this config claims either path.
+            { source: "/api/v1/student/graduation-plan/target", destination: `${dotnetApiBaseUrl}/api/v1/student/graduation-plan/target` },
+            { source: "/api/v1/student/graduation-plan/submit", destination: `${dotnetApiBaseUrl}/api/v1/student/graduation-plan/submit` },
+            {
+              source: "/api/v1/student/graduation-plan/supplemental",
+              destination: `${dotnetApiBaseUrl}/api/v1/student/graduation-plan/supplemental`,
+            },
+            { source: "/api/v1/student/graduation-plan", destination: `${dotnetApiBaseUrl}/api/v1/student/graduation-plan` },
+            {
+              source: "/api/v1/counselor/me/students/:studentId/graduation-plan/review",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/students/:studentId/graduation-plan/review`,
+            },
+            {
+              source: "/api/v1/counselor/me/students/:studentId/graduation-plan",
+              destination: `${dotnetApiBaseUrl}/api/v1/counselor/me/students/:studentId/graduation-plan`,
+            },
+          ]
+        : []),
+
+      // ── Product telemetry (#65) -- FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET ──────────────────────
+      // routes/telemetry.ts ported whole: ONE route, ONE path. Exact literal, source ===
+      // destination. Deliberately NOT /api/v1/telemetry/:path* -- nothing else in the repo routes
+      // under /api/v1/telemetry, so the prefix would be harmless today and would silently shadow
+      // the moment a second telemetry path appeared; #109/#114/#120 are all that same story, and
+      // the precedent they set is per-path. There is exactly one path to name, so naming it costs
+      // nothing. Destination group: app.MapGroup("/api/v1/telemetry") + MapPost("/events").
+      ...(shouldRouteTelemetryToDotnet()
+        ? [{ source: "/api/v1/telemetry/events", destination: `${dotnetApiBaseUrl}/api/v1/telemetry/events` }]
+        : []),
+
+      // ── Teacher onboarding + dashboard (#62) -- FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET ─
+      // routes/teacher.ts ported whole: 4 routes, 4 paths, ONE flag, ACROSS A SPLIT AUTH BOUNDARY.
+      //
+      // THE FIRST TWO ARE PRE-AUTHENTICATION and that constrains this block, not just the .NET
+      // side. The caller is a teacher clicking an emailed invite link: no cookie, no bearer token.
+      // These entries therefore sit in the same flat afterFiles array as everything else, matched
+      // on path alone, with no `has`/`missing` condition -- a Next rewrite is a pure origin swap
+      // that adds no middleware, and that is exactly the property being relied on. Do not "tidy"
+      // them behind an auth-cookie matcher: the anonymous invite click would stop matching and
+      // every invited teacher would land on Node while the rest of the lane was on .NET.
+      //
+      // POST /onboarding/complete SETS access_token + refresh_token cookies on its 200. Set-Cookie
+      // passes back through the rewrite unchanged (same-origin from the browser's point of view --
+      // the proxy hop is server-side), which is what makes onboarding actually log the teacher in.
+      // Nothing here rewrites, filters or scopes those headers, and nothing may start to.
+      //
+      // Literal paths, source === destination, no prefix: /api/v1/teacher/:path* would collapse the
+      // split auth boundary into one rule and would capture any future unported /api/v1/teacher/*
+      // route. Legacy: teacher.ts:18 (verify), :33 (complete), :91 (profile), :111 (pending).
+      ...(shouldRouteTeacherOnboardingToDotnet()
+        ? [
+            { source: "/api/v1/teacher/onboarding/verify", destination: `${dotnetApiBaseUrl}/api/v1/teacher/onboarding/verify` },
+            { source: "/api/v1/teacher/onboarding/complete", destination: `${dotnetApiBaseUrl}/api/v1/teacher/onboarding/complete` },
+            { source: "/api/v1/teacher/profile", destination: `${dotnetApiBaseUrl}/api/v1/teacher/profile` },
+            { source: "/api/v1/teacher/evaluations/pending", destination: `${dotnetApiBaseUrl}/api/v1/teacher/evaluations/pending` },
           ]
         : []),
       // ══ M4 NO-DECISION PORTS -- END ════════════════════════════════════════════════════════

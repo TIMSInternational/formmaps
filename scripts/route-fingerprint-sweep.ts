@@ -740,6 +740,20 @@ export const PATH_DOMAIN_MAP: [string, string][] = [
   // as platform-health rather than being attached to whichever feature happened to emit the
   // event. Without a row here it would report as `unmapped` for the whole rollout.
   ["/api/v1/telemetry", "platform-health"],
+  // issue #62, ADDED BY THE INTEGRATOR, not by the teacher lane -- flagged for a reviewer's eye.
+  // The lane ported four routes under a prefix that had no row here, so the moment its rewrite
+  // landed the sweep would have reported all four as `unmapped-domain`. That is a reporting
+  // defect introduced by landing the rewrite, hence fixed here rather than left for the flip.
+  //
+  // JUDGEMENT CALL, and the arguable one in this merge: /api/v1/teacher is a STAFF IDENTITY
+  // prefix, not assessment content. Three of its four routes (onboarding verify, onboarding
+  // complete, profile) are staff provisioning and self-read, which is squarely
+  // schools-rosters-organizations alongside /api/v1/school-admin/users. The fourth,
+  // /evaluations/pending, is a teacher's own work queue rather than an assessment instrument --
+  // it returns which evaluations this teacher still owes, not any evaluation's content -- so it
+  // does not pull the prefix into assessments-and-readiness. If the domain owner disagrees, this
+  // is one row to change and it affects reporting only; no rewrite and no flag depends on it.
+  ["/api/v1/teacher", "schools-rosters-organizations"],
   ["/hubs", "messaging"],
   ["/authapi", "auth"],
 ];
