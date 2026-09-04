@@ -164,7 +164,11 @@ public class CareerFitAuditLedgerTests(ITestOutputHelper output)
         var ruleSet = CareerFitRulesResolver.Resolve(Rules);
         var checks = 0;
 
-        foreach (var c in Fixture.GetProperty("cases").EnumerateArray().Take(10))
+        // All 60 cases, not a window: 15 of the 840 family evaluations are the case where F22 answers STRONG
+        // for 360 and convergence_level still counts PARTIAL because the confidence is LOW, and that is the
+        // one place a ledger could quietly disagree with the score it explains.
+        var downgrades = 0;
+        foreach (var c in Fixture.GetProperty("cases").EnumerateArray())
         {
             var ranked = CareerFitEvaluator.EvaluateCore(ReadAssessment(c.GetProperty("inputs")), ruleSet);
             foreach (var family in ranked)
@@ -242,6 +246,8 @@ public class CareerFitAuditLedgerTests(ITestOutputHelper output)
                     else
                     {
                         Assert.Equal(counted.ToReferenceValue(), strong.GetProperty("rule").GetProperty("final_support").GetString());
+                        Assert.Contains("careerfit360_confidence", strong.GetProperty("rule").GetProperty("downgrade_reason").GetString()!);
+                        downgrades++;
                     }
 
                     checks++;
@@ -251,7 +257,9 @@ public class CareerFitAuditLedgerTests(ITestOutputHelper output)
             }
         }
 
-        output.WriteLine($"{checks} recorded outputs matched the value the run used");
+        // Not an incidental number: without it this test would never see the downgrade branch at all.
+        Assert.True(downgrades > 0, "no fixture case exercised the LOW-confidence 360 downgrade");
+        output.WriteLine($"{checks} recorded outputs matched the value the run used, {downgrades} of them through the 360 confidence downgrade");
     }
 
     [Fact]
