@@ -184,8 +184,17 @@ GRANT SELECT ON TABLE
     -- routes/transcript.ts PUT /school-admin/gpa-config upserts the school's row
     -- (TranscriptWriter.UpsertGpaConfigAsync). Read-only here would 42501 every save of a
     -- GPA scale / grade map the moment FORMMAPS_ROUTE_GRADUATION_TO_DOTNET is flipped.
+    -- issue #55 REMAINDER: graduation_plan_items stays READ-ONLY. The graduation-plan routes .NET now serves
+    -- only ever SELECT these (getCurrentPlan's item list and reviewPlan's materialization source); the only
+    -- code path that INSERTs them is generateDraftPlan, which lives on POST /graduation-plan/generate and
+    -- stays on Node permanently under DECISION D1. Widening this to INSERT would grant a verb no .NET code
+    -- path has.
     public."graduation_plan_items",
-    public."graduation_plans",
+    -- NOTE: "graduation_plans" moved to the SELECT/INSERT/UPDATE tier below (issue #55 REMAINDER) --
+    -- POST /graduation-plan/submit (draft -> proposed + submittedAt), DELETE /graduation-plan (soft delete,
+    -- isActive=false) and PUT /me/students/:id/graduation-plan/review (approved|rejected + reviewedBy /
+    -- reviewedAt / reviewNote) all UPDATE this table. Read-only here would 42501 every submit, discard and
+    -- counselor decision the moment FORMMAPS_ROUTE_GRADUATION_TO_DOTNET is flipped.
     -- NOTE: "graduation_rule_sets" moved to the SELECT/INSERT/UPDATE tier below (issue #55) --
     -- POST /api/v1/school-admin/graduation/rules INSERTs a rule set and PUT .../rules/:id UPDATEs
     -- totalCreditsRequired + updatedBy (GraduationRulesWriter). It does NOT need DELETE: the PUT
@@ -203,7 +212,10 @@ GRANT SELECT ON TABLE
     -- not this table. Keep it here rather than folding it into the read/write tier.
     public."school_users",
     public."student_grades",
-    public."student_graduation_targets",
+    -- NOTE: "student_graduation_targets" moved to the SELECT/INSERT/UPDATE tier below (issue #55 REMAINDER) --
+    -- PUT /api/v1/student/graduation-plan/target is a Prisma upsert on the @unique studentId, ported as an
+    -- INSERT ... ON CONFLICT ("studentId") DO UPDATE. It needs INSERT and UPDATE, and NOT delete: legacy
+    -- never removes a target, it sets isActive.
     -- Domain 9a: the subscription plan catalog, read by PlanReader to resolve a
     -- plan's Stripe Price id for POST /api/v1/billing/checkout-session.
     public."subscription_plans",
@@ -296,6 +308,17 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     -- issue #55: created by POST /graduation/rules, updated by PUT /graduation/rules/:id. Never deleted
     -- (moved from the read-only tier; see the NOTE there).
     public."graduation_rule_sets",
+    -- issue #55 REMAINDER (routes/graduation-plan.ts + routes/counselor-graduation.ts). Both moved from the
+    -- read-only tier; see the NOTEs there. Neither needs DELETE:
+    --   graduation_plans          -- UPDATE only. The status transitions (submit, review) and the discard
+    --                                soft-delete are all UPDATEs; the only INSERT is generateDraftPlan, which
+    --                                stays on Node under DECISION D1. INSERT is granted here because this tier
+    --                                is SELECT/INSERT/UPDATE as a unit -- one verb wider than today's code,
+    --                                recorded deliberately rather than split into a bespoke tier, and pinned
+    --                                by DbRoleGrantsTests so "wider" cannot drift into "unbounded".
+    --   student_graduation_targets -- INSERT + UPDATE, the target upsert.
+    public."graduation_plans",
+    public."student_graduation_targets",
     public."evaluation_groups",
     public."isams_configs",
     public."lia_assessment_sessions",
