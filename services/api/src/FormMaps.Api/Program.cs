@@ -129,6 +129,7 @@ app.MapVocationalTakeEndpoints();
 app.MapEvaluationExternalEndpoints();
 app.MapRecommendationsEndpoints();
 app.MapTelemetryEndpoints();
+app.MapTeacherEndpoints();
 
 app.Run();
 

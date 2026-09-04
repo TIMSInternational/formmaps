@@ -38,6 +38,7 @@ using FormMaps.Application.ParentChildReads;
 using FormMaps.Application.StudentCoursePlan;
 using FormMaps.Application.StudentParents;
 using FormMaps.Application.StudentPortfolio;
+using FormMaps.Application.Teacher;
 using FormMaps.Application.Video;
 using FormMaps.Application.Messaging;
 using FormMaps.Application.Recommendations;
@@ -81,6 +82,7 @@ using FormMaps.Infrastructure.ParentChildReads;
 using FormMaps.Infrastructure.StudentCoursePlan;
 using FormMaps.Infrastructure.StudentParents;
 using FormMaps.Infrastructure.StudentPortfolio;
+using FormMaps.Infrastructure.Teacher;
 using FormMaps.Infrastructure.Video;
 using FormMaps.Infrastructure.Messaging;
 using Microsoft.Extensions.Configuration;
@@ -262,6 +264,11 @@ public static class DependencyInjection
         // FM-DOTNET-078: parent portal self-scoped surface (profile, notifications, evaluations/pending, delete-link).
         // Onboarding (auth-cookie), invite/resend (SES), and child-link reads stay in Node.
         services.AddScoped<IParentPortalRepository, ParentPortalRepository>();
+        // formmaps#62: routes/teacher.ts. FOUR routes across a SPLIT auth boundary — the onboarding pair runs
+        // pre-auth on System (bypass) sessions, the profile pair on the CALLER's Identity session. The repository
+        // encodes that split in its method signatures (pre-auth methods take no RequestContext); see
+        // ITeacherOnboardingRepository and TeacherEndpoints.
+        services.AddScoped<ITeacherOnboardingRepository, TeacherOnboardingRepository>();
         // FM-DOTNET-079: parent child-link-scoped reads (children/:id/progress + course-plan). course-plan reads the
         // plan/target/course-plan on a System (RLS-bypass) session, mirroring legacy runAsSystem.
         services.AddScoped<IParentChildReader, ParentChildReader>();
