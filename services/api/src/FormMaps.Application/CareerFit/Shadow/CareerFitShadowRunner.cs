@@ -17,12 +17,25 @@ namespace FormMaps.Application.CareerFit.Shadow;
 // writer, on the caller's own RLS session — and the shadow row itself is served by nothing.
 //
 // WHOSE SESSION. The caller's, always, exactly like every other CareerFit class: the evaluator, the
-// run reader, the legacy reader and the shadow writer all take the RequestContext they are given and
-// open their own RLS session with it. There is no bypass session anywhere in this slice. A shadow
-// operator therefore sees exactly the students their own credential can see, and a mis-scoped
-// operator produces a smaller cohort rather than a leak. (This is the difference from
+// run reader, the legacy reader, the tenant reader and the shadow writer all take the RequestContext
+// they are given and open their own RLS session with it. There is no bypass session anywhere in this
+// slice. A shadow operator therefore sees exactly the students their own credential can see, and a
+// mis-scoped operator produces a smaller cohort rather than a leak. (This is the difference from
 // BillingShadowRepository, which does use RequestContext.System(): its shadow tables hold no
 // tenant-scoped student data and carry no policy, and this one's do and does.)
+//
+// THE STUDENT'S TENANT IS THE FIRST READ, AND IT IS ALSO THE GATE. Every row this job writes carries
+// the STUDENT's "schoolId", because careerfit_shadow_comparisons' WITH CHECK is careerfit_runs'
+// predicate verbatim: bypass, OR the row is the caller's own, OR its "schoolId" is the caller's tenant.
+// A comparable pair takes that value off the run it measured; the three PRE-SCORING arms have no run to
+// take it from, so they read it here — from the policied users row, on the caller's own session,
+// exactly the query CareerFitInputReader opens with. This was a defect and not a refinement: those
+// three arms shipped writing "schoolId" NULL, and a NULL-tenant row about someone else's student is
+// refused (42501) on every non-bypass session, so the job aborted on the first student in a cohort with
+// no cached legacy answer -- the very population the design says must be recorded. Under a bypass
+// operator it did write, and then the row was invisible to the school staff who had run the cohort.
+// Because the read is the policied one, it is the gate too: a student this caller cannot see is refused
+// BEFORE the legacy cache is touched, so no row is written about someone the operator may not read.
 //
 // WHY A RUN IS REUSED WHEN THERE IS A USABLE ONE. Runs are immutable and a re-evaluation is a new
 // row; measuring a cohort twice would otherwise double the run table for no new information. A run is
@@ -46,6 +59,11 @@ public interface ICareerFitShadowRunner
     /// incomparable ones, which are recorded rather than skipped so a report's denominator counts every
     /// student that was looked at.
     /// </summary>
+    /// <exception cref="CareerFitInputException">
+    /// STUDENT / STUDENT_NOT_VISIBLE when no <c>users</c> row for <paramref name="userId"/> is visible to
+    /// this caller's session. Nothing is read and nothing is written: a pair the operator may not see is
+    /// not a pair to measure, and a row about them could not be read back afterwards either.
+    /// </exception>
     Task<CareerFitShadowComparison> MeasureAsync(
         RequestContext context,
         string userId,
@@ -59,6 +77,7 @@ public sealed class CareerFitShadowRunner : ICareerFitShadowRunner
     private readonly ICareerFitEvaluator _evaluator;
     private readonly ICareerFitRunReader _runReader;
     private readonly ILegacyCareerScoreReader _legacyReader;
+    private readonly ICareerFitStudentTenantReader _tenantReader;
     private readonly ICareerFitShadowWriter _shadowWriter;
     private readonly ICareerFitRulesProvider _rulesProvider;
     private readonly CareerFitShadowProjection _projection;
@@ -71,6 +90,7 @@ public sealed class CareerFitShadowRunner : ICareerFitShadowRunner
         ICareerFitEvaluator evaluator,
         ICareerFitRunReader runReader,
         ILegacyCareerScoreReader legacyReader,
+        ICareerFitStudentTenantReader tenantReader,
         ICareerFitShadowWriter shadowWriter,
         ICareerFitRulesProvider rulesProvider,
         CareerFitShadowProjection? projection = null)
@@ -78,6 +98,7 @@ public sealed class CareerFitShadowRunner : ICareerFitShadowRunner
         _evaluator = evaluator;
         _runReader = runReader;
         _legacyReader = legacyReader;
+        _tenantReader = tenantReader;
         _shadowWriter = shadowWriter;
         _rulesProvider = rulesProvider;
         _projection = projection ?? CareerFitShadowProjection.Embedded;
@@ -114,6 +135,16 @@ public sealed class CareerFitShadowRunner : ICareerFitShadowRunner
         ArgumentNullException.ThrowIfNull(context);
         ArgumentException.ThrowIfNullOrWhiteSpace(userId);
 
+        // FIRST, and before the legacy cache is touched: the student's own tenant, off the policied users
+        // row. It is what every row this method writes must carry (see the header) and, because that row
+        // is policied, it is also the gate — an invisible student is refused here rather than measured.
+        var tenant = await _tenantReader.ReadAsync(context, userId, cancellationToken)
+            ?? throw new CareerFitInputException(
+                InputInstruments.Student,
+                InputWarningCodes.StudentNotVisible,
+                $"No users row for student '{userId}' is visible to this session; the pair cannot be measured "
+                + "and no shadow comparison may be recorded for them.");
+
         var legacy = await _legacyReader.ReadAsync(context, userId, cancellationToken);
 
         // The legacy-side verdicts are decided BEFORE the engine runs. Scoring a student legacy has no
@@ -123,7 +154,7 @@ public sealed class CareerFitShadowRunner : ICareerFitShadowRunner
             return await RecordAsync(
                 context,
                 CareerFitShadowComparator.NotComparable(
-                    userId, schoolId: null, CareerFitShadowCause.LegacyAbsent,
+                    userId, tenant.SchoolId, CareerFitShadowCause.LegacyAbsent,
                     _projection.Version, _rulesProvider.RulesVersion),
                 cancellationToken);
         }
@@ -133,7 +164,7 @@ public sealed class CareerFitShadowRunner : ICareerFitShadowRunner
             return await RecordAsync(
                 context,
                 CareerFitShadowComparator.NotComparable(
-                    userId, schoolId: null, CareerFitShadowCause.LegacyLocked,
+                    userId, tenant.SchoolId, CareerFitShadowCause.LegacyLocked,
                     _projection.Version, _rulesProvider.RulesVersion, legacy.ObservedAt),
                 cancellationToken);
         }
@@ -152,7 +183,7 @@ public sealed class CareerFitShadowRunner : ICareerFitShadowRunner
             return await RecordAsync(
                 context,
                 CareerFitShadowComparator.NotComparable(
-                    userId, schoolId: null, CareerFitShadowCause.EngineNotScorable,
+                    userId, tenant.SchoolId, CareerFitShadowCause.EngineNotScorable,
                     _projection.Version, _rulesProvider.RulesVersion, legacy.ObservedAt,
                     note: $"The engine refused to score this student: instrument {exception.Instrument}, "
                         + $"code {exception.Code}. Legacy had an answer for them."),

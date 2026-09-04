@@ -133,6 +133,51 @@ public class CareerFitExplanationTests
         });
     }
 
+    /// <summary>
+    /// REVIEW FINDING (important / numerics), RED FIRST. The payload projected the engine's per-instrument
+    /// SUPPORT label unconditionally, and for a run with no 360 the engine's careerfit360 is 0.0, so
+    /// evidence_support returns DIVERGENT — which the payload then reported as the 360's support, twice
+    /// (V360Explanation.Support and the "360" entry of ConvergenceExplanation.Supports). That renders
+    /// "absent" exactly as "weak", which this file's header forbids in those words, for every student in
+    /// production today. Observed RED: <c>v360.support=DIVERGENT convergence.supports[360]=DIVERGENT</c>.
+    ///
+    /// The ENGINE must keep emitting DIVERGENT — the reference engine evaluates evidence_support on the
+    /// 0.0 and parity is not negotiable (formmaps_engine_reference.py) — so the repair belongs here, at the
+    /// presentation boundary: when Determinable is false the payload carries NO verdict about the 360 at
+    /// all. Null, not a third label, so a consumer that already switches on the three support values does
+    /// not silently render an unknown one.
+    /// </summary>
+    [Fact]
+    public void With_no_360_evidence_the_payload_passes_NO_support_verdict_on_the_360_instrument()
+    {
+        var explanation = CareerFitExplanation.From(Run());
+
+        Assert.All(explanation.Families, family =>
+        {
+            Assert.False(family.V360.Determinable);
+            Assert.Null(family.V360.Support);
+            Assert.True(family.Convergence.Supports.ContainsKey(InputInstruments.V360));   // the key stays: absent, not missing
+            Assert.Null(family.Convergence.Supports[InputInstruments.V360]);
+
+            // the other three instruments still carry their real verdicts
+            foreach (var instrument in new[] { "PCA", "MIL", "PERSONALITY" })
+            {
+                Assert.NotNull(family.Convergence.Supports[instrument]);
+            }
+        });
+
+        // And nothing anywhere in the serialised payload says DIVERGENT about the 360: the key is emitted
+        // (nulls are kept on purpose, so "absent" is distinguishable from "not sent") and its value is null.
+        var json = JsonDocument.Parse(JsonSerializer.Serialize(explanation, CareerFitExplanation.SerializerOptions));
+        foreach (var family in json.RootElement.GetProperty("families").EnumerateArray())
+        {
+            Assert.Equal(JsonValueKind.Null, family.GetProperty("v360").GetProperty("support").ValueKind);
+            Assert.Equal(
+                JsonValueKind.Null,
+                family.GetProperty("convergence").GetProperty("supports").GetProperty(InputInstruments.V360).ValueKind);
+        }
+    }
+
     // ------------------------------------------------------------------ 360 present
 
     /// <summary>
@@ -171,6 +216,38 @@ public class CareerFitExplanationTests
         var v360Modulators = family.Modulators.Where(m => m.Instrument == InputInstruments.V360).ToList();
         Assert.NotEmpty(v360Modulators);
         Assert.Equal(v360Modulators.Select(m => m.Magnitude).OrderByDescending(m => m), v360Modulators.Select(m => m.Magnitude));
+    }
+
+    /// <summary>
+    /// REVIEW FINDING (important / numerics), RED FIRST. Every MIL modulator shipped the sentence
+    /// "relative strength against the student's own MIL mean" to the client, but the number is the
+    /// reference's mil_relative_strengths, which is normalised against the student's own MAX:
+    /// formmaps_engine_reference.py:253-254 takes <c>m = max(DC, RZ, VN, MT, OR)</c> and divides by it, and
+    /// CareerFitFormulas.CalculateMil reproduces that with Math.Max. The payload therefore misdescribed its
+    /// own arithmetic to the counselor reading it. Observed RED, and the signature is unmistakable: the top
+    /// subtest is exactly 100.0, which is impossible for a mean-relative measure. The same reading made the
+    /// <c>OrderByDescending(Math.Abs(...))</c> on the modulator ordering a no-op — the values are strictly
+    /// positive, so no modulator is ever negative and the absolute value never changes an order.
+    /// </summary>
+    [Fact]
+    public void A_MIL_modulator_describes_the_max_relative_number_it_actually_carries()
+    {
+        var family = CareerFitExplanation.From(Run()).Families[0];
+        var mil = family.Modulators.Where(m => m.Instrument == InputInstruments.Mil).ToList();
+
+        Assert.NotEmpty(mil);
+        Assert.Equal(family.Mil.RelativeStrengths.Count, mil.Count);
+
+        // The measure is max-relative: the strongest subtest is exactly 100 and nothing is ever negative.
+        Assert.Equal(100.0, mil.Max(m => m.Magnitude), 9);
+        Assert.All(mil, m => Assert.True(m.Magnitude >= 0.0, $"{m.Code} = {m.Magnitude}"));
+
+        // ... and the sentence shipped to the client says so, rather than naming a mean.
+        Assert.All(mil, m => Assert.DoesNotContain("mean", m.Meaning, StringComparison.OrdinalIgnoreCase));
+        Assert.All(mil, m => Assert.Contains("strongest", m.Meaning, StringComparison.OrdinalIgnoreCase));
+
+        // Heaviest first, on the value itself now that the no-op Math.Abs is gone.
+        Assert.Equal(mil.Select(m => m.Magnitude).OrderByDescending(v => v), mil.Select(m => m.Magnitude));
     }
 
     /// <summary>

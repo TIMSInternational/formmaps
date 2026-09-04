@@ -78,6 +78,7 @@ public sealed class CareerFitDatabaseFixture : RlsEnabledDatabaseFixture
         "student_parent_links",             // 003-fk-users.sql + 009-parent-links.sql
         "pca_results",                      // 007-self-scoped.sql (self OR owner's school via users) — FM-CF-010 source row
         "evaluation_groups",                // 003-fk-users.sql    (self OR the evaluated user's school) — FM-CF-007 source row
+        "user_career_profiles",             // 003-fk-users.sql    (self OR the owner's school via users) — FM-CF-013 legacy cache
     ];
 
     /// <summary>The real <c>infra/aws/sql/careerfit-schema.sql</c>, applied as-is. See the class remarks.</summary>

@@ -114,6 +114,10 @@ public sealed record FamilyExplanation(
         ArgumentNullException.ThrowIfNull(family);
         ArgumentNullException.ThrowIfNull(quality);
 
+        // The 360 verdict is withheld — not relabelled — when the instrument carried no evidence: see
+        // ConvergenceExplanation and V360Explanation.SupportOf. Every other instrument always has one.
+        var v360Determinable = V360Explanation.IsDeterminable(quality);
+
         return new FamilyExplanation(
             FamilyId: family.OwnerId,
             Rank: family.RankPosition,
@@ -124,7 +128,10 @@ public sealed record FamilyExplanation(
             Convergence: new ConvergenceExplanation(
                 family.ConvergenceLevel.ToReferenceValue(),
                 family.ConvergenceDetail.StrongCount,
-                family.ConvergenceDetail.Supports.ToDictionary(s => s.Key, s => s.Value.ToReferenceValue(), StringComparer.Ordinal)),
+                family.ConvergenceDetail.Supports.ToDictionary(
+                    s => s.Key,
+                    s => !v360Determinable && s.Key == InputInstruments.V360 ? null : s.Value.ToReferenceValue(),
+                    StringComparer.Ordinal)),
             Pca: new PcaExplanation(
                 family.PcaWinningRoute,
                 [.. family.AuditInputs.PcaRoutes.Select(r => new RouteEvidence(r.RouteId, r.Components))]),
@@ -145,9 +152,16 @@ public sealed record FamilyExplanation(
     /// <summary>
     /// The MODULATORS, as structured facts rather than prose. A modulator is something that moves this
     /// family's reading without being one of the four instrument fits: a MIL subtest this student is
-    /// relatively strong or weak on (the reference's mil_relative_strengths, signed against the student's
-    /// own mean) and a 360 variable this family weights heavily (base_weight × relevance — the reason two
-    /// families read the same 360 evidence differently). Ordered most influential first.
+    /// relatively strong or weak on and a 360 variable this family weights heavily (base_weight ×
+    /// relevance — the reason two families read the same 360 evidence differently). Ordered most
+    /// influential first.
+    ///
+    /// THE MIL NUMBER IS MAX-RELATIVE, NOT MEAN-RELATIVE, AND THE SENTENCE SAYS SO. The reference's
+    /// mil_relative_strengths divides each subtest percentile by the student's OWN STRONGEST subtest and
+    /// multiplies by 100 (formmaps_engine_reference.py:253-254 — <c>m = max(DC, RZ, VN, MT, OR)</c>), which
+    /// CareerFitFormulas.CalculateMil reproduces. So the top subtest is always exactly 100 and no value is
+    /// ever negative; an earlier version of this payload described the number as "signed against the
+    /// student's own mean", which was wrong twice over and made the ordering's Math.Abs a no-op.
     ///
     /// The workbook ALSO carries a per-family <c>v360_route_modulators_text</c> — a free Spanish sentence
     /// from TIMS ("OC/EC→innovación; OL/EI→gerencial"). It is deliberately not surfaced here: it is not
@@ -157,9 +171,13 @@ public sealed record FamilyExplanation(
     /// </summary>
     private static IEnumerable<Modulator> ModulatorsOf(OwnerEvaluation family)
     {
-        foreach (var (subtest, strength) in family.MilRelativeStrengths.OrderByDescending(s => Math.Abs(s.Value)))
+        foreach (var (subtest, strength) in family.MilRelativeStrengths.OrderByDescending(s => s.Value))
         {
-            yield return new Modulator(InputInstruments.Mil, subtest, strength, "relative strength against the student's own MIL mean");
+            yield return new Modulator(
+                InputInstruments.Mil, subtest, strength,
+                // No "percentile" in the SHIPPED sentence: the contract test walks the serialised JSON for
+                // *percent* (guardrail 3, and MilSubtestEvidence's remarks). The share is the same fact.
+                "relative strength as a share of the student's strongest MIL subtest, which is 100 by construction");
         }
 
         foreach (var (code, evidence) in family.AuditInputs.V360.Variables.OrderByDescending(v => v.Value.CombinedWeight))
@@ -172,8 +190,15 @@ public sealed record FamilyExplanation(
 /// <summary>The three gates as their persisted labels (SATISFIED / CONDITIONED / CRITICAL).</summary>
 public sealed record GateExplanation(string Competencies, string Mil, string Final);
 
-/// <summary>Cross-instrument agreement: the level, how many instruments read STRONG, and each instrument's own support label.</summary>
-public sealed record ConvergenceExplanation(string Level, int StrongInstruments, IReadOnlyDictionary<string, string> Supports);
+/// <summary>
+/// Cross-instrument agreement: the level, how many instruments read STRONG, and each instrument's own
+/// support label. A value is NULL where the instrument carried no evidence at all — today only "360",
+/// which may be wholly absent (FM-CF-006). The engine still computes DIVERGENT for it, because the
+/// reference evaluates evidence_support on the 0.0 that no-evidence produces and parity is not
+/// negotiable; passing that verdict on would render "absent" exactly as "weak". The key is kept so a
+/// consumer can tell "no verdict" from "instrument not reported".
+/// </summary>
+public sealed record ConvergenceExplanation(string Level, int StrongInstruments, IReadOnlyDictionary<string, string?> Supports);
 
 /// <summary>The winning PCA archetype and every route that competed, with the per-factor match that produced it.</summary>
 public sealed record PcaExplanation(string WinningRoute, IReadOnlyList<RouteEvidence> Routes);
@@ -211,12 +236,14 @@ public sealed record PersonalityExplanation(string WinningRoute, IReadOnlyList<R
 /// The 360 block, which is the one instrument that may be wholly absent. <see cref="Determinable"/> is the
 /// question a consumer should ask — never the length of <see cref="Variables"/> — and
 /// <see cref="Confidence"/> is NOT_DETERMINABLE with a <see cref="Reason"/> whenever it is false.
+/// <see cref="Support"/> is NULL in that case rather than the engine's DIVERGENT: see
+/// <c>SupportOf</c> for why the engine must keep emitting it and why this payload must not repeat it.
 /// </summary>
 public sealed record V360Explanation(
     bool Determinable,
     string Source,
     string Confidence,
-    string Support,
+    string? Support,
     IReadOnlyList<string> RaterSources,
     IReadOnlyList<V360VariableEvidenceView> Variables,
     string? Reason)
@@ -235,13 +262,43 @@ public sealed record V360Explanation(
         "360 evidence came from a single rater source, so there is no second opinion to agree or disagree with: "
         + "consensus is undefined and the confidence index cannot be computed. The scores are real; their reliability is unmeasured.";
 
+    /// <summary>
+    /// Did the run aggregate any 360 evidence at all? Read from the RUN's v360_source — never from the
+    /// length of a family's variable list, which is empty both for a student with no 360 and for a family
+    /// that weights none of the variables the student answered.
+    /// </summary>
+    public static bool IsDeterminable(InputQuality quality)
+    {
+        ArgumentNullException.ThrowIfNull(quality);
+        return !string.Equals(quality.V360Source, V360Sources.NoData, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// This family's 360 support verdict, or NULL when the instrument carried no evidence.
+    ///
+    /// THE ENGINE MUST KEEP SAYING DIVERGENT AND THIS PAYLOAD MUST NOT REPEAT IT. With no 360 the run's
+    /// careerfit360 is 0.0, and the reference engine evaluates evidence_support on that 0.0 and returns
+    /// DIVERGENT (formmaps_engine_reference.py); the port reproduces it bit for bit and neither may
+    /// change. But DIVERGENT is a verdict about WEAK evidence, and rendering it for a student who has no
+    /// 360 at all — which is every student until FM-CF-006 seeds the items — tells a counselor the 360
+    /// contradicts the other instruments when there is no 360 to contradict anything. Null rather than a
+    /// fourth label: a consumer that switches on STRONG / PARTIAL / DIVERGENT keeps working, and "no
+    /// verdict" is what the absence actually is.
+    /// </summary>
+    private static string? SupportOf(OwnerEvaluation family, bool determinable) =>
+        !determinable
+            ? null
+            : family.ConvergenceDetail.Supports.TryGetValue(InputInstruments.V360, out var support)
+                ? support.ToReferenceValue()
+                : Application.CareerFit.Support.Divergent.ToReferenceValue();
+
     /// <summary>Project the family's 360 evidence together with the run-level facts about where it came from.</summary>
     public static V360Explanation From(OwnerEvaluation family, InputQuality quality)
     {
         ArgumentNullException.ThrowIfNull(family);
         ArgumentNullException.ThrowIfNull(quality);
 
-        var determinable = !string.Equals(quality.V360Source, V360Sources.NoData, StringComparison.Ordinal);
+        var determinable = IsDeterminable(quality);
         var confidence = family.CareerFit360Confidence;
         var raterSources = quality.V360Instrument?.Sources ?? [];
 
@@ -249,9 +306,7 @@ public sealed record V360Explanation(
             Determinable: determinable,
             Source: quality.V360Source,
             Confidence: confidence.ToReferenceValue(),
-            Support: family.ConvergenceDetail.Supports.TryGetValue(InputInstruments.V360, out var support)
-                ? support.ToReferenceValue()
-                : Application.CareerFit.Support.Divergent.ToReferenceValue(),
+            Support: SupportOf(family, determinable),
             RaterSources: raterSources,
             Variables: determinable
                 ? [.. family.AuditInputs.V360.Variables.Select(v => new V360VariableEvidenceView(v.Key, v.Value.Score, v.Value.CombinedWeight))]

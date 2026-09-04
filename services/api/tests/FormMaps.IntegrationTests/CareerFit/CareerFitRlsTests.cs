@@ -102,11 +102,11 @@ public sealed class CareerFitRlsTests : IClassFixture<CareerFitDatabaseFixture>,
         }
 
         // What the VENDORED files applied — the platform tables only (pca_results joined the list with FM-CF-010's
-        // source rows and evaluation_groups with FM-CF-007's; the two session tables and vocational_responses have
-        // no vendored policy). The CareerFit tables cannot appear here (see the fixture remarks), which is exactly
-        // why the next assertion reads the catalog instead.
+        // source rows, evaluation_groups with FM-CF-007's and user_career_profiles with FM-CF-013's legacy cache;
+        // the two session tables and vocational_responses have no vendored policy). The CareerFit tables cannot
+        // appear here (see the fixture remarks), which is exactly why the next assertion reads the catalog instead.
         Assert.Equal<string>(
-            ["counselor_student_assignments", "evaluation_groups", "pca_results", "student_parent_links", "users"],
+            ["counselor_student_assignments", "evaluation_groups", "pca_results", "student_parent_links", "user_career_profiles", "users"],
             _fixture.AppliedPolicyTables);
 
         // What infra/aws/sql/careerfit-schema.sql applied: ENABLE + FORCE, one tenant_isolation policy per table,
@@ -539,6 +539,40 @@ public sealed class CareerFitRlsTests : IClassFixture<CareerFitDatabaseFixture>,
             var refused = await Assert.ThrowsAsync<PostgresException>(
                 () => InsertShadowAsync(session, Guid.NewGuid(), StudentB1, SchoolB, RunB1));
             Assert.Equal("42501", refused.SqlState);   // new row violates row-level security policy
+        }
+    }
+
+    /// <summary>
+    /// REVIEW FINDING: the test above only ever appended rows with a NON-NULL schoolId, and the ONE row
+    /// shape the production writer actually produced — schoolId NULL, from CareerFitShadowRunner's three
+    /// pre-scoring arms — was never appended on a caller session anywhere in the suite. (The NULL-schoolId
+    /// seed row is inserted by the ADMIN connection, which bypasses RLS entirely, so it proved nothing
+    /// about WITH CHECK.) It is pinned here, in both directions, because the answer is not symmetric:
+    ///
+    ///   • a NULL-tenant row about SOMEONE ELSE is REFUSED — none of the three disjuncts holds (bypass is
+    ///     off, the userId is not the caller's, and NULL = 'school-a' is NULL, not true). This is the 42501
+    ///     the shadow job used to abort on, and the reason CareerFitShadowRunner now resolves the STUDENT's
+    ///     tenant before it writes anything (CareerFitShadowRunnerDatabaseTests);
+    ///   • a NULL-tenant row about ONESELF is ADMITTED — the self branch alone, which is how the genuinely
+    ///     school-less student (an individual account) can still be measured.
+    ///
+    /// So this file states what the policy does, and the runner is what must never produce the first shape.
+    /// </summary>
+    [Fact]
+    public async Task A_null_tenant_shadow_row_is_refused_for_another_user_and_admitted_only_for_oneself()
+    {
+        await using (var session = await Factory().OpenWritableAsync(Counselor(CounselorA, SchoolA)))
+        {
+            var refused = await Assert.ThrowsAsync<PostgresException>(
+                () => InsertShadowAsync(session, Guid.NewGuid(), StudentA2, schoolId: null, RunA2));
+            Assert.Equal("42501", refused.SqlState);
+        }
+
+        // The same shape about a student of no school, written by that student: the self branch admits it.
+        await using (var session = await Factory().OpenWritableAsync(Student(SoloStudent, schoolId: null)))
+        {
+            Assert.Equal(1, await InsertShadowAsync(session, Guid.NewGuid(), SoloStudent, schoolId: null, RunSolo));
+            await session.CommitAsync();
         }
     }
 

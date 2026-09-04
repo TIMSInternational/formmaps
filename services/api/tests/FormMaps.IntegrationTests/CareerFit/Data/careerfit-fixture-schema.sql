@@ -139,3 +139,21 @@ CREATE TABLE "vocational_responses" (
     "isActive"           boolean NOT NULL DEFAULT true,
     "createdDate"        timestamp(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
+
+-- ------------------------------------------------------------------------------------------------
+-- FM-CF-013: the LEGACY side of the shadow comparison. LegacyCareerScoreReader reads exactly two
+-- columns of this row ("careerMatches" and "isAnalysisComplete") for one "userId"; it is the cache the
+-- platform's own career service writes, and the .NET role holds SELECT on it and nothing more. The
+-- shape is the one the Counselor and StudentCoursePlan fixtures already use, so the three readers of
+-- this table are compiled against the same columns. Policied by the vendored 003-fk-users.sql (self OR
+-- the owner's school via a users sub-select), and named in PoliciedTables so the base applies it: the
+-- shadow job's legacy read is therefore gated by the platform's own policy, exactly as the reader's
+-- header claims, and a cross-school operator gets no row rather than a denial to distinguish.
+-- ------------------------------------------------------------------------------------------------
+
+CREATE TABLE "user_career_profiles" (
+    "id"                 text PRIMARY KEY,
+    "userId"             text NOT NULL REFERENCES "users" ("id") ON DELETE CASCADE,
+    "isAnalysisComplete" boolean NOT NULL DEFAULT false,
+    "careerMatches"      jsonb NOT NULL DEFAULT '[]'
+);

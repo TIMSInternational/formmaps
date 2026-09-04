@@ -155,12 +155,12 @@ public static class V360Aggregation
                 SourceScores = Kept(integration.SourceScores),
             });
 
-            if (evidence.ItemsAnswered < evidence.ItemsExpected * evidence.SourceCount)
+            if (evidence.ItemsAnswered < evidence.ItemsExpected)
             {
                 warnings.Add(new InputWarning(
                     InputInstruments.V360,
                     InputWarningCodes.V360PartialCoverage,
-                    $"360 variable {variable.Code}: {evidence.ItemsAnswered} of {evidence.ItemsExpected * evidence.SourceCount} "
+                    $"360 variable {variable.Code}: {evidence.ItemsAnswered} of {evidence.ItemsExpected} "
                     + $"item answers present across {evidence.SourceCount} rater source(s); the score is the mean of the answers given."));
             }
         }
@@ -243,8 +243,14 @@ public static class V360Aggregation
         var perSource = new List<SourceScore>(sourceWeights.Count);
         foreach (var source in sourceWeights.Keys)
         {
-            var scored = audits.Where(a => a.Sources.Contains(source)).ToList();
-            perSource.Add(new SourceScore(source, scored.Count == 0 ? null : scored.Average(a => a.Score!.Value)));
+            // SourceScores[source], never Score: Score is F02's output — the score integrate_sources has
+            // ALREADY combined ACROSS raters — and is therefore the same number for every source, so
+            // averaging it per source made any set of raters who answered the same variables agree with
+            // themselves perfectly (consensus 100, HIGH) however violently they actually disagreed. The
+            // per-source F01 outputs are on the record precisely so this arm can read them.
+            var scored = audits.Where(a => a.SourceScores.ContainsKey(source)).Select(a => a.SourceScores[source]).ToList();
+            perSource.Add(new SourceScore(
+                source, scored.Count == 0 ? null : CareerFitFormulas.PythonSum(scored) / scored.Count));
         }
 
         var integration = CareerFitFormulas.IntegrateSources(perSource, sourceWeights);
@@ -387,15 +393,18 @@ public static class V360Aggregation
         return CareerFitFormulas.NormalizeLikert((int)rating)!.Value;
     }
 
-    // One variable's evidence while it is being collected. ItemsExpected is the union of the question
-    // numbers the variable was ASKED on across all raters (the seeded item set is not knowable from the
-    // responses alone); ItemsAnswered counts the answers actually given, across raters.
+    // One variable's evidence while it is being collected. ItemsPerSource is the union of the question
+    // numbers the variable was ASKED on (the seeded item set is not knowable from the responses alone);
+    // ItemsExpected multiplies it by the number of rater sources that answered, so it is measured in the
+    // SAME unit as ItemsAnswered — (item, rater) pairs — and the recorded pair can never read "4 of 2".
     private sealed class VariableEvidence
     {
         private readonly OrderedDictionary<string, List<double>> _bySource = new(StringComparer.Ordinal);
         private readonly HashSet<int> _questions = [];
 
-        public int ItemsExpected => _questions.Count;
+        public int ItemsPerSource => _questions.Count;
+
+        public int ItemsExpected => ItemsPerSource * _bySource.Count;
 
         public int ItemsAnswered => _bySource.Values.Sum(v => v.Count);
 

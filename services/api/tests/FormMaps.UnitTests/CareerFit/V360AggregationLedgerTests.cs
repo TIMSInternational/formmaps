@@ -129,6 +129,18 @@ public class V360AggregationLedgerTests
     /// when it decides whether a STRONG 360 stands — is F05 applied a second time, at instrument level,
     /// over the per-source overall scores. That application is a step and must be recorded as one, or the
     /// ledger explains every variable and not the number that actually gates the convergence.
+    ///
+    /// REVIEW FINDING (blocker), and the reason every assertion below now names a LITERAL. The first
+    /// version of this test compared each ledger entry against the same V360VariableAudit the adapter had
+    /// just produced — both sides came out of one V360Aggregation.Adapt call — so it was a tautology: it
+    /// could not fail for any value the adapter emitted, including the wrong one it emitted. Its own
+    /// fixture was a live instance of that defect (the raters' true means are 87.5 and 37.5, so the
+    /// instrument consensus is 50 and the confidence LOW; the adapter reported consensus 100 and HIGH) and
+    /// the test was green on it. The values here are derived BY HAND from the fixture — F01: SELF AN=5→100,
+    /// AST=4→75 ⇒ 87.5; PARENT AN=3→50, AST=2→25 ⇒ 37.5; F03: 100 − (87.5 − 37.5) = 50; F04: 0.35 + 0.25 =
+    /// 0.6; F05: 0.7·50 + 0.3·0.6·100 = 53 &lt; medium_min 55 ⇒ LOW — and were watched failing against the
+    /// adapter as shipped (consensus 100, index 88, label HIGH). The line that asserted the confidence
+    /// index twice is now the F05 OutputLabel assertion it was meant to be.
     /// </summary>
     [Fact]
     public void The_instrument_level_confidence_is_recorded_as_its_own_F02_F03_F04_F05()
@@ -145,10 +157,20 @@ public class V360AggregationLedgerTests
         Assert.Equal(["F02", "F03", "F04", "F05"], instrument.Select(s => s.StepId));
         Assert.Same(steps[^1], instrument[^1]);   // the instrument arm closes the ledger
 
-        Assert.Equal(quality.V360Instrument!.Score!.Value, instrument[0].Output!.Value, 9);
+        // F02's INPUT: each rater source's OWN overall 360 score, never the source-integrated one.
+        Assert.Equal(87.5, quality.V360Instrument!.SourceScores["SELF"], 9);
+        Assert.Equal(37.5, quality.V360Instrument.SourceScores["PARENT"], 9);
+
+        Assert.Equal((87.5 * 0.35 + 37.5 * 0.25) / 0.6, instrument[0].Output!.Value, 9);
+        Assert.Equal(50.0, instrument[1].Output!.Value, 9);
+        Assert.Equal(0.6, instrument[2].Output!.Value, 9);
+        Assert.Equal(53.0, instrument[3].Output!.Value, 9);
+        Assert.Equal(Confidence.Low.ToReferenceValue(), instrument[3].OutputLabel);
+
+        // and the ledger still records exactly what the run carries: it reads, it never recomputes.
+        Assert.Equal(quality.V360Instrument.Score!.Value, instrument[0].Output!.Value, 9);
         Assert.Equal(quality.V360Instrument.Consensus!.Value, instrument[1].Output!.Value, 9);
         Assert.Equal(quality.V360Instrument.SourceCoverage, instrument[2].Output!.Value, 9);
-        Assert.Equal(quality.V360Instrument.ConfidenceIndex!.Value, instrument[3].Output!.Value, 9);
         Assert.Equal(quality.V360Instrument.ConfidenceIndex!.Value, instrument[3].Output!.Value, 9);
     }
 

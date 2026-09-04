@@ -388,6 +388,10 @@ public static class DependencyInjection
         // embedded projection still agrees with the loaded rule set and warns, loudly and once, that the
         // projection is INCOMPLETE until the legacy cluster vocabulary is filled in.
         services.AddScoped<ILegacyCareerScoreReader, LegacyCareerScoreReader>();
+        // The job's FIRST read and its gate: the student's own users."schoolId", which every shadow row
+        // must carry (the table's WITH CHECK is careerfit_runs' predicate verbatim) and which the three
+        // pre-scoring arms have no run to take it from.
+        services.AddScoped<ICareerFitStudentTenantReader, CareerFitStudentTenantReader>();
         services.AddScoped<ICareerFitShadowWriter, CareerFitShadowWriter>();
         services.AddScoped<ICareerFitShadowRunner, CareerFitShadowRunner>();
 

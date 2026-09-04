@@ -10,6 +10,13 @@ namespace FormMaps.Application.CareerFit.Adapters;
 /// the raters actually answered. Both are recorded because they fail differently: a variable scored by
 /// one rater on all its items and a variable scored by four raters on one item each are indistinguishable
 /// from the score alone.
+///
+/// BOTH ITEM COUNTS ARE (ITEM, RATER) PAIRS. <see cref="ItemsExpected"/> is the variable's item set
+/// multiplied by the number of rater sources that answered it — the same unit as
+/// <see cref="ItemsAnswered"/> — so the pair is always readable as a fraction. Counting the item set
+/// alone while counting answers across raters made every multi-rater record arithmetically impossible
+/// ("2 answered of 1 asked"), and CareerFitAuditLedger renders the pair verbatim into the F04 rule
+/// block. On the instrument row both fields are the run's totals, summed over the scored variables.
 /// </summary>
 public sealed record V360VariableAudit(
     string Code,

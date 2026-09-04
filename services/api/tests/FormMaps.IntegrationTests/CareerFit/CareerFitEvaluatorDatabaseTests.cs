@@ -313,7 +313,7 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         await using var admin = await _adminDataSource.OpenConnectionAsync();
 
         // A2 gets a LIA session but loses its personality session: PERSONALITY is the missing instrument.
-        await SeedLiaSessionAsync(admin, "lia-a2", StudentA2, SampleStudent.PercentilesJson, "2026-09-01 10:00:00");
+        await SeedLiaSessionAsync(admin, "lia-a2", StudentA2, CareerFitSampleStudent.PercentilesJson, "2026-09-01 10:00:00");
         await ExecAsync(admin, $"""DELETE FROM "personality_assessment_sessions" WHERE "user_id" = '{StudentA2}' """);
         var personality = await Assert.ThrowsAsync<CareerFitInputException>(
             () => Evaluator().EvaluateAsync(Student(StudentA2, SchoolA), StudentA2));
@@ -350,7 +350,7 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
     public async Task Reader_mirrors_PersonalityResultReader_a_newest_completed_session_without_a_resolved_type_is_no_results()
     {
         await using var admin = await _adminDataSource.OpenConnectionAsync();
-        await SeedPersonalitySessionAsync(admin, "pers-a1-untyped", StudentA1, SampleStudent.DimensionScoresJson(), "2026-09-02 09:00:00", resolvedType: null);
+        await SeedPersonalitySessionAsync(admin, "pers-a1-untyped", StudentA1, CareerFitSampleStudent.DimensionScoresJson(), "2026-09-02 09:00:00", resolvedType: null);
 
         var ex = await Assert.ThrowsAsync<CareerFitInputException>(
             () => Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1));
@@ -820,12 +820,12 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
                 ('csa-b', '{{CounselorB}}', '{{StudentA1}}');   -- cross-school: the row exists, the policy must still deny
             """);
 
-        var competences = SampleStudent.CompetencesJson(Provider.Rules);
-        await SeedPcaResultAsync(admin, PcaRowA1, StudentA1, SampleStudent.DiscJson, competences);
-        await SeedPcaResultAsync(admin, "pca-a2", StudentA2, SampleStudent.DiscJson, competences);
-        await SeedLiaSessionAsync(admin, LiaSessionA1, StudentA1, SampleStudent.PercentilesJson, "2026-09-01 10:00:00");
-        await SeedPersonalitySessionAsync(admin, PersonalitySessionA1, StudentA1, SampleStudent.DimensionScoresJson(), "2026-09-01 11:00:00", resolvedType: "ENTJ");
-        await SeedPersonalitySessionAsync(admin, "pers-a2", StudentA2, SampleStudent.DimensionScoresJson(), "2026-09-01 11:00:00", resolvedType: "ENTJ");
+        var competences = CareerFitSampleStudent.CompetencesJson(Provider.Rules);
+        await SeedPcaResultAsync(admin, PcaRowA1, StudentA1, CareerFitSampleStudent.DiscJson, competences);
+        await SeedPcaResultAsync(admin, "pca-a2", StudentA2, CareerFitSampleStudent.DiscJson, competences);
+        await SeedLiaSessionAsync(admin, LiaSessionA1, StudentA1, CareerFitSampleStudent.PercentilesJson, "2026-09-01 10:00:00");
+        await SeedPersonalitySessionAsync(admin, PersonalitySessionA1, StudentA1, CareerFitSampleStudent.DimensionScoresJson(), "2026-09-01 11:00:00", resolvedType: "ENTJ");
+        await SeedPersonalitySessionAsync(admin, "pers-a2", StudentA2, CareerFitSampleStudent.DimensionScoresJson(), "2026-09-01 11:00:00", resolvedType: "ENTJ");
     }
 
     private static async Task SeedPcaResultAsync(NpgsqlConnection admin, string id, string userId, string disc, string competences)
@@ -941,42 +941,4 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         return (string)(await command.ExecuteScalarAsync())!;
     }
 
-    /// <summary>
-    /// The student the platform's writers would have produced — byte-identical to the unit tests'
-    /// SampleStudentRows so the pure and the persisted paths score the same person.
-    /// </summary>
-    private static class SampleStudent
-    {
-        public const string DiscJson = """
-            {"PcaD1":89,"PcaI1":18,"PcaS1":18,"PcaC1":21,
-             "PcaD2":87,"PcaI2":87,"PcaS2":26,"PcaC2":25,
-             "PcaD3":90,"PcaI3":60,"PcaS3":25,"PcaC3":25}
-            """;
-
-        public const string PercentilesJson = """
-            {"pattern_recognition":72,"verbal_reasoning":58,"numerical_speed":81,"working_memory":47,"visual_rotation":63,"global":64.2}
-            """;
-
-        public static string CompetencesJson(CareerFitRules rules)
-        {
-            var entries = rules.Competencies
-                .Select(c => $$"""{"CmpNom":"{{c.Name.ToUpperInvariant()}}","Level":{{1 + (c.CompetencyId - 1) % 4}}}""");
-            return $$"""{"PcaCmps":[{{string.Join(",", entries)}}]}""";
-        }
-
-        public static string DimensionScoresJson()
-        {
-            var answers = new List<PersonalityAnswer>();
-            var n = 1;
-            foreach (var (dimension, aCount) in new[] { ("EI", 14), ("SN", 8), ("TF", 17), ("JP", 11) })
-            {
-                for (var i = 0; i < 20; i++)
-                {
-                    answers.Add(new PersonalityAnswer(dimension, n++, i < aCount ? "A" : "B"));
-                }
-            }
-
-            return JsonSerializer.Serialize(PersonalityScoring.ScorePersonality("estudiantil", answers).Dimensions);
-        }
-    }
 }

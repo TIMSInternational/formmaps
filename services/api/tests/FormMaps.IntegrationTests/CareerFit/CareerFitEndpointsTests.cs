@@ -83,8 +83,22 @@ public class CareerFitEndpointsTests
         Assert.Equal(0, harness.Evaluator.CallCount);
     }
 
-    [Fact]
-    public async Task Missing_subscription_is_403_and_the_student_is_never_read_or_scored()
+    /// <summary>
+    /// REVIEW FINDING: this covered <c>/results/{userId}</c> only. The decision log calls the subscription
+    /// guard deliberate for all SIX per-user routes, and nothing held that claim for the two per-RUN ones —
+    /// deleting the RequireSubscriptionAsync block from <c>AuthorizeRunAsync</c> left the endpoint suite
+    /// 36/36 green, while every other guard mutation the reviewer applied went red. It is now a Theory over
+    /// every route that names a student or a run, each asserting that the 403 arrives BEFORE the student is
+    /// read, scored or access-checked.
+    /// </summary>
+    [Theory]
+    [InlineData("GET", "/api/v1/careerfit/results/student-7")]
+    [InlineData("GET", "/api/v1/careerfit/results/student-7/explanation")]
+    [InlineData("GET", "/api/v1/careerfit/results/student-7/runs")]
+    [InlineData("GET", "/api/v1/careerfit/runs/3f2504e0-4f89-11d3-9a0c-0305e82c3301")]
+    [InlineData("GET", "/api/v1/careerfit/runs/3f2504e0-4f89-11d3-9a0c-0305e82c3301/explanation")]
+    [InlineData("POST", "/api/v1/careerfit/evaluate/student-7")]
+    public async Task Missing_subscription_is_403_and_the_student_is_never_read_or_scored(string method, string path)
     {
         var harness = new Harness
         {
@@ -94,12 +108,14 @@ public class CareerFitEndpointsTests
         using var factory = harness.Factory();
         using var client = factory.CreateClient();
 
-        var response = await client.SendAsync(Get($"/api/v1/careerfit/results/{TargetUserId}"));
+        var response = await client.SendAsync(
+            method == "POST" ? Post(path) : Get(path));
 
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         Assert.Equal(1, harness.Subscription.CallCount);
         Assert.Equal(0, harness.Access.CallCount);
-        Assert.Equal(0, harness.Reader.CallCount);
+        Assert.Equal(0, harness.Reader.CallCount);      // a run fetched BY ID is not read before the guard either
+        Assert.Equal(0, harness.Evaluator.CallCount);
     }
 
     [Fact]

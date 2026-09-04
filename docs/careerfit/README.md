@@ -328,6 +328,18 @@ have written. Every reader and writer takes the **caller's** `RequestContext` an
 session — there is no bypass session anywhere in this slice, which is the difference from
 `BillingShadowRepository` (whose tables hold no tenant-scoped student data and carry no policy).
 
+**Every row carries the STUDENT's tenant, and the read that supplies it is also the gate.**
+`careerfit_shadow_comparisons`' `WITH CHECK` is `careerfit_runs`' predicate verbatim, so a row whose
+`schoolId` is NULL and whose `userId` is not the caller's is refused (`42501`) on every non-bypass
+session — the one the writer documents as the only session it ever uses. A *comparable* pair takes the
+tenant off the run it measured; the three pre-scoring arms (LEGACY_ABSENT, LEGACY_LOCKED,
+ENGINE_NOT_SCORABLE) have no run to take it from, so `MeasureAsync` resolves it first, from the
+policied `users` row, on the caller's own session — the same read `CareerFitInputReader` opens with.
+They shipped writing NULL, which aborted the job on the first student with no cached legacy answer;
+that is fixed and pinned end to end against real Postgres (`CareerFitShadowRunnerDatabaseTests`).
+Because the read is policied it doubles as the gate: a student the operator cannot see raises
+`STUDENT / STUDENT_NOT_VISIBLE` before the legacy cache is touched, and no row is written about them.
+
 **Running it for real**, in order: complete the projection from the legacy cluster vocabulary and have TIMS
 review the assignment; apply `careerfit-shadow-tables.sql` then `dotnet-service-role.sql`; invoke
 `ICareerFitShadowRunner.MeasureAsync` per student under a credential whose RLS scope covers the cohort;
@@ -336,6 +348,7 @@ export and regenerate the report. The synthetic banner disappears on its own —
 ```
 dotnet test services/api/tests/FormMaps.UnitTests --filter "FullyQualifiedName~CareerFitShadow"
 dotnet test services/api/tests/FormMaps.UnitTests --filter "FullyQualifiedName~SyntheticShadowCohortTests"
+dotnet test services/api/tests/FormMaps.IntegrationTests --filter "FullyQualifiedName~CareerFitShadowRunnerDatabaseTests"
 dotnet test services/api/tests/FormMaps.IntegrationTests --filter "FullyQualifiedName~CareerFitRlsTests"
 dotnet test services/api/tests/FormMaps.IntegrationTests --filter "FullyQualifiedName~DbRoleGrantsTests"
 python3 tools/careerfit/shadow_report.py            # regenerates the report from the synthetic fixture
@@ -400,6 +413,20 @@ family's own rule**, so relevance really is per family. Held to the reference en
 `V360ParityTests` against `tools/careerfit/export_v360_fixture.py`'s fixture (F01, F04/F05 over nine
 source cases, F06 over six aggregate sets × 14 families).
 
+The same four formulas run once more at **instrument** level (`V360Aggregation.GlobalConfidence`) to
+produce the run's single `careerfit360_confidence` — the only value F23 consults when it decides
+whether a STRONG 360 stands. Each rater source's overall 360 score is the mean of the variable scores
+**that source itself produced** (`V360VariableAudit.SourceScores[source]`, F01's output), never the
+source-integrated `Score`: integrating first would give every source the same number, so any set of
+raters who answered the same variables would "agree" perfectly — consensus 100, confidence HIGH —
+however violently they actually disagreed, and the STRONG → PARTIAL downgrade would never fire. Both
+readings were green across the whole unit suite until the review; the values are now pinned against
+hand-derived numbers in `VocationalV360AdapterTests` and `V360AggregationLedgerTests`.
+
+`ItemsAnswered` / `ItemsExpected` on the per-variable audit are both **(item, rater) pairs** — the
+variable's item set times the sources that answered it — so the recorded pair is always readable as a
+fraction and the F04 rule block cannot state a coverage above 100%.
+
 Three things are deliberately NOT decided here:
 
 * **Consensus with one rater.** V1 is self-only 360 (decision 1). Consensus is `100 − (max − min)`
@@ -456,9 +483,21 @@ pinned by tests proven red against the obvious readings: a family that weights *
 variables a student answered (`PB` is weighted by no family in 1.0.0-draft.1) is still a student who
 completed a 360, and self-only is neither "no evidence" nor "confident evidence".
 
+The same rule now governs the 360's **support verdict**. With no 360 the run's `careerfit360` is
+`0.0`, and the reference engine evaluates `evidence_support` on that `0.0` and returns `DIVERGENT`;
+the port reproduces it bit for bit and must. The *payload* must not repeat it — DIVERGENT is a
+verdict about weak evidence, and passing it on told a counselor the 360 contradicted the other
+instruments when there was no 360 to contradict anything. So when `Determinable` is false,
+`V360Explanation.Support` and the `"360"` entry of `ConvergenceExplanation.Supports` are **null** —
+null rather than a fourth label, so a consumer switching on STRONG / PARTIAL / DIVERGENT keeps
+working, and the key stays so "no verdict" is distinguishable from "not reported".
+
 **Modulators are structured facts**, not prose: the MIL relative strengths and each 360 variable's
 `base_weight × relevance`, heaviest first — the reason two families read the same 360 evidence
-differently. The rule set's per-family `v360_route_modulators_text` is deliberately *not* surfaced:
+differently. The MIL number is **max-relative**: `mil_relative_strengths` divides each subtest by the
+student's own *strongest* one (`formmaps_engine_reference.py:253-254`), so the top subtest is always
+exactly 100 and no value is ever negative. The payload's sentence says that; it used to say "against
+the student's own MIL mean", which was wrong and also made the ordering's `Math.Abs` a no-op. The rule set's per-family `v360_route_modulators_text` is deliberately *not* surfaced:
 it is free Spanish prose naming route flavours ("OC/EC→innovación") that the engine does not score,
 and P1–P3 does not parse it into `CareerFitRules`. Putting it in the payload is a rule-set parsing
 change first.

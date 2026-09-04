@@ -239,7 +239,7 @@ public static class CareerFitAuditLedger
                 ("formula", "sum(source_weight over answering sources)"),
                 ("weights", weights),
                 ("valid_sources", variable.ValidSources),
-                ("not_item_coverage", $"items answered {variable.ItemsAnswered} of {variable.ItemsExpected} asked — recorded separately because the two fail differently")));
+                ("not_item_coverage", $"items answered {variable.ItemsAnswered} of {variable.ItemsExpected} (item, rater) pairs asked — recorded separately because the two fail differently")));
 
         Add(steps,
             "F05",

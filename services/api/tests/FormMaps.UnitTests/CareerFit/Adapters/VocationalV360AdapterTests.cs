@@ -193,7 +193,10 @@ public class VocationalV360AdapterTests
             Rater("parent", Item(1, "AN", 3), Item(2, "AN", 3), Item(3, "AN", 3)));
 
         var audit = adaptation.Variables.Single(v => v.Code == "AN");
-        Assert.Equal(3, audit.ItemsExpected);
+        // Three items put to each of two raters: six (item, rater) pairs asked, five answered. Both counts
+        // are in the same unit, so the pair reads as a fraction (it used to record "5 of 3" — see
+        // Items_answered_never_exceeds_items_asked_on_a_variable_or_on_the_instrument).
+        Assert.Equal(6, audit.ItemsExpected);
         Assert.Equal(5, audit.ItemsAnswered);            // 2 from SELF + 3 from PARENT
         Assert.Equal(2, audit.ValidSources);
         Assert.Equal(
@@ -277,6 +280,152 @@ public class VocationalV360AdapterTests
         Assert.Contains(adaptation.Warnings, w => w.Code == InputWarningCodes.V360RankNotScored);
         // and the rest of the student's 360 is unaffected by the ranking being present
         Assert.Equal(75.0, adaptation.Aggregates["AN"].Score);
+    }
+
+    // ------------------------------------------------------------------ the instrument arm (the run's ONE confidence)
+
+    /// <summary>
+    /// REVIEW FINDING (blocker / numerics), RED FIRST. <c>GlobalConfidence</c> built each rater source's
+    /// OVERALL 360 score from <see cref="V360VariableAudit.Score"/> — the score integrate_sources had
+    /// ALREADY combined across raters, and therefore the same number for every source — instead of that
+    /// source's own F01 output, which the record already carries as
+    /// <see cref="V360VariableAudit.SourceScores"/>. Any set of raters who answered the same variables
+    /// consequently "agreed" perfectly: instrument consensus 100, confidence HIGH, no matter how violently
+    /// they disagreed. That label IS the run's careerfit360_confidence, the only value F23 consults to
+    /// downgrade a STRONG 360 to PARTIAL, so the defect made VERY_HIGH convergence reachable on maximally
+    /// divergent 360 evidence.
+    ///
+    /// Every number below is derived BY HAND from the fixture and never read back off the adapter:
+    /// SELF answered AN=5 (F01 → 100) and AST=4 (→ 75), so SELF's own 360 mean is 87.5;
+    /// PARENT answered AN=3 (→ 50) and AST=2 (→ 25), so PARENT's own mean is 37.5.
+    /// F03 consensus = 100 − (87.5 − 37.5) = 50. F04 coverage = 0.35 + 0.25 = 0.6.
+    /// F05 index = 0.7·50 + 0.3·0.6·100 = 53 &lt; medium_min 55 → LOW.
+    /// Observed RED against the shipped adapter: SourceScores [SELF = 66.666…, PARENT = 66.666…],
+    /// consensus 100, index 88, label High.
+    /// </summary>
+    [Fact]
+    public void The_instrument_confidence_is_each_sources_OWN_mean_so_two_raters_who_disagree_read_LOW()
+    {
+        var adaptation = Adapt(
+            Rater("self", Item(1, "AN", 5), Item(3, "AST", 4)),
+            Rater("parent", Item(1, "AN", 3), Item(3, "AST", 2)));
+
+        var instrument = Assert.IsType<V360VariableAudit>(adaptation.Instrument);
+        Assert.Equal(InputInstruments.V360, instrument.Code);
+
+        // F01/F02's input at instrument level: each source's OWN overall 360 score.
+        Assert.Equal(87.5, instrument.SourceScores["SELF"], 9);
+        Assert.Equal(37.5, instrument.SourceScores["PARENT"], 9);
+
+        // F02 score, F03 consensus, F04 coverage, F05 index — all computed above without the adapter.
+        Assert.Equal((87.5 * 0.35 + 37.5 * 0.25) / 0.6, instrument.Score!.Value, 9);
+        Assert.Equal(50.0, instrument.Consensus!.Value, 9);
+        Assert.Equal(0.6, instrument.SourceCoverage, 9);
+        Assert.Equal(53.0, instrument.ConfidenceIndex!.Value, 9);
+
+        // The label is the whole point: LOW is what F23 needs to downgrade a STRONG 360 to PARTIAL.
+        Assert.Equal(Confidence.Low, adaptation.Confidence);
+    }
+
+    /// <summary>
+    /// The same defect at its extreme, stated as the consequence rather than as the arithmetic: two raters
+    /// who answer 5 and 1 to every single item are the most divergent 360 that can exist, and the run's one
+    /// confidence label must say so. RED against the shipped adapter, which reported instrument consensus
+    /// 100 / index 88 / HIGH for exactly this input, so F23's STRONG → PARTIAL downgrade never fired and a
+    /// family could reach VERY_HIGH convergence on evidence whose raters contradict each other completely.
+    /// </summary>
+    [Fact]
+    public void Maximally_divergent_raters_cannot_produce_a_confident_instrument_label()
+    {
+        var adaptation = Adapt(
+            Rater("self", Item(1, "AN", 5), Item(3, "AST", 5), Item(7, "OA", 5)),
+            Rater("parent", Item(1, "AN", 1), Item(3, "AST", 1), Item(7, "OA", 1)));
+
+        var instrument = adaptation.Instrument!;
+        Assert.Equal(100.0, instrument.SourceScores["SELF"], 9);
+        Assert.Equal(0.0, instrument.SourceScores["PARENT"], 9);
+        Assert.Equal(0.0, instrument.Consensus!.Value, 9);                       // 100 − (100 − 0)
+        Assert.Equal(0.7 * 0.0 + 0.3 * 0.6 * 100.0, instrument.ConfidenceIndex!.Value, 9);
+        Assert.Equal(Confidence.Low, adaptation.Confidence);
+
+        // and the downgrade F23 owes this student actually fires: a STRONG 360 cannot stand on LOW confidence.
+        var convergence = CareerFitFormulas.ConvergenceLevel(
+            pcaFit: 100.0, milFit: 100.0, personalityFit: 100.0, fit360: 100.0,
+            adaptation.Confidence, Rules.Thresholds.Convergence);
+        Assert.Equal(Support.Partial, convergence.Supports["360"]);
+        Assert.NotEqual(Convergence.VeryHigh, convergence.Level);
+    }
+
+    /// <summary>
+    /// A source that answered NO variable at all contributes no score to the instrument arm either: it is
+    /// absent from SourceScores, does not count towards valid_sources, and its weight is not in the
+    /// coverage. Pins the other half of the corrected selection — the fix reads
+    /// <c>SourceScores.ContainsKey(source)</c>, and a source present in the weights but silent must not
+    /// become a zero.
+    /// </summary>
+    [Fact]
+    public void A_source_that_answered_nothing_is_absent_from_the_instrument_arm()
+    {
+        var adaptation = Adapt(
+            Rater("self", Item(1, "AN", 5)),
+            Rater("parent", Item(1, "AN", 3)));
+
+        var instrument = adaptation.Instrument!;
+        Assert.Equal(["SELF", "PARENT"], instrument.Sources);
+        Assert.Equal(["SELF", "PARENT"], instrument.SourceScores.Keys);
+        Assert.Equal(2, instrument.ValidSources);
+        Assert.Equal(0.6, instrument.SourceCoverage, 9);
+    }
+
+    /// <summary>
+    /// A source that answered only SOME of the variables is averaged over the variables IT answered, not
+    /// over all of them. RED against the shipped adapter for the same reason as the tests above (every
+    /// source got the integrated per-variable score), and it is the case that makes the two readings
+    /// numerically different in a way a single-variable fixture cannot show.
+    /// </summary>
+    [Fact]
+    public void A_sources_overall_score_is_the_mean_of_the_variables_IT_answered()
+    {
+        // SELF answers both variables (AN → 100, AST → 25 ⇒ 62.5); PARENT answers AST only (→ 100).
+        var adaptation = Adapt(
+            Rater("self", Item(1, "AN", 5), Item(3, "AST", 2)),
+            Rater("parent", Item(3, "AST", 5)));
+
+        var instrument = adaptation.Instrument!;
+        Assert.Equal(62.5, instrument.SourceScores["SELF"], 9);
+        Assert.Equal(100.0, instrument.SourceScores["PARENT"], 9);
+        Assert.Equal(100.0 - (100.0 - 62.5), instrument.Consensus!.Value, 9);
+    }
+
+    // ------------------------------------------------------------------ item counts (the persisted pair)
+
+    /// <summary>
+    /// REVIEW FINDING (important / numerics), RED FIRST. <see cref="V360VariableAudit.ItemsExpected"/>
+    /// counted the union of QUESTION NUMBERS across raters while
+    /// <see cref="V360VariableAudit.ItemsAnswered"/> counted ANSWERS across raters, so for any multi-rater
+    /// 360 the persisted pair was arithmetically impossible — two raters answering one item each recorded
+    /// "2 answered of 1 asked", and the instrument row summed to "4 of 2". CareerFitAuditLedger renders that
+    /// pair verbatim into the F04 rule block, so the run's audit stated a coverage above 100%. The
+    /// adapter's own partial-coverage check already used the right denominator (× SourceCount); only the
+    /// recorded field did not.
+    /// </summary>
+    [Fact]
+    public void Items_answered_never_exceeds_items_asked_on_a_variable_or_on_the_instrument()
+    {
+        var adaptation = Adapt(
+            Rater("self", Item(1, "AN", 5), Item(3, "AST", 4)),
+            Rater("parent", Item(1, "AN", 3), Item(3, "AST", 2)));
+
+        // One item each on AN and AST, two raters: 2 answers of 2 asked per variable, 4 of 4 on the run.
+        foreach (var variable in adaptation.Variables)
+        {
+            Assert.Equal(2, variable.ItemsAnswered);
+            Assert.Equal(2, variable.ItemsExpected);
+        }
+
+        Assert.Equal(4, adaptation.Instrument!.ItemsAnswered);
+        Assert.Equal(4, adaptation.Instrument.ItemsExpected);
+        Assert.True(adaptation.Instrument.ItemsAnswered <= adaptation.Instrument.ItemsExpected);
     }
 
     // ------------------------------------------------------------------ fail-safe / fail-closed
