@@ -125,6 +125,7 @@ app.MapCalendarEndpoints();
 app.MapQuestion360Endpoints();
 app.MapVocationalTakeEndpoints();
 app.MapEvaluationExternalEndpoints();
+app.MapRecommendationsEndpoints();
 
 app.Run();
 

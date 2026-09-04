@@ -38,6 +38,7 @@ using FormMaps.Application.StudentParents;
 using FormMaps.Application.StudentPortfolio;
 using FormMaps.Application.Video;
 using FormMaps.Application.Messaging;
+using FormMaps.Application.Recommendations;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
@@ -48,6 +49,7 @@ using FormMaps.Infrastructure.Pathways;
 using FormMaps.Infrastructure.Prerequisites;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Email;
+using FormMaps.Infrastructure.Recommendations;
 using FormMaps.Infrastructure.Reports;
 using FormMaps.Infrastructure.Gradebook;
 using FormMaps.Infrastructure.SchoolAdmin;
@@ -340,6 +342,14 @@ public static class DependencyInjection
             _ => new AmazonS3Client(RegionEndpoint.GetBySystemName(objectStorageOptions.Region)));
         services.AddScoped<IObjectStorage, S3ObjectStorage>();
         services.AddScoped<IUploadRepository, UploadRepository>();
+
+        // formmaps#59: letters of recommendation (routes/recommendations.ts + services/recommendationsService.ts).
+        // Reuses the S3 rail above for the letter PDF and IUserAccessGuard (the canAccessUser port) for the
+        // download gate. RecommendationEmails is a pure template builder over the shared EmailTemplates/EmailOptions.
+        services.AddSingleton(sp => new RecommendationEmails(
+            sp.GetRequiredService<EmailTemplates>(), sp.GetRequiredService<EmailOptions>()));
+        services.AddScoped<IRecommendationsRepository, RecommendationsRepository>();
+        services.AddScoped<RecommendationsService>();
 
         // FM-DOTNET-089: resume section + template writes (routes/resume.ts, /api/resume). Self-scoped jsonb-array
         // manipulation; resumes has NO RLS so ownership is code-only. The resume CRUD + cross-user + AI routes stay Node.

@@ -67,6 +67,10 @@ public sealed class S3ObjectStorage(IAmazonS3 client, ObjectStorageOptions optio
         return Task.FromResult(client.GetPreSignedURL(request));
     }
 
+    // lib/s3.ts deleteFile — a bare DeleteObject. S3 DELETE is idempotent (a missing key is not an error).
+    public Task DeleteAsync(string key, CancellationToken cancellationToken = default) =>
+        client.DeleteObjectAsync(new DeleteObjectRequest { BucketName = options.Bucket, Key = key }, cancellationToken);
+
     // {folder}/{unixMs}-{6 base36 chars}{ext} — lib/s3.ts key shape (Date.now() + Math.random().toString(36)).
     private static string BuildKey(string folder, string filename)
     {

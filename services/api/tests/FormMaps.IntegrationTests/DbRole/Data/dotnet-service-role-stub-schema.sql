@@ -74,6 +74,10 @@ CREATE TABLE "pca_results" (id text PRIMARY KEY);
 CREATE TABLE "personality_assessment_sessions" (id text PRIMARY KEY);
 CREATE TABLE "personality_responses" (id text PRIMARY KEY);
 CREATE TABLE "questions_360" (id text PRIMARY KEY);
+-- formmaps#59: letters of recommendation. Both are SELECT/INSERT/UPDATE (section 4 of the
+-- role script) -- no .NET path deletes from either.
+CREATE TABLE "recommendation_application_links" (id text PRIMARY KEY);
+CREATE TABLE "recommendation_requests" (id text PRIMARY KEY);
 CREATE TABLE "refresh_tokens" (id text PRIMARY KEY);
 CREATE TABLE "reports" (id text PRIMARY KEY);
 CREATE TABLE "resumes" (id text PRIMARY KEY);
