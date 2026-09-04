@@ -495,13 +495,16 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     [Fact]
     public async Task Every_table_in_the_schema_is_granted_at_least_select()
     {
-        // The single documented exception, and it stays a NAMED one rather than relaxing the check to "has any
+        // The documented exceptions, and they stay NAMED ones rather than relaxing the check to "has any
         // privilege": audit_logs is INSERT-only on purpose (role script section 4.6 — the service writes the legacy
-        // role-change trail and never reads it). Broadening the rule instead would let a table that genuinely needs
-        // SELECT pass with only an INSERT grant, which is the same class of miss this test exists to catch. The
-        // exception is not a hole either — the test below pins audit_logs' exact verb set, so "excluded here" cannot
-        // degrade into "ungranted entirely".
-        var insertOnly = new[] { "audit_logs" };
+        // role-change trail and never reads it), and telemetry_events is INSERT-only for the same shape of reason
+        // (section 4.8, issue #65 — TelemetryEventWriter's multi-row INSERT is the only statement any .NET path
+        // issues against it, and granting SELECT would hand the service account every user's behavioural history
+        // for a capability no code exercises). Broadening the rule instead would let a table that genuinely needs
+        // SELECT pass with only an INSERT grant, which is the same class of miss this test exists to catch. Neither
+        // exception is a hole — the tests below pin both tables' exact verb sets, so "excluded here" cannot degrade
+        // into "ungranted entirely".
+        var insertOnly = new[] { "audit_logs", "telemetry_events" };
 
         await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
         await connection.OpenAsync();
@@ -622,6 +625,92 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
         await using var admin = new NpgsqlConnection(fixture.AdminConnectionString);
         await admin.OpenAsync();
         await using var survived = new NpgsqlCommand("""SELECT count(*) FROM "audit_logs" WHERE id = @id""", admin);
+        survived.Parameters.AddWithValue("id", id);
+        Assert.Equal(1L, (long)(await survived.ExecuteScalarAsync())!);
+    }
+
+    /// <summary>
+    /// issue #65. The telemetry ingest table's grant is INSERT and nothing else (role script section 4.8).
+    ///
+    /// <para>Pinned individually rather than sampled because the WITHHELD verbs are the invariant. SELECT is
+    /// withheld because no .NET path reads the table and the INSERT does not need one (no RETURNING, no ON
+    /// CONFLICT) — and because a service account that can SELECT here can enumerate every user's behavioural
+    /// history. UPDATE and DELETE are withheld because the 90-day retention (`expiresAt`, telemetry.ts:40) is a
+    /// reaper's job that no .NET code does; a future reaper should be given DELETE deliberately, not inherit it
+    /// from a grant widened by resemblance to the section-4 bucket.</para>
+    /// </summary>
+    [Fact]
+    public async Task Telemetry_events_is_insert_only()
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', 'public.telemetry_events', 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.telemetry_events', 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.telemetry_events', 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.telemetry_events', 'DELETE'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.telemetry_events', 'TRUNCATE')
+            """,
+            connection);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.True(reader.GetBoolean(0), "TelemetryEventWriter INSERTs telemetry_events; without this every ingest 42501s at cutover");
+        Assert.False(reader.GetBoolean(1), "no .NET code path reads telemetry_events, and the INSERT does not need SELECT");
+        Assert.False(reader.GetBoolean(2), "nothing in .NET edits a telemetry row after it is written");
+        Assert.False(reader.GetBoolean(3), "retention is a reaper's job; give DELETE deliberately if one is ever added");
+        Assert.False(reader.GetBoolean(4), "TRUNCATE erases the whole ingest history in one statement");
+    }
+
+    /// <summary>
+    /// The behavioural half of the assertion above, run as the role itself. There is no RLS policy and no trigger
+    /// in this stub schema, so a rejected SELECT/UPDATE/DELETE is attributable to the GRANT and to nothing else,
+    /// and the SqlState assertions keep it that way rather than passing on any thrown exception.
+    /// </summary>
+    [Fact]
+    public async Task Role_can_append_telemetry_but_not_read_or_rewrite_it()
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand("""INSERT INTO "telemetry_events" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        var select = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""SELECT count(*) FROM "telemetry_events" """, connection);
+            await command.ExecuteScalarAsync();
+        });
+        Assert.Equal("42501", select.SqlState);
+
+        var update = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""UPDATE "telemetry_events" SET id = 'rewritten' WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", update.SqlState);
+
+        var delete = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""DELETE FROM "telemetry_events" WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", delete.SqlState);
+
+        // Read the survivor as admin, since the role deliberately cannot.
+        await using var admin = new NpgsqlConnection(fixture.AdminConnectionString);
+        await admin.OpenAsync();
+        await using var survived = new NpgsqlCommand("""SELECT count(*) FROM "telemetry_events" WHERE id = @id""", admin);
         survived.Parameters.AddWithValue("id", id);
         Assert.Equal(1L, (long)(await survived.ExecuteScalarAsync())!);
     }

@@ -106,6 +106,10 @@ CREATE TABLE "student_portfolio_items" (id text PRIMARY KEY);
 CREATE TABLE "student_test_scores" (id text PRIMARY KEY);
 -- Domain 9a: read-only plan catalog (PlanReader).
 CREATE TABLE "subscription_plans" (id text PRIMARY KEY);
+-- issue #65, section 4.8 of the role script: INSERT-only, the SECOND table here granted without
+-- SELECT. Named explicitly in Every_table_in_the_schema_is_granted_at_least_select's exception list
+-- for the same reason audit_logs is, and its exact verb set pinned by Telemetry_events_is_insert_only.
+CREATE TABLE "telemetry_events" (id text PRIMARY KEY);
 CREATE TABLE "universities" (id text PRIMARY KEY);
 CREATE TABLE "university_favorites" (id text PRIMARY KEY);
 CREATE TABLE "user_blocks" (id text PRIMARY KEY);
