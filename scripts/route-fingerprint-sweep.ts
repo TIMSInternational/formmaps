@@ -722,6 +722,19 @@ export const PATH_DOMAIN_MAP: [string, string][] = [
   ["/api/v1/upload", "documents-and-resume"],
   ["/api/v1/video", "video"],
   ["/api/v1/messages", "messaging"],
+  // M4 no-decision ports. Keyed on the path, longest prefix wins, so
+  // /api/v1/school-admin/graduation/* already resolves via the school-admin entry above and
+  // needs no row of its own -- these three prefixes are the ones that had no owner at all and
+  // would otherwise be reported as `unmapped` for the rest of the M4 rollout.
+  // /api/v1/moderation rides with messaging deliberately: user_blocks is the messaging read
+  // path (MessagesRepository reads the blocks ModerationRepository writes), which is the same
+  // reason the Moderation integration namespace shares Messaging's CI shard.
+  ["/api/v1/moderation", "messaging"],
+  ["/api/v1/recommendations", "student-counselor-parent-workflows"],
+  // /api/v1/transcript is the reads half of the #55 flag whose writes live under
+  // /api/v1/school-admin/graduation; both halves therefore report the same domain, which is
+  // what a single-flag unit should do.
+  ["/api/v1/transcript", "schools-rosters-organizations"],
   ["/hubs", "messaging"],
   ["/authapi", "auth"],
 ];

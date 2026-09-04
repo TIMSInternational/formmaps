@@ -517,6 +517,37 @@ function shouldRouteAuthToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_AUTH_TO_DOTNET));
 }
 
+// ─── M4 no-decision ports: moderation, recommendation letters, graduation/transcripts ───────
+// Three NEW flags, all default OFF, all verified to be set nowhere (no .env, no vercel config,
+// no workflow, no CloudFormation template assigns them -- only doc comments mention the names).
+// Same `dotnetApiBaseUrl && isEnabled(...)` shape as every flag above, so the whole M4 block
+// stays inert until BOTH the base URL is configured AND the flag is deliberately flipped.
+
+// Moderation (#63): POST /report, GET /reports, POST+DELETE /block/:userId -- routes/moderation.ts
+// ported WHOLE. ONE flag for all four on purpose: /report and /reports are the two halves of one
+// queue, and splitting them would put a report on one backend and its moderation queue on the
+// other. Default OFF.
+function shouldRouteModerationToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_MODERATION_TO_DOTNET));
+}
+
+// Letters of recommendation (#59): all 10 routes of routes/recommendations.ts under ONE flag.
+// Note GET+POST /:id/letter is a single source co-flipping both methods (Next matches path, not
+// method): POST is the multipart upload, GET the download. Multipart passes through the rewrite
+// unchanged and the .NET group is DisableAntiforgery(). Default OFF.
+function shouldRouteRecommendationsToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_RECOMMENDATIONS_TO_DOTNET));
+}
+
+// Graduation + transcripts (#55): the whole of routes/transcript.ts (9 paths) plus the GRADUATION
+// half of routes/school-grades.ts (6 paths). The calendar half of that same legacy file keeps its
+// own pre-existing flag (FORMMAPS_ROUTE_SCHOOL_ADMIN_CALENDAR_TO_DOTNET) and /grades/import* is
+// not ported at all -- which is why every entry below names the /graduation/ segment explicitly
+// instead of taking a /api/v1/school-admin/:path* prefix that would swallow both. Default OFF.
+function shouldRouteGraduationToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_GRADUATION_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -599,6 +630,33 @@ const nextConfig: NextConfig = {
     // /session/:sessionId sub-paths (results/answer/complete) precede the bare
     // /session/:sessionId (Next matches array order, first match wins).
     const personalityRewrites = [
+      // ── M4 #55 decision D1: the two AI graduation-plan generators STAY ON NODE ──────────────
+      // UNCONDITIONAL, and deliberately so -- same shape and same reasoning as the
+      // coach-management carve-outs further down this file. Both routes are aiLimiter-rate-limited
+      // (formmaps-platform api/src/index.ts:306 and :307) and call Bedrock via
+      // planWorkflowService.generateRationale. They were NOT ported and there is no .NET handler
+      // for either, so if a flag rewrite ever covers their path they would 404 the instant it
+      // flipped.
+      //
+      // ORDERING IS THE WHOLE POINT, and it is why these sit at the TOP of this array rather than
+      // beside the graduation block at the bottom. afterFiles rewrites match in array order,
+      // first match wins, so a carve-out placed AFTER the flag rewrite that covers the same path
+      // does exactly nothing. Today nothing covers /api/v1/student/graduation-plan/* (the closest
+      // is /api/v1/student/portfolio and friends) and nothing covers this 7-segment counselor path
+      // (the existing counselor rewrites stop at /me/students/:studentId, 5 segments), so BOTH
+      // entries are inert-but-correct right now -- they resolve to the same Node origin the
+      // /api/:path* catch-all would have given them. They become load-bearing the moment
+      // routes/graduation-plan.ts or routes/counselor-graduation.ts is ported behind a flag, and
+      // adding them then, below that flag's block, would be the silent no-op this comment exists
+      // to prevent. Added now so that later port cannot forget them.
+      //
+      // `target`, not dotnetApiBaseUrl: these PIN to Node. No dotnetApiBaseUrl guard is needed or
+      // wanted -- target always has a value, so these are safe with the .NET base URL unset.
+      { source: "/api/v1/student/graduation-plan/generate", destination: `${target}/api/v1/student/graduation-plan/generate` },
+      {
+        source: "/api/v1/counselor/me/students/:studentId/graduation-plan/generate",
+        destination: `${target}/api/v1/counselor/me/students/:studentId/graduation-plan/generate`,
+      },
       ...(shouldRoutePersonalityAccessToDotnet()
         ? [{ source: "/api/v1/personality/access", destination: `${dotnetApiBaseUrl}/api/v1/personality/access` }]
         : []),
@@ -1390,6 +1448,124 @@ const nextConfig: NextConfig = {
       ...(dotnetApiBaseUrl
         ? [{ source: "/api/v1/migration/:path*", destination: `${dotnetApiBaseUrl}/api/v1/migration/:path*` }]
         : []),
+
+      // ══ M4 NO-DECISION PORTS -- START ══════════════════════════════════════════════════════
+      // Three lanes, three NEW flags, every one default OFF and set nowhere today. Self-contained
+      // and delimited on purpose: a CareerFit rewrite block is landing on a parallel branch, and
+      // keeping this region contiguous is what lets the two merge without interleaving.
+      //
+      // Every entry below is PATH-SPECIFIC with source === destination. No prefix rules: #109,
+      // #114 and #120 all exist because a broad prefix silently shadowed another flag's routes and
+      // left three mapped groups unreachable, and the fix had to be per-path for exactly that
+      // reason. All of these sit inside personalityRewrites, which is spread ahead of the
+      // /api/:path* catch-all -- without that they would never match at all.
+
+      // ── Moderation (#63) -- FORMMAPS_ROUTE_MODERATION_TO_DOTNET ────────────────────────────
+      // routes/moderation.ts ported whole: 4 routes, 3 paths, ONE flag. /report and /reports are
+      // DISTINCT literal paths and are listed as two separate entries on purpose -- a
+      // /api/v1/moderation/report:path* style source would swallow /reports and put a filed report
+      // on one backend while its moderation queue stayed on the other.
+      // /block/:userId is a single entry covering both POST and DELETE, exactly like the existing
+      // /api/v1/messages/conversations/:id row: Next rewrites are method-agnostic. No carve-out is
+      // needed ahead of it -- /api/v1/moderation has no other sub-paths in legacy.
+      ...(shouldRouteModerationToDotnet()
+        ? [
+            { source: "/api/v1/moderation/report", destination: `${dotnetApiBaseUrl}/api/v1/moderation/report` },
+            { source: "/api/v1/moderation/reports", destination: `${dotnetApiBaseUrl}/api/v1/moderation/reports` },
+            { source: "/api/v1/moderation/block/:userId", destination: `${dotnetApiBaseUrl}/api/v1/moderation/block/:userId` },
+          ]
+        : []),
+
+      // ── Letters of recommendation (#59) -- FORMMAPS_ROUTE_RECOMMENDATIONS_TO_DOTNET ────────
+      // All 10 legacy routes, 8 paths, ONE flag. The collection root co-flips GET and POST; the
+      // three literal segments (/staff, /dashboard, /received) are grouped ahead of the :id block
+      // the way legacy's router declares them (recommendations.ts:111 comments that ordering
+      // explicitly). There is no GET /:id route today, so no param source can shadow the literals
+      // -- keeping the grouping is what makes that stay true if one is ever added.
+      // /:id/letter is ONE source co-flipping the multipart upload (POST) and the download (GET);
+      // the GET is the D9 student-reachable download and routing it to .NET is behaviour-neutral,
+      // the exposure being identical in Node.
+      ...(shouldRouteRecommendationsToDotnet()
+        ? [
+            { source: "/api/v1/recommendations", destination: `${dotnetApiBaseUrl}/api/v1/recommendations` },
+            { source: "/api/v1/recommendations/staff", destination: `${dotnetApiBaseUrl}/api/v1/recommendations/staff` },
+            { source: "/api/v1/recommendations/dashboard", destination: `${dotnetApiBaseUrl}/api/v1/recommendations/dashboard` },
+            { source: "/api/v1/recommendations/received", destination: `${dotnetApiBaseUrl}/api/v1/recommendations/received` },
+            { source: "/api/v1/recommendations/:id/respond", destination: `${dotnetApiBaseUrl}/api/v1/recommendations/:id/respond` },
+            { source: "/api/v1/recommendations/:id/status", destination: `${dotnetApiBaseUrl}/api/v1/recommendations/:id/status` },
+            { source: "/api/v1/recommendations/:id/letter", destination: `${dotnetApiBaseUrl}/api/v1/recommendations/:id/letter` },
+            {
+              source: "/api/v1/recommendations/:id/link-applications",
+              destination: `${dotnetApiBaseUrl}/api/v1/recommendations/:id/link-applications`,
+            },
+          ]
+        : []),
+
+      // ── Graduation + transcripts (#55) -- FORMMAPS_ROUTE_GRADUATION_TO_DOTNET ──────────────
+      // 15 routes, 12 paths, ONE flag: the whole of routes/transcript.ts plus the graduation half
+      // of routes/school-grades.ts. They share the GPA computation, so the reads and the two write
+      // paths (POST /compute-gpa, POST /school-admin/class-ranks, both upserting student_gpas)
+      // flip and roll back together.
+      //
+      // THE /api/v1/transcript/school-admin/... PATHS REALLY DO LOOK LIKE THAT. The legacy router
+      // is mounted at /api/v1/transcript (index.ts:378) and the school-admin segment lives INSIDE
+      // it, so those two pairs do NOT belong in the /api/v1/school-admin block above and must not
+      // be "corrected" into it.
+      //
+      // NON-SHADOWING, the property this block most has to preserve:
+      //   * /api/v1/school-admin/graduation/... names the /graduation/ segment on every entry. A
+      //     /api/v1/school-admin/:path* prefix would shadow the calendar block
+      //     (FORMMAPS_ROUTE_SCHOOL_ADMIN_CALENDAR_TO_DOTNET) -- the other half of this very same
+      //     legacy file -- and would also capture /grades/import*, which is NOT ported and must
+      //     keep resolving to Node.
+      //   * /api/v1/transcript/students/:id/transcript is a DIFFERENT legacy route from
+      //     /api/v1/school-admin/gradebook/students/:studentId, which is already flagged under
+      //     FORMMAPS_ROUTE_GRADEBOOK_READ_TO_DOTNET. Different prefixes, different flags; do not
+      //     merge them.
+      //   * Explicit transcript paths rather than one /api/v1/transcript/:path* prefix, the way
+      //     the calendar and gradebook blocks are written -- and so the bare /api/v1/transcript
+      //     read does not depend on :path* matching zero segments.
+      // Ordered most-specific-first within each group. No param source here sits at the same
+      // segment depth as a literal sibling, so nothing can shadow anything in either order; the
+      // ordering is defensive, not load-bearing.
+      ...(shouldRouteGraduationToDotnet()
+        ? [
+            {
+              source: "/api/v1/transcript/students/:id/transcript",
+              destination: `${dotnetApiBaseUrl}/api/v1/transcript/students/:id/transcript`,
+            },
+            { source: "/api/v1/transcript/students/:id/gpa", destination: `${dotnetApiBaseUrl}/api/v1/transcript/students/:id/gpa` },
+            {
+              source: "/api/v1/transcript/school-admin/gpa-config",
+              destination: `${dotnetApiBaseUrl}/api/v1/transcript/school-admin/gpa-config`,
+            },
+            {
+              source: "/api/v1/transcript/school-admin/class-ranks",
+              destination: `${dotnetApiBaseUrl}/api/v1/transcript/school-admin/class-ranks`,
+            },
+            { source: "/api/v1/transcript/compute-gpa", destination: `${dotnetApiBaseUrl}/api/v1/transcript/compute-gpa` },
+            { source: "/api/v1/transcript/gpa", destination: `${dotnetApiBaseUrl}/api/v1/transcript/gpa` },
+            { source: "/api/v1/transcript", destination: `${dotnetApiBaseUrl}/api/v1/transcript` },
+            {
+              source: "/api/v1/school-admin/graduation/rules/:ruleSetId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/graduation/rules/:ruleSetId`,
+            },
+            { source: "/api/v1/school-admin/graduation/rules", destination: `${dotnetApiBaseUrl}/api/v1/school-admin/graduation/rules` },
+            {
+              source: "/api/v1/school-admin/graduation/progress/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/graduation/progress/:studentId`,
+            },
+            {
+              source: "/api/v1/school-admin/graduation/progress",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/graduation/progress`,
+            },
+            {
+              source: "/api/v1/school-admin/graduation/gap-analysis/:studentId",
+              destination: `${dotnetApiBaseUrl}/api/v1/school-admin/graduation/gap-analysis/:studentId`,
+            },
+          ]
+        : []),
+      // ══ M4 NO-DECISION PORTS -- END ════════════════════════════════════════════════════════
     ];
     return {
       afterFiles: [
