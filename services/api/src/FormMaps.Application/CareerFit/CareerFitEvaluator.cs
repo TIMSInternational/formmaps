@@ -22,11 +22,18 @@ namespace FormMaps.Application.CareerFit;
 // the 360 instrument reads DIVERGENT in convergence_level, so convergence counts at most THREE
 // STRONG instruments — SOLID is the ceiling and VERY_HIGH is unreachable until FM-CF-007.
 //
+// THE AUDIT. Two layers, both on the family row's "audit" jsonb and both written by the same transaction as
+// the scores. evaluate_owner's own blocks (audit_inputs / convergence_detail / critical_gaps /
+// mil_relative_strengths) say what each instrument produced; CareerFitAuditLedger's formula_steps say HOW —
+// one record per F01–F23 application the evaluation actually executed, naming the step, its inputs, its
+// output and the rule or threshold that governed it. The ledger is attached in EvaluateCore AFTER
+// AssignRelativeFit and is built by READING what EvaluateOwner already returned, never by re-scoring, so it
+// cannot move a number (see CareerFitAuditLedger's header for why it is a jsonb array and not a table).
+//
 // Deliberately NOT here: any HTTP surface (FM-CF-012 — the seven endpoints and the flag), any
 // per-user authorization (the endpoint's job; RLS on every read and write is the backstop, so a caller
-// who cannot see the student's rows gets "not ready", never a score), the explainability payload
-// (FM-CF-011), and a per-formula-step audit table (the family row carries evaluate_owner's audit_inputs
-// verbatim; FM-CF-010's finer-grained ledger is still open).
+// who cannot see the student's rows gets "not ready", never a score), and the explainability payload
+// (FM-CF-011 — the ledger is evidence for an auditor, not copy for a student).
 
 /// <summary>Evaluates one student against every scorable family of the active rule set and persists the run.</summary>
 public interface ICareerFitEvaluator
@@ -137,10 +144,16 @@ public sealed class CareerFitEvaluator(
 
     /// <summary>
     /// The pure centre: validate the assessment once (CareerFitFormulas.ValidateInputs), EvaluateOwner for
-    /// every scorable family in the rule set's family order, then AssignRelativeFit. Returns the families in
-    /// rank order (1 = best); ties keep family order. The rule set's own thresholds — including the D5
-    /// per_instrument recut — are used; a test wanting reference-engine parity strips them (see
-    /// CareerFitEvaluatorTests).
+    /// every scorable family in the rule set's family order, AssignRelativeFit, then attach each family's
+    /// per-formula-step audit ledger. Returns the families in rank order (1 = best); ties keep family order.
+    /// The rule set's own thresholds — including the D5 per_instrument recut — are used; a test wanting
+    /// reference-engine parity strips them (see CareerFitEvaluatorTests).
+    ///
+    /// The ledger is attached HERE and not inside EvaluateOwner, and it is built by reading what EvaluateOwner
+    /// already returned rather than by re-scoring anything: EvaluateOwner is the reference engine's
+    /// evaluate_owner, held to it at 1e-9 (measured bit-exact) by the parity fixture, and it stays that
+    /// function. Attaching after AssignRelativeFit is also what lets F21 be a recorded step at all — the rank
+    /// does not exist until the whole ranked set does.
     /// </summary>
     public static IReadOnlyList<OwnerEvaluation> EvaluateCore(CareerFitAssessment assessment, CareerFitActiveRuleSet ruleSet)
     {
@@ -155,6 +168,18 @@ public sealed class CareerFitEvaluator(
             evaluations.Add(CareerFitFormulas.EvaluateOwner(assessment, family, ruleSet.Rules.Weights, ruleSet.Rules.Thresholds));
         }
 
-        return CareerFitFormulas.AssignRelativeFit(evaluations);
+        var ranked = CareerFitFormulas.AssignRelativeFit(evaluations);
+
+        var audited = new List<OwnerEvaluation>(ranked.Count);
+        foreach (var family in ranked)
+        {
+            audited.Add(family with
+            {
+                AuditSteps = CareerFitAuditLedger.Build(
+                    assessment, ruleSet.Family(family.OwnerId), ruleSet.Rules.Weights, ruleSet.Rules.Thresholds, family, ranked.Count),
+            });
+        }
+
+        return audited;
     }
 }

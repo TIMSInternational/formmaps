@@ -115,16 +115,16 @@ ADEQUATE and is told their cognitive profile is *Insuficiente / Bajo*.
 
 The rule set above is consumed, unchanged, by the .NET bounded context under `services/api`
 (manifest slices FM-CF-002/003/004/005/009 completed, FM-CF-010's orchestrator half shipped on
-branch `careerfit/p1-p3`). Nothing is mapped as an HTTP endpoint yet — that is FM-CF-012, behind
-`FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET`.
+branch `careerfit/p1-p3` and its per-formula-step audit ledger on `careerfit/audit`). Nothing is
+mapped as an HTTP endpoint yet — that is FM-CF-012, behind `FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET`.
 
 | namespace / path | what |
 |---|---|
-| `FormMaps.Application.CareerFit` | `CareerFitFormulas` (F01–F23, one static function per reference function), the input/result records, `CareerFitRules` + `CareerFitRulesJson` (the JSON above, embedded from `CareerFit/Data`), `ICareerFitRulesProvider`, `CareerFitEvaluator` / `ICareerFitEvaluator` (the orchestrator), `CareerFitRun`, `CareerFitRunJson` (the three jsonb shapes) |
+| `FormMaps.Application.CareerFit` | `CareerFitFormulas` (F01–F23, one static function per reference function), the input/result records, `CareerFitRules` + `CareerFitRulesJson` (the JSON above, embedded from `CareerFit/Data`), `ICareerFitRulesProvider`, `CareerFitEvaluator` / `ICareerFitEvaluator` (the orchestrator), `CareerFitAuditLedger` (the per-formula-step audit trail), `CareerFitRun`, `CareerFitRunJson` (the three jsonb shapes) |
 | `FormMaps.Application.CareerFit.Resolver` | `CareerFitRulesResolver` — `mc_gate.py check_resolved()` ported one for one; `CareerFitRulesInvalidException` lists every problem with family and field |
 | `FormMaps.Application.CareerFit.Adapters` | `DiscAdapter`, `CompetencyAdapter`, `MilAdapter`, `PersonalityAdapter`, `IV360Adapter` / `NoDataV360Adapter`, composed by `CareerFitInputAdapters`; `InputQuality` is the audit record |
 | `FormMaps.Infrastructure.CareerFit` | `CareerFitRulesProvider` (the ConfigCache: `CareerFit:RulesVersion`, loaded + resolved once per process, boot-gated in `AddFormMapsInfrastructure`), `CareerFitInputReader` (one read-only RLS session), `CareerFitRunWriter` (run + family rows in one transaction) |
-| `infra/aws/sql/careerfit-schema.sql` | `careerfit_runs` / `careerfit_family_results`, tenant-scoped, RLS ENABLE+FORCE; grants in `dotnet-service-role.sql` §4.7 (SELECT + INSERT only — a run is immutable, a re-evaluation is a new run) |
+| `infra/aws/sql/careerfit-schema.sql` | `careerfit_runs` / `careerfit_family_results`, tenant-scoped, RLS ENABLE+FORCE; grants in `dotnet-service-role.sql` §4.7 (SELECT + INSERT only — a run is immutable, a re-evaluation is a new run). The audit ledger rides in the existing `audit` jsonb, so it adds no table, no policy and no grant |
 
 The pipeline is `CareerFitEvaluator.EvaluateAsync(context, userId, graph?)`: read the student's
 `pca_results` / newest completed `lia_assessment_sessions` / newest completed
@@ -134,6 +134,59 @@ scorable family (14) → `AssignRelativeFit` → persist → return the run with
 `formmaps_engine_reference.py` at 1e-9 through the same parity fixture FM-CF-004 uses — measured
 bit-exact. A missing instrument is a typed `CareerFitInputException` naming it (PCA / MIL /
 PERSONALITY) and nothing is written; the caller reports "not ready".
+
+### The audit ledger (§21)
+
+Every family row's `audit` jsonb carries two layers, both written by the same transaction as the
+scores. `audit_inputs` / `convergence_detail` / `critical_gaps` / `mil_relative_strengths` are
+`evaluate_owner`'s own blocks: what each instrument produced. `formula_steps` is FM-CF-010's **step
+ledger**: one record per **application** of an F01–F23 formula that the evaluation actually
+executed, in execution order, each naming the step (id, workbook name, block), what it consumed,
+what it produced, and the rule or threshold that governed it — the archetype factor's direction and
+weight, the competency's minimum level, the MIL role weight, the convergence cut and whether it came
+from the spec pair or the D5 `per_instrument` recut (and that recut's `SIMULATED` provenance).
+
+The count is derivable, not decorative: `F07/F08/F09` per contributing (route, factor), `F10` per
+route, `F12/F13` per competency rule with a scored role, `F18` per personality route, `F17` per MIL
+subtest, `F22` per convergence instrument, `F23` only where `F22` did not already answer STRONG
+(`evidence_support` returns on the strong test), and one each of `F11 F14 F15 F16 F19 F06 F20 F21`.
+That is 39–56 records per family and **709 for one run of the sample student** — the number
+`CareerFitAuditLedgerTests` and the database test both re-derive from the rule set and assert against
+`jsonb_array_length(audit -> 'formula_steps')`. `F01–F05` are the 360 *aggregation* pipeline and do
+not execute at all while the registered `IV360Adapter` is `NoData`; they belong to FM-CF-007.
+
+Two things carry no record on purpose: the gates (`COMP_GATE` / `MIL_GATE` / `FINAL_GATE` are sheet
+14 and step 17, not F-numbered formulas, and are already typed columns) and the `mil_band` lookup
+(carried inside `F16`'s rule block). Keeping the ledger to F01–F23 is what makes its row count
+re-derivable from the rule set.
+
+**Where the granularity comes from, stated plainly.** §21 of the TIMS implementation specification
+is *not* among the vendored sources — `docs/careerfit/sources` holds the workbook, the model config
+and the reference engine, and the manifest cites §21/§25/§26/§29 of a document FormMaps was never
+given. So "a record per formula step" is read off the two normative artefacts we do have: sheet
+`13_FORMULAS_ENGINE`, where each formula is subscripted by what it is applied to (`match_f`,
+`att_j`, `rel_k`, `RouteFit_r`), and `evaluate_owner`'s order of operations. One record per
+*application* follows from the subscripts; the execution order follows from the reference. If TIMS
+delivers §21 and it says otherwise, the shape to change is `CareerFitAuditLedger` alone.
+
+**Why the `audit` jsonb and not a `careerfit_audit_steps` table.** Every read of the ledger is "the
+whole derivation for this (run, family)" — the row already being fetched; nothing filters, joins,
+orders or aggregates on a step, so a table buys no query. The row count argues the same way: ~700
+records per run, per student, forever (runs are immutable, a re-evaluation is a new run) would be
+~700 tuples plus index entries per evaluation, against one TOASTed value per family row (~19 KB of
+JSON text before compression). Staying in the existing column also means the ledger *cannot* be read
+apart from the scores it derives, and it adds no policy, no `GRANT`, no fixture-schema change and no
+apply-order dependency. Revisit only if a query appears that must scan across runs by step — a
+reporting question (FM-CF-013/014), not this table's.
+
+**It cannot move a number.** `CareerFitFormulas.EvaluateOwner` — the function the parity fixture
+holds to the reference engine — is untouched and produces no ledger; `EvaluateCore` attaches one
+afterwards by *reading* what `EvaluateOwner` already returned (route scores and components, MIL
+components, personality routes, 360 evidence) plus re-invoking the same pure statics for the two leaf
+values the engine does not retain (`CompetencyAttainment`, `EvidenceSupport`). Attaching it after
+`AssignRelativeFit` is also what lets `F21` be a step at all. Measured after the change: the parity
+fixture regenerates byte-identical and `EvaluateCore` reproduces the reference at **0.0** deviation
+over 10,920 field comparisons.
 
 ### Running the tests
 

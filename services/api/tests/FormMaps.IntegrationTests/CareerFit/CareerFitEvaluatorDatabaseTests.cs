@@ -380,6 +380,82 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         Assert.Equal(2, quality.GetProperty("warnings").EnumerateArray().Count(w => w.GetProperty("code").GetString() == InputWarningCodes.MilPercentileClamped));
     }
 
+    [Fact]
+    public async Task The_formula_step_ledger_lands_in_the_audit_jsonb_with_the_derived_row_count_per_family()
+    {
+        // FM-CF-010's acceptance, on the real column: "audit row count == formula steps per family per
+        // student". The ledger ships WITH the scores -- it is inside careerfit_family_results."audit", written
+        // by the same INSERT as the family row, so counting it is jsonb_array_length on that row and there is
+        // no second table, no second write and no way to read a score without its derivation.
+        //
+        // The expected number is DERIVED here from the rule set the process loaded, deliberately re-derived
+        // rather than shared with FormMaps.UnitTests/CareerFit/CareerFitAuditLedgerTests: the database
+        // assertion must not depend on the same helper the unit test uses. Reading evaluate_owner top to
+        // bottom -- F07/F08/F09 per weighted non-OPEN factor of each route, F10 per route, F12/F13 per
+        // competency rule with a scored role, F18 per personality route, F17 per MIL subtest, F22 per
+        // convergence instrument, F23 only where F22 did not answer STRONG, and one each of F11 F14 F15 F16
+        // F19 F06 F20 F21.
+        var run = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+
+        var rules = Provider.Rules;
+        var expectedTotal = 0;
+        foreach (var family in run.Families)
+        {
+            var familyRules = rules.Family(family.OwnerId);
+            var fits = new (string Instrument, double Fit)[]
+            {
+                ("PCA", family.PcaIndex), ("MIL", family.MilFit), ("PERSONALITY", family.PersonalityFit), ("360", family.CareerFit360),
+            };
+
+            var expected =
+                familyRules.PcaRoutes.Sum(id => rules.Archetypes[id].Factors.Count(f => f.Direction != "OPEN" && f.Weight > 0))
+                + familyRules.PcaRoutes.Count
+                + familyRules.CompetencyRules.Count(r => rules.Weights.CompetencyRole.ContainsKey(r.Role))
+                + familyRules.PersonalityRoutes.Count
+                + fits.Count(f => f.Fit < rules.Thresholds.Convergence.PerInstrument![f.Instrument].StrongMin)
+                + 5 + 4 + 8;
+            expectedTotal += expected;
+
+            var stored = await ScalarAsync(
+                admin,
+                $"""
+                 SELECT jsonb_array_length("audit" -> 'formula_steps')
+                 FROM "careerfit_family_results" WHERE "runId" = '{run.Id}' AND "familyId" = {family.OwnerId}
+                 """);
+            Assert.Equal((long)expected, stored);
+            Assert.Equal(expected, family.AuditSteps.Count);
+        }
+
+        // The whole run, counted in SQL: nothing is lost between the engine and the column.
+        Assert.Equal(
+            (long)expectedTotal,
+            await ScalarAsync(admin, $"""SELECT sum(jsonb_array_length("audit" -> 'formula_steps')) FROM "careerfit_family_results" WHERE "runId" = '{run.Id}' """));
+
+        // Every step id is an F01-F23 formula, and the four blocks of evaluate_owner still travel beside it.
+        var audit = JsonDocument.Parse(await StringAsync(
+            admin, $"""SELECT "audit"::text FROM "careerfit_family_results" WHERE "runId" = '{run.Id}' AND "rank_position" = 1""")).RootElement;
+        // As a SET, not a sequence: jsonb normalises object key order (shortest key first, then by bytes), so
+        // the serialiser's member order is a unit-test claim (CareerFitRunJsonTests) and not a column one.
+        Assert.Equal(
+            ["audit_inputs", "convergence_detail", "critical_gaps", "formula_steps", "mil_relative_strengths"],
+            audit.EnumerateObject().Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal));
+        foreach (var step in audit.GetProperty("formula_steps").EnumerateArray())
+        {
+            Assert.Matches("^F(0[1-9]|1[0-9]|2[0-3])$", step.GetProperty("step_id").GetString());
+            Assert.NotEmpty(step.GetProperty("rule").EnumerateObject());
+        }
+
+        // A run is immutable, so a second evaluation is a second ledger, and the first one is untouched.
+        var second = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+        Assert.Equal(
+            (long)expectedTotal,
+            await ScalarAsync(admin, $"""SELECT sum(jsonb_array_length("audit" -> 'formula_steps')) FROM "careerfit_family_results" WHERE "runId" = '{run.Id}' """));
+        Assert.Equal(
+            (long)(2 * expectedTotal),
+            await ScalarAsync(admin, $"""SELECT sum(jsonb_array_length("audit" -> 'formula_steps')) FROM "careerfit_family_results" WHERE "runId" IN ('{run.Id}', '{second.Id}')"""));
+    }
+
     // ---- contexts ----
 
     private static RequestContext Student(string userId, string? schoolId) => Ctx(userId, FormMapsRoles.Student, schoolId);
