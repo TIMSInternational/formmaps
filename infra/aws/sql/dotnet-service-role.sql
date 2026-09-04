@@ -251,6 +251,16 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     -- POST /block/:userId and soft-deleted (UPDATE isActive=false) by DELETE. Both
     -- moved/added here from the read-only tier. Not needed until the port lands, but
     -- granting late means an ops re-run mid-domain -- the exact failure #29 hit.
+    -- VERIFIED AGAINST THE LANDED PORT (#63): ModerationRepository needs exactly
+    -- SELECT+INSERT on `reports` and SELECT+INSERT+UPDATE on `user_blocks`, and
+    -- nothing else -- no DELETE anywhere (an unblock is isActive=false, a report is
+    -- never removed), and the audit rows go to `audit_logs`, granted INSERT-only in
+    -- 4.6 below. So this tier is sufficient and no new grant was needed. It is one
+    -- verb WIDER than today's code on `reports` (UPDATE is unused: the admin
+    -- review/resolve path is still Node). Left as-is deliberately -- that path is the
+    -- next port into this same tier, and narrowing now would buy an ops re-run to undo
+    -- later. DbRoleGrantsTests.Moderation_tables_* pins both verb sets from the
+    -- catalog and behaviourally, so "wider" cannot drift into "unbounded".
     public."reports",
     public."user_blocks",
     public."community_service_entries",

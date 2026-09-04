@@ -169,7 +169,7 @@ public static class ApiSecurityExtensions
         {
             context.HttpContext.Response.ContentType = "application/json";
             await context.HttpContext.Response.WriteAsJsonAsync(
-                new { success = false, message = "Too many requests, please try again later" },
+                new { success = false, message = RejectionMessageFor(context.HttpContext) },
                 cancellationToken);
         };
 
@@ -186,6 +186,37 @@ public static class ApiSecurityExtensions
 
         options.AddPolicy(FormMapsRateLimitPolicies.Ai, httpContext =>
             BuildFixedWindowPartition(BuildRequestLimitKey(httpContext), apiSecurityOptions.RateLimits.Ai));
+
+        // formmaps#63. Same per-caller partition as Sensitive (legacy keys moderationLimiter on
+        // `req.userId || req.ip`, which BuildRequestLimitKey already mirrors) but legacy's own 30/hour.
+        options.AddPolicy(FormMapsRateLimitPolicies.Moderation, httpContext =>
+            BuildFixedWindowPartition(BuildRequestLimitKey(httpContext), apiSecurityOptions.RateLimits.Moderation));
+    }
+
+    /// <summary>
+    /// The 429 body. One global <c>OnRejected</c> serves every policy here, so the per-policy message legacy
+    /// sends has to be selected from the endpoint's own metadata rather than from a policy-level handler:
+    /// ASP.NET invokes a policy's <c>OnRejected</c> IN ADDITION to the global one, which would append a
+    /// second JSON document to the response body.
+    ///
+    /// <para>Only moderation is special-cased, and only because formmaps#63 is a port whose brief is to
+    /// reproduce the limiter's response. The other three policies keep the message they already send — they
+    /// are NOT re-derived here; changing them would be a behaviour change in lanes this one does not own,
+    /// which is the divergence this port is deliberately not making.</para>
+    ///
+    /// <para>KNOWN EDGE: if the GLOBAL limiter (3000 per 15 min) is what rejected a moderation request, this
+    /// still returns moderation's message. Distinguishing them is not exposed by the middleware, and a
+    /// caller who trips 3000/15min has long since tripped 30/hour on these three routes.</para>
+    /// </summary>
+    private static string RejectionMessageFor(HttpContext httpContext)
+    {
+        var policyName = httpContext.GetEndpoint()?.Metadata
+            .GetMetadata<Microsoft.AspNetCore.RateLimiting.EnableRateLimitingAttribute>()?.PolicyName;
+
+        // rateLimiter.ts:31 — `message: { success: false, message: "Too many attempts. Try again later." }`.
+        return policyName == FormMapsRateLimitPolicies.Moderation
+            ? "Too many attempts. Try again later."
+            : "Too many requests, please try again later";
     }
 
     private static RateLimitPartition<string> BuildFixedWindowPartition(

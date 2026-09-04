@@ -118,8 +118,11 @@ jobs:
             filter: "FullyQualifiedName~FormMaps.IntegrationTests.Assessments."
           - name: auth-counselor-students
             filter: "FullyQualifiedName~FormMaps.IntegrationTests.Auth.|FullyQualifiedName~FormMaps.IntegrationTests.Counselor.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolStudents."
+          # Moderation rides with Messaging on purpose (formmaps#63): the two share the user_blocks read
+          # path — MessagesRepository reads blocks that ModerationRepository writes — so when one breaks
+          # the other, both shards' worth of evidence lands in the same job's log.
           - name: messaging-college-plan
-            filter: "FullyQualifiedName~FormMaps.IntegrationTests.Messaging.|FullyQualifiedName~FormMaps.IntegrationTests.StudentCoursePlan.|FullyQualifiedName~FormMaps.IntegrationTests.College.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolAdmin."
+            filter: "FullyQualifiedName~FormMaps.IntegrationTests.Messaging.|FullyQualifiedName~FormMaps.IntegrationTests.Moderation.|FullyQualifiedName~FormMaps.IntegrationTests.StudentCoursePlan.|FullyQualifiedName~FormMaps.IntegrationTests.College.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolAdmin."
           - name: school-courses-users-calendar
             filter: "FullyQualifiedName~FormMaps.IntegrationTests.SchoolCourses.|FullyQualifiedName~FormMaps.IntegrationTests.Resumes.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolUsers.|FullyQualifiedName~FormMaps.IntegrationTests.StudentApplicationSubResources.|FullyQualifiedName~FormMaps.IntegrationTests.Calendar.|FullyQualifiedName~FormMaps.IntegrationTests.DataMappings."
           - name: reports-billing-video
@@ -198,6 +201,7 @@ jobs:
           FormMaps.IntegrationTests.Counselor.
           FormMaps.IntegrationTests.SchoolStudents.
           FormMaps.IntegrationTests.Messaging.
+          FormMaps.IntegrationTests.Moderation.
           FormMaps.IntegrationTests.StudentCoursePlan.
           FormMaps.IntegrationTests.College.
           FormMaps.IntegrationTests.SchoolAdmin.

@@ -38,6 +38,17 @@ public sealed class RateLimitPolicyOptions
         PermitLimit = 10,
         WindowSeconds = 60
     };
+
+    /// <summary>
+    /// formmaps#63. Legacy's moderationLimiter is `windowMs: 60 * 60 * 1000, max: 30` — deliberately looser
+    /// than Sensitive's 10/hour, because legitimate flagging bursts (a thread going bad) must not be capped
+    /// at the password-change rate. The numbers are legacy's, not a re-derivation.
+    /// </summary>
+    public FixedWindowRateLimitOptions Moderation { get; set; } = new()
+    {
+        PermitLimit = 30,
+        WindowSeconds = 60 * 60
+    };
 }
 
 public sealed class FixedWindowRateLimitOptions

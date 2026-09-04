@@ -180,6 +180,12 @@ public static class DependencyInjection
         services.AddScoped<IVideoSessionsRepository, VideoSessionsRepository>();
         // Domain 7b: messaging (FM-DOTNET-098+; routes/messages.ts, all 7 endpoints under /api/v1/messages).
         services.AddScoped<IMessagesRepository, MessagesRepository>();
+        // formmaps#63: UGC moderation (routes/moderation.ts, all 4 endpoints under /api/v1/moderation).
+        // NOTE the session asymmetry inside it: everything runs on the caller's Identity session EXCEPT
+        // CanModerateUserAsync, which opens under RequestContext.System() (Bypass) — legacy's runAsSystem.
+        // A safety action must not depend on the actor being able to SEE the target in the tenant sense;
+        // formmaps#80 is what happens when it does. See MessagesRepository.cs:518 for the long form.
+        services.AddScoped<FormMaps.Application.Moderation.IModerationRepository, FormMaps.Infrastructure.Moderation.ModerationRepository>();
         // formmaps#52: the ONLY sanctioned write path to audit_events. The table's RLS policy admits
         // bypass-mode sessions only, so this writer opens under RequestContext.System() internally —
         // nothing else should ever INSERT there, and no tenant-scoped session can.
