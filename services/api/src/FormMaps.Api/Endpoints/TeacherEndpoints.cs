@@ -43,6 +43,24 @@ namespace FormMaps.Api.Endpoints;
 /// therefore load-bearing and belongs to whoever mints the invite (schoolService.ts:278, outside this port's
 /// scope), not to this route. This port does NOT tighten it -- see the divergences below.</para>
 ///
+/// <para>THE CROSS-TENANT CONSEQUENCE OF THAT BYPASS SESSION, stated explicitly because "the <c>users</c> row it
+/// creates or migrates" above understates it. <c>CompleteOnboardingAsync</c> looks the user up by EMAIL ALONE
+/// (TeacherOnboardingRepository.cs:110, no <c>schoolId</c> conjunct), and the takeover guard at :131 --
+/// teacher.ts:55's <c>if (user.password &amp;&amp; !user.passwordNeedsMigration)</c> -- only covers an
+/// ESTABLISHED account. So ANY tenant that can send an invite to an address can CLAIM a
+/// provisioned-but-not-onboarded (null/empty password) or migration-flagged account belonging to ANOTHER
+/// tenant: the redemption repoints that row's <c>schoolId</c> to the INVITE's school, sets the redeemer's
+/// password and makes them a teacher, and every FK'd record (grades, assessments) follows the row across the
+/// boundary. An established account is safe -- the guard 409s and does not even consume the invite.</para>
+///
+/// <para>INHERITED, NOT INTRODUCED, and deliberately NOT repaired here: legacy is identical (teacher.ts:52-61
+/// under <c>systemContext</c>), so the flag flip is behaviour-neutral, which is the brief. Closing it needs a
+/// <c>schoolId</c> conjunct on the users lookup AND the same change to legacy's <c>findFirst</c> IN THE SAME
+/// COMMIT, or the two implementations disagree and the flag stops being a clean rollback. Pinned as an exposure
+/// record -- not an endorsement -- by TeacherOnboardingRepositoryTests'
+/// <c>Complete_migrates_a_user_from_ANOTHER_school__INHERITED_EXPOSURE_pinned</c>, its migration-flagged twin,
+/// and the boundary case <c>Complete_cannot_claim_an_ESTABLISHED_user_from_another_school</c>.</para>
+///
 /// <para><b>DIVERGENCES NOT MADE</b> (each would be a behaviour change on flip, and #40/#151 were both reverted
 /// on this project for exactly this):</para>
 /// <list type="bullet">

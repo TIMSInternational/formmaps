@@ -187,10 +187,12 @@ public static class ApiSecurityExtensions
         options.AddPolicy(FormMapsRateLimitPolicies.Ai, httpContext =>
             BuildFixedWindowPartition(BuildRequestLimitKey(httpContext), apiSecurityOptions.RateLimits.Ai));
 
-        // formmaps#63. Same per-caller partition as Sensitive (legacy keys moderationLimiter on
-        // `req.userId || req.ip`, which BuildRequestLimitKey already mirrors) but legacy's own 30/hour.
+        // formmaps#63. Legacy's own 30/hour, keyed on the CALLER rather than on the credential --
+        // `req.userId || req.ip` (rateLimiter.ts:33), which BuildActorLimitKey reproduces and
+        // BuildRequestLimitKey does NOT. See BuildActorLimitKey for why the difference matters here
+        // and why the other three policies deliberately keep the hashed-token key.
         options.AddPolicy(FormMapsRateLimitPolicies.Moderation, httpContext =>
-            BuildFixedWindowPartition(BuildRequestLimitKey(httpContext), apiSecurityOptions.RateLimits.Moderation));
+            BuildFixedWindowPartition(BuildActorLimitKey(httpContext), apiSecurityOptions.RateLimits.Moderation));
     }
 
     /// <summary>
@@ -230,6 +232,61 @@ public static class ApiSecurityExtensions
             QueueLimit = 0,
             Window = TimeSpan.FromSeconds(Math.Max(1, options.WindowSeconds))
         });
+    }
+
+    /// <summary>
+    /// legacy's <c>keyGenerator: (req) =&gt; req.userId || req.ip</c> (rateLimiter.ts:33), reproduced: the
+    /// partition belongs to the CALLER, not to the credential they happen to be holding.
+    ///
+    /// <para>WHY NOT <see cref="BuildRequestLimitKey"/>. That one returns <c>auth:{sha256(token)}</c> whenever
+    /// an access token is present and never consults the userId, which drifts from legacy in BOTH directions.
+    /// One user with N live sessions got N budgets — and since <c>/auth/refresh</c> rotation issues a NEW access
+    /// token, and a new token was a new partition, the 30/hour cap was renewable on demand by any authenticated
+    /// caller. In the other direction, two DIFFERENT users behind one NAT egress with no token shared a single
+    /// budget where legacy gives each their own. On this surface the limiter is the only control there is, so
+    /// both halves matter.</para>
+    ///
+    /// <para>WHY THE OTHER THREE POLICIES ARE LEFT ALONE. The hashed-token key is inherited from the
+    /// pre-existing General/Sensitive/Ai policies; changing those is a behaviour change in lanes formmaps#63
+    /// does not own, and the divergence is deliberately not repaired here. This is scoped to Moderation, which
+    /// is the lane that ASSERTS parity with legacy and the one whose surface the limiter alone guards.</para>
+    ///
+    /// <para>WHY IT RESOLVES THE CONTEXT ITSELF rather than reading <c>IRequestContextAccessor</c>. Ordering:
+    /// <c>UseRateLimiter()</c> runs inside <c>UseFormMapsApiSecurity()</c>, which Program.cs registers BEFORE
+    /// <c>RequestContextMiddleware</c> — so at partition time the accessor is still empty and reading it would
+    /// silently key every request as anonymous, reproducing the shared-budget bug it is meant to fix. The
+    /// factory is a singleton whose <c>Create</c> is a pure function of the HttpContext, so calling it here is
+    /// safe; the result is cached in <c>HttpContext.Items</c> under the key the middleware uses so the
+    /// signature verification is not paid twice on these three routes. Anonymous callers (and unparseable or
+    /// expired tokens) fall through to the IP key, which is legacy's <c>|| req.ip</c> exactly.</para>
+    /// </summary>
+    private static string BuildActorLimitKey(HttpContext httpContext)
+    {
+        var userId = ResolveUserId(httpContext);
+
+        return string.IsNullOrWhiteSpace(userId)
+            ? BuildIpLimitKey(httpContext)
+            : $"user:{userId}";
+    }
+
+    private static string? ResolveUserId(HttpContext httpContext)
+    {
+        if (httpContext.Items.TryGetValue(Auth.RequestContextMiddleware.RequestContextItemsKey, out var cached)
+            && cached is Application.Auth.RequestContext existing)
+        {
+            return existing.Tenant?.UserId;
+        }
+
+        var factory = httpContext.RequestServices.GetService<Auth.LegacyJwtRequestContextFactory>();
+        if (factory is null)
+        {
+            return null;
+        }
+
+        var context = factory.Create(httpContext);
+        httpContext.Items[Auth.RequestContextMiddleware.RequestContextItemsKey] = context;
+
+        return context.Tenant?.UserId;
     }
 
     private static string BuildRequestLimitKey(HttpContext httpContext)

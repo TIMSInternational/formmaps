@@ -106,6 +106,13 @@ CREATE TABLE "student_portfolio_items" (id text PRIMARY KEY);
 CREATE TABLE "student_test_scores" (id text PRIMARY KEY);
 -- Domain 9a: read-only plan catalog (PlanReader).
 CREATE TABLE "subscription_plans" (id text PRIMARY KEY);
+-- issue #62, section 4.9 of the role script: SELECT + UPDATE, and deliberately NOT INSERT -- the .NET
+-- service redeems invites but must never MINT one (that stays schoolService.ts:387 on Node). This table
+-- was MISSING from both this stub schema and every GRANT list when #62 landed, which is exactly why
+-- Every_table_in_the_schema_is_granted_at_least_select could not see the gap: it reconciles this file
+-- against the grants file, and a table in NEITHER is invisible to it. DbRoleGrantCoverageTests now
+-- derives the table set from services/api/src so the next such omission fails without a human noticing.
+CREATE TABLE "teacher_invites" (id text PRIMARY KEY);
 -- issue #65, section 4.8 of the role script: INSERT-only, the SECOND table here granted without
 -- SELECT. Named explicitly in Every_table_in_the_schema_is_granted_at_least_select's exception list
 -- for the same reason audit_logs is, and its exact verb set pinned by Telemetry_events_is_insert_only.

@@ -258,6 +258,14 @@ trust for every other domain:
   If the .NET App Runner service runs more than one instance, effective limits multiply per
   instance. Needs an explicit answer (accept the gap, or add a shared-store implementation) before
   claiming rate-limit parity — not resolved by this spec.
+  - **`.Moderation` (formmaps#63) has the same property and is the worst case of it.** Legacy's
+    `moderationLimiter` uses `sharedStore("moderation")` (rateLimiter.ts:27), so its 30/hour is a
+    CLUSTER-wide budget; the .NET policy's 30/hour is per-instance, making the effective ceiling
+    30N/hour across N App Runner instances. It matters more here than for Auth/Sensitive because on
+    POST `/report` and POST/DELETE `/block/:userId` the limiter is the ONLY control on the surface —
+    there is no second guard behind it. The partition KEY was fixed to legacy's `req.userId || req.ip`
+    (see `BuildActorLimitKey`), which closes the per-session/per-rotation multiplication; the
+    per-INSTANCE multiplication described here is a separate, still-open gap, and nothing measures it.
 - **Legacy SHA-256 migration dead-code path**: Node's `needsMigration` branch is currently
   unreachable (`verifyPassword` never returns `needsMigration: true` in practice). Decide at
   planning time whether to port the dormant branch faithfully (for byte-parity) or omit it as

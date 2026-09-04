@@ -309,6 +309,110 @@ public sealed class TeacherOnboardingRepositoryTests(TeacherDatabaseFixture fixt
     }
 
     /// <summary>
+    /// INHERITED EXPOSURE, PINNED — NOT AN ENDORSEMENT. A School-1 invite redeemed against an email belonging
+    /// to a School-2 user REPOINTS that other tenant's row into School-1, with an attacker-chosen password.
+    ///
+    /// <para>THE MECHANISM. <c>CompleteOnboardingAsync</c> opens a <c>RequestContext.System()</c> BYPASS session
+    /// (:100) — it must, because the caller is unauthenticated by definition — and then looks the user up by
+    /// EMAIL ALONE (:110, <c>FROM "users" WHERE "email" = @email</c>), with no <c>schoolId</c> conjunct. The
+    /// takeover guard at :131 (<c>password AND NOT passwordNeedsMigration</c>) only protects an ESTABLISHED
+    /// account, so every provisioned-but-not-onboarded row (null password) and every legacy-imported row
+    /// (<c>passwordNeedsMigration = true</c>) in ANY school is reachable by any school that can send an invite
+    /// to that address. Everything FK'd to the userId — grades, assessments — follows the row across the
+    /// tenant line.</para>
+    ///
+    /// <para>WHAT THIS TEST DOES NOT SAY. It does not say this is correct. It records that the port reproduces
+    /// legacy EXACTLY: teacher.ts:52 is <c>prisma.user.findFirst({ where: { email: emailLower } })</c> under the
+    /// same system context, and teacher.ts:58-61 writes <c>schoolId: invite.schoolId</c>. The flag flip is
+    /// therefore behaviour-neutral, which is the whole brief — the DIVERGENCE NOT MADE is adding the
+    /// <c>schoolId</c> conjunct that would close it.</para>
+    ///
+    /// <para>WHAT WOULD HAVE TO CHANGE TOGETHER to close it, so that closing it is a deliberate act rather than
+    /// a migration accident: (1) a <c>schoolId</c> conjunct on the users lookup here, AND (2) the same conjunct
+    /// on legacy's <c>findFirst</c> at teacher.ts:52 in the SAME commit — otherwise the two implementations
+    /// disagree and the flag stops being a no-op rollback. Note (3): the residual control is that the invite
+    /// token is <c>crypto.randomBytes(32).toString("base64url")</c> (api/src/lib/auth.ts:319), 256 bits of
+    /// CSPRNG, so this is not reachable by guessing — it needs an invite deliberately sent to the target's
+    /// address.</para>
+    /// </summary>
+    [Fact]
+    public async Task Complete_migrates_a_user_from_ANOTHER_school__INHERITED_EXPOSURE_pinned()
+    {
+        // The victim belongs to school-2 and has never onboarded (null password) -- e.g. a roster import.
+        await fixture.SeedUserAsync("victim", "victim@example.test", OtherSchool, name: "Victim", password: null);
+
+        // An invite minted by school-1 for the SAME address. Nothing ties the two schools together.
+        await fixture.SeedInviteAsync("inv-1", "tok-1", "victim@example.test", School);
+
+        var result = await Repository().CompleteOnboardingAsync(
+            "tok-1", "victim@example.test", "Attacker", "attacker-hash", Role(), School);
+
+        // The redemption SUCCEEDS and resolves to the other tenant's existing user row.
+        Assert.Equal(TeacherOnboardingOutcome.Completed, result.Outcome);
+        Assert.Equal("victim", result.UserId);
+
+        // ...and that row has crossed the tenant line: new school, attacker's password, teacher role.
+        Assert.Equal(School, await fixture.ScalarAsync<string>(
+            """SELECT "schoolId" FROM "users" WHERE "id" = 'victim'"""));
+        Assert.Equal("attacker-hash", await fixture.ScalarAsync<string>(
+            """SELECT "password" FROM "users" WHERE "id" = 'victim'"""));
+        Assert.Equal("teacher", await fixture.ScalarAsync<string>(
+            """SELECT "roleName" FROM "users" WHERE "id" = 'victim'"""));
+    }
+
+    /// <summary>
+    /// The same crossing for the OTHER limb of the guard at :131 — a row flagged
+    /// <c>passwordNeedsMigration = true</c> is claimable across schools even though it HAS a password. Seeded in
+    /// <c>OtherSchool</c> for the reason the sibling test above explains; the existing migration-flag test seeds
+    /// in the invite's own school and so never crosses a boundary.
+    /// </summary>
+    [Fact]
+    public async Task Complete_migrates_a_migration_flagged_user_from_ANOTHER_school__INHERITED_EXPOSURE_pinned()
+    {
+        await fixture.SeedUserAsync(
+            "victim", "victim@example.test", OtherSchool,
+            password: "legacy-bcrypt-hash", passwordNeedsMigration: true);
+        await fixture.SeedInviteAsync("inv-1", "tok-1", "victim@example.test", School);
+
+        var result = await Repository().CompleteOnboardingAsync(
+            "tok-1", "victim@example.test", null, "attacker-hash", Role(), School);
+
+        Assert.Equal(TeacherOnboardingOutcome.Completed, result.Outcome);
+        Assert.Equal("victim", result.UserId);
+        Assert.Equal(School, await fixture.ScalarAsync<string>(
+            """SELECT "schoolId" FROM "users" WHERE "id" = 'victim'"""));
+        Assert.Equal("attacker-hash", await fixture.ScalarAsync<string>(
+            """SELECT "password" FROM "users" WHERE "id" = 'victim'"""));
+    }
+
+    /// <summary>
+    /// The boundary of the exposure above, and the reason it is not unbounded: an ESTABLISHED account (real
+    /// password, not migration-flagged) is NOT claimable across schools — teacher.ts:55's guard fires and the
+    /// row is left completely untouched, in its own school, with its own password. Without this, the two tests
+    /// above would read as "any user in any school", which is not what the code does.
+    /// </summary>
+    [Fact]
+    public async Task Complete_cannot_claim_an_ESTABLISHED_user_from_another_school()
+    {
+        await fixture.SeedUserAsync(
+            "victim", "victim@example.test", OtherSchool, name: "Victim", password: "real-hash");
+        await fixture.SeedInviteAsync("inv-1", "tok-1", "victim@example.test", School);
+
+        var result = await Repository().CompleteOnboardingAsync(
+            "tok-1", "victim@example.test", "Attacker", "attacker-hash", Role(), School);
+
+        Assert.Equal(TeacherOnboardingOutcome.AccountAlreadyExists, result.Outcome);
+
+        // Nothing moved, and the invite was NOT consumed (legacy's early return).
+        Assert.Equal(OtherSchool, await fixture.ScalarAsync<string>(
+            """SELECT "schoolId" FROM "users" WHERE "id" = 'victim'"""));
+        Assert.Equal("real-hash", await fixture.ScalarAsync<string>(
+            """SELECT "password" FROM "users" WHERE "id" = 'victim'"""));
+        Assert.Null(await fixture.ScalarAsync<DateTime?>(
+            """SELECT "usedAt" FROM "teacher_invites" WHERE "token" = 'tok-1'"""));
+    }
+
+    /// <summary>
     /// The write path also runs on a bypass session, so it can create a user in ANY school — again by design,
     /// and again gated only by the token. The school written is the INVITE's, never anything caller-supplied.
     /// </summary>

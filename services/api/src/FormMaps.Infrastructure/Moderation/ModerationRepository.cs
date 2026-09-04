@@ -26,8 +26,25 @@ namespace FormMaps.Infrastructure.Moderation;
 /// resolved on the bypass rail, and eligibility is then a real relationship test — same NON-EMPTY school OR
 /// a shared conversation. Only a boolean leaves the method; no target data does. And because
 /// <c>reports</c> and <c>user_blocks</c> are unpolicied in production (formmaps#77 group 2), the predicates
-/// in this class are the ONLY tenant boundary this domain has. ModerationCrossTenantRlsTests sabotages them
-/// and records that they go red.</para>
+/// in this class are the ONLY tenant boundary this domain has.</para>
+///
+/// <para>WHICH PREDICATES ARE SABOTAGE-PROVEN, precisely — an earlier version of this paragraph claimed the
+/// suite sabotages "them" and records them all going red, which was an OVER-CLAIM:
+/// <list type="bullet">
+/// <item>The <c>CanModerateUserAsync</c> set IS predicate-proven. It runs on a bypass session where RLS
+/// contributes nothing, so its cross-tenant tests can only pass because of the predicate, and
+/// ModerationCrossTenantRlsTests records the measured red for both the whole-predicate and the
+/// dropped-shared-conversation-branch mutations.</item>
+/// <item><c>ListOpenReportsAsync</c>'s school scope is RLS-BACKSTOPPED on the normal path, not
+/// predicate-proven by the school-admin test: the scope is an INNER JOIN to <c>users</c>, which IS policied,
+/// so on a school admin's Identity session the policy drops the foreign reporter's row whether or not the
+/// conjunct is there. That backstop is real but invisible and one join rewrite away from evaporating, so the
+/// predicate gets its own proof from a SUPER-ADMIN (bypass) context in
+/// <c>Open_report_queue_school_scope_is_the_predicate_not_RLS</c>, which is red under
+/// <c>AND (u."schoolId" = @schoolId OR true)</c>.</item>
+/// <item><c>CanReportTargetAsync</c>'s conversation branch is likewise RLS-backstopped, and that test says so
+/// in its own comment rather than claiming a predicate proof.</item>
+/// </list></para>
 /// </summary>
 public sealed class ModerationRepository(IFormMapsDatabaseSessionFactory databaseSessionFactory) : IModerationRepository
 {

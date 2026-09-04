@@ -166,7 +166,29 @@ WITH checks(tbl, priv, expected, hard, why) AS (
     ('public.telemetry_events', 'INSERT', true,  true, 'issue #65: TelemetryEventWriter ingest rows (sec 4.8)'),
     ('public.telemetry_events', 'SELECT', false, true, 'withheld: no .NET read path; INSERT needs no SELECT'),
     ('public.telemetry_events', 'UPDATE', false, true, 'withheld: nothing in .NET edits a telemetry row'),
-    ('public.telemetry_events', 'DELETE', false, true, 'withheld: retention is a reaper''s job, not this service''s')
+    ('public.telemetry_events', 'DELETE', false, true, 'withheld: retention is a reaper''s job, not this service''s'),
+    -- issue #62 / cutover: the teacher onboarding pair reads and consumes invites --
+    -- TeacherOnboardingRepository.cs:38 (SELECT ... WHERE "token" = @token, behind
+    -- GET /teacher/onboarding/verify) and :197 (UPDATE ... SET "usedAt", behind
+    -- POST /teacher/onboarding/complete). Same cutover shape as audit_logs and
+    -- telemetry_events above, but with a WORSE blast radius: both routes are PRE-AUTH,
+    -- so the invited teacher has no session by definition and a 42501 here leaves
+    -- onboarding with no recovery path at all. Worked only on the legacy shared
+    -- credential; dotnet-service-role.sql section 4.9 now grants it.
+    --
+    -- This table was in NO grant list and NO stub schema when #62 landed, so neither
+    -- this file nor the test suite could see the gap. Listed here now, hard=true in
+    -- both directions, so a production run reports it rather than a locked-out teacher.
+    --
+    -- INSERT is withheld and that is the security-relevant half: minting an invite is
+    -- Node's job (schoolService.ts:387), and the 256-bit token is the ONLY authorization
+    -- on these two routes, so a service account that could INSERT could mint its own
+    -- valid invite into any school. DELETE is withheld because an invite is consumed by
+    -- setting "usedAt", never removed.
+    ('public.teacher_invites', 'SELECT', true,  true, 'issue #62: TeacherOnboardingRepository reads the invite (sec 4.9)'),
+    ('public.teacher_invites', 'UPDATE', true,  true, 'issue #62: consuming the invite sets "usedAt" (sec 4.9)'),
+    ('public.teacher_invites', 'INSERT', false, true, 'withheld: minting invites is Node''s job; INSERT = self-service entry to any school'),
+    ('public.teacher_invites', 'DELETE', false, true, 'withheld: invites are consumed via "usedAt", never removed')
 )
 SELECT tbl,
        priv,

@@ -11,6 +11,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Options;
 
 namespace FormMaps.IntegrationTests.Moderation;
 
@@ -28,8 +29,22 @@ namespace FormMaps.IntegrationTests.Moderation;
 /// would be a divergence in the tightening direction — still a divergence. Verified by grep, and pinned by
 /// <c>The_admin_queue_is_not_rate_limited</c> below.</para>
 /// </summary>
-public class ModerationRateLimitTests
+[Collection(nameof(JwtSecretCollection))]
+public class ModerationRateLimitTests : IDisposable
 {
+    private const string Secret = "formmaps-test-secret-that-is-at-least-32-bytes";
+
+    // Required because the partition-key tests below present REAL session JWTs (see
+    // One_caller_cannot_mint_a_fresh_budget_by_rotating_their_access_token): minting one goes through
+    // AccessTokenFactory, which reads the process-wide JWT_SECRET (formmaps#37).
+    private readonly JwtSecretScope jwtSecretScope = new(Secret);
+
+    public void Dispose()
+    {
+        jwtSecretScope.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     [Theory]
     [InlineData("/api/v1/moderation/report", "POST")]
     [InlineData("/api/v1/moderation/block/u2", "POST")]
@@ -91,12 +106,93 @@ public class ModerationRateLimitTests
         Assert.Equal(3600, options.Moderation.WindowSeconds);
     }
 
+    // =============================================================================================
+    // THE PARTITION KEY. Nothing above this line exercises it.
+    // =============================================================================================
+
+    /// <summary>
+    /// WHO the budget belongs to. legacy's <c>keyGenerator</c> (rateLimiter.ts:33) is
+    /// <c>req.userId || req.ip</c>, and <c>router.use(authenticate)</c> at moderation.ts:20 runs BEFORE the
+    /// limiter, so on every authenticated request that resolves to the USER — two users never share a budget.
+    ///
+    /// <para>WHY THIS TEST EXISTS. The suite had 73 tests and not one of them looked at the key.
+    /// <c>The_three_limited_routes_share_one_per_caller_budget</c> proves the three routes share ONE budget,
+    /// but every request it sends comes from one client with one identity, so a per-user key, a per-IP key and
+    /// a single global constant are all indistinguishable under it — replacing the key expression with the
+    /// literal <c>"SABOTAGE-GLOBAL-BUDGET"</c> (one abuser exhausting the moderation budget for every user on
+    /// the instance) left the whole namespace green. This test is red under that mutation.</para>
+    ///
+    /// <para>It is ALSO the test that was red against the shipped keying: the port keyed the partition on a
+    /// SHA-256 of the access token and, with no token on these dev-auth requests, both callers fell through to
+    /// <c>ip:127.0.0.1</c> and shared one budget — where legacy gives each their own.</para>
+    /// </summary>
+    [Fact]
+    public async Task Two_different_callers_each_get_their_own_budget()
+    {
+        using var factory = new Factory(new StubRepo(), permitLimit: 1);
+        using var client = factory.CreateClient();
+
+        var first = await Send(client, HttpMethod.Post, "/api/v1/moderation/report", userId: "caller-a");
+        var second = await Send(client, HttpMethod.Post, "/api/v1/moderation/report", userId: "caller-b");
+
+        Assert.NotEqual((HttpStatusCode)429, first.StatusCode);
+        Assert.NotEqual((HttpStatusCode)429, second.StatusCode);
+    }
+
+    /// <summary>
+    /// The inverse, and the assertion that would have caught the keying drift in the first place: ONE user with
+    /// two live sessions gets ONE budget, not one per session.
+    ///
+    /// <para>THE DRIFT. <c>BuildRequestLimitKey</c> returns <c>auth:{sha256(token)[..32]}</c> whenever an access
+    /// token is present, so every distinct token was its own partition. Because <c>/auth/refresh</c> rotation
+    /// hands out a new access token, and a new token was a new partition, the 30/hour cap on POST /report and
+    /// POST/DELETE /block was renewable on demand by any authenticated user — on the one surface where the
+    /// limiter is the ONLY control. Legacy has no such property: its key is the userId, which rotation does not
+    /// change.</para>
+    ///
+    /// <para>REAL JWTs, deliberately, not placeholder cookie values. The production key path only runs when a
+    /// token actually resolves to an identity — a garbage cookie makes the context Anonymous and silently falls
+    /// back to the IP key, which would make this test pass for the wrong reason. These are minted through the
+    /// same <c>AccessTokenFactory</c> the service issues with, so the request shape is production's. This is
+    /// also the suite's first coverage of the token branch at all.</para>
+    /// </summary>
+    [Fact]
+    public async Task One_caller_cannot_mint_a_fresh_budget_by_rotating_their_access_token()
+    {
+        var tokens = new AccessTokenFactory(Options.Create(new LegacyJwtOptions()));
+        var claims = new AccessTokenClaims("caller-a", "Caller A", "a@example.test", "student", "school-1", []);
+
+        // Two DIFFERENT tokens for the SAME user, which is exactly what a refresh-token rotation produces.
+        var sessionOne = tokens.CreateAccessToken(claims);
+        var sessionTwo = tokens.CreateAccessToken(claims with { Name = "Caller A (second session)" });
+        Assert.NotEqual(sessionOne, sessionTwo);
+
+        using var factory = new Factory(new StubRepo(), permitLimit: 1);
+        using var client = factory.CreateClient();
+
+        var first = await SendWithToken(client, sessionOne);
+        var second = await SendWithToken(client, sessionTwo);
+
+        Assert.NotEqual((HttpStatusCode)429, first.StatusCode);
+        Assert.Equal((HttpStatusCode)429, second.StatusCode);
+    }
+
     // ---- helpers ----
 
-    private static Task<HttpResponseMessage> Send(HttpClient client, HttpMethod method, string path, string role = "student")
+    private static Task<HttpResponseMessage> SendWithToken(HttpClient client, string accessToken)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/moderation/report");
+        request.Headers.Add("Cookie", $"access_token={accessToken}");
+        request.Content = new StringContent(
+            """{"targetType":"message","targetId":"m1","reason":"abusive"}""", Encoding.UTF8, "application/json");
+        return client.SendAsync(request);
+    }
+
+    private static Task<HttpResponseMessage> Send(
+        HttpClient client, HttpMethod method, string path, string role = "student", string userId = "caller-1")
     {
         var request = new HttpRequestMessage(method, path);
-        request.Headers.Add(DevelopmentRequestContextFactory.UserIdHeader, "caller-1");
+        request.Headers.Add(DevelopmentRequestContextFactory.UserIdHeader, userId);
         request.Headers.Add(DevelopmentRequestContextFactory.RoleHeader, role);
         request.Headers.Add(DevelopmentRequestContextFactory.EmailHeader, "caller@example.test");
         request.Headers.Add(DevelopmentRequestContextFactory.SchoolIdHeader, "school-1");

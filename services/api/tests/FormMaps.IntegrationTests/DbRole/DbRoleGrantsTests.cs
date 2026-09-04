@@ -734,6 +734,107 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     }
 
     /// <summary>
+    /// formmaps#62. <c>teacher_invites</c>: SELECT and UPDATE, and deliberately NEITHER INSERT NOR DELETE.
+    ///
+    /// <para>WHY IT NEEDS TWO VERBS. TeacherOnboardingRepository.cs:38 reads the invite
+    /// (<c>SELECT ... FROM "teacher_invites" WHERE "token" = @token</c>, the port of teacher.ts:33's
+    /// <c>findUnique</c>) and :197 consumes it (<c>UPDATE "teacher_invites" SET "usedAt" = ...</c>, the port of
+    /// teacher.ts:68). Both sit on the PRE-AUTH onboarding routes, so a missing grant is not a degraded feature:
+    /// GET /onboarding/verify and POST /onboarding/complete both 500, and the invited teacher — who by
+    /// definition has no session yet — has no other way in. Teacher onboarding becomes unrecoverable.</para>
+    ///
+    /// <para>WHY INSERT IS WITHHELD, and this is the load-bearing half. Minting an invite is Node's job
+    /// (schoolService.ts:387) and no .NET path does it. The 256-bit <c>crypto.randomBytes(32)</c> token is the
+    /// ENTIRE authorization on these two routes — TeacherEndpoints' own remarks say so — so a service account
+    /// that could INSERT here could mint itself a valid invite for any address in any school, turning the
+    /// disclosed token-only exposure into a self-service one. Widening this to the section-4
+    /// SELECT/INSERT/UPDATE bucket by resemblance is precisely the mistake the script's maintenance note warns
+    /// about. DELETE is withheld for the ordinary reason: an invite is consumed by setting <c>usedAt</c>, never
+    /// removed, and a role that could DELETE could erase the record that a redemption happened.</para>
+    ///
+    /// <para>HOW IT WAS MISSED. This table had NO grant at all when #62 landed, and no test could see it: the
+    /// stub-schema reconciliation compares two hand-maintained lists and <c>teacher_invites</c> was absent from
+    /// both. DbRoleGrantCoverageTests now derives the table set from the source instead.</para>
+    /// </summary>
+    [Fact]
+    public async Task Teacher_invites_is_select_and_update_only()
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', 'public.teacher_invites', 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.teacher_invites', 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.teacher_invites', 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.teacher_invites', 'DELETE'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.teacher_invites', 'TRUNCATE')
+            """,
+            connection);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.True(reader.GetBoolean(0), "TeacherOnboardingRepository.cs:38 reads the invite; without SELECT both pre-auth onboarding routes 42501 at cutover");
+        Assert.True(reader.GetBoolean(1), "TeacherOnboardingRepository.cs:197 consumes the invite by setting usedAt");
+        Assert.False(reader.GetBoolean(2), "minting an invite is Node's job (schoolService.ts:387); INSERT here would let the service mint its own way into any school");
+        Assert.False(reader.GetBoolean(3), "an invite is consumed via usedAt, never deleted; DELETE would erase the redemption record");
+        Assert.False(reader.GetBoolean(4), "TRUNCATE erases every outstanding invite in one statement");
+    }
+
+    /// <summary>
+    /// The behavioural half, run as the role itself. No RLS and no trigger in this stub schema, so an accepted
+    /// SELECT/UPDATE and a rejected INSERT/DELETE are attributable to the GRANT and nothing else; the SqlState
+    /// assertions keep it that way rather than passing on any thrown exception.
+    /// </summary>
+    [Fact]
+    public async Task Role_can_read_and_consume_an_invite_but_never_mint_or_erase_one()
+    {
+        var id = $"invite-{Guid.NewGuid():N}";
+
+        // Seed as admin: the role deliberately cannot create the row it is about to redeem.
+        await using (var admin = new NpgsqlConnection(fixture.AdminConnectionString))
+        {
+            await admin.OpenAsync();
+            await using var seed = new NpgsqlCommand("""INSERT INTO "teacher_invites" (id) VALUES (@id)""", admin);
+            seed.Parameters.AddWithValue("id", id);
+            await seed.ExecuteNonQueryAsync();
+        }
+
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        // The verify path: reads the invite.
+        await using (var select = new NpgsqlCommand("""SELECT count(*) FROM "teacher_invites" WHERE id = @id""", connection))
+        {
+            select.Parameters.AddWithValue("id", id);
+            Assert.Equal(1L, (long)(await select.ExecuteScalarAsync())!);
+        }
+
+        // The complete path: consumes it.
+        await using (var update = new NpgsqlCommand("""UPDATE "teacher_invites" SET id = id WHERE id = @id""", connection))
+        {
+            update.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await update.ExecuteNonQueryAsync());
+        }
+
+        var insert = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""INSERT INTO "teacher_invites" (id) VALUES ('minted-by-the-service')""", connection);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", insert.SqlState);
+
+        var delete = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""DELETE FROM "teacher_invites" WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", delete.SqlState);
+    }
+
+    /// <summary>
     /// formmaps#63/#80. The two tables the moderation port writes, pinned individually rather than sampled,
     /// because their verb sets are the invariant and because they were STAGED ahead of the port: the role
     /// script moved "user_blocks" out of the read-only tier and added "reports" to the SELECT/INSERT/UPDATE

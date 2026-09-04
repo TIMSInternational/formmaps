@@ -507,6 +507,51 @@ GRANT INSERT ON TABLE
     TO formmaps_dotnet_svc;
 
 -- ---------------------------------------------------------------------------
+-- 4.9. Teacher invitations (issue #62): SELECT and UPDATE -- and deliberately
+--    NEITHER INSERT NOR DELETE.
+--
+--    TWO CALL SITES, both on the PRE-AUTH onboarding pair:
+--      * TeacherOnboardingRepository.cs:38  -- SELECT ... FROM "teacher_invites"
+--        WHERE "token" = @token, the port of teacher.ts:33's findUnique, behind
+--        GET /api/v1/teacher/onboarding/verify.
+--      * TeacherOnboardingRepository.cs:197 -- UPDATE "teacher_invites"
+--        SET "usedAt" = @now, the port of teacher.ts:68, behind
+--        POST /api/v1/teacher/onboarding/complete.
+--
+--    NO INSERT, and this is the load-bearing withholding rather than a tidy
+--    default. Minting an invite is NODE's job (schoolService.ts:387) and no
+--    .NET path does it. The token is `crypto.randomBytes(32).toString("base64url")`
+--    (api/src/lib/auth.ts:319) and it is the ENTIRE authorization on both routes --
+--    there is no session, because the invited teacher does not have one yet. A
+--    service account that could INSERT here could therefore mint itself a valid
+--    invite for any email address in any school and walk in through its own front
+--    door, converting a token-only exposure into a self-service one. This is the
+--    case the maintenance note below means by "re-deriving mechanically would
+--    widen": the code uses SELECT and UPDATE today, and the right grant is exactly
+--    those two, NOT the section-4 SELECT/INSERT/UPDATE bucket this table otherwise
+--    resembles.
+--
+--    NO DELETE for the ordinary reason: an invite is consumed by setting `usedAt`,
+--    never removed, so DELETE would only ever let the service erase the record that
+--    a redemption happened.
+--
+--    THIS TABLE WAS MISSING ENTIRELY until 2026-09-04. #62 shipped SELECT and UPDATE
+--    call sites with no GRANT at all, and no test could see it: the stub schema and
+--    this file are both hand-maintained, and a table absent from BOTH is invisible to
+--    the reconciliation between them. It worked only because the service still runs on
+--    the legacy shared credential -- the same shape as the audit_logs KNOWN-GAP in 4.6
+--    -- and would have 42501'd the moment DATABASE_URL flipped, taking teacher
+--    onboarding down with no recovery path for the invitee. DbRoleGrantCoverageTests
+--    now re-derives the table set from services/api/src so the next omission of this
+--    class fails in CI instead of at cutover. Verb set pinned from the catalog by
+--    DbRoleGrantsTests.Teacher_invites_is_select_and_update_only and behaviourally by
+--    Role_can_read_and_consume_an_invite_but_never_mint_or_erase_one.
+-- ---------------------------------------------------------------------------
+GRANT SELECT, UPDATE ON TABLE
+    public."teacher_invites"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
 -- 5. Full-CRUD tables -- the service also deletes rows here (verified:
 --    DELETE FROM hits in services/api/src, e.g. calendar/holiday and
 --    academic-year cleanup, course-plan removal, data-mapping deletion, and

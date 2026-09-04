@@ -183,6 +183,11 @@ public sealed class SuiteParallelismGuardTests
             "FormMaps.IntegrationTests.Auth.AuthEndpointsTests",
             "FormMaps.IntegrationTests.Auth.CrossIssuerInteropTests",
             "FormMaps.IntegrationTests.Messaging.MessagesEndpointAdversarialTests",
+            // formmaps#63: the moderation limiter's partition-key tests present REAL session JWTs (a
+            // placeholder cookie resolves to Anonymous and silently falls back to the IP key, which would
+            // make them pass for the wrong reason), so ModerationRateLimitTests mints through
+            // AccessTokenFactory and sets the process-wide JWT_SECRET via JwtSecretScope.
+            "FormMaps.IntegrationTests.Moderation.ModerationRateLimitTests",
             "FormMaps.IntegrationTests.Messaging.RealtimeTicketEndpointTests",
             "FormMaps.IntegrationTests.Security.ApiSecurityUtilityTests",
             // formmaps#62: POST /api/v1/teacher/onboarding/complete mints a real session JWT through

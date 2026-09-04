@@ -203,6 +203,41 @@ public sealed class ModerationCrossTenantRlsTests : IAsyncLifetime
         Assert.Equal([ours], page.Reports.Select(r => r.Id));
     }
 
+    /// <summary>
+    /// THE PREDICATE-ONLY PROOF for the admin queue's school scope, which the test above deliberately does not
+    /// make. It runs the same query on a session where RLS hides NOTHING, so the only thing that can omit the
+    /// foreign school's report is the <c>AND u."schoolId" = @schoolId</c> conjunct itself.
+    ///
+    /// <para>HOW THE BACKSTOP IS REMOVED. The context is a SUPER ADMIN, which
+    /// <c>TenantGucPlanResolver.Resolve</c> maps to <c>TenantGucPlan.Bypass()</c> — so the users policy that
+    /// silently did the filtering in the test above is not in play, while <c>schoolId: "school-1"</c> still asks
+    /// the repository to scope. Both reporters are therefore fully visible to the session and only the app
+    /// predicate can drop one.</para>
+    ///
+    /// <para>WHY IT IS WORTH ITS OWN TEST. This is the only app-layer tenant boundary this domain has on an
+    /// unpolicied table, and it was unpinned: replacing the conjunct with
+    /// <c>AND (u."schoolId" = @schoolId OR true)</c> left all 73 moderation tests green. With the predicate
+    /// gone, GET /api/v1/moderation/reports returns every school's open reports — reporter id, name, email and
+    /// the free-text reason — to any school admin. Measured: this test FAILS under that mutation
+    /// (Total 2, expected 1) and passes on the clean tree.</para>
+    /// </summary>
+    [Fact]
+    public async Task Open_report_queue_school_scope_is_the_predicate_not_RLS()
+    {
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        await _fixture.SeedUserAsync(admin, "root", null, role: "super admin");
+        await _fixture.SeedUserAsync(admin, "mine", "school-1");
+        await _fixture.SeedUserAsync(admin, "theirs", "school-2");
+        var ours = await _fixture.SeedReportAsync(admin, "mine", At(2));
+        await _fixture.SeedReportAsync(admin, "theirs", At(1));
+
+        // Super admin => Bypass plan => RLS hides nothing, so the predicate is the only filter left standing.
+        var page = await Repo().ListOpenReportsAsync(Ctx("root", null, "super admin"), 1, 50, "school-1");
+
+        Assert.Equal(1, page.Total);
+        Assert.Equal([ours], page.Reports.Select(r => r.Id));
+    }
+
     // ---- helpers ----
 
     private ModerationRepository Repo() =>
