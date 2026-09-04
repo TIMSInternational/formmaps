@@ -1,0 +1,240 @@
+{
+  "comment": "Curated course-rigor templates: 10 fields x 3 selectivity tiers = 30 templates. Consumed by lib/rigorTemplates.ts (zod-validated) and the deterministic graduation planner. AI never generates requirements; edits to this file are code-reviewed.",
+  "fieldAliases": {
+    "computer science": "computer-science",
+    "software engineering": "computer-science",
+    "computer engineering": "computer-science",
+    "cs": "computer-science",
+    "data science": "computer-science",
+    "artificial intelligence": "computer-science",
+    "cybersecurity": "computer-science",
+    "information technology": "computer-science",
+    "engineering": "engineering",
+    "mechanical engineering": "engineering",
+    "electrical engineering": "engineering",
+    "civil engineering": "engineering",
+    "aerospace engineering": "engineering",
+    "chemical engineering": "engineering",
+    "biomedical engineering": "engineering",
+    "industrial engineering": "engineering",
+    "biology": "biology-premed",
+    "pre-med": "biology-premed",
+    "premed": "biology-premed",
+    "pre med": "biology-premed",
+    "medicine": "biology-premed",
+    "nursing": "biology-premed",
+    "biochemistry": "biology-premed",
+    "neuroscience": "biology-premed",
+    "health sciences": "biology-premed",
+    "kinesiology": "biology-premed",
+    "physics": "physical-sciences",
+    "chemistry": "physical-sciences",
+    "astronomy": "physical-sciences",
+    "geology": "physical-sciences",
+    "earth science": "physical-sciences",
+    "environmental science": "physical-sciences",
+    "mathematics": "mathematics",
+    "math": "mathematics",
+    "applied mathematics": "mathematics",
+    "statistics": "mathematics",
+    "actuarial science": "mathematics",
+    "business": "business-economics",
+    "business administration": "business-economics",
+    "economics": "business-economics",
+    "finance": "business-economics",
+    "accounting": "business-economics",
+    "marketing": "business-economics",
+    "management": "business-economics",
+    "entrepreneurship": "business-economics",
+    "psychology": "social-sciences",
+    "sociology": "social-sciences",
+    "political science": "social-sciences",
+    "international relations": "social-sciences",
+    "anthropology": "social-sciences",
+    "criminal justice": "social-sciences",
+    "social work": "social-sciences",
+    "education": "social-sciences",
+    "english": "humanities",
+    "literature": "humanities",
+    "history": "humanities",
+    "philosophy": "humanities",
+    "linguistics": "humanities",
+    "classics": "humanities",
+    "communications": "humanities",
+    "journalism": "humanities",
+    "law": "humanities",
+    "pre-law": "humanities",
+    "art": "arts",
+    "fine arts": "arts",
+    "studio art": "arts",
+    "graphic design": "arts",
+    "design": "arts",
+    "music": "arts",
+    "theater": "arts",
+    "theatre": "arts",
+    "film": "arts",
+    "dance": "arts",
+    "architecture": "arts",
+    "undecided": "undecided-general",
+    "general studies": "undecided-general",
+    "liberal arts": "undecided-general"
+  },
+  "categoryAliases": {
+    "Mathematics": ["math", "mathematics", "algebra", "calculus", "statistics"],
+    "Science": ["science", "biology", "chemistry", "physics", "lab"],
+    "English": ["english", "language arts", "literature", "writing"],
+    "Social Studies": ["social studies", "history", "government", "economics", "geography"],
+    "World Language": ["world language", "foreign language", "spanish", "french", "language", "mandarin", "latin", "german"],
+    "Arts": ["art", "arts", "music", "theater", "theatre", "drama", "band", "visual"],
+    "Computer Science": ["computer science", "computer", "technology", "programming"],
+    "Physical Education": ["physical education", "pe", "health", "athletics"]
+  },
+  "tierBands": { "mostSelectiveMaxAcceptanceRate": 0.15, "selectiveMaxAcceptanceRate": 0.4 },
+  "fields": {
+    "computer-science": {
+      "label": "Computer Science",
+      "depthTracks": [
+        { "subject": "math", "departments": ["Mathematics", "Math"], "preferKeywords": ["calculus bc", "calculus ab", "calculus", "multivariable", "precalculus"], "optionalIfUnavailable": false },
+        { "subject": "science", "departments": ["Science"], "preferKeywords": ["physics", "chemistry"], "optionalIfUnavailable": false },
+        { "subject": "cs", "departments": ["Computer Science", "Technology"], "preferKeywords": ["computer science a", "computer science", "programming"], "optionalIfUnavailable": true }
+      ],
+      "electivePreferences": ["Computer Science", "Mathematics", "Engineering", "Technology"],
+      "narrativeHints": ["Top CS programs expect calculus and physics by senior year", "CS coursework (or outside equivalents) signals genuine interest"],
+      "tiers": {
+        "most-selective": { "trackMinYears": [4, 4, 2], "trackHonors": [true, true, true], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "Social Studies", "minYears": 3 }, { "category": "World Language", "minYears": 3 }], "maxHonorsPerYear": { "9": 2, "10": 3, "11": 4, "12": 4 } },
+        "selective": { "trackMinYears": [4, 3, 1], "trackHonors": [true, false, false], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "Social Studies", "minYears": 3 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 1, "10": 2, "11": 3, "12": 3 } },
+        "open": { "trackMinYears": [3, 2, 1], "trackHonors": [false, false, false], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 0, "10": 1, "11": 2, "12": 2 } }
+      }
+    },
+    "engineering": {
+      "label": "Engineering",
+      "depthTracks": [
+        { "subject": "math", "departments": ["Mathematics", "Math"], "preferKeywords": ["calculus bc", "calculus ab", "calculus", "precalculus"], "optionalIfUnavailable": false },
+        { "subject": "science", "departments": ["Science"], "preferKeywords": ["physics", "chemistry"], "optionalIfUnavailable": false },
+        { "subject": "engineering", "departments": ["Engineering", "Technology", "Computer Science"], "preferKeywords": ["engineering", "robotics", "design"], "optionalIfUnavailable": true }
+      ],
+      "electivePreferences": ["Engineering", "Mathematics", "Science", "Technology"],
+      "narrativeHints": ["Engineering programs weight physics and the highest available math track heavily"],
+      "tiers": {
+        "most-selective": { "trackMinYears": [4, 4, 1], "trackHonors": [true, true, false], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "Social Studies", "minYears": 3 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 2, "10": 3, "11": 4, "12": 4 } },
+        "selective": { "trackMinYears": [4, 3, 1], "trackHonors": [true, false, false], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 1, "10": 2, "11": 3, "12": 3 } },
+        "open": { "trackMinYears": [3, 2, 0], "trackHonors": [false, false, false], "breadth": [{ "category": "English", "minYears": 4 }], "maxHonorsPerYear": { "9": 0, "10": 1, "11": 2, "12": 2 } }
+      }
+    },
+    "biology-premed": {
+      "label": "Biology / Pre-Med",
+      "depthTracks": [
+        { "subject": "science", "departments": ["Science"], "preferKeywords": ["biology", "chemistry", "anatomy", "physics"], "optionalIfUnavailable": false },
+        { "subject": "math", "departments": ["Mathematics", "Math"], "preferKeywords": ["calculus", "statistics", "precalculus"], "optionalIfUnavailable": false }
+      ],
+      "electivePreferences": ["Science", "Health", "Mathematics"],
+      "narrativeHints": ["Pre-med tracks expect biology AND chemistry, ideally with lab depth"],
+      "tiers": {
+        "most-selective": { "trackMinYears": [4, 4], "trackHonors": [true, true], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "Social Studies", "minYears": 3 }, { "category": "World Language", "minYears": 3 }], "maxHonorsPerYear": { "9": 2, "10": 3, "11": 4, "12": 4 } },
+        "selective": { "trackMinYears": [4, 3], "trackHonors": [true, false], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 1, "10": 2, "11": 3, "12": 3 } },
+        "open": { "trackMinYears": [3, 3], "trackHonors": [false, false], "breadth": [{ "category": "English", "minYears": 4 }], "maxHonorsPerYear": { "9": 0, "10": 1, "11": 2, "12": 2 } }
+      }
+    },
+    "physical-sciences": {
+      "label": "Physical Sciences",
+      "depthTracks": [
+        { "subject": "science", "departments": ["Science"], "preferKeywords": ["physics", "chemistry", "earth"], "optionalIfUnavailable": false },
+        { "subject": "math", "departments": ["Mathematics", "Math"], "preferKeywords": ["calculus bc", "calculus", "precalculus"], "optionalIfUnavailable": false }
+      ],
+      "electivePreferences": ["Science", "Mathematics"],
+      "narrativeHints": ["Physical science programs expect physics plus the strongest math track available"],
+      "tiers": {
+        "most-selective": { "trackMinYears": [4, 4], "trackHonors": [true, true], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "Social Studies", "minYears": 3 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 2, "10": 3, "11": 4, "12": 4 } },
+        "selective": { "trackMinYears": [3, 4], "trackHonors": [false, true], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 1, "10": 2, "11": 3, "12": 3 } },
+        "open": { "trackMinYears": [3, 3], "trackHonors": [false, false], "breadth": [{ "category": "English", "minYears": 4 }], "maxHonorsPerYear": { "9": 0, "10": 1, "11": 2, "12": 2 } }
+      }
+    },
+    "mathematics": {
+      "label": "Mathematics",
+      "depthTracks": [
+        { "subject": "math", "departments": ["Mathematics", "Math"], "preferKeywords": ["calculus bc", "multivariable", "calculus", "statistics", "precalculus"], "optionalIfUnavailable": false },
+        { "subject": "science", "departments": ["Science"], "preferKeywords": ["physics"], "optionalIfUnavailable": false },
+        { "subject": "cs", "departments": ["Computer Science", "Technology"], "preferKeywords": ["computer science", "programming"], "optionalIfUnavailable": true }
+      ],
+      "electivePreferences": ["Mathematics", "Computer Science", "Science"],
+      "narrativeHints": ["Math programs want the deepest available calculus track, plus statistics where offered"],
+      "tiers": {
+        "most-selective": { "trackMinYears": [4, 3, 1], "trackHonors": [true, true, false], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "Social Studies", "minYears": 3 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 2, "10": 3, "11": 4, "12": 4 } },
+        "selective": { "trackMinYears": [4, 3, 0], "trackHonors": [true, false, false], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 1, "10": 2, "11": 3, "12": 3 } },
+        "open": { "trackMinYears": [3, 2, 0], "trackHonors": [false, false, false], "breadth": [{ "category": "English", "minYears": 4 }], "maxHonorsPerYear": { "9": 0, "10": 1, "11": 2, "12": 2 } }
+      }
+    },
+    "business-economics": {
+      "label": "Business / Economics",
+      "depthTracks": [
+        { "subject": "math", "departments": ["Mathematics", "Math"], "preferKeywords": ["calculus", "statistics", "precalculus"], "optionalIfUnavailable": false },
+        { "subject": "social", "departments": ["Social Studies", "Business"], "preferKeywords": ["economics", "government", "business"], "optionalIfUnavailable": false }
+      ],
+      "electivePreferences": ["Business", "Social Studies", "Mathematics", "Computer Science"],
+      "narrativeHints": ["Business and economics programs value calculus or statistics plus economics coursework"],
+      "tiers": {
+        "most-selective": { "trackMinYears": [4, 3], "trackHonors": [true, true], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "Science", "minYears": 3 }, { "category": "World Language", "minYears": 3 }], "maxHonorsPerYear": { "9": 2, "10": 3, "11": 4, "12": 4 } },
+        "selective": { "trackMinYears": [4, 3], "trackHonors": [false, false], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "Science", "minYears": 3 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 1, "10": 2, "11": 3, "12": 3 } },
+        "open": { "trackMinYears": [3, 2], "trackHonors": [false, false], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "Science", "minYears": 2 }], "maxHonorsPerYear": { "9": 0, "10": 1, "11": 2, "12": 2 } }
+      }
+    },
+    "social-sciences": {
+      "label": "Social Sciences",
+      "depthTracks": [
+        { "subject": "social", "departments": ["Social Studies"], "preferKeywords": ["psychology", "government", "history", "economics"], "optionalIfUnavailable": false },
+        { "subject": "math", "departments": ["Mathematics", "Math"], "preferKeywords": ["statistics", "precalculus", "calculus"], "optionalIfUnavailable": false }
+      ],
+      "electivePreferences": ["Social Studies", "English", "World Language"],
+      "narrativeHints": ["Social science programs value research-adjacent skills: statistics plus strong writing"],
+      "tiers": {
+        "most-selective": { "trackMinYears": [4, 4], "trackHonors": [true, true], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "Science", "minYears": 3 }, { "category": "World Language", "minYears": 3 }], "maxHonorsPerYear": { "9": 2, "10": 3, "11": 4, "12": 4 } },
+        "selective": { "trackMinYears": [4, 3], "trackHonors": [true, false], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "Science", "minYears": 3 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 1, "10": 2, "11": 3, "12": 3 } },
+        "open": { "trackMinYears": [3, 3], "trackHonors": [false, false], "breadth": [{ "category": "English", "minYears": 4 }, { "category": "Science", "minYears": 2 }], "maxHonorsPerYear": { "9": 0, "10": 1, "11": 2, "12": 2 } }
+      }
+    },
+    "humanities": {
+      "label": "Humanities",
+      "depthTracks": [
+        { "subject": "english", "departments": ["English"], "preferKeywords": ["literature", "composition", "english"], "optionalIfUnavailable": false },
+        { "subject": "social", "departments": ["Social Studies"], "preferKeywords": ["history", "government", "philosophy"], "optionalIfUnavailable": false },
+        { "subject": "language", "departments": ["World Language", "Foreign Language"], "preferKeywords": ["spanish", "french", "latin"], "optionalIfUnavailable": false }
+      ],
+      "electivePreferences": ["English", "Social Studies", "World Language", "Arts"],
+      "narrativeHints": ["Humanities programs expect 4 years of English and history with the deepest available writing courses, plus sustained language study"],
+      "tiers": {
+        "most-selective": { "trackMinYears": [4, 4, 4], "trackHonors": [true, true, false], "breadth": [{ "category": "Mathematics", "minYears": 3 }, { "category": "Science", "minYears": 3 }], "maxHonorsPerYear": { "9": 2, "10": 3, "11": 4, "12": 4 } },
+        "selective": { "trackMinYears": [4, 3, 3], "trackHonors": [true, false, false], "breadth": [{ "category": "Mathematics", "minYears": 3 }, { "category": "Science", "minYears": 3 }], "maxHonorsPerYear": { "9": 1, "10": 2, "11": 3, "12": 3 } },
+        "open": { "trackMinYears": [4, 3, 2], "trackHonors": [false, false, false], "breadth": [{ "category": "Mathematics", "minYears": 3 }, { "category": "Science", "minYears": 2 }], "maxHonorsPerYear": { "9": 0, "10": 1, "11": 2, "12": 2 } }
+      }
+    },
+    "arts": {
+      "label": "Arts & Design",
+      "depthTracks": [
+        { "subject": "arts", "departments": ["Arts", "Art", "Music", "Theater"], "preferKeywords": ["studio", "art", "design", "music", "theater"], "optionalIfUnavailable": false },
+        { "subject": "english", "departments": ["English"], "preferKeywords": ["literature", "english"], "optionalIfUnavailable": false }
+      ],
+      "electivePreferences": ["Arts", "Art", "Music", "Theater", "English"],
+      "narrativeHints": ["Arts programs weigh the portfolio — sustained studio depth matters more than breadth"],
+      "tiers": {
+        "most-selective": { "trackMinYears": [4, 4], "trackHonors": [true, true], "breadth": [{ "category": "Mathematics", "minYears": 3 }, { "category": "Science", "minYears": 2 }, { "category": "Social Studies", "minYears": 3 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 1, "10": 2, "11": 3, "12": 3 } },
+        "selective": { "trackMinYears": [4, 4], "trackHonors": [false, false], "breadth": [{ "category": "Mathematics", "minYears": 3 }, { "category": "Science", "minYears": 2 }, { "category": "Social Studies", "minYears": 3 }], "maxHonorsPerYear": { "9": 1, "10": 1, "11": 2, "12": 2 } },
+        "open": { "trackMinYears": [3, 4], "trackHonors": [false, false], "breadth": [{ "category": "Mathematics", "minYears": 2 }, { "category": "Science", "minYears": 2 }], "maxHonorsPerYear": { "9": 0, "10": 1, "11": 1, "12": 1 } }
+      }
+    },
+    "undecided-general": {
+      "label": "Undecided / General Admissions",
+      "depthTracks": [
+        { "subject": "math", "departments": ["Mathematics", "Math"], "preferKeywords": ["precalculus", "calculus", "algebra"], "optionalIfUnavailable": false },
+        { "subject": "english", "departments": ["English"], "preferKeywords": ["literature", "english"], "optionalIfUnavailable": false },
+        { "subject": "science", "departments": ["Science"], "preferKeywords": ["biology", "chemistry", "physics"], "optionalIfUnavailable": false }
+      ],
+      "electivePreferences": ["Mathematics", "Science", "Social Studies", "World Language"],
+      "narrativeHints": ["A balanced college-prep transcript keeps every door open: steady depth in math, English, and science"],
+      "tiers": {
+        "most-selective": { "trackMinYears": [4, 4, 4], "trackHonors": [true, true, true], "breadth": [{ "category": "Social Studies", "minYears": 3 }, { "category": "World Language", "minYears": 3 }], "maxHonorsPerYear": { "9": 2, "10": 3, "11": 4, "12": 4 } },
+        "selective": { "trackMinYears": [4, 4, 3], "trackHonors": [true, false, false], "breadth": [{ "category": "Social Studies", "minYears": 3 }, { "category": "World Language", "minYears": 2 }], "maxHonorsPerYear": { "9": 1, "10": 2, "11": 3, "12": 3 } },
+        "open": { "trackMinYears": [3, 4, 2], "trackHonors": [false, false, false], "breadth": [{ "category": "Social Studies", "minYears": 3 }], "maxHonorsPerYear": { "9": 0, "10": 1, "11": 2, "12": 2 } }
+      }
+    }
+  }
+}

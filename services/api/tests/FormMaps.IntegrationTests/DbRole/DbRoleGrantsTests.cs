@@ -247,6 +247,21 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     ///     routes/school-grades.ts stays in Node.
     ///   graduation_rule_sets -- SELECT + INSERT + UPDATE (POST/PUT /graduation/rules), never DELETE: the PUT
     ///     replaces the rule set's CHILD rows, it never removes the rule set itself.
+    ///
+    /// <para>issue #55 REMAINDER (routes/graduation-plan.ts + routes/counselor-graduation.ts) adds three more,
+    /// two of which changed tier:</para>
+    ///
+    ///   graduation_plans -- SELECT + INSERT + UPDATE, never DELETE. The service only UPDATEs (submit's
+    ///     draft->proposed, discard's isActive=false, review's approved|rejected); the sole INSERT path,
+    ///     generateDraftPlan, stays on Node under DECISION D1. INSERT is one verb wider than today's .NET code
+    ///     and that is deliberate and recorded in the SQL -- the tier is granted as a unit, and this assertion
+    ///     is what stops "wider" from drifting into "unbounded", exactly as the moderation block does.
+    ///   student_graduation_targets -- SELECT + INSERT + UPDATE, never DELETE. PUT /graduation-plan/target is
+    ///     an upsert on the @unique studentId; legacy deactivates a target, it never removes one.
+    ///   graduation_plan_items -- SELECT ONLY, and this is the assertion that matters most of the three. The
+    ///     .NET service reads items (getCurrentPlan, and reviewPlan's materialization source) and writes none;
+    ///     the writer is generateDraftPlan on Node. A future "the plans table is writable, surely its items are
+    ///     too" would sail through review and this pins it.
     /// </summary>
     [Theory]
     [InlineData("student_gpas", true, true, true, false)]
@@ -254,6 +269,9 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     [InlineData("school_users", true, false, false, false)]
     [InlineData("student_grades", true, false, false, false)]
     [InlineData("graduation_rule_sets", true, true, true, false)]
+    [InlineData("graduation_plans", true, true, true, false)]
+    [InlineData("student_graduation_targets", true, true, true, false)]
+    [InlineData("graduation_plan_items", true, false, false, false)]
     public async Task Graduation_lane_tables_have_exactly_the_privileges_the_service_needs(
         string table, bool canSelect, bool canInsert, bool canUpdate, bool canDelete)
     {

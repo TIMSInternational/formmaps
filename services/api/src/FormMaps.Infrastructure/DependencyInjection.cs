@@ -317,6 +317,16 @@ public static class DependencyInjection
         // untouched; the grade-import half stays in Node. Same lane flag as the transcript reader above.
         services.AddScoped<IGraduationRulesReader, GraduationRulesReader>();
         services.AddScoped<IGraduationRulesWriter, GraduationRulesWriter>();
+        // issue #55 REMAINDER, third and fourth files: routes/graduation-plan.ts (6 of 7 routes) and
+        // routes/counselor-graduation.ts (2 of 3). The two POST /generate routes are NOT here and never will
+        // be -- DECISION D1 keeps them on Node permanently (aiLimiter + Bedrock), with unconditional
+        // next.config.ts carve-outs ahead of every flag rewrite. Same lane flag as the two readers above.
+        // GraduationNotificationWriter is the lane's ONLY System-session component; see its doc comment for
+        // the runAsSystem port and the lazy-PrismaPromise trap (planWorkflowService.ts:20-27) it must not
+        // reproduce.
+        services.AddScoped<IGraduationNotificationWriter, GraduationNotificationWriter>();
+        services.AddScoped<IGraduationPlanRepository, GraduationPlanRepository>();
+        services.AddScoped<ICounselorGraduationRepository, CounselorGraduationRepository>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();
         services.AddScoped<ISchoolAdminWriter, SchoolAdminWriter>();

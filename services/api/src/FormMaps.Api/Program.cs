@@ -123,6 +123,8 @@ app.MapCourseImportEndpoints();
 app.MapGradebookEndpoints();
 app.MapTranscriptEndpoints();
 app.MapGraduationRulesEndpoints();
+app.MapGraduationPlanEndpoints();
+app.MapCounselorGraduationEndpoints();
 app.MapCalendarEndpoints();
 app.MapQuestion360Endpoints();
 app.MapVocationalTakeEndpoints();
