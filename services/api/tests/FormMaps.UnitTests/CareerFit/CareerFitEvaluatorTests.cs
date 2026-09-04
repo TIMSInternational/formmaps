@@ -355,6 +355,7 @@ public class CareerFitEvaluatorTests(ITestOutputHelper output)
         SampleStudentRows.Parse(SampleStudentRows.PercentilesJson),
         SampleStudentRows.Parse(SampleStudentRows.DimensionScoresJson()),
         threeSixty: null,
+        v360RaterGroups: null,
         Rules.Competencies).Assessment;
 
     private static CareerFitRawInputs SampleRaw() => new(
