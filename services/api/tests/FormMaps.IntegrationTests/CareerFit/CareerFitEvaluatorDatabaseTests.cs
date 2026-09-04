@@ -570,6 +570,121 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
             await ScalarAsync(admin, $"""SELECT sum(jsonb_array_length("audit" -> 'formula_steps')) FROM "careerfit_family_results" WHERE "runId" IN ('{run.Id}', '{second.Id}')"""));
     }
 
+    // ---- FM-CF-012: the run READER, on the same seed and the same restricted login ----
+
+    /// <summary>
+    /// FM-CF-012. A run written by <see cref="CareerFitRunWriter"/> reads back through
+    /// <see cref="CareerFitRunReader"/> as the same value, on the caller's own RLS session — which is what
+    /// lets the endpoints serve the scores and the FM-CF-011 explanation without re-scoring. Everything the
+    /// explanation projects is asserted, because a silent parse defect there would make the payload LIE about
+    /// the 360 (an empty V360Instrument would turn "no evidence" into "weak evidence").
+    /// </summary>
+    [Fact]
+    public async Task A_persisted_run_reads_back_through_the_run_reader_as_the_same_value()
+    {
+        var written = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+        var reader = new CareerFitRunReader(Factory());
+
+        var read = await reader.ReadAsync(Student(StudentA1, SchoolA), written.Id);
+
+        Assert.NotNull(read);
+        Assert.Equal(written.Id, read!.Id);
+        Assert.Equal(written.UserId, read.UserId);
+        Assert.Equal(written.SchoolId, read.SchoolId);
+        Assert.Equal(written.RulesVersion, read.RulesVersion);
+        Assert.Equal(written.DiscGraph, read.DiscGraph);
+        Assert.Equal(written.CreatedAt, read.CreatedAt);
+        Assert.Equal(written.Sources, read.Sources);
+
+        // inputs: the engine's assessment dict, bit for bit (CareerFitRunJson.ParseInputs).
+        Assert.Equal(written.Inputs.Pca, read.Inputs.Pca);
+        Assert.Equal(written.Inputs.Mil, read.Inputs.Mil);
+        Assert.Equal(written.Inputs.Personality, read.Inputs.Personality);
+
+        // inputQuality: the three fields the explanation reads, plus the 360 arms FM-CF-007/010 added.
+        Assert.Equal(written.Quality.DiscGraph, read.Quality.DiscGraph);
+        Assert.Equal(written.Quality.V360Source, read.Quality.V360Source);
+        Assert.Equal(written.Quality.HasRepairs, read.Quality.HasRepairs);
+        Assert.Equal(
+            written.Quality.Warnings.Select(w => (w.Instrument, w.Code)),
+            read.Quality.Warnings.Select(w => (w.Instrument, w.Code)));
+        Assert.Equal(written.Quality.V360Variables.Count, read.Quality.V360Variables.Count);
+        Assert.Equal(written.Quality.V360Instrument, read.Quality.V360Instrument);
+        Assert.Equal(written.Quality.V360FormulaSteps.Count, read.Quality.V360FormulaSteps.Count);
+
+        // The families, in rank order, with every scalar column and every audit block.
+        Assert.Equal(written.Families.Count, read.Families.Count);
+        Assert.Equal(Enumerable.Range(1, written.Families.Count), read.Families.Select(f => f.RankPosition!.Value));
+        foreach (var (expected, actual) in written.Families.Zip(read.Families))
+        {
+            Assert.Equal(expected.OwnerId, actual.OwnerId);
+            Assert.Equal(expected.OwnerType, actual.OwnerType);
+            Assert.Equal(expected.CareerFitAbsolute, actual.CareerFitAbsolute);
+            Assert.Equal(expected.CareerFitRelative, actual.CareerFitRelative);
+            Assert.Equal(expected.PcaWinningRoute, actual.PcaWinningRoute);
+            Assert.Equal(expected.PersonalityWinningRoute, actual.PersonalityWinningRoute);
+            Assert.Equal(expected.CompetencyGate, actual.CompetencyGate);
+            Assert.Equal(expected.MilGate, actual.MilGate);
+            Assert.Equal(expected.FinalGate, actual.FinalGate);
+            Assert.Equal(expected.ConvergenceLevel, actual.ConvergenceLevel);
+            Assert.Equal(expected.CareerFit360Confidence, actual.CareerFit360Confidence);
+            Assert.Equal(expected.CareerFit360Consensus, actual.CareerFit360Consensus);
+            Assert.Equal(expected.ConvergenceDetail.StrongCount, actual.ConvergenceDetail.StrongCount);
+            Assert.Equal(expected.ConvergenceDetail.Supports, actual.ConvergenceDetail.Supports);
+            Assert.Equal(expected.MilRelativeStrengths, actual.MilRelativeStrengths);
+            Assert.Equal(
+                expected.CriticalGaps.Select(g => (g.CompetencyId, g.Level, g.Required)),
+                actual.CriticalGaps.Select(g => (g.CompetencyId, g.Level, g.Required)));
+            Assert.Equal(expected.AuditInputs.Mil.LearningCapacityIndicator, actual.AuditInputs.Mil.LearningCapacityIndicator);
+            Assert.Equal(expected.AuditInputs.PcaRoutes.Select(r => r.RouteId), actual.AuditInputs.PcaRoutes.Select(r => r.RouteId));
+            Assert.Equal(expected.AuditInputs.V360.Variables.Count, actual.AuditInputs.V360.Variables.Count);
+            // The whole F06-F23 ledger travels with the row it derives.
+            Assert.Equal(expected.AuditSteps.Count, actual.AuditSteps.Count);
+            Assert.Equal(expected.AuditSteps.Select(s => (s.Sequence, s.StepId, s.Target)), actual.AuditSteps.Select(s => (s.Sequence, s.StepId, s.Target)));
+        }
+    }
+
+    /// <summary>
+    /// The reader takes the CALLER's session and nothing else decides visibility: the same-school counselor
+    /// reads the student's run, the other-school counselor gets null — the same negative control the writer's
+    /// tests use, on the read path. Not an authorization decision in the reader (that is the endpoint's
+    /// CanAccessUser gate); this is the RLS backstop underneath it.
+    /// </summary>
+    [Fact]
+    public async Task The_run_reader_sees_exactly_what_the_callers_RLS_session_sees()
+    {
+        var run = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+        var reader = new CareerFitRunReader(Factory());
+
+        Assert.NotNull(await reader.ReadAsync(Counselor(CounselorA, SchoolA), run.Id));
+        Assert.NotNull(await reader.ReadNewestForUserAsync(Counselor(CounselorA, SchoolA), StudentA1));
+        Assert.Single(await reader.ListForUserAsync(Counselor(CounselorA, SchoolA), StudentA1, 20));
+
+        Assert.Null(await reader.ReadAsync(Counselor(CounselorB, SchoolB), run.Id));
+        Assert.Null(await reader.ReadNewestForUserAsync(Counselor(CounselorB, SchoolB), StudentA1));
+        Assert.Empty(await reader.ListForUserAsync(Counselor(CounselorB, SchoolB), StudentA1, 20));
+    }
+
+    /// <summary>Runs are immutable, so the history is a list and "the newest" is the one the read endpoints serve.</summary>
+    [Fact]
+    public async Task The_history_lists_every_run_newest_first_and_the_newest_read_is_the_last_one_written()
+    {
+        var first = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+        var second = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+        var reader = new CareerFitRunReader(Factory());
+
+        var history = await reader.ListForUserAsync(Student(StudentA1, SchoolA), StudentA1, 20);
+
+        Assert.Equal(2, history.Count);
+        Assert.Equal(second.Id, history[0].RunId);
+        Assert.Equal(first.Id, history[1].RunId);
+        Assert.Equal(RulesVersion, history[0].RulesVersion);
+        Assert.Equal(second.Best.OwnerId, history[0].TopFamilyId);
+
+        var newest = await reader.ReadNewestForUserAsync(Student(StudentA1, SchoolA), StudentA1);
+        Assert.Equal(second.Id, newest!.Id);
+    }
+
     // ---- contexts ----
 
     private static RequestContext Student(string userId, string? schoolId) => Ctx(userId, FormMapsRoles.Student, schoolId);

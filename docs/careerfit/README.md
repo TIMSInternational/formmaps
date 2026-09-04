@@ -116,17 +116,56 @@ ADEQUATE and is told their cognitive profile is *Insuficiente / Bajo*.
 
 The rule set above is consumed, unchanged, by the .NET bounded context under `services/api`.
 
-**Status.** Manifest slices FM-CF-002/003/004/005/009 (P1–P3), FM-CF-007/008 (P4) and
-FM-CF-010/011 (P5) are **completed**, integrated on branch `careerfit/p4-p6`. FM-CF-006 (seed the
-40 360 items) is **blocked on TIMS** and is the reason the 360 engine below is built but idle.
-FM-CF-012 (the seven endpoints, behind `FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET`) is the next slice, and
-nothing is mapped as an HTTP route until it lands.
+**Status.** Manifest slices FM-CF-002/003/004/005/009 (P1–P3), FM-CF-007/008 (P4),
+FM-CF-010/011 (P5) and FM-CF-012 (P6) are **completed**, integrated on branch `careerfit/p4-p6`
+(FM-CF-012 on `careerfit/endpoints`). FM-CF-006 (seed the 40 360 items) is **blocked on TIMS** and
+is the reason the 360 engine below is built but idle. The HTTP surface now exists —
+`/api/v1/careerfit/*`, seven routes — and is dark from the frontend: the rewrite that would send a
+browser to it is guarded by `FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET`, which is set nowhere in this repo.
 
 | slice | what shipped |
 |---|---|
 | FM-CF-007/008 | `VocationalV360Adapter` / `V360Aggregation` — real variable-level 360 aggregation (F01→F05) and per-family relevance weighting (F06). Registered in DI; idle until FM-CF-006 seeds the items, with `NoDataV360Adapter` as the named fallback |
 | FM-CF-010 | `CareerFitAuditLedger` — the per-formula-step ledger, F06–F23 per family in `careerfit_family_results."audit" -> formula_steps` and F01–F05 once per student in `careerfit_runs."inputQuality" -> v360_formula_steps` |
 | FM-CF-011 | `FormMaps.Api.Contracts.CareerFit.CareerFitExplanation` — the explainability payload: structured evidence, no family-level fit scalar |
+| FM-CF-012 | `CareerFitEndpoints` — the seven routes at `/api/v1/careerfit`, plus `ICareerFitRunReader` / `CareerFitRunReader` (a persisted run read back on the caller's session, so a read never scores) and the rewrite block in `apps/web/next.config.ts`, per-path and default OFF |
+
+### The seven endpoints (FM-CF-012)
+
+```
+POST /api/v1/careerfit/evaluate/{userId}                score now, persist the run, return the ranking
+GET  /api/v1/careerfit/results/{userId}                 the newest run's ranking
+GET  /api/v1/careerfit/results/{userId}/explanation     the newest run's FM-CF-011 payload
+GET  /api/v1/careerfit/results/{userId}/runs            the run history, newest first
+GET  /api/v1/careerfit/runs/{runId}                     one persisted run's ranking
+GET  /api/v1/careerfit/runs/{runId}/explanation         one persisted run's FM-CF-011 payload
+GET  /api/v1/careerfit/families                         the active rule set's families
+```
+
+They are **derived from the legacy surface, not invented**. Of the eleven method+path pairs apps/web
+calls under `/api/v1/careers/*` (`services/careerService.ts`, `services/timsService.ts`), exactly one
+is a CareerFit question — `POST /careers/score`, the manifest's `legacyBaseline`. The other ten are
+the 370-role catalogue, its admin CRUD and its favourites; V1 CareerFit scores fourteen *families*
+and has no catalogue, so those ten stay on Node and **no `/api/v1/careers` path is rewritten**.
+`/careers/score` both scores and returns, and every caller uses it as a read on mount — but a run is
+immutable, so scoring is the one POST and reading is separate and never writes. The explanatory half
+of the legacy response (`profileSummary` / `breakdown`) is FM-CF-011's payload; `/careers/clusters`
+becomes `/careerfit/families`; the history exists because immutability makes "which run produced the
+advice this student was shown" a real question.
+
+Guards are the surrounding endpoint files' convention: identity → subscription → `CanAccessUser`,
+with denial as the uniform IDOR-safe 404 and the caller's RLS session underneath every read and
+write. A run fetched **by id** re-runs the per-user gate on the *run's owner*: `careerfit_runs`' RLS
+admits every caller in the row's tenant, so without that second gate a same-school stranger reads the
+run by id — the hole `CareerFitRlsTests.Same_school_caller_is_admitted_by_the_policy_so_the_endpoint_gate_is_not_optional`
+was written to name. **No fit scalar reaches a browser** on any of the seven: the ranking view carries
+the ordinal rank and the categorical gate / convergence / confidence labels, and nothing else.
+
+The flag is **new and off**. `FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET` appears in no `.env`, no workflow
+and no other file in this repo, so with nothing configured the rewrite block contributes zero entries
+and there is no .NET CareerFit traffic at all. Its entries are **per path with `source === destination`**,
+never a `/api/v1/careerfit/:path*` prefix: a prefix silently adopts every route a later commit adds
+under it, live on the next deploy with no flip and no canary (#109/#114/#120).
 
 | namespace / path | what |
 |---|---|

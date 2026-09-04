@@ -368,11 +368,14 @@ public static class DependencyInjection
         // items no response carries such a code, so it selects NoDataV360Adapter — by name, not by an
         // empty query — and every run still scores careerfit360 = 0 / NOT_DETERMINABLE and says so in its
         // inputQuality, exactly as before. Singleton: it is stateless and reads the singleton rules
-        // provider. NOTHING is mapped as an endpoint yet (FM-CF-012 owns the seven routes and
-        // FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET).
+        // provider. The seven routes over all of this are FM-CF-012's CareerFitEndpoints, mapped in
+        // Program.cs and dark from the frontend until FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET is turned on.
         services.AddSingleton<IV360Adapter, VocationalV360Adapter>();
         services.AddScoped<ICareerFitInputReader, CareerFitInputReader>();
         services.AddScoped<ICareerFitRunWriter, CareerFitRunWriter>();
+        // FM-CF-012's read seam: a persisted run read back under the CALLER's RLS session, so the endpoints
+        // can serve the scores and the explanation without re-scoring (and without writing a run per page view).
+        services.AddScoped<ICareerFitRunReader, CareerFitRunReader>();
         services.AddScoped<ICareerFitEvaluator, CareerFitEvaluator>();
 
         services.AddSingleton(TimeProvider.System);

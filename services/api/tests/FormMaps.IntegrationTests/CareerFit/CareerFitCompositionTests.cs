@@ -11,8 +11,9 @@ namespace FormMaps.IntegrationTests.CareerFit;
 /// <summary>
 /// FM-CF-010 (d): the evaluator and its seams resolve from the REAL composition root (Program.cs →
 /// AddFormMapsApplication → AddFormMapsInfrastructure) — Scoped, on the process's single rule set, with
-/// the NoData 360 adapter — and nothing about them is reachable over HTTP yet (FM-CF-012). The host build
-/// also re-runs the FM-CF-003 startup check for free.
+/// the aggregating 360 adapter. FM-CF-012 adds the run READER to that set and maps the seven routes, so
+/// the HTTP assertion below is now "the group is mounted and still refuses an unauthenticated caller"
+/// rather than "nothing is mapped". The host build also re-runs the FM-CF-003 startup check for free.
 /// </summary>
 public class CareerFitCompositionTests
 {
@@ -27,6 +28,9 @@ public class CareerFitCompositionTests
         Assert.IsType<CareerFitEvaluator>(evaluator);
         Assert.IsType<CareerFitInputReader>(services.GetRequiredService<ICareerFitInputReader>());
         Assert.IsType<CareerFitRunWriter>(services.GetRequiredService<ICareerFitRunWriter>());
+        // FM-CF-012's read seam, Scoped like the other two: it holds the caller's RLS session, so a
+        // singleton would outlive the request whose identity it reads under.
+        Assert.IsType<CareerFitRunReader>(services.GetRequiredService<ICareerFitRunReader>());
         // FM-CF-007: the registered adapter is the AGGREGATOR, not the NoData one. It delegates to NoData
         // when a student has no 360 variable answered — which, until FM-CF-006 seeds the items, is every
         // student — so the runtime behaviour is unchanged while the path that will score is the one wired.
@@ -45,16 +49,20 @@ public class CareerFitCompositionTests
     }
 
     [Fact]
-    public async Task No_careerfit_route_is_mapped_yet()
+    public async Task The_careerfit_group_is_mapped_and_still_refuses_an_unauthenticated_caller()
     {
-        // FM-CF-012 owns the seven endpoints and the FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET flag. Until then a
-        // request to the obvious path must fall through to 404, not to an unauthenticated evaluator.
+        // FM-CF-012 mapped the seven routes on the real host. Two things must hold on the production
+        // composition root: an anonymous request reaches the guard and is denied 401 (never an
+        // unauthenticated evaluation), and a path the group does NOT map is still a plain 404 — the bare
+        // /evaluate without a {userId} is the one that would silently "work" if someone widened the route.
         using var factory = new ApiFactory();
         using var client = factory.CreateClient();
 
-        var response = await client.PostAsync("/api/v1/careerfit/evaluate", content: null);
+        var mapped = await client.GetAsync("/api/v1/careerfit/families");
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, mapped.StatusCode);
 
-        Assert.Equal(System.Net.HttpStatusCode.NotFound, response.StatusCode);
+        var unmapped = await client.PostAsync("/api/v1/careerfit/evaluate", content: null);
+        Assert.Equal(System.Net.HttpStatusCode.NotFound, unmapped.StatusCode);
     }
 
     /// <summary>

@@ -316,3 +316,216 @@ describe("next.config rewrites -- lookahead guards against param-over-literal sh
     expect(winner!.destination).toBe(`${DOTNET}/api/question360/:id`);
   });
 });
+
+/**
+ * FM-CF-012 -- the seven CareerFit routes behind FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET.
+ *
+ * The manifest's validation for this slice is two sentences: "flag OFF: zero .NET traffic; flag ON:
+ * legacy route never called". Both are asserted below, and the OFF half is the load-bearing one --
+ * apps/web auto-deploys to production on push to main, so an entry that escaped the flag guard would
+ * be live on the next push with no flip and no canary. That is exactly the wave-3 failure
+ * (#109/#114/#120), which is why every case here pins BOTH states rather than only the on state.
+ *
+ * "Legacy route never called" is asserted from the other side too: the legacy career surface is
+ * /api/v1/careers/* (the 370-role catalogue, its admin CRUD and favourites -- apps/web/src/services/
+ * careerService.ts), CareerFit serves /api/v1/careerfit/* and NOTHING under /api/v1/careers, so the
+ * shadowing cases below pin every legacy career path to the Node catch-all in BOTH flag states.
+ */
+describe("next.config rewrites -- CareerFit /api/v1/careerfit -> .NET (FM-CF-012)", () => {
+  const CAREERFIT_FLAG = "FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET";
+
+  // The seven, in the order CareerFitEndpoints.cs maps them and next.config.ts lists them. Each
+  // sub-path precedes its parent, because afterFiles is first-match-wins.
+  const SEVEN = [
+    "/api/v1/careerfit/families",
+    "/api/v1/careerfit/evaluate/:userId",
+    "/api/v1/careerfit/results/:userId/explanation",
+    "/api/v1/careerfit/results/:userId/runs",
+    "/api/v1/careerfit/results/:userId",
+    "/api/v1/careerfit/runs/:runId/explanation",
+    "/api/v1/careerfit/runs/:runId",
+  ];
+
+  // One concrete request path per rule, with the rule it MUST resolve to. These pairs are what
+  // proves the ordering does what the comment claims: /results/u_1/runs must not be swallowed by
+  // /results/:userId, and /runs/<uuid>/explanation must not be swallowed by /runs/:runId.
+  const CONCRETE: Array<[string, string]> = [
+    ["/api/v1/careerfit/families", "/api/v1/careerfit/families"],
+    ["/api/v1/careerfit/evaluate/u_1", "/api/v1/careerfit/evaluate/:userId"],
+    ["/api/v1/careerfit/results/u_1/explanation", "/api/v1/careerfit/results/:userId/explanation"],
+    ["/api/v1/careerfit/results/u_1/runs", "/api/v1/careerfit/results/:userId/runs"],
+    ["/api/v1/careerfit/results/u_1", "/api/v1/careerfit/results/:userId"],
+    [
+      "/api/v1/careerfit/runs/3f2504e0-4f89-11d3-9a0c-0305e82c3301/explanation",
+      "/api/v1/careerfit/runs/:runId/explanation",
+    ],
+    ["/api/v1/careerfit/runs/3f2504e0-4f89-11d3-9a0c-0305e82c3301", "/api/v1/careerfit/runs/:runId"],
+  ];
+
+  // The legacy career surface, every distinct path apps/web calls (careerService.ts :21 :33 :42 :52
+  // :57 :65 :73 :84 :98 :107 :116, timsService.ts :8). CareerFit serves NONE of them -- V1 scores
+  // fourteen families and has no career catalogue -- so they must reach Node in both flag states.
+  const LEGACY_CAREERS = [
+    "/api/v1/careers/catalog",
+    "/api/v1/careers/clusters",
+    "/api/v1/careers/admin",
+    "/api/v1/careers",
+    "/api/v1/careers/c_123",
+    "/api/v1/careers/score",
+    "/api/v1/careers/favorites",
+    "/api/v1/careers/favorites/c_123",
+  ];
+
+  // Explicitly undefined rather than merely omitted: loadAfterFiles clones the ambient process.env,
+  // so a flag exported in the shell would leak in and turn this "off" case into an "on" case that
+  // still passed the absence assertions for the wrong reason.
+  const FLAG_OFF = { FORMMAPS_DOTNET_API_BASE_URL: DOTNET, [CAREERFIT_FLAG]: undefined };
+  const FLAG_ON = { FORMMAPS_DOTNET_API_BASE_URL: DOTNET, [CAREERFIT_FLAG]: "1" };
+
+  /**
+   * Every FORMMAPS_ROUTE_* flag this config knows about, read out of the config SOURCE rather than
+   * hand-listed, so a flag added later is covered by the shadowing cases below without anyone
+   * remembering to update this file.
+   */
+  function everyRouteFlag(): string[] {
+    const source: string = require("fs").readFileSync(`${__dirname}/next.config.ts`, "utf8");
+    return [...new Set<string>(source.match(/FORMMAPS_ROUTE_[A-Z0-9_]+/g) ?? [])];
+  }
+
+  function allFlags(value: string | undefined, overrides: Record<string, string | undefined> = {}) {
+    const env: Record<string, string | undefined> = { FORMMAPS_DOTNET_API_BASE_URL: DOTNET };
+    for (const flag of everyRouteFlag()) env[flag] = value;
+    return { ...env, ...overrides };
+  }
+
+  function expectNode(afterFiles: Rewrite[], path: string) {
+    const winner = winningRule(afterFiles, path);
+    expect(winner).toBeDefined();
+    expect(winner!.source).toBe(CATCH_ALL);
+    expect(winner!.destination).not.toContain("dotnet.example.test");
+  }
+
+  it("maps all seven with source === destination when the flag is on", async () => {
+    const afterFiles = await loadAfterFiles(FLAG_ON);
+
+    for (const source of SEVEN) {
+      expect(afterFiles).toContainEqual({ source, destination: `${DOTNET}${source}` });
+    }
+
+    expect(afterFiles.filter((r) => r.source.startsWith("/api/v1/careerfit"))).toHaveLength(7);
+  });
+
+  it("keeps each sub-path ahead of its parent, so every one of the seven is reachable", async () => {
+    const afterFiles = await loadAfterFiles(FLAG_ON);
+
+    for (const [path, expected] of CONCRETE) {
+      const winner = winningRule(afterFiles, path);
+      expect(winner).toBeDefined();
+      expect(winner!.source).toBe(expected);
+      expect(winner!.destination).toBe(`${DOTNET}${expected}`);
+    }
+  });
+
+  it("places all seven BEFORE the Node catch-all, or they would never match", async () => {
+    const afterFiles = await loadAfterFiles(FLAG_ON);
+    const catchAllIndex = afterFiles.findIndex((r) => r.source === CATCH_ALL);
+
+    expect(catchAllIndex).toBeGreaterThanOrEqual(0);
+    for (const source of SEVEN) {
+      const index = afterFiles.findIndex((r) => r.source === source);
+      expect(index).toBeGreaterThanOrEqual(0);
+      expect(index).toBeLessThan(catchAllIndex);
+    }
+  });
+
+  // THE MANIFEST'S "flag OFF: zero .NET traffic". This is the assertion that fails if an entry is
+  // ever hoisted out of the shouldRouteCareerFitToDotnet() guard.
+  it("is completely inert with the flag unset -- zero .NET CareerFit traffic", async () => {
+    const afterFiles = await loadAfterFiles(FLAG_OFF);
+
+    expect(afterFiles.filter((r) => r.source.startsWith("/api/v1/careerfit"))).toEqual([]);
+    expect(afterFiles.filter((r) => r.destination.includes("/api/v1/careerfit"))).toEqual([]);
+
+    // Every one of the seven paths falls through to Node, which has no such route -- a 404 from the
+    // legacy backend, which is the correct OFF behaviour: no CareerFit traffic reaches .NET at all.
+    for (const [path] of CONCRETE) {
+      expectNode(afterFiles, path);
+    }
+  });
+
+  it("stays inert when the .NET base URL is unset, with no 'undefined' destination", async () => {
+    const afterFiles = await loadAfterFiles({ FORMMAPS_DOTNET_API_BASE_URL: undefined, [CAREERFIT_FLAG]: "1" });
+
+    expect(afterFiles.filter((r) => r.source.startsWith("/api/v1/careerfit"))).toEqual([]);
+    expect(afterFiles.filter((r) => r.destination.startsWith("undefined"))).toEqual([]);
+  });
+
+  // NEGATIVE CONTROL 1 -- "flag ON: legacy route never called", from the legacy side. The legacy
+  // career surface is a DIFFERENT prefix and a different domain (the 370-role catalogue); CareerFit
+  // must not touch it in either state, and a /api/v1/careers/:path* prefix would 404 all of it.
+  it.each([
+    ["flag on", FLAG_ON],
+    ["flag off", FLAG_OFF],
+  ])("never rewrites any legacy /api/v1/careers path (%s)", async (_label, env) => {
+    const afterFiles = await loadAfterFiles(env);
+
+    expect(afterFiles.filter((r) => r.source.startsWith("/api/v1/careers/"))).toEqual([]);
+    for (const path of LEGACY_CAREERS) {
+      expectNode(afterFiles, path);
+    }
+  });
+
+  // NEGATIVE CONTROL 2 -- CareerFit does not SHADOW any other flag's paths. With CareerFit the only
+  // flag on, nothing outside /api/v1/careerfit may be claimed by a CareerFit rule.
+  it("claims no path outside /api/v1/careerfit", async () => {
+    const afterFiles = await loadAfterFiles(allFlags(undefined, { [CAREERFIT_FLAG]: "1" }));
+
+    const careerfitSources = afterFiles
+      .filter((r) => r.source.startsWith("/api/v1/careerfit"))
+      .map((r) => r.source);
+    expect(careerfitSources).toHaveLength(7);
+
+    const foreign = [
+      ...LEGACY_CAREERS,
+      "/api/v1/personality/access",
+      "/api/v1/lia/user/u_1/results",
+      "/api/v1/mil/results/u_1",
+      "/api/v1/vocational360/score/u_1",
+      "/api/v1/reports/pca/u_1",
+      "/api/v1/student/course-plan",
+      "/api/v1/school-admin/courses",
+      "/api/pcaexam/history/u_1",
+    ];
+    for (const path of foreign) {
+      const winner = winningRule(afterFiles, path);
+      expect(winner).toBeDefined();
+      // Whatever wins, it is never one of ours.
+      expect(careerfitSources).not.toContain(winner!.source);
+    }
+  });
+
+  // NEGATIVE CONTROL 3 -- CareerFit is not SHADOWED by any other flag. With EVERY flag in the config
+  // turned on (read out of the config source, so a flag added later is covered automatically), each
+  // of the seven concrete paths must still resolve to its own CareerFit rule.
+  it("is not shadowed by any other flag, with every flag in the config on", async () => {
+    const afterFiles = await loadAfterFiles(allFlags("1"));
+
+    for (const [path, expected] of CONCRETE) {
+      const winner = winningRule(afterFiles, path);
+      expect(winner).toBeDefined();
+      expect(winner!.source).toBe(expected);
+    }
+  });
+
+  // NEGATIVE CONTROL 4 -- the same board with CareerFit the only flag OFF: no other flag's rule may
+  // pick these paths up, so turning CareerFit off really does mean zero .NET CareerFit traffic
+  // rather than "someone else's rule catches them".
+  it("sends nothing to .NET when CareerFit alone is off and every other flag is on", async () => {
+    const afterFiles = await loadAfterFiles(allFlags("1", { [CAREERFIT_FLAG]: undefined }));
+
+    expect(afterFiles.filter((r) => r.source.startsWith("/api/v1/careerfit"))).toEqual([]);
+    for (const [path] of CONCRETE) {
+      expectNode(afterFiles, path);
+    }
+  });
+});

@@ -517,6 +517,19 @@ function shouldRouteAuthToDotnet() {
   return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_AUTH_TO_DOTNET));
 }
 
+// CareerFit (FM-CF-012): the seven /api/v1/careerfit/* routes as ONE flag, because they are one
+// bounded context that ships together -- there is no partial CareerFit (the read routes serve runs
+// the write route produced, and the explanation routes project the same runs). NEW flag, and it is
+// NOT set anywhere in this repo, so it is OFF everywhere until someone sets it deliberately.
+//
+// One flag over a prefix is the Messaging/Billing/Auth convention above, but the rewrite ENTRIES
+// stay per-path (see the block in rewrites()): a /api/v1/careerfit/:path* prefix would silently
+// adopt every route a later .NET commit adds under it, live on the next deploy, with no flip and
+// no canary -- the wave-3 failure (#109/#114/#120) this file already carries scars from.
+function shouldRouteCareerFitToDotnet() {
+  return Boolean(dotnetApiBaseUrl && isEnabled(process.env.FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET));
+}
+
 const nextConfig: NextConfig = {
   /**
    * Allow external image hosts used in the app (e.g. Unsplash)
@@ -1389,6 +1402,42 @@ const nextConfig: NextConfig = {
       // second endpoint added to that group will not need another frontend redeploy.
       ...(dotnetApiBaseUrl
         ? [{ source: "/api/v1/migration/:path*", destination: `${dotnetApiBaseUrl}/api/v1/migration/:path*` }]
+        : []),
+      // ── CareerFit (FM-CF-012) ────────────────────────────────────────────────────────────────
+      // The seven routes of the CareerFit bounded context
+      // (services/api/src/FormMaps.Api/Endpoints/CareerFitEndpoints.cs). NEW flag, DEFAULT OFF:
+      // FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET is set nowhere in this repo (.env.template, the
+      // workflows, any file — grepped), so with nothing configured this block contributes zero
+      // entries and there is zero .NET CareerFit traffic. That is the slice's own validation.
+      //
+      // WHY THESE PATHS SHADOW NOTHING AND ARE SHADOWED BY NOTHING. /api/v1/careerfit is a prefix
+      // no other rule in this file touches: the only rule that matches it today is the
+      // /api/:path* catch-all further down, which sends it to Node, which has no such route (the
+      // legacy career surface is /api/v1/careers/*, a different prefix and a different domain —
+      // the 370-role catalogue, its admin CRUD and favourites, all of which STAY on Node and are
+      // deliberately NOT rewritten here; see CareerFitEndpoints.cs's header for the route-by-route
+      // derivation). So flipping this flag cannot move any path away from another flag's owner,
+      // and no existing param rule can steal one of these: none of them is at the same segment
+      // depth under a shared parent.
+      //
+      // Per-path with source === destination, never a /api/v1/careerfit/:path* prefix, for the
+      // wave-3 reason (#109/#114/#120): a prefix silently adopts every path a later .NET commit
+      // adds under it, on the next deploy, with no flag flip and no canary. Adding a route here is
+      // an explicit line in this file and a review.
+      //
+      // ORDER inside the block is first-match-wins order: each sub-path precedes its parent, so
+      // /results/:userId/explanation and /results/:userId/runs are reachable at all, and the whole
+      // block sits inside personalityRewrites, which is spread AHEAD of the /api/:path* catch-all.
+      ...(shouldRouteCareerFitToDotnet()
+        ? [
+            { source: "/api/v1/careerfit/families", destination: `${dotnetApiBaseUrl}/api/v1/careerfit/families` },
+            { source: "/api/v1/careerfit/evaluate/:userId", destination: `${dotnetApiBaseUrl}/api/v1/careerfit/evaluate/:userId` },
+            { source: "/api/v1/careerfit/results/:userId/explanation", destination: `${dotnetApiBaseUrl}/api/v1/careerfit/results/:userId/explanation` },
+            { source: "/api/v1/careerfit/results/:userId/runs", destination: `${dotnetApiBaseUrl}/api/v1/careerfit/results/:userId/runs` },
+            { source: "/api/v1/careerfit/results/:userId", destination: `${dotnetApiBaseUrl}/api/v1/careerfit/results/:userId` },
+            { source: "/api/v1/careerfit/runs/:runId/explanation", destination: `${dotnetApiBaseUrl}/api/v1/careerfit/runs/:runId/explanation` },
+            { source: "/api/v1/careerfit/runs/:runId", destination: `${dotnetApiBaseUrl}/api/v1/careerfit/runs/:runId` },
+          ]
         : []),
     ];
     return {
