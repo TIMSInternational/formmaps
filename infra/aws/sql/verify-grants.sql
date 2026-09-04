@@ -151,7 +151,22 @@ WITH checks(tbl, priv, expected, hard, why) AS (
     ('public.audit_logs', 'INSERT', true,  true, 'formmaps#120: SchoolUsersWriter role-change rows (sec 4.6)'),
     ('public.audit_logs', 'SELECT', false, true, 'withheld: no .NET read path; INSERT needs no SELECT'),
     ('public.audit_logs', 'UPDATE', false, true, 'formmaps#128: INSERT-only — UPDATE would make the trail rewritable'),
-    ('public.audit_logs', 'DELETE', false, true, 'formmaps#128: INSERT-only — DELETE would let the service erase it')
+    ('public.audit_logs', 'DELETE', false, true, 'formmaps#128: INSERT-only — DELETE would let the service erase it'),
+    -- issue #65 / cutover: TelemetryEventWriter does INSERT INTO "telemetry_events"
+    -- (the port of routes/telemetry.ts:45's createMany). Same cutover shape as
+    -- audit_logs above — the write works TODAY only because the service still runs
+    -- on the legacy shared credential, and would start 42501ing the moment
+    -- DATABASE_URL flips to formmaps_dotnet_svc. Listed here BEFORE the flag is
+    -- ever flipped so a production run reports it rather than a user discovering
+    -- it. dotnet-service-role.sql section 4.8 grants it.
+    --
+    -- hard=true in both directions. SELECT is withheld because a service account
+    -- that can read this table can enumerate every user's behavioural history;
+    -- UPDATE/DELETE because retention is a reaper's job no .NET code does.
+    ('public.telemetry_events', 'INSERT', true,  true, 'issue #65: TelemetryEventWriter ingest rows (sec 4.8)'),
+    ('public.telemetry_events', 'SELECT', false, true, 'withheld: no .NET read path; INSERT needs no SELECT'),
+    ('public.telemetry_events', 'UPDATE', false, true, 'withheld: nothing in .NET edits a telemetry row'),
+    ('public.telemetry_events', 'DELETE', false, true, 'withheld: retention is a reaper''s job, not this service''s')
 )
 SELECT tbl,
        priv,

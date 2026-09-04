@@ -192,6 +192,10 @@ public static class DependencyInjection
         // A safety action must not depend on the actor being able to SEE the target in the tenant sense;
         // formmaps#80 is what happens when it does. See MessagesRepository.cs:518 for the long form.
         services.AddScoped<FormMaps.Application.Moderation.IModerationRepository, FormMaps.Infrastructure.Moderation.ModerationRepository>();
+        // formmaps#65: product telemetry ingest (routes/telemetry.ts:45). Opens on the CALLER's Identity
+        // session — telemetry_events IS policied in production (003-fk-users.sql) and every row it writes
+        // belongs to the caller, so there is nothing here that wants a bypass.
+        services.AddScoped<FormMaps.Application.Telemetry.ITelemetryEventWriter, FormMaps.Infrastructure.Telemetry.TelemetryEventWriter>();
         // formmaps#52: the ONLY sanctioned write path to audit_events. The table's RLS policy admits
         // bypass-mode sessions only, so this writer opens under RequestContext.System() internally —
         // nothing else should ever INSERT there, and no tenant-scoped session can.

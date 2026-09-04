@@ -379,6 +379,8 @@ test("domainForPath maps by longest path prefix and never guesses", () => {
   assert.equal(domainForPath("/evaluation/vocational/take"), "assessments-and-readiness");
   assert.equal(domainForPath("/authapi/login"), "auth");
   assert.equal(domainForPath("/api/v1/totally-unknown/x"), null);
+  // issue #65: telemetry ingest is platform observability, not a product domain.
+  assert.equal(domainForPath("/api/v1/telemetry/events"), "platform-health");
   // prefix must be path-segment aligned, not a substring match
   assert.equal(domainForPath("/api/v1/videoconference"), null);
 });

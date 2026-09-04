@@ -735,6 +735,11 @@ export const PATH_DOMAIN_MAP: [string, string][] = [
   // /api/v1/school-admin/graduation; both halves therefore report the same domain, which is
   // what a single-flag unit should do.
   ["/api/v1/transcript", "schools-rosters-organizations"],
+  // issue #65. /api/v1/telemetry has no natural product owner -- it is the ingest side of
+  // platform observability, written by every surface and read by none of them -- so it reports
+  // as platform-health rather than being attached to whichever feature happened to emit the
+  // event. Without a row here it would report as `unmapped` for the whole rollout.
+  ["/api/v1/telemetry", "platform-health"],
   ["/hubs", "messaging"],
   ["/authapi", "auth"],
 ];

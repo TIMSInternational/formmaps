@@ -450,6 +450,40 @@ GRANT SELECT, INSERT, DELETE ON TABLE
     TO formmaps_dotnet_svc;
 
 -- ---------------------------------------------------------------------------
+-- 4.8. Product telemetry ingest (issue #65): INSERT and nothing else.
+--
+--    `telemetry_events` is append-only from this service's point of view.
+--    TelemetryEventWriter issues exactly one statement against it -- a multi-row
+--    INSERT, the port of `prisma.telemetryEvent.createMany` at
+--    formmaps-platform/api/src/routes/telemetry.ts:45-55 -- and there is no other
+--    .NET code path that touches the table at all.
+--
+--    NO SELECT, on purpose, and this is the second table in this file to be
+--    granted without it (audit_logs, section 4.6, is the first). The INSERT does
+--    not need one: no RETURNING, no ON CONFLICT, no read of existing rows. The
+--    response body's `eventsReceived` is a count of what the REQUEST offered, not
+--    a count read back from the database, so nothing downstream of the write
+--    wants a read either. Granting SELECT would hand the service account the
+--    ability to enumerate every user's behavioural history for a capability no
+--    code exercises.
+--
+--    NO UPDATE/DELETE either. The 90-day retention (telemetry.ts:40 writes
+--    `expiresAt`) is a REAPER's job, not this service's -- nothing in
+--    services/api/src deletes an expired row, and the column is written so that
+--    whatever eventually does can find them. If a .NET reaper is ever added, give
+--    it DELETE here deliberately rather than widening this grant to match the
+--    section-4 bucket by resemblance.
+--
+--    Because the grant omits SELECT, `telemetry_events` must also be named in
+--    DbRoleGrantsTests.Every_table_in_the_schema_is_granted_at_least_select`s
+--    `insertOnly` list, and its exact verb set is pinned by
+--    DbRoleGrantsTests.Telemetry_events_is_insert_only.
+-- ---------------------------------------------------------------------------
+GRANT INSERT ON TABLE
+    public."telemetry_events"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
 -- 5. Full-CRUD tables -- the service also deletes rows here (verified:
 --    DELETE FROM hits in services/api/src, e.g. calendar/holiday and
 --    academic-year cleanup, course-plan removal, data-mapping deletion, and
