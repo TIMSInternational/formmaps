@@ -117,14 +117,17 @@ public class CareerFitRunJsonTests
     }
 
     [Fact]
-    public void Family_audit_carries_the_four_blocks_under_the_reference_keys()
+    public void Family_audit_carries_the_four_reference_blocks_and_the_formula_step_ledger()
     {
         var ruleSet = CareerFitRulesResolver.Resolve(Rules);
         var family = CareerFitEvaluator.EvaluateCore(SampleInputs().Assessment, ruleSet).Single(f => f.OwnerId == 1);
 
         var json = SampleStudentRows.Parse(CareerFitRunJson.SerializeFamilyAudit(family));
 
-        Assert.Equal(["audit_inputs", "convergence_detail", "critical_gaps", "mil_relative_strengths"], json.EnumerateObject().Select(p => p.Name));
+        // The four blocks of evaluate_owner's return dict, then FM-CF-010's per-formula-step ledger.
+        Assert.Equal(
+            ["audit_inputs", "convergence_detail", "critical_gaps", "mil_relative_strengths", "formula_steps"],
+            json.EnumerateObject().Select(p => p.Name));
 
         // audit_inputs: pca_routes[] / mil / personality / v360 — the reference's evidence dicts, each with its score.
         var audit = json.GetProperty("audit_inputs");
@@ -167,5 +170,15 @@ public class CareerFitRunJsonTests
         }
 
         Assert.Equal(["DC", "RZ", "VN", "MT", "OR"], json.GetProperty("mil_relative_strengths").EnumerateObject().Select(p => p.Name));
+
+        // formula_steps: one record per executed F01-F23 application, each carrying the same nine keys.
+        // What the records mean, and that their count is the derived one, is CareerFitAuditLedgerTests.
+        Assert.Equal(family.AuditSteps.Count, json.GetProperty("formula_steps").GetArrayLength());
+        foreach (var step in json.GetProperty("formula_steps").EnumerateArray())
+        {
+            Assert.Equal(
+                ["sequence", "step_id", "name", "block", "target", "inputs", "output", "output_label", "rule"],
+                step.EnumerateObject().Select(p => p.Name));
+        }
     }
 }

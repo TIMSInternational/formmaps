@@ -111,4 +111,13 @@ public sealed record OwnerEvaluation(
 
     /// <summary>F21: 100 for a single alternative, else 100·(N − rank)/(N − 1); set by AssignRelativeFit.</summary>
     public double? CareerFitRelative { get; init; }
+
+    /// <summary>
+    /// FM-CF-010's per-formula-step audit ledger — one record per F01–F23 application this family's
+    /// evaluation executed, in execution order (<see cref="CareerFitAuditLedger"/>). EMPTY on the value
+    /// <see cref="CareerFitFormulas.EvaluateOwner"/> returns: EvaluateOwner is the reference engine's
+    /// evaluate_owner and stays exactly that, so the ledger is attached afterwards by
+    /// <see cref="CareerFitEvaluator.EvaluateCore"/>, once the family has been ranked and F21 has run.
+    /// </summary>
+    public IReadOnlyList<FormulaStep> AuditSteps { get; init; } = [];
 }

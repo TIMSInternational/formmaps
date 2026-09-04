@@ -34,12 +34,19 @@ public static class CareerFitRunJson
         DictionaryKeyPolicy = null, // route ids, subtest codes and 360 codes keep their own spelling
     };
 
-    /// <summary>The non-scalar half of evaluate_owner's return dict, exactly the four blocks the schema names.</summary>
+    /// <summary>
+    /// The non-scalar half of evaluate_owner's return dict — the four blocks the schema names — plus
+    /// FM-CF-010's <c>formula_steps</c>: one record per F01–F23 application the family's evaluation actually
+    /// executed, in execution order (<see cref="CareerFitAuditLedger"/>). The four reference blocks say what
+    /// the instruments produced; the ledger says how, step by step, and is what makes the acceptance's
+    /// "audit row count == formula steps per family per student" a countable thing.
+    /// </summary>
     public sealed record FamilyResultAudit(
         AuditInputs AuditInputs,
         ConvergenceResult ConvergenceDetail,
         IReadOnlyList<CriticalGap> CriticalGaps,
-        IReadOnlyDictionary<string, double> MilRelativeStrengths);
+        IReadOnlyDictionary<string, double> MilRelativeStrengths,
+        IReadOnlyList<FormulaStep> FormulaSteps);
 
     // ---------------------------------------------------------------- inputs
 
@@ -242,7 +249,7 @@ public static class CareerFitRunJson
 
     // ---------------------------------------------------------------- family audit
 
-    /// <summary>careerfit_family_results."audit" for one family: audit_inputs / convergence_detail / critical_gaps / mil_relative_strengths.</summary>
+    /// <summary>careerfit_family_results."audit" for one family: audit_inputs / convergence_detail / critical_gaps / mil_relative_strengths / formula_steps.</summary>
     public static string SerializeFamilyAudit(OwnerEvaluation evaluation)
     {
         ArgumentNullException.ThrowIfNull(evaluation);
@@ -250,7 +257,8 @@ public static class CareerFitRunJson
             evaluation.AuditInputs,
             evaluation.ConvergenceDetail,
             evaluation.CriticalGaps,
-            evaluation.MilRelativeStrengths);
+            evaluation.MilRelativeStrengths,
+            evaluation.AuditSteps);
         return JsonSerializer.Serialize(audit, AuditOptions);
     }
 
