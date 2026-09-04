@@ -185,6 +185,10 @@ public sealed class SuiteParallelismGuardTests
             "FormMaps.IntegrationTests.Messaging.MessagesEndpointAdversarialTests",
             "FormMaps.IntegrationTests.Messaging.RealtimeTicketEndpointTests",
             "FormMaps.IntegrationTests.Security.ApiSecurityUtilityTests",
+            // formmaps#62: POST /api/v1/teacher/onboarding/complete mints a real session JWT through
+            // AccessTokenFactory on its happy path, so TeacherEndpointsTests sets (and, via JwtSecretScope,
+            // restores) the process-wide JWT_SECRET.
+            "FormMaps.IntegrationTests.Teacher.TeacherEndpointsTests",
         ];
 
         // Read via CustomAttributeData, not GetCustomAttribute<CollectionAttribute>(): xunit 2.x's

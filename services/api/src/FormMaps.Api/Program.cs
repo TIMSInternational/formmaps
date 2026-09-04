@@ -128,6 +128,7 @@ app.MapQuestion360Endpoints();
 app.MapVocationalTakeEndpoints();
 app.MapEvaluationExternalEndpoints();
 app.MapRecommendationsEndpoints();
+app.MapTeacherEndpoints();
 
 app.Run();
 

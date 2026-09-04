@@ -216,6 +216,10 @@
     <EmbeddedResource Include="Auth\Data\auth-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers letters-of-recommendation harness (formmaps#59). -->
     <EmbeddedResource Include="Recommendations\Data\recommendations-schema.sql" />
+    <!-- RLS-enabled DDL for the teacher onboarding + teacher portal harness (formmaps#62, routes/teacher.ts).
+         teacher_invites / users / evaluation_groups run under the real production policies; schools is left
+         unpolicied because production leaves it unpolicied. -->
+    <EmbeddedResource Include="Teacher\Data\teacher-schema.sql" />
     <!-- formmaps#125: byte-for-byte copies of the production RLS policy files (formmaps-platform/api/prisma/rls/*.sql),
          embedded so converted fixtures assert against the policies Aurora actually enforces rather than a transcription
          of them. A GLOB, not a list: a policy file copied into that directory MUST get applied, and a hand-maintained
