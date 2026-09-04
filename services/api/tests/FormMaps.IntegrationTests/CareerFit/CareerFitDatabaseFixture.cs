@@ -46,6 +46,14 @@ public sealed class CareerFitDatabaseFixture : RlsEnabledDatabaseFixture
     /// <summary>Basename of the production file; the embedded resource is linked under CareerFit\Data\.</summary>
     public const string ProductionDdlFileName = "careerfit-schema.sql";
 
+    /// <summary>
+    /// FM-CF-013's shadow table, in its own production file for the reason its header gives (it is
+    /// MEASUREMENT, retired at cutover, so it is dropped as one file's worth of objects). Applied here
+    /// AFTER the run schema and in that order, because its "runId" foreign key references careerfit_runs
+    /// -- the same apply-order dependency docs/migration/sql-apply-runbook.md records for production.
+    /// </summary>
+    public const string ShadowDdlFileName = "careerfit-shadow-tables.sql";
+
     protected override string SchemaResourceFileName => "careerfit-fixture-schema.sql";
 
     /// <summary>
@@ -73,17 +81,23 @@ public sealed class CareerFitDatabaseFixture : RlsEnabledDatabaseFixture
     ];
 
     /// <summary>The real <c>infra/aws/sql/careerfit-schema.sql</c>, applied as-is. See the class remarks.</summary>
-    protected override string? AdditionalDdl => LoadProductionDdl();
+    protected override string? AdditionalDdl =>
+        LoadProductionDdl() + "\n" + LoadShadowDdl();
 
     /// <summary>
     /// The production DDL text. Public because the idempotency test re-applies it on a database where every object
     /// already exists — the file's "safe to run multiple times" header claim is only observable on a SECOND apply.
     /// </summary>
-    public static string LoadProductionDdl()
+    public static string LoadProductionDdl() => LoadEmbedded(ProductionDdlFileName);
+
+    /// <summary>The real <c>infra/aws/sql/careerfit-shadow-tables.sql</c>. Public for the same idempotency reason.</summary>
+    public static string LoadShadowDdl() => LoadEmbedded(ShadowDdlFileName);
+
+    private static string LoadEmbedded(string fileName)
     {
         var assembly = Assembly.GetExecutingAssembly();
         var name = assembly.GetManifestResourceNames()
-            .Single(n => n.EndsWith($".CareerFit.Data.{ProductionDdlFileName}", StringComparison.Ordinal));
+            .Single(n => n.EndsWith($".CareerFit.Data.{fileName}", StringComparison.Ordinal));
         using var stream = assembly.GetManifestResourceStream(name)!;
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();

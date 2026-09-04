@@ -168,6 +168,7 @@ jobs:
           shadow_pos=0
           audit_pos=0
           careerfit_pos=0
+          careerfit_shadow_pos=0
           pos=0
           IFS=',' read -ra parts <<< "$SQL_FILES_INPUT"
           for raw in "${parts[@]}"; do
@@ -193,6 +194,7 @@ jobs:
               billing-shadow-tables.sql) shadow_pos=$pos ;;
               audit-events-schema.sql)   audit_pos=$pos ;;
               careerfit-schema.sql)      careerfit_pos=$pos ;;
+              careerfit-shadow-tables.sql) careerfit_shadow_pos=$pos ;;
             esac
             files="$files $f"
           done
@@ -213,6 +215,16 @@ jobs:
           fi
           if [ "$role_pos" -gt 0 ] && [ "$careerfit_pos" -gt "$role_pos" ]; then
             echo "::warning::careerfit-schema.sql is listed AFTER dotnet-service-role.sql. On a database without the careerfit_* tables, the role file's GRANT (section 4.7) will fail (42P01)."
+          fi
+          if [ "$role_pos" -gt 0 ] && [ "$careerfit_shadow_pos" -gt "$role_pos" ]; then
+            echo "::warning::careerfit-shadow-tables.sql is listed AFTER dotnet-service-role.sql. On a database without careerfit_shadow_comparisons, the role file's GRANT (section 4.8) will fail (42P01)."
+          fi
+          # FM-CF-013 has a SECOND ordering dependency the others do not: its
+          # "runId" foreign key references careerfit_runs, so on a fresh
+          # database careerfit-schema.sql must come first or the CREATE TABLE
+          # itself aborts with 42P01 (not just a GRANT).
+          if [ "$careerfit_shadow_pos" -gt 0 ] && [ "$careerfit_pos" -gt "$careerfit_shadow_pos" ]; then
+            echo "::warning::careerfit-shadow-tables.sql is listed BEFORE careerfit-schema.sql. On a database without careerfit_runs, its foreign key will fail (42P01)."
           fi
           echo "applying, in order: $files"
           echo "files=$files" >> "$GITHUB_OUTPUT"

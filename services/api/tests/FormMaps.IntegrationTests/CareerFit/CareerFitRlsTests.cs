@@ -51,10 +51,19 @@ public sealed class CareerFitRlsTests : IClassFixture<CareerFitDatabaseFixture>,
     private static readonly Guid RunB1 = Guid.Parse("33333333-3333-3333-3333-333333333333");
     private static readonly Guid RunSolo = Guid.Parse("44444444-4444-4444-4444-444444444444");
 
+    // FM-CF-013: one shadow comparison per seeded run, so the isolation cases below assert on the shadow
+    // table over the SAME seed as the run it measures.
+    private static readonly Guid ShadowA1 = Guid.Parse("aaaaaaaa-1111-1111-1111-111111111111");
+    private static readonly Guid ShadowA2 = Guid.Parse("aaaaaaaa-2222-2222-2222-222222222222");
+    private static readonly Guid ShadowB1 = Guid.Parse("aaaaaaaa-3333-3333-3333-333333333333");
+    private static readonly Guid ShadowSolo = Guid.Parse("aaaaaaaa-4444-4444-4444-444444444444");
+
+    // Children before parents: careerfit_shadow_comparisons (FM-CF-013) references careerfit_runs, which
+    // references users, which references schools.
     private static readonly string[] AllTables =
     [
-        "careerfit_family_results", "careerfit_runs", "student_parent_links", "counselor_student_assignments",
-        "users", "schools",
+        "careerfit_shadow_comparisons", "careerfit_family_results", "careerfit_runs", "student_parent_links",
+        "counselor_student_assignments", "users", "schools",
     ];
 
     private readonly CareerFitDatabaseFixture _fixture;
@@ -104,7 +113,10 @@ public sealed class CareerFitRlsTests : IClassFixture<CareerFitDatabaseFixture>,
         // with BOTH halves (USING and WITH CHECK) present. Enabled-but-not-forced would let the table owner bypass;
         // a USING-only policy would let any admitted session write rows it cannot read back.
         await using var admin = await _adminDataSource.OpenConnectionAsync();
-        foreach (var table in new[] { "careerfit_runs", "careerfit_family_results" })
+        // FM-CF-013's shadow table is in the same loop and not in a class of its own: its policy is a
+        // VERBATIM copy of careerfit_runs' predicate, and the whole value of that copy is that the two are
+        // held to the same posture assertions.
+        foreach (var table in new[] { "careerfit_runs", "careerfit_family_results", "careerfit_shadow_comparisons" })
         {
             await using var posture = new NpgsqlCommand(
                 """
@@ -135,15 +147,21 @@ public sealed class CareerFitRlsTests : IClassFixture<CareerFitDatabaseFixture>,
         // second time on a database where every object already exists, then prove nothing doubled or vanished and
         // the seed survived (a DROP TABLE hiding in a re-apply would take the rows with it).
         await using var admin = await _adminDataSource.OpenConnectionAsync();
-        await using (var reapply = new NpgsqlCommand(CareerFitDatabaseFixture.LoadProductionDdl(), admin))
+        foreach (var ddl in new[] { CareerFitDatabaseFixture.LoadProductionDdl(), CareerFitDatabaseFixture.LoadShadowDdl() })
         {
+            await using var reapply = new NpgsqlCommand(ddl, admin);
             await reapply.ExecuteNonQueryAsync();
         }
 
-        Assert.Equal(2L, await ScalarAsync(admin,
+        // Three policies now: careerfit_runs, careerfit_family_results and FM-CF-013's
+        // careerfit_shadow_comparisons. The count is spelled out rather than derived so that a file which
+        // silently stopped creating its policy on a re-apply fails here.
+        Assert.Equal(3L, await ScalarAsync(admin,
             "SELECT count(*) FROM pg_policies WHERE schemaname = 'public' AND tablename LIKE 'careerfit_%'"));
         Assert.Equal(2L, await ScalarAsync(admin,
             """SELECT count(*) FROM pg_indexes WHERE tablename = 'careerfit_runs' AND indexname LIKE 'careerfit_runs_%_idx'"""));
+        Assert.Equal(3L, await ScalarAsync(admin,
+            """SELECT count(*) FROM pg_indexes WHERE tablename = 'careerfit_shadow_comparisons' AND indexname LIKE '%_idx'"""));
         Assert.Equal(4L, await ScalarAsync(admin, """SELECT count(*) FROM "careerfit_runs" """));
         Assert.Equal(8L, await ScalarAsync(admin, """SELECT count(*) FROM "careerfit_family_results" """));
     }
@@ -464,6 +482,138 @@ public sealed class CareerFitRlsTests : IClassFixture<CareerFitDatabaseFixture>,
             """));
     }
 
+    // ---- FM-CF-013: the shadow comparison table ----
+
+    /// <summary>
+    /// A shadow row is visible exactly where the run it measures is: it carries careerfit_runs' own predicate,
+    /// copied verbatim, so a student sees their own and not a classmate's, a same-school counselor sees both,
+    /// and a cross-school counselor sees neither. Asserted against the SAME callers as the run cases above,
+    /// because the whole claim of copying the predicate is that the two behave identically.
+    /// </summary>
+    [Fact]
+    public async Task Shadow_comparison_rows_are_visible_exactly_where_the_run_they_measure_is()
+    {
+        // A1 sees their own AND their classmate's, exactly as they see their classmate's RUN: the school
+        // branch admits every caller in the tenant. Stated as the run cases state it, rather than asserting
+        // a denial the policy does not make.
+        var fromA1 = await VisibleShadowsAsync(Student(StudentA1, SchoolA));
+        Assert.Contains(ShadowA1, fromA1);
+        Assert.Contains(ShadowA2, fromA1);
+        Assert.DoesNotContain(ShadowB1, fromA1);      // other school: neither branch matches
+        Assert.DoesNotContain(ShadowSolo, fromA1);    // NULL schoolId row: only its owner and bypass reach it
+
+        // The no-school student reaches their own row and nothing else -- the self branch alone.
+        Assert.Equal([ShadowSolo], await VisibleShadowsAsync(Student(SoloStudent, schoolId: null)));
+
+        // The school branch admits every caller in the tenant -- the platform's design, stated here for the
+        // same reason the run cases state it: there is no endpoint over this table, so there is no per-user
+        // gate behind the policy either, and pretending the policy is narrower than it is would be vacuous.
+        Assert.Equal(
+            new[] { ShadowA1, ShadowA2 }.OrderBy(g => g),
+            (await VisibleShadowsAsync(Counselor(CounselorA, SchoolA))).OrderBy(g => g));
+        Assert.Equal(
+            new[] { ShadowA1, ShadowA2 }.OrderBy(g => g),
+            (await VisibleShadowsAsync(SchoolAdmin(AdminA, SchoolA))).OrderBy(g => g));
+
+        Assert.Equal([ShadowB1], await VisibleShadowsAsync(Counselor(CounselorB, SchoolB)));
+        Assert.Empty(await VisibleShadowsAsync(Parent(ParentOfA1)));
+        Assert.Equal(4, (await VisibleShadowsAsync(SuperAdminContext())).Length);
+    }
+
+    /// <summary>
+    /// The WITH CHECK half: a caller may append a comparison about a student in their own tenant and may not
+    /// append one about a student of another school. Without WITH CHECK an admitted session could write rows
+    /// it cannot read back, which for a measurement table means silently poisoning someone else's cohort.
+    /// </summary>
+    [Fact]
+    public async Task Shadow_comparison_can_be_appended_for_an_own_tenant_student_but_not_for_another_schools()
+    {
+        await using (var session = await Factory().OpenWritableAsync(Counselor(CounselorA, SchoolA)))
+        {
+            Assert.Equal(1, await InsertShadowAsync(session, Guid.NewGuid(), StudentA2, SchoolA, RunA2));
+            await session.CommitAsync();
+        }
+
+        await using (var session = await Factory().OpenWritableAsync(Counselor(CounselorA, SchoolA)))
+        {
+            var refused = await Assert.ThrowsAsync<PostgresException>(
+                () => InsertShadowAsync(session, Guid.NewGuid(), StudentB1, SchoolB, RunB1));
+            Assert.Equal("42501", refused.SqlState);   // new row violates row-level security policy
+        }
+    }
+
+    /// <summary>
+    /// Erasing the student takes their shadow rows with them (ON DELETE CASCADE on "userId"), and deleting the
+    /// RUN takes them too. Both directions matter: a comparison that outlived the student would be derived
+    /// personal data surviving an erasure, and one that outlived its run would be unreadable evidence.
+    /// </summary>
+    [Fact]
+    public async Task Shadow_comparisons_cascade_from_both_the_student_and_the_run()
+    {
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+
+        await ExecAsync(admin, $"""DELETE FROM "careerfit_runs" WHERE "id" = '{RunA2}'""");
+        Assert.Equal(0L, await ScalarAsync(admin,
+            $"""SELECT count(*) FROM "careerfit_shadow_comparisons" WHERE "id" = '{ShadowA2}'"""));
+
+        await ExecAsync(admin, $"""DELETE FROM "users" WHERE "id" = '{StudentA1}'""");
+        Assert.Equal(0L, await ScalarAsync(admin,
+            $"""SELECT count(*) FROM "careerfit_shadow_comparisons" WHERE "id" = '{ShadowA1}'"""));
+    }
+
+    /// <summary>
+    /// The metrics/comparable CHECK: a comparable row must carry both metrics and an incomparable one neither.
+    /// Enforced at the database because the report's denominators are computed from "comparable" -- a
+    /// comparable row with a null rho would silently shrink the mean's denominator.
+    /// </summary>
+    [Theory]
+    [InlineData(true, false)]    // comparable, no metrics
+    [InlineData(false, true)]    // incomparable, carrying metrics
+    public async Task Shadow_comparison_refuses_metrics_that_disagree_with_the_comparable_flag(bool comparable, bool withMetrics)
+    {
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            """
+            INSERT INTO "careerfit_shadow_comparisons"
+                ("userId", "schoolId", "runId", "rulesVersion", "comparatorVersion", "projectionVersion",
+                 "comparable", "primaryCause", "spearmanRho", "topThreeOverlap",
+                 "engineRanking", "legacyRanking", "disagreements")
+            VALUES (@u, @s, @r, '1.0.0-draft.1', 'v1', 'synthetic', @c, 'AGREEMENT', @rho, @top,
+                    '[]'::jsonb, '[]'::jsonb, '{}'::jsonb)
+            """, admin);
+        command.Parameters.AddWithValue("u", StudentA1);
+        command.Parameters.AddWithValue("s", SchoolA);
+        command.Parameters.AddWithValue("r", RunA1);
+        command.Parameters.AddWithValue("c", comparable);
+        command.Parameters.AddWithValue("rho", withMetrics ? 1.0 : (object)DBNull.Value);
+        command.Parameters.AddWithValue("top", withMetrics ? (short)3 : (object)DBNull.Value);
+
+        var refused = await Assert.ThrowsAsync<PostgresException>(() => command.ExecuteNonQueryAsync());
+        Assert.Equal("23514", refused.SqlState);   // check_violation
+        Assert.Contains("metrics_match_comparable", refused.Message, StringComparison.Ordinal);
+    }
+
+    /// <summary>A cause spelling this build does not emit is refused, so an unparseable row cannot be written.</summary>
+    [Fact]
+    public async Task Shadow_comparison_refuses_a_cause_the_comparator_does_not_emit()
+    {
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        await using var command = new NpgsqlCommand(
+            """
+            INSERT INTO "careerfit_shadow_comparisons"
+                ("userId", "schoolId", "runId", "rulesVersion", "comparatorVersion", "projectionVersion",
+                 "comparable", "primaryCause", "engineRanking", "legacyRanking", "disagreements")
+            VALUES (@u, @s, @r, '1.0.0-draft.1', 'v1', 'synthetic', false, 'PROBABLY_FINE',
+                    '[]'::jsonb, '[]'::jsonb, '{}'::jsonb)
+            """, admin);
+        command.Parameters.AddWithValue("u", StudentA1);
+        command.Parameters.AddWithValue("s", SchoolA);
+        command.Parameters.AddWithValue("r", RunA1);
+
+        var refused = await Assert.ThrowsAsync<PostgresException>(() => command.ExecuteNonQueryAsync());
+        Assert.Equal("23514", refused.SqlState);
+    }
+
     // ---- contexts ----
 
     private static RequestContext Student(string userId, string? schoolId) => Ctx(userId, FormMapsRoles.Student, schoolId);
@@ -524,6 +674,45 @@ public sealed class CareerFitRlsTests : IClassFixture<CareerFitDatabaseFixture>,
         }
 
         return (long)(await command.ExecuteScalarAsync())!;
+    }
+
+    /// <summary>Shadow-comparison ids this caller's RLS session can see, sorted .NET-side like <c>ReadRunIdsAsync</c>.</summary>
+    private async Task<Guid[]> VisibleShadowsAsync(RequestContext context)
+    {
+        await using var session = await Factory().OpenReadOnlyAsync(context);
+        var command = session.Connection.CreateCommand();
+        command.Transaction = session.Transaction;
+        command.CommandText = """SELECT "id" FROM "careerfit_shadow_comparisons" """;
+        var ids = new List<Guid>();
+        await using var reader = await command.ExecuteReaderAsync();
+        while (await reader.ReadAsync())
+        {
+            ids.Add(reader.GetGuid(0));
+        }
+
+        return ids.OrderBy(g => g).ToArray();
+    }
+
+    /// <summary>A complete, valid shadow row, appended on the CALLER's session so the policy's WITH CHECK decides.</summary>
+    private static async Task<int> InsertShadowAsync(
+        FormMapsDatabaseSession session, Guid id, string userId, string? schoolId, Guid runId)
+    {
+        var command = (NpgsqlCommand)session.Connection.CreateCommand();
+        command.Transaction = (NpgsqlTransaction)session.Transaction;
+        command.CommandText =
+            """
+            INSERT INTO "careerfit_shadow_comparisons"
+                ("id", "userId", "schoolId", "runId", "rulesVersion", "discGraph", "comparatorVersion",
+                 "projectionVersion", "comparable", "primaryCause", "spearmanRho", "topThreeOverlap",
+                 "engineRanking", "legacyRanking", "disagreements")
+            VALUES (@id, @userId, @schoolId, @runId, '1.0.0-draft.1', 1, 'v1', 'synthetic', true,
+                    'AGREEMENT', 1.0, 3, '[]'::jsonb, '[]'::jsonb, '{}'::jsonb)
+            """;
+        command.Parameters.AddWithValue("id", id);
+        command.Parameters.AddWithValue("userId", userId);
+        command.Parameters.AddWithValue("schoolId", (object?)schoolId ?? DBNull.Value);
+        command.Parameters.AddWithValue("runId", runId);
+        return await command.ExecuteNonQueryAsync();
     }
 
     private static async Task<int> InsertRunAsync(FormMapsDatabaseSession session, Guid id, string userId, string? schoolId)
@@ -646,6 +835,17 @@ public sealed class CareerFitRlsTests : IClassFixture<CareerFitDatabaseFixture>,
                 ('{{RunA2}}',   '{{StudentA2}}',   '{{SchoolA}}', '1.0.0-draft.1', 2, '{"pca":"snapshot"}'::jsonb, '{"coverage":1}'::jsonb),
                 ('{{RunB1}}',   '{{StudentB1}}',   '{{SchoolB}}', '1.0.0-draft.1', 2, '{"pca":"snapshot"}'::jsonb, '{"coverage":1}'::jsonb),
                 ('{{RunSolo}}', '{{SoloStudent}}', NULL,        '1.0.0-draft.1', 1, '{"pca":"snapshot"}'::jsonb, '{"coverage":1}'::jsonb);
+
+            -- FM-CF-013: one shadow comparison per run, so every isolation case below has a shadow row to
+            -- assert on over the SAME seed as the run it measures.
+            INSERT INTO "careerfit_shadow_comparisons"
+                ("id", "userId", "schoolId", "runId", "rulesVersion", "discGraph", "comparatorVersion",
+                 "projectionVersion", "comparable", "primaryCause", "spearmanRho", "topThreeOverlap",
+                 "engineRanking", "legacyRanking", "disagreements") VALUES
+                ('{{ShadowA1}}',   '{{StudentA1}}',   '{{SchoolA}}', '{{RunA1}}',   '1.0.0-draft.1', 1, 'v1', 'synthetic', true,  'AGREEMENT', 1.0, 3, '[]'::jsonb, '[]'::jsonb, '{}'::jsonb),
+                ('{{ShadowA2}}',   '{{StudentA2}}',   '{{SchoolA}}', '{{RunA2}}',   '1.0.0-draft.1', 1, 'v1', 'synthetic', true,  'AGREEMENT', 1.0, 3, '[]'::jsonb, '[]'::jsonb, '{}'::jsonb),
+                ('{{ShadowB1}}',   '{{StudentB1}}',   '{{SchoolB}}', '{{RunB1}}',   '1.0.0-draft.1', 1, 'v1', 'synthetic', true,  'AGREEMENT', 1.0, 3, '[]'::jsonb, '[]'::jsonb, '{}'::jsonb),
+                ('{{ShadowSolo}}', '{{SoloStudent}}', NULL,        '{{RunSolo}}', '1.0.0-draft.1', 1, 'v1', 'synthetic', false, 'LEGACY_LOCKED', NULL, NULL, '[]'::jsonb, '[]'::jsonb, '{}'::jsonb);
             """, admin);
         await seed.ExecuteNonQueryAsync();
 

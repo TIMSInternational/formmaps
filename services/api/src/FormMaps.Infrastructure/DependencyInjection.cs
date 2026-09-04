@@ -4,6 +4,7 @@ using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.CareerFit;
 using FormMaps.Application.CareerFit.Adapters;
+using FormMaps.Application.CareerFit.Shadow;
 using FormMaps.Application.Calendar;
 using FormMaps.Application.CourseImport;
 using FormMaps.Application.CurriculumFrameworks;
@@ -377,6 +378,18 @@ public static class DependencyInjection
         // can serve the scores and the explanation without re-scoring (and without writing a run per page view).
         services.AddScoped<ICareerFitRunReader, CareerFitRunReader>();
         services.AddScoped<ICareerFitEvaluator, CareerFitEvaluator>();
+
+        // FM-CF-013's shadow arm. Registered, and reachable from NO route: FM-CF-012 mapped seven
+        // endpoints and none of them touches this, so the job runs only where an operator invokes it.
+        // Every one of these takes the CALLER's RequestContext and opens its own RLS session with it --
+        // there is no bypass session anywhere in this slice, which is the difference from
+        // BillingShadowRepository (its shadow tables hold no tenant-scoped student data and carry no
+        // policy; careerfit_shadow_comparisons holds both and does). The runner's constructor asserts the
+        // embedded projection still agrees with the loaded rule set and warns, loudly and once, that the
+        // projection is INCOMPLETE until the legacy cluster vocabulary is filled in.
+        services.AddScoped<ILegacyCareerScoreReader, LegacyCareerScoreReader>();
+        services.AddScoped<ICareerFitShadowWriter, CareerFitShadowWriter>();
+        services.AddScoped<ICareerFitShadowRunner, CareerFitShadowRunner>();
 
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IQuestion360Reader, Question360Reader>();

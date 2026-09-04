@@ -37,6 +37,9 @@ CREATE TABLE "bookings" (id text PRIMARY KEY);
 -- GRANT and to nothing else. The real tables' RLS is the CareerFit fixture's subject, not this one's.
 CREATE TABLE "careerfit_family_results" (id text PRIMARY KEY);
 CREATE TABLE "careerfit_runs" (id text PRIMARY KEY);
+-- FM-CF-013: the shadow comparison table (infra/aws/sql/careerfit-shadow-tables.sql). Same bareness,
+-- same reason, and the same append-only verb set as the run pair above (role script section 4.8).
+CREATE TABLE "careerfit_shadow_comparisons" (id text PRIMARY KEY);
 CREATE TABLE "category_requirements" (id text PRIMARY KEY);
 CREATE TABLE "coaches" (id text PRIMARY KEY);
 CREATE TABLE "college_essays" (id text PRIMARY KEY);

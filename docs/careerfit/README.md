@@ -12,6 +12,8 @@ FormMaps memory chain.
 docs/careerfit/
   sources/      TIMS deliverables, vendored byte-for-byte (workbook, model config, reference engine)
   rules/        careerfit-rules.v<version>.json — DERIVED, never hand-edited
+  shadow/       synthetic-shadow-cohort.ndjson — FM-CF-013's SYNTHETIC export fixture
+  careerfit-shadow-report.md   GENERATED from that fixture; not a measurement
   careerfit.manifest.json
 tools/careerfit/
   xlsx_reader.py              namespace-aware reader for the workbook (x: prefixes, sharedStrings, absolute rels)
@@ -20,6 +22,7 @@ tools/careerfit/
   recut_thresholds.py         the measurement behind decision D5 (per-instrument convergence thresholds)
   mc_lib.py                   rules JSON -> matrices, archetypal profile generator, reference-fidelity check
   mc_gate.py                  the CI gate (+ --self-test)
+  shadow_report.py            FM-CF-013: a shadow-table export -> the comparison report
 ```
 
 ## What the rule set is
@@ -118,7 +121,9 @@ The rule set above is consumed, unchanged, by the .NET bounded context under `se
 
 **Status.** Manifest slices FM-CF-002/003/004/005/009 (P1–P3), FM-CF-007/008 (P4),
 FM-CF-010/011 (P5) and FM-CF-012 (P6) are **completed**, integrated on branch `careerfit/p4-p6`
-(FM-CF-012 on `careerfit/endpoints`). FM-CF-006 (seed the 40 360 items) is **blocked on TIMS** and
+(FM-CF-012 on `careerfit/endpoints`). FM-CF-013 (the shadow comparison, branch `careerfit/shadow`)
+is **built and proven on synthetic pairs and has never been run on real data** — see
+[The shadow comparison](#the-shadow-comparison-fm-cf-013--built-never-run-on-real-data). FM-CF-006 (seed the 40 360 items) is **blocked on TIMS** and
 is the reason the 360 engine below is built but idle. The HTTP surface now exists —
 `/api/v1/careerfit/*`, seven routes — and is dark from the frontend: the rewrite that would send a
 browser to it is guarded by `FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET`, which is set nowhere in this repo.
@@ -257,6 +262,86 @@ values the engine does not retain (`CompetencyAttainment`, `EvidenceSupport`). A
 `AssignRelativeFit` is also what lets `F21` be a step at all. Measured after the change: the parity
 fixture regenerates byte-identical and `EvaluateCore` reproduces the reference at **0.0** deviation
 over 10,920 field comparisons.
+
+
+### The shadow comparison (FM-CF-013) — built, never run on real data
+
+The manifest calls this "the only external reference that exists", and the honest headline is that the
+**machinery exists and the measurement has not been taken**. There is no production database access from
+this repository and no real student in any local one, so what is committed is the job, the schema, the
+report generator, and a report generated from **synthetic** pairs and labelled as such in its own first
+paragraph. Running it against a real cohort is a human gate, not an oversight.
+
+```
+services/api/src/FormMaps.Application/CareerFit/Shadow/
+  LegacyCareerRanking.cs         the legacy answer as the platform caches it, + ILegacyCareerScoreReader
+  CareerFitShadowProjection.cs   legacy cluster -> family, from the versioned embedded file
+  CareerFitShadowComparison.cs   the value types and the CAUSE taxonomy
+  CareerFitShadowComparator.cs   pure: run + legacy + projection -> the row (metrics + classification)
+  CareerFitShadowJson.cs         the three jsonb shapes
+  CareerFitShadowRunner.cs       the job: read legacy -> score -> compare -> append
+services/api/src/FormMaps.Infrastructure/CareerFit/
+  LegacyCareerScoreReader.cs     user_career_profiles."careerMatches", caller's read-only RLS session
+  CareerFitShadowWriter.cs       one append, caller's writable RLS session
+infra/aws/sql/careerfit-shadow-tables.sql      careerfit_shadow_comparisons (RLS ENABLE+FORCE, append-only)
+tools/careerfit/shadow_report.py               export -> docs/careerfit/careerfit-shadow-report.md
+docs/careerfit/shadow/synthetic-shadow-cohort.ndjson   24 constructed pairs, produced by the real comparator
+```
+
+**The two engines do not score the same unit, and that is the slice's central problem.** Legacy
+`/careers/score` ranks ~370 individual *programs*, each tagged with a cluster; the .NET engine ranks
+**14 families** and has no catalogue at all. "Rank correlation" does not exist until something says which
+cluster belongs to which family — and the legacy cluster vocabulary **is not in this repository**: the
+catalogue and `GET /careers/clusters` are `formmaps-platform`'s, and exactly one cluster string appears
+anywhere here (the example on `apps/web/src/types/tims.ts:35`). So
+`CareerFit/Data/careerfit-shadow-projection.v0.json` ships with that one evidenced entry and the status
+`INCOMPLETE_PENDING_LEGACY_CLUSTER_VOCABULARY`, and the comparator **fails closed** on it: a pair whose
+legacy evidence reaches fewer than three families is recorded `TAXONOMY_UNMAPPED` with no metrics, rather
+than correlated over whatever happened to map. Two points correlate at exactly ±1 whatever the data says;
+a plausible-looking ρ computed through an invented taxonomy would be worse than no number.
+
+**Rank correlation and top-3 overlap, and deliberately no index delta.** 360 is not seeded (FM-CF-006) and
+personality can be absent, so up to 45% of the model's weight can be constant across every family.
+`CareerFitAbsolute` is uniformly *deflated*, and its distance from a legacy 0–100 `totalScore` measures the
+missing instruments rather than the port. A constant applied to every family cannot reorder them, so the
+**ordering** survives what the values do not. The table has no delta-of-scores column, so there is none to
+misread.
+
+**Every difference is classified by cause, and `UNEXPLAINED` is the only bucket that may indicate a port
+defect.** Pair-level: `LEGACY_ABSENT`, `LEGACY_LOCKED`, `ENGINE_NOT_SCORABLE` (legacy could score the
+student and the engine failed closed — the population the port would refuse to serve on the day of the
+flip; the instrument is *persisted* on the row, not logged), `DISC_GRAPH_MISMATCH` (a run on graph 2 or 3
+measures the graph, not the port — legacy is fed graph 1, which is why `DiscAdapter` defaults to it),
+`TAXONOMY_UNMAPPED`. Family-level: `TAXONOMY_NO_LEGACY_EVIDENCE`, `TIE`, `INPUT_COVERAGE` (the family
+scores a competency the student's report did not carry — real reports carry *fewer* than 24, and 13-of-24
+and 0-of-24 have both been observed), `NAME_JOIN` (that defaulted id exists because a printed name joins no
+catalogue entry — a data defect repaired in the name table), `UNEXPLAINED`. The absent 360 is
+**not** a family-level cause: it is the same constant for every family, cannot explain why one moved, and
+recording it per family would let a real defect hide behind the largest caveat in the project. It is a
+pair-level annotation and a paragraph in the report.
+
+**It cannot touch a user's response.** It never calls legacy `/careers/score` — it reads the cache the
+platform already writes, at the cost (recorded on the row as `legacyObservedAt`) that the legacy half is
+the answer legacy gave when it *last* scored that student. It is mounted on no route. The only row it
+writes that a user could see is the same immutable `careerfit_run` that `POST /careerfit/evaluate` would
+have written. Every reader and writer takes the **caller's** `RequestContext` and opens its own RLS
+session — there is no bypass session anywhere in this slice, which is the difference from
+`BillingShadowRepository` (whose tables hold no tenant-scoped student data and carry no policy).
+
+**Running it for real**, in order: complete the projection from the legacy cluster vocabulary and have TIMS
+review the assignment; apply `careerfit-shadow-tables.sql` then `dotnet-service-role.sql`; invoke
+`ICareerFitShadowRunner.MeasureAsync` per student under a credential whose RLS scope covers the cohort;
+export and regenerate the report. The synthetic banner disappears on its own — it keys on the user ids.
+
+```
+dotnet test services/api/tests/FormMaps.UnitTests --filter "FullyQualifiedName~CareerFitShadow"
+dotnet test services/api/tests/FormMaps.UnitTests --filter "FullyQualifiedName~SyntheticShadowCohortTests"
+dotnet test services/api/tests/FormMaps.IntegrationTests --filter "FullyQualifiedName~CareerFitRlsTests"
+dotnet test services/api/tests/FormMaps.IntegrationTests --filter "FullyQualifiedName~DbRoleGrantsTests"
+python3 tools/careerfit/shadow_report.py            # regenerates the report from the synthetic fixture
+CAREERFIT_SHADOW_EXPORT=docs/careerfit/shadow/synthetic-shadow-cohort.ndjson \
+  dotnet test services/api/tests/FormMaps.UnitTests --filter "FullyQualifiedName~SyntheticShadowCohortTests"
+```
 
 ### Running the tests
 
