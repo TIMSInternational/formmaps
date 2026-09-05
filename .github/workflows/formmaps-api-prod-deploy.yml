@@ -175,11 +175,17 @@ jobs:
         with:
           node-version: 22
 
-      # The same suite CI runs, re-run against the exact commit being shipped.
-      # Deliberately not skippable: "CI was green on the PR" is a claim about a
-      # merge preview, not about this SHA.
-      - name: Test API
-        run: npm run api:test
+      # Was `npm run api:test` -- `dotnet test` over the whole solution, unsharded.
+      # The invariant that step protected is UNCHANGED and still enforced: never
+      # ship a SHA whose full suite has not passed, and "CI was green on the PR"
+      # is still not an acceptable answer. What changed is that the evidence is
+      # now READ from formmaps-api-ci's run for THIS head_sha instead of being
+      # re-derived serially over ~90 minutes. Fails closed when that evidence
+      # does not exist. Full rationale and measurements in the script's header.
+      - name: Require a green CI run for this exact commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/workflows/scripts/require-green-ci.sh
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
