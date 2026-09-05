@@ -1,5 +1,7 @@
--- Schema-only harness DDL for video sessions (FM-091..097). Includes the counselor_sessions table
--- filtered to video-call rows (topic='Video Call'), schools for videoCallsEnabled, and users for joins.
+-- Harness DDL for video sessions (FM-091..097). Includes the counselor_sessions table filtered to
+-- video-call rows (topic='Video Call'), schools for videoCallsEnabled, and users for joins.
+-- Production RLS is applied on top by RlsEnabledDatabaseFixture (formmaps#125): users, counselor_sessions
+-- and counselor_student_assignments are policied; schools is not (see the fixture doc-comment).
 
 CREATE TABLE "users" (
     "id"       text PRIMARY KEY,
