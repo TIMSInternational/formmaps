@@ -380,6 +380,41 @@ GRANT INSERT ON TABLE
     TO formmaps_dotnet_svc;
 
 -- ---------------------------------------------------------------------------
+-- 4.7. CareerFit runs (FM-CF-002): append-only. SELECT + INSERT, and
+--    deliberately NOT UPDATE or DELETE.
+--
+--    `careerfit_runs` and `careerfit_family_results`
+--    (infra/aws/sql/careerfit-schema.sql) hold the engine's inputs snapshot
+--    and every evaluate_owner scalar for one evaluation of one student.
+--    A run is IMMUTABLE by design: the row is the evidence that a given
+--    rules_version, fed these inputs, produced these scores. Nothing may
+--    change after the fact -- a re-evaluation (new inputs, new rules version,
+--    a recut threshold) is a NEW run, ordered after the old one by createdAt,
+--    and the old one stays as the audit of what the student was shown then.
+--
+--    NOTE: why no UPDATE/DELETE, spelled out because the read/write bucket
+--    above is the default and this is a departure from it.
+--      * no UPDATE -- there is no code path that edits a run, and none may
+--        exist: "fix the number in place" is precisely what the FM-CF-013
+--        shadow comparison and the FM-CF-014 threshold recut must never be
+--        able to do to the rows they are measured against.
+--      * no DELETE -- erasure of a student's runs is a data-subject request,
+--        handled by the platform's account-deletion path under the admin
+--        credential, not by the service account on a request path. ON DELETE
+--        CASCADE on the child table is for that path, not for this role.
+--    Unlike audit_events (4.5) there is no immutability trigger on these
+--    tables, so this GRANT is the lock; keep it this narrow.
+--
+--    DbRoleGrantsTests.CareerFit_tables_are_granted_select_and_insert_but_never_update_or_delete
+--    pins this exact verb set; verify-grants.sql carries the same four
+--    expectations per table.
+-- ---------------------------------------------------------------------------
+GRANT SELECT, INSERT ON TABLE
+    public."careerfit_runs",
+    public."careerfit_family_results"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
 -- 5. Full-CRUD tables -- the service also deletes rows here (verified:
 --    DELETE FROM hits in services/api/src, e.g. calendar/holiday and
 --    academic-year cleanup, course-plan removal, data-mapping deletion, and
@@ -417,10 +452,11 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
 --
 -- Do NOT apply that re-derivation blindly. It reports which verbs the code
 -- uses TODAY, which is the right default but is not the rule for every table:
---   * "user_subscriptions" (3b) and "audit_events" (4.5) are withheld verbs on
---     purpose, not for lack of a call site. Re-deriving mechanically would
---     widen both -- audit_events would land in the section-4 bucket and
---     quietly gain UPDATE, defeating the whole point of the table.
+--   * "user_subscriptions" (3b), "audit_events" (4.5) and the careerfit_*
+--     pair (4.7) are withheld verbs on purpose, not for lack of a call site.
+--     Re-deriving mechanically would widen them -- audit_events would land in
+--     the section-4 bucket and quietly gain UPDATE, defeating the whole point
+--     of the table.
 --   * "shadow_payments" (4) is granted despite having no call site yet.
 -- The tests are the backstop: DbRoleGrantsTests pins those exact verb sets and
 -- also fails if a table in the harness's stub schema has no GRANT here at all

@@ -1,6 +1,7 @@
 """Shared Monte Carlo machinery for the CareerFit rule set.
 
-Loads a rule-set JSON (docs/careerfit/rules/*.json), turns it into numpy matrices, generates
+Loads a rule-set JSON (services/api/src/FormMaps.Application/CareerFit/Data/*.json), turns it into
+numpy matrices, generates
 archetypal student profiles from it, and scores them with a vectorised copy of the reference
 engine's formulas. `check_reference_fidelity` proves the vectorised scorer agrees with
 docs/careerfit/sources/formmaps_engine_reference.py -- through `evaluate_owner`, fed the rule
@@ -24,7 +25,9 @@ import numpy as np
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.normpath(os.path.join(HERE, "..", ".."))
 REFERENCE_ENGINE = os.path.join(ROOT, "docs", "careerfit", "sources", "formmaps_engine_reference.py")
-DEFAULT_RULES = os.path.join(ROOT, "docs", "careerfit", "rules", "careerfit-rules.v1.0.0-draft.1.json")
+DEFAULT_RULES = os.path.join(
+    ROOT, "services", "api", "src", "FormMaps.Application", "CareerFit", "Data",
+    "careerfit-rules.v1.0.0-draft.1.json")
 
 FACTORS = ["D", "I", "S", "C"]
 SUBTESTS = ["DC", "RZ", "VN", "MT", "OR"]

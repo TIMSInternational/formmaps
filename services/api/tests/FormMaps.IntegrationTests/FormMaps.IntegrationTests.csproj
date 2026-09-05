@@ -205,6 +205,15 @@
     <EmbeddedResource Include="..\..\..\..\infra\aws\sql\audit-events-schema.sql"
                       Link="Audit\Data\audit-events-schema.sql"
                       CopyToOutputDirectory="PreserveNewest" />
+    <!-- FM-CF-002: platform tables (users/schools/counselor_student_assignments/student_parent_links) the CareerFit
+         DDL's foreign keys and the vendored policies need. The CareerFit tables themselves are NOT in this file. -->
+    <EmbeddedResource Include="CareerFit\Data\careerfit-fixture-schema.sql" />
+    <!-- The REAL production CareerFit DDL (FM-CF-002), by reference for the same reason as audit-events-schema.sql
+         above: its tables, indexes and RLS policies are the entire subject of the CareerFit fixture's tests, and a
+         hand-maintained copy would let production drift out from under a green suite (formmaps#125). Manifest
+         resource name: FormMaps.IntegrationTests.CareerFit.Data.careerfit-schema.sql. -->
+    <EmbeddedResource Include="..\..\..\..\infra\aws\sql\careerfit-schema.sql"
+                      Link="CareerFit\Data\careerfit-schema.sql" />
     <!-- Schema-only DDL mirroring the live Node/Prisma auth tables (users/roles/refresh_tokens/login_attempts/password_reset_tokens/user_settings + touched-column schools subset) for the Testcontainers IAuthRepository harness (Domain 10, Task 5). -->
     <EmbeddedResource Include="Auth\Data\auth-schema.sql" />
     <!-- formmaps#125: byte-for-byte copies of the production RLS policy files (formmaps-platform/api/prisma/rls/*.sql),

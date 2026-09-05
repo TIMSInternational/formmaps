@@ -22,6 +22,18 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- CareerFit rule set (FM-CF-004): the ONE source of truth, derived by tools/careerfit/build_rules.py
+         (which writes exactly here), gated by tools/careerfit/mc_gate.py, never hand-edited.
+         CareerFitRulesJson.LoadEmbedded(version) reads it by resource name.
+         It lives INSIDE services/api on purpose. The Dockerfile builds with the services/api directory as
+         its context (`docker build -f services/api/Dockerfile … services/api`, both deploy workflows), so
+         anything above that directory — docs/ included — simply is not there at image-build time. An
+         earlier revision linked it from docs/careerfit/rules and the container build failed on a guard;
+         same shape as Assessments/Data/lia-percentile-tables.json, which has always lived here. -->
+    <EmbeddedResource Include="CareerFit\Data\careerfit-rules.v1.0.0-draft.1.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="Stripe.net" Version="52.2.0" />
   </ItemGroup>

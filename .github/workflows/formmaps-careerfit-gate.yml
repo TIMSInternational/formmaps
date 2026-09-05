@@ -1,6 +1,6 @@
 name: formmaps-careerfit-gate
 
-# The CareerFit rule set (docs/careerfit/rules) is derived, not authored: build_rules.py turns
+# The CareerFit rule set (services/api/.../CareerFit/Data) is derived, not authored: build_rules.py turns
 # the vendored TIMS workbook + model config + the reviewed decisions into JSON, and mc_gate.py
 # proves the JSON still recovers the archetypes it encodes on the spec's own engine. This job
 # keeps both facts true on every PR.
