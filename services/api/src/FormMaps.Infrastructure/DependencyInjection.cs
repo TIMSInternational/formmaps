@@ -216,6 +216,10 @@ public static class DependencyInjection
         // users."stripeCustomerId" column (caller's own tenant-scoped RLS session), consumed by
         // StripeGateway.GetOrCreateCustomerAsync to look up an existing Stripe customer before creating one.
         services.AddScoped<FormMaps.Application.Billing.ILiveCustomerReader, FormMaps.Infrastructure.Billing.LiveCustomerReader>();
+        // Wave 3 billing-subscription-parity: ILiveSchoolAffiliationReader -- read-only reader of the LIVE
+        // users."schoolId" column (caller's own tenant-scoped RLS session), consumed by GET /status for
+        // legacy user.ts:304-311's school-student short-circuit.
+        services.AddScoped<FormMaps.Application.Billing.ILiveSchoolAffiliationReader, FormMaps.Infrastructure.Billing.LiveSchoolAffiliationReader>();
         // Domain 7a: Daily.co video-provider client (FM-094). First HttpClient-based external integration in
         // this codebase — 15s timeout matches legacy's AbortSignal.timeout(15000).
         services.AddHttpClient<IDailyClient, DailyClient>(client =>

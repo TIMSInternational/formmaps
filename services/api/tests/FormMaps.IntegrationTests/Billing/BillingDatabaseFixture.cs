@@ -114,7 +114,8 @@ public sealed class BillingDatabaseFixture : RlsEnabledDatabaseFixture, IAsyncLi
     /// active locally, never linked to Stripe (comped/manual grant, pre-Stripe legacy row, direct insert).
     /// </summary>
     public async Task SeedLiveSubscriptionAsync(
-        string userId, string? stripeSubscriptionId, string status = "active", bool isActive = true)
+        string userId, string? stripeSubscriptionId, string status = "active", bool isActive = true, bool cancelAtPeriodEnd = false,
+        string planId = "plan_1")
     {
         await using var connection = new NpgsqlConnection(AdminConnectionString);
         await connection.OpenAsync();
@@ -122,16 +123,21 @@ public sealed class BillingDatabaseFixture : RlsEnabledDatabaseFixture, IAsyncLi
         plan.CommandText = """INSERT INTO "subscription_plans" ("id", "name", "price", "interval") VALUES ('plan_1', 'Pro', 29.99, 'month') ON CONFLICT DO NOTHING""";
         await plan.ExecuteNonQueryAsync();
 
+        // planId is caller-chosen. This shadow schema declares no FK on it (schema.prisma:532 does relate
+        // it to subscription_plans), so the empty-string shape legacy's `planId || null` coerces is
+        // seedable here without a matching plan row.
         await using var live = connection.CreateCommand();
         live.CommandText = """
-            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive", "updatedAt")
-            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive, TIMESTAMPTZ '2000-01-01 00:00:00Z')
+            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive", "cancelAtPeriodEnd", "updatedAt")
+            VALUES (@id, @userId, @planId, @status, @subId, @isActive, @cancelAtPeriodEnd, TIMESTAMPTZ '2000-01-01 00:00:00Z')
             """;
         AddParam(live, "id", Guid.NewGuid().ToString());
         AddParam(live, "userId", userId);
+        AddParam(live, "planId", planId);
         AddParam(live, "status", status);
         AddParam(live, "subId", (object?)stripeSubscriptionId ?? DBNull.Value);
         AddParam(live, "isActive", isActive);
+        AddParam(live, "cancelAtPeriodEnd", cancelAtPeriodEnd);
         await live.ExecuteNonQueryAsync();
     }
 

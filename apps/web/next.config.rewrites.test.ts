@@ -148,9 +148,19 @@ describe("next.config rewrites -- /api/v1/migration -> .NET (issue #82)", () => 
 describe("next.config rewrites -- legacy /api/stripe billing paths -> .NET (issue #98)", () => {
   const CANCEL = "/api/stripe/cancel-subscription";
   const PORTAL = "/api/stripe/billing-portal";
-  // Node-only /api/stripe paths with no .NET twin. If a prefix rule (/api/stripe/:path*) is ever
-  // substituted for the two exact rules, these start resolving to .NET and 404.
-  const NODE_ONLY = ["/api/stripe/config", "/api/stripe/status/cs_test_123", "/api/stripe/user/u_1"];
+  // Wave 3 billing-subscription-parity review: GET status had the same #98 gap. subscriptionStatusService.ts
+  // requests /api/v1/user/subscription/status (a routes/user.ts route, not /api/stripe), which #98 did not
+  // alias -- so the status payload .NET ports was unreachable on a flip and kept going to Node.
+  const STATUS = "/api/v1/user/subscription/status";
+  // Node-only paths with no .NET twin. If a prefix rule (/api/stripe/:path* or /api/v1/user/:path*) is
+  // ever substituted for the exact rules, these start resolving to .NET and 404.
+  const NODE_ONLY = [
+    "/api/stripe/config",
+    "/api/stripe/status/cs_test_123",
+    "/api/stripe/user/u_1",
+    "/api/v1/user/me",
+    "/api/v1/user/profile",
+  ];
 
   const FLAG_ON = {
     FORMMAPS_DOTNET_API_BASE_URL: DOTNET,
@@ -164,28 +174,33 @@ describe("next.config rewrites -- legacy /api/stripe billing paths -> .NET (issu
     FORMMAPS_ROUTE_BILLING_TO_DOTNET: undefined,
   };
 
-  it("routes both legacy billing paths to .NET when the billing flag is on", async () => {
+  it("routes all three legacy billing paths to .NET when the billing flag is on", async () => {
     const afterFiles = await loadAfterFiles(FLAG_ON);
 
     expect(afterFiles).toContainEqual({ source: CANCEL, destination: `${DOTNET}${CANCEL}` });
     expect(afterFiles).toContainEqual({ source: PORTAL, destination: `${DOTNET}${PORTAL}` });
+    expect(afterFiles).toContainEqual({ source: STATUS, destination: `${DOTNET}${STATUS}` });
     // Source == destination, the shape every other pair in this file uses -- no remapping rewrite.
     expect(winningRule(afterFiles, CANCEL)!.destination).toBe(`${DOTNET}${CANCEL}`);
     expect(winningRule(afterFiles, PORTAL)!.destination).toBe(`${DOTNET}${PORTAL}`);
+    expect(winningRule(afterFiles, STATUS)!.destination).toBe(`${DOTNET}${STATUS}`);
   });
 
-  it("places both legacy billing rules BEFORE the Node catch-all, or they would never match", async () => {
+  it("places all three legacy billing rules BEFORE the Node catch-all, or they would never match", async () => {
     const afterFiles = await loadAfterFiles(FLAG_ON);
 
     const catchAllIndex = afterFiles.findIndex((r) => r.source === CATCH_ALL);
     const cancelIndex = afterFiles.findIndex((r) => r.source === CANCEL);
     const portalIndex = afterFiles.findIndex((r) => r.source === PORTAL);
+    const statusIndex = afterFiles.findIndex((r) => r.source === STATUS);
 
     expect(catchAllIndex).toBeGreaterThanOrEqual(0);
     expect(cancelIndex).toBeGreaterThanOrEqual(0);
     expect(portalIndex).toBeGreaterThanOrEqual(0);
+    expect(statusIndex).toBeGreaterThanOrEqual(0);
     expect(cancelIndex).toBeLessThan(catchAllIndex);
     expect(portalIndex).toBeLessThan(catchAllIndex);
+    expect(statusIndex).toBeLessThan(catchAllIndex);
   });
 
   // NEGATIVE CONTROL 1. This is the assertion that fails if the entries are ever hoisted out of the
@@ -196,9 +211,11 @@ describe("next.config rewrites -- legacy /api/stripe billing paths -> .NET (issu
 
     expect(afterFiles.some((r) => r.source === CANCEL)).toBe(false);
     expect(afterFiles.some((r) => r.source === PORTAL)).toBe(false);
+    expect(afterFiles.some((r) => r.source === STATUS)).toBe(false);
     expect(afterFiles.filter((r) => r.source.startsWith("/api/stripe"))).toEqual([]);
+    expect(afterFiles.filter((r) => r.source.startsWith("/api/v1/user"))).toEqual([]);
 
-    for (const path of [CANCEL, PORTAL]) {
+    for (const path of [CANCEL, PORTAL, STATUS]) {
       const winner = winningRule(afterFiles, path);
       expect(winner).toBeDefined();
       expect(winner!.source).toBe(CATCH_ALL);
@@ -206,13 +223,14 @@ describe("next.config rewrites -- legacy /api/stripe billing paths -> .NET (issu
     }
   });
 
-  // NEGATIVE CONTROL 2. Proves the slice is path-scoped rather than a /api/stripe/:path* prefix:
-  // Node exclusively owns these paths and .NET has no twin, so they must keep going to Node in BOTH
-  // flag states. A prefix rule would pass every assertion above and 404 all of these in production.
+  // NEGATIVE CONTROL 2. Proves the slice is path-scoped rather than a /api/stripe/:path* (or
+  // /api/v1/user/:path*) prefix: Node exclusively owns these paths and .NET has no twin, so they must
+  // keep going to Node in BOTH flag states. A prefix rule would pass every assertion above and 404 all
+  // of these in production.
   it.each([
     ["flag on", FLAG_ON],
     ["flag off", FLAG_OFF],
-  ])("never rewrites the Node-only /api/stripe paths (%s)", async (_label, env) => {
+  ])("never rewrites the Node-only /api/stripe and /api/v1/user paths (%s)", async (_label, env) => {
     const afterFiles = await loadAfterFiles(env);
 
     for (const path of NODE_ONLY) {

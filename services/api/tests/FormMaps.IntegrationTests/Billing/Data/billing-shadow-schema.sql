@@ -85,6 +85,10 @@ CREATE TABLE IF NOT EXISTS "users" (
 -- self OR same school) names "schoolId" -- without the column the apply fails with 42703. Nullable, like
 -- production: the endpoint tests seed school-less callers who reach their own row on the self branch, and
 -- the cross-school negative control seeds two schools to exercise the other one.
+--
+-- Wave 3 billing-subscription-parity: GET /status now reads users."schoolId" first (legacy
+-- api/src/routes/user.ts:304-311 short-circuits any school-affiliated user to hasActiveSubscription:true
+-- before touching user_subscriptions), so the stub needs the column ILiveSchoolAffiliationReader selects.
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "schoolId" TEXT;
 
 CREATE TABLE IF NOT EXISTS "stripe_events" (
