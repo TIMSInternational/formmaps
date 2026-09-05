@@ -43,6 +43,7 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
     private static readonly string[] AllTables =
     [
         "careerfit_family_results", "careerfit_runs",
+        "vocational_responses", "evaluation_groups",
         "personality_assessment_sessions", "lia_assessment_sessions", "pca_results",
         "student_parent_links", "counselor_student_assignments", "users", "schools",
     ];
@@ -262,7 +263,7 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         // 'on' and both identity GUCs come back unset.
         var factory = new SessionSpy(Factory());
         var evaluator = new CareerFitEvaluator(
-            new CareerFitInputReader(factory), new CareerFitRunWriter(factory), Provider, NoDataV360Adapter.Instance);
+            new CareerFitInputReader(factory), new CareerFitRunWriter(factory), Provider, new VocationalV360Adapter(Provider));
 
         // A COUNSELOR, not the student: the caller's identity and the run's subject differ, so a writer that
         // silently ran as the subject (or as nobody) is distinguishable from one that ran as the caller.
@@ -312,7 +313,7 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         await using var admin = await _adminDataSource.OpenConnectionAsync();
 
         // A2 gets a LIA session but loses its personality session: PERSONALITY is the missing instrument.
-        await SeedLiaSessionAsync(admin, "lia-a2", StudentA2, SampleStudent.PercentilesJson, "2026-09-01 10:00:00");
+        await SeedLiaSessionAsync(admin, "lia-a2", StudentA2, CareerFitSampleStudent.PercentilesJson, "2026-09-01 10:00:00");
         await ExecAsync(admin, $"""DELETE FROM "personality_assessment_sessions" WHERE "user_id" = '{StudentA2}' """);
         var personality = await Assert.ThrowsAsync<CareerFitInputException>(
             () => Evaluator().EvaluateAsync(Student(StudentA2, SchoolA), StudentA2));
@@ -349,7 +350,7 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
     public async Task Reader_mirrors_PersonalityResultReader_a_newest_completed_session_without_a_resolved_type_is_no_results()
     {
         await using var admin = await _adminDataSource.OpenConnectionAsync();
-        await SeedPersonalitySessionAsync(admin, "pers-a1-untyped", StudentA1, SampleStudent.DimensionScoresJson(), "2026-09-02 09:00:00", resolvedType: null);
+        await SeedPersonalitySessionAsync(admin, "pers-a1-untyped", StudentA1, CareerFitSampleStudent.DimensionScoresJson(), "2026-09-02 09:00:00", resolvedType: null);
 
         var ex = await Assert.ThrowsAsync<CareerFitInputException>(
             () => Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1));
@@ -380,6 +381,310 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         Assert.Equal(2, quality.GetProperty("warnings").EnumerateArray().Count(w => w.GetProperty("code").GetString() == InputWarningCodes.MilPercentileClamped));
     }
 
+    // ---- 360 (FM-CF-007/008) ----
+
+    /// <summary>
+    /// The whole 360 path on the real tables: rows written the way the vocational chassis writes them, read
+    /// back through the chassis's OWN loader, aggregated to variable level, and scored per family from the
+    /// rule set's relevance weights. The item TEXTS do not exist (FM-CF-006 is blocked on TIMS) and none is
+    /// invented here — only the codes, which are the rule set's own, and synthetic ratings.
+    ///
+    /// This is the SELF-ONLY shape V1 ships, so every claim about a single rater is made against the
+    /// database: real scores, no consensus, NOT_DETERMINABLE, and 360 never counted as a fourth STRONG
+    /// instrument. IND is seeded deliberately and must not appear.
+    /// </summary>
+    [Fact]
+    public async Task Seeded_360_item_responses_score_at_variable_level_with_self_only_confidence()
+    {
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        await SeedRaterGroupAsync(admin, "eg-a1-self", StudentA1, "self",
+            [(1, "AN", 5), (2, "AN", 4), (3, "AST", 5), (7, "OA", 3), (27, "EA", 5), (36, "IND", 5)]);
+
+        var run = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+
+        // Variable level: one aggregate per seeded code, IND excluded by name (FM-CF-008).
+        Assert.Equal(["AN", "AST", "OA", "EA"], run.Inputs.V360Aggregates.Keys.ToArray());
+        Assert.Equal(87.5, run.Inputs.V360Aggregates["AN"].Score);    // mean(100, 75), SELF alone
+        Assert.Equal(100.0, run.Inputs.V360Aggregates["AST"].Score);
+        Assert.Equal(50.0, run.Inputs.V360Aggregates["OA"].Score);
+
+        // One rater: consensus is undefined, and nothing manufactures one.
+        Assert.All(run.Inputs.V360Aggregates.Values, a => Assert.Null(a.Consensus));
+        Assert.All(run.Inputs.V360Aggregates.Values, a => Assert.Null(a.ConfidenceIndex));
+        Assert.Equal(Confidence.NotDeterminable, run.Inputs.CareerFit360Confidence);
+
+        Assert.Equal(V360Sources.VocationalResponses, run.Quality.V360Source);
+        Assert.Contains(run.Quality.Warnings, w => w.Code == InputWarningCodes.V360SingleRater);
+        Assert.Contains(run.Quality.Warnings, w => w.Code == InputWarningCodes.V360IndExcluded);
+        Assert.DoesNotContain(run.Quality.Warnings, w => w.Code == InputWarningCodes.V360NoData);
+
+        // Family level: family 1's rules carry AN, AST, OA, MR, EA and IND. Four of them are scored, IND is
+        // not, MR was never answered — so F06's weighted mean runs over exactly those four.
+        var family1 = run.Families.Single(f => f.OwnerId == 1);
+        Assert.True(family1.CareerFit360 > 0.0);
+        var expected = CareerFitFormulas.CalculateCareerFit360(run.Inputs.V360Aggregates, Provider.Rules.Family(1).V360Rules);
+        Assert.Equal(expected.Score, family1.CareerFit360);
+        Assert.Equal(["AN", "AST", "OA", "EA"], expected.Variables.Keys.ToArray());
+
+        // Persisted, and still not a fourth STRONG instrument: NOT_DETERMINABLE downgrades a STRONG 360.
+        Assert.Equal(
+            family1.CareerFit360,
+            await DoubleAsync(admin, $"""SELECT "careerfit360" FROM "careerfit_family_results" WHERE "runId" = '{run.Id}' AND "familyId" = 1"""));
+        Assert.DoesNotContain(run.Families, f => f.ConvergenceLevel == Convergence.VeryHigh);
+
+        var quality = JsonDocument.Parse(await StringAsync(admin, $"""SELECT "inputQuality"::text FROM "careerfit_runs" WHERE "id" = '{run.Id}' """)).RootElement;
+        Assert.Equal(V360Sources.VocationalResponses, quality.GetProperty("v360_source").GetString());
+        Assert.True(quality.GetProperty("evidence").GetProperty("360").GetBoolean());
+
+        // FM-CF-010's aggregation half, on the real column. F01-F05 run ONCE PER STUDENT (the aggregate map
+        // is global), so they ride on the run's inputQuality rather than on fourteen family rows, and the
+        // count is derivable from the variable trail beside them: per variable, one F01 per answering rater
+        // source plus F02/F03/F04/F05, then the instrument arm's four.
+        var variables = quality.GetProperty("v360_variables").EnumerateArray().ToList();
+        Assert.Equal(["AN", "AST", "OA", "EA"], variables.Select(v => v.GetProperty("code").GetString()));
+        var expectedSteps = variables.Sum(v => v.GetProperty("source_scores").EnumerateObject().Count() + 4) + 4;
+        Assert.Equal(
+            (long)expectedSteps,
+            await ScalarAsync(admin, $"""SELECT jsonb_array_length("inputQuality" -> 'v360_formula_steps') FROM "careerfit_runs" WHERE "id" = '{run.Id}' """));
+        Assert.Equal(
+            (long)variables.Count,
+            await ScalarAsync(admin, $"""SELECT count(*) FROM "careerfit_runs", jsonb_array_elements("inputQuality" -> 'v360_formula_steps') s WHERE "id" = '{run.Id}' AND s ->> 'step_id' = 'F02' AND s ->> 'target' <> '360'"""));
+    }
+
+    /// <summary>
+    /// The fallback is a DECISION, made on the real rows: a student whose chassis rows exist but carry no
+    /// 360 variable code (every student until FM-CF-006 seeds the items) gets today's run — empty
+    /// aggregates, NOT_DETERMINABLE, careerfit360 0.0 on every family, v360_source NO_DATA.
+    /// </summary>
+    [Fact]
+    public async Task Rater_groups_with_no_360_variable_code_still_produce_the_NO_DATA_run()
+    {
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        await SeedRaterGroupAsync(admin, "eg-a1-legacy", StudentA1, "self",
+            [(1, "communication", 5), (2, "leadership", 4)]);   // legacy vocational dimensions, not 360 variables
+
+        var run = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+
+        Assert.Empty(run.Inputs.V360Aggregates);
+        Assert.Equal(Confidence.NotDeterminable, run.Inputs.CareerFit360Confidence);
+        Assert.Equal(V360Sources.NoData, run.Quality.V360Source);
+        Assert.Contains(run.Quality.Warnings, w => w.Code == InputWarningCodes.V360NoData);
+        Assert.All(run.Families, f => Assert.Equal(0.0, f.CareerFit360));
+
+        // Nothing executed, so nothing is recorded: the aggregation ledger is an EMPTY array on the column,
+        // never a row of zeros. This is the shape every run has until FM-CF-006 seeds the 40 items.
+        Assert.Equal(
+            0L,
+            await ScalarAsync(admin, $"""SELECT jsonb_array_length("inputQuality" -> 'v360_formula_steps') FROM "careerfit_runs" WHERE "id" = '{run.Id}' """));
+        Assert.Equal(
+            0L,
+            await ScalarAsync(admin, $"""SELECT jsonb_array_length("inputQuality" -> 'v360_variables') FROM "careerfit_runs" WHERE "id" = '{run.Id}' """));
+    }
+
+    /// <summary>An INCOMPLETE rater group is not evidence: the chassis's own loader filters on isEvaluationCompleted, and CareerFit inherits that rather than deciding it again.</summary>
+    [Fact]
+    public async Task An_incomplete_rater_group_is_not_read_as_360_evidence()
+    {
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+        await SeedRaterGroupAsync(admin, "eg-a1-open", StudentA1, "self", [(1, "AN", 5)], completed: false);
+
+        var run = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+
+        Assert.Empty(run.Inputs.V360Aggregates);
+        Assert.Equal(V360Sources.NoData, run.Quality.V360Source);
+    }
+
+    [Fact]
+    public async Task The_formula_step_ledger_lands_in_the_audit_jsonb_with_the_derived_row_count_per_family()
+    {
+        // FM-CF-010's acceptance, on the real column: "audit row count == formula steps per family per
+        // student". The ledger ships WITH the scores -- it is inside careerfit_family_results."audit", written
+        // by the same INSERT as the family row, so counting it is jsonb_array_length on that row and there is
+        // no second table, no second write and no way to read a score without its derivation.
+        //
+        // The expected number is DERIVED here from the rule set the process loaded, deliberately re-derived
+        // rather than shared with FormMaps.UnitTests/CareerFit/CareerFitAuditLedgerTests: the database
+        // assertion must not depend on the same helper the unit test uses. Reading evaluate_owner top to
+        // bottom -- F07/F08/F09 per weighted non-OPEN factor of each route, F10 per route, F12/F13 per
+        // competency rule with a scored role, F18 per personality route, F17 per MIL subtest, F22 per
+        // convergence instrument, F23 only where F22 did not answer STRONG, and one each of F11 F14 F15 F16
+        // F19 F06 F20 F21.
+        var run = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+        await using var admin = await _adminDataSource.OpenConnectionAsync();
+
+        var rules = Provider.Rules;
+        var expectedTotal = 0;
+        foreach (var family in run.Families)
+        {
+            var familyRules = rules.Family(family.OwnerId);
+            var fits = new (string Instrument, double Fit)[]
+            {
+                ("PCA", family.PcaIndex), ("MIL", family.MilFit), ("PERSONALITY", family.PersonalityFit), ("360", family.CareerFit360),
+            };
+
+            var expected =
+                familyRules.PcaRoutes.Sum(id => rules.Archetypes[id].Factors.Count(f => f.Direction != "OPEN" && f.Weight > 0))
+                + familyRules.PcaRoutes.Count
+                + familyRules.CompetencyRules.Count(r => rules.Weights.CompetencyRole.ContainsKey(r.Role))
+                + familyRules.PersonalityRoutes.Count
+                + fits.Count(f => f.Fit < rules.Thresholds.Convergence.PerInstrument![f.Instrument].StrongMin)
+                + 5 + 4 + 8;
+            expectedTotal += expected;
+
+            var stored = await ScalarAsync(
+                admin,
+                $"""
+                 SELECT jsonb_array_length("audit" -> 'formula_steps')
+                 FROM "careerfit_family_results" WHERE "runId" = '{run.Id}' AND "familyId" = {family.OwnerId}
+                 """);
+            Assert.Equal((long)expected, stored);
+            Assert.Equal(expected, family.AuditSteps.Count);
+        }
+
+        // The whole run, counted in SQL: nothing is lost between the engine and the column.
+        Assert.Equal(
+            (long)expectedTotal,
+            await ScalarAsync(admin, $"""SELECT sum(jsonb_array_length("audit" -> 'formula_steps')) FROM "careerfit_family_results" WHERE "runId" = '{run.Id}' """));
+
+        // Every step id is an F01-F23 formula, and the four blocks of evaluate_owner still travel beside it.
+        var audit = JsonDocument.Parse(await StringAsync(
+            admin, $"""SELECT "audit"::text FROM "careerfit_family_results" WHERE "runId" = '{run.Id}' AND "rank_position" = 1""")).RootElement;
+        // As a SET, not a sequence: jsonb normalises object key order (shortest key first, then by bytes), so
+        // the serialiser's member order is a unit-test claim (CareerFitRunJsonTests) and not a column one.
+        Assert.Equal(
+            ["audit_inputs", "convergence_detail", "critical_gaps", "formula_steps", "mil_relative_strengths"],
+            audit.EnumerateObject().Select(p => p.Name).OrderBy(n => n, StringComparer.Ordinal));
+        foreach (var step in audit.GetProperty("formula_steps").EnumerateArray())
+        {
+            Assert.Matches("^F(0[1-9]|1[0-9]|2[0-3])$", step.GetProperty("step_id").GetString());
+            Assert.NotEmpty(step.GetProperty("rule").EnumerateObject());
+        }
+
+        // A run is immutable, so a second evaluation is a second ledger, and the first one is untouched.
+        var second = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+        Assert.Equal(
+            (long)expectedTotal,
+            await ScalarAsync(admin, $"""SELECT sum(jsonb_array_length("audit" -> 'formula_steps')) FROM "careerfit_family_results" WHERE "runId" = '{run.Id}' """));
+        Assert.Equal(
+            (long)(2 * expectedTotal),
+            await ScalarAsync(admin, $"""SELECT sum(jsonb_array_length("audit" -> 'formula_steps')) FROM "careerfit_family_results" WHERE "runId" IN ('{run.Id}', '{second.Id}')"""));
+    }
+
+    // ---- FM-CF-012: the run READER, on the same seed and the same restricted login ----
+
+    /// <summary>
+    /// FM-CF-012. A run written by <see cref="CareerFitRunWriter"/> reads back through
+    /// <see cref="CareerFitRunReader"/> as the same value, on the caller's own RLS session — which is what
+    /// lets the endpoints serve the scores and the FM-CF-011 explanation without re-scoring. Everything the
+    /// explanation projects is asserted, because a silent parse defect there would make the payload LIE about
+    /// the 360 (an empty V360Instrument would turn "no evidence" into "weak evidence").
+    /// </summary>
+    [Fact]
+    public async Task A_persisted_run_reads_back_through_the_run_reader_as_the_same_value()
+    {
+        var written = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+        var reader = new CareerFitRunReader(Factory());
+
+        var read = await reader.ReadAsync(Student(StudentA1, SchoolA), written.Id);
+
+        Assert.NotNull(read);
+        Assert.Equal(written.Id, read!.Id);
+        Assert.Equal(written.UserId, read.UserId);
+        Assert.Equal(written.SchoolId, read.SchoolId);
+        Assert.Equal(written.RulesVersion, read.RulesVersion);
+        Assert.Equal(written.DiscGraph, read.DiscGraph);
+        Assert.Equal(written.CreatedAt, read.CreatedAt);
+        Assert.Equal(written.Sources, read.Sources);
+
+        // inputs: the engine's assessment dict, bit for bit (CareerFitRunJson.ParseInputs).
+        Assert.Equal(written.Inputs.Pca, read.Inputs.Pca);
+        Assert.Equal(written.Inputs.Mil, read.Inputs.Mil);
+        Assert.Equal(written.Inputs.Personality, read.Inputs.Personality);
+
+        // inputQuality: the three fields the explanation reads, plus the 360 arms FM-CF-007/010 added.
+        Assert.Equal(written.Quality.DiscGraph, read.Quality.DiscGraph);
+        Assert.Equal(written.Quality.V360Source, read.Quality.V360Source);
+        Assert.Equal(written.Quality.HasRepairs, read.Quality.HasRepairs);
+        Assert.Equal(
+            written.Quality.Warnings.Select(w => (w.Instrument, w.Code)),
+            read.Quality.Warnings.Select(w => (w.Instrument, w.Code)));
+        Assert.Equal(written.Quality.V360Variables.Count, read.Quality.V360Variables.Count);
+        Assert.Equal(written.Quality.V360Instrument, read.Quality.V360Instrument);
+        Assert.Equal(written.Quality.V360FormulaSteps.Count, read.Quality.V360FormulaSteps.Count);
+
+        // The families, in rank order, with every scalar column and every audit block.
+        Assert.Equal(written.Families.Count, read.Families.Count);
+        Assert.Equal(Enumerable.Range(1, written.Families.Count), read.Families.Select(f => f.RankPosition!.Value));
+        foreach (var (expected, actual) in written.Families.Zip(read.Families))
+        {
+            Assert.Equal(expected.OwnerId, actual.OwnerId);
+            Assert.Equal(expected.OwnerType, actual.OwnerType);
+            Assert.Equal(expected.CareerFitAbsolute, actual.CareerFitAbsolute);
+            Assert.Equal(expected.CareerFitRelative, actual.CareerFitRelative);
+            Assert.Equal(expected.PcaWinningRoute, actual.PcaWinningRoute);
+            Assert.Equal(expected.PersonalityWinningRoute, actual.PersonalityWinningRoute);
+            Assert.Equal(expected.CompetencyGate, actual.CompetencyGate);
+            Assert.Equal(expected.MilGate, actual.MilGate);
+            Assert.Equal(expected.FinalGate, actual.FinalGate);
+            Assert.Equal(expected.ConvergenceLevel, actual.ConvergenceLevel);
+            Assert.Equal(expected.CareerFit360Confidence, actual.CareerFit360Confidence);
+            Assert.Equal(expected.CareerFit360Consensus, actual.CareerFit360Consensus);
+            Assert.Equal(expected.ConvergenceDetail.StrongCount, actual.ConvergenceDetail.StrongCount);
+            Assert.Equal(expected.ConvergenceDetail.Supports, actual.ConvergenceDetail.Supports);
+            Assert.Equal(expected.MilRelativeStrengths, actual.MilRelativeStrengths);
+            Assert.Equal(
+                expected.CriticalGaps.Select(g => (g.CompetencyId, g.Level, g.Required)),
+                actual.CriticalGaps.Select(g => (g.CompetencyId, g.Level, g.Required)));
+            Assert.Equal(expected.AuditInputs.Mil.LearningCapacityIndicator, actual.AuditInputs.Mil.LearningCapacityIndicator);
+            Assert.Equal(expected.AuditInputs.PcaRoutes.Select(r => r.RouteId), actual.AuditInputs.PcaRoutes.Select(r => r.RouteId));
+            Assert.Equal(expected.AuditInputs.V360.Variables.Count, actual.AuditInputs.V360.Variables.Count);
+            // The whole F06-F23 ledger travels with the row it derives.
+            Assert.Equal(expected.AuditSteps.Count, actual.AuditSteps.Count);
+            Assert.Equal(expected.AuditSteps.Select(s => (s.Sequence, s.StepId, s.Target)), actual.AuditSteps.Select(s => (s.Sequence, s.StepId, s.Target)));
+        }
+    }
+
+    /// <summary>
+    /// The reader takes the CALLER's session and nothing else decides visibility: the same-school counselor
+    /// reads the student's run, the other-school counselor gets null — the same negative control the writer's
+    /// tests use, on the read path. Not an authorization decision in the reader (that is the endpoint's
+    /// CanAccessUser gate); this is the RLS backstop underneath it.
+    /// </summary>
+    [Fact]
+    public async Task The_run_reader_sees_exactly_what_the_callers_RLS_session_sees()
+    {
+        var run = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+        var reader = new CareerFitRunReader(Factory());
+
+        Assert.NotNull(await reader.ReadAsync(Counselor(CounselorA, SchoolA), run.Id));
+        Assert.NotNull(await reader.ReadNewestForUserAsync(Counselor(CounselorA, SchoolA), StudentA1));
+        Assert.Single(await reader.ListForUserAsync(Counselor(CounselorA, SchoolA), StudentA1, 20));
+
+        Assert.Null(await reader.ReadAsync(Counselor(CounselorB, SchoolB), run.Id));
+        Assert.Null(await reader.ReadNewestForUserAsync(Counselor(CounselorB, SchoolB), StudentA1));
+        Assert.Empty(await reader.ListForUserAsync(Counselor(CounselorB, SchoolB), StudentA1, 20));
+    }
+
+    /// <summary>Runs are immutable, so the history is a list and "the newest" is the one the read endpoints serve.</summary>
+    [Fact]
+    public async Task The_history_lists_every_run_newest_first_and_the_newest_read_is_the_last_one_written()
+    {
+        var first = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+        var second = await Evaluator().EvaluateAsync(Student(StudentA1, SchoolA), StudentA1);
+        var reader = new CareerFitRunReader(Factory());
+
+        var history = await reader.ListForUserAsync(Student(StudentA1, SchoolA), StudentA1, 20);
+
+        Assert.Equal(2, history.Count);
+        Assert.Equal(second.Id, history[0].RunId);
+        Assert.Equal(first.Id, history[1].RunId);
+        Assert.Equal(RulesVersion, history[0].RulesVersion);
+        Assert.Equal(second.Best.OwnerId, history[0].TopFamilyId);
+
+        var newest = await reader.ReadNewestForUserAsync(Student(StudentA1, SchoolA), StudentA1);
+        Assert.Equal(second.Id, newest!.Id);
+    }
+
     // ---- contexts ----
 
     private static RequestContext Student(string userId, string? schoolId) => Ctx(userId, FormMapsRoles.Student, schoolId);
@@ -406,7 +711,10 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
             new CareerFitInputReader(factory),
             new CareerFitRunWriter(factory),
             Provider,
-            NoDataV360Adapter.Instance);
+            // The registered adapter (FM-CF-007), not the NoData one: with no 360 item seeded for this
+            // student it must SELECT NoData itself and produce today's run byte for byte. That is the whole
+            // claim of "keep NoData as the fallback", and swapping in NoDataV360Adapter here would hide it.
+            new VocationalV360Adapter(Provider));
     }
 
     private async Task<Guid[]> VisibleRunsAsync(RequestContext context)
@@ -512,12 +820,12 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
                 ('csa-b', '{{CounselorB}}', '{{StudentA1}}');   -- cross-school: the row exists, the policy must still deny
             """);
 
-        var competences = SampleStudent.CompetencesJson(Provider.Rules);
-        await SeedPcaResultAsync(admin, PcaRowA1, StudentA1, SampleStudent.DiscJson, competences);
-        await SeedPcaResultAsync(admin, "pca-a2", StudentA2, SampleStudent.DiscJson, competences);
-        await SeedLiaSessionAsync(admin, LiaSessionA1, StudentA1, SampleStudent.PercentilesJson, "2026-09-01 10:00:00");
-        await SeedPersonalitySessionAsync(admin, PersonalitySessionA1, StudentA1, SampleStudent.DimensionScoresJson(), "2026-09-01 11:00:00", resolvedType: "ENTJ");
-        await SeedPersonalitySessionAsync(admin, "pers-a2", StudentA2, SampleStudent.DimensionScoresJson(), "2026-09-01 11:00:00", resolvedType: "ENTJ");
+        var competences = CareerFitSampleStudent.CompetencesJson(Provider.Rules);
+        await SeedPcaResultAsync(admin, PcaRowA1, StudentA1, CareerFitSampleStudent.DiscJson, competences);
+        await SeedPcaResultAsync(admin, "pca-a2", StudentA2, CareerFitSampleStudent.DiscJson, competences);
+        await SeedLiaSessionAsync(admin, LiaSessionA1, StudentA1, CareerFitSampleStudent.PercentilesJson, "2026-09-01 10:00:00");
+        await SeedPersonalitySessionAsync(admin, PersonalitySessionA1, StudentA1, CareerFitSampleStudent.DimensionScoresJson(), "2026-09-01 11:00:00", resolvedType: "ENTJ");
+        await SeedPersonalitySessionAsync(admin, "pers-a2", StudentA2, CareerFitSampleStudent.DimensionScoresJson(), "2026-09-01 11:00:00", resolvedType: "ENTJ");
     }
 
     private static async Task SeedPcaResultAsync(NpgsqlConnection admin, string id, string userId, string disc, string competences)
@@ -564,6 +872,51 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         await cmd.ExecuteNonQueryAsync();
     }
 
+    /// <summary>
+    /// One completed vocational rater group with its item responses, written exactly as the chassis writes
+    /// them (evaluation_groups + vocational_responses, instrument 'vocational'). The variable code goes in
+    /// vocational_responses."dimensionKey" — the carrier FM-CF-007 reads and FM-CF-006 will seed; see
+    /// V360Aggregation's header for what happens if TIMS seeds it somewhere else.
+    /// </summary>
+    private static async Task SeedRaterGroupAsync(
+        NpgsqlConnection admin,
+        string groupId,
+        string userId,
+        string groupType,
+        IReadOnlyList<(int Question, string Code, int? Rating)> responses,
+        bool completed = true)
+    {
+        await using (var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "evaluation_groups" ("id", "groupType", "evaluatedUserId", "instrument", "isEvaluationCompleted", "isActive")
+            VALUES (@id, @type, @uid, 'vocational', @done, true)
+            """, admin))
+        {
+            cmd.Parameters.AddWithValue("id", groupId);
+            cmd.Parameters.AddWithValue("type", groupType);
+            cmd.Parameters.AddWithValue("uid", userId);
+            cmd.Parameters.AddWithValue("done", completed);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        foreach (var (question, code, rating) in responses)
+        {
+            await using var cmd = new NpgsqlCommand(
+                """
+                INSERT INTO "vocational_responses"
+                    ("id", "evaluationGroupId", "instrumentVersion", "group", "questionNumber", "dimensionKey", "type", "ratingValue", "isActive")
+                VALUES (@id, @gid, 'v360-careerfit', @grp, @q, @code, 'likert', @rating, true)
+                """, admin);
+            cmd.Parameters.AddWithValue("id", $"{groupId}-{question}");
+            cmd.Parameters.AddWithValue("gid", groupId);
+            cmd.Parameters.AddWithValue("grp", groupType);
+            cmd.Parameters.AddWithValue("q", question);
+            cmd.Parameters.AddWithValue("code", code);
+            cmd.Parameters.AddWithValue("rating", (object?)rating ?? DBNull.Value);
+            await cmd.ExecuteNonQueryAsync();
+        }
+    }
+
     private static async Task ExecAsync(NpgsqlConnection connection, string sql)
     {
         await using var command = new NpgsqlCommand(sql, connection);
@@ -588,42 +941,4 @@ public sealed class CareerFitEvaluatorDatabaseTests : IClassFixture<CareerFitDat
         return (string)(await command.ExecuteScalarAsync())!;
     }
 
-    /// <summary>
-    /// The student the platform's writers would have produced — byte-identical to the unit tests'
-    /// SampleStudentRows so the pure and the persisted paths score the same person.
-    /// </summary>
-    private static class SampleStudent
-    {
-        public const string DiscJson = """
-            {"PcaD1":89,"PcaI1":18,"PcaS1":18,"PcaC1":21,
-             "PcaD2":87,"PcaI2":87,"PcaS2":26,"PcaC2":25,
-             "PcaD3":90,"PcaI3":60,"PcaS3":25,"PcaC3":25}
-            """;
-
-        public const string PercentilesJson = """
-            {"pattern_recognition":72,"verbal_reasoning":58,"numerical_speed":81,"working_memory":47,"visual_rotation":63,"global":64.2}
-            """;
-
-        public static string CompetencesJson(CareerFitRules rules)
-        {
-            var entries = rules.Competencies
-                .Select(c => $$"""{"CmpNom":"{{c.Name.ToUpperInvariant()}}","Level":{{1 + (c.CompetencyId - 1) % 4}}}""");
-            return $$"""{"PcaCmps":[{{string.Join(",", entries)}}]}""";
-        }
-
-        public static string DimensionScoresJson()
-        {
-            var answers = new List<PersonalityAnswer>();
-            var n = 1;
-            foreach (var (dimension, aCount) in new[] { ("EI", 14), ("SN", 8), ("TF", 17), ("JP", 11) })
-            {
-                for (var i = 0; i < 20; i++)
-                {
-                    answers.Add(new PersonalityAnswer(dimension, n++, i < aCount ? "A" : "B"));
-                }
-            }
-
-            return JsonSerializer.Serialize(PersonalityScoring.ScorePersonality("estudiantil", answers).Dimensions);
-        }
-    }
 }

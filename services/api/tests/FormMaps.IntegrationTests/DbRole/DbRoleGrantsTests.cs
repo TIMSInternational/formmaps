@@ -341,10 +341,17 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     /// (role script section 4.7). Unlike audit_events there is NO immutability trigger on these tables, so this
     /// grant is the only lock between the service account and a rewritable run -- which is why the verb set is
     /// pinned per table, catalog-side, rather than sampled through one representative.
+    ///
+    /// FM-CF-013 adds careerfit_shadow_comparisons (section 4.8) to the same theory, deliberately rather than
+    /// in a class of its own: it is append-only for the SAME reason and would drift if it were pinned somewhere
+    /// else. The reason is worth stating once more, because it is the point of the whole slice -- a shadow row
+    /// is the EXTERNAL measurement of the port, and a service account that can edit one can edit the evidence
+    /// the cutover decision rests on. Re-measuring under a corrected projection is a new row.
     /// </summary>
     [Theory]
     [InlineData("careerfit_runs")]
     [InlineData("careerfit_family_results")]
+    [InlineData("careerfit_shadow_comparisons")]
     public async Task CareerFit_tables_are_granted_select_and_insert_but_never_update_or_delete(string table)
     {
         await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
@@ -364,11 +371,11 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
         await using var reader = await command.ExecuteReaderAsync();
         Assert.True(await reader.ReadAsync());
 
-        Assert.True(reader.GetBoolean(0), $"{table}: the run reader SELECTs under the caller's RLS session");
-        Assert.True(reader.GetBoolean(1), $"{table}: the run writer INSERTs; without this every evaluation 42501s");
-        Assert.False(reader.GetBoolean(2), $"{table}: a run is immutable -- UPDATE would let the service rewrite a score in place");
-        Assert.False(reader.GetBoolean(3), $"{table}: a run is immutable -- erasure is the admin path, not the service's");
-        Assert.False(reader.GetBoolean(4), $"{table}: TRUNCATE erases every run in one statement and is never needed by the service");
+        Assert.True(reader.GetBoolean(0), $"{table}: the reader SELECTs under the caller's RLS session");
+        Assert.True(reader.GetBoolean(1), $"{table}: the writer INSERTs; without this every evaluation or measurement 42501s");
+        Assert.False(reader.GetBoolean(2), $"{table}: append-only -- UPDATE would let the service rewrite a score or a measurement in place");
+        Assert.False(reader.GetBoolean(3), $"{table}: append-only -- erasure is the admin path, not the service's");
+        Assert.False(reader.GetBoolean(4), $"{table}: TRUNCATE erases every row in one statement and is never needed by the service");
     }
 
     /// <summary>
@@ -379,6 +386,7 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     [Theory]
     [InlineData("careerfit_runs")]
     [InlineData("careerfit_family_results")]
+    [InlineData("careerfit_shadow_comparisons")]
     public async Task CareerFit_tables_accept_appends_from_the_role_but_reject_rewrites_and_erasures(string table)
     {
         await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);

@@ -324,19 +324,31 @@ Run these as **separate dispatches**, reading each output before the next:
    atomic under the pipeline's single transaction). Like the two files above
    it is a table-creating file and goes BEFORE `dotnet-service-role.sql`,
    whose section 4.7 GRANTs on both tables. Rollback note below.
-5. `dotnet-service-role.sql` — **last**, because its GRANTs name the shadow
-   tables, `audit_events` and (section 4.7) the `careerfit_*` pair; on a
-   database where those don't exist yet the GRANT aborts with `42P01`. The
-   workflow warns (but does not block, since the tables may exist from an
-   earlier run) if you order it before any of the table-creating files.
+5. `careerfit-shadow-tables.sql` — FM-CF-013: `careerfit_shadow_comparisons`,
+   the shadow-period measurement table (the .NET engine's family ranking, the
+   legacy `/careers/score` ranking projected onto the same families, the two
+   metrics and every disagreement classified by cause). RLS ENABLE+FORCE with
+   careerfit_runs' `tenant_isolation` predicate copied verbatim. It goes
+   **after** `careerfit-schema.sql`, because its `"runId"` foreign key
+   references `careerfit_runs`, and **before** `dotnet-service-role.sql`,
+   whose section 4.8 GRANTs on it. Idempotent on the same terms as the file
+   above. Retired at cutover — see the rollback note.
+6. `dotnet-service-role.sql` — **last**, because its GRANTs name the shadow
+   tables, `audit_events`, (section 4.7) the `careerfit_*` pair and
+   (section 4.8) `careerfit_shadow_comparisons`; on a database where those
+   don't exist yet the GRANT aborts with `42P01`. The workflow warns (but does
+   not block, since the tables may exist from an earlier run) if you order it
+   before any of the table-creating files.
 
-Steps 2–5 can be one dispatch
-(`billing-shadow-tables.sql,audit-events-schema.sql,careerfit-schema.sql,dotnet-service-role.sql`) —
+Steps 2–6 can be one dispatch
+(`billing-shadow-tables.sql,audit-events-schema.sql,careerfit-schema.sql,careerfit-shadow-tables.sql,dotnet-service-role.sql`) —
 the ordering inside one dispatch is preserved. On a database that already
 has the earlier tables, the FM-CF-002 apply is the pair
 `careerfit-schema.sql,dotnet-service-role.sql`: the role file must be
 re-applied after the tables exist or the service 42501s on its first run
-write, exactly the audit_logs failure #128 recorded.
+write, exactly the audit_logs failure #128 recorded. The FM-CF-013 apply is
+the same shape one file later —
+`careerfit-shadow-tables.sql,dotnet-service-role.sql`.
 
 All files are idempotent (verified per file — the audit is recorded in
 `apply.sh`'s header; the `audit-events-schema.sql` line there is
@@ -472,6 +484,17 @@ file, is a manual action as `nexaadmin` — this pipeline intentionally has no
   formmaps_dotnet_svc` as the emergency stop (the writer stops, the history
   stays) and re-apply `dotnet-service-role.sql` to restore. The policies can
   always be repaired by re-applying the file.
+- **`careerfit-shadow-tables.sql`** — `DROP TABLE careerfit_shadow_comparisons;`.
+  This is the file that is *expected* to be dropped: the table exists only for
+  the shadow period and is retired at cutover (FM-CF-015), which is why it is a
+  separate file from `careerfit-schema.sql` rather than a section of it. Before
+  dropping it, **export it** — it is the only external reference the port has
+  (`psql … COPY (…) TO STDOUT`, the command in
+  `tools/careerfit/shadow_report.py`'s header) and FM-CF-014's threshold recut
+  is measured against the same cohort. Emergency stop without data loss is
+  `REVOKE INSERT ON careerfit_shadow_comparisons FROM formmaps_dotnet_svc`; the
+  job stops, the measurements stay, and re-applying
+  `dotnet-service-role.sql` restores it.
 - **`audit-events-schema.sql`** — **do not drop `audit_events` once real
   events exist**; it is the compliance trail (#52's whole point). The policy
   and trigger can always be repaired by re-applying the file. Emergency stop

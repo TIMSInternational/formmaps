@@ -74,6 +74,14 @@ public static class InputWarningCodes
 
     // 360
     public const string V360NoData = "V360_NO_DATA";
+    public const string V360Adapted = "V360_ADAPTED";
+    public const string V360SingleRater = "V360_SINGLE_RATER";
+    public const string V360UnknownCode = "V360_UNKNOWN_CODE";
+    public const string V360PartialCoverage = "V360_PARTIAL_COVERAGE";
+    public const string V360IndExcluded = "V360_IND_EXCLUDED";
+    public const string V360RankNotScored = "V360_RANK_NOT_SCORED";
+    public const string V360RaterGroupUnknown = "V360_RATER_GROUP_UNKNOWN";
+    public const string V360ResponseOutOfRange = "V360_RESPONSE_OUT_OF_RANGE";
 
     // Reader authorization gate (FM-CF-010) — not an instrument defect: the caller's RLS session cannot see the
     // student's "users" row, so no instrument of theirs may be read either.
@@ -122,8 +130,11 @@ public enum PersonalityPoleDerivation
 /// <summary>Names an <see cref="IV360Adapter"/> implementation in <see cref="InputQuality.V360Source"/>.</summary>
 public static class V360Sources
 {
-    /// <summary>No 360 evidence was consulted (<see cref="NoDataV360Adapter"/>).</summary>
+    /// <summary>No 360 evidence was consulted, or none of it was scorable (<see cref="NoDataV360Adapter"/>).</summary>
     public const string NoData = "NO_DATA";
+
+    /// <summary>Aggregated from the vocational chassis's stored item responses (<see cref="VocationalV360Adapter"/>, FM-CF-007).</summary>
+    public const string VocationalResponses = "VOCATIONAL_RESPONSES";
 }
 
 /// <summary>Everything the orchestrator persists for audit about how the engine inputs were produced.</summary>
@@ -135,12 +146,41 @@ public sealed record InputQuality(
     string V360Source,
     IReadOnlyList<InputWarning> Warnings)
 {
+    /// <summary>
+    /// The FM-CF-007 aggregator's per-VARIABLE trail — one entry per 360 variable that reached an
+    /// aggregate, carrying what F02–F05 produced for it and how much of its item set was answered. Empty
+    /// whenever <see cref="V360Source"/> is <see cref="V360Sources.NoData"/>, which is every student until
+    /// FM-CF-006 seeds the items. Init-only so the positional constructor, and every caller of it, is
+    /// unchanged.
+    /// </summary>
+    public IReadOnlyList<V360VariableAudit> V360Variables { get; init; } = [];
+
+    /// <summary>
+    /// The same trail at INSTRUMENT level: F02/F03/F04/F05 applied once over the per-source overall 360
+    /// scores, which is where the run's single <c>careerfit360_confidence</c> label comes from (see
+    /// <c>V360Aggregation.GlobalConfidence</c>). Null when no 360 evidence was aggregated.
+    /// </summary>
+    public V360VariableAudit? V360Instrument { get; init; }
+
+    /// <summary>
+    /// FM-CF-010's step ledger for the part of the derivation that happens ONCE PER STUDENT rather than
+    /// once per family: F01–F05, the 360 aggregation pipeline. The family ledger
+    /// (<see cref="OwnerEvaluation.AuditSteps"/>) starts at F06, because F06 is the first 360 formula that
+    /// is subscripted by a family. Empty when no 360 evidence was aggregated — nothing executed, so
+    /// nothing is recorded.
+    /// </summary>
+    public IReadOnlyList<FormulaStep> V360FormulaSteps { get; init; } = [];
+
     private static readonly HashSet<string> Informational = new(StringComparer.Ordinal)
     {
         InputWarningCodes.DiscGraphSelected,
         InputWarningCodes.PersonalityDerivedFromCounts,
         InputWarningCodes.PersonalityDerivedFromIntensity,
         InputWarningCodes.V360NoData,
+        InputWarningCodes.V360Adapted,
+        InputWarningCodes.V360SingleRater,
+        InputWarningCodes.V360IndExcluded,
+        InputWarningCodes.V360RankNotScored,
     };
 
     /// <summary>True when at least one warning is a repair (anything but the informational graph / derivation / 360-source notes).</summary>

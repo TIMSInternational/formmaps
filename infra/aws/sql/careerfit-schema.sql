@@ -167,8 +167,22 @@ CREATE INDEX IF NOT EXISTS "careerfit_runs_schoolId_idx"
 --
 -- "audit" carries the non-scalar half of evaluate_owner: audit_inputs (per-route PCA
 -- scores, MIL/personality/360 evidence), convergence_detail (per-instrument supports and
--- the strong count), critical_gaps and mil_relative_strengths. FM-CF-010 owns the exact
--- shape; this file guarantees it travels with the scores (spec section 21).
+-- the strong count), critical_gaps and mil_relative_strengths -- plus FM-CF-010's
+-- formula_steps, the per-formula-step ledger: one record per F01-F23 application the
+-- family's evaluation actually executed, naming the step, its inputs, its output and the
+-- rule or threshold that governed it. FM-CF-010 owns the exact shape (CareerFitAuditLedger
+-- / CareerFitRunJson); this file guarantees it travels with the scores (spec section 21).
+--
+-- WHY THE LEDGER IS HERE AND NOT A careerfit_audit_steps TABLE, decided deliberately. It is
+-- ~40-60 records per family, ~700 per run, and every read of it is "the whole derivation for
+-- this (run, family)" -- the row being fetched anyway. Nothing filters, joins, orders or
+-- aggregates on a step, so a table would buy no query and cost ~700 tuples plus index
+-- entries per evaluation per student, forever, since runs are immutable and a re-evaluation
+-- is a new run. As a jsonb array it is one TOASTed value on the row it explains (~19 KB of
+-- JSON text per family row before compression), it cannot be read apart from the scores it
+-- derives, and it inherits this table's RLS unchanged -- no third policy, no extra GRANT, no
+-- new apply-order dependency. Revisit only if a query appears that must scan ACROSS runs by
+-- step, which is a reporting question (FM-CF-013/014), not this table's.
 -- ---------------------------------------------------------------------------
 CREATE TABLE IF NOT EXISTS "careerfit_family_results" (
     "id"                        UUID PRIMARY KEY DEFAULT gen_random_uuid(),

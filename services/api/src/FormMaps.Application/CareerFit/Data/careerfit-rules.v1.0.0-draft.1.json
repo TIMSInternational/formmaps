@@ -3414,6 +3414,15 @@
   ],
   "source_discrepancies": [
     {
+      "scope": "instrument",
+      "field": "thresholds.mil_bands",
+      "model_config": "ONE global table applied to all five subtests, spanning 1-99: INSUFFICIENT 1-17, LOW 18-37, ADEQUATE 38-56, EXCEEDS 57-81, EXCEPTIONAL 82-99. formmaps_engine_reference.mil_band() hardcodes the same numbers and require_range()s the percentile to 1..99.",
+      "official_evaluator": "FIVE per-subtest tables spanning 0-100 (LIA Evaluator.xlsx): DC 0-11/12-31/32-62/63-82/83-100 | RZ 0-9/10-30/31-61/62-83/84-100 | VN 0-8/9-25/26-51/52-75/76-100 | MT 0-7/8-28/29-58/59-80/81-100 | OR 0-8/9-16/17-42/43-70/71-100. A separate global table exists for the MEAN of the five percentiles (0-9/10-20/21-57/58-74/75-100), and it does not match the model_config table either.",
+      "evidence_that_the_evaluator_governs": "A real TIMS-issued report (student A, 2024-10-21; DC96 RZ73 VN55 MT57 OR78) matches the per-subtest tables on 5 of 5 subtests and the model_config table on 2 of 5. The three it 'fails' under model_config -- VN 55 Excede, MT 57 Adecuado, OR 78 Excepcional -- are all correct under the per-subtest tables.",
+      "measured_impact": "Band LABEL differs on 149 of 495 subtest-percentile cells (30.1%); visual rotation differs across 54.5% of its range. The GATE (which inlines the same 17/37 boundaries rather than calling mil_band) differs on 96 of 505 cells (19.0%), and model_config is UNIFORMLY HARSHER -- every disagreement blocks or conditions a family the student qualifies for under the official bands.",
+      "explains": "OPEN_QUESTIONS' 'unequal MIL ceilings' entry and the 0->1 / 100->99 clamp in MilAdapter: the model_config table cannot express P0 or P100, which the instrument actually produces (a perfect raw score reaches P100 on DC, VN and OR)."
+    },
+    {
       "family_id": 14,
       "field": "v360_relevance",
       "sheet_09": {
@@ -3447,6 +3456,7 @@
     "Rounding and persistence precision for §25 byte-equivalent determinism.",
     "Which confidence gates the 360 'strong' test -- global, or the relevance-weighted index.",
     "Family 14's 360 central set (sheet 09 prose vs sheet 10 numeric, see source_discrepancies) and family 15's inheritance source.",
-    "Unequal MIL ceilings: a perfect raw score reaches P100 on DC/VN/OR but P99 on RZ and P95 on MT."
+    "Unequal MIL ceilings: a perfect raw score reaches P100 on DC/VN/OR but P99 on RZ and P95 on MT. Now believed to be a symptom of the mil_bands conflict below, not a separate issue.",
+    "WHICH MIL BANDS GOVERN? Two TIMS artefacts disagree (see source_discrepancies, scope=instrument): formmaps_model_config_v1.json gives ONE table for all five subtests spanning 1-99, while the official LIA Evaluator.xlsx gives FIVE per-subtest tables spanning 0-100. A real TIMS-issued report matches the per-subtest tables 5/5 and the model_config table 2/5, so the evaluator appears to govern -- but the model_config table is what the normative reference engine hardcodes, so switching is a spec change, not a bug fix. It moves 19.0% of the gate surface, always in the student's favour."
   ]
 }

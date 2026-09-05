@@ -48,7 +48,7 @@ public class CareerFitInputAdaptersTests
     [Fact]
     public void Raw_rows_become_an_engine_assessment_plus_a_quality_record()
     {
-        var inputs = CareerFitInputAdapters.Adapt(Disc, Competences, Percentiles, DimensionScores, threeSixty: null, Rules.Competencies);
+        var inputs = CareerFitInputAdapters.Adapt(Disc, Competences, Percentiles, DimensionScores, threeSixty: null, v360RaterGroups: null, Rules.Competencies);
         var a = inputs.Assessment;
         var q = inputs.Quality;
 
@@ -119,7 +119,7 @@ public class CareerFitInputAdaptersTests
             """);
         var percentiles = J("""{"pattern_recognition":50,"verbal_reasoning":50,"numerical_speed":50,"working_memory":50,"visual_rotation":50}""");
 
-        var inputs = CareerFitInputAdapters.Adapt(Disc, clean, percentiles, DimensionScores, null, Rules.Competencies, discGraph: DiscGraphChoice.UnderPressure);
+        var inputs = CareerFitInputAdapters.Adapt(Disc, clean, percentiles, DimensionScores, null, null, Rules.Competencies, discGraph: DiscGraphChoice.UnderPressure);
 
         Assert.Equal(new PcaInput(60, 30, 50, 65), inputs.Assessment.Pca);
         Assert.Equal(DiscGraphChoice.UnderPressure, inputs.Quality.DiscGraph);
@@ -137,7 +137,7 @@ public class CareerFitInputAdaptersTests
         var fourSubtests = J("""{"pattern_recognition":50,"verbal_reasoning":50,"numerical_speed":50,"working_memory":50}""");
 
         var ex = Assert.Throws<CareerFitInputException>(() =>
-            CareerFitInputAdapters.Adapt(Disc, Competences, fourSubtests, DimensionScores, null, Rules.Competencies));
+            CareerFitInputAdapters.Adapt(Disc, Competences, fourSubtests, DimensionScores, null, null, Rules.Competencies));
 
         Assert.Equal(InputInstruments.Mil, ex.Instrument);
         Assert.Equal(InputWarningCodes.MilSubtestMissing, ex.Code);
@@ -149,8 +149,8 @@ public class CareerFitInputAdaptersTests
         IV360Adapter adapter = NoDataV360Adapter.Instance;
         var profile = new ThreeSixtyProfile(new Dictionary<string, double> { ["liderazgo"] = 4.2 }, EvaluatorCount: 3);
 
-        var withData = adapter.Adapt(profile);
-        var withoutData = adapter.Adapt(null);
+        var withData = adapter.Adapt(profile, [new ScoringGroup("self", [])]);
+        var withoutData = adapter.Adapt(null, null);
 
         foreach (var result in new[] { withData, withoutData })
         {
@@ -168,7 +168,7 @@ public class CareerFitInputAdaptersTests
     {
         var stub = new StubV360Adapter();
 
-        var inputs = CareerFitInputAdapters.Adapt(Disc, Competences, Percentiles, DimensionScores, null, Rules.Competencies, v360Adapter: stub);
+        var inputs = CareerFitInputAdapters.Adapt(Disc, Competences, Percentiles, DimensionScores, null, null, Rules.Competencies, v360Adapter: stub);
 
         Assert.Equal(88.0, inputs.Assessment.V360Aggregates["V01"].Score);
         Assert.Equal(Confidence.High, inputs.Assessment.CareerFit360Confidence);
@@ -178,10 +178,11 @@ public class CareerFitInputAdaptersTests
 
     private sealed class StubV360Adapter : IV360Adapter
     {
-        public V360Adaptation Adapt(ThreeSixtyProfile? threeSixty) => new(
+        public V360Adaptation Adapt(ThreeSixtyProfile? threeSixty, IReadOnlyList<ScoringGroup>? raterGroups) => new(
             new Dictionary<string, V360Aggregate>(StringComparer.Ordinal) { ["V01"] = new(88.0, 75.0, 80.0) },
             Confidence.High,
             "STUB",
+            [],
             []);
     }
 }

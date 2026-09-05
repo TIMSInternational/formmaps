@@ -214,6 +214,11 @@
          resource name: FormMaps.IntegrationTests.CareerFit.Data.careerfit-schema.sql. -->
     <EmbeddedResource Include="..\..\..\..\infra\aws\sql\careerfit-schema.sql"
                       Link="CareerFit\Data\careerfit-schema.sql" />
+    <!-- FM-CF-013: the shadow comparison table, by reference for the same reason. Its RLS predicate is a
+         verbatim copy of careerfit_runs' and the fixture asserts that from pg_policies, so a divergence
+         between the two files fails here rather than in production. -->
+    <EmbeddedResource Include="..\..\..\..\infra\aws\sql\careerfit-shadow-tables.sql"
+                      Link="CareerFit\Data\careerfit-shadow-tables.sql" />
     <!-- Schema-only DDL mirroring the live Node/Prisma auth tables (users/roles/refresh_tokens/login_attempts/password_reset_tokens/user_settings + touched-column schools subset) for the Testcontainers IAuthRepository harness (Domain 10, Task 5). -->
     <EmbeddedResource Include="Auth\Data\auth-schema.sql" />
     <!-- formmaps#125: byte-for-byte copies of the production RLS policy files (formmaps-platform/api/prisma/rls/*.sql),

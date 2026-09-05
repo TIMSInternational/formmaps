@@ -31,6 +31,11 @@
          earlier revision linked it from docs/careerfit/rules and the container build failed on a guard;
          same shape as Assessments/Data/lia-percentile-tables.json, which has always lived here. -->
     <EmbeddedResource Include="CareerFit\Data\careerfit-rules.v1.0.0-draft.1.json" />
+    <!-- CareerFit shadow projection (FM-CF-013): the legacy cluster -> family map the shadow comparison
+         is computed through. Beside the rule set for the same Docker-context reason, and hand-authored
+         rather than derived, because the legacy cluster vocabulary is not in this repository at all;
+         see the file's own why_it_is_incomplete block. CareerFitShadowProjection.Embedded reads it. -->
+    <EmbeddedResource Include="CareerFit\Data\careerfit-shadow-projection.v0.json" />
   </ItemGroup>
 
   <ItemGroup>

@@ -199,6 +199,11 @@ GRANT SELECT ON TABLE
     -- Messaging only ever READ blocks, which is why SELECT was right here. Porting
     -- moderation adds POST/DELETE /api/v1/moderation/block/:userId, which upserts
     -- and soft-deletes rows, so read-only would fail every block and unblock.
+    -- FM-CF-013 reads "careerMatches" off this row -- it is where the platform
+    -- already caches legacy /careers/score's answer, and reading the cache is
+    -- what keeps the shadow job off the live request path entirely. SELECT was
+    -- already right here (CounselorCaseloadReader, CoursePlanComputeReader);
+    -- LegacyCareerScoreReader adds a third reader and no new verb.
     public."user_career_profiles",
     public."user_preferences",
     -- NOTE: "user_settings" moved to the SELECT/INSERT/UPDATE tier below (Domain 10) --
@@ -415,6 +420,46 @@ GRANT SELECT, INSERT ON TABLE
     TO formmaps_dotnet_svc;
 
 -- ---------------------------------------------------------------------------
+-- 4.8. CareerFit shadow comparisons (FM-CF-013): append-only, same reasoning
+--    as 4.7 above and the same verb set.
+--
+--    `careerfit_shadow_comparisons`
+--    (infra/aws/sql/careerfit-shadow-tables.sql) holds one row per measured
+--    student: the .NET engine's family ranking, the legacy /careers/score
+--    result projected onto the same families, the two metrics
+--    (Spearman rho, top-3 overlap) and every disagreement classified by
+--    cause. It is written by CareerFitShadowRunner and read by nothing in
+--    the product -- no endpoint serves it; the report generator
+--    (tools/careerfit/shadow_report.py) consumes an export of it.
+--
+--    NOTE: why SELECT + INSERT and not the read/write bucket, spelled out
+--    because section 4 is the default and this is a departure from it.
+--      * no UPDATE -- a comparison row IS the measurement, and the whole
+--        purpose of FM-CF-013 is to be an EXTERNAL reference for the port.
+--        A service account that can edit a disagreement after the fact can
+--        edit the evidence the cutover decision (FM-CF-015) and the threshold
+--        recut (FM-CF-014) rest on. Re-measuring is a NEW row: the row
+--        carries "comparatorVersion" and "projectionVersion" precisely so a
+--        re-measurement under a corrected projection is a second row that can
+--        be told apart from the first, never an overwrite of it.
+--      * no DELETE -- a student's shadow rows disappear with the student, via
+--        ON DELETE CASCADE on "userId" under the platform's erasure path
+--        (the admin credential), not via the service account on a request
+--        path. Retiring the whole table at cutover is a DROP TABLE by the
+--        admin, one file's worth of objects (see the file's header and
+--        docs/migration/sql-apply-runbook.md's rollback section).
+--    There is no immutability trigger on this table either, so this GRANT is
+--    the lock; keep it this narrow.
+--
+--    DbRoleGrantsTests.CareerFit_tables_are_granted_select_and_insert_but_never_update_or_delete
+--    covers this table in the same [Theory] as the run pair; verify-grants.sql
+--    carries the same four expectations for it.
+-- ---------------------------------------------------------------------------
+GRANT SELECT, INSERT ON TABLE
+    public."careerfit_shadow_comparisons"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
 -- 5. Full-CRUD tables -- the service also deletes rows here (verified:
 --    DELETE FROM hits in services/api/src, e.g. calendar/holiday and
 --    academic-year cleanup, course-plan removal, data-mapping deletion, and
@@ -452,8 +497,9 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
 --
 -- Do NOT apply that re-derivation blindly. It reports which verbs the code
 -- uses TODAY, which is the right default but is not the rule for every table:
---   * "user_subscriptions" (3b), "audit_events" (4.5) and the careerfit_*
---     pair (4.7) are withheld verbs on purpose, not for lack of a call site.
+--   * "user_subscriptions" (3b), "audit_events" (4.5), the careerfit_* pair
+--     (4.7) and "careerfit_shadow_comparisons" (4.8) are withheld verbs on
+--     purpose, not for lack of a call site.
 --     Re-deriving mechanically would widen them -- audit_events would land in
 --     the section-4 bucket and quietly gain UPDATE, defeating the whole point
 --     of the table.

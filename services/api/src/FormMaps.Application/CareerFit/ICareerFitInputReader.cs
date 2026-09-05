@@ -10,8 +10,9 @@ namespace FormMaps.Application.CareerFit;
 // under the CALLER's RLS session. The implementation (one OpenReadOnlyAsync session, the same queries
 // CompleteProfileAssembler and PersonalityResultReader run) is FormMaps.Infrastructure/CareerFit/
 // CareerFitInputReader. Deliberately NOT here: any adaptation (the adapters are pure and take these
-// shapes), any authorization decision (RLS is the backstop; the per-user gate is FM-CF-012's endpoint),
-// and 360 evidence (null until FM-CF-006/007 give the adapters something to aggregate).
+// shapes) and any authorization decision (RLS is the backstop; the per-user gate is FM-CF-012's
+// endpoint). The 360 rater groups come back as the vocational chassis stores them, unaggregated: turning
+// them into per-variable aggregates is VocationalV360Adapter's job (FM-CF-007), not this reader's.
 
 /// <summary>Which stored rows fed a run — provenance for the audit record, never read by the engine.</summary>
 public sealed record CareerFitInputSources(
@@ -25,7 +26,11 @@ public sealed record CareerFitInputSources(
 /// lia_assessment_sessions."percentiles"; <see cref="PersonalityDimensionScores"/> is the newest completed,
 /// active personality_assessment_sessions."dimension_scores" (the row PersonalityResultReader would
 /// surface). <see cref="SchoolId"/> is the STUDENT's users."schoolId" — the tenant the run belongs to.
-/// <see cref="ThreeSixty"/> is null in P1–P3 (see <see cref="NoDataV360Adapter"/>).
+/// <see cref="ThreeSixty"/> is the platform's CATEGORY-level 360 block and stays null — the aggregating
+/// adapter cannot use it (FM-CF-007). <see cref="V360RaterGroups"/> is the 360 evidence that matters: the
+/// student's completed vocational rater groups with their item responses, read through the same
+/// <c>VocationalResponseLoader</c> the vocational recompute uses. It is EMPTY until FM-CF-006 seeds the
+/// 40 items, which is exactly the <see cref="NoDataV360Adapter"/> case.
 /// </summary>
 public sealed record CareerFitRawInputs(
     string UserId,
@@ -35,6 +40,7 @@ public sealed record CareerFitRawInputs(
     JsonElement LiaPercentiles,
     JsonElement PersonalityDimensionScores,
     ThreeSixtyProfile? ThreeSixty,
+    IReadOnlyList<ScoringGroup> V360RaterGroups,
     CareerFitInputSources Sources);
 
 /// <summary>Reads a student's engine inputs under the caller's RLS session; fail-closed on any missing instrument.</summary>

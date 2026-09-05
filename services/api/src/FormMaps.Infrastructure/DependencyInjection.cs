@@ -4,6 +4,7 @@ using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 using FormMaps.Application.CareerFit;
 using FormMaps.Application.CareerFit.Adapters;
+using FormMaps.Application.CareerFit.Shadow;
 using FormMaps.Application.Calendar;
 using FormMaps.Application.CourseImport;
 using FormMaps.Application.CurriculumFrameworks;
@@ -367,14 +368,36 @@ public static class DependencyInjection
             CareerFitRulesProvider.FromConfiguration(configuration).EnsureLoaded());
         // FM-CF-010 (P1–P3): the evaluator and its two seams. Scoped like every other reader/writer here
         // (they open sessions on the Scoped IFormMapsDatabaseSessionFactory under the caller's RequestContext).
-        // IV360Adapter is the NoData implementation until FM-CF-006/007 exist: every run scores
-        // careerfit360 = 0 / NOT_DETERMINABLE and says so in its inputQuality — see CareerFitEvaluator's
-        // header. Swapping this one registration is how FM-CF-007 turns 360 on. NOTHING is mapped as an
-        // endpoint yet (FM-CF-012 owns the seven routes and FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET).
-        services.AddSingleton<IV360Adapter>(NoDataV360Adapter.Instance);
+        // IV360Adapter is the FM-CF-007 aggregator: it reads the student's stored vocational item
+        // responses and produces one aggregate per rules.v360_variables code. Until FM-CF-006 seeds the 40
+        // items no response carries such a code, so it selects NoDataV360Adapter — by name, not by an
+        // empty query — and every run still scores careerfit360 = 0 / NOT_DETERMINABLE and says so in its
+        // inputQuality, exactly as before. Singleton: it is stateless and reads the singleton rules
+        // provider. The seven routes over all of this are FM-CF-012's CareerFitEndpoints, mapped in
+        // Program.cs and dark from the frontend until FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET is turned on.
+        services.AddSingleton<IV360Adapter, VocationalV360Adapter>();
         services.AddScoped<ICareerFitInputReader, CareerFitInputReader>();
         services.AddScoped<ICareerFitRunWriter, CareerFitRunWriter>();
+        // FM-CF-012's read seam: a persisted run read back under the CALLER's RLS session, so the endpoints
+        // can serve the scores and the explanation without re-scoring (and without writing a run per page view).
+        services.AddScoped<ICareerFitRunReader, CareerFitRunReader>();
         services.AddScoped<ICareerFitEvaluator, CareerFitEvaluator>();
+
+        // FM-CF-013's shadow arm. Registered, and reachable from NO route: FM-CF-012 mapped seven
+        // endpoints and none of them touches this, so the job runs only where an operator invokes it.
+        // Every one of these takes the CALLER's RequestContext and opens its own RLS session with it --
+        // there is no bypass session anywhere in this slice, which is the difference from
+        // BillingShadowRepository (its shadow tables hold no tenant-scoped student data and carry no
+        // policy; careerfit_shadow_comparisons holds both and does). The runner's constructor asserts the
+        // embedded projection still agrees with the loaded rule set and warns, loudly and once, that the
+        // projection is INCOMPLETE until the legacy cluster vocabulary is filled in.
+        services.AddScoped<ILegacyCareerScoreReader, LegacyCareerScoreReader>();
+        // The job's FIRST read and its gate: the student's own users."schoolId", which every shadow row
+        // must carry (the table's WITH CHECK is careerfit_runs' predicate verbatim) and which the three
+        // pre-scoring arms have no run to take it from.
+        services.AddScoped<ICareerFitStudentTenantReader, CareerFitStudentTenantReader>();
+        services.AddScoped<ICareerFitShadowWriter, CareerFitShadowWriter>();
+        services.AddScoped<ICareerFitShadowRunner, CareerFitShadowRunner>();
 
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IQuestion360Reader, Question360Reader>();

@@ -164,7 +164,17 @@ WITH checks(tbl, priv, expected, hard, why) AS (
     ('public.careerfit_family_results', 'SELECT', true,  true, 'FM-CF-002: per-family scores read with the run'),
     ('public.careerfit_family_results', 'INSERT', true,  true, 'FM-CF-002: written once with the run'),
     ('public.careerfit_family_results', 'UPDATE', false, true, 'immutable run: must NEVER be granted'),
-    ('public.careerfit_family_results', 'DELETE', false, true, 'immutable run: cascades from the admin erasure path only')
+    ('public.careerfit_family_results', 'DELETE', false, true, 'immutable run: cascades from the admin erasure path only'),
+    -- FM-CF-013: the shadow comparison table (dotnet-service-role.sql sec 4.8).
+    -- Same append-only reasoning as the run pair: the row IS the external
+    -- measurement of the port, so the service that produces it must not be able
+    -- to edit or erase it. Re-measuring under a corrected projection is a NEW
+    -- row (the row carries comparatorVersion / projectionVersion for exactly
+    -- that). ABSENT until careerfit-shadow-tables.sql has been applied.
+    ('public.careerfit_shadow_comparisons', 'SELECT', true,  true, 'FM-CF-013: idempotency check + report export'),
+    ('public.careerfit_shadow_comparisons', 'INSERT', true,  true, 'FM-CF-013: the shadow writer'),
+    ('public.careerfit_shadow_comparisons', 'UPDATE', false, true, 'the measurement must not be editable by its own producer'),
+    ('public.careerfit_shadow_comparisons', 'DELETE', false, true, 'erasure cascades from "users" on the admin path only')
 )
 SELECT tbl,
        priv,

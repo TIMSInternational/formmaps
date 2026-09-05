@@ -124,6 +124,11 @@ app.MapCalendarEndpoints();
 app.MapQuestion360Endpoints();
 app.MapVocationalTakeEndpoints();
 app.MapEvaluationExternalEndpoints();
+// FM-CF-012. Mapped unconditionally, like every other domain: the routes exist on .NET but nothing reaches
+// them until apps/web's FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET rewrite block is turned on (it defaults OFF, and
+// none of these paths exists on the legacy Node backend, so with the flag off there is no CareerFit traffic
+// at all rather than traffic going somewhere else).
+app.MapCareerFitEndpoints();
 
 app.Run();
 

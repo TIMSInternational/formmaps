@@ -143,6 +143,51 @@ public class CareerFitEvaluatorTests(ITestOutputHelper output)
         }
     }
 
+    // ---------------------------------------------------------------- the audit ledger (FM-CF-010 acceptance)
+
+    [Fact]
+    public void EvaluateCore_ships_a_formula_step_ledger_per_family_whose_row_count_is_the_derived_one()
+    {
+        // The manifest's validation for this slice: "audit row count == formula steps per family per student".
+        // The expected number is DERIVED from the rule set's own shape plus the two terms that move with the
+        // student (F23 runs only where F22 did not answer STRONG; F21 runs only once the family is ranked) —
+        // see CareerFitAuditLedgerTests, which owns the derivation and every claim about what a record says.
+        // Here it is asserted through the orchestrator, for the sample student, on the ACTIVE rule set.
+        var ruleSet = CareerFitRulesResolver.Resolve(Rules);
+        var families = CareerFitEvaluator.EvaluateCore(SampleAssessment(), ruleSet);
+        Assert.Equal(14, families.Count);
+
+        var total = 0;
+        foreach (var family in families)
+        {
+            var rules = Rules.Family(family.OwnerId);
+            var fits = new (string Instrument, double Fit)[]
+            {
+                ("PCA", family.PcaIndex), ("MIL", family.MilFit), ("PERSONALITY", family.PersonalityFit), ("360", family.CareerFit360),
+            };
+
+            var expected =
+                rules.PcaRoutes.Sum(id => Rules.Archetypes[id].Factors.Count(f => f.Direction != "OPEN" && f.Weight > 0))  // F07/F08/F09
+                + rules.PcaRoutes.Count                                                                                     // F10
+                + rules.CompetencyRules.Count(r => Rules.Weights.CompetencyRole.ContainsKey(r.Role))                        // F12/F13
+                + rules.PersonalityRoutes.Count                                                                             // F18
+                + fits.Count(f => f.Fit < Rules.Thresholds.Convergence.PerInstrument![f.Instrument].StrongMin)              // F23
+                + 5                                                                                                         // F17, per subtest
+                + 4                                                                                                         // F22, per instrument
+                + 8;                                                                                                        // F11 F14 F15 F16 F19 F06 F20 F21
+
+            Assert.Equal(expected, family.AuditSteps.Count);
+            Assert.Equal(Enumerable.Range(1, expected), family.AuditSteps.Select(s => s.Sequence));
+            total += expected;
+        }
+
+        // The ledger ships WITH the scores: it is inside the audit jsonb the writer persists on the family row.
+        var persisted = JsonDocument.Parse(CareerFitRunJson.SerializeFamilyAudit(families[0])).RootElement;
+        Assert.Equal(families[0].AuditSteps.Count, persisted.GetProperty("formula_steps").GetArrayLength());
+
+        output.WriteLine($"{total} formula-step records across the 14 families of one run");
+    }
+
     // ---------------------------------------------------------------- EvaluateAsync: the wiring
 
     [Fact]
@@ -303,6 +348,16 @@ public class CareerFitEvaluatorTests(ITestOutputHelper output)
 
     // ---------------------------------------------------------------- fakes
 
+    /// <summary>The sample student's rows through the FM-CF-005 adapters — the same assessment the database tests score.</summary>
+    private static CareerFitAssessment SampleAssessment() => CareerFitInputAdapters.Adapt(
+        SampleStudentRows.Parse(SampleStudentRows.DiscJson),
+        SampleStudentRows.Parse(SampleStudentRows.CompetencesJson(Rules)),
+        SampleStudentRows.Parse(SampleStudentRows.PercentilesJson),
+        SampleStudentRows.Parse(SampleStudentRows.DimensionScoresJson()),
+        threeSixty: null,
+        v360RaterGroups: null,
+        Rules.Competencies).Assessment;
+
     private static CareerFitRawInputs SampleRaw() => new(
         UserId: "student-1",
         SchoolId: "school-a",
@@ -311,6 +366,7 @@ public class CareerFitEvaluatorTests(ITestOutputHelper output)
         LiaPercentiles: SampleStudentRows.Parse(SampleStudentRows.PercentilesJson),
         PersonalityDimensionScores: SampleStudentRows.Parse(SampleStudentRows.DimensionScoresJson()),
         ThreeSixty: null,
+        V360RaterGroups: [],
         Sources: new CareerFitInputSources("pca-1", "lia-1", "pers-1"));
 
     private sealed class FakeReader : ICareerFitInputReader
@@ -358,7 +414,7 @@ public class CareerFitEvaluatorTests(ITestOutputHelper output)
     private static JsonElement LoadFixture()
     {
         var assembly = Assembly.GetExecutingAssembly();
-        var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith("parity-fixture.json", StringComparison.Ordinal));
+        var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith(".CareerFit.Data.parity-fixture.json", StringComparison.Ordinal));
         using var stream = assembly.GetManifestResourceStream(name)!;
         return JsonDocument.Parse(stream).RootElement.Clone();
     }

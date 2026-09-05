@@ -22,7 +22,8 @@ public static class CareerFitInputAdapters
     /// <paramref name="competences"/> are pca_results.discResult / .competences; <paramref name="liaPercentiles"/>
     /// is lia_assessment_sessions.percentiles; <paramref name="personalityDimensionScores"/> is
     /// personality_assessment_sessions.dimension_scores; <paramref name="threeSixty"/> is the profile's 360
-    /// block (ignored by <see cref="NoDataV360Adapter"/>). Fail-closed cases throw
+    /// block and <paramref name="v360RaterGroups"/> the student's completed vocational rater groups with
+    /// their item responses (both ignored by <see cref="NoDataV360Adapter"/>). Fail-closed cases throw
     /// <see cref="CareerFitInputException"/>; everything repairable lands in the quality record.
     /// </summary>
     public static CareerFitAssessmentInputs Adapt(
@@ -31,6 +32,7 @@ public static class CareerFitInputAdapters
         JsonElement liaPercentiles,
         JsonElement personalityDimensionScores,
         ThreeSixtyProfile? threeSixty,
+        IReadOnlyList<ScoringGroup>? v360RaterGroups,
         IReadOnlyList<CompetencyDefinition> competencyDefinitions,
         IV360Adapter? v360Adapter = null,
         DiscGraphChoice discGraph = DiscAdapter.DefaultGraph)
@@ -40,7 +42,7 @@ public static class CareerFitInputAdapters
             CompetencyAdapter.Adapt(competences, competencyDefinitions),
             MilAdapter.Adapt(liaPercentiles),
             PersonalityAdapter.Adapt(personalityDimensionScores),
-            (v360Adapter ?? NoDataV360Adapter.Instance).Adapt(threeSixty));
+            (v360Adapter ?? NoDataV360Adapter.Instance).Adapt(threeSixty, v360RaterGroups));
     }
 
     /// <summary>Compose five adaptations into the engine assessment and its quality record. Warnings keep instrument order: PCA, competencies, MIL, personality, 360.</summary>
@@ -73,7 +75,14 @@ public static class CareerFitInputAdapters
             competencies.DefaultedIds,
             personality.Derivation,
             v360.Source,
-            warnings);
+            warnings)
+        {
+            // FM-CF-007's per-variable trail travelled only as far as the adaptation before; carrying it onto
+            // the quality record is what lets the run persist the 360 evidence (and FM-CF-010 record F01-F05)
+            // instead of leaving the detail to be inferred from warning text. Empty under NoDataV360Adapter.
+            V360Variables = v360.Variables,
+            V360Instrument = v360.Instrument,
+        };
 
         return new CareerFitAssessmentInputs(assessment, quality);
     }
