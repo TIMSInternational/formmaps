@@ -15,10 +15,31 @@
     <EmbeddedResource Include="Assessments\Data\lia-question-bank.json" />
     <!-- LIA-core EN verbal-reasoning question TEXT bank (extracted from legacy verbal-en.ts VERBAL_EN; certified human-reviewed content). -->
     <EmbeddedResource Include="Assessments\Data\lia-verbal-en.json" />
+    <!-- Verbatim copy of legacy api/data/rigor-templates.json (10 fields x 3 selectivity tiers). The
+         graduation-plan routes read only fieldAliases / tierBands / fields[].label; the planner-facing
+         depthTracks + breadth + narrativeHints are carried untouched so a refresh stays a cp + git diff. -->
+    <EmbeddedResource Include="Graduation\Data\rigor-templates.json" />
     <!-- Single source of truth for GET /api/v1/migration/roadmap (formmaps#12/#13): domain-grained
          code-completion + live-in-prod status, hand-maintained per the update convention documented
          inside the file itself and in docs/migration/domain-status-manifest.md. -->
     <EmbeddedResource Include="Migration\Data\domain-status.manifest.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- CareerFit rule set (FM-CF-004): the ONE source of truth, derived by tools/careerfit/build_rules.py
+         (which writes exactly here), gated by tools/careerfit/mc_gate.py, never hand-edited.
+         CareerFitRulesJson.LoadEmbedded(version) reads it by resource name.
+         It lives INSIDE services/api on purpose. The Dockerfile builds with the services/api directory as
+         its context (`docker build -f services/api/Dockerfile … services/api`, both deploy workflows), so
+         anything above that directory — docs/ included — simply is not there at image-build time. An
+         earlier revision linked it from docs/careerfit/rules and the container build failed on a guard;
+         same shape as Assessments/Data/lia-percentile-tables.json, which has always lived here. -->
+    <EmbeddedResource Include="CareerFit\Data\careerfit-rules.v1.0.0-draft.1.json" />
+    <!-- CareerFit shadow projection (FM-CF-013): the legacy cluster -> family map the shadow comparison
+         is computed through. Beside the rule set for the same Docker-context reason, and hand-authored
+         rather than derived, because the legacy cluster vocabulary is not in this repository at all;
+         see the file's own why_it_is_incomplete block. CareerFitShadowProjection.Embedded reads it. -->
+    <EmbeddedResource Include="CareerFit\Data\careerfit-shadow-projection.v0.json" />
   </ItemGroup>
 
   <ItemGroup>

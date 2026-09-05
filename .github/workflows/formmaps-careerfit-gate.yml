@@ -1,0 +1,50 @@
+name: formmaps-careerfit-gate
+
+# The CareerFit rule set (services/api/.../CareerFit/Data) is derived, not authored: build_rules.py turns
+# the vendored TIMS workbook + model config + the reviewed decisions into JSON, and mc_gate.py
+# proves the JSON still recovers the archetypes it encodes on the spec's own engine. This job
+# keeps both facts true on every PR.
+#
+# No `paths:` filter, for the same reason formmaps-web-ci.yml has none: a filtered job that
+# becomes a required check sits at "Expected -- waiting for status" on unrelated PRs. The whole
+# thing runs in well under a minute.
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  gate:
+    name: rule set reproducible + Monte Carlo gate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install harness dependencies
+        run: python3 -m pip install --quiet -r tools/careerfit/requirements.txt
+
+      # The committed JSON must be byte-identical to a fresh build from its sources. A hand edit
+      # to the rule set, or a decision changed in build_rules.py without rebuilding, fails here.
+      - name: Rule set is reproducible from its sources
+        run: python3 tools/careerfit/build_rules.py --check
+
+      # Fail-closed structure, bit-fidelity to the reference engine, recovery and distribution.
+      - name: Monte Carlo gate
+        run: python3 tools/careerfit/mc_gate.py --n 5000
+
+      # The gate must be able to fail: five poisoned rule sets are rejected, the clean one passes.
+      - name: Gate self-test
+        run: python3 tools/careerfit/mc_gate.py --self-test --n 5000

@@ -11,7 +11,7 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
     private NpgsqlDataSource _dataSource = null!;
 
     public MessagesListConversationsTests(MessagingDatabaseFixture fixture) => _fixture = fixture;
-    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
+    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString); return Task.CompletedTask; }
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     private MessagesRepository Repo() => new(
@@ -28,7 +28,7 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
         // Update conversation with lastMessagePreview and lastMessageAt (normally done by application)
         await UpdateConversationPreviewAsync(conversationId, "hi", DateTime.UtcNow);
 
-        var results = await Repo().ListConversationsAsync(_fixture.Ctx(userId), userId);
+        var results = await Repo().ListConversationsAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId);
 
         var conv = Assert.Single(results);
         Assert.Equal(otherId, conv.OtherParticipantId);
@@ -37,6 +37,23 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
         Assert.NotNull(conv.LastMessagePreview);
         Assert.NotNull(conv.LastMessageAt);
         Assert.Equal(2, conv.UnreadCount);
+    }
+
+    [Fact]
+    public async Task LastMessageAt_is_iso_z_with_millisecond_precision()
+    {
+        var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();
+        await _fixture.SeedMessageAsync(conversationId, senderId: otherId, readAt: null);
+        await UpdateConversationPreviewAsync(conversationId, "hi", new DateTime(2026, 1, 1, 12, 34, 56, 789, DateTimeKind.Utc));
+
+        var results = await Repo().ListConversationsAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId);
+
+        // ISO-Z, not +00:00 and not a bare local time -- the column is timestamp-without-tz, so a raw
+        // DateTime would come back Kind.Unspecified and browsers would shift it by their UTC offset.
+        var conv = Assert.Single(results);
+        Assert.Equal("2026-01-01T12:34:56.789Z", conv.LastMessageAt);
+        Assert.EndsWith("Z", conv.LastMessageAt);
+        Assert.DoesNotContain("+00:00", conv.LastMessageAt);
     }
 
     [Fact]
@@ -57,16 +74,20 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
         } while ((string.CompareOrdinal(userId, otherId2) < 0) == userIsAWithOther1);
         // Now userId is A with one and B with the other
 
-        // Create users and conversations via direct SQL to force A/B assignment
-        await using var conn = new Npgsql.NpgsqlConnection(_fixture.ConnectionString);
+        // Create users and conversations via direct SQL to force A/B assignment. All three share a school:
+        // ListConversationsAsync INNER JOINs both participants' users rows, and the production users policy
+        // (formmaps#125) hides a school-less stranger from the caller's session, so a school-less seed made
+        // both conversations vanish -- correctly, and as production would.
+        await using var conn = new Npgsql.NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
 
         foreach (var id in new[] { userId, otherId1, otherId2 })
         {
             await using var userCmd = new Npgsql.NpgsqlCommand(
-                """INSERT INTO "users" ("id","name","email","roleId","roleName","schoolId","isActive") VALUES (@id,@id,@id || '@test.dev','r','student',null,true)""",
+                """INSERT INTO "users" ("id","name","email","roleId","roleName","schoolId","isActive") VALUES (@id,@id,@id || '@test.dev','r','student',@schoolId,true)""",
                 conn);
             userCmd.Parameters.AddWithValue("id", id);
+            userCmd.Parameters.AddWithValue("schoolId", MessagingDatabaseFixture.DefaultSchoolId);
             await userCmd.ExecuteNonQueryAsync();
         }
 
@@ -99,7 +120,7 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
         await UpdateConversationPreviewAsync(convId2, "hi", DateTime.UtcNow);
 
         // Query both conversations
-        var results = await Repo().ListConversationsAsync(_fixture.Ctx(userId), userId);
+        var results = await Repo().ListConversationsAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId);
 
         Assert.Equal(2, results.Count);
 
@@ -133,9 +154,9 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
         await UpdateConversationPreviewAsync(convIdWithMsg, "hi", DateTime.UtcNow);
 
         // Create conversation with no message (lastMessageAt is NULL)
-        var otherId2 = await _fixture.SeedUserAsync(null, "counselor");
+        var otherId2 = await _fixture.SeedUserAsync(MessagingDatabaseFixture.DefaultSchoolId, "counselor");
         var convIdNoMsg = Guid.NewGuid().ToString();
-        await using var conn = new Npgsql.NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new Npgsql.NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         var (pa, pb) = string.CompareOrdinal(userId, otherId2) < 0 ? (userId, otherId2) : (otherId2, userId);
         await using var cmd = new Npgsql.NpgsqlCommand(
@@ -145,7 +166,7 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
         cmd.Parameters.AddWithValue("pb", pb);
         await cmd.ExecuteNonQueryAsync();
 
-        var results = await Repo().ListConversationsAsync(_fixture.Ctx(userId), userId);
+        var results = await Repo().ListConversationsAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId);
 
         Assert.Equal(2, results.Count);
         // New conversation (NULL lastMessageAt) should come FIRST due to NULLS FIRST ordering
@@ -155,7 +176,7 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
 
     private async Task UpdateConversationPreviewAsync(string conversationId, string preview, DateTime timestamp)
     {
-        await using var conn = new Npgsql.NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new Npgsql.NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         await using var cmd = new Npgsql.NpgsqlCommand(
             """UPDATE "conversations" SET "lastMessagePreview" = @preview, "lastMessageAt" = @timestamp WHERE "id" = @id""", conn);

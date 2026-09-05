@@ -1,8 +1,10 @@
 -- Harness DDL for the parent child-link-scoped reads (FM-DOTNET-079), hand-written from schema.prisma.
 -- Only the columns the reader queries touch are modelled, PLUS the columns the production RLS policies name
--- (formmaps#125): "schoolId" on student_grades / graduation_plans / graduation_plan_items is not read by any
--- query here, but 002-direct-schoolid.sql and 006-graduation-plans.sql scope all three directly on it, so
--- without the column the policy cannot even be created. That gap was invisible until the policies were applied. totalCreditsRequired + credits are `numeric` (Prisma
+-- (formmaps#125): "schoolId" on student_grades / graduation_plans / graduation_plan_items / student_course_plans
+-- is not read by any query here, but 002-direct-schoolid.sql, 006-graduation-plans.sql and pilot.sql scope all
+-- four directly on it, so without the column the policy cannot even be created. That gap was invisible until the
+-- policies were applied; student_course_plans stayed invisible one round longer because pilot.sql was not
+-- vendored (formmaps#135). totalCreditsRequired + credits are `numeric` (Prisma
 -- Decimal); scorePercentage is double precision (Prisma Float); timestamps are `timestamp` (no tz).
 
 CREATE TABLE "users" (
@@ -100,6 +102,7 @@ CREATE TABLE "student_graduation_targets" (
 CREATE TABLE "student_course_plans" (
     "id"        text PRIMARY KEY,
     "studentId" text NOT NULL,
+    "schoolId"  text NOT NULL,                        -- formmaps#135 (pilot.sql scopes this table directly on it)
     "courseId"  text NOT NULL,
     "term"      text,
     "gradeLevel" integer,                              -- #122

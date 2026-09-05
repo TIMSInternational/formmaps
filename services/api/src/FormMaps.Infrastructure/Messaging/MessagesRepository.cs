@@ -1,8 +1,12 @@
 using System.Data;
 using System.Data.Common;
+using System.Globalization;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using FormMaps.Application.Messaging;
+using FormMaps.Infrastructure.Data;
+using Microsoft.Extensions.Options;
+using Npgsql;
 
 namespace FormMaps.Infrastructure.Messaging;
 
@@ -15,7 +19,8 @@ namespace FormMaps.Infrastructure.Messaging;
 public sealed class MessagesRepository(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     TimeProvider timeProvider,
-    IMessagesRealtimeNotifier realtimeNotifier) : IMessagesRepository
+    IMessagesRealtimeNotifier realtimeNotifier,
+    IOptions<FormMapsDatabaseOptions>? databaseOptions = null) : IMessagesRepository
 {
     public async Task<int> GetUnreadCountAsync(RequestContext context, string userId, CancellationToken cancellationToken = default)
     {
@@ -116,6 +121,13 @@ public sealed class MessagesRepository(
         command.Parameters.Add(parameter);
     }
 
+    // Wire format for every messaging timestamp (REST and the realtime push): the columns are
+    // timestamp-without-tz, so the DateTime comes back Kind.Unspecified and would serialize as a bare
+    // local time. Same convention as VideoSessionsRepository / CalendarReader; matches legacy's
+    // Prisma DateTime -> JSON output including millisecond precision.
+    private static string IsoZ(DateTime value) =>
+        DateTime.SpecifyKind(value, DateTimeKind.Utc).ToString("yyyy-MM-ddTHH:mm:ss.fff'Z'", CultureInfo.InvariantCulture);
+
     public async Task<IReadOnlyList<ConversationSummary>> ListConversationsAsync(
         RequestContext context, string userId, CancellationToken cancellationToken = default)
     {
@@ -148,7 +160,7 @@ public sealed class MessagesRepository(
                 reader.GetString(0), reader.GetString(1),
                 reader.IsDBNull(2) ? null : reader.GetString(2), reader.GetString(3),
                 reader.IsDBNull(4) ? null : reader.GetString(4),
-                reader.IsDBNull(5) ? null : reader.GetDateTime(5),
+                reader.IsDBNull(5) ? null : IsoZ(reader.GetDateTime(5)),
                 reader.GetInt32(6)));
         }
         return rows;
@@ -317,7 +329,7 @@ public sealed class MessagesRepository(
                 rows.Add(new MessageRow(
                     reader.GetString(0), reader.GetString(1), reader.GetString(2),
                     reader.IsDBNull(3) ? null : reader.GetString(3), reader.GetString(4),
-                    reader.IsDBNull(5) ? null : reader.GetDateTime(5), reader.GetDateTime(6)));
+                    reader.IsDBNull(5) ? null : IsoZ(reader.GetDateTime(5)), IsoZ(reader.GetDateTime(6))));
             }
         }
 
@@ -414,12 +426,13 @@ public sealed class MessagesRepository(
         // request's token would cancel and silently swallow (SignalRMessagesNotifier catches everything)
         // a push for a message that was, in fact, successfully sent. The recipient just misses the
         // realtime nudge, not the message.
+        var createdDate = IsoZ(now);
         await realtimeNotifier.NotifyMessageReceivedAsync(otherId, new
         {
-            id = messageId, conversationId, senderId = userId, content, createdDate = now,
+            id = messageId, conversationId, senderId = userId, content, createdDate,
         }, CancellationToken.None);
 
-        var message = new MessageRow(messageId, conversationId, userId, senderName, content, null, now);
+        var message = new MessageRow(messageId, conversationId, userId, senderName, content, null, createdDate);
         return new SendMessageResult(SendMessageStatus.Sent, message, otherId, recipientEmail, senderName, preview);
     }
 
@@ -438,7 +451,7 @@ public sealed class MessagesRepository(
 
     private sealed record ConversationRow(
         string Id, string ParticipantAId, string ParticipantBId, string? AName, string AEmail,
-        string? BName, string BEmail, string? LastMessagePreview, DateTime? LastMessageAt);
+        string? BName, string BEmail, string? LastMessagePreview, string? LastMessageAt);
 
     private static ConversationSummary ToSummary(ConversationRow row, string userId)
     {
@@ -489,7 +502,7 @@ public sealed class MessagesRepository(
             reader.IsDBNull(3) ? null : reader.GetString(3), reader.GetString(4),
             reader.IsDBNull(5) ? null : reader.GetString(5), reader.GetString(6),
             reader.IsDBNull(7) ? null : reader.GetString(7),
-            reader.IsDBNull(8) ? null : reader.GetDateTime(8));
+            reader.IsDBNull(8) ? null : IsoZ(reader.GetDateTime(8)));
     }
 
     private static Task<ConversationRow?> FindConversationRowAsync(
@@ -604,78 +617,165 @@ public sealed class MessagesRepository(
     /// counselor broadcasting to "students" the resolved (possibly empty) assignment-id list is ALWAYS
     /// passed through as restrictToIds -- never skipped or left null for that combination -- so an empty
     /// assignment list yields zero recipients rather than falling through to the whole school.
+    ///
+    /// Delivery is per recipient, NOT one transaction: legacy runs each recipient's Prisma calls with
+    /// auto-commit under `Promise.all` over chunks of 20. This method used to hold ONE writable session
+    /// and loop every recipient sequentially with a single COMMIT at the end, so 500 recipients x 3
+    /// statements ran serially against the 60s request budget (504 with zero messages delivered) and any
+    /// one failure rolled back every other recipient. Now each recipient gets its own session/transaction
+    /// (sessions are not thread-safe; one per task) and its outcome is recorded rather than thrown.
+    ///
+    /// Two deliberate differences from legacy inside a recipient's transaction: (1) the unread-notification
+    /// outbox INSERT rides in it, so an enqueue failure fails that recipient -- legacy fires
+    /// enqueueUnreadMessageNotification without awaiting it (failure logged, recipient still counted);
+    /// (2) the whole fan-out ignores <paramref name="cancellationToken"/> -- legacy's Node handler keeps
+    /// running after the client socket closes, so a disconnect or the gateway timeout never leaves a
+    /// broadcast half-delivered with no response for the client to act on (a retry would double-send).
     /// </summary>
-    public async Task<int> BroadcastAsync(
+    public async Task<BroadcastResult> BroadcastAsync(
         RequestContext context, string userId, string role, string schoolId, string recipientGroup, string content,
         CancellationToken cancellationToken = default)
     {
-        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
         var roles = BroadcastRoleMap[recipientGroup];
+        List<RecipientRow> filtered;
+        string senderName;
 
-        IReadOnlyList<string>? restrictToIds = null;
-        if (role == "counselor" && recipientGroup == "students")
+        // Recipient selection is read-only and released before the fan-out: MaxPoolSize is 10, so holding
+        // this connection across the per-recipient sessions would only shrink what the chunk can use.
+        await using (var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken))
         {
-            restrictToIds = await GetAssignedStudentIdsAsync(session, userId, cancellationToken);
+            IReadOnlyList<string>? restrictToIds = null;
+            if (role == "counselor" && recipientGroup == "students")
+            {
+                restrictToIds = await GetAssignedStudentIdsAsync(session, userId, cancellationToken);
+            }
+
+            var recipients = await GetSchoolRecipientsAsync(session, schoolId, roles, userId, restrictToIds, cancellationToken);
+            if (recipients.Count == 0) return BroadcastResult.Empty;
+
+            var blockedIds = await GetBlockedIdsAsync(session, userId, recipients.Select(r => r.Id).ToList(), cancellationToken);
+            filtered = recipients.Where(r => !blockedIds.Contains(r.Id)).ToList();
+            senderName = await GetUserNameAsync(session, userId, cancellationToken) ?? "";
         }
-
-        var recipients = await GetSchoolRecipientsAsync(session, schoolId, roles, userId, restrictToIds, cancellationToken);
-        if (recipients.Count == 0) { await session.CommitAsync(cancellationToken); return 0; }
-
-        var blockedIds = await GetBlockedIdsAsync(session, userId, recipients.Select(r => r.Id).ToList(), cancellationToken);
-        var filtered = recipients.Where(r => !blockedIds.Contains(r.Id)).ToList();
 
         var preview = content.Length > 100 ? content[..97] + "..." : content;
         var now = NowTruncated();
-        var senderName = await GetUserNameAsync(session, userId, cancellationToken) ?? "";
 
+        // Bounded concurrency: legacy's CHUNK = 20 with Promise.all per chunk. Task.WhenAll waits for the
+        // whole chunk (including failures) before the next one starts, and -- exactly like a rejected
+        // Promise.all throwing out of legacy's for-loop into the route's catch -- a chunk that records any
+        // failure ends the broadcast: its siblings have already finished, later chunks never start, the
+        // endpoint answers 500 with the successes kept. Otherwise a systemic failure (pool exhausted, DB
+        // gone) would still walk every remaining chunk, each open waiting out Database.TimeoutSeconds,
+        // and burn the request budget delivering more than legacy did before failing.
+        //
+        // Within a chunk the pool, not the chunk, is the real concurrency limit: it is process-wide and
+        // MaxPoolSize is 10, so 20 simultaneous opens would pin every connection for the whole broadcast
+        // and park every other request on the pool's 20s wait. At most MaxPoolSize - PoolHeadroom
+        // sessions are open at once (per broadcast; two concurrent broadcasts still share the pool).
         const int chunkSize = 20;
+        using var inFlight = new SemaphoreSlim(MaxInFlightSessions(chunkSize));
         var created = 0;
+        var failures = new List<BroadcastFailure>();
         for (var i = 0; i < filtered.Count; i += chunkSize)
         {
-            var chunk = filtered.Skip(i).Take(chunkSize);
-            foreach (var recipient in chunk)
+            var outcomes = await Task.WhenAll(filtered.Skip(i).Take(chunkSize).Select(recipient =>
+                DeliverBroadcastMessageAsync(context, userId, recipient, content, preview, senderName, now, inFlight)));
+            foreach (var failure in outcomes)
             {
-                var (pa, pb) = string.CompareOrdinal(userId, recipient.Id) < 0 ? (userId, recipient.Id) : (recipient.Id, userId);
-                var conversationId = await UpsertConversationAsync(session, pa, pb, now, preview, cancellationToken);
-                // ONE id, bound to both the message row and the outbox payload below. These were two
-                // separate Guid.NewGuid() calls until this fix, so every broadcast enqueued a payload
-                // pointing at a message that does not exist -- and notificationOutboxService's
-                // handleUnreadMessage does `findUnique({ id: payload.messageId })` then `if (!msg) return`,
-                // so every broadcast notification email was silently dropped. SendMessageAsync always did
-                // this correctly; only this loop was wrong.
-                var messageId = Guid.NewGuid().ToString();
-                await using (var insert = Command(session, """
-                    INSERT INTO "messages" ("id", "conversationId", "senderId", "content", "createdDate", "updatedAt")
-                    VALUES (@id, @cid, @sid, @content, @now, @now)
-                    """))
-                {
-                    AddParameter(insert, "id", messageId);
-                    AddParameter(insert, "cid", conversationId);
-                    AddParameter(insert, "sid", userId);
-                    AddParameter(insert, "content", content);
-                    AddTimestamp(insert, "now", now);
-                    await insert.ExecuteNonQueryAsync(cancellationToken);
-                }
-                await using (var outbox = Command(session, """
-                    INSERT INTO "notification_outbox" ("id", "type", "payload", "due_at")
-                    VALUES (@id, 'unread_message', @payload::jsonb, @dueAt)
-                    """))
-                {
-                    AddParameter(outbox, "id", Guid.NewGuid().ToString());
-                    AddParameter(outbox, "payload", System.Text.Json.JsonSerializer.Serialize(new
-                    {
-                        messageId, recipientEmail = recipient.Email, senderName, preview,
-                    }));
-                    AddTimestamp(outbox, "dueAt", now.AddMinutes(5));
-                    await outbox.ExecuteNonQueryAsync(cancellationToken);
-                }
+                if (failure is null) created++;
+                else failures.Add(failure);
             }
-            created += chunk.Count();
+            if (failures.Count > 0) break;
         }
 
-        await session.CommitAsync(cancellationToken);
-        return created;
+        return new BroadcastResult(created, failures);
     }
+
+    /// <summary>Connections left for the other requests on this instance while a broadcast is fanning out.</summary>
+    private const int PoolHeadroom = 2;
+
+    private int MaxInFlightSessions(int chunkSize)
+    {
+        var maxPoolSize = databaseOptions?.Value.MaxPoolSize ?? new FormMapsDatabaseOptions().MaxPoolSize;
+        return Math.Clamp(maxPoolSize - PoolHeadroom, 1, chunkSize);
+    }
+
+    /// <summary>
+    /// One recipient of a broadcast on its OWN session: upsert conversation, insert message, enqueue outbox,
+    /// COMMIT. Returns null on success or the failure to record; a failed recipient's session rolls back on
+    /// dispose without touching any other recipient's committed rows. Deliberately takes no cancellation
+    /// token (see <see cref="BroadcastAsync"/>): once the fan-out has started it runs to completion.
+    /// </summary>
+    private async Task<BroadcastFailure?> DeliverBroadcastMessageAsync(
+        RequestContext context, string userId, RecipientRow recipient, string content, string preview, string senderName,
+        DateTime now, SemaphoreSlim inFlight)
+    {
+        var cancellationToken = CancellationToken.None;
+        await inFlight.WaitAsync(cancellationToken);
+        var committed = false;
+        try
+        {
+            await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
+            var (pa, pb) = string.CompareOrdinal(userId, recipient.Id) < 0 ? (userId, recipient.Id) : (recipient.Id, userId);
+            var conversationId = await UpsertConversationAsync(session, pa, pb, now, preview, cancellationToken);
+            // ONE id, bound to both the message row and the outbox payload below. These were two
+            // separate Guid.NewGuid() calls until this fix, so every broadcast enqueued a payload
+            // pointing at a message that does not exist -- and notificationOutboxService's
+            // handleUnreadMessage does `findUnique({ id: payload.messageId })` then `if (!msg) return`,
+            // so every broadcast notification email was silently dropped. SendMessageAsync always did
+            // this correctly; only this loop was wrong.
+            var messageId = Guid.NewGuid().ToString();
+            await using (var insert = Command(session, """
+                INSERT INTO "messages" ("id", "conversationId", "senderId", "content", "createdDate", "updatedAt")
+                VALUES (@id, @cid, @sid, @content, @now, @now)
+                """))
+            {
+                AddParameter(insert, "id", messageId);
+                AddParameter(insert, "cid", conversationId);
+                AddParameter(insert, "sid", userId);
+                AddParameter(insert, "content", content);
+                AddTimestamp(insert, "now", now);
+                await insert.ExecuteNonQueryAsync(cancellationToken);
+            }
+            await using (var outbox = Command(session, """
+                INSERT INTO "notification_outbox" ("id", "type", "payload", "due_at")
+                VALUES (@id, 'unread_message', @payload::jsonb, @dueAt)
+                """))
+            {
+                AddParameter(outbox, "id", Guid.NewGuid().ToString());
+                AddParameter(outbox, "payload", System.Text.Json.JsonSerializer.Serialize(new
+                {
+                    messageId, recipientEmail = recipient.Email, senderName, preview,
+                }));
+                AddTimestamp(outbox, "dueAt", now.AddMinutes(5));
+                await outbox.ExecuteNonQueryAsync(cancellationToken);
+            }
+            await session.CommitAsync(cancellationToken);
+            committed = true;
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // Once COMMIT has returned the message IS delivered: a failure after that point (the session's
+            // dispose returning a broken connection to the pool) must not be reported as an undelivered
+            // recipient, or the endpoint answers 500 for a message the recipient will read.
+            return committed ? null : new BroadcastFailure(recipient.Id, DescribeFailure(ex));
+        }
+        finally
+        {
+            inFlight.Release();
+        }
+    }
+
+    /// <summary>
+    /// SQLSTATE + primary message only. PostgresException.Message also carries DETAIL, which for a
+    /// unique/FK violation quotes the offending row's values (participant ids, emails); Npgsql redacts it
+    /// unless the connection string sets "Include Error Detail", which DATABASE_URL passes through
+    /// untouched -- and BroadcastFailure.Error ends up verbatim in the endpoint's log line.
+    /// </summary>
+    private static string DescribeFailure(Exception ex) =>
+        ex is PostgresException pg ? $"{pg.SqlState}: {pg.MessageText}" : ex.Message;
 
     private sealed record RecipientRow(string Id, string Email);
 

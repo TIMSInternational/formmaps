@@ -379,6 +379,11 @@ test("domainForPath maps by longest path prefix and never guesses", () => {
   assert.equal(domainForPath("/evaluation/vocational/take"), "assessments-and-readiness");
   assert.equal(domainForPath("/authapi/login"), "auth");
   assert.equal(domainForPath("/api/v1/totally-unknown/x"), null);
+  // issue #65: telemetry ingest is platform observability, not a product domain.
+  assert.equal(domainForPath("/api/v1/telemetry/events"), "platform-health");
+  // issue #62: all four teacher routes are staff-identity, not assessment content.
+  assert.equal(domainForPath("/api/v1/teacher/onboarding/verify"), "schools-rosters-organizations");
+  assert.equal(domainForPath("/api/v1/teacher/evaluations/pending"), "schools-rosters-organizations");
   // prefix must be path-segment aligned, not a substring match
   assert.equal(domainForPath("/api/v1/videoconference"), null);
 });

@@ -1,0 +1,228 @@
+{
+  "schemaVersion": 1,
+  "project": "formmaps-careerfit",
+  "activeRepository": "TIMSInternational/formmaps",
+  "strategy": "greenfield-bounded-context-shadow-then-replace",
+  "sourceOfTruth": {
+    "specification": "docs/careerfit/sources (TIMS: workbook, model config, reference engine)",
+    "rules": "services/api/src/FormMaps.Application/CareerFit/Data",
+    "engine": "services/api/src/FormMaps.Application/CareerFit",
+    "legacyBaseline": "formmaps-platform api GET /api/v1/careers/score (shadow target, not a behavioural spec)"
+  },
+  "decisions": [
+    "Self-only 360 in V1 (multi-rater is V1.1): measured identical to 4-source for ranking.",
+    "Bounded context inside services/api, same shape as LiaScoring / VocationalScoring; flag FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET.",
+    "FormMaps drafts the configuration, TIMS ratifies it; every drafted number carries its derivation.",
+    "Shadow against legacy /careers/score, then replace."
+  ],
+  "globalGuardrails": [
+    "No engine code before the Monte Carlo gate is green on the rule set it will load (tools/careerfit/mc_gate.py).",
+    "No VARIABLE / INHERIT / X/Y marker may reach a scoring function: the resolver fails closed.",
+    "CareerFitAbsolute is never presented as a percentage; the ranking and the gates are the product.",
+    "Every rule-set version is reproducible from docs/careerfit/sources by tools/careerfit/build_rules.py --check.",
+    "Inherit RLS and tenant context from services/api; no CareerFit table without a school scope."
+  ],
+  "acceptance": {
+    "mc_gate": {
+      "top1_min": 0.93,
+      "top3_min": 0.99,
+      "family_top3_min": 0.60,
+      "absolute_mean_tolerance": 1.5,
+      "absolute_sd_tolerance": 1.0,
+      "reference_fidelity_max": 1e-9,
+      "coherence": 0.75
+    }
+  },
+  "tasks": [
+    {
+      "id": "FM-CF-001-rule-set-draft",
+      "phase": "P0",
+      "status": "completed",
+      "goal": "Draft the complete rule set as versioned JSON with every marker resolved to a concrete rule; TIMS ratifies cell by cell.",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit/Data", "docs/careerfit/sources", "tools/careerfit"],
+      "validation": [
+        "python3 tools/careerfit/build_rules.py --check",
+        "python3 tools/careerfit/mc_gate.py",
+        "python3 tools/careerfit/mc_gate.py --self-test"
+      ],
+      "notes": "Rule set 1.0.0-draft.1: 12 archetypes under one injective phrase mapping (D1); all 15 MIL rows resolved (D2), Ingeniería from its 12 subfamilies; per-instrument convergence thresholds (D5). Gate at 94.0% top-1 / 99.9% top-3, Ingeniería 97.1% (was 0.0%)."
+    },
+    {
+      "id": "FM-CF-002-schema-tenant-scoped",
+      "phase": "P1",
+      "status": "completed",
+      "goal": "Schema, tenant-scoped and RLS-native: the reference DDL has no school column; every CareerFit table carries the scope the platform's RLS policies expect.",
+      "ownedPaths": ["infra/aws/sql/careerfit-schema.sql", "infra/aws/sql/dotnet-service-role.sql", "services/api/tests/FormMaps.IntegrationTests/CareerFit"],
+      "validation": [
+        "dotnet test services/api/tests/FormMaps.IntegrationTests --filter \"FullyQualifiedName~CareerFitRlsTests\"",
+        "dotnet test services/api/tests/FormMaps.IntegrationTests --filter \"FullyQualifiedName~DbRoleGrantsTests\""
+      ],
+      "notes": "careerfit_runs (userId TEXT, nullable schoolId = the row's own tenant snapshot, rulesVersion, discGraph 1..3, inputs/inputQuality jsonb) + careerfit_family_results (every evaluate_owner scalar under its reference name, CHECKed enum columns, audit jsonb, UNIQUE(runId, familyId)); RLS ENABLE+FORCE with the platform's self/school/bypass predicates and nested EXISTS for the child; formmaps_dotnet_svc gets SELECT+INSERT only (runs are immutable). Harness applies the real infra file verbatim and asserts access AND denial as a NOSUPERUSER NOBYPASSRLS login."
+    },
+    {
+      "id": "FM-CF-003-config-cache",
+      "phase": "P1",
+      "status": "completed",
+      "goal": "ConfigCache: one immutable ACTIVE rule-set version, loaded once per version, never queried per factor inside the scoring loop (spec §26).",
+      "ownedPaths": ["services/api/src/FormMaps.Infrastructure/CareerFit", "services/api/src/FormMaps.Application/CareerFit/ICareerFitRulesProvider.cs"],
+      "validation": ["dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitRulesProviderTests\""],
+      "notes": "CareerFitRulesProvider: CareerFit:RulesVersion (env CareerFit__RulesVersion, default 1.0.0-draft.1) → embedded JSON → resolver, once per process behind Lazy<T>(ExecutionAndPublication); a failed load stays failed. EnsureLoaded() runs inside AddFormMapsInfrastructure so an unknown or invalid version stops both hosts (Api, Workers) before Build(). Refuses a document whose rules_version differs from the configured one."
+    },
+    {
+      "id": "FM-CF-004-formulas-f01-f23",
+      "phase": "P2",
+      "status": "completed",
+      "goal": "F01–F23 as pure static functions, I/O-free, every parameter passed in — the LiaScoring / VocationalScoring shape.",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit"],
+      "validation": [
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitParityTests\"",
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitFormulasBoundaryTests\"",
+        "python3 tools/careerfit/export_parity_fixture.py (regenerates services/api/tests/FormMaps.UnitTests/CareerFit/Data/parity-fixture.json; if C# and fixture disagree the C# is wrong)"
+      ],
+      "notes": "CareerFitFormulas: one static function per reference function, same order of floating-point operations, Python 3.12 Neumaier sum() reproduced; 60 archetypal profiles × 14 families held to formmaps_engine_reference.py at 1e-9 — measured bit-exact (0.0). Rule set loaded by CareerFitRulesJson in declared order; ResolvedFamilyRules.FromFamily is mc_lib.resolved_bundle()."
+    },
+    {
+      "id": "FM-CF-005-input-adapters",
+      "phase": "P3",
+      "status": "completed",
+      "goal": "The seam between what the platform measures and what the engine consumes: DISC graph choice, competency name→id, LIA percentile tails, personality poles. Four silent defects live here.",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit/Adapters"],
+      "validation": ["dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~FormMaps.UnitTests.CareerFit.Adapters\""],
+      "notes": "Red first (commit 1050d707: naive adapters, 29/42 tests fail on the defect symptom), then the fix. DiscGraphChoice explicit, default graph 1 (legacy /careers/score's) and recorded; competency names joined NORMALISED (NFD, marks stripped, case-folded, punctuation collapsed), unknown recorded, missing ids → level 0 with a warning; LIA 0/100 → 1/99 with a warning, a missing subtest fails closed; personality poles from the stored counts (winner = 100·count/answered), intensity fallback, 0/0 → 50/50. InputQuality is the audit record the orchestrator persists. 360 is NoDataV360Adapter until FM-CF-006/007."
+    },
+    {
+      "id": "FM-CF-006-seed-360-items",
+      "phase": "P4",
+      "status": "blocked",
+      "blockedOn": "TIMS item text for the 40 variables",
+      "goal": "Seed the 40 items into the existing vocational chassis (likert P1–P34, ranking P35).",
+      "ownedPaths": ["sql", "services/api/src/FormMaps.Infrastructure"],
+      "validation": ["40 items present; codes match rules.v360_variables exactly"]
+    },
+    {
+      "id": "FM-CF-007-360-variable-aggregation",
+      "phase": "P4",
+      "status": "completed",
+      "goal": "Variable-level aggregation with consensus, coverage and confidence (VocationalScoring aggregates at dimension level today).",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit", "services/api/src/FormMaps.Infrastructure/Assessments/VocationalResponseLoader.cs"],
+      "validation": [
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~V360ParityTests\"",
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~V360AggregationLedgerTests\"",
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~VocationalV360AdapterTests\"",
+        "F04/F05 parity with the reference engine"
+      ],
+      "notes": "Red first (commit e2548aee: naive aggregation, 12/22 tests fail on the defect symptom), then the fix. V360Aggregation: per source per variable the mean of F01-normalized answers -> F02/F03/F04 IntegrateSources over weights.v360_sources -> F05 Confidence360; the aggregate map is produced in the rule set's DECLARED variable order. Coverage is the reference's (sum of rater-source weights, what F05 consumes); ITEM coverage is recorded separately on a per-variable audit and warned on, because the two fail differently. V1 is SELF-ONLY, so consensus degenerates: one rater -> consensus None, confidence index null, global NOT_DETERMINABLE, warning V360_SINGLE_RATER -- no spread is manufactured. The global confidence is F05 applied once at instrument level (the GLOBAL arm of open question 7; F06's relevance-weighted index is the other arm and already ships beside it). Reads go through VocationalResponseLoader, VocationalWriter.LoadGroupsAsync lifted verbatim so there is ONE query for 'the student's 360 responses'; the variable code is read from vocational_responses.dimensionKey and, if FM-CF-006 seeds it elsewhere, NOTHING matches and the run degrades to NO_DATA rather than scoring something wrong. NoData stays the fallback and the selection is explicit (a named delegation, not an empty query): no rater group, or no response carrying a rules.v360_variables code, yields the empty map / NOT_DETERMINABLE / careerfit360 0.0 run of today. DI now registers VocationalV360Adapter; behaviour is unchanged until the items exist. P4–P6 INTEGRATION (branch careerfit/p4-p6): the aggregator's per-variable trail (V360VariableAudit) reached only as far as the adaptation and was dropped in Assemble, so the coverage / consensus detail arrived at the run as warning PROSE. It is now carried on InputQuality and persisted as careerfit_runs.\"inputQuality\" -> v360_variables / v360_instrument, and FM-CF-010 records F01–F05 beside it as v360_formula_steps. V360VariableAudit gained SourceScores (F01's output per rater source, F02's input) and V360Adaptation gained Instrument (the instrument-level arm of F02–F05, where the run's one careerfit360_confidence label is produced). REVIEW REPAIR (P4-P6 review, on branch careerfit/shadow), RED FIRST. Two defects in the aggregator's INSTRUMENT arm. (1) V360Aggregation.GlobalConfidence built each rater source's overall 360 score from V360VariableAudit.Score -- the score integrate_sources has ALREADY combined ACROSS sources, so the same number for every source -- instead of SourceScores[source], that source's own F01 output which the record already carried. Any set of raters who answered the same variables therefore agreed with themselves perfectly: instrument consensus 100 and confidence HIGH however violently they disagreed. That label IS the run's one careerfit360_confidence, the only value F23 consults to downgrade a STRONG 360 to PARTIAL, so the defect made VERY_HIGH convergence reachable on maximally divergent evidence; it was dormant only because v360_source is NO_DATA for every student (FM-CF-006 blocked). Four new tests pin the VALUE against numbers derived by hand from the fixture (two raters at means 87.5 / 37.5 -> consensus 50, index 53, LOW), and V360AggregationLedgerTests' instrument test -- which compared the ledger against the same adapter output on BOTH sides and so could not fail for any value the adapter emitted, including the wrong one -- now names literals too (its duplicated line is the F05 OutputLabel assertion it was meant to be). (2) V360VariableAudit.ItemsExpected counted the union of question numbers while ItemsAnswered counted answers ACROSS raters, so every multi-rater record was arithmetically impossible ('4 of 2') and CareerFitAuditLedger rendered that pair into the F04 rule block as a coverage above 100%. ItemsExpected is now (items x answering sources) -- the same unit as ItemsAnswered, and the denominator the adapter's own partial-coverage check already used."
+    },
+    {
+      "id": "FM-CF-008-careerfit360-relevance",
+      "phase": "P4",
+      "status": "completed",
+      "goal": "CareerFit360 per-family relevance weighting (F06) from rules.families[].v360_rules; IND excluded in V1.",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit"],
+      "validation": [
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~V360ParityTests\"",
+        "F06 parity; base_weight carried on the rule, not the schema gap"
+      ],
+      "notes": "F06 parity at 1e-9 over six synthetic aggregate sets x 14 families, per-variable combined_weight included: the weight is base_weight x relevance READ OFF THE RULE (rules.families[].v360_rules[code].base_weight, required by the loader since FM-CF-004), pinned by a test that perturbs the rule and watches the catalogue entry stay put, and by one that shows the same variable weighing differently in two families (IND relevance 3 in family 4, 2 in family 1). IND is EXCLUDED in V1 as a NAMED exclusion (V360Aggregation.ExcludedInV1) at the point the evidence is read, not a silent filter: P36 is a 20-industry selection vector and a per-family scalar needs an industry -> family projection TIMS has not delivered; the exclusion is recorded on every run (V360_IND_EXCLUDED) and a test proves removing IND still leaves every scorable family with weighted BASE rules. The rule set is untouched -- when the projection arrives, deleting the exclusion is the whole change. P35 (RANK) is NOT decided here (open question 5): it is recognised, recorded as not scored, and its weight is entirely the rule set's -- base_weight 0 in the catalogue and no family rule in 1.0.0-draft.1, so it contributes nothing today. P4–P6 INTEGRATION: each family's F06-weighted variables, with their base_weight × relevance, are what FM-CF-011's explainability payload surfaces as that family's 360 evidence and as its 360 modulators."
+    },
+    {
+      "id": "FM-CF-009-rules-resolver-fail-closed",
+      "phase": "P5",
+      "status": "completed",
+      "goal": "RulesResolver: deep-merge family → subfamily → career, then assert_no_unresolved_markers(). Highest leverage in the plan.",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit/Resolver"],
+      "validation": ["dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitRulesResolverTests\""],
+      "notes": "CareerFitRulesResolver.Check/Resolve: mc_gate.py check_resolved() ported one for one (every problem listed, none truncated), the self-test poisons rejected with family and field named; the fourth poison (one family's 360 row everywhere) is RESOLVED by construction and is the Monte Carlo gate's to catch. The family → subfamily → career deep merge is deliberately absent: 1.0.0-draft.1 carries family-level rules only (subfamily_roles are D2 provenance); when a later version adds that layer, Resolve() is where it goes and Check() must run on the merged bundle."
+    },
+    {
+      "id": "FM-CF-010-orchestrator-ranking-audit",
+      "phase": "P5",
+      "status": "completed",
+      "goal": "Orchestrator, ranking, audit trail — a record per formula step, shipped with the scores (§21).",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit"],
+      "validation": [
+        "audit row count == formula steps per family per student (CareerFitAuditLedgerTests re-derives the count from the rule set; the database test asserts jsonb_array_length(audit -> 'formula_steps') on every family row)",
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitEvaluatorTests\"",
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitAuditLedgerTests\"",
+        "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~V360AggregationLedgerTests\"",
+        "dotnet test services/api/tests/FormMaps.IntegrationTests --filter \"FullyQualifiedName~CareerFitEvaluatorDatabaseTests\"",
+        "python3 tools/careerfit/export_parity_fixture.py --n 60 --out <tmp> && cmp <tmp> services/api/tests/FormMaps.UnitTests/CareerFit/Data/parity-fixture.json   # the ledger moved no number"
+      ],
+      "notes": "P1–P3 integration (branch careerfit/p1-p3) ships the orchestrator half: CareerFitEvaluator (read → adapt → rules → EvaluateOwner per scorable family → AssignRelativeFit → write), CareerFitInputReader (one RLS read session; fail-closed CareerFitInputException per missing instrument), CareerFitRunWriter (run + 14 family rows in one transaction, the student's tenant on the run), and the audit shipped with the scores as evaluate_owner's audit_inputs / convergence_detail / critical_gaps / mil_relative_strengths per family. EvaluateCore reproduces the reference at 0.0 deviation. 360 is NoData (careerfit360 0, NOT_DETERMINABLE, SOLID is the convergence ceiling). The per-formula-step ledger the acceptance names shipped on branch careerfit/audit: CareerFitAuditLedger adds careerfit_family_results.audit -> formula_steps, one record per F01–F23 APPLICATION the evaluation actually executed (F07/F08/F09 per contributing route factor, F10 per route, F11, F12/F13 per competency rule with a scored role, F14, F15, F16, F17 per MIL subtest, F18 per personality route, F19, F06, F20, F22 per convergence instrument, F23 only where F22 did not already answer STRONG, F21 once ranked), each naming the step, its inputs, its output and the governing rule or threshold with its provenance — 39–56 records per family, 709 for one run of the sample student. F01–F05 are the 360 AGGREGATION pipeline and execute only once FM-CF-007 lands. §21 itself is not among the vendored sources, so the granularity is read off sheet 13_FORMULAS_ENGINE's own subscripts and evaluate_owner's order of operations; if TIMS delivers §21 and it disagrees, CareerFitAuditLedger is the only thing that changes. NO new table: the ledger rides in the existing audit jsonb because every read of it is 'the whole derivation for this (run, family)' — the row being fetched anyway — while a table would cost ~700 tuples per run per student, forever, for queries nobody makes; so no policy, no GRANT, no fixture-schema and no apply-order change. EvaluateOwner is untouched and the parity fixture still regenerates byte-identical at 0.0 deviation. Still open for this slice: the endpoints (FM-CF-012). P4–P6 INTEGRATION (branch careerfit/p4-p6) closes this slice's engine half, so the status is now completed. The merge added what the ledger could not have before: F01–F05, the 360 aggregation pipeline that FM-CF-007's aggregator turned on. They are recorded ONCE PER STUDENT on careerfit_runs.\"inputQuality\" -> v360_formula_steps, not fourteen times on the family rows, because the aggregate map is GLOBAL — built before any family is scored, and F06 is the first 360 formula a family subscripts. So the family ledger's count stays derivable from the rule set alone, and the run ledger's count is derivable from the variable trail beside it (Σ over scored variables of its answering-source count + 4, plus the instrument arm's 4). No DDL: inputQuality is already a jsonb column. STILL OPEN: the endpoints (FM-CF-012)."
+    },
+    {
+      "id": "FM-CF-011-explainability-payload",
+      "phase": "P5",
+      "status": "completed",
+      "goal": "Explainability payload: structured evidence only (strengths, gaps, winning routes, gates, convergence, modulators). No percentage next to a family.",
+      "ownedPaths": ["services/api/src/FormMaps.Api/Contracts/CareerFit"],
+      "validation": ["contract test: no field named *percent*/*probability* on a family result (asserted by reflection over every public type in the namespace AND over the serialised JSON)", "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitExplanationTests\""],
+      "notes": "Built on branch careerfit/p4-p6, NOT by the explain slice: branch careerfit/explain was created and never committed to (it points at the same SHA as careerfit/p1-p3), so services/api/src/FormMaps.Api/Contracts/CareerFit did not exist and the integration brief's “ensure the payload surfaces the real 360 evidence” had nothing to ensure. CareerFitExplanation is a PURE PROJECTION over the run FM-CF-010 persisted — gates, convergence and per-instrument support, the winning PCA and personality routes, the critical competency gaps, the MIL band and relative strengths, the 360 evidence, and structured modulators — so it computes nothing and cannot disagree with the scores it explains. It carries NO family-level fit scalar at all (no careerfit_absolute, careerfit_relative, pca_index, mil_fit or route score), which is stronger than the stated validation: guardrail 3's point is that a 0–100 number beside a career family reads as a likelihood whatever it is called, so what the payload carries about “how well” is the ORDINAL rank and categorical labels. The name check ran RED on its first execution and found the raw LIA Percentile on the MIL block; it was removed rather than the assertion weakened — open question 1 (what population the MIL percentiles are normed on) is unanswered, while the BAND is the workbook's own presentation category and survives a re-norm. 360 has its own shape because it is the one instrument that may be wholly absent: Determinable is read from the RUN's v360_source, never from the length of a family's variable list, and carries either the no-evidence reason or the single-rater reason in words. Both naive readings were proven RED with the naive code in place — a family that weights none of the variables a student answered (PB is weighted by no family in 1.0.0-draft.1) is still a student who completed a 360, and SELF-ONLY is neither “no evidence” nor “confident evidence”. MODULATORS are surfaced as structured facts (MIL relative strengths, and each 360 variable's base_weight × relevance, heaviest first) and NOT as the rule set's per-family v360_route_modulators_text, which is free Spanish prose naming route flavours the engine does not score and which P1–P3 does not parse into CareerFitRules. NOT here: any HTTP surface, route, authorization or feature flag — FM-CF-012 owns those. REVIEW REPAIR (P4-P6 review), RED FIRST. Two presentation defects. (1) The payload projected the 360's SUPPORT label unconditionally, and for a run with no 360 the engine's careerfit360 is 0.0, so evidence_support returns DIVERGENT -- which the payload passed on twice (V360Explanation.Support and the '360' entry of ConvergenceExplanation.Supports), rendering 'absent' exactly as 'weak' for every student in production today, which this file's own header forbids in those words. The ENGINE keeps emitting DIVERGENT (the reference evaluates evidence_support on the 0.0 and parity is not negotiable); the payload now carries NULL there -- not a fourth label, so a consumer switching on STRONG/PARTIAL/DIVERGENT keeps working -- and the key is kept so 'no verdict' stays distinguishable from 'not reported'. (2) Every MIL modulator shipped the sentence 'relative strength against the student's own MIL mean', but mil_relative_strengths is normalised against the student's own MAX (formmaps_engine_reference.py:253-254), so the top subtest is always exactly 100 and no value is ever negative -- which also made the ordering's Math.Abs a no-op. The sentence now says what the number is and the Math.Abs is gone; 'percentile' is deliberately NOT in the shipped wording because the contract test walks the serialised JSON for *percent*."
+    },
+    {
+      "id": "FM-CF-012-endpoints-flag-gated",
+      "phase": "P6",
+      "status": "completed",
+      "goal": "Seven endpoints behind FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET; rewrite block in next.config.ts.",
+      "ownedPaths": ["services/api/src/FormMaps.Api/Endpoints/CareerFitEndpoints.cs", "apps/web/next.config.ts"],
+      "validation": [
+        "flag OFF: zero .NET traffic; flag ON: legacy route never called",
+        "npx jest next.config.rewrites.test.ts   (in apps/web; 10 CareerFit cases: presence, source == destination, sub-path-before-parent ordering, ahead of the /api/:path* catch-all, FLAG-OFF INERTNESS, base-URL-unset inertness, no legacy /api/v1/careers path touched in either state, shadows nothing outside /api/v1/careerfit, not shadowed with EVERY flag in the config on, and nothing to .NET with CareerFit alone off)",
+        "dotnet test services/api/tests/FormMaps.IntegrationTests --filter \"FullyQualifiedName~CareerFitEndpointsTests\"   (36 cases: guard chain, tenant scoping, wire shape, all seven mapped)",
+        "dotnet test services/api/tests/FormMaps.IntegrationTests --filter \"FullyQualifiedName~CareerFitEvaluatorDatabaseTests\"   (adds the run-reader round trip, the RLS negative control on the READ path, and the history order, on the real DDL as the restricted login)"
+      ],
+      "notes": "THE SEVEN ARE DERIVED, NOT GUESSED. The legacy career surface, as apps/web actually calls it, is eleven method+path pairs in two files (services/careerService.ts :21 :33 :42 :52 :57 :65 :73 :84 :98 :107 :116, services/timsService.ts :8). Exactly ONE of them is a CareerFit question — POST /api/v1/careers/score, the manifest's own legacyBaseline and FM-CF-013's shadow target. The other ten are the 370-role CATALOGUE, its admin CRUD and favourites; V1 CareerFit scores fourteen FAMILIES and has no career catalogue at all (careerfit-schema.sql: 'no per-career / per-subfamily rows'), so those ten STAY on Node and next.config.ts rewrites none of them. The seven are that one legacy question split along the seams the engine actually has: legacy /score both SCORES and RETURNS and every apps/web caller uses it as a READ on mount (CareerMatches.tsx:25, StatCards.tsx:106, CareerMatchHub.tsx:45, careers/compare/page.tsx:16, PCAReports.tsx:48), but a run is IMMUTABLE, so scoring is POST /careerfit/evaluate/{userId} and reading is GET /careerfit/results/{userId} and GET /careerfit/runs/{runId}; the legacy response's explanatory half (types/tims.ts profileSummary/breakdown) is FM-CF-011's payload on GET .../results/{userId}/explanation and .../runs/{runId}/explanation; immutability makes the run history a real question (GET .../results/{userId}/runs, the read careerfit_runs_userId_createdAt_idx exists for); and legacy GET /careers/clusters becomes GET /careerfit/families, the rule set's own family list. Mounted at /api/v1/careerfit, a prefix NO other rule in next.config.ts touches, so this flag can neither shadow nor be shadowed. NEW INFRASTRUCTURE this slice had to add, because a read must not score: ICareerFitRunReader / CareerFitRunReader (a persisted run read back on the CALLER's read-only RLS session) plus CareerFitRunJson.ParseInputQuality / ParseFamilyAudit, the inverses of the two serialisers FM-CF-010 wrote. No DDL, no new column, no policy, no GRANT. AUTH is the surrounding files' convention: RequireIdentity -> RequireSubscription -> CanAccessUser, denial as the uniform IDOR-safe 404; /families is authenticate-only (catalogue metadata, the treatment /vocational360/instrument gets). A run fetched BY ID re-runs CanAccessUser on the RUN'S OWNER — proven RED against the naive version that trusted RLS alone, which is exactly the hole CareerFitRlsTests.Same_school_caller_is_admitted_by_the_policy_so_the_endpoint_gate_is_not_optional names. NO FIT SCALAR REACHES A BROWSER: the ranking view carries the ordinal rank and the categorical gate/convergence/confidence labels only, and the assertion walks the raw JSON of every route for careerfit_absolute/career_fit_absolute/pca_index/mil_fit/*percent*/*probability* plus any property ending in _fit — the first draft listed only the persisted column spellings and stayed GREEN when the scalar was deliberately put back, which is why both spellings are pinned. THE FLAG IS NEW AND OFF: grep finds FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET nowhere in the repo (.env.template, .github/workflows, any file) — the Vercel project's own environment could not be inspected from the worktree and is the one place left to confirm. Rewrite entries are PER-PATH with source == destination, never a /api/v1/careerfit/:path* prefix: a prefix silently adopts every route a later .NET commit adds under it, live on the next deploy with no flip and no canary (#109/#114/#120). DELIBERATELY NOT DONE: no legacy /api/v1/careers path is rewritten (shadow-then-replace is FM-CF-013 then FM-CF-015, not this slice), the F01–F23 ledger is not served over HTTP (~700 records per run; it is evidence for an auditor and rides on the run for FM-CF-013's in-process use), no audit_events row is written (the immutable run IS the audit record), and no DELETE or re-run-of-a-run is mapped (SELECT + INSERT only, dotnet-service-role.sql 4.7). REVIEW REPAIR (P4-P6 review): the SUBSCRIPTION guard on the two per-RUN routes had zero regression protection -- deleting the RequireSubscriptionAsync block from AuthorizeRunAsync left the endpoint suite green, while every other guard mutation the reviewer applied went red. Missing_subscription_is_403_and_the_student_is_never_read_or_scored is now a Theory over all six per-user routes (the three /results/*, both /runs/*, and POST /evaluate), each asserting the 403 arrives before the student is access-checked, read or scored. Re-running the same sabotage now turns the two /runs/* arms RED."
+    },
+    {
+        "id": "FM-CF-013-shadow-compare-legacy",
+        "phase": "P6",
+        "status": "completed-pending-real-cohort",
+        "blockedOn": "A human gate, not a dependency: a real run needs (1) the legacy cluster vocabulary, to complete careerfit-shadow-projection.v0.json, and (2) a decision to run a scoring job across real students' data. Neither is an agent's to take.",
+        "goal": "Shadow-compare against legacy /careers/score for real students; report rank correlation and top-3 overlap. The only external reference that exists.",
+        "ownedPaths": [
+          "services/api/src/FormMaps.Application/CareerFit/Shadow",
+          "services/api/src/FormMaps.Infrastructure/CareerFit",
+          "infra/aws/sql/careerfit-shadow-tables.sql",
+          "tools/careerfit/shadow_report.py",
+          "docs/careerfit"
+        ],
+        "validation": [
+          "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitShadow\"   (45 cases: the two metrics, every cause, the legacy parser's tolerance and its refusals, the projection)",
+          "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~SyntheticShadowCohortTests\"   (the committed export fixture is exactly what this build's comparator produces)",
+          "dotnet test services/api/tests/FormMaps.IntegrationTests --filter \"FullyQualifiedName~CareerFitRlsTests\"   (the shadow table's RLS on the real DDL, both halves, plus the erasure cascades and the two CHECKs)",
+          "dotnet test services/api/tests/FormMaps.IntegrationTests --filter \"FullyQualifiedName~DbRoleGrantsTests\"   (SELECT+INSERT and never UPDATE/DELETE/TRUNCATE on careerfit_shadow_comparisons)",
+          "dotnet test services/api/tests/FormMaps.UnitTests --filter \"FullyQualifiedName~CareerFitShadowRunnerTests\"",
+          "dotnet test services/api/tests/FormMaps.IntegrationTests --filter \"FullyQualifiedName~CareerFitShadowRunnerDatabaseTests\"",
+          "python3 tools/careerfit/shadow_report.py   (regenerates docs/careerfit/careerfit-shadow-report.md from the synthetic fixture)",
+          "NOT RUN, and it is the half of this slice that remains: the job against a REAL cohort. 'shadow table populated' is populated with real rows, and a report generated from them."
+        ],
+        "notes": "BUILT AND PROVEN ON SYNTHETIC PAIRS; NEVER RUN ON REAL DATA. There is no production database access from this repository and no real student in any local one, so the machinery is complete and the measurement has not been taken. The report committed under docs/careerfit is generated from docs/careerfit/shadow/synthetic-shadow-cohort.ndjson — 24 CONSTRUCTED pairs run through the real comparator — and carries a banner saying exactly that; its numbers describe the classifier's behaviour on inputs whose answer is known by construction and say NOTHING about whether the port agrees with legacy. Running it for real is a human gate. THE COMPARISON'S PREMISE IS A PROJECTION NOBODY HAS RATIFIED. The two engines do not score the same unit: legacy /careers/score ranks ~370 PROGRAMS each tagged with a cluster, the .NET engine ranks 14 FAMILIES and has no catalogue. Rank correlation does not exist until something maps cluster → family, and the legacy cluster vocabulary is not in this repository at all (the catalogue and GET /careers/clusters are formmaps-platform's; exactly ONE cluster string appears anywhere here, the example on apps/web/src/types/tims.ts:35). So CareerFit/Data/careerfit-shadow-projection.v0.json ships with that one evidenced entry, status INCOMPLETE_PENDING_LEGACY_CLUSTER_VOCABULARY, and the comparator FAILS CLOSED on it: a pair whose legacy evidence reaches fewer than 3 families is recorded TAXONOMY_UNMAPPED with no metrics rather than correlated over whatever happened to map (two points correlate at exactly ±1 whatever the data says). Completing it is step 1 of any real run and needs TIMS review — which cluster belongs to which family is a judgement about careers. WHY RANK CORRELATION AND TOP-3 OVERLAP AND NOT AN INDEX DELTA. 360 is not seeded (FM-CF-006, blocked) and personality can be absent, so up to 45% of the model's weight can be constant; CareerFitAbsolute is uniformly DEFLATED and its distance from a legacy 0–100 totalScore measures the missing instruments, not the port. A constant applied to every family cannot reorder them, so the ORDERING survives what the values do not. The table has NO delta-of-scores column, deliberately, so there is none to misread. DISAGREEMENTS ARE CLASSIFIED BY CAUSE, and UNEXPLAINED is the only bucket that may indicate a port defect. Pair-level: LEGACY_ABSENT / LEGACY_LOCKED / ENGINE_NOT_SCORABLE (legacy could score the student and the engine fail-closed — the population the port would refuse to serve on the day of the flip, with the instrument PERSISTED on the row's note rather than logged) / DISC_GRAPH_MISMATCH (a run on graph 2 or 3 measures the GRAPH, not the port — legacy is fed graph 1 and DiscAdapter defaults to graph 1 for exactly this reason) / TAXONOMY_UNMAPPED. Family-level: TAXONOMY_NO_LEGACY_EVIDENCE, TIE, INPUT_COVERAGE (the family scores a competency the report did not carry — real reports carry FEWER than 24; 13-of-24 and 0-of-24 have both been observed), NAME_JOIN (that defaulted id exists because a PRINTED NAME joins no catalogue entry — a DATA defect repaired in the name table), UNEXPLAINED. The absent 360 is deliberately NOT a family-level cause: it is the same constant for every family, cannot explain why one moved, and recording it per family would let a real port defect hide behind the largest caveat in the project — it is a pair-level annotation and a paragraph in the report. RED FIRST, MEASURED: eight of the 21 comparator tests were run against the naive readings they name, with the naive code in place, and observed to FAIL — classifying every defaulted-competency disagreement as INPUT_COVERAGE regardless of unjoined names (got InputCoverage, wanted NameJoin); treating a family legacy never mentioned as a large rank delta (spurious UNEXPLAINED rows for a student legacy had no opinion about); no graph gate (a rho of 1.0 for a graph-2 run); reading V360 NO_DATA as INPUT_COVERAGE (every disagreement in every run explained away, UNEXPLAINED empty by construction); no minimum-families gate (a comparable pair correlated over two families); and competition ranks instead of midranks in Spearman (a different rho for the same data). SCHEMA: careerfit_shadow_comparisons in its OWN file (infra/aws/sql/careerfit-shadow-tables.sql) because it is MEASUREMENT retired at cutover, so retirement is one DROP of one file's objects and the immutable-evidence file is never touched to do it — billing-shadow-tables.sql's precedent. Unlike that trio it is RLS ENABLE+FORCE with careerfit_runs' tenant_isolation predicate copied VERBATIM (a row holds a named student's two rankings; guardrail 5). Append-only: SELECT + INSERT only (dotnet-service-role.sql section 4.8 with its own -- NOTE, verify-grants.sql, and DbRoleGrantsTests' existing CareerFit theories extended to the third table), because a service that can edit a measurement can edit the evidence the cutover decision rests on; re-measuring under a corrected projection is a NEW row, which is why comparatorVersion / projectionVersion are ON the row. A CHECK pins the metrics to the comparable flag so a comparable row with a null rho cannot silently shrink the report's denominator. Apply order: AFTER careerfit-schema.sql (the runId FK) and BEFORE dotnet-service-role.sql — both tripwires added to formmaps-sql-apply.yml, both directions recorded in the apply runbook with the rollback note (export before dropping: it is the only external reference the port has, and FM-CF-014 is measured against the same cohort). NEVER AFFECTS THE RESPONSE THE USER SEES, stated as what it does not do: it never calls legacy /careers/score (it reads user_career_profiles.\\\"careerMatches\\\", the cache the platform already writes, so no user request is issued or delayed — at the cost, recorded on the row as legacyObservedAt, that the legacy half is the answer legacy gave when it LAST scored that student); it is mounted on NO route; and the only row a user could ever see is the same immutable careerfit_run POST /careerfit/evaluate would have written. Every reader and writer takes the CALLER's RequestContext and opens its own RLS session — no bypass session anywhere in this slice, which is the difference from BillingShadowRepository. NOT DONE: no scheduling (no worker, no cron — invocation is an operator's), no cohort-selection query (the operator supplies the user ids, so the job cannot widen its own scope), no HTTP surface, and no logging (the Application layer has no logging dependency and this slice does not add one — every fact worth knowing is persisted on the row, which is what a report can count). REVIEW REPAIR (P4-P6 review), and this slice's first tests of the RUNNER. CareerFitShadowRunner shipped with no test of any kind, and all three PRE-SCORING arms (LEGACY_ABSENT, LEGACY_LOCKED, ENGINE_NOT_SCORABLE) built their row with schoolId: null. careerfit_shadow_comparisons' WITH CHECK is careerfit_runs' predicate verbatim -- bypass OR userId = app.current_user_id OR schoolId = app.current_school_id -- so a NULL-tenant row about someone else's student is REFUSED on every non-bypass session: the job threw 42501 out of CareerFitShadowWriter on the first student in a cohort with no cached legacy answer, exactly the population the design says must be recorded, and under a bypass operator it wrote a row the school staff who ran the cohort could never read. Reproduced against real Testcontainers Postgres before the fix. The runner now resolves the STUDENT's tenant FIRST -- ICareerFitStudentTenantReader / CareerFitStudentTenantReader, the same policied users read CareerFitInputReader opens with, on the caller's own session -- and carries it on every row; because that read is policied it is also the GATE, so a student the operator cannot see is refused (STUDENT / STUDENT_NOT_VISIBLE) before the legacy cache is even touched and no row is written about them. NEW TESTS: CareerFitShadowRunnerDatabaseTests (7 cases -- the three arms end to end through the REAL legacy reader, evaluator, run reader and writer as a same-school counselor; the invisible-student refusal; the super-admin operator still recording the student's tenant; the run-REUSE rule and reuseExistingRun: false) and CareerFitShadowRunnerTests (7 cases over fakes -- the two reuse REJECTIONS, a stale rules version and DISC graph 2/3, which the real evaluator can never produce, plus the order-of-operations call counts). CareerFitRlsTests gained the NULL-tenant WITH CHECK arm that was missing: refused for another user, admitted only for oneself. The harness now creates user_career_profiles (policied by the vendored 003-fk-users.sql and named in PoliciedTables), so LegacyCareerScoreReader's SQL is finally compiled and executed against something the suite creates."
+      },
+    {
+      "id": "FM-CF-014-recut-thresholds-observed",
+      "phase": "P7",
+      "status": "pending",
+      "goal": "Recut the thresholds against the OBSERVED distribution from the shadow period (spec §29). Replaces every threshold marked SIMULATED in the rule set.",
+      "ownedPaths": ["services/api/src/FormMaps.Application/CareerFit/Data", "tools/careerfit"],
+      "validation": ["new rules_version; gate green; provenance no longer SIMULATED"]
+    },
+    {
+      "id": "FM-CF-015-cutover-runbook",
+      "phase": "P7",
+      "status": "pending",
+      "goal": "Flag flip + rollback runbook, drill proven in both directions before the flip.",
+      "ownedPaths": ["docs/careerfit/careerfit-cutover-runbook.md"],
+      "validation": ["rollback drill recorded"]
+    },
+    {
+      "id": "FM-CF-016-concurrent-validity-panel",
+      "phase": "P7",
+      "status": "blocked",
+      "blockedOn": "TIMS: 60–100 real files, 3–4 counselors naming a top-3 blind to the engine",
+      "goal": "Concurrent-validity panel — converts 'unvalidated' into a defensible number.",
+      "ownedPaths": ["docs/careerfit"],
+      "validation": ["agreement statistics committed"]
+    }
+  ],
+  "openQuestionsForTIMS": "see services/api/src/FormMaps.Application/CareerFit/Data/careerfit-rules.v1.0.0-draft.1.json open_questions"
+}

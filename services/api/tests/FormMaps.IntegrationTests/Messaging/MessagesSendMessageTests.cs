@@ -1,7 +1,15 @@
+using System.Text;
+using System.Text.Json;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Messaging;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Messaging;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Protocol;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.Messaging;
@@ -12,8 +20,11 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     private NpgsqlDataSource _dataSource = null!;
 
     public MessagesSendMessageTests(MessagingDatabaseFixture fixture) => _fixture = fixture;
-    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
+    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString); return Task.CompletedTask; }
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+
+    // Legacy's Prisma DateTime -> JSON wire format: "2026-01-01T00:00:00.000Z" (ms precision, Z marker).
+    private const string IsoZPattern = @"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$";
 
     private MessagesRepository Repo() => new(
         new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
@@ -24,11 +35,28 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     {
         var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();
 
-        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, "hello there");
 
         Assert.Equal(SendMessageStatus.Sent, result.Status);
         Assert.Equal("hello there", result.Message!.Content);
         Assert.Equal(otherId, result.RecipientId);
+    }
+
+    [Fact]
+    public async Task Sent_message_createdDate_is_iso_z_and_round_trips_the_stored_instant()
+    {
+        var (userId, _, conversationId) = await _fixture.SeedConversationAsync();
+
+        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, "hello there");
+
+        // ISO-Z, not +00:00 and not a bare local time -- this is the value the web's optimistic echo is
+        // replaced with, so a local-time string would make the sent message jump by the viewer's offset.
+        var createdDate = result.Message!.CreatedDate;
+        Assert.Matches(IsoZPattern, createdDate);
+        Assert.DoesNotContain("+00:00", createdDate);
+        Assert.Null(result.Message.ReadAt);
+        var (_, _, updatedAt) = await GetMessageAsync(result.Message.Id);
+        Assert.Equal(DateTime.SpecifyKind(updatedAt, DateTimeKind.Utc), DateTime.Parse(createdDate, null, System.Globalization.DateTimeStyles.AdjustToUniversal));
     }
 
     [Fact]
@@ -39,7 +67,7 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
         var repo = new MessagesRepository(
             new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System, notifier);
 
-        var result = await repo.SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+        var result = await repo.SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, "hello there");
 
         Assert.Equal(1, notifier.CallCount);
         Assert.Equal(otherId, notifier.LastRecipientUserId);
@@ -48,12 +76,55 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     }
 
     [Fact]
+    public async Task Realtime_payload_createdDate_is_iso_z_matching_the_rest_response()
+    {
+        var (userId, _, conversationId) = await _fixture.SeedConversationAsync();
+        var notifier = new CapturingRealtimeNotifier();
+        var repo = new MessagesRepository(
+            new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System, notifier);
+
+        var result = await repo.SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, "hello there");
+
+        // SignalRMessagesNotifier hands this object to hubContext.Clients.Group(...).SendAsync, which the
+        // hub's JSON protocol serializes as the "messageReceived" invocation frame -- so assert on that
+        // frame, produced by the protocol the app actually registers (AddSignalR in
+        // FormMaps.Api.DependencyInjection, resolved through the same IHubProtocolResolver the hub uses),
+        // not on the anonymous object's property. A raw DateTime (Kind.Unspecified) would go out as a bare
+        // local time and the recipient's browser would render it shifted by its UTC offset, unlike the
+        // poll that follows; a converter registered on the hub protocol would surface here too.
+        var frame = SerializeMessageReceivedFrame(notifier.LastPayload!);
+        using var doc = JsonDocument.Parse(frame);
+        var argument = doc.RootElement.GetProperty("arguments")[0];
+        var createdDate = argument.GetProperty("createdDate");
+        Assert.Equal(JsonValueKind.String, createdDate.ValueKind);
+        Assert.Matches(IsoZPattern, createdDate.GetString());
+        Assert.Equal(result.Message!.CreatedDate, createdDate.GetString());
+        Assert.DoesNotContain("+00:00", frame);
+        Assert.Equal(result.Message.Id, argument.GetProperty("id").GetString());
+    }
+
+    /// <summary>
+    /// Serializes <paramref name="payload"/> exactly as the hub sends it to a connected client: the JSON hub
+    /// protocol registered by the app (with its options -- a naming policy or converter added later
+    /// would show up here), wrapped in the "messageReceived" invocation frame. The trailing 0x1E record
+    /// separator is stripped so the frame parses as a plain JSON object.
+    /// </summary>
+    private static string SerializeMessageReceivedFrame(object payload)
+    {
+        using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder => builder.UseEnvironment(Environments.Development));
+        var protocol = factory.Services.GetRequiredService<IHubProtocolResolver>().GetProtocol("json", null)!;
+        var bytes = protocol.GetMessageBytes(new InvocationMessage("messageReceived", [payload]));
+        return Encoding.UTF8.GetString(bytes.Span).TrimEnd('\u001e');
+    }
+
+    [Fact]
     public async Task Blocked_pair_cannot_send()
     {
         var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();
         await _fixture.SeedBlockAsync(userId, otherId);
 
-        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hi");
+        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, "hi");
 
         Assert.Equal(SendMessageStatus.Blocked, result.Status);
     }
@@ -64,7 +135,7 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
         var (_, _, conversationId) = await _fixture.SeedConversationAsync();
         var stranger = Guid.NewGuid().ToString();
 
-        var result = await Repo().SendMessageAsync(_fixture.Ctx(stranger), stranger, conversationId, "hi");
+        var result = await Repo().SendMessageAsync(_fixture.Ctx(stranger, MessagingDatabaseFixture.DefaultSchoolId), stranger, conversationId, "hi");
 
         Assert.Equal(SendMessageStatus.NotFound, result.Status);
     }
@@ -74,7 +145,7 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     {
         var userId = Guid.NewGuid().ToString();
 
-        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId), userId, Guid.NewGuid().ToString(), "hi");
+        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, Guid.NewGuid().ToString(), "hi");
 
         Assert.Equal(SendMessageStatus.NotFound, result.Status);
     }
@@ -84,7 +155,7 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     {
         var (userId, _, conversationId) = await _fixture.SeedConversationAsync();
 
-        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, "hello there");
 
         var (content, senderId, updatedAt) = await GetMessageAsync(result.Message!.Id);
         Assert.Equal("hello there", content);
@@ -98,7 +169,7 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
         var (userId, _, conversationId) = await _fixture.SeedConversationAsync();
         var updatedAtBefore = await GetConversationUpdatedAtAsync(conversationId);
 
-        await Repo().SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+        await Repo().SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, "hello there");
 
         var (preview, lastMessageAt, updatedAtAfter) = await GetConversationPreviewAsync(conversationId);
         Assert.Equal("hello there", preview);
@@ -113,7 +184,7 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
         var (userId, _, conversationId) = await _fixture.SeedConversationAsync();
         var content = new string('x', 150);
 
-        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, content);
+        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, content);
 
         Assert.Equal(new string('x', 97) + "...", result.Preview);
         var (preview, _, _) = await GetConversationPreviewAsync(conversationId);
@@ -125,7 +196,7 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     {
         var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();
 
-        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, "hello there");
 
         Assert.Equal($"{otherId}@test.dev", result.RecipientEmail);
         Assert.Equal(userId, result.SenderName); // fixture seeds "name" == userId
@@ -137,9 +208,9 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
         var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();
 
         var before = DateTime.UtcNow;
-        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, "hello there");
 
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
             """SELECT "type", "payload"->>'recipientEmail', "payload"->>'preview', "payload"->>'senderName', "due_at" FROM "notification_outbox" WHERE "payload"->>'messageId' = @mid""",
@@ -157,7 +228,7 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
 
     private async Task<(string Content, string SenderId, DateTime UpdatedAt)> GetMessageAsync(string messageId)
     {
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
             """SELECT "content", "senderId", "updatedAt" FROM "messages" WHERE "id" = @id""", conn);
@@ -169,7 +240,7 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
 
     private async Task<(string? Preview, DateTime? LastMessageAt, DateTime UpdatedAt)> GetConversationPreviewAsync(string conversationId)
     {
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
             """SELECT "lastMessagePreview", "lastMessageAt", "updatedAt" FROM "conversations" WHERE "id" = @id""", conn);

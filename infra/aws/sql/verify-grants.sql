@@ -151,7 +151,67 @@ WITH checks(tbl, priv, expected, hard, why) AS (
     ('public.audit_logs', 'INSERT', true,  true, 'formmaps#120: SchoolUsersWriter role-change rows (sec 4.6)'),
     ('public.audit_logs', 'SELECT', false, true, 'withheld: no .NET read path; INSERT needs no SELECT'),
     ('public.audit_logs', 'UPDATE', false, true, 'formmaps#128: INSERT-only — UPDATE would make the trail rewritable'),
-    ('public.audit_logs', 'DELETE', false, true, 'formmaps#128: INSERT-only — DELETE would let the service erase it')
+    ('public.audit_logs', 'DELETE', false, true, 'formmaps#128: INSERT-only — DELETE would let the service erase it'),
+    -- FM-CF-002: CareerFit runs are append-only (dotnet-service-role.sql sec
+    -- 4.7). SELECT+INSERT and nothing else — a run is the evidence of what a
+    -- rules version produced from given inputs; a re-evaluation is a NEW run.
+    -- No immutability trigger on these tables, so this grant IS the lock.
+    -- ABSENT until careerfit-schema.sql has been applied.
+    ('public.careerfit_runs', 'SELECT', true,  true, 'FM-CF-002: run reader (own / school / bypass per RLS)'),
+    ('public.careerfit_runs', 'INSERT', true,  true, 'FM-CF-002: run writer'),
+    ('public.careerfit_runs', 'UPDATE', false, true, 'immutable run: must NEVER be granted'),
+    ('public.careerfit_runs', 'DELETE', false, true, 'immutable run: erasure is the admin path, not the service'),
+    ('public.careerfit_family_results', 'SELECT', true,  true, 'FM-CF-002: per-family scores read with the run'),
+    ('public.careerfit_family_results', 'INSERT', true,  true, 'FM-CF-002: written once with the run'),
+    ('public.careerfit_family_results', 'UPDATE', false, true, 'immutable run: must NEVER be granted'),
+    ('public.careerfit_family_results', 'DELETE', false, true, 'immutable run: cascades from the admin erasure path only'),
+    -- FM-CF-013: the shadow comparison table (dotnet-service-role.sql sec 4.8).
+    -- Same append-only reasoning as the run pair: the row IS the external
+    -- measurement of the port, so the service that produces it must not be able
+    -- to edit or erase it. Re-measuring under a corrected projection is a NEW
+    -- row (the row carries comparatorVersion / projectionVersion for exactly
+    -- that). ABSENT until careerfit-shadow-tables.sql has been applied.
+    ('public.careerfit_shadow_comparisons', 'SELECT', true,  true, 'FM-CF-013: idempotency check + report export'),
+    ('public.careerfit_shadow_comparisons', 'INSERT', true,  true, 'FM-CF-013: the shadow writer'),
+    ('public.careerfit_shadow_comparisons', 'UPDATE', false, true, 'the measurement must not be editable by its own producer'),
+    ('public.careerfit_shadow_comparisons', 'DELETE', false, true, 'erasure cascades from "users" on the admin path only'),
+    -- issue #65 / cutover: TelemetryEventWriter does INSERT INTO "telemetry_events"
+    -- (the port of routes/telemetry.ts:45's createMany). Same cutover shape as
+    -- audit_logs above — the write works TODAY only because the service still runs
+    -- on the legacy shared credential, and would start 42501ing the moment
+    -- DATABASE_URL flips to formmaps_dotnet_svc. Listed here BEFORE the flag is
+    -- ever flipped so a production run reports it rather than a user discovering
+    -- it. dotnet-service-role.sql section 4.10 grants it.
+    --
+    -- hard=true in both directions. SELECT is withheld because a service account
+    -- that can read this table can enumerate every user's behavioural history;
+    -- UPDATE/DELETE because retention is a reaper's job no .NET code does.
+    ('public.telemetry_events', 'INSERT', true,  true, 'issue #65: TelemetryEventWriter ingest rows (sec 4.8)'),
+    ('public.telemetry_events', 'SELECT', false, true, 'withheld: no .NET read path; INSERT needs no SELECT'),
+    ('public.telemetry_events', 'UPDATE', false, true, 'withheld: nothing in .NET edits a telemetry row'),
+    ('public.telemetry_events', 'DELETE', false, true, 'withheld: retention is a reaper''s job, not this service''s'),
+    -- issue #62 / cutover: the teacher onboarding pair reads and consumes invites --
+    -- TeacherOnboardingRepository.cs:38 (SELECT ... WHERE "token" = @token, behind
+    -- GET /teacher/onboarding/verify) and :197 (UPDATE ... SET "usedAt", behind
+    -- POST /teacher/onboarding/complete). Same cutover shape as audit_logs and
+    -- telemetry_events above, but with a WORSE blast radius: both routes are PRE-AUTH,
+    -- so the invited teacher has no session by definition and a 42501 here leaves
+    -- onboarding with no recovery path at all. Worked only on the legacy shared
+    -- credential; dotnet-service-role.sql section 4.9 now grants it.
+    --
+    -- This table was in NO grant list and NO stub schema when #62 landed, so neither
+    -- this file nor the test suite could see the gap. Listed here now, hard=true in
+    -- both directions, so a production run reports it rather than a locked-out teacher.
+    --
+    -- INSERT is withheld and that is the security-relevant half: minting an invite is
+    -- Node's job (schoolService.ts:387), and the 256-bit token is the ONLY authorization
+    -- on these two routes, so a service account that could INSERT could mint its own
+    -- valid invite into any school. DELETE is withheld because an invite is consumed by
+    -- setting "usedAt", never removed.
+    ('public.teacher_invites', 'SELECT', true,  true, 'issue #62: TeacherOnboardingRepository reads the invite (sec 4.11)'),
+    ('public.teacher_invites', 'UPDATE', true,  true, 'issue #62: consuming the invite sets "usedAt" (sec 4.11)'),
+    ('public.teacher_invites', 'INSERT', false, true, 'withheld: minting invites is Node''s job; INSERT = self-service entry to any school'),
+    ('public.teacher_invites', 'DELETE', false, true, 'withheld: invites are consumed via "usedAt", never removed')
 )
 SELECT tbl,
        priv,

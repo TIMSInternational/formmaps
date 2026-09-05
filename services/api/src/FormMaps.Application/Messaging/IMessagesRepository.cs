@@ -25,7 +25,7 @@ public interface IMessagesRepository
         RequestContext context, string userId, string conversationId, string content,
         CancellationToken cancellationToken = default);
 
-    Task<int> BroadcastAsync(
+    Task<BroadcastResult> BroadcastAsync(
         RequestContext context, string userId, string role, string schoolId, string recipientGroup, string content,
         CancellationToken cancellationToken = default);
 }

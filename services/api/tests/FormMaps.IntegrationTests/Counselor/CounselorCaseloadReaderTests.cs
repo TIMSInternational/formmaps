@@ -1,5 +1,6 @@
 using FormMaps.Application.Auth;
 using FormMaps.Application.Counselor;
+using FormMaps.Domain.Auth;
 using FormMaps.Infrastructure.Counselor;
 using FormMaps.Infrastructure.Data;
 using FormMaps.IntegrationTests.TestSupport.Rls;
@@ -73,19 +74,16 @@ public sealed class CounselorCaseloadReaderTests
         Assert.Equal<string>(
             [
                 "academic_years", "counselor_student_assignments", "evaluation_groups", "graduation_rule_sets",
-                "pca_evaluations", "pca_exam_sessions", "student_alerts", "student_grades",
+                "pca_evaluations", "pca_exam_sessions", "school_courses", "student_alerts", "student_grades",
                 "user_career_profiles", "users",
             ],
             _fixture.AppliedPolicyTables);
 
-        // Stated, not merely omitted: both are unpolicied HERE, so the reader's own WHERE is the only thing these
-        // tests exercise. They are unpolicied for DIFFERENT reasons (formmaps#135):
-        //   school_courses                 — POLICIED IN PRODUCTION by pilot.sql, which this harness does not
-        //                                    vendor. This assertion describes the harness, not production, and is
-        //                                    expected to flip when pilot.sql is vendored.
-        //   personality_assessment_sessions — policied by no file at all, but tracked as PENDING debt in
-        //                                    api/scripts/check-rls-coverage.mjs, not undocumented.
-        Assert.DoesNotContain("school_courses", _fixture.AppliedPolicyTables);
+        // Stated, not merely omitted: personality_assessment_sessions is unpolicied, so the reader's own WHERE is
+        // the only thing the tests over it exercise. It is policied by no file at all, but tracked as PENDING debt
+        // in api/scripts/check-rls-coverage.mjs, not undocumented. school_courses used to be asserted absent here
+        // too, described as policied in production by pilot.sql and expected to flip once that file was vendored;
+        // formmaps#135 vendored it, so it flipped and is in the applied list above.
         Assert.DoesNotContain("personality_assessment_sessions", _fixture.AppliedPolicyTables);
     }
 
@@ -258,11 +256,15 @@ public sealed class CounselorCaseloadReaderTests
         await SeedCourse(conn, "c1", School, credits: 4);
         await SeedCourse(conn, "c2", "other-school", credits: 9); // other school → excluded
 
-        // school_courses is UNPOLICIED in production, so the other school's row is genuinely visible to this
-        // session and the reader's own "schoolId" = @school is the entire tenant boundary on it.
+        // formmaps#135: school_courses IS policied — by pilot.sql, now vendored — so the other school's row is not
+        // merely filtered by the reader, it is invisible to this session. The admin count is the negative control:
+        // the row really is in the table, so the 1 below is the policy and not a failed seed. This assertion used
+        // to read 2 on the claim that school_courses was unpolicied in production; that claim was false.
+        Assert.Equal(2L, await CountAsync(conn, """SELECT count(*) FROM "school_courses" """));
         await using (var identity = await OpenIdentitySessionAsync(Counselor, School))
         {
-            Assert.Equal(2L, await CountAsync(identity, """SELECT count(*) FROM "school_courses" """));
+            Assert.Equal(1L, await CountAsync(identity, """SELECT count(*) FROM "school_courses" """));
+            Assert.Equal(0L, await CountAsync(identity, """SELECT count(*) FROM "school_courses" WHERE "id"='c2'"""));
         }
 
         var data = await Reader().GetCaseloadDataAsync(Ctx(), Counselor);
@@ -271,6 +273,18 @@ public sealed class CounselorCaseloadReaderTests
         Assert.Contains("Engineer", data.Profiles[0].CareerMatchesJson);
         Assert.Single(data.CourseCredits);
         Assert.Equal(4, data.CourseCredits["c1"]);
+
+        // THE APP-LAYER HALF, and why it has to be here. The assertion above is now the POLICY's: c2 never reaches
+        // the reader, so deleting `WHERE "schoolId" = @school` from LoadCourseCredits would leave it green. Run the
+        // same seed through a Super Admin caller — TenantGucPlanResolver maps a Super Admin actor to Bypass mode, so
+        // the session sets app.bypass_rls='on' and pilot's policy admits BOTH rows — and the reader's own predicate
+        // is the only thing left that can exclude c2. This is the same convention as
+        // Eligibility_does_not_count_a_classmates_completed_grade_that_RLS_admits: keep the half RLS cannot supply.
+        var bypass = await Reader().GetCaseloadDataAsync(SuperAdminCtx(), Counselor);
+
+        Assert.Single(bypass.CourseCredits);
+        Assert.Equal(4, bypass.CourseCredits["c1"]);
+        Assert.False(bypass.CourseCredits.ContainsKey("c2"));
     }
 
     [Fact]
@@ -300,6 +314,18 @@ public sealed class CounselorCaseloadReaderTests
         RequestContext.Authenticated(
             new RequestActor(userId, "counselor", $"{userId}@e.st", "Counselor"),
             schoolId, permissions: new[] { "counselor:dashboard" },
+            tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
+
+    /// <summary>
+    /// The same counselor as a Super Admin actor. <c>TenantGucPlanResolver</c> resolves that to Bypass, so the
+    /// session sets <c>app.bypass_rls = 'on'</c> instead of the tenant GUCs and every school's rows are visible —
+    /// the caller shape that leaves the reader's own <c>WHERE</c> as the only tenant boundary. Still on the
+    /// restricted login: bypass is a GUC the policies honour, not a different Postgres role.
+    /// </summary>
+    private static RequestContext SuperAdminCtx() =>
+        RequestContext.Authenticated(
+            new RequestActor(Counselor, FormMapsRoles.SuperAdmin, $"{Counselor}@e.st", "Super"),
+            School, permissions: new[] { "counselor:dashboard" },
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
 
     /// <summary>

@@ -333,65 +333,12 @@ public sealed class VocationalWriter(
         return new IntegrationWeights(NumberOr(root, "threeSixty", 0), NumberOr(root, "pca", 0), NumberOr(root, "mil", 0));
     }
 
-    private static async Task<List<ScoringGroup>> LoadGroupsAsync(
-        FormMapsDatabaseSession session, string evaluatedUserId, CancellationToken cancellationToken)
-    {
-        var byGroup = new List<(string Id, string GroupType, List<ScoringResponse> Responses)>();
-        var index = new Dictionary<string, List<ScoringResponse>>(StringComparer.Ordinal);
-        // LEFT JOIN (isActive predicate in the ON clause): legacy uses a Prisma `include`, which returns a
-        // completed group EVEN when it has zero active responses — such a group must still count as a present
-        // rater (respondentCount / hasSelf gating / weight renorm), which an inner join would silently drop.
-        // Each evaluation_group is its own ScoringGroup (two 'teacher' groups stay two groups). TS has no
-        // orderBy (DB-arbitrary); we order deterministically (createdDate, id / questionNumber) — a stable
-        // superset of the legacy non-deterministic order (only affects ranking tie / duplicate-group-key order,
-        // where TS is itself non-deterministic, so no byte-match exists).
-        await using var command = Command(session, """
-            SELECT eg."id", eg."groupType", vr."id", vr."questionNumber", vr."type", vr."dimensionKey",
-                   vr."ratingValue", vr."rankingOrder"::text, vr."selectedValues"::text, vr."textValue"
-            FROM "evaluation_groups" eg
-            LEFT JOIN "vocational_responses" vr ON vr."evaluationGroupId" = eg."id" AND vr."isActive" = true
-            WHERE eg."evaluatedUserId" = @uid AND eg."instrument" = 'vocational'
-              AND eg."isEvaluationCompleted" = true AND eg."isActive" = true
-            ORDER BY eg."createdDate" ASC, eg."id" ASC, vr."questionNumber" ASC NULLS FIRST
-            """);
-        AddParameter(command, "uid", evaluatedUserId);
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        while (await reader.ReadAsync(cancellationToken))
-        {
-            var groupId = reader.GetString(0);
-            var groupType = reader.GetString(1);
-            // Only the four canonical rater groups are scored (legacy filter on VOCATIONAL_GROUPS).
-            if (!VocationalScoring.Groups.Contains(groupType))
-            {
-                continue;
-            }
-
-            if (!index.TryGetValue(groupId, out var responses))
-            {
-                responses = [];
-                index[groupId] = responses;
-                byGroup.Add((groupId, groupType, responses));
-            }
-
-            // A LEFT-JOIN row with a null vr id = a completed group with no active responses: register the
-            // group (above) but add no response.
-            if (reader.IsDBNull(2))
-            {
-                continue;
-            }
-
-            responses.Add(new ScoringResponse(
-                QuestionNumber: reader.GetInt32(3),
-                Type: reader.GetString(4),
-                DimensionKey: reader.IsDBNull(5) ? null : reader.GetString(5),
-                RatingValue: reader.IsDBNull(6) ? null : reader.GetInt32(6),
-                RankingOrder: reader.IsDBNull(7) ? null : ParseRankingOrder(reader.GetString(7)),
-                SelectedValues: reader.IsDBNull(8) ? null : ParseStringArray(reader.GetString(8)),
-                TextValue: reader.IsDBNull(9) ? null : reader.GetString(9)));
-        }
-
-        return byGroup.Select(g => new ScoringGroup(g.GroupType, g.Responses)).ToList();
-    }
+    // The 360 rater groups + responses. Lifted VERBATIM into VocationalResponseLoader (FM-CF-007) so the
+    // CareerFit 360 adapter reads the student's responses through THIS query, not a second one that could
+    // drift from it. The session — this writer's own writable transaction — is still the caller's.
+    private static Task<List<ScoringGroup>> LoadGroupsAsync(
+        FormMapsDatabaseSession session, string evaluatedUserId, CancellationToken cancellationToken) =>
+        VocationalResponseLoader.LoadGroupsAsync(session, evaluatedUserId, cancellationToken);
 
     // ---- jsonb parsers (mirror the legacy service's defensive readers) ----
 

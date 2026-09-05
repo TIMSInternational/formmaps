@@ -2,6 +2,9 @@ using Amazon;
 using Amazon.SimpleEmailV2;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
+using FormMaps.Application.CareerFit;
+using FormMaps.Application.CareerFit.Adapters;
+using FormMaps.Application.CareerFit.Shadow;
 using FormMaps.Application.Calendar;
 using FormMaps.Application.CourseImport;
 using FormMaps.Application.CurriculumFrameworks;
@@ -12,6 +15,8 @@ using FormMaps.Application.Prerequisites;
 using FormMaps.Application.Email;
 using FormMaps.Application.Reports;
 using FormMaps.Application.Gradebook;
+using FormMaps.Application.Graduation;
+using FormMaps.Application.Transcript;
 using FormMaps.Application.SchoolAdmin;
 using FormMaps.Application.SchoolAnalytics;
 using FormMaps.Application.SchoolProfile;
@@ -36,11 +41,14 @@ using FormMaps.Application.ParentChildReads;
 using FormMaps.Application.StudentCoursePlan;
 using FormMaps.Application.StudentParents;
 using FormMaps.Application.StudentPortfolio;
+using FormMaps.Application.Teacher;
 using FormMaps.Application.Video;
 using FormMaps.Application.Messaging;
+using FormMaps.Application.Recommendations;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
+using FormMaps.Infrastructure.CareerFit;
 using FormMaps.Infrastructure.CourseImport;
 using FormMaps.Infrastructure.CurriculumFrameworks;
 using FormMaps.Infrastructure.DataMappings;
@@ -48,8 +56,11 @@ using FormMaps.Infrastructure.Pathways;
 using FormMaps.Infrastructure.Prerequisites;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Email;
+using FormMaps.Infrastructure.Recommendations;
 using FormMaps.Infrastructure.Reports;
 using FormMaps.Infrastructure.Gradebook;
+using FormMaps.Infrastructure.Graduation;
+using FormMaps.Infrastructure.Transcript;
 using FormMaps.Infrastructure.SchoolAdmin;
 using FormMaps.Infrastructure.SchoolAnalytics;
 using FormMaps.Infrastructure.SchoolProfile;
@@ -75,6 +86,7 @@ using FormMaps.Infrastructure.ParentChildReads;
 using FormMaps.Infrastructure.StudentCoursePlan;
 using FormMaps.Infrastructure.StudentParents;
 using FormMaps.Infrastructure.StudentPortfolio;
+using FormMaps.Infrastructure.Teacher;
 using FormMaps.Infrastructure.Video;
 using FormMaps.Infrastructure.Messaging;
 using Microsoft.Extensions.Configuration;
@@ -180,6 +192,16 @@ public static class DependencyInjection
         services.AddScoped<IVideoSessionsRepository, VideoSessionsRepository>();
         // Domain 7b: messaging (FM-DOTNET-098+; routes/messages.ts, all 7 endpoints under /api/v1/messages).
         services.AddScoped<IMessagesRepository, MessagesRepository>();
+        // formmaps#63: UGC moderation (routes/moderation.ts, all 4 endpoints under /api/v1/moderation).
+        // NOTE the session asymmetry inside it: everything runs on the caller's Identity session EXCEPT
+        // CanModerateUserAsync, which opens under RequestContext.System() (Bypass) — legacy's runAsSystem.
+        // A safety action must not depend on the actor being able to SEE the target in the tenant sense;
+        // formmaps#80 is what happens when it does. See MessagesRepository.cs:518 for the long form.
+        services.AddScoped<FormMaps.Application.Moderation.IModerationRepository, FormMaps.Infrastructure.Moderation.ModerationRepository>();
+        // formmaps#65: product telemetry ingest (routes/telemetry.ts:45). Opens on the CALLER's Identity
+        // session — telemetry_events IS policied in production (003-fk-users.sql) and every row it writes
+        // belongs to the caller, so there is nothing here that wants a bypass.
+        services.AddScoped<FormMaps.Application.Telemetry.ITelemetryEventWriter, FormMaps.Infrastructure.Telemetry.TelemetryEventWriter>();
         // formmaps#52: the ONLY sanctioned write path to audit_events. The table's RLS policy admits
         // bypass-mode sessions only, so this writer opens under RequestContext.System() internally —
         // nothing else should ever INSERT there, and no tenant-scoped session can.
@@ -213,6 +235,10 @@ public static class DependencyInjection
         // users."stripeCustomerId" column (caller's own tenant-scoped RLS session), consumed by
         // StripeGateway.GetOrCreateCustomerAsync to look up an existing Stripe customer before creating one.
         services.AddScoped<FormMaps.Application.Billing.ILiveCustomerReader, FormMaps.Infrastructure.Billing.LiveCustomerReader>();
+        // Wave 3 billing-subscription-parity: ILiveSchoolAffiliationReader -- read-only reader of the LIVE
+        // users."schoolId" column (caller's own tenant-scoped RLS session), consumed by GET /status for
+        // legacy user.ts:304-311's school-student short-circuit.
+        services.AddScoped<FormMaps.Application.Billing.ILiveSchoolAffiliationReader, FormMaps.Infrastructure.Billing.LiveSchoolAffiliationReader>();
         // Domain 7a: Daily.co video-provider client (FM-094). First HttpClient-based external integration in
         // this codebase — 15s timeout matches legacy's AbortSignal.timeout(15000).
         services.AddHttpClient<IDailyClient, DailyClient>(client =>
@@ -246,6 +272,11 @@ public static class DependencyInjection
         // FM-DOTNET-078: parent portal self-scoped surface (profile, notifications, evaluations/pending, delete-link).
         // Onboarding (auth-cookie), invite/resend (SES), and child-link reads stay in Node.
         services.AddScoped<IParentPortalRepository, ParentPortalRepository>();
+        // formmaps#62: routes/teacher.ts. FOUR routes across a SPLIT auth boundary — the onboarding pair runs
+        // pre-auth on System (bypass) sessions, the profile pair on the CALLER's Identity session. The repository
+        // encodes that split in its method signatures (pre-auth methods take no RequestContext); see
+        // ITeacherOnboardingRepository and TeacherEndpoints.
+        services.AddScoped<ITeacherOnboardingRepository, TeacherOnboardingRepository>();
         // FM-DOTNET-079: parent child-link-scoped reads (children/:id/progress + course-plan). course-plan reads the
         // plan/target/course-plan on a System (RLS-bypass) session, mirroring legacy runAsSystem.
         services.AddScoped<IParentChildReader, ParentChildReader>();
@@ -283,6 +314,27 @@ public static class DependencyInjection
         services.AddScoped<ICourseImportReader, CourseImportReader>();
         services.AddScoped<ICourseImportWriter, CourseImportWriter>();
         services.AddScoped<IGradebookReader, GradebookReader>();
+        // issue #55 (graduation + transcripts lane): routes/transcript.ts, all nine routes, under
+        // FORMMAPS_ROUTE_GRADUATION_TO_DOTNET. The getTranscriptData/resolveGpaConfig half is SHARED with
+        // GradebookReader via TranscriptDataQuery rather than reimplemented — there is exactly one GPA
+        // computation in this codebase (FormMaps.Application.Gradebook.GpaComputation) and it stays that way.
+        services.AddScoped<ITranscriptReader, TranscriptReader>();
+        services.AddScoped<ITranscriptWriter, TranscriptWriter>();
+        // issue #55, second file: the GRADUATION half of routes/school-grades.ts (six routes under
+        // /graduation/*). The calendar half of that same legacy file is already .NET under its own flag and is
+        // untouched; the grade-import half stays in Node. Same lane flag as the transcript reader above.
+        services.AddScoped<IGraduationRulesReader, GraduationRulesReader>();
+        services.AddScoped<IGraduationRulesWriter, GraduationRulesWriter>();
+        // issue #55 REMAINDER, third and fourth files: routes/graduation-plan.ts (6 of 7 routes) and
+        // routes/counselor-graduation.ts (2 of 3). The two POST /generate routes are NOT here and never will
+        // be -- DECISION D1 keeps them on Node permanently (aiLimiter + Bedrock), with unconditional
+        // next.config.ts carve-outs ahead of every flag rewrite. Same lane flag as the two readers above.
+        // GraduationNotificationWriter is the lane's ONLY System-session component; see its doc comment for
+        // the runAsSystem port and the lazy-PrismaPromise trap (planWorkflowService.ts:20-27) it must not
+        // reproduce.
+        services.AddScoped<IGraduationNotificationWriter, GraduationNotificationWriter>();
+        services.AddScoped<IGraduationPlanRepository, GraduationPlanRepository>();
+        services.AddScoped<ICounselorGraduationRepository, CounselorGraduationRepository>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();
         services.AddScoped<ISchoolAdminWriter, SchoolAdminWriter>();
@@ -335,6 +387,14 @@ public static class DependencyInjection
         services.AddScoped<IObjectStorage, S3ObjectStorage>();
         services.AddScoped<IUploadRepository, UploadRepository>();
 
+        // formmaps#59: letters of recommendation (routes/recommendations.ts + services/recommendationsService.ts).
+        // Reuses the S3 rail above for the letter PDF and IUserAccessGuard (the canAccessUser port) for the
+        // download gate. RecommendationEmails is a pure template builder over the shared EmailTemplates/EmailOptions.
+        services.AddSingleton(sp => new RecommendationEmails(
+            sp.GetRequiredService<EmailTemplates>(), sp.GetRequiredService<EmailOptions>()));
+        services.AddScoped<IRecommendationsRepository, RecommendationsRepository>();
+        services.AddScoped<RecommendationsService>();
+
         // FM-DOTNET-089: resume section + template writes (routes/resume.ts, /api/resume). Self-scoped jsonb-array
         // manipulation; resumes has NO RLS so ownership is code-only. The resume CRUD + cross-user + AI routes stay Node.
         services.AddScoped<IResumeSectionsRepository, ResumeSectionsRepository>();
@@ -342,6 +402,54 @@ public static class DependencyInjection
         // FM-DOTNET-090: resume CRUD list + create (routes/resume.ts, /api/resume). Self-scoped by userId (no RLS);
         // GET / lists the caller's active resumes, POST / creates one (full 22-col Prisma row passthrough).
         services.AddScoped<IResumeRepository, ResumeRepository>();
+
+        // FM-CF-003 / FM-CF-009: the CareerFit ConfigCache. One immutable rule-set version per process
+        // (CareerFit:RulesVersion, default the embedded 1.0.0-draft.1), loaded + resolved once behind a
+        // Lazy<T>. EnsureLoaded() runs HERE, at composition time, so a version that is not embedded or a
+        // rule set the resolver rejects (an unresolved VARIABLE/INHERIT marker, a PCA route outside the
+        // catalogue, a zero-weight MIL/360 row ...) throws CareerFitRulesInvalidException out of
+        // AddFormMapsInfrastructure -> AddFormMapsApplication -> Program.cs before builder.Build(): the
+        // same phase and the same unhandled-exception exit StartupEnvironmentValidator uses, chosen over a
+        // hosted-service check because (a) it fires in BOTH composition roots that share this method
+        // (FormMaps.Api and FormMaps.Workers) without a per-root AddHostedService, (b) it cannot be
+        // reordered behind another IHostedService that already accepted traffic, and (c) every
+        // WebApplicationFactory<Program> test exercises it for free. The cost — ~ms of JSON parsing at
+        // boot for a file that is always present — is the point: no scoring request can ever be the
+        // first to discover the rule set is bad.
+        services.AddSingleton<ICareerFitRulesProvider>(
+            CareerFitRulesProvider.FromConfiguration(configuration).EnsureLoaded());
+        // FM-CF-010 (P1–P3): the evaluator and its two seams. Scoped like every other reader/writer here
+        // (they open sessions on the Scoped IFormMapsDatabaseSessionFactory under the caller's RequestContext).
+        // IV360Adapter is the FM-CF-007 aggregator: it reads the student's stored vocational item
+        // responses and produces one aggregate per rules.v360_variables code. Until FM-CF-006 seeds the 40
+        // items no response carries such a code, so it selects NoDataV360Adapter — by name, not by an
+        // empty query — and every run still scores careerfit360 = 0 / NOT_DETERMINABLE and says so in its
+        // inputQuality, exactly as before. Singleton: it is stateless and reads the singleton rules
+        // provider. The seven routes over all of this are FM-CF-012's CareerFitEndpoints, mapped in
+        // Program.cs and dark from the frontend until FORMMAPS_ROUTE_CAREERFIT_TO_DOTNET is turned on.
+        services.AddSingleton<IV360Adapter, VocationalV360Adapter>();
+        services.AddScoped<ICareerFitInputReader, CareerFitInputReader>();
+        services.AddScoped<ICareerFitRunWriter, CareerFitRunWriter>();
+        // FM-CF-012's read seam: a persisted run read back under the CALLER's RLS session, so the endpoints
+        // can serve the scores and the explanation without re-scoring (and without writing a run per page view).
+        services.AddScoped<ICareerFitRunReader, CareerFitRunReader>();
+        services.AddScoped<ICareerFitEvaluator, CareerFitEvaluator>();
+
+        // FM-CF-013's shadow arm. Registered, and reachable from NO route: FM-CF-012 mapped seven
+        // endpoints and none of them touches this, so the job runs only where an operator invokes it.
+        // Every one of these takes the CALLER's RequestContext and opens its own RLS session with it --
+        // there is no bypass session anywhere in this slice, which is the difference from
+        // BillingShadowRepository (its shadow tables hold no tenant-scoped student data and carry no
+        // policy; careerfit_shadow_comparisons holds both and does). The runner's constructor asserts the
+        // embedded projection still agrees with the loaded rule set and warns, loudly and once, that the
+        // projection is INCOMPLETE until the legacy cluster vocabulary is filled in.
+        services.AddScoped<ILegacyCareerScoreReader, LegacyCareerScoreReader>();
+        // The job's FIRST read and its gate: the student's own users."schoolId", which every shadow row
+        // must carry (the table's WITH CHECK is careerfit_runs' predicate verbatim) and which the three
+        // pre-scoring arms have no run to take it from.
+        services.AddScoped<ICareerFitStudentTenantReader, CareerFitStudentTenantReader>();
+        services.AddScoped<ICareerFitShadowWriter, CareerFitShadowWriter>();
+        services.AddScoped<ICareerFitShadowRunner, CareerFitShadowRunner>();
 
         services.AddSingleton(TimeProvider.System);
         services.AddScoped<IQuestion360Reader, Question360Reader>();

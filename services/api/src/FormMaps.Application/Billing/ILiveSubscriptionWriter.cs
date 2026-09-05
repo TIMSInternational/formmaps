@@ -26,24 +26,30 @@ namespace FormMaps.Application.Billing;
 /// admin cancel a student's subscription. Rowcount is returned for observability; the endpoint treats 0
 /// as "someone else got there first", which is the idempotent outcome, not an error.
 ///
-/// <para>formmaps#108: userId scoping alone is NOT a row scope. The <c>@@unique([userId])</c> in
-/// schema.prisma was never emitted by a migration, so a user may own several user_subscriptions rows in
-/// production and these UPDATEs used to hit all of them at once. Both are now additionally pinned to the
-/// single row <see cref="ILiveSubscriptionReader" /> resolves (newest by createdDate, id as tie-break),
-/// so at most ONE row is ever affected and it is the row the caller's decision was based on -- matching
-/// legacy stripe.ts, whose updateMany is scoped by <c>{ id: sub.id, userId }</c>.</para>
+/// <para>formmaps#108: userId scoping alone is NOT a row scope. These UPDATEs used to hit every row the
+/// user owned at once; both are now additionally pinned to ONE row, so at most one is ever affected and
+/// it is the row the caller's decision was based on -- matching legacy stripe.ts, whose updateMany is
+/// scoped by <c>{ id: sub.id, userId }</c>. (Production is BELIEVED to carry the userId unique, so a
+/// user owns at most one row there; the scope is defence in depth -- see LiveSubscriptionReader for the
+/// provenance note.) Wave 3 billing-subscription-parity review: the row is pinned by the
+/// <see cref="LiveSubscriptionRow.Id" /> the endpoint READ, threaded through <c>rowId</c>, not re-resolved
+/// by the writer from the reader's predicate -- re-resolving is not "the same row" once a webhook has
+/// changed the table between the two transactions (see LiveSubscriptionWriter).</para>
 /// </remarks>
 public interface ILiveSubscriptionWriter
 {
     /// <summary>
     /// Legacy's no-Stripe-subscription branch: <c>status = 'cancelled', isActive = false</c> on the
-    /// caller's own cancellable row.
+    /// caller's own cancellable row. <paramref name="rowId" /> is the <see cref="LiveSubscriptionRow.Id" />
+    /// the caller read; a row that is no longer cancellable, or is not <paramref name="userId" />'s, is a
+    /// 0-row no-op.
     /// </summary>
-    Task<int> MarkCancelledAsync(RequestContext context, string userId, CancellationToken cancellationToken = default);
+    Task<int> MarkCancelledAsync(RequestContext context, string userId, string rowId, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Legacy's Stripe branch: <c>cancelAtPeriodEnd = true</c> on the caller's own cancellable row. The
-    /// customer.subscription.* webhook flips status/isActive when Stripe actually ends it.
+    /// customer.subscription.* webhook flips status/isActive when Stripe actually ends it. Same
+    /// <paramref name="rowId" /> contract as <see cref="MarkCancelledAsync" />.
     /// </summary>
-    Task<int> MarkCancelAtPeriodEndAsync(RequestContext context, string userId, CancellationToken cancellationToken = default);
+    Task<int> MarkCancelAtPeriodEndAsync(RequestContext context, string userId, string rowId, CancellationToken cancellationToken = default);
 }

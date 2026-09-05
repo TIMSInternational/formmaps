@@ -32,7 +32,7 @@ public sealed class MessagesEndToEndLifecycleTests : IClassFixture<MessagingData
     private NpgsqlDataSource _dataSource = null!;
 
     public MessagesEndToEndLifecycleTests(MessagingDatabaseFixture fixture) => _fixture = fixture;
-    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
+    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString); return Task.CompletedTask; }
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     private MessagesRepository Repo() => new(
@@ -135,7 +135,7 @@ public sealed class MessagesEndToEndLifecycleTests : IClassFixture<MessagingData
         var broadcastContent = $"school-wide notice {Guid.NewGuid()}";
         var broadcastCount = await repo.BroadcastAsync(
             _fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", broadcastContent);
-        Assert.Equal(1, broadcastCount); // only `student` is a student in this school
+        Assert.Equal(1, broadcastCount.RecipientCount); // only `student` is a student in this school
 
         // The broadcast's outbox row must point at the REAL message row it inserted -- the exact bug
         // (a second, unrelated Guid.NewGuid() written as the outbox messageId) this whole file exists to
@@ -183,7 +183,7 @@ public sealed class MessagesEndToEndLifecycleTests : IClassFixture<MessagingData
     /// </summary>
     private async Task AssertOutboxResolvesToRealMessageAsync(string? expectedMessageId, string preview, string? expectedSenderId = null)
     {
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
 
         await using var joined = new NpgsqlCommand(

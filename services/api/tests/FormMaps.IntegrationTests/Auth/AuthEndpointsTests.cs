@@ -3,6 +3,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using FormMaps.Api.Auth;
+using FormMaps.Application.Audit;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Email;
 using FormMaps.Domain.Auth;
@@ -367,18 +368,76 @@ public class AuthEndpointsTests : IDisposable
         Assert.Null(repo.LastFindUserByIdCalledFor);
     }
 
+    // The frontend ALWAYS sends the caller's own email on the self-service form
+    // (apps/web dashboard/settings + counselor/settings: `{ email: user.email, password, oldPassword }`),
+    // so "email present" cannot mean "admin action". Legacy (authService.ts changePassword) resolves
+    // the target first and derives isAdminAction = user.id !== requesterId; these tests pin that.
+
     [Fact]
-    public async Task ChangePassword_admin_action_role_checked_before_target_lookup()
+    public async Task ChangePassword_self_service_by_own_email_with_correct_old_password_is_200()
     {
-        // Non-privileged caller attempts to change someone else's password by email --
-        // the 403 must fire WITHOUT ever calling FindUserByEmailAsync (item 1: role-check-before-lookup).
-        var repo = new FakeAuthRepository();
+        var repo = new FakeAuthRepository
+        {
+            UserByEmail = new AuthUserRow("caller-1", "Ada", "ada@example.test", PasswordHasher.Hash("Original1$"), "role_x", FormMapsRoles.Student, null, true),
+        };
+        var audit = new FakeAuditEventWriter();
+        using var factory = CreateFactory(repo, audit);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-password")
+        {
+            Content = JsonBody(new { email = "ada@example.test", password = "NewPass1$", oldPassword = "Original1$" }),
+        };
+        AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.Student);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("caller-1", repo.LastRevokeAllUserId);
+        Assert.NotNull(repo.LastUpdatedPasswordHash);
+        // Self-service is not an admin action: no audit row.
+        Assert.Empty(audit.Events);
+    }
+
+    [Fact]
+    public async Task ChangePassword_self_service_by_own_email_without_old_password_is_400()
+    {
+        var repo = new FakeAuthRepository
+        {
+            UserByEmail = new AuthUserRow("caller-1", "Ada", "ada@example.test", PasswordHasher.Hash("Original1$"), "role_x", FormMapsRoles.Student, null, true),
+        };
         using var factory = CreateFactory(repo);
         using var client = factory.CreateClient();
 
         var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-password")
         {
-            Content = JsonBody(new { email = "target@example.test", password = "NewPass1$" }),
+            Content = JsonBody(new { email = "ada@example.test", password = "NewPass1$" }),
+        };
+        AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.Student);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Current password required", doc.RootElement.GetProperty("message").GetString());
+        Assert.Null(repo.LastUpdatedPasswordHash);
+    }
+
+    [Fact]
+    public async Task ChangePassword_non_admin_targeting_another_user_by_email_is_403()
+    {
+        // Regression guard, not a fix-proving test: the 403 for a non-admin acting on someone else
+        // was already correct under the previous "email present => admin" rule and must survive the
+        // switch to legacy's id-based isAdminAction (this test is green before and after the fix).
+        var repo = new FakeAuthRepository
+        {
+            UserByEmail = new AuthUserRow("target-1", "Target", "target@example.test", PasswordHasher.Hash("x"), "role_x", FormMapsRoles.Student, null, true),
+        };
+        var audit = new FakeAuditEventWriter();
+        using var factory = CreateFactory(repo, audit);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-password")
+        {
+            Content = JsonBody(new { email = "target@example.test", password = "NewPass1$", oldPassword = "whatever" }),
         };
         AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.Student);
         var response = await client.SendAsync(request);
@@ -386,7 +445,159 @@ public class AuthEndpointsTests : IDisposable
         Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal("Cannot change another user's password", doc.RootElement.GetProperty("message").GetString());
-        Assert.False(repo.FindUserByEmailWasCalled);
+        Assert.Null(repo.LastUpdatedPasswordHash);
+        Assert.Null(repo.LastRevokeAllUserId);
+        Assert.Empty(audit.Events);
+    }
+
+    [Fact]
+    public async Task ChangePassword_non_admin_targeting_unknown_email_is_403_not_404()
+    {
+        // Regression guard (green before and after the fix). Existence-hiding kept from the previous
+        // rule: a non-privileged caller must not be able to tell "that email is not a user" (404)
+        // from "that email is someone else" (403).
+        var repo = new FakeAuthRepository { UserByEmail = null };
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-password")
+        {
+            Content = JsonBody(new { email = "nobody@example.test", password = "NewPass1$", oldPassword = "whatever" }),
+        };
+        AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.Student);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Null(repo.LastUpdatedPasswordHash);
+    }
+
+    [Fact]
+    public async Task ChangePassword_admin_changing_own_password_by_email_still_requires_old_password()
+    {
+        // A SchoolAdmin on the settings form is a self-service change, not an admin action:
+        // legacy's isAdminAction is user.id !== requesterId, not "caller is an admin".
+        var repo = new FakeAuthRepository
+        {
+            UserByEmail = new AuthUserRow("caller-1", "Admin", "admin@example.test", PasswordHasher.Hash("Original1$"), "role_x", FormMapsRoles.SchoolAdmin, "my-school", true),
+        };
+        var audit = new FakeAuditEventWriter();
+        using var factory = CreateFactory(repo, audit);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-password")
+        {
+            Content = JsonBody(new { email = "admin@example.test", password = "NewPass1$" }),
+        };
+        AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.SchoolAdmin, schoolId: "my-school");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Current password required", doc.RootElement.GetProperty("message").GetString());
+        Assert.Null(repo.LastUpdatedPasswordHash);
+        Assert.Empty(audit.Events);
+    }
+
+    [Fact]
+    public async Task ChangePassword_admin_action_on_another_user_records_an_audit_event()
+    {
+        var repo = new FakeAuthRepository
+        {
+            UserByEmail = new AuthUserRow("target-1", "Target", "target@example.test", PasswordHasher.Hash("x"), "role_x", FormMapsRoles.Student, "my-school", true),
+        };
+        var audit = new FakeAuditEventWriter();
+        using var factory = CreateFactory(repo, audit);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-password")
+        {
+            Content = JsonBody(new { email = "target@example.test", password = "NewPass1$" }),
+        };
+        AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.SchoolAdmin, schoolId: "my-school");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("target-1", repo.LastRevokeAllUserId);
+        // legacy: logger.warn({ adminId: requesterId, targetUserId: user.id }, "Admin password change")
+        var evt = Assert.Single(audit.Events);
+        Assert.Equal("audit.auth.password.admin_changed", evt.EventType);
+        Assert.Equal("caller-1", evt.ActorUserId);
+        Assert.Equal(FormMapsRoles.SchoolAdmin, evt.ActorRole);
+        Assert.Equal("my-school", evt.SchoolId);
+        Assert.Equal("user", evt.SubjectType);
+        Assert.Equal("target-1", evt.SubjectId);
+        Assert.Equal("success", evt.Outcome);
+    }
+
+    [Fact]
+    public async Task ChangePassword_admin_audit_row_is_written_even_when_session_revocation_fails()
+    {
+        // The password UPDATE has already committed by the time the refresh-token revocation runs
+        // (independent sessions). If the revoke throws, the privileged rotation must still be on
+        // record: the audit write has to be sequenced right after the password commit, not after
+        // the revoke. Legacy warns BEFORE the update, so it never loses an authorized admin attempt.
+        var repo = new FakeAuthRepository
+        {
+            UserByEmail = new AuthUserRow("target-1", "Target", "target@example.test", PasswordHasher.Hash("x"), "role_x", FormMapsRoles.Student, "my-school", true),
+            RevokeAllThrows = true,
+        };
+        var audit = new FakeAuditEventWriter();
+        using var factory = CreateFactory(repo, audit);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-password")
+        {
+            Content = JsonBody(new { email = "target@example.test", password = "NewPass1$" }),
+        };
+        AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.SchoolAdmin, schoolId: "my-school");
+        var response = await client.SendAsync(request);
+
+        // The revoke failure still surfaces as a server error to the caller...
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        Assert.NotNull(repo.LastUpdatedPasswordHash);
+        Assert.Null(repo.LastRevokeAllUserId);
+        // ...but the committed password change is audited regardless.
+        var evt = Assert.Single(audit.Events);
+        Assert.Equal("audit.auth.password.admin_changed", evt.EventType);
+        Assert.Equal("caller-1", evt.ActorUserId);
+        Assert.Equal("target-1", evt.SubjectId);
+    }
+
+    [Fact]
+    public async Task ChangePassword_super_admin_cross_school_reset_is_attributed_to_the_targets_school()
+    {
+        // audit_events.schoolId is "tenant context, for filtering only" (audit-events spec) and
+        // IAuditEventReader filters on it. A Super Admin usually has no school of their own, so
+        // stamping the ACTOR's school would leave a `?schoolId=school-b` query blind to one of
+        // school-b's users having been force-reset. The row carries the TARGET's school; the
+        // actor's school (if any) rides along in metadata.
+        var repo = new FakeAuthRepository
+        {
+            UserByEmail = new AuthUserRow("target-1", "Target", "target@example.test", PasswordHasher.Hash("x"), "role_x", FormMapsRoles.Student, "school-b", true),
+        };
+        var audit = new FakeAuditEventWriter();
+        using var factory = CreateFactory(repo, audit);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-password")
+        {
+            Content = JsonBody(new { email = "target@example.test", password = "NewPass1$" }),
+        };
+        AddDevIdentity(request, userId: "super-1", role: FormMapsRoles.SuperAdmin);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal("target-1", repo.LastRevokeAllUserId);
+        var evt = Assert.Single(audit.Events);
+        Assert.Equal("audit.auth.password.admin_changed", evt.EventType);
+        Assert.Equal("super-1", evt.ActorUserId);
+        Assert.Equal(FormMapsRoles.SuperAdmin, evt.ActorRole);
+        Assert.Equal("school-b", evt.SchoolId);
+        Assert.NotNull(evt.Metadata);
+        Assert.True(evt.Metadata!.ContainsKey("actorSchoolId"));
+        Assert.Null(evt.Metadata["actorSchoolId"]);
+        // Metadata keys must clear the PII denylist (this is what the real writer enforces).
+        AuditMetadataGuard.Validate(evt.Metadata);
     }
 
     [Fact]
@@ -444,15 +655,49 @@ public class AuthEndpointsTests : IDisposable
         using var factory = CreateFactory(repo);
         using var client = factory.CreateClient();
 
+        // Wave 3 A3: no surrounding whitespace here -- legacy's zod .email() runs on the RAW body value,
+        // so a padded newEmail is a 400 (pinned below), never something that reaches normalization.
         var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-email")
         {
-            Content = JsonBody(new { userId = "caller-1", newEmail = "  NEW@EXAMPLE.TEST  " }),
+            Content = JsonBody(new { userId = "caller-1", newEmail = "NEW@EXAMPLE.TEST" }),
         };
         AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.Student);
         var response = await client.SendAsync(request);
 
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("new@example.test", repo.LastChangeEmailNewEmail);
+    }
+
+    // Wave 3 A3: legacy's changeEmailSchema is newEmail: z.string().email(), so a malformed newEmail is
+    // 400 with zod's default "Invalid email" (body.error.errors[0].message). The port's LooksLikeEmail
+    // only checked for an interior '@' and let all of these through to the repository.
+    [Theory]
+    [InlineData("a@b")]
+    [InlineData("john doe@x")]
+    [InlineData("a@b c")]
+    [InlineData("  NEW@EXAMPLE.TEST  ")]
+    [InlineData("")]                           // present-but-empty is a zod "Invalid email", not a missing field
+    [InlineData("  ")]
+    public async Task ChangeEmail_malformed_new_email_is_400_with_legacy_message_and_never_reaches_the_repository(string newEmail)
+    {
+        var repo = new FakeAuthRepository
+        {
+            UserById = new AuthUserRow("caller-1", "Ada", "ada@example.test", null, "role_x", FormMapsRoles.Student, null, true),
+        };
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/change-email")
+        {
+            Content = JsonBody(new { userId = "caller-1", newEmail }),
+        };
+        AddDevIdentity(request, userId: "caller-1", role: FormMapsRoles.Student);
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Invalid email", doc.RootElement.GetProperty("message").GetString());
+        Assert.Null(repo.LastChangeEmailNewEmail);
     }
 
     [Fact]
@@ -789,6 +1034,48 @@ public class AuthEndpointsTests : IDisposable
         Assert.Equal("Invalid email", doc.RootElement.GetProperty("message").GetString());
     }
 
+    // Wave 3 A3: the old LooksLikeEmail let these three through (an interior '@' was enough); legacy's
+    // forgotPasswordSchema is z.string().email() and answers 400 "Invalid email" for each.
+    [Theory]
+    [InlineData("a@b")]
+    [InlineData("john doe@x")]
+    [InlineData("a@b c")]
+    public async Task ForgotPassword_malformed_email_is_400_and_never_starts_the_background_work(string email)
+    {
+        // A matching user and a gate, same shape as ForgotPassword_responds_before_the_background_work_completes:
+        // if the 400 path ever scheduled the background task, the user lookup would run synchronously
+        // (before the gate) and the token invalidation would run once the gate is released -- so the
+        // "never starts" claim below is proven against work that WOULD have happened, not a fake that
+        // had nothing to do anyway.
+        var repo = new FakeAuthRepository
+        {
+            UserByEmail = new AuthUserRow("u1", "Ada", "ada@example.test", "hash", "role_x", FormMapsRoles.Student, null, true),
+            ForgotPasswordGate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously),
+        };
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsync("/authapi/forgot-password", JsonBody(new { email }));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("Invalid email", doc.RootElement.GetProperty("message").GetString());
+        Assert.False(repo.FindUserByEmailWasCalled);
+        Assert.False(repo.InvalidatePriorResetTokensWasCalled);
+
+        // Release the gate and give any (wrongly) scheduled work a chance to run, so a regression that
+        // detaches the task before the 400 cannot hide behind the snapshot above.
+        repo.ForgotPasswordGate.SetResult();
+        var deadline = DateTime.UtcNow.AddMilliseconds(500);
+        while (!repo.InvalidatePriorResetTokensWasCalled && DateTime.UtcNow < deadline)
+        {
+            await Task.Delay(20);
+        }
+        Assert.False(repo.FindUserByEmailWasCalled);
+        Assert.False(repo.InvalidatePriorResetTokensWasCalled);
+        Assert.False(repo.CreatePasswordResetTokenWasCalled);
+    }
+
     // ---- Reset password ----
 
     [Fact]
@@ -935,13 +1222,13 @@ public class AuthEndpointsTests : IDisposable
         if (permissions is not null) request.Headers.Add(DevelopmentRequestContextFactory.PermissionsHeader, permissions);
     }
 
-    private static Factory CreateFactory(FakeAuthRepository repository)
+    private static Factory CreateFactory(FakeAuthRepository repository, FakeAuditEventWriter? auditEventWriter = null)
     {
         Environment.SetEnvironmentVariable("JWT_SECRET", Secret);
-        return new Factory(repository);
+        return new Factory(repository, auditEventWriter ?? new FakeAuditEventWriter());
     }
 
-    private sealed class Factory(FakeAuthRepository repository) : WebApplicationFactory<Program>
+    private sealed class Factory(FakeAuthRepository repository, FakeAuditEventWriter auditEventWriter) : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
         {
@@ -953,6 +1240,9 @@ public class AuthEndpointsTests : IDisposable
 
                 services.RemoveAll<IEmailSender>();
                 services.AddSingleton<IEmailSender>(new FakeEmailSender());
+
+                services.RemoveAll<IAuditEventWriter>();
+                services.AddSingleton<IAuditEventWriter>(auditEventWriter);
 
                 services.RemoveAll<AccessTokenFactory>();
                 services.AddSingleton(new AccessTokenFactory(Options.Create(new LegacyJwtOptions())));
@@ -972,6 +1262,17 @@ public class AuthEndpointsTests : IDisposable
             Task.FromResult(true);
     }
 
+    private sealed class FakeAuditEventWriter : IAuditEventWriter
+    {
+        public List<AuditEvent> Events { get; } = [];
+
+        public Task WriteAsync(AuditEvent auditEvent, CancellationToken cancellationToken = default)
+        {
+            Events.Add(auditEvent);
+            return Task.CompletedTask;
+        }
+    }
+
     private sealed class FakeAuthRepository : IAuthRepository
     {
         public AuthUserRow? UserByEmail { get; set; }
@@ -988,6 +1289,7 @@ public class AuthEndpointsTests : IDisposable
         public AuthUserRow? UpsertedSchoolAdminUser { get; set; }
         public ResetTokenRow? ResetToken { get; set; }
         public TaskCompletionSource? ForgotPasswordGate { get; set; }
+        public bool RevokeAllThrows { get; set; }
 
         public int RecordFailedLoginCallCount { get; private set; }
         public bool FindUserByEmailWasCalled { get; private set; }
@@ -1034,6 +1336,7 @@ public class AuthEndpointsTests : IDisposable
 
         public Task RevokeAllRefreshTokensAsync(string userId, string clientIp, CancellationToken cancellationToken = default)
         {
+            if (RevokeAllThrows) throw new InvalidOperationException("simulated refresh_tokens outage");
             LastRevokeAllUserId = userId;
             return Task.CompletedTask;
         }

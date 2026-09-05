@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  getPCAResult,
-  getPCACompetences,
   checkPCAStatus,
   getPCAResultByUserId,
   getPCACompetencesByUserId,
@@ -40,161 +39,143 @@ export interface PCAData {
   score?: number;
 }
 
+type Language = "english" | "spanish";
+
+// Shared with checkPCAStatus, which reads this key as its own fast path.
+const cacheKey = (userId: string) => `pcaData_${userId}`;
+
+export const pcaDataQueryKey = (userId: string, language: Language) =>
+  ["pca", "data", userId, language] as const;
+
+function readCache(userId: string): PCAData | null {
+  try {
+    const raw = localStorage.getItem(cacheKey(userId));
+    return raw ? (JSON.parse(raw) as PCAData) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeCache(userId: string, data: PCAData | null) {
+  try {
+    if (data) localStorage.setItem(cacheKey(userId), JSON.stringify(data));
+    else localStorage.removeItem(cacheKey(userId));
+  } catch {
+    // Storage may be unavailable (private mode, quota); the query cache still has it.
+  }
+}
+
+/**
+ * One fetch of the signed-in student's PCA state: status (server verdict first, then
+ * TIMS), and — once completed — the DISC results and competences from TIMS.
+ */
+export async function fetchPCAData(userId: string, language: Language): Promise<PCAData | null> {
+  const statusData = await checkPCAStatus(userId, language);
+  if (statusData.status === "not_started") return null;
+
+  let results: PCAResults | null = null;
+  let competences: PCACompetences | null = null;
+
+  if (statusData.hasResults) {
+    // Both are optional decorations of a status the server already settled: a TIMS
+    // hiccup leaves them null and the card still reads "completed".
+    const [rawResults, rawCompetences] = await Promise.all([
+      getPCAResultByUserId(userId, language).catch(() => null),
+      getPCACompetencesByUserId(userId, "1", language).catch(() => null),
+    ]);
+    results = rawResults as PCAResults | null;
+    competences = rawCompetences as PCACompetences | null;
+  }
+
+  const overallScore = results?.data
+    ? (() => {
+        const rd = results.data!;
+        const scores = [rd.pcaD1 || 0, rd.pcaI1 || 0, rd.pcaS1 || 0, rd.pcaC1 || 0].filter(
+          (score) => score > 0
+        );
+        return scores.length > 0
+          ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
+          : 0;
+      })()
+    : ((results?.overallScore || results?.totalScore || results?.score || 0) as number);
+
+  return {
+    pcaCod: statusData.pcaCod || "unknown",
+    results,
+    competences,
+    lastUpdated: statusData.lastActivity || new Date().toISOString(),
+    isCompleted: statusData.status === "completed",
+    status: statusData.status,
+    overallScore,
+    totalScore: results?.totalScore as number | undefined,
+    score: results?.score as number | undefined,
+  };
+}
+
+/**
+ * The student's PCA state, shared across every component that asks for it.
+ *
+ * This used to be a per-component useEffect + useState fetch. The dashboard mounts it
+ * from StatCards, CareerMatchHub and SkillBridgingCard at once, StrictMode double-runs
+ * the effect in dev, and each run fired two TIMS-backed POSTs that apiRequest retried —
+ * one page load became dozens of get-result/get-competences calls. react-query
+ * deduplicates concurrent mounts into one in-flight request and one cache entry.
+ *
+ * The localStorage copy is kept: checkPCAStatus reads it as a fast path, and it seeds
+ * the query (stale on arrival, so it is refreshed in the background exactly as before).
+ */
 export function usePCAData() {
   const { user, language } = useGlobalStore();
-  const [pcaData, setPcaData] = useState<PCAData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const userId = user?.id || "";
+  const enabled = !!userId && normalizeRole(user.role) === Roles.STUDENT;
+  const key = pcaDataQueryKey(userId, language);
 
-  const loadPCAData = async (forcePcaCod?: string) => {
-    if (!user?.id && !forcePcaCod) {
-      setLoading(false);
-      return;
-    }
+  const query = useQuery({
+    queryKey: key,
+    queryFn: async () => {
+      const data = await fetchPCAData(userId, language);
+      writeCache(userId, data);
+      return data;
+    },
+    enabled,
+    initialData: () => (enabled ? readCache(userId) : null),
+    initialDataUpdatedAt: 0, // cached copy is a placeholder: always refresh it on mount
+    staleTime: 60 * 1000,
+    retry: false, // the reads decide their own retry policy in pcaService
+  });
 
-    try {
-      setLoading(true);
-      setError(null);
+  const pcaData = query.data ?? null;
 
-      // Check PCA status using the new backend API
-      const statusData = await checkPCAStatus(user?.id || "unknown", language);
+  const loadPCAData = useCallback(async () => {
+    await query.refetch();
+  }, [query]);
 
-      if (statusData.status === "not_started") {
-        setPcaData(null);
-        setLoading(false);
-        return;
-      }
+  const savePCACode = useCallback(
+    (pcaCod: string) => {
+      if (!userId) return;
+      const data: PCAData = { pcaCod, isCompleted: false, status: "in_progress" };
+      writeCache(userId, data);
+      queryClient.setQueryData(key, data);
+    },
+    [userId, key, queryClient]
+  );
 
-      // If user has PCA evaluation, try to get results and competences
-      let results: PCAResults | null = null;
-      let competences: PCACompetences | null = null;
-
-      if (statusData.hasResults && user?.id) {
-        try {
-          const [rawResults, rawCompetences] = await Promise.all([
-            getPCAResultByUserId(user.id, language).catch(() => null),
-            getPCACompetencesByUserId(user.id, "1", language).catch(() => null),
-          ]);
-          results = rawResults as PCAResults | null;
-          competences = rawCompetences as PCACompetences | null;
-        } catch (err) {
-          console.error("Failed to fetch PCA results/competences:", err);
-        }
-      }
-
-      const data: PCAData = {
-        pcaCod: statusData.pcaCod || "unknown",
-        results,
-        competences,
-        lastUpdated: statusData.lastActivity || new Date().toISOString(),
-        isCompleted: statusData.status === "completed",
-        status: statusData.status,
-        // Calculate overall score from PCA dimensions if available
-        overallScore: results?.data
-          ? (() => {
-              const rd = results.data!;
-              const d = rd.pcaD1 || 0;
-              const i = rd.pcaI1 || 0;
-              const s = rd.pcaS1 || 0;
-              const c = rd.pcaC1 || 0;
-              const scores = [d, i, s, c].filter((score) => score > 0);
-              return scores.length > 0
-                ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)
-                : 0;
-            })()
-          : (results?.overallScore || results?.totalScore || results?.score || 0) as number,
-        totalScore: results?.totalScore as number | undefined,
-        score: results?.score as number | undefined,
-      };
-
-      setPcaData(data);
-
-      // Cache the data with user ID as key
-      if (user?.id) {
-        localStorage.setItem(`pcaData_${user.id}`, JSON.stringify(data));
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load PCA data");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const savePCACode = (pcaCod: string) => {
-    if (!user?.id) return;
-
-    const data: PCAData = {
-      pcaCod,
-      isCompleted: false,
-      status: "in_progress",
-    };
-
-    setPcaData(data);
-    localStorage.setItem(`pcaData_${user.id}`, JSON.stringify(data));
-  };
-
-  const clearPCAData = () => {
-    if (!user?.id) return;
-
-    localStorage.removeItem(`pcaData_${user.id}`);
-    setPcaData(null);
-  };
-
-  const refreshPCAData = () => {
-    if (!user?.id) {
-      loadPCAData();
-      return;
-    }
-
-    const cachedData = localStorage.getItem(`pcaData_${user.id}`);
-    if (cachedData) {
-      try {
-        const parsed = JSON.parse(cachedData);
-        setPcaData(parsed);
-        // Refresh from API in background
-        loadPCAData();
-      } catch (e) {
-        // Invalid cached data, reload from API
-        loadPCAData();
-      }
-    } else {
-      loadPCAData();
-    }
-  };
-
-  useEffect(() => {
-    if (!user?.id || normalizeRole(user.role) !== Roles.STUDENT) {
-      setLoading(false);
-      return;
-    }
-
-    // Try to load cached data first
-    const cachedData = localStorage.getItem(`pcaData_${user.id}`);
-    if (cachedData) {
-      try {
-        const parsed = JSON.parse(cachedData);
-        setPcaData(parsed);
-        setLoading(false);
-
-        // Refresh from API in background
-        loadPCAData();
-      } catch (e) {
-        // Invalid cached data, load from API
-        loadPCAData();
-      }
-    } else {
-      loadPCAData();
-    }
-  }, [user?.id]);
+  const clearPCAData = useCallback(() => {
+    if (!userId) return;
+    writeCache(userId, null);
+    queryClient.setQueryData(key, null);
+  }, [userId, key, queryClient]);
 
   return {
     pcaData,
-    loading,
-    error,
+    // Only true while there is nothing to show at all — a cached copy renders immediately.
+    loading: enabled && query.isLoading,
+    error: query.error ? (query.error as Error).message || "Failed to load PCA data" : null,
     loadPCAData,
     savePCACode,
     clearPCAData,
-    refreshPCAData,
+    refreshPCAData: loadPCAData,
     hasPCA: !!pcaData?.pcaCod,
     isCompleted: pcaData?.isCompleted || false,
   };

@@ -79,11 +79,12 @@ public sealed class SchoolStudentsCoursePlanReader(
         }
 
         // Plan rows — ONLY when there is a current academic year (legacy ternary). sortOrder ASC + id ASC tie-break.
-        var plans = new List<(string Id, string CourseId, string? Term, string? Status)>();
+        // "gradeLevel" (#122) is the grade the row was PLANNED for; NULL on rows written before the column existed.
+        var plans = new List<(string Id, string CourseId, string? Term, string? Status, int? GradeLevel)>();
         if (academicYearId is not null)
         {
             await using var command = Command(session, """
-                SELECT "id", "courseId", "term", "status" FROM "student_course_plans"
+                SELECT "id", "courseId", "term", "status", "gradeLevel" FROM "student_course_plans"
                 WHERE "studentId" = @id AND "schoolId" = @school AND "academicYearId" = @ay AND "isActive" = true
                 ORDER BY "sortOrder" ASC, "id" ASC
                 """);
@@ -95,7 +96,8 @@ public sealed class SchoolStudentsCoursePlanReader(
             {
                 plans.Add((reader.GetString(0), reader.GetString(1),
                     reader.IsDBNull(2) ? null : reader.GetString(2),
-                    reader.IsDBNull(3) ? null : reader.GetString(3)));
+                    reader.IsDBNull(3) ? null : reader.GetString(3),
+                    reader.IsDBNull(4) ? null : reader.GetInt32(4)));
             }
         }
 
@@ -151,7 +153,6 @@ public sealed class SchoolStudentsCoursePlanReader(
             ? PcaExamPagination.JsParseInt(academicYearName.Split('-')[0])
             : currentYear;
         var currentGrade = gradeLevel is null or 0 ? 11 : gradeLevel.Value; // JS `user.gradeLevel || 11`
-        int planGradeLevel = currentGrade;                                  // plan enrollments reuse the same `|| 11`
 
         var enrollments = new List<CoursePlanEnrollment>();
 
@@ -194,7 +195,13 @@ public sealed class SchoolStudentsCoursePlanReader(
                 CourseName: JsOr(hasCourse ? c.Name : null, ""),
                 Credits: hasCourse ? c.Credits : 0,
                 Category: JsOr(hasCourse ? c.Department : null, ""),
-                GradeLevel: planGradeLevel,
+                // #122 — the grade this row was PLANNED for, falling back to the student's current grade only for
+                // rows written before the column existed. This was an unconditional `user.gradeLevel || 11` (the
+                // visible half of the bug reproduced in prod on 2026-08-09): every plan enrollment carried the
+                // same number, so a course added to "Grade 9 — Fall" rendered under the student's own grade.
+                // Legacy `p.gradeLevel ?? user.gradeLevel ?? 11` — `??`, NOT the `|| 11` above, so a stored 0 is
+                // kept rather than swallowed; silent coercion is precisely what kept this invisible.
+                GradeLevel: p.GradeLevel ?? gradeLevel ?? 11,
                 Semester: JsOr(p.Term, "Fall"),
                 Status: JsOr(p.Status, "planned"),
                 IsGraded: false,

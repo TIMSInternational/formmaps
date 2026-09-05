@@ -2,6 +2,7 @@
 
 import { apiRequest } from "@/lib/api/apiClient";
 import type { LockdownViolation } from "@/components/proctoring/types";
+import { getOwnAssessmentCompletion, isViewingSelf } from "./assessmentCompletionService";
 
 /**
  * Flush proctoring violations for an authed PCA exam session. Best-effort —
@@ -114,9 +115,14 @@ export async function getPCAResultByUserId(
 ): Promise<Record<string, unknown> | null> {
   const langParam = language === "spanish" ? "sp" : "en";
   try {
+    // A read shaped as a POST: it fills an optional widget, so it must neither toast
+    // "Server error" like a failed form submit nor retry like one — several dashboard
+    // components issue it at once, and the server already retries TIMS itself.
     return await apiRequest<Record<string, unknown>>(`/api/pcaapi/get-result?lang=${langParam}`, {
       method: "POST",
       data: { UserId: userId },
+      showErrorToast: false,
+      retries: 0,
     });
   } catch (err: unknown) {
     const apiErr = err as ApiError;
@@ -135,9 +141,12 @@ export async function getPCACompetencesByUserId(
 ): Promise<Record<string, unknown> | null> {
   const langParam = language === "spanish" ? "sp" : "en";
   try {
+    // Same read-shaped-POST rule as getPCAResultByUserId: no toast, no retry.
     return await apiRequest<Record<string, unknown>>(`/api/pcaapi/get-competences?lang=${langParam}`, {
       method: "POST",
       data: { UserId: userId, CmpTims: cmpTims },
+      showErrorToast: false,
+      retries: 0,
     });
   } catch (err: unknown) {
     const apiErr = err as ApiError;
@@ -211,11 +220,20 @@ export async function getAllPCAEvaluations(
 }
 
 /**
- * Check PCA Status by UserId
+ * Check PCA Status by UserId.
+ *
+ * `knownCompleted` is the server's own `pcaCompleted` verdict (GET /api/v1/assessment/
+ * completion) when the caller already holds it. Without it, and only for the signed-in
+ * user, it is fetched here. Either way a PCA the database marks complete reads as
+ * "completed" BEFORE the live TIMS results round-trip below — that call used to be the
+ * only thing that could say so, which meant a TIMS outage (or, locally, no PCA_COKEY)
+ * turned a finished PCA into "Continue PCA" on the assessments page while the dashboard
+ * card, driven by the same server verdict, said 4/4.
  */
 export async function checkPCAStatus(
   userId: string,
-  language: "english" | "spanish" = "english"
+  language: "english" | "spanish" = "english",
+  knownCompleted?: boolean
 ): Promise<{
   status: "not_started" | "in_progress" | "completed";
   pcaCod?: string;
@@ -231,6 +249,18 @@ export async function checkPCAStatus(
 
     if (!userEvaluation) {
       return { status: "not_started" };
+    }
+
+    const serverSaysCompleted =
+      knownCompleted ??
+      (isViewingSelf(userId) ? (await getOwnAssessmentCompletion())?.pcaCompleted : undefined);
+    if (serverSaysCompleted === true) {
+      return {
+        status: "completed",
+        pcaCod: userEvaluation.pcaCod as string | undefined,
+        hasResults: true,
+        lastActivity: (userEvaluation.createdAt as string) || new Date().toISOString(),
+      };
     }
 
     // Check localStorage cache first (maintained by usePCAData hook)

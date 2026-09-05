@@ -7,8 +7,11 @@ namespace FormMaps.Api.Endpoints;
 /// <summary>
 /// Domain 9a subscription REST endpoints (routes/stripe.ts). Flag: FORMMAPS_ROUTE_BILLING_TO_DOTNET
 /// (frontend next.config.ts rewrite) — dark by default, same convention as every other domain.
-/// GET /status (Task 7) reads the LIVE user_subscriptions table (read-only — Node still owns writes) via
-/// ILiveSubscriptionReader, unlike the shadow-table webhook/reconciliation code in this same domain.
+/// GET /status (Task 7; legacy twin is routes/user.ts GET /api/v1/user/subscription/status, NOT a
+/// stripe.ts route, and is also served at that exact path -- see MapBillingEndpoints) reads the LIVE
+/// users."schoolId" via ILiveSchoolAffiliationReader and then the LIVE
+/// user_subscriptions table (read-only — Node still owns writes) via ILiveSubscriptionReader, unlike the
+/// shadow-table webhook/reconciliation code in this same domain.
 /// POST /checkout-session (Task 8) validates planId against subscription_plans via IPlanReader, then
 /// calls IStripeGateway to create/reuse a Stripe customer and start a subscription-mode Checkout
 /// session. POST /cancel-subscription (Task 9) reads the live row's stripeSubscriptionId via
@@ -30,11 +33,12 @@ public static class BillingEndpoints
         // reused rather than repeating the method group per group, so the aliases are the same delegate
         // instance and cannot drift: there is exactly one implementation of each behaviour, and no way to
         // "fix" one path without fixing the other.
+        var getStatus = GetStatusAsync;
         var cancelSubscription = CancelSubscriptionAsync;
         var billingPortal = CreateBillingPortalAsync;
 
         var group = app.MapGroup("/api/v1/billing").WithTags("Billing");
-        group.MapGet("/status", GetStatusAsync);
+        group.MapGet("/status", getStatus);
         group.MapPost("/checkout-session", CreateCheckoutSessionAsync);
         group.MapPost("/cancel-subscription", cancelSubscription);
         group.MapPost("/portal", billingPortal);
@@ -56,6 +60,17 @@ public static class BillingEndpoints
         var legacy = app.MapGroup("/api/stripe").WithTags("Billing");
         legacy.MapPost("/cancel-subscription", cancelSubscription);
         legacy.MapPost("/billing-portal", billingPortal);
+
+        // Wave 3 billing-subscription-parity review: GET /status had the same #98 problem and was not
+        // covered by the #98 fix, because its legacy twin is NOT under /api/stripe -- it is
+        // routes/user.ts GET /subscription/status, mounted at /api/v1/user (legacy index.ts:324), and
+        // that is the path subscriptionStatusService.ts requests. Without this alias the legacy-shaped
+        // payload above was reachable only by tests: on a flip the SPA's status call kept going to Node
+        // via the /api/:path* catch-all. Same treatment as the /api/stripe pair -- one delegate, per-path
+        // (Node owns every other /api/v1/user route), and the matching flag-guarded source==destination
+        // rewrite in next.config.ts.
+        var legacyUser = app.MapGroup("/api/v1/user").WithTags("Billing");
+        legacyUser.MapGet("/subscription/status", getStatus);
 
         return app;
     }
@@ -100,16 +115,51 @@ public static class BillingEndpoints
         return Results.Ok(new { success = true, data = new { url } });
     }
 
+    /// <remarks>
+    /// Wave 3 billing-subscription-parity (formmaps#108 comment). Legacy twin is
+    /// GET /api/v1/user/subscription/status, api/src/routes/user.ts:302-334, and this now matches it in
+    /// three places it used to diverge:
+    /// <list type="bullet">
+    /// <item>the school short-circuit (user.ts:304-311): any user whose users row carries a schoolId is
+    /// answered <c>{ hasActiveSubscription:true, planId:"school", status:"active", expiryDate:null,
+    /// isSchoolStudent:true }</c> before user_subscriptions is read at all. Legacy checks the schoolId only,
+    /// never the role, and reads it live -- so does this.</item>
+    /// <item>the row predicate: legacy's findFirst carries <c>isActive: true</c>; the reader now does too
+    /// (see LiveSubscriptionReader), so an inactive row is "no subscription", status "none".</item>
+    /// <item>the field names: <c>hasActiveSubscription</c> / <c>expiryDate</c> / <c>cancelAtPeriodEnd</c>,
+    /// not the <c>grantsAccess</c> / <c>nextBillingDate</c> this handler used to invent. apps/web's
+    /// subscriptionStatusService.ts (and everything on it: dashboard/subscriptions, subscribe, AuthWrapper)
+    /// reads the legacy names from Node today, and nothing in apps/web ever read the invented ones, so
+    /// the legacy shape is the one a flip is invisible under -- given the legacy PATH alias in
+    /// MapBillingEndpoints, without which no SPA traffic reaches this handler on a flip at all.</item>
+    /// </list>
+    /// The two branches have DIFFERENT key sets, deliberately: legacy's school response has no
+    /// cancelAtPeriodEnd and its individual response has no isSchoolStudent. planId is null unless access
+    /// is granted (<c>hasAccess ? sub?.planId || null : null</c> -- the <c>||</c> also coerces an
+    /// empty-string planId to null, hence IsNullOrEmpty rather than a bare null check), and status falls
+    /// back to "none".
+    /// </remarks>
     private static async Task<IResult> GetStatusAsync(
         IRequestContextAccessor accessor, IProtectedRequestGuard guard, ILiveSubscriptionReader reader,
-        TimeProvider timeProvider, CancellationToken cancellationToken)
+        ILiveSchoolAffiliationReader schoolReader, TimeProvider timeProvider, CancellationToken cancellationToken)
     {
         var context = accessor.Current;
         var decision = guard.RequireIdentity(context);
         if (!decision.Allowed) return Deny(decision);
 
-        var row = await reader.GetForUserAsync(context, context.Tenant!.UserId, cancellationToken);
-        var grantsAccess = row is not null && SubscriptionAccess.GrantsAccess(
+        var userId = context.Tenant!.UserId;
+        var schoolId = await schoolReader.GetSchoolIdAsync(context, userId, cancellationToken);
+        if (!string.IsNullOrEmpty(schoolId))
+        {
+            return Results.Ok(new
+            {
+                success = true,
+                data = new { hasActiveSubscription = true, planId = "school", status = "active", expiryDate = (DateTimeOffset?)null, isSchoolStudent = true },
+            });
+        }
+
+        var row = await reader.GetForUserAsync(context, userId, cancellationToken);
+        var hasAccess = row is not null && SubscriptionAccess.GrantsAccess(
             row.Status, row.IsActive, row.NextBillingDate, timeProvider.GetUtcNow(), SubscriptionAccess.DefaultGraceDays);
 
         return Results.Ok(new
@@ -117,10 +167,11 @@ public static class BillingEndpoints
             success = true,
             data = new
             {
-                grantsAccess,
-                status = row?.Status,
-                planId = row?.PlanId,
-                nextBillingDate = row?.NextBillingDate,
+                hasActiveSubscription = hasAccess,
+                planId = hasAccess && !string.IsNullOrEmpty(row?.PlanId) ? row.PlanId : null,
+                status = string.IsNullOrEmpty(row?.Status) ? "none" : row.Status,
+                expiryDate = row?.NextBillingDate,
+                cancelAtPeriodEnd = row?.CancelAtPeriodEnd ?? false,
             },
         });
     }
@@ -181,7 +232,7 @@ public static class BillingEndpoints
             var outcome = await gateway.CancelSubscriptionAsync(row.StripeSubscriptionId, cancellationToken);
             if (outcome == StripeCancelOutcome.Scheduled)
             {
-                await writer.MarkCancelAtPeriodEndAsync(context, userId, cancellationToken);
+                await writer.MarkCancelAtPeriodEndAsync(context, userId, row.Id, cancellationToken);
                 return Results.Ok(new { success = true, message = "Subscription will cancel at the end of the current period" });
             }
 
@@ -189,9 +240,11 @@ public static class BillingEndpoints
         }
 
         // No Stripe subscription to cancel (or Stripe has already lost it) -- cancel the local row
-        // outright, exactly as legacy does. Rowcount is deliberately ignored: 0 means a concurrent writer
-        // already cancelled it, which is the same outcome the caller asked for.
-        await writer.MarkCancelledAsync(context, userId, cancellationToken);
+        // outright, exactly as legacy does. Both writes are pinned to row.Id, the row this handler's
+        // cancellable decision was made on (legacy's `{ id: sub.id, userId }` scope). Rowcount is
+        // deliberately ignored: 0 means a concurrent writer already cancelled it, which is the same
+        // outcome the caller asked for.
+        await writer.MarkCancelledAsync(context, userId, row.Id, cancellationToken);
         return Results.Ok(new { success = true, message = "Subscription cancelled" });
     }
 

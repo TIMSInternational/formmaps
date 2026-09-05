@@ -25,3 +25,7 @@ pnpm-debug.log*
 # Claude Code harness worktrees / local state
 .claude/
 graphify-out/
+
+# Python bytecode (tools/careerfit harness)
+__pycache__/
+*.pyc

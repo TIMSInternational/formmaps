@@ -30,9 +30,13 @@ namespace FormMaps.Api.Endpoints;
 /// should not be read as a claim that this route is open. It is the deliberate positive control for the
 /// guard, and the pair (200 here, 401 there) is what makes the group useful as a smoke test at all.</para>
 ///
-/// <para>Neither route is reachable through app.formmaps.com: there is no <c>/api/v1/context</c> rewrite
-/// in apps/web/next.config.ts, so Node answers (and 404s) the whole prefix. That half of #109 is
-/// accurate. Mapped-but-unreachable is the real defect class here, NOT the anonymous 200.</para>
+/// <para>Reachability (formmaps#109): until 2026-09-03 neither route was reachable through
+/// app.formmaps.com -- there was no <c>/api/v1/context</c> rewrite in apps/web/next.config.ts, so Node
+/// answered (and 404'd) the whole prefix. Mapped-but-unreachable was the real defect class here, NOT the
+/// anonymous 200. Both routes now have exact-path rewrites gated by
+/// <c>FORMMAPS_ROUTE_REQUEST_CONTEXT_TO_DOTNET</c> (default OFF): this is a diagnostic group, not a
+/// post-deploy verification instrument like <c>/api/v1/migration</c>, so it is flag-gated rather than
+/// exposed unconditionally. Deliberately two exact paths, not a prefix rewrite.</para>
 /// </summary>
 public static class RequestContextEndpoints
 {

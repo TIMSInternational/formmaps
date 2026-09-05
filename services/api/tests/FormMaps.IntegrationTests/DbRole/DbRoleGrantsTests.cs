@@ -11,8 +11,8 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
 {
     // One representative table per grant tier from the script (kept in sync by hand; a full round-trip over every
     // granted table adds verification depth without adding coverage of a genuinely different code path). Tables
-    // whose exact verb set IS the invariant -- the billing tier and audit_events -- are named individually below
-    // instead of being sampled.
+    // whose exact verb set IS the invariant -- the billing tier, audit_events and the careerfit_* pair -- are named
+    // individually below instead of being sampled.
     private const string ReadOnlyTable = "universities";
     private const string WriteNoDeleteTable = "users";
     private const string FullCrudTable = "holidays";
@@ -235,6 +235,174 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     }
 
     /// <summary>
+    /// issue #55 (graduation + transcripts lane). Same reasoning as the billing block above: for these five the
+    /// exact verb set IS the invariant, not a sample, and three of them changed tier in this task. Named
+    /// individually so a later "just add DELETE, it's a write table" cannot pass unnoticed.
+    ///
+    ///   student_gpas / gpa_configurations -- upserted (INSERT + UPDATE), NEVER deleted. Legacy overwrites a GPA
+    ///     row rather than removing it, so DELETE is a verb no code path has and none should get.
+    ///   school_users -- SELECT only. computeClassRanks/getClassRankings read the roster from it; nothing in the
+    ///     .NET service creates or changes a school membership.
+    ///   student_grades -- SELECT only. The transcript lane READS grades; the grade import/write half of
+    ///     routes/school-grades.ts stays in Node.
+    ///   graduation_rule_sets -- SELECT + INSERT + UPDATE (POST/PUT /graduation/rules), never DELETE: the PUT
+    ///     replaces the rule set's CHILD rows, it never removes the rule set itself.
+    ///
+    /// <para>issue #55 REMAINDER (routes/graduation-plan.ts + routes/counselor-graduation.ts) adds three more,
+    /// two of which changed tier:</para>
+    ///
+    ///   graduation_plans -- SELECT + INSERT + UPDATE, never DELETE. The service only UPDATEs (submit's
+    ///     draft->proposed, discard's isActive=false, review's approved|rejected); the sole INSERT path,
+    ///     generateDraftPlan, stays on Node under DECISION D1. INSERT is one verb wider than today's .NET code
+    ///     and that is deliberate and recorded in the SQL -- the tier is granted as a unit, and this assertion
+    ///     is what stops "wider" from drifting into "unbounded", exactly as the moderation block does.
+    ///   student_graduation_targets -- SELECT + INSERT + UPDATE, never DELETE. PUT /graduation-plan/target is
+    ///     an upsert on the @unique studentId; legacy deactivates a target, it never removes one.
+    ///   graduation_plan_items -- SELECT ONLY, and this is the assertion that matters most of the three. The
+    ///     .NET service reads items (getCurrentPlan, and reviewPlan's materialization source) and writes none;
+    ///     the writer is generateDraftPlan on Node. A future "the plans table is writable, surely its items are
+    ///     too" would sail through review and this pins it.
+    /// </summary>
+    [Theory]
+    [InlineData("student_gpas", true, true, true, false)]
+    [InlineData("gpa_configurations", true, true, true, false)]
+    [InlineData("school_users", true, false, false, false)]
+    [InlineData("student_grades", true, false, false, false)]
+    [InlineData("graduation_rule_sets", true, true, true, false)]
+    [InlineData("graduation_plans", true, true, true, false)]
+    [InlineData("student_graduation_targets", true, true, true, false)]
+    [InlineData("graduation_plan_items", true, false, false, false)]
+    public async Task Graduation_lane_tables_have_exactly_the_privileges_the_service_needs(
+        string table, bool canSelect, bool canInsert, bool canUpdate, bool canDelete)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'DELETE')
+            """,
+            connection);
+        command.Parameters.AddWithValue("table", table);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.Equal(canSelect, reader.GetBoolean(0));
+        Assert.Equal(canInsert, reader.GetBoolean(1));
+        Assert.Equal(canUpdate, reader.GetBoolean(2));
+        Assert.Equal(canDelete, reader.GetBoolean(3));
+    }
+
+    /// <summary>
+    /// The behavioural half for the two tables this lane actually upserts into. A catalog assertion alone would
+    /// pass against a grant Postgres records but the role cannot use; a behavioural one alone cannot tell "no
+    /// privilege" from "some other lock said no", which is why the SqlState is asserted rather than a bare throw.
+    /// </summary>
+    /// <summary>
+    /// issue #55, the rule-set CHILDREN. Their tier is SELECT + INSERT + DELETE and specifically NOT UPDATE,
+    /// which is the opposite withholding from the two tables above. `updateGraduationRules` replaces these rows
+    /// wholesale (deleteMany + createMany in one transaction) rather than editing them, so no .NET code path
+    /// issues an UPDATE here — and granting one would hand the service the partial in-place edit that the
+    /// delete-and-recreate design exists to prevent. Catalog assertion; the behavioural half is below.
+    /// </summary>
+    [Theory]
+    [InlineData("category_requirements")]
+    [InlineData("special_requirements")]
+    public async Task Graduation_rule_set_children_are_select_insert_delete_but_never_update(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'DELETE')
+            """,
+            connection);
+        command.Parameters.AddWithValue("table", table);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.True(reader.GetBoolean(0), "the rule-set read includes both child lists");
+        Assert.True(reader.GetBoolean(1), "createMany re-creates the rows on every rules POST and PUT");
+        Assert.False(reader.GetBoolean(2), "no code path edits a requirement in place -- the PUT replaces them");
+        Assert.True(reader.GetBoolean(3), "deleteMany is half of the PUT's replace");
+    }
+
+    /// <summary>
+    /// The behavioural half of the assertion above, run as the role itself. The SqlState check is what makes the
+    /// rejected UPDATE attributable to the GRANT rather than to a constraint or a typo.
+    /// </summary>
+    [Theory]
+    [InlineData("category_requirements")]
+    [InlineData("special_requirements")]
+    public async Task Graduation_rule_set_children_accept_insert_and_delete_but_reject_update(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand($"""INSERT INTO "{table}" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        var exception = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var update = new NpgsqlCommand($"""UPDATE "{table}" SET id = @id WHERE id = @id""", connection);
+            update.Parameters.AddWithValue("id", id);
+            await update.ExecuteNonQueryAsync();
+        });
+
+        Assert.Equal("42501", exception.SqlState); // insufficient_privilege
+
+        await using var delete = new NpgsqlCommand($"""DELETE FROM "{table}" WHERE id = @id""", connection);
+        delete.Parameters.AddWithValue("id", id);
+        Assert.Equal(1, await delete.ExecuteNonQueryAsync());
+    }
+
+    [Theory]
+    [InlineData("student_gpas")]
+    [InlineData("gpa_configurations")]
+    public async Task Graduation_lane_upsert_tables_accept_writes_but_reject_deletes(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand($"""INSERT INTO "{table}" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        await using (var update = new NpgsqlCommand($"""UPDATE "{table}" SET id = @id WHERE id = @id""", connection))
+        {
+            update.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await update.ExecuteNonQueryAsync());
+        }
+
+        var exception = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var delete = new NpgsqlCommand($"""DELETE FROM "{table}" WHERE id = @id""", connection);
+            delete.Parameters.AddWithValue("id", id);
+            await delete.ExecuteNonQueryAsync();
+        });
+
+        Assert.Equal("42501", exception.SqlState); // insufficient_privilege
+    }
+
+    /// <summary>
     /// formmaps#52. The audit trail's grant is its own tier: SELECT + INSERT, never UPDATE, never DELETE.
     /// This mirrors at the privilege layer what infra/aws/sql/audit-events-schema.sql enforces at the table
     /// layer (REVOKE + the ENABLE ALWAYS statement trigger), so that the two independent locks agree. The
@@ -337,6 +505,91 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     }
 
     /// <summary>
+    /// FM-CF-002. CareerFit runs are append-only: SELECT + INSERT, never UPDATE, never DELETE, never TRUNCATE
+    /// (role script section 4.7). Unlike audit_events there is NO immutability trigger on these tables, so this
+    /// grant is the only lock between the service account and a rewritable run -- which is why the verb set is
+    /// pinned per table, catalog-side, rather than sampled through one representative.
+    ///
+    /// FM-CF-013 adds careerfit_shadow_comparisons (section 4.8) to the same theory, deliberately rather than
+    /// in a class of its own: it is append-only for the SAME reason and would drift if it were pinned somewhere
+    /// else. The reason is worth stating once more, because it is the point of the whole slice -- a shadow row
+    /// is the EXTERNAL measurement of the port, and a service account that can edit one can edit the evidence
+    /// the cutover decision rests on. Re-measuring under a corrected projection is a new row.
+    /// </summary>
+    [Theory]
+    [InlineData("careerfit_runs")]
+    [InlineData("careerfit_family_results")]
+    [InlineData("careerfit_shadow_comparisons")]
+    public async Task CareerFit_tables_are_granted_select_and_insert_but_never_update_or_delete(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'DELETE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'TRUNCATE')
+            """,
+            connection);
+        command.Parameters.AddWithValue("table", table);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.True(reader.GetBoolean(0), $"{table}: the reader SELECTs under the caller's RLS session");
+        Assert.True(reader.GetBoolean(1), $"{table}: the writer INSERTs; without this every evaluation or measurement 42501s");
+        Assert.False(reader.GetBoolean(2), $"{table}: append-only -- UPDATE would let the service rewrite a score or a measurement in place");
+        Assert.False(reader.GetBoolean(3), $"{table}: append-only -- erasure is the admin path, not the service's");
+        Assert.False(reader.GetBoolean(4), $"{table}: TRUNCATE erases every row in one statement and is never needed by the service");
+    }
+
+    /// <summary>
+    /// The behavioural half of the assertion above, as the role itself. The stub tables are bare (no RLS, no
+    /// trigger), so a rejected UPDATE/DELETE is the GRANT and nothing else -- and the SqlState is asserted, not
+    /// merely that something threw, for the reason the audit_events test above records.
+    /// </summary>
+    [Theory]
+    [InlineData("careerfit_runs")]
+    [InlineData("careerfit_family_results")]
+    [InlineData("careerfit_shadow_comparisons")]
+    public async Task CareerFit_tables_accept_appends_from_the_role_but_reject_rewrites_and_erasures(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand($"""INSERT INTO "{table}" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        var update = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand($"""UPDATE "{table}" SET id = 'rewritten' WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", update.SqlState); // insufficient_privilege
+
+        var delete = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand($"""DELETE FROM "{table}" WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", delete.SqlState);
+
+        await using var survived = new NpgsqlCommand($"""SELECT count(*) FROM "{table}" WHERE id = @id""", connection);
+        survived.Parameters.AddWithValue("id", id);
+        Assert.Equal(1L, (long)(await survived.ExecuteScalarAsync())!);
+    }
+
+    /// <summary>
     /// Drift guard in the direction the fixture cannot catch on its own. A table granted by the script but
     /// missing from the stub schema already fails loudly (the GRANT errors during fixture init); the reverse --
     /// a table the service touches that made it into the stub schema but NOT into any GRANT list, which is
@@ -345,13 +598,16 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     [Fact]
     public async Task Every_table_in_the_schema_is_granted_at_least_select()
     {
-        // The single documented exception, and it stays a NAMED one rather than relaxing the check to "has any
+        // The documented exceptions, and they stay NAMED ones rather than relaxing the check to "has any
         // privilege": audit_logs is INSERT-only on purpose (role script section 4.6 — the service writes the legacy
-        // role-change trail and never reads it). Broadening the rule instead would let a table that genuinely needs
-        // SELECT pass with only an INSERT grant, which is the same class of miss this test exists to catch. The
-        // exception is not a hole either — the test below pins audit_logs' exact verb set, so "excluded here" cannot
-        // degrade into "ungranted entirely".
-        var insertOnly = new[] { "audit_logs" };
+        // role-change trail and never reads it), and telemetry_events is INSERT-only for the same shape of reason
+        // (section 4.8, issue #65 — TelemetryEventWriter's multi-row INSERT is the only statement any .NET path
+        // issues against it, and granting SELECT would hand the service account every user's behavioural history
+        // for a capability no code exercises). Broadening the rule instead would let a table that genuinely needs
+        // SELECT pass with only an INSERT grant, which is the same class of miss this test exists to catch. Neither
+        // exception is a hole — the tests below pin both tables' exact verb sets, so "excluded here" cannot degrade
+        // into "ungranted entirely".
+        var insertOnly = new[] { "audit_logs", "telemetry_events" };
 
         await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
         await connection.OpenAsync();
@@ -474,6 +730,276 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
         await using var survived = new NpgsqlCommand("""SELECT count(*) FROM "audit_logs" WHERE id = @id""", admin);
         survived.Parameters.AddWithValue("id", id);
         Assert.Equal(1L, (long)(await survived.ExecuteScalarAsync())!);
+    }
+
+    /// <summary>
+    /// issue #65. The telemetry ingest table's grant is INSERT and nothing else (role script section 4.8).
+    ///
+    /// <para>Pinned individually rather than sampled because the WITHHELD verbs are the invariant. SELECT is
+    /// withheld because no .NET path reads the table and the INSERT does not need one (no RETURNING, no ON
+    /// CONFLICT) — and because a service account that can SELECT here can enumerate every user's behavioural
+    /// history. UPDATE and DELETE are withheld because the 90-day retention (`expiresAt`, telemetry.ts:40) is a
+    /// reaper's job that no .NET code does; a future reaper should be given DELETE deliberately, not inherit it
+    /// from a grant widened by resemblance to the section-4 bucket.</para>
+    /// </summary>
+    [Fact]
+    public async Task Telemetry_events_is_insert_only()
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', 'public.telemetry_events', 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.telemetry_events', 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.telemetry_events', 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.telemetry_events', 'DELETE'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.telemetry_events', 'TRUNCATE')
+            """,
+            connection);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.True(reader.GetBoolean(0), "TelemetryEventWriter INSERTs telemetry_events; without this every ingest 42501s at cutover");
+        Assert.False(reader.GetBoolean(1), "no .NET code path reads telemetry_events, and the INSERT does not need SELECT");
+        Assert.False(reader.GetBoolean(2), "nothing in .NET edits a telemetry row after it is written");
+        Assert.False(reader.GetBoolean(3), "retention is a reaper's job; give DELETE deliberately if one is ever added");
+        Assert.False(reader.GetBoolean(4), "TRUNCATE erases the whole ingest history in one statement");
+    }
+
+    /// <summary>
+    /// The behavioural half of the assertion above, run as the role itself. There is no RLS policy and no trigger
+    /// in this stub schema, so a rejected SELECT/UPDATE/DELETE is attributable to the GRANT and to nothing else,
+    /// and the SqlState assertions keep it that way rather than passing on any thrown exception.
+    /// </summary>
+    [Fact]
+    public async Task Role_can_append_telemetry_but_not_read_or_rewrite_it()
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand("""INSERT INTO "telemetry_events" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        var select = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""SELECT count(*) FROM "telemetry_events" """, connection);
+            await command.ExecuteScalarAsync();
+        });
+        Assert.Equal("42501", select.SqlState);
+
+        var update = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""UPDATE "telemetry_events" SET id = 'rewritten' WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", update.SqlState);
+
+        var delete = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""DELETE FROM "telemetry_events" WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", delete.SqlState);
+
+        // Read the survivor as admin, since the role deliberately cannot.
+        await using var admin = new NpgsqlConnection(fixture.AdminConnectionString);
+        await admin.OpenAsync();
+        await using var survived = new NpgsqlCommand("""SELECT count(*) FROM "telemetry_events" WHERE id = @id""", admin);
+        survived.Parameters.AddWithValue("id", id);
+        Assert.Equal(1L, (long)(await survived.ExecuteScalarAsync())!);
+    }
+
+    /// <summary>
+    /// formmaps#62. <c>teacher_invites</c>: SELECT and UPDATE, and deliberately NEITHER INSERT NOR DELETE.
+    ///
+    /// <para>WHY IT NEEDS TWO VERBS. TeacherOnboardingRepository.cs:38 reads the invite
+    /// (<c>SELECT ... FROM "teacher_invites" WHERE "token" = @token</c>, the port of teacher.ts:33's
+    /// <c>findUnique</c>) and :197 consumes it (<c>UPDATE "teacher_invites" SET "usedAt" = ...</c>, the port of
+    /// teacher.ts:68). Both sit on the PRE-AUTH onboarding routes, so a missing grant is not a degraded feature:
+    /// GET /onboarding/verify and POST /onboarding/complete both 500, and the invited teacher — who by
+    /// definition has no session yet — has no other way in. Teacher onboarding becomes unrecoverable.</para>
+    ///
+    /// <para>WHY INSERT IS WITHHELD, and this is the load-bearing half. Minting an invite is Node's job
+    /// (schoolService.ts:387) and no .NET path does it. The 256-bit <c>crypto.randomBytes(32)</c> token is the
+    /// ENTIRE authorization on these two routes — TeacherEndpoints' own remarks say so — so a service account
+    /// that could INSERT here could mint itself a valid invite for any address in any school, turning the
+    /// disclosed token-only exposure into a self-service one. Widening this to the section-4
+    /// SELECT/INSERT/UPDATE bucket by resemblance is precisely the mistake the script's maintenance note warns
+    /// about. DELETE is withheld for the ordinary reason: an invite is consumed by setting <c>usedAt</c>, never
+    /// removed, and a role that could DELETE could erase the record that a redemption happened.</para>
+    ///
+    /// <para>HOW IT WAS MISSED. This table had NO grant at all when #62 landed, and no test could see it: the
+    /// stub-schema reconciliation compares two hand-maintained lists and <c>teacher_invites</c> was absent from
+    /// both. DbRoleGrantCoverageTests now derives the table set from the source instead.</para>
+    /// </summary>
+    [Fact]
+    public async Task Teacher_invites_is_select_and_update_only()
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', 'public.teacher_invites', 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.teacher_invites', 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.teacher_invites', 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.teacher_invites', 'DELETE'),
+                   has_table_privilege('formmaps_dotnet_svc', 'public.teacher_invites', 'TRUNCATE')
+            """,
+            connection);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.True(reader.GetBoolean(0), "TeacherOnboardingRepository.cs:38 reads the invite; without SELECT both pre-auth onboarding routes 42501 at cutover");
+        Assert.True(reader.GetBoolean(1), "TeacherOnboardingRepository.cs:197 consumes the invite by setting usedAt");
+        Assert.False(reader.GetBoolean(2), "minting an invite is Node's job (schoolService.ts:387); INSERT here would let the service mint its own way into any school");
+        Assert.False(reader.GetBoolean(3), "an invite is consumed via usedAt, never deleted; DELETE would erase the redemption record");
+        Assert.False(reader.GetBoolean(4), "TRUNCATE erases every outstanding invite in one statement");
+    }
+
+    /// <summary>
+    /// The behavioural half, run as the role itself. No RLS and no trigger in this stub schema, so an accepted
+    /// SELECT/UPDATE and a rejected INSERT/DELETE are attributable to the GRANT and nothing else; the SqlState
+    /// assertions keep it that way rather than passing on any thrown exception.
+    /// </summary>
+    [Fact]
+    public async Task Role_can_read_and_consume_an_invite_but_never_mint_or_erase_one()
+    {
+        var id = $"invite-{Guid.NewGuid():N}";
+
+        // Seed as admin: the role deliberately cannot create the row it is about to redeem.
+        await using (var admin = new NpgsqlConnection(fixture.AdminConnectionString))
+        {
+            await admin.OpenAsync();
+            await using var seed = new NpgsqlCommand("""INSERT INTO "teacher_invites" (id) VALUES (@id)""", admin);
+            seed.Parameters.AddWithValue("id", id);
+            await seed.ExecuteNonQueryAsync();
+        }
+
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        // The verify path: reads the invite.
+        await using (var select = new NpgsqlCommand("""SELECT count(*) FROM "teacher_invites" WHERE id = @id""", connection))
+        {
+            select.Parameters.AddWithValue("id", id);
+            Assert.Equal(1L, (long)(await select.ExecuteScalarAsync())!);
+        }
+
+        // The complete path: consumes it.
+        await using (var update = new NpgsqlCommand("""UPDATE "teacher_invites" SET id = id WHERE id = @id""", connection))
+        {
+            update.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await update.ExecuteNonQueryAsync());
+        }
+
+        var insert = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""INSERT INTO "teacher_invites" (id) VALUES ('minted-by-the-service')""", connection);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", insert.SqlState);
+
+        var delete = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand("""DELETE FROM "teacher_invites" WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", delete.SqlState);
+    }
+
+    /// <summary>
+    /// formmaps#63/#80. The two tables the moderation port writes, pinned individually rather than sampled,
+    /// because their verb sets are the invariant and because they were STAGED ahead of the port: the role
+    /// script moved "user_blocks" out of the read-only tier and added "reports" to the SELECT/INSERT/UPDATE
+    /// tier before any code needed them (script sections 3 and 4). This test is the other half of that bet —
+    /// it says the staged grants are exactly what the landed code needs.
+    ///
+    /// <para>WHAT NEEDS WHAT. "reports": INSERT from POST /moderation/report, SELECT from GET
+    /// /moderation/reports (which also joins "users", already granted). "user_blocks": INSERT + UPDATE from
+    /// the block upsert, UPDATE from the unblock soft-delete, SELECT because MessagesRepository ALREADY
+    /// reads blocks on the live messaging path (MessagesRepository.cs:556 and :721) — losing SELECT here
+    /// would break messaging, not moderation.</para>
+    ///
+    /// <para>NO DELETE on either, and that is load-bearing rather than incidental: an unblock is a soft
+    /// delete (isActive = false) and a report is never removed, so a role that could DELETE could destroy
+    /// the evidence trail an abuse investigation runs on. UPDATE on "reports" is currently UNUSED by .NET —
+    /// the admin review/resolve path is still Node — and is deliberately not narrowed here: it is the next
+    /// obvious port into the same tier, and re-running grants mid-domain is the exact failure #29 hit.</para>
+    /// </summary>
+    [Theory]
+    [InlineData("reports", true, true, true, false)]
+    [InlineData("user_blocks", true, true, true, false)]
+    public async Task Moderation_tables_have_exactly_the_privileges_the_port_needs(
+        string table, bool canSelect, bool canInsert, bool canUpdate, bool canDelete)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+
+        await using var command = new NpgsqlCommand(
+            """
+            SELECT has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'SELECT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'INSERT'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'UPDATE'),
+                   has_table_privilege('formmaps_dotnet_svc', format('public.%I', @table), 'DELETE')
+            """,
+            connection);
+        command.Parameters.AddWithValue("table", table);
+
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+
+        Assert.Equal(canSelect, reader.GetBoolean(0));
+        Assert.Equal(canInsert, reader.GetBoolean(1));
+        Assert.Equal(canUpdate, reader.GetBoolean(2));
+        Assert.Equal(canDelete, reader.GetBoolean(3));
+    }
+
+    /// <summary>
+    /// The behavioural half of the pin above, run as the role itself. Neither table has RLS or a trigger
+    /// behind it (both are on formmaps#77's still-undecided group 2), so a rejected DELETE here is
+    /// attributable to the GRANT and to nothing else — which is what the SqlState assertion keeps true.
+    /// </summary>
+    [Theory]
+    [InlineData("reports")]
+    [InlineData("user_blocks")]
+    public async Task Role_can_write_moderation_rows_but_never_delete_them(string table)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AppRoleConnectionString);
+        await connection.OpenAsync();
+
+        var id = $"probe-{Guid.NewGuid():N}";
+
+        await using (var insert = new NpgsqlCommand($"""INSERT INTO "{table}" (id) VALUES (@id)""", connection))
+        {
+            insert.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync());
+        }
+
+        await using (var update = new NpgsqlCommand($"""UPDATE "{table}" SET id = @id WHERE id = @id""", connection))
+        {
+            update.Parameters.AddWithValue("id", id);
+            Assert.Equal(1, await update.ExecuteNonQueryAsync());
+        }
+
+        var delete = await Assert.ThrowsAsync<PostgresException>(async () =>
+        {
+            await using var command = new NpgsqlCommand($"""DELETE FROM "{table}" WHERE id = @id""", connection);
+            command.Parameters.AddWithValue("id", id);
+            await command.ExecuteNonQueryAsync();
+        });
+        Assert.Equal("42501", delete.SqlState); // insufficient_privilege
     }
 
     [Fact]

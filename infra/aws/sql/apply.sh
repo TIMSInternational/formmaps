@@ -73,6 +73,28 @@
 #       one — which is exactly why this script defaults to
 #       --single-transaction: the re-apply is atomic and the window never
 #       exists.
+#   * careerfit-schema.sql        IDEMPOTENT (audited 2026-09-03, FM-CF-002).
+#       CREATE TABLE / CREATE INDEX IF NOT EXISTS; policies in the same
+#       DROP POLICY IF EXISTS + CREATE style as audit-events-schema.sql, so
+#       the same --single-transaction argument applies: the re-apply is atomic
+#       and the unprotected window never exists. No functions, no triggers, no
+#       psql meta-commands. Measured: applied twice under
+#       `psql --single-transaction -v ON_ERROR_STOP=1`, second run all
+#       "already exists, skipping" NOTICEs, policies and FORCE RLS intact; the
+#       integration harness re-applies it mid-suite for the same reason
+#       (CareerFitRlsTests.Production_ddl_is_idempotent_on_a_second_apply).
+#       Table-creating: goes BEFORE dotnet-service-role.sql (section 4.7).
+#   * careerfit-shadow-tables.sql IDEMPOTENT (audited 2026-09-04, FM-CF-013).
+#       Structurally identical to careerfit-schema.sql above and audited the
+#       same way: CREATE TABLE / CREATE INDEX IF NOT EXISTS, one policy in the
+#       DROP POLICY IF EXISTS + CREATE style, no functions, no triggers, no
+#       psql meta-commands, so --single-transaction makes the re-apply atomic.
+#       Measured by the integration harness rather than by hand: the CareerFit
+#       fixture applies this file and CareerFitRlsTests re-applies BOTH files
+#       mid-suite and asserts the object counts and the seed survive
+#       (Production_ddl_is_idempotent_on_a_second_apply). Table-creating: goes
+#       AFTER careerfit-schema.sql (its "runId" FK references careerfit_runs)
+#       and BEFORE dotnet-service-role.sql (section 4.8).
 #   * verify-grants.sql           read-only catalog checks plus one INSERT
 #       probe that is always rolled back; safe to run repeatedly.
 #   * 360-invitation-recovery.sql READ-ONLY diagnostics (15 SELECTs, zero

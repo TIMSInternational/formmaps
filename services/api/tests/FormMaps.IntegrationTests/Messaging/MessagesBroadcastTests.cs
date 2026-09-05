@@ -1,7 +1,9 @@
 using FormMaps.Application.Auth;
+using FormMaps.Application.Data;
 using FormMaps.Application.Messaging;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Messaging;
+using Microsoft.Extensions.Options;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.Messaging;
@@ -12,11 +14,11 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
     private NpgsqlDataSource _dataSource = null!;
 
     public MessagesBroadcastTests(MessagingDatabaseFixture fixture) => _fixture = fixture;
-    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
+    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString); return Task.CompletedTask; }
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
-    private MessagesRepository Repo() => new(
-        new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
+    private MessagesRepository Repo(IFormMapsDatabaseSessionFactory? factory = null) => new(
+        factory ?? new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
         new NoopRealtimeNotifier());
 
     [Fact]
@@ -30,7 +32,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         var count = await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "hello school");
 
-        Assert.Equal(2, count);
+        Assert.Equal(2, count.RecipientCount);
     }
 
     [Fact]
@@ -44,7 +46,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         var count = await Repo().BroadcastAsync(_fixture.Ctx(counselor, schoolId), counselor, "counselor", schoolId, "students", "hi");
 
-        Assert.Equal(1, count);
+        Assert.Equal(1, count.RecipientCount);
     }
 
     [Fact]
@@ -59,7 +61,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         var count = await Repo().BroadcastAsync(_fixture.Ctx(counselor, schoolId), counselor, "counselor", schoolId, "students", "hi");
 
-        Assert.Equal(0, count);
+        Assert.Equal(0, count.RecipientCount);
     }
 
     [Fact]
@@ -74,7 +76,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         var count = await Repo().BroadcastAsync(_fixture.Ctx(counselor, schoolId), counselor, "counselor", schoolId, "staff", "hi");
 
-        Assert.Equal(2, count); // otherCounselor + admin; self excluded
+        Assert.Equal(2, count.RecipientCount); // otherCounselor + admin; self excluded
     }
 
     [Fact]
@@ -87,7 +89,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         var count = await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "hi");
 
-        Assert.Equal(0, count);
+        Assert.Equal(0, count.RecipientCount);
     }
 
     [Fact]
@@ -100,7 +102,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "hello there");
 
         var (pa, pb) = string.CompareOrdinal(admin, student) < 0 ? (admin, student) : (student, admin);
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
 
         await using var convCmd = new NpgsqlCommand(
@@ -135,7 +137,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "first");
 
         var (pa, pb) = string.CompareOrdinal(admin, student) < 0 ? (admin, student) : (student, admin);
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         DateTime firstUpdatedAt;
         string firstConversationId;
@@ -153,7 +155,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         await Task.Delay(50);
         var count = await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "second");
 
-        Assert.Equal(1, count);
+        Assert.Equal(1, count.RecipientCount);
         await using (var cmd = new NpgsqlCommand(
             """SELECT "id", "lastMessagePreview", "updatedAt" FROM "conversations" WHERE "participantAId" = @pa AND "participantBId" = @pb""", conn))
         {
@@ -177,7 +179,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "hi all");
 
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
             """SELECT count(*)::int FROM "notification_outbox" WHERE "type" = 'unread_message' AND "payload"->>'preview' = 'hi all'""",
@@ -204,9 +206,9 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         var count = await Repo().BroadcastAsync(
             _fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", preview);
-        Assert.Equal(2, count);
+        Assert.Equal(2, count.RecipientCount);
 
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
 
         // Every outbox row for this broadcast must JOIN to a real "messages" row -- and that row must be
@@ -234,6 +236,267 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         {
             dangling.Parameters.AddWithValue("preview", preview);
             Assert.Equal(0, (int)(await dangling.ExecuteScalarAsync())!);
+        }
+    }
+
+    [Fact]
+    public async Task Partial_failure_keeps_the_other_recipients_messages_and_reports_the_failed_one()
+    {
+        // Legacy (routes/messages.ts:596-611) runs each recipient's Prisma calls with auto-commit, so one
+        // recipient failing never rolls back the others. The .NET port ran all recipients inside ONE
+        // transaction with a single COMMIT at the end: any failure meant zero messages delivered.
+        // Exactly 20 recipients = one chunk, so the expected count does not depend on which chunk the
+        // poisoned recipient lands in (recipient order is unordered SQL, as in legacy); the chunk
+        // boundary itself is pinned by A_failing_chunk_stops_the_broadcast_before_the_next_chunk_starts.
+        var schoolId = Guid.NewGuid().ToString();
+        var content = $"partial-{Guid.NewGuid()}";
+        var admin = await _fixture.SeedUserAsync(schoolId, "school_admin");
+        var students = new List<string>();
+        for (var i = 0; i < 20; i++) students.Add(await _fixture.SeedUserAsync(schoolId, "student"));
+        var poisoned = students[7];
+
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
+        await conn.OpenAsync();
+        // Make exactly one recipient's conversation upsert fail: a CHECK constraint that rejects any
+        // conversation involving the poisoned user. Dropped in finally so sibling tests are unaffected
+        // (the fixture is per class, so no other class shares this table).
+        // ALTER TABLE needs the fixture's superuser connection string. When this fixture is converted to
+        // the restricted app login (sibling item wave3/rls-fixtures-billing-messaging, see
+        // TestSupport/Rls/CONVERTING-A-FIXTURE.md) this DDL must move to the fixture's admin connection.
+        await using (var poison = new NpgsqlCommand(
+            $"""ALTER TABLE "conversations" ADD CONSTRAINT "broadcast_poison" CHECK ("participantAId" <> '{poisoned}' AND "participantBId" <> '{poisoned}')""",
+            conn))
+        {
+            await poison.ExecuteNonQueryAsync();
+        }
+
+        try
+        {
+            var result = await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", content);
+
+            // The result reports exactly the one failure, by recipient, and counts only the delivered.
+            Assert.Equal(19, result.RecipientCount);
+            var failure = Assert.Single(result.Failures);
+            Assert.Equal(poisoned, failure.RecipientId);
+            Assert.Contains("broadcast_poison", failure.Error);
+            // SQLSTATE + primary message only: PostgresException.Message also carries DETAIL, which
+            // quotes row values once "Include Error Detail" is on the connection string.
+            Assert.StartsWith("23514: ", failure.Error);
+            Assert.DoesNotContain("DETAIL", failure.Error);
+
+            // The other 19 recipients' messages must be committed and visible from a second connection...
+            await using (var committed = new NpgsqlCommand("""SELECT count(*)::int FROM "messages" WHERE "content" = @content""", conn))
+            {
+                committed.Parameters.AddWithValue("content", content);
+                Assert.Equal(19, (int)(await committed.ExecuteScalarAsync())!);
+            }
+            // ...and the failed recipient got neither a conversation nor an outbox row (its own transaction rolled back).
+            await using (var poisonedRows = new NpgsqlCommand(
+                """
+                SELECT (SELECT count(*) FROM "conversations" WHERE "participantAId" = @p OR "participantBId" = @p)
+                     + (SELECT count(*) FROM "notification_outbox" WHERE "payload"->>'recipientEmail' = @p || '@test.dev')
+                """, conn))
+            {
+                poisonedRows.Parameters.AddWithValue("p", poisoned);
+                Assert.Equal(0L, (long)(await poisonedRows.ExecuteScalarAsync())!);
+            }
+        }
+        finally
+        {
+            await using var drop = new NpgsqlCommand("""ALTER TABLE "conversations" DROP CONSTRAINT "broadcast_poison" """, conn);
+            await drop.ExecuteNonQueryAsync();
+        }
+    }
+
+    [Fact]
+    public async Task A_failing_chunk_stops_the_broadcast_before_the_next_chunk_starts()
+    {
+        // Legacy: `await Promise.all(chunk.map(...))` inside the for-loop (routes/messages.ts:596-611) --
+        // a rejected recipient throws out of the loop into the route's catch (500), so the failing
+        // chunk's siblings finish but NO later chunk is ever started. Pinned here with the failure
+        // injected at the 3rd writable open (deterministically inside the first chunk of 20, whatever
+        // order the recipients come back in), the way a pool-exhausted open fails in production: the
+        // first chunk's other 19 are delivered, the second chunk's 5 are never opened.
+        var schoolId = Guid.NewGuid().ToString();
+        var content = $"stop-{Guid.NewGuid()}";
+        var admin = await _fixture.SeedUserAsync(schoolId, "school_admin");
+        for (var i = 0; i < 25; i++) await _fixture.SeedUserAsync(schoolId, "student");
+
+        var intercepting = new InterceptingSessionFactory(
+            new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()),
+            onWritableOpen: n => { if (n == 3) throw new NpgsqlException("The connection pool has been exhausted (simulated)"); });
+
+        var result = await Repo(intercepting).BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", content);
+
+        Assert.Equal(19, result.RecipientCount);
+        var failure = Assert.Single(result.Failures);
+        Assert.Contains("pool has been exhausted", failure.Error);
+        Assert.Equal(20, intercepting.WritableOpens); // the whole first chunk, and nothing of the second
+
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
+        await conn.OpenAsync();
+        await using var committed = new NpgsqlCommand("""SELECT count(*)::int FROM "messages" WHERE "content" = @content""", conn);
+        committed.Parameters.AddWithValue("content", content);
+        Assert.Equal(19, (int)(await committed.ExecuteScalarAsync())!);
+    }
+
+    [Fact]
+    public async Task Request_abort_mid_fan_out_does_not_half_deliver_the_broadcast()
+    {
+        // Legacy's Node handler keeps running after the client socket closes, so a broadcast is never
+        // left half-delivered by a disconnect or the gateway timeout. Cancelling the request token from
+        // inside the 3rd writable open used to abort the remaining per-recipient sessions: the already
+        // committed recipients stayed delivered, no response reached the client, and a retry
+        // double-sent to them. The fan-out must not observe the request token.
+        var schoolId = Guid.NewGuid().ToString();
+        var content = $"abort-{Guid.NewGuid()}";
+        var admin = await _fixture.SeedUserAsync(schoolId, "school_admin");
+        for (var i = 0; i < 25; i++) await _fixture.SeedUserAsync(schoolId, "student");
+
+        using var requestAborted = new CancellationTokenSource();
+        var intercepting = new InterceptingSessionFactory(
+            new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()),
+            onWritableOpen: n => { if (n == 3) requestAborted.Cancel(); });
+
+        var result = await Repo(intercepting).BroadcastAsync(
+            _fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", content, requestAborted.Token);
+
+        Assert.True(requestAborted.IsCancellationRequested);
+        Assert.Equal(25, result.RecipientCount);
+        Assert.Empty(result.Failures);
+
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
+        await conn.OpenAsync();
+        await using var committed = new NpgsqlCommand("""SELECT count(*)::int FROM "messages" WHERE "content" = @content""", conn);
+        committed.Parameters.AddWithValue("content", content);
+        Assert.Equal(25, (int)(await committed.ExecuteScalarAsync())!);
+    }
+
+    [Fact]
+    public async Task In_flight_sessions_stay_below_the_pool_size_so_other_requests_keep_a_connection()
+    {
+        // The Npgsql pool is process-wide (MaxPoolSize 10 in production, see appsettings.json). A chunk
+        // of 20 simultaneous per-recipient opens pinned every pooled connection for the whole broadcast
+        // and queued every other request behind the pool's 20s wait. The repository must cap in-flight
+        // sessions at MaxPoolSize - headroom; proven on a data source whose pool really is 4 wide, with
+        // options saying so, by counting how many writable opens are in progress at once.
+        var schoolId = Guid.NewGuid().ToString();
+        var content = $"pool-{Guid.NewGuid()}";
+        var admin = await _fixture.SeedUserAsync(schoolId, "school_admin");
+        for (var i = 0; i < 25; i++) await _fixture.SeedUserAsync(schoolId, "student");
+
+        const int maxPoolSize = 4;
+        await using var smallPool = NpgsqlDataSource.Create(
+            new NpgsqlConnectionStringBuilder(_fixture.AppConnectionString) { MaxPoolSize = maxPoolSize }.ConnectionString);
+        var intercepting = new InterceptingSessionFactory(new NpgsqlFormMapsDatabaseSessionFactory(smallPool, new RlsSessionContextApplier()));
+        var repo = new MessagesRepository(intercepting, TimeProvider.System, new NoopRealtimeNotifier(),
+            Options.Create(new FormMapsDatabaseOptions { MaxPoolSize = maxPoolSize }));
+
+        var result = await repo.BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", content);
+
+        Assert.Empty(result.Failures.Select(f => f.Error));
+        Assert.Equal(25, result.RecipientCount);
+        Assert.Equal(25, intercepting.WritableOpens);
+        Assert.True(intercepting.MaxInFlightOpens <= maxPoolSize - 2,
+            $"expected at most {maxPoolSize - 2} writable opens in flight on a pool of {maxPoolSize}, saw {intercepting.MaxInFlightOpens}");
+    }
+
+    [Fact]
+    public async Task Each_recipient_commits_on_its_own_transaction_before_the_broadcast_completes()
+    {
+        // Pins "no single transaction spans recipients" two ways, both through the session factory the
+        // repository already depends on (no fixture change needed):
+        //   1. one writable session (= one transaction, see NpgsqlFormMapsDatabaseSessionFactory) is
+        //      opened PER RECIPIENT, not one for the whole broadcast;
+        //   2. while the broadcast is still opening sessions for the second chunk, the first chunk's
+        //      messages are already visible from an unrelated autocommit connection -- i.e. committed.
+        var schoolId = Guid.NewGuid().ToString();
+        var content = $"per-tx-{Guid.NewGuid()}";
+        var admin = await _fixture.SeedUserAsync(schoolId, "school_admin");
+        for (var i = 0; i < 25; i++) await _fixture.SeedUserAsync(schoolId, "student");
+
+        var observing = new ObservingSessionFactory(
+            new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), _fixture.AdminConnectionString, content);
+
+        var result = await Repo(observing).BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", content);
+
+        Assert.Equal(25, result.RecipientCount);
+        Assert.Empty(result.Failures);
+        Assert.Equal(25, observing.WritableOpens); // one transaction per recipient
+        // The 21st..25th sessions open only after the first chunk of 20 has fully completed, so by then
+        // 20 committed messages are visible to an outside connection. A single spanning transaction
+        // would show 0 here until the final COMMIT.
+        Assert.True(observing.MaxVisibleAtOpen >= 20, $"expected >= 20 committed messages visible mid-broadcast, saw {observing.MaxVisibleAtOpen}");
+    }
+
+    /// <summary>
+    /// Decorates the real factory: counts writable opens and, at each one, asks a separate autocommit
+    /// connection how many of this broadcast's messages are already committed.
+    /// </summary>
+    private sealed class ObservingSessionFactory(IFormMapsDatabaseSessionFactory inner, string connectionString, string content)
+        : IFormMapsDatabaseSessionFactory
+    {
+        private int _writableOpens;
+        private int _maxVisibleAtOpen;
+
+        public int WritableOpens => _writableOpens;
+        public int MaxVisibleAtOpen => _maxVisibleAtOpen;
+
+        public Task<FormMapsDatabaseSession> OpenReadOnlyAsync(RequestContext requestContext, CancellationToken cancellationToken = default) =>
+            inner.OpenReadOnlyAsync(requestContext, cancellationToken);
+
+        public async Task<FormMapsDatabaseSession> OpenWritableAsync(RequestContext requestContext, CancellationToken cancellationToken = default)
+        {
+            Interlocked.Increment(ref _writableOpens);
+            await using (var conn = new NpgsqlConnection(connectionString))
+            {
+                await conn.OpenAsync(cancellationToken);
+                await using var cmd = new NpgsqlCommand("""SELECT count(*)::int FROM "messages" WHERE "content" = @content""", conn);
+                cmd.Parameters.AddWithValue("content", content);
+                var visible = (int)(await cmd.ExecuteScalarAsync(cancellationToken))!;
+                int seen;
+                do { seen = _maxVisibleAtOpen; if (visible <= seen) break; }
+                while (Interlocked.CompareExchange(ref _maxVisibleAtOpen, visible, seen) != seen);
+            }
+            return await inner.OpenWritableAsync(requestContext, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Decorates the real factory so a test can act from INSIDE a writable open: the hook runs with the
+    /// 1-based open number before the inner open (throw to fault that recipient, cancel a token to
+    /// simulate an aborted request), and the decorator records how many inner opens are in progress
+    /// at once.
+    /// </summary>
+    private sealed class InterceptingSessionFactory(IFormMapsDatabaseSessionFactory inner, Action<int>? onWritableOpen = null)
+        : IFormMapsDatabaseSessionFactory
+    {
+        private int _writableOpens;
+        private int _inFlight;
+        private int _maxInFlight;
+
+        public int WritableOpens => _writableOpens;
+        public int MaxInFlightOpens => _maxInFlight;
+
+        public Task<FormMapsDatabaseSession> OpenReadOnlyAsync(RequestContext requestContext, CancellationToken cancellationToken = default) =>
+            inner.OpenReadOnlyAsync(requestContext, cancellationToken);
+
+        public async Task<FormMapsDatabaseSession> OpenWritableAsync(RequestContext requestContext, CancellationToken cancellationToken = default)
+        {
+            var opened = Interlocked.Increment(ref _writableOpens);
+            onWritableOpen?.Invoke(opened);
+            var inFlight = Interlocked.Increment(ref _inFlight);
+            int seen;
+            do { seen = _maxInFlight; if (inFlight <= seen) break; }
+            while (Interlocked.CompareExchange(ref _maxInFlight, inFlight, seen) != seen);
+            try
+            {
+                return await inner.OpenWritableAsync(requestContext, cancellationToken);
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _inFlight);
+            }
         }
     }
 }

@@ -32,6 +32,14 @@ CREATE TABLE "audit_events" (id text PRIMARY KEY);
 -- Every_table_in_the_schema_is_granted_at_least_select names it explicitly.
 CREATE TABLE "audit_logs" (id text PRIMARY KEY);
 CREATE TABLE "bookings" (id text PRIMARY KEY);
+-- FM-CF-002: CareerFit runs (infra/aws/sql/careerfit-schema.sql). Stubbed BARE like audit_events
+-- above -- no RLS, no FKs -- so a rejected UPDATE/DELETE in DbRoleGrantsTests is attributable to the
+-- GRANT and to nothing else. The real tables' RLS is the CareerFit fixture's subject, not this one's.
+CREATE TABLE "careerfit_family_results" (id text PRIMARY KEY);
+CREATE TABLE "careerfit_runs" (id text PRIMARY KEY);
+-- FM-CF-013: the shadow comparison table (infra/aws/sql/careerfit-shadow-tables.sql). Same bareness,
+-- same reason, and the same append-only verb set as the run pair above (role script section 4.8).
+CREATE TABLE "careerfit_shadow_comparisons" (id text PRIMARY KEY);
 CREATE TABLE "category_requirements" (id text PRIMARY KEY);
 CREATE TABLE "coaches" (id text PRIMARY KEY);
 CREATE TABLE "college_essays" (id text PRIMARY KEY);
@@ -74,6 +82,10 @@ CREATE TABLE "pca_results" (id text PRIMARY KEY);
 CREATE TABLE "personality_assessment_sessions" (id text PRIMARY KEY);
 CREATE TABLE "personality_responses" (id text PRIMARY KEY);
 CREATE TABLE "questions_360" (id text PRIMARY KEY);
+-- formmaps#59: letters of recommendation. Both are SELECT/INSERT/UPDATE (section 4 of the
+-- role script) -- no .NET path deletes from either.
+CREATE TABLE "recommendation_application_links" (id text PRIMARY KEY);
+CREATE TABLE "recommendation_requests" (id text PRIMARY KEY);
 CREATE TABLE "refresh_tokens" (id text PRIMARY KEY);
 CREATE TABLE "reports" (id text PRIMARY KEY);
 CREATE TABLE "resumes" (id text PRIMARY KEY);
@@ -85,20 +97,34 @@ CREATE TABLE "school_course_import_jobs" (id text PRIMARY KEY);
 CREATE TABLE "school_courses" (id text PRIMARY KEY);
 CREATE TABLE "school_framework_course_overrides" (id text PRIMARY KEY);
 CREATE TABLE "schools" (id text PRIMARY KEY);
+CREATE TABLE "school_users" (id text PRIMARY KEY);
 -- Domain 9a shadow-mode billing tables (infra/aws/sql/billing-shadow-tables.sql).
 CREATE TABLE "shadow_payments" (id text PRIMARY KEY);
 CREATE TABLE "shadow_stripe_events" (id text PRIMARY KEY);
 CREATE TABLE "shadow_user_subscriptions" (id text PRIMARY KEY);
+CREATE TABLE "special_requirements" (id text PRIMARY KEY);
 CREATE TABLE "student_alerts" (id text PRIMARY KEY);
 CREATE TABLE "student_applications" (id text PRIMARY KEY);
 CREATE TABLE "student_course_plans" (id text PRIMARY KEY);
 CREATE TABLE "student_grades" (id text PRIMARY KEY);
+CREATE TABLE "student_gpas" (id text PRIMARY KEY);
 CREATE TABLE "student_graduation_targets" (id text PRIMARY KEY);
 CREATE TABLE "student_parent_links" (id text PRIMARY KEY);
 CREATE TABLE "student_portfolio_items" (id text PRIMARY KEY);
 CREATE TABLE "student_test_scores" (id text PRIMARY KEY);
 -- Domain 9a: read-only plan catalog (PlanReader).
 CREATE TABLE "subscription_plans" (id text PRIMARY KEY);
+-- issue #62, section 4.9 of the role script: SELECT + UPDATE, and deliberately NOT INSERT -- the .NET
+-- service redeems invites but must never MINT one (that stays schoolService.ts:387 on Node). This table
+-- was MISSING from both this stub schema and every GRANT list when #62 landed, which is exactly why
+-- Every_table_in_the_schema_is_granted_at_least_select could not see the gap: it reconciles this file
+-- against the grants file, and a table in NEITHER is invisible to it. DbRoleGrantCoverageTests now
+-- derives the table set from services/api/src so the next such omission fails without a human noticing.
+CREATE TABLE "teacher_invites" (id text PRIMARY KEY);
+-- issue #65, section 4.8 of the role script: INSERT-only, the SECOND table here granted without
+-- SELECT. Named explicitly in Every_table_in_the_schema_is_granted_at_least_select's exception list
+-- for the same reason audit_logs is, and its exact verb set pinned by Telemetry_events_is_insert_only.
+CREATE TABLE "telemetry_events" (id text PRIMARY KEY);
 CREATE TABLE "universities" (id text PRIMARY KEY);
 CREATE TABLE "university_favorites" (id text PRIMARY KEY);
 CREATE TABLE "user_blocks" (id text PRIMARY KEY);

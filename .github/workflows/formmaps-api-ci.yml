@@ -118,14 +118,17 @@ jobs:
             filter: "FullyQualifiedName~FormMaps.IntegrationTests.Assessments."
           - name: auth-counselor-students
             filter: "FullyQualifiedName~FormMaps.IntegrationTests.Auth.|FullyQualifiedName~FormMaps.IntegrationTests.Counselor.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolStudents."
+          # Moderation rides with Messaging on purpose (formmaps#63): the two share the user_blocks read
+          # path — MessagesRepository reads blocks that ModerationRepository writes — so when one breaks
+          # the other, both shards' worth of evidence lands in the same job's log.
           - name: messaging-college-plan
-            filter: "FullyQualifiedName~FormMaps.IntegrationTests.Messaging.|FullyQualifiedName~FormMaps.IntegrationTests.StudentCoursePlan.|FullyQualifiedName~FormMaps.IntegrationTests.College.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolAdmin."
+            filter: "FullyQualifiedName~FormMaps.IntegrationTests.Messaging.|FullyQualifiedName~FormMaps.IntegrationTests.Moderation.|FullyQualifiedName~FormMaps.IntegrationTests.StudentCoursePlan.|FullyQualifiedName~FormMaps.IntegrationTests.College.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolAdmin."
           - name: school-courses-users-calendar
             filter: "FullyQualifiedName~FormMaps.IntegrationTests.SchoolCourses.|FullyQualifiedName~FormMaps.IntegrationTests.Resumes.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolUsers.|FullyQualifiedName~FormMaps.IntegrationTests.StudentApplicationSubResources.|FullyQualifiedName~FormMaps.IntegrationTests.Calendar.|FullyQualifiedName~FormMaps.IntegrationTests.DataMappings."
           - name: reports-billing-video
             filter: "FullyQualifiedName~FormMaps.IntegrationTests.Prerequisites.|FullyQualifiedName~FormMaps.IntegrationTests.Reports.|FullyQualifiedName~FormMaps.IntegrationTests.CourseImport.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolProfile.|FullyQualifiedName~FormMaps.IntegrationTests.CurriculumFrameworks.|FullyQualifiedName~FormMaps.IntegrationTests.Billing.|FullyQualifiedName~FormMaps.IntegrationTests.Video.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolReads.|FullyQualifiedName~FormMaps.IntegrationTests.ParentPortal.|FullyQualifiedName~FormMaps.IntegrationTests.SchoolAnalytics."
           - name: remainder
-            filter: "FullyQualifiedName~FormMaps.IntegrationTests.AcademicGaps.|FullyQualifiedName~FormMaps.IntegrationTests.Audit.|FullyQualifiedName~FormMaps.IntegrationTests.StudentApplications.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsWrites.|FullyQualifiedName~FormMaps.IntegrationTests.StudentPortfolio.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsReads.|FullyQualifiedName~FormMaps.IntegrationTests.StudentParents.|FullyQualifiedName~FormMaps.IntegrationTests.Uploads.|FullyQualifiedName~FormMaps.IntegrationTests.CommunityService.|FullyQualifiedName~FormMaps.IntegrationTests.ParentChildReads.|FullyQualifiedName~FormMaps.IntegrationTests.Gradebook.|FullyQualifiedName~FormMaps.IntegrationTests.Security.|FullyQualifiedName~FormMaps.IntegrationTests.DbRole.|FullyQualifiedName~FormMaps.IntegrationTests.Data.|FullyQualifiedName~FormMaps.IntegrationTests.Pathways.|FullyQualifiedName~FormMaps.IntegrationTests.ScaffoldTests|FullyQualifiedName~FormMaps.IntegrationTests.TestSupport."
+            filter: "FullyQualifiedName~FormMaps.IntegrationTests.CareerFit.|FullyQualifiedName~FormMaps.IntegrationTests.AcademicGaps.|FullyQualifiedName~FormMaps.IntegrationTests.Audit.|FullyQualifiedName~FormMaps.IntegrationTests.StudentApplications.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsWrites.|FullyQualifiedName~FormMaps.IntegrationTests.StudentPortfolio.|FullyQualifiedName~FormMaps.IntegrationTests.IsamsReads.|FullyQualifiedName~FormMaps.IntegrationTests.StudentParents.|FullyQualifiedName~FormMaps.IntegrationTests.Uploads.|FullyQualifiedName~FormMaps.IntegrationTests.CommunityService.|FullyQualifiedName~FormMaps.IntegrationTests.ParentChildReads.|FullyQualifiedName~FormMaps.IntegrationTests.Gradebook.|FullyQualifiedName~FormMaps.IntegrationTests.Security.|FullyQualifiedName~FormMaps.IntegrationTests.DbRole.|FullyQualifiedName~FormMaps.IntegrationTests.Data.|FullyQualifiedName~FormMaps.IntegrationTests.Pathways.|FullyQualifiedName~FormMaps.IntegrationTests.ScaffoldTests|FullyQualifiedName~FormMaps.IntegrationTests.TestSupport.|FullyQualifiedName~FormMaps.IntegrationTests.Recommendations.|FullyQualifiedName~FormMaps.IntegrationTests.Teacher.|FullyQualifiedName~FormMaps.IntegrationTests.Transcript.|FullyQualifiedName~FormMaps.IntegrationTests.Graduation.|FullyQualifiedName~FormMaps.IntegrationTests.Telemetry."
 
     steps:
       - name: Checkout
@@ -198,6 +201,7 @@ jobs:
           FormMaps.IntegrationTests.Counselor.
           FormMaps.IntegrationTests.SchoolStudents.
           FormMaps.IntegrationTests.Messaging.
+          FormMaps.IntegrationTests.Moderation.
           FormMaps.IntegrationTests.StudentCoursePlan.
           FormMaps.IntegrationTests.College.
           FormMaps.IntegrationTests.SchoolAdmin.
@@ -217,6 +221,9 @@ jobs:
           FormMaps.IntegrationTests.SchoolReads.
           FormMaps.IntegrationTests.ParentPortal.
           FormMaps.IntegrationTests.SchoolAnalytics.
+          FormMaps.IntegrationTests.CareerFit.
+          FormMaps.IntegrationTests.Recommendations.
+          FormMaps.IntegrationTests.Teacher.
           FormMaps.IntegrationTests.AcademicGaps.
           FormMaps.IntegrationTests.Audit.
           FormMaps.IntegrationTests.StudentApplications.
@@ -228,8 +235,11 @@ jobs:
           FormMaps.IntegrationTests.CommunityService.
           FormMaps.IntegrationTests.ParentChildReads.
           FormMaps.IntegrationTests.Gradebook.
+          FormMaps.IntegrationTests.Transcript.
+          FormMaps.IntegrationTests.Graduation.
           FormMaps.IntegrationTests.Security.
           FormMaps.IntegrationTests.DbRole.
+          FormMaps.IntegrationTests.Telemetry.
           FormMaps.IntegrationTests.Data.
           FormMaps.IntegrationTests.Pathways.
           FormMaps.IntegrationTests.ScaffoldTests.

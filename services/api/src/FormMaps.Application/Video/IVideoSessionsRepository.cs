@@ -38,7 +38,9 @@ public interface IVideoSessionsRepository
     /// not just nondeterminism.</summary>
     Task<VideoSessionRow?> FindByRoomNameAsync(RequestContext context, string roomName, CancellationToken cancellationToken = default);
 
-    /// <summary>A prospective call participant's directory info, for POST /sessions's validation chain.</summary>
+    /// <summary>A prospective call participant's directory info, for POST /sessions's validation chain.
+    /// Existence-only — NOT filtered on users."isActive" (legacy gates isActive on the ASSIGNMENT, below, never
+    /// on the participant row; formmaps#151, same revert messaging made in formmaps#40).</summary>
     Task<VideoParticipantCandidate?> FindParticipantCandidateAsync(RequestContext context, string userId, CancellationToken cancellationToken = default);
 
     /// <summary>True if an ACTIVE counselor_student_assignments row links counselorId → studentId.</summary>

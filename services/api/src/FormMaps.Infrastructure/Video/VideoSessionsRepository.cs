@@ -98,11 +98,24 @@ public sealed class VideoSessionsRepository(
         return await reader.ReadAsync(cancellationToken) ? null : row;
     }
 
+    /// <summary>
+    /// Deliberately NOT filtered on users."isActive" — matches legacy exactly (routes/video.ts:212-215, a bare
+    /// prisma.user.findUnique({ where: { id } })). The isActive gate legacy applies on this route is on the
+    /// counselor-student ASSIGNMENT (:232, HasActiveCounselorAssignmentAsync below), not the user row.
+    ///
+    /// formmaps#151. This previously carried `AND "isActive" = true`, which made POST /sessions against a
+    /// since-deactivated student 404 "Participant not found" on .NET while Node started the call — the same
+    /// port-introduced divergence messaging reverted in formmaps#40 (MessagesRepository's recipient lookup),
+    /// resolved on the same grounds: flipping the route flag must be behaviour-neutral, and the risk is
+    /// asymmetric (a call opened toward an account that cannot join is harmless; a flow that worked yesterday
+    /// 404ing at cutover is a regression). Tightening belongs to a change applied to BOTH backends. The real
+    /// gates are untouched: staff role, same-school for non-super-admins, the active assignment, and RLS.
+    /// </summary>
     public async Task<VideoParticipantCandidate?> FindParticipantCandidateAsync(RequestContext context, string userId, CancellationToken cancellationToken = default)
     {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
         await using var command = Command(session,
-            """SELECT "id","name","email","schoolId" FROM "users" WHERE "id" = @id AND "isActive" = true""");
+            """SELECT "id","name","email","schoolId" FROM "users" WHERE "id" = @id""");
         AddParameter(command, "id", userId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         if (!await reader.ReadAsync(cancellationToken))

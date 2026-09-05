@@ -1,0 +1,39 @@
+{
+  "projection_version": "v0-incomplete",
+  "status": "INCOMPLETE_PENDING_LEGACY_CLUSTER_VOCABULARY",
+  "what_this_is": "The legacy /careers/score cluster label -> CareerFit family id projection. FM-CF-013 needs it because the two engines do not score the same unit: legacy ranks ~370 individual PROGRAMS, each tagged with a cluster; the .NET engine ranks 14 career FAMILIES. Without a projection there is no common ordering to correlate, so this file is the comparison's premise, not a detail of it.",
+  "why_it_is_incomplete": "The legacy cluster vocabulary is not in this repository. The catalogue, its clusters and GET /api/v1/careers/clusters all live in formmaps-platform (Node); the FormMaps repo contains exactly ONE legacy cluster string anywhere, the illustrative value in apps/web/src/types/tims.ts:35. Authoring the other entries here would be inventing a taxonomy nobody has seen, and every rank correlation computed through an invented projection would be a measurement of the invention. So this ships with the one evidenced entry and a status that makes the comparator fail closed.",
+  "how_to_complete_it": [
+    "1. GET /api/v1/careers/clusters against a legacy environment (or SELECT DISTINCT cluster over the career catalogue) to obtain the real vocabulary.",
+    "2. For each cluster, assign the CareerFit family id it belongs to, or null where it genuinely belongs to none (a cluster with no family is NOT a defect; family 15 'Ruta Alternativa / No universitaria' is not scorable and legacy has clusters V1 CareerFit does not model).",
+    "3. Bump projection_version, set status to REVIEWED_BY_TIMS once TIMS has signed off on the assignment, and re-run the shadow job. Rows carry projectionVersion, so a re-measurement under a corrected projection is a NEW row that can be told apart from the old one, never an overwrite.",
+    "4. TIMS review matters here: which legacy cluster maps to which family is a judgement about careers, and getting it wrong turns a correct port into an apparent disagreement (cause TAXONOMY_UNMAPPED / TAXONOMY_NO_LEGACY_EVIDENCE in the report)."
+  ],
+  "minimum_families_for_comparison": 3,
+  "minimum_families_note": "A pair is comparable only when the projection lands legacy evidence on at least this many families. Three is the floor at which a top-3 overlap means anything at all; below it the metric is arithmetic on nothing. It is deliberately not 14: real legacy answers will not reach every family, and requiring them to would discard the cohort.",
+  "clusters": {
+    "Social_and_Behavioral_Sciences": {
+      "family_id": 13,
+      "family_name": "Ciencias Sociales",
+      "evidence": "apps/web/src/types/tims.ts:35 — the only legacy cluster string that appears anywhere in this repository, given there as the documented example value of ScoredCareer.cluster. Assigned to family 13 on the name alone; NOT reviewed by TIMS."
+    }
+  },
+  "family_names": {
+    "1": "Ingeniería",
+    "2": "Tecnología / CS / Data",
+    "3": "Finanzas / Contabilidad / Economía",
+    "4": "Administración / Negocios",
+    "5": "Emprendimiento",
+    "6": "Marketing / Comunicación / Publicidad",
+    "7": "Psicología",
+    "8": "Medicina / Salud",
+    "9": "Derecho",
+    "10": "Arquitectura",
+    "11": "Diseño / Industrias Creativas",
+    "12": "Educación",
+    "13": "Ciencias Sociales",
+    "14": "Formación Técnica Especializada",
+    "15": "Ruta Alternativa / No universitaria"
+  },
+  "family_names_note": "Copied from careerfit-rules.v1.0.0-draft.1.json for the report's readability only. CareerFitShadowProjection asserts they still agree with the loaded rule set, so a rules bump that renamed a family cannot leave a stale name in a report."
+}

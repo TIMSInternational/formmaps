@@ -400,7 +400,7 @@ public sealed class MessagesEndpointAdversarialTests : IDisposable
             RequestContext context, string userId, string conversationId, string content,
             CancellationToken cancellationToken = default) => throw Unexpected();
 
-        public Task<int> BroadcastAsync(
+        public Task<BroadcastResult> BroadcastAsync(
             RequestContext context, string userId, string role, string schoolId, string recipientGroup, string content,
             CancellationToken cancellationToken = default) => throw Unexpected();
     }

@@ -1,88 +1,101 @@
-using System.Reflection;
 using FormMaps.Application.Data;
 using FormMaps.Infrastructure.Data;
+using FormMaps.IntegrationTests.TestSupport.Rls;
 using Npgsql;
-using Testcontainers.PostgreSql;
 
 namespace FormMaps.IntegrationTests.Billing;
 
 /// <summary>
-/// Schema-only Testcontainers Postgres harness for Domain 9a's shadow-table write rail
-/// (BillingShadowRepository, and now BillingWebhookEndpointTests via the full ASP.NET pipeline).
-/// Boots postgres:16-alpine, applies billing-shadow-schema.sql (the real shadow_* tables plus a
-/// minimal live-side stub of subscription_plans/user_subscriptions/stripe_events so tests can seed
-/// realistic legacy-side data). Follows the same schema-only-fixture convention as
-/// TokenRailDatabaseFixture/MessagingDatabaseFixture — NO RLS policies, since shadow tables are
-/// .NET-internal and not tenant-scoped; the repository under test runs under RequestContext.System()
-/// (GUC bypass), matching TokenRailDatabaseFixture's rail.
+/// Testcontainers Postgres harness for Domain 9a: the shadow-table write rail (BillingShadowRepository,
+/// BillingWebhookEndpointTests via the full ASP.NET pipeline) AND the live-table reads/writes the billing
+/// endpoints make on the caller's own tenant session (LiveSubscriptionReader/Writer, LiveCustomerReader).
+/// Applies billing-shadow-schema.sql: the real shadow_* tables plus a minimal live-side stub of
+/// subscription_plans/user_subscriptions/stripe_events/users so tests can seed realistic legacy-side data.
+///
+/// <para>formmaps#125: derives from <see cref="RlsEnabledDatabaseFixture"/>, so the PRODUCTION policies are live
+/// and the code under test runs as a NOSUPERUSER NOBYPASSRLS login. The previous version of this comment said
+/// "NO RLS policies, since shadow tables are .NET-internal and not tenant-scoped" -- true of the shadow_* tables,
+/// and false of the fixture: <c>user_subscriptions</c> (003-fk-users.sql, owner OR owner's school) and
+/// <c>users</c> (005-sensitive.sql) are both policied in production, and both are read on the CALLER's session
+/// by the status/cancel/portal endpoints. On the superuser those reads could not tell the caller's row from
+/// anyone else's. The shadow_* tables, <c>subscription_plans</c> and <c>stripe_events</c> stay unpolicied, as in
+/// production (005-sensitive.sql lists the last two as global catalog); the shadow rail and PlanReader run under
+/// <c>RequestContext.System()</c>, which is the GUC bypass branch of every policy and needs no role privilege.</para>
+///
+/// <para>Two connection strings, deliberately: <see cref="SessionFactory"/> is built over
+/// <see cref="RlsEnabledDatabaseFixture.AppConnectionString"/> and is what the code under test gets; every seed
+/// helper and every Query* helper below runs on <see cref="RlsEnabledDatabaseFixture.AdminConnectionString"/>,
+/// because a policy-filtered assertion cannot distinguish "row absent" from "row invisible".</para>
 /// </summary>
-public sealed class BillingDatabaseFixture : IAsyncLifetime
+public sealed class BillingDatabaseFixture : RlsEnabledDatabaseFixture, IAsyncLifetime
 {
-    private readonly PostgreSqlContainer _container = new PostgreSqlBuilder()
-        .WithImage("postgres:16-alpine")
-        .Build();
+    protected override string SchemaResourceFileName => "billing-shadow-schema.sql";
 
-    private NpgsqlDataSource _dataSource = null!;
+    /// <summary>
+    /// The two tables in this fixture production policies. The harness-proof test in
+    /// <c>BillingRlsHarnessTests</c> asserts this is exactly what got applied, and that the shadow_* tables,
+    /// subscription_plans and stripe_events did NOT.
+    /// </summary>
+    protected override IReadOnlyCollection<string> PoliciedTables => ["users", "user_subscriptions"];
 
-    public string ConnectionString => _container.GetConnectionString();
+    /// <summary>Restricted login (NOSUPERUSER NOBYPASSRLS). Backs <see cref="SessionFactory"/> and nothing else.</summary>
+    private NpgsqlDataSource _appDataSource = null!;
 
     /// <summary>
     /// Real Testcontainers-backed session factory, for registering into a WebApplicationFactory's DI
     /// container (last registration wins for a given service type — see BillingWebhookEndpointTests),
-    /// so endpoint tests exercise the actual repository/write path instead of a fake.
+    /// so endpoint tests exercise the actual repository/write path instead of a fake. Runs as the
+    /// restricted app login (formmaps#125).
     /// </summary>
     public IFormMapsDatabaseSessionFactory SessionFactory { get; private set; } = null!;
 
-    public async Task InitializeAsync()
+    /// <summary>Runs as the superuser after the restricted login exists, so the app data source can be opened here.</summary>
+    protected override Task OnSeededAsync(NpgsqlConnection adminConnection)
     {
-        await _container.StartAsync();
-
-        await using var connection = new NpgsqlConnection(ConnectionString);
-        await connection.OpenAsync();
-        await using var command = new NpgsqlCommand(LoadSchemaDdl(), connection);
-        await command.ExecuteNonQueryAsync();
-
-        _dataSource = NpgsqlDataSource.Create(ConnectionString);
-        SessionFactory = new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier());
+        _appDataSource = NpgsqlDataSource.Create(AppConnectionString);
+        SessionFactory = new NpgsqlFormMapsDatabaseSessionFactory(_appDataSource, new RlsSessionContextApplier());
+        return Task.CompletedTask;
     }
 
-    public async Task DisposeAsync()
+    /// <summary>
+    /// The base class's DisposeAsync is not virtual, so the interface is re-implemented here to dispose the app
+    /// data source before the container goes away. xunit dispatches through IAsyncLifetime, which resolves to this.
+    /// </summary>
+    async Task IAsyncLifetime.DisposeAsync()
     {
-        await _dataSource.DisposeAsync();
-        await _container.DisposeAsync();
+        await _appDataSource.DisposeAsync();
+        await base.DisposeAsync();
     }
 
-    /// <summary>Truncates shadow + stub legacy tables between tests — mirrors BillingShadowRepositoryTests' InitializeAsync reset.</summary>
-    public async Task ResetAsync()
-    {
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            """
-            TRUNCATE "shadow_user_subscriptions", "shadow_payments", "shadow_stripe_events",
-                     "user_subscriptions", "subscription_plans", "stripe_events", "users" CASCADE
-            """, conn);
-        await cmd.ExecuteNonQueryAsync();
-    }
+    /// <summary>Truncates shadow + stub legacy tables between tests, as the SUPERUSER — see <see cref="RlsEnabledDatabaseFixture.TruncateAsync"/>.</summary>
+    public Task ResetAsync() =>
+        TruncateAsync(
+            "shadow_user_subscriptions", "shadow_payments", "shadow_stripe_events",
+            "user_subscriptions", "subscription_plans", "stripe_events", "users");
 
     /// <summary>
     /// Seeds a live users row, optionally with a Stripe customer id on file. Added for the final-review fix
     /// wave (Important 7): POST /portal reads this column via ILiveCustomerReader and 404s when it is
-    /// absent, instead of minting a new Stripe customer it could never persist.
+    /// absent, instead of minting a new Stripe customer it could never persist. <paramref name="schoolId"/>
+    /// (formmaps#125) is what the users and user_subscriptions policies' school branch keys on; null keeps every
+    /// existing caller on the self branch.
     /// </summary>
-    public async Task SeedUserAsync(string userId, string? stripeCustomerId)
+    public async Task SeedUserAsync(string userId, string? stripeCustomerId, string? schoolId = null)
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        await using var connection = new NpgsqlConnection(AdminConnectionString);
         await connection.OpenAsync();
         await using var command = connection.CreateCommand();
-        command.CommandText = """INSERT INTO "users" ("id", "stripeCustomerId") VALUES (@id, @customerId)""";
+        command.CommandText = """INSERT INTO "users" ("id", "stripeCustomerId", "schoolId") VALUES (@id, @customerId, @schoolId)""";
         AddParam(command, "id", userId);
         AddParam(command, "customerId", (object?)stripeCustomerId ?? DBNull.Value);
+        AddParam(command, "schoolId", (object?)schoolId ?? DBNull.Value);
         await command.ExecuteNonQueryAsync();
     }
 
     public async Task<(string StripeSubscriptionId, string Status, bool IsActive, DateTimeOffset? NextBillingDate)> QueryShadowSubscriptionAsync(string userId)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = new NpgsqlConnection(AdminConnectionString);
+        await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
             """SELECT "stripeSubscriptionId", "status", "isActive", "nextBillingDate" FROM "shadow_user_subscriptions" WHERE "userId" = @userId""", conn);
         cmd.Parameters.AddWithValue("userId", userId);
@@ -101,24 +114,30 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
     /// active locally, never linked to Stripe (comped/manual grant, pre-Stripe legacy row, direct insert).
     /// </summary>
     public async Task SeedLiveSubscriptionAsync(
-        string userId, string? stripeSubscriptionId, string status = "active", bool isActive = true)
+        string userId, string? stripeSubscriptionId, string status = "active", bool isActive = true, bool cancelAtPeriodEnd = false,
+        string planId = "plan_1")
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        await using var connection = new NpgsqlConnection(AdminConnectionString);
         await connection.OpenAsync();
         await using var plan = connection.CreateCommand();
         plan.CommandText = """INSERT INTO "subscription_plans" ("id", "name", "price", "interval") VALUES ('plan_1', 'Pro', 29.99, 'month') ON CONFLICT DO NOTHING""";
         await plan.ExecuteNonQueryAsync();
 
+        // planId is caller-chosen. This shadow schema declares no FK on it (schema.prisma:532 does relate
+        // it to subscription_plans), so the empty-string shape legacy's `planId || null` coerces is
+        // seedable here without a matching plan row.
         await using var live = connection.CreateCommand();
         live.CommandText = """
-            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive", "updatedAt")
-            VALUES (@id, @userId, 'plan_1', @status, @subId, @isActive, TIMESTAMPTZ '2000-01-01 00:00:00Z')
+            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive", "cancelAtPeriodEnd", "updatedAt")
+            VALUES (@id, @userId, @planId, @status, @subId, @isActive, @cancelAtPeriodEnd, TIMESTAMPTZ '2000-01-01 00:00:00Z')
             """;
         AddParam(live, "id", Guid.NewGuid().ToString());
         AddParam(live, "userId", userId);
+        AddParam(live, "planId", planId);
         AddParam(live, "status", status);
         AddParam(live, "subId", (object?)stripeSubscriptionId ?? DBNull.Value);
         AddParam(live, "isActive", isActive);
+        AddParam(live, "cancelAtPeriodEnd", cancelAtPeriodEnd);
         await live.ExecuteNonQueryAsync();
     }
 
@@ -129,7 +148,8 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
     /// </summary>
     public async Task<(string Status, bool IsActive, bool CancelAtPeriodEnd, DateTimeOffset UpdatedAt)?> QueryLiveSubscriptionAsync(string userId)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = new NpgsqlConnection(AdminConnectionString);
+        await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
             """SELECT "status", "isActive", "cancelAtPeriodEnd", "updatedAt" FROM "user_subscriptions" WHERE "userId" = @userId""", conn);
         cmd.Parameters.AddWithValue("userId", userId);
@@ -144,15 +164,6 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
             reader.GetBoolean(1),
             reader.GetBoolean(2),
             new DateTimeOffset(DateTime.SpecifyKind(reader.GetDateTime(3), DateTimeKind.Utc)));
-    }
-
-    private static string LoadSchemaDdl()
-    {
-        var assembly = Assembly.GetExecutingAssembly();
-        var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith("billing-shadow-schema.sql", StringComparison.Ordinal));
-        using var stream = assembly.GetManifestResourceStream(name)!;
-        using var reader = new StreamReader(stream);
-        return reader.ReadToEnd();
     }
 
     // --- Seed helpers for BillingReconciliationServiceTests (Task 6) ---
@@ -187,7 +198,7 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
 
     public async Task SeedShadowOnlySubscriptionAsync(string userId, string stripeSubscriptionId)
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        await using var connection = new NpgsqlConnection(AdminConnectionString);
         await connection.OpenAsync();
         await using var command = connection.CreateCommand();
         command.CommandText = """
@@ -205,7 +216,7 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
         bool shadowIsActive = true, bool liveIsActive = true,
         DateTimeOffset? shadowNextBilling = null, DateTimeOffset? liveNextBilling = null)
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        await using var connection = new NpgsqlConnection(AdminConnectionString);
         await connection.OpenAsync();
         await using var plan = connection.CreateCommand();
         plan.CommandText = """INSERT INTO "subscription_plans" ("id", "name", "price", "interval") VALUES ('plan_1', 'Pro', 29.99, 'month') ON CONFLICT DO NOTHING""";
@@ -237,7 +248,7 @@ public sealed class BillingDatabaseFixture : IAsyncLifetime
     /// <summary>Seeds a subscription_plans row with a non-null stripePriceId for checkout-session tests (Task 8).</summary>
     public async Task SeedPlanAsync(string planId, decimal price, string interval)
     {
-        await using var connection = new NpgsqlConnection(ConnectionString);
+        await using var connection = new NpgsqlConnection(AdminConnectionString);
         await connection.OpenAsync();
         await using var command = connection.CreateCommand();
         command.CommandText = """

@@ -88,7 +88,7 @@ public class MessagesEndpointsTests
     {
         var repo = new FakeRepo
         {
-            Conversations = [new ConversationSummary("conv-1", "u2", "Peer", "u2@x.test", "hi", DateTime.Parse("2026-01-01T00:00:00Z"), 2)],
+            Conversations = [new ConversationSummary("conv-1", "u2", "Peer", "u2@x.test", "hi", "2026-01-01T00:00:00.000Z", 2)],
         };
         using var factory = new Factory(repo);
         using var client = factory.CreateClient();
@@ -173,7 +173,7 @@ public class MessagesEndpointsTests
     public async Task Get_conversation_messages_returns_the_paginated_shape()
     {
         var page = new ConversationMessagesPage(
-            [new MessageRow("m1", "conv-1", "u2", "Peer", "hello", DateTime.Parse("2026-01-01T00:01:00Z"), DateTime.Parse("2026-01-01T00:00:00Z"))],
+            [new MessageRow("m1", "conv-1", "u2", "Peer", "hello", "2026-01-01T00:01:00.000Z", "2026-01-01T00:00:00.000Z")],
             Total: 1, Page: 1, Limit: 50, TotalPages: 1);
         var repo = new FakeRepo { MessagesResult = new ConversationMessagesResult(ConversationMessagesStatus.Ok, page) };
         using var factory = new Factory(repo);
@@ -258,7 +258,7 @@ public class MessagesEndpointsTests
     [Fact]
     public async Task Send_message_happy_path_is_201_with_the_message_shape()
     {
-        var message = new MessageRow("m1", "conv-1", "caller-1", "Caller", "hello there", null, DateTime.Parse("2026-01-01T00:00:00Z"));
+        var message = new MessageRow("m1", "conv-1", "caller-1", "Caller", "hello there", null, "2026-01-01T00:00:00.000Z");
         var repo = new FakeRepo
         {
             SendResult = new SendMessageResult(SendMessageStatus.Sent, message, "u2", "u2@x.test", "Caller", "hello there"),
@@ -276,6 +276,79 @@ public class MessagesEndpointsTests
         Assert.Equal("caller-1", repo.LastUserId);
         Assert.Equal("conv-1", repo.LastConversationId);
         Assert.Equal("hello there", repo.LastContent);
+    }
+
+    // Wire format for every messaging timestamp: ISO-8601 with the Z marker and millisecond precision,
+    // exactly what legacy's Prisma DateTime -> JSON produced ("2026-01-01T00:00:00.000Z"). A bare local
+    // time ("2026-01-01T00:00:00") is parsed by browsers as LOCAL time, so every message would shift by
+    // the viewer's UTC offset and sent messages would jump when the poll replaced the optimistic echo.
+    // The DTOs carry the pre-formatted string, so these pin that the endpoint emits it verbatim (a
+    // DateTime creeping back into MessageRow/ConversationSummary would fail here); the real
+    // repository's formatting is covered by the Testcontainers suites (MessagesSendMessageTests etc.).
+    // Same assertion style as CalendarReaderTests / ExamHistoryEndpointsTests: ends with Z, never +00:00.
+    private const string IsoZPattern = @"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$";
+
+    [Fact]
+    public async Task List_conversations_serializes_lastMessageAt_as_iso_z()
+    {
+        var repo = new FakeRepo
+        {
+            Conversations = [new ConversationSummary("conv-1", "u2", "Peer", "u2@x.test", "hi", "2026-01-01T12:34:56.789Z", 2)],
+        };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Get, "/api/v1/messages/conversations");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var lastMessageAt = doc.RootElement.GetProperty("data")[0].GetProperty("lastMessageAt").GetString();
+        Assert.Equal("2026-01-01T12:34:56.789Z", lastMessageAt);
+        Assert.Matches(IsoZPattern, lastMessageAt);
+    }
+
+    [Fact]
+    public async Task Get_conversation_messages_serializes_readAt_and_createdDate_as_iso_z()
+    {
+        var page = new ConversationMessagesPage(
+            [new MessageRow("m1", "conv-1", "u2", "Peer", "hello", "2026-01-01T00:01:00.000Z", "2026-01-01T00:00:00.500Z")],
+            Total: 1, Page: 1, Limit: 50, TotalPages: 1);
+        var repo = new FakeRepo { MessagesResult = new ConversationMessagesResult(ConversationMessagesStatus.Ok, page) };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Get, "/api/v1/messages/conversations/conv-1");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var message = doc.RootElement.GetProperty("data").GetProperty("data")[0];
+        Assert.Equal("2026-01-01T00:01:00.000Z", message.GetProperty("readAt").GetString());
+        Assert.Equal("2026-01-01T00:00:00.500Z", message.GetProperty("createdDate").GetString());
+        Assert.Matches(IsoZPattern, message.GetProperty("readAt").GetString());
+        Assert.Matches(IsoZPattern, message.GetProperty("createdDate").GetString());
+    }
+
+    [Fact]
+    public async Task Send_message_serializes_createdDate_as_iso_z_and_null_readAt_stays_null()
+    {
+        var message = new MessageRow("m1", "conv-1", "caller-1", "Caller", "hello there", null, "2026-01-01T00:00:00.000Z");
+        var repo = new FakeRepo
+        {
+            SendResult = new SendMessageResult(SendMessageStatus.Sent, message, "u2", "u2@x.test", "Caller", "hello there"),
+        };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Post, "/api/v1/messages/conversations/conv-1", body: """{"content":"hello there"}""");
+
+        Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        var json = await response.Content.ReadAsStringAsync();
+        using var doc = JsonDocument.Parse(json);
+        var data = doc.RootElement.GetProperty("data");
+        Assert.Equal("2026-01-01T00:00:00.000Z", data.GetProperty("createdDate").GetString());
+        Assert.Matches(IsoZPattern, data.GetProperty("createdDate").GetString());
+        Assert.Equal(JsonValueKind.Null, data.GetProperty("readAt").ValueKind);
+        Assert.DoesNotContain("+00:00", json);
     }
 
     [Fact]
@@ -324,7 +397,7 @@ public class MessagesEndpointsTests
     [Fact]
     public async Task Broadcast_happy_path_is_200_with_the_recipient_count()
     {
-        var repo = new FakeRepo { BroadcastCount = 12 };
+        var repo = new FakeRepo { BroadcastResult = new BroadcastResult(12, []) };
         using var factory = new Factory(repo);
         using var client = factory.CreateClient();
 
@@ -337,6 +410,25 @@ public class MessagesEndpointsTests
         Assert.Equal("students", repo.LastRecipientGroup);
         Assert.Equal("school-1", repo.LastSchoolId);
         Assert.Equal("counselor", repo.LastRole);
+    }
+
+    [Fact]
+    public async Task Broadcast_with_any_failed_recipient_is_legacy_500_internal_server_error()
+    {
+        // routes/messages.ts: a rejected recipient inside Promise.all lands in the route's catch ->
+        // 500 { success:false, message:"Internal server error" }. The recipients that already committed
+        // stay delivered (repository contract); the endpoint only reports the failure.
+        var repo = new FakeRepo { BroadcastResult = new BroadcastResult(11, [new BroadcastFailure("student-7", "boom")]) };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Post, "/api/v1/messages/broadcast",
+            body: """{"recipientGroup":"students","content":"hi all"}""", role: FormMapsRoles.Counselor, schoolId: "school-1");
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.False(doc.RootElement.GetProperty("success").GetBoolean());
+        Assert.Equal("Internal server error", doc.RootElement.GetProperty("message").GetString());
     }
 
     // Unlike Video/most other domains, Messages does not hand-parse the body via JsonDocument -- it binds
@@ -413,8 +505,8 @@ public class MessagesEndpointsTests
         public ConversationMessagesResult MessagesResult { get; init; } =
             new(ConversationMessagesStatus.Ok, new ConversationMessagesPage([], 0, 1, 50, 0));
         public SendMessageResult SendResult { get; init; } =
-            new(SendMessageStatus.Sent, new MessageRow("id", "conv", "caller-1", "Caller", "hi", null, DateTime.UtcNow), "other", "o@x.test", "Caller", "hi");
-        public int BroadcastCount { get; init; }
+            new(SendMessageStatus.Sent, new MessageRow("id", "conv", "caller-1", "Caller", "hi", null, "2026-01-01T00:00:00.000Z"), "other", "o@x.test", "Caller", "hi");
+        public BroadcastResult BroadcastResult { get; init; } = new(0, []);
 
         public string? LastUserId { get; private set; }
         public string? LastRole { get; private set; }
@@ -472,12 +564,12 @@ public class MessagesEndpointsTests
             return Task.FromResult(SendResult);
         }
 
-        public Task<int> BroadcastAsync(
+        public Task<BroadcastResult> BroadcastAsync(
             RequestContext context, string userId, string role, string schoolId, string recipientGroup, string content,
             CancellationToken cancellationToken = default)
         {
             (LastUserId, LastRole, LastSchoolId, LastRecipientGroup, LastContent) = (userId, role, schoolId, recipientGroup, content);
-            return Task.FromResult(BroadcastCount);
+            return Task.FromResult(BroadcastResult);
         }
     }
 }

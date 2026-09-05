@@ -1,7 +1,23 @@
 # Converting a fixture to real RLS (formmaps#125)
 
-Four fixtures are converted. This is the route for the rest, plus the inventory that says which ones
-are worth converting and in what order.
+Ten fixtures are converted (every class deriving from `RlsEnabledDatabaseFixture`):
+
+* `Assessments/TestScoreDatabaseFixture`
+* `Counselor/CounselorCaseloadDatabaseFixture`
+* `ParentChildReads/ParentChildReaderTests.Fixture`
+* `ParentPortal/ParentPortalRepositoryTests.Fixture`
+* `SchoolStudents/SchoolStudentsDatabaseFixture`
+* `StudentCoursePlan/CoursePlanComputeReaderTests.Fixture`
+* `StudentParents/StudentParentRepositoryTests.Fixture`
+* `Billing/BillingDatabaseFixture` — `users` + `user_subscriptions`; the shadow rail and PlanReader run on
+  the bypass GUC, which is now proven to work on a NOBYPASSRLS login rather than as a superuser privilege
+* `Billing/LiveSubscriptionDuplicateRowFixture` — the formmaps#108 constraint-absent contract, same two tables
+* `Messaging/MessagingDatabaseFixture` — was the "deliberately inert" one below; its hand-written policies are
+  gone and `MessagesAdversarialAccessTests` now opens with the harness proof instead of the inert-RLS test
+
+(`Audit/AuditDatabaseFixture` enforces RLS too, but through the real `audit_events` DDL rather than this
+base class, and is not counted above.) This is the route for the rest, plus the inventory that says which
+ones are worth converting and in what order.
 
 ## The state of the world before #125
 
@@ -64,43 +80,68 @@ Expect three failure modes on first run. All three are the fixture being wrong, 
   `schoolId: null`, which the policies deny — production mints school staff *with* a school. The old
   fixture let that pass. Fix the context, not the policy.
 
-## Priority for the remaining ~50
+## Priority for the remaining ~47
 
-Ranked by policied tables the fixture already models (the count is what a conversion would cover):
+Ranked by policied tables the fixture already models (the count is what a conversion would cover).
+Counts include `pilot.sql`'s two tables since #135 vendored it; the rows that moved say by how much.
+This table is UNCONVERTED fixtures only — the three that used to head it (`SchoolStudents` 14,
+`Counselor` 11, `StudentCoursePlan` 10, each having gained one or two tables from `pilot.sql`) are
+converted and are listed at the top of this file.
 
 | Fixture | tables | policied | note |
 |---|---|---|---|
-| `SchoolStudents/school-students-schema.sql` | 15 | 12 | biggest uncovered tenant surface; school roster reads |
-| `Counselor/counselor-caseload-schema.sql` | 12 | 10 | cross-student reads by staff — the school branch matters most here |
-| `StudentCoursePlan/course-plan-compute-schema.sql` | 13 | 9 | |
 | `Assessments/assessmentprofile-schema.sql` | 10 | 8 | |
 | `SchoolAdmin/schooladmin-schema.sql` | 11 | 8 | |
-| `SchoolReads/schoolreads-schema.sql` | 8 | 7 | |
-| `AcademicGaps`, `SchoolAnalytics` | 6–7 | 6 | |
+| `SchoolReads/schoolreads-schema.sql` | 8 | 8 | was 7 (+`school_courses`) |
+| `AcademicGaps` | 6–7 | 7 | was 6 (+`school_courses`) |
+| `SchoolAnalytics` | 6–7 | 6 | |
 | `Auth/auth-schema.sql` | 8 | 5 | `refresh_tokens` is owner-only (007); `SchoolUserRoleRlsHarness` already covers that shape |
-| `Messaging/messaging-schema.sql` | 7 | 5 | deliberately inert today; converting means *adding* an RLS-on twin suite, not flipping this one |
-| `DbRole/dotnet-service-role-stub-schema.sql` | 87 | 55 | do NOT convert — it is a GRANT-verification stub, one row per table, no queries under test |
+| ~~`Messaging/messaging-schema.sql`~~ | 7 | 5 | CONVERTED. The earlier note here said converting meant adding an RLS-on twin suite rather than flipping this one; flipping it turned out to be right — the app-layer half survives (a same-school attacker is admitted by every policy and only the repository's WHERE denies), and two `Angle2` tests that had asserted outcomes only a superuser could observe were corrected to what both backends actually do (`RecipientNotFound`) |
+| `DbRole/dotnet-service-role-stub-schema.sql` | 87 | 57 | do NOT convert — it is a GRANT-verification stub, one row per table, no queries under test |
+
+**Any fixture in that table whose schema creates `school_courses` or `student_course_plans` needs a
+`schoolId` column, NOT NULL and seeded with the session's school, before it can be converted** —
+`pilot.sql`'s predicate names that column, and without it `ApplyAsync` fails the fixture's init with
+`42703`, which is exactly what `parent-child-reads-schema.sql` did when #135 vendored the file. Ten of
+these schemas create `school_courses` (AcademicGaps, Counselor, CourseImport, DbRole, Pathways,
+Prerequisites, SchoolCourses, SchoolReads, SchoolStudents, StudentCoursePlan) and five create
+`student_course_plans` (DbRole, ParentChildReads, SchoolCourses, SchoolStudents, StudentCoursePlan);
+only the converted ones call `ApplyAsync`, so the rest are not broken today — they are pre-loaded with
+this blocker. A NULLABLE `schoolId` is the quieter version of the same trap: `"schoolId" = current_setting(…)`
+is NULL for such a row, so it is invisible to every non-bypass session and the failure reads as a broken
+query rather than a schema gap. `SchoolCourses/Data/school-courses-schema.sql` declares it plain `text` where
+production is non-null (`formmaps-platform/api/prisma/schema.prisma`, `StudentCoursePlan.schoolId`) and
+where the three converted schemas that model the table all say `text NOT NULL`; tighten it when
+converting that one.
+
+`DbRole` is the sharpest case: its `school_courses` / `student_course_plans` rows are
+`id text PRIMARY KEY` stubs with no `schoolId` at all, so converting that last one would need columns it
+has no use for — one more reason not to.
 
 Everything below ~5 policied tables is mostly self-scoped CRUD where the app predicate and the policy say
 the same thing; convert those opportunistically when touching them.
 
-## Known production gap found on the way
+## The gap that was not a gap (formmaps#135)
 
-**CORRECTED (formmaps#135).** This section previously read "`student_course_plans` appears in **none**
-of `prisma/rls/*.sql` … and is unpolicied in production." Both halves were wrong, and the error
-propagated into four fixtures before anyone checked it.
+This section used to read "`student_course_plans` appears in **none** of `prisma/rls/*.sql` … and is
+unpolicied in production." Both halves were wrong, and the error propagated into four fixtures before
+anyone checked it.
 
 `student_course_plans` **is** in `prisma/rls/*.sql` — in `pilot.sql`, together with `school_courses`.
 And `pilot.sql` **is** applied to production: `apply-rls.ts` and `check-rls-coverage.mjs` both glob the
 whole directory, and the production measurement in `docs/ops/rls-prod-apply-14.md` matches the
-pilot-inclusive policy count exactly at two independent snapshots. See `README.md` for the full
-evidence.
+pilot-inclusive policy count exactly at two independent snapshots. `pilot.sql` is now vendored, so
+both tables are policied in the fixtures too; `README.md` records the evidence and what vendoring
+took. `CoursePlanComputeReaderTests` and `CounselorCaseloadReaderTests` each traded a "the reader's
+own predicate is the entire boundary" assertion for a cross-school row that RLS now genuinely hides.
 
-What remains true is the *shape* of the hazard, so keep reading it that way: this harness does not
-vendor `pilot.sql`, so in a fixture these two tables carry no policy even though production policies
-them. A test over them proves the app-layer predicate only. That understates production — which is the
-safe direction — but it means **"unpolicied here" must never be written down as "unpolicied in
-production."** That substitution is the whole of #135.
+The lesson generalises past these two tables, so keep it: **"unpolicied here" must never be written
+down as "unpolicied in production."** That substitution is the whole of #135. Before you record a
+table as a production gap in a fixture doc, grep the WHOLE of `prisma/rls/` for it and check
+`check-rls-coverage.mjs`'s `EXEMPT`/`PENDING`/`ESCALATED` lists — a tenant-scoped table on none of
+them and in no policy file would fail legacy CI, so if CI is green your reading is wrong.
 
-If you are converting a fixture that creates either table, say so explicitly in the fixture doc:
-*policied in production by `pilot.sql`, which this harness does not yet vendor (#135)*.
+Also keep in mind what a policy does NOT do. `pilot.sql` scopes purely on `schoolId`, with no owner
+branch, so it separates schools and nothing finer. A same-school adversary is still the app layer's
+problem — see the trap section above, and
+`SchoolStudentsCoursePlanWriterTests.Delete_cannot_be_levered_across_students`.

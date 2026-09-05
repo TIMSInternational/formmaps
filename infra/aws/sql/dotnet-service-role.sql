@@ -174,14 +174,31 @@ REVOKE CREATE ON SCHEMA public FROM formmaps_dotnet_svc;
 -- ---------------------------------------------------------------------------
 GRANT SELECT ON TABLE
     public."bookings",
-    public."category_requirements",
+    -- NOTE: "category_requirements" moved to its own SELECT/INSERT/DELETE tier below (issue #55) --
+    -- the graduation-rules PUT replaces these rows wholesale (deleteMany + createMany), which needs
+    -- DELETE. Read-only here would 42501 every rule-set edit.
     public."course_enrollments",
     public."courses",
     public."framework_courses",
-    public."gpa_configurations",
+    -- NOTE: "gpa_configurations" moved to the SELECT/INSERT/UPDATE tier below (issue #55) --
+    -- routes/transcript.ts PUT /school-admin/gpa-config upserts the school's row
+    -- (TranscriptWriter.UpsertGpaConfigAsync). Read-only here would 42501 every save of a
+    -- GPA scale / grade map the moment FORMMAPS_ROUTE_GRADUATION_TO_DOTNET is flipped.
+    -- issue #55 REMAINDER: graduation_plan_items stays READ-ONLY. The graduation-plan routes .NET now serves
+    -- only ever SELECT these (getCurrentPlan's item list and reviewPlan's materialization source); the only
+    -- code path that INSERTs them is generateDraftPlan, which lives on POST /graduation-plan/generate and
+    -- stays on Node permanently under DECISION D1. Widening this to INSERT would grant a verb no .NET code
+    -- path has.
     public."graduation_plan_items",
-    public."graduation_plans",
-    public."graduation_rule_sets",
+    -- NOTE: "graduation_plans" moved to the SELECT/INSERT/UPDATE tier below (issue #55 REMAINDER) --
+    -- POST /graduation-plan/submit (draft -> proposed + submittedAt), DELETE /graduation-plan (soft delete,
+    -- isActive=false) and PUT /me/students/:id/graduation-plan/review (approved|rejected + reviewedBy /
+    -- reviewedAt / reviewNote) all UPDATE this table. Read-only here would 42501 every submit, discard and
+    -- counselor decision the moment FORMMAPS_ROUTE_GRADUATION_TO_DOTNET is flipped.
+    -- NOTE: "graduation_rule_sets" moved to the SELECT/INSERT/UPDATE tier below (issue #55) --
+    -- POST /api/v1/school-admin/graduation/rules INSERTs a rule set and PUT .../rules/:id UPDATEs
+    -- totalCreditsRequired + updatedBy (GraduationRulesWriter). It does NOT need DELETE: the PUT
+    -- replaces the rule set's CHILD rows, never the rule set itself.
     public."isams_sync_jobs",
     public."lia_questions",
     public."pca_evaluations",
@@ -189,8 +206,16 @@ GRANT SELECT ON TABLE
     public."pca_questions",
     public."pca_results",
     public."reviews",
+    -- issue #55: transcriptService computeClassRanks/getClassRankings resolve the school roster from
+    -- school_users (role='student', isActive). READ ONLY -- the .NET service has no code path that
+    -- creates, updates or deletes a school membership; SchoolUsersWriter's role change writes "users",
+    -- not this table. Keep it here rather than folding it into the read/write tier.
+    public."school_users",
     public."student_grades",
-    public."student_graduation_targets",
+    -- NOTE: "student_graduation_targets" moved to the SELECT/INSERT/UPDATE tier below (issue #55 REMAINDER) --
+    -- PUT /api/v1/student/graduation-plan/target is a Prisma upsert on the @unique studentId, ported as an
+    -- INSERT ... ON CONFLICT ("studentId") DO UPDATE. It needs INSERT and UPDATE, and NOT delete: legacy
+    -- never removes a target, it sets isActive.
     -- Domain 9a: the subscription plan catalog, read by PlanReader to resolve a
     -- plan's Stripe Price id for POST /api/v1/billing/checkout-session.
     public."subscription_plans",
@@ -199,6 +224,11 @@ GRANT SELECT ON TABLE
     -- Messaging only ever READ blocks, which is why SELECT was right here. Porting
     -- moderation adds POST/DELETE /api/v1/moderation/block/:userId, which upserts
     -- and soft-deletes rows, so read-only would fail every block and unblock.
+    -- FM-CF-013 reads "careerMatches" off this row -- it is where the platform
+    -- already caches legacy /careers/score's answer, and reading the cache is
+    -- what keeps the shadow job off the live request path entirely. SELECT was
+    -- already right here (CounselorCaseloadReader, CoursePlanComputeReader);
+    -- LegacyCareerScoreReader adds a third reader and no new verb.
     public."user_career_profiles",
     public."user_preferences",
     -- NOTE: "user_settings" moved to the SELECT/INSERT/UPDATE tier below (Domain 10) --
@@ -251,6 +281,16 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     -- POST /block/:userId and soft-deleted (UPDATE isActive=false) by DELETE. Both
     -- moved/added here from the read-only tier. Not needed until the port lands, but
     -- granting late means an ops re-run mid-domain -- the exact failure #29 hit.
+    -- VERIFIED AGAINST THE LANDED PORT (#63): ModerationRepository needs exactly
+    -- SELECT+INSERT on `reports` and SELECT+INSERT+UPDATE on `user_blocks`, and
+    -- nothing else -- no DELETE anywhere (an unblock is isActive=false, a report is
+    -- never removed), and the audit rows go to `audit_logs`, granted INSERT-only in
+    -- 4.6 below. So this tier is sufficient and no new grant was needed. It is one
+    -- verb WIDER than today's code on `reports` (UPDATE is unused: the admin
+    -- review/resolve path is still Node). Left as-is deliberately -- that path is the
+    -- next port into this same tier, and narrowing now would buy an ops re-run to undo
+    -- later. DbRoleGrantsTests.Moderation_tables_* pins both verb sets from the
+    -- catalog and behaviourally, so "wider" cannot drift into "unbounded".
     public."reports",
     public."user_blocks",
     public."community_service_entries",
@@ -262,6 +302,28 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     public."curriculum_frameworks",
     public."essay_comments",
     public."evaluation_feedbacks",
+    -- issue #55 (graduation + transcripts). Both are upserted, never deleted:
+    --   gpa_configurations -- PUT /api/v1/transcript/school-admin/gpa-config (moved from the read-only tier).
+    --   student_gpas       -- POST /compute-gpa (one row, the caller's own) and POST
+    --                         /school-admin/class-ranks (one row per active student in the school).
+    -- No DELETE: legacy never removes a GPA row, it overwrites it (an emptied transcript is persisted as
+    -- NULL GPAs, not as a missing row), so full CRUD would grant a verb no code path has.
+    public."gpa_configurations",
+    public."student_gpas",
+    -- issue #55: created by POST /graduation/rules, updated by PUT /graduation/rules/:id. Never deleted
+    -- (moved from the read-only tier; see the NOTE there).
+    public."graduation_rule_sets",
+    -- issue #55 REMAINDER (routes/graduation-plan.ts + routes/counselor-graduation.ts). Both moved from the
+    -- read-only tier; see the NOTEs there. Neither needs DELETE:
+    --   graduation_plans          -- UPDATE only. The status transitions (submit, review) and the discard
+    --                                soft-delete are all UPDATEs; the only INSERT is generateDraftPlan, which
+    --                                stays on Node under DECISION D1. INSERT is granted here because this tier
+    --                                is SELECT/INSERT/UPDATE as a unit -- one verb wider than today's code,
+    --                                recorded deliberately rather than split into a bespoke tier, and pinned
+    --                                by DbRoleGrantsTests so "wider" cannot drift into "unbounded".
+    --   student_graduation_targets -- INSERT + UPDATE, the target upsert.
+    public."graduation_plans",
+    public."student_graduation_targets",
     public."evaluation_groups",
     public."isams_configs",
     public."lia_assessment_sessions",
@@ -281,6 +343,18 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     public."personality_assessment_sessions",
     public."personality_responses",
     public."questions_360",
+    -- ---------------------------------------------------------------------
+    -- formmaps#59 (letters of recommendation): the .NET port of
+    -- routes/recommendations.ts INSERTs a request (POST /), UPDATEs it on
+    -- reactivate / respond / status / letter-upload, and upserts the
+    -- application links (POST /:id/link-applications). No .NET code path
+    -- DELETEs from either -- de-linking and cancellation are soft-deletes
+    -- (isActive = false) in legacy and there is no route for either here --
+    -- so they belong in this tier and not in section 5. Granted now rather
+    -- than at flag-flip time: granting late means an ops re-run mid-domain,
+    -- which is the exact failure #29 hit.
+    public."recommendation_application_links",
+    public."recommendation_requests",
     public."refresh_tokens",   -- Domain 10: created on login, rotated on refresh, revoked on logout
     public."resumes",
     public."roles",            -- Domain 10: EnsureSchoolAdminRoleAsync / EnsureRoleAsync find-or-create
@@ -380,6 +454,184 @@ GRANT INSERT ON TABLE
     TO formmaps_dotnet_svc;
 
 -- ---------------------------------------------------------------------------
+-- 4.7. CareerFit runs (FM-CF-002): append-only. SELECT + INSERT, and
+--    deliberately NOT UPDATE or DELETE.
+--
+--    `careerfit_runs` and `careerfit_family_results`
+--    (infra/aws/sql/careerfit-schema.sql) hold the engine's inputs snapshot
+--    and every evaluate_owner scalar for one evaluation of one student.
+--    A run is IMMUTABLE by design: the row is the evidence that a given
+--    rules_version, fed these inputs, produced these scores. Nothing may
+--    change after the fact -- a re-evaluation (new inputs, new rules version,
+--    a recut threshold) is a NEW run, ordered after the old one by createdAt,
+--    and the old one stays as the audit of what the student was shown then.
+--
+--    NOTE: why no UPDATE/DELETE, spelled out because the read/write bucket
+--    above is the default and this is a departure from it.
+--      * no UPDATE -- there is no code path that edits a run, and none may
+--        exist: "fix the number in place" is precisely what the FM-CF-013
+--        shadow comparison and the FM-CF-014 threshold recut must never be
+--        able to do to the rows they are measured against.
+--      * no DELETE -- erasure of a student's runs is a data-subject request,
+--        handled by the platform's account-deletion path under the admin
+--        credential, not by the service account on a request path. ON DELETE
+--        CASCADE on the child table is for that path, not for this role.
+--    Unlike audit_events (4.5) there is no immutability trigger on these
+--    tables, so this GRANT is the lock; keep it this narrow.
+--
+--    DbRoleGrantsTests.CareerFit_tables_are_granted_select_and_insert_but_never_update_or_delete
+--    pins this exact verb set; verify-grants.sql carries the same four
+--    expectations per table.
+-- ---------------------------------------------------------------------------
+GRANT SELECT, INSERT ON TABLE
+    public."careerfit_runs",
+    public."careerfit_family_results"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
+-- 4.8. CareerFit shadow comparisons (FM-CF-013): append-only, same reasoning
+--    as 4.7 above and the same verb set.
+--
+--    `careerfit_shadow_comparisons`
+--    (infra/aws/sql/careerfit-shadow-tables.sql) holds one row per measured
+--    student: the .NET engine's family ranking, the legacy /careers/score
+--    result projected onto the same families, the two metrics
+--    (Spearman rho, top-3 overlap) and every disagreement classified by
+--    cause. It is written by CareerFitShadowRunner and read by nothing in
+--    the product -- no endpoint serves it; the report generator
+--    (tools/careerfit/shadow_report.py) consumes an export of it.
+--
+--    NOTE: why SELECT + INSERT and not the read/write bucket, spelled out
+--    because section 4 is the default and this is a departure from it.
+--      * no UPDATE -- a comparison row IS the measurement, and the whole
+--        purpose of FM-CF-013 is to be an EXTERNAL reference for the port.
+--        A service account that can edit a disagreement after the fact can
+--        edit the evidence the cutover decision (FM-CF-015) and the threshold
+--        recut (FM-CF-014) rest on. Re-measuring is a NEW row: the row
+--        carries "comparatorVersion" and "projectionVersion" precisely so a
+--        re-measurement under a corrected projection is a second row that can
+--        be told apart from the first, never an overwrite of it.
+--      * no DELETE -- a student's shadow rows disappear with the student, via
+--        ON DELETE CASCADE on "userId" under the platform's erasure path
+--        (the admin credential), not via the service account on a request
+--        path. Retiring the whole table at cutover is a DROP TABLE by the
+--        admin, one file's worth of objects (see the file's header and
+--        docs/migration/sql-apply-runbook.md's rollback section).
+--    There is no immutability trigger on this table either, so this GRANT is
+--    the lock; keep it this narrow.
+--
+--    DbRoleGrantsTests.CareerFit_tables_are_granted_select_and_insert_but_never_update_or_delete
+--    covers this table in the same [Theory] as the run pair; verify-grants.sql
+--    carries the same four expectations for it.
+-- ---------------------------------------------------------------------------
+GRANT SELECT, INSERT ON TABLE
+    public."careerfit_shadow_comparisons"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
+-- 4.9. Graduation rule-set CHILDREN (issue #55): SELECT, INSERT and DELETE -- and
+--    deliberately NOT UPDATE, which the read/write tier above would have carried.
+--
+--    `updateGraduationRules` (schoolGradesService.ts:243) does not edit these rows.
+--    It DELETEs every child of the rule set and re-creates the list from the request
+--    body, inside one transaction, so that a malformed payload cannot leave a rule set
+--    half-rewritten. GraduationRulesWriter ports that shape verbatim. There is
+--    therefore no .NET code path that issues an UPDATE against either table, and
+--    granting one would hand the service a verb its own design says it must not use:
+--    a partial in-place edit is exactly the half-applied state the delete-and-recreate
+--    exists to prevent.
+--
+--    This is the third distinct verb set in this file for the same reason the billing
+--    tier (3b) and the audit tier (4.5) are their own: what is WITHHELD is the
+--    invariant, not the tier the tables happen to resemble.
+--    DbRoleGrantsTests.Graduation_rule_set_children_* pins it, from the catalog and
+--    behaviourally.
+-- ---------------------------------------------------------------------------
+GRANT SELECT, INSERT, DELETE ON TABLE
+    public."category_requirements",
+    public."special_requirements"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
+-- 4.10. Product telemetry ingest (issue #65): INSERT and nothing else.
+--
+--    `telemetry_events` is append-only from this service's point of view.
+--    TelemetryEventWriter issues exactly one statement against it -- a multi-row
+--    INSERT, the port of `prisma.telemetryEvent.createMany` at
+--    formmaps-platform/api/src/routes/telemetry.ts:45-55 -- and there is no other
+--    .NET code path that touches the table at all.
+--
+--    NO SELECT, on purpose, and this is the second table in this file to be
+--    granted without it (audit_logs, section 4.6, is the first). The INSERT does
+--    not need one: no RETURNING, no ON CONFLICT, no read of existing rows. The
+--    response body's `eventsReceived` is a count of what the REQUEST offered, not
+--    a count read back from the database, so nothing downstream of the write
+--    wants a read either. Granting SELECT would hand the service account the
+--    ability to enumerate every user's behavioural history for a capability no
+--    code exercises.
+--
+--    NO UPDATE/DELETE either. The 90-day retention (telemetry.ts:40 writes
+--    `expiresAt`) is a REAPER's job, not this service's -- nothing in
+--    services/api/src deletes an expired row, and the column is written so that
+--    whatever eventually does can find them. If a .NET reaper is ever added, give
+--    it DELETE here deliberately rather than widening this grant to match the
+--    section-4 bucket by resemblance.
+--
+--    Because the grant omits SELECT, `telemetry_events` must also be named in
+--    DbRoleGrantsTests.Every_table_in_the_schema_is_granted_at_least_select`s
+--    `insertOnly` list, and its exact verb set is pinned by
+--    DbRoleGrantsTests.Telemetry_events_is_insert_only.
+-- ---------------------------------------------------------------------------
+GRANT INSERT ON TABLE
+    public."telemetry_events"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
+-- 4.11. Teacher invitations (issue #62): SELECT and UPDATE -- and deliberately
+--    NEITHER INSERT NOR DELETE.
+--
+--    TWO CALL SITES, both on the PRE-AUTH onboarding pair:
+--      * TeacherOnboardingRepository.cs:38  -- SELECT ... FROM "teacher_invites"
+--        WHERE "token" = @token, the port of teacher.ts:33's findUnique, behind
+--        GET /api/v1/teacher/onboarding/verify.
+--      * TeacherOnboardingRepository.cs:197 -- UPDATE "teacher_invites"
+--        SET "usedAt" = @now, the port of teacher.ts:68, behind
+--        POST /api/v1/teacher/onboarding/complete.
+--
+--    NO INSERT, and this is the load-bearing withholding rather than a tidy
+--    default. Minting an invite is NODE's job (schoolService.ts:387) and no
+--    .NET path does it. The token is `crypto.randomBytes(32).toString("base64url")`
+--    (api/src/lib/auth.ts:319) and it is the ENTIRE authorization on both routes --
+--    there is no session, because the invited teacher does not have one yet. A
+--    service account that could INSERT here could therefore mint itself a valid
+--    invite for any email address in any school and walk in through its own front
+--    door, converting a token-only exposure into a self-service one. This is the
+--    case the maintenance note below means by "re-deriving mechanically would
+--    widen": the code uses SELECT and UPDATE today, and the right grant is exactly
+--    those two, NOT the section-4 SELECT/INSERT/UPDATE bucket this table otherwise
+--    resembles.
+--
+--    NO DELETE for the ordinary reason: an invite is consumed by setting `usedAt`,
+--    never removed, so DELETE would only ever let the service erase the record that
+--    a redemption happened.
+--
+--    THIS TABLE WAS MISSING ENTIRELY until 2026-09-04. #62 shipped SELECT and UPDATE
+--    call sites with no GRANT at all, and no test could see it: the stub schema and
+--    this file are both hand-maintained, and a table absent from BOTH is invisible to
+--    the reconciliation between them. It worked only because the service still runs on
+--    the legacy shared credential -- the same shape as the audit_logs KNOWN-GAP in 4.6
+--    -- and would have 42501'd the moment DATABASE_URL flipped, taking teacher
+--    onboarding down with no recovery path for the invitee. DbRoleGrantCoverageTests
+--    now re-derives the table set from services/api/src so the next omission of this
+--    class fails in CI instead of at cutover. Verb set pinned from the catalog by
+--    DbRoleGrantsTests.Teacher_invites_is_select_and_update_only and behaviourally by
+--    Role_can_read_and_consume_an_invite_but_never_mint_or_erase_one.
+-- ---------------------------------------------------------------------------
+GRANT SELECT, UPDATE ON TABLE
+    public."teacher_invites"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
 -- 5. Full-CRUD tables -- the service also deletes rows here (verified:
 --    DELETE FROM hits in services/api/src, e.g. calendar/holiday and
 --    academic-year cleanup, course-plan removal, data-mapping deletion, and
@@ -417,10 +669,12 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE
 --
 -- Do NOT apply that re-derivation blindly. It reports which verbs the code
 -- uses TODAY, which is the right default but is not the rule for every table:
---   * "user_subscriptions" (3b) and "audit_events" (4.5) are withheld verbs on
---     purpose, not for lack of a call site. Re-deriving mechanically would
---     widen both -- audit_events would land in the section-4 bucket and
---     quietly gain UPDATE, defeating the whole point of the table.
+--   * "user_subscriptions" (3b), "audit_events" (4.5), the careerfit_* pair
+--     (4.7) and "careerfit_shadow_comparisons" (4.8) are withheld verbs on
+--     purpose, not for lack of a call site.
+--     Re-deriving mechanically would widen them -- audit_events would land in
+--     the section-4 bucket and quietly gain UPDATE, defeating the whole point
+--     of the table.
 --   * "shadow_payments" (4) is granted despite having no call site yet.
 -- The tests are the backstop: DbRoleGrantsTests pins those exact verb sets and
 -- also fails if a table in the harness's stub schema has no GRANT here at all

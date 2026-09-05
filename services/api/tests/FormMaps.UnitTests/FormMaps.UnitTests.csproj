@@ -22,6 +22,17 @@
   <ItemGroup>
     <!-- Shared cross-repo LIA-core golden fixtures (byte-identical to lib/lia-core/__fixtures__/golden.json). -->
     <EmbeddedResource Include="Assessments\Data\golden.json" />
+    <!-- CareerFit parity fixture (FM-CF-004): 60 archetypal profiles x 14 families scored by the NORMATIVE
+         docs/careerfit/sources/formmaps_engine_reference.py. Regenerate ONLY with
+         tools/careerfit/export_parity_fixture.py (n 60, default seed 20260903, out = this path);
+         if the C# and the fixture disagree, the C# is wrong. -->
+    <EmbeddedResource Include="CareerFit\Data\parity-fixture.json" />
+    <!-- CareerFit 360 parity fixture (FM-CF-007/008): synthetic per-source scores and synthetic variable
+         aggregates scored by the same NORMATIVE reference engine, because the 40 items are not seeded
+         (FM-CF-006, blocked on TIMS) and no real 360 response exists. Regenerate ONLY with
+         tools/careerfit/export_v360_fixture.py (out = this path); if the C# and the fixture disagree,
+         the C# is wrong. -->
+    <EmbeddedResource Include="CareerFit\Data\v360-parity-fixture.json" />
   </ItemGroup>
 
   <ItemGroup>
