@@ -324,7 +324,7 @@ public class MessagesEndpointsTests
     [Fact]
     public async Task Broadcast_happy_path_is_200_with_the_recipient_count()
     {
-        var repo = new FakeRepo { BroadcastCount = 12 };
+        var repo = new FakeRepo { BroadcastResult = new BroadcastResult(12, []) };
         using var factory = new Factory(repo);
         using var client = factory.CreateClient();
 
@@ -337,6 +337,25 @@ public class MessagesEndpointsTests
         Assert.Equal("students", repo.LastRecipientGroup);
         Assert.Equal("school-1", repo.LastSchoolId);
         Assert.Equal("counselor", repo.LastRole);
+    }
+
+    [Fact]
+    public async Task Broadcast_with_any_failed_recipient_is_legacy_500_internal_server_error()
+    {
+        // routes/messages.ts: a rejected recipient inside Promise.all lands in the route's catch ->
+        // 500 { success:false, message:"Internal server error" }. The recipients that already committed
+        // stay delivered (repository contract); the endpoint only reports the failure.
+        var repo = new FakeRepo { BroadcastResult = new BroadcastResult(11, [new BroadcastFailure("student-7", "boom")]) };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Post, "/api/v1/messages/broadcast",
+            body: """{"recipientGroup":"students","content":"hi all"}""", role: FormMapsRoles.Counselor, schoolId: "school-1");
+
+        Assert.Equal(HttpStatusCode.InternalServerError, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.False(doc.RootElement.GetProperty("success").GetBoolean());
+        Assert.Equal("Internal server error", doc.RootElement.GetProperty("message").GetString());
     }
 
     // Unlike Video/most other domains, Messages does not hand-parse the body via JsonDocument -- it binds
@@ -414,7 +433,7 @@ public class MessagesEndpointsTests
             new(ConversationMessagesStatus.Ok, new ConversationMessagesPage([], 0, 1, 50, 0));
         public SendMessageResult SendResult { get; init; } =
             new(SendMessageStatus.Sent, new MessageRow("id", "conv", "caller-1", "Caller", "hi", null, DateTime.UtcNow), "other", "o@x.test", "Caller", "hi");
-        public int BroadcastCount { get; init; }
+        public BroadcastResult BroadcastResult { get; init; } = new(0, []);
 
         public string? LastUserId { get; private set; }
         public string? LastRole { get; private set; }
@@ -472,12 +491,12 @@ public class MessagesEndpointsTests
             return Task.FromResult(SendResult);
         }
 
-        public Task<int> BroadcastAsync(
+        public Task<BroadcastResult> BroadcastAsync(
             RequestContext context, string userId, string role, string schoolId, string recipientGroup, string content,
             CancellationToken cancellationToken = default)
         {
             (LastUserId, LastRole, LastSchoolId, LastRecipientGroup, LastContent) = (userId, role, schoolId, recipientGroup, content);
-            return Task.FromResult(BroadcastCount);
+            return Task.FromResult(BroadcastResult);
         }
     }
 }
