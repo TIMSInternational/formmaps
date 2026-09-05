@@ -47,7 +47,7 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     {
         var (userId, _, conversationId) = await _fixture.SeedConversationAsync();
 
-        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, "hello there");
 
         // ISO-Z, not +00:00 and not a bare local time -- this is the value the web's optimistic echo is
         // replaced with, so a local-time string would make the sent message jump by the viewer's offset.
@@ -83,7 +83,7 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
         var repo = new MessagesRepository(
             new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System, notifier);
 
-        var result = await repo.SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+        var result = await repo.SendMessageAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, "hello there");
 
         // SignalRMessagesNotifier hands this object to hubContext.Clients.Group(...).SendAsync, which the
         // hub's JSON protocol serializes as the "messageReceived" invocation frame -- so assert on that
