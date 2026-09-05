@@ -1,0 +1,1397 @@
+{
+  "metadata": {
+    "model_name": "FORMMAPS CareerFit Rules Engine",
+    "model_version": "1.0.0-expert-prior",
+    "career_matrix_version": "1.0",
+    "status": "implementation_specification",
+    "source_workbook": "FORMMAPS_Matriz_Maestra_Logica_Implementacion_V1.xlsx",
+    "notes": [
+      "Expert Prior V1: no interpretar CareerFitAbsolute como probabilidad actuarial de éxito.",
+      "Gates no descartan carreras; modifican estado y explicación.",
+      "Personality no genera gates.",
+      "PCA y Personality son multirruta."
+    ]
+  },
+  "weights": {
+    "career_fit": {
+      "MIL": 0.25,
+      "PCA": 0.3,
+      "PERSONALITY": 0.15,
+      "VOCATIONAL_360": 0.3
+    },
+    "pca_internal": {
+      "DISC": 0.5,
+      "COMPETENCIES": 0.5,
+      "status": "PROVISIONAL"
+    },
+    "v360_sources": {
+      "SELF": 0.35,
+      "PARENT": 0.25,
+      "TEACHER": 0.25,
+      "PEER": 0.15
+    },
+    "relevance": {
+      "CENTRAL": 3,
+      "IMPORTANT": 2,
+      "NOT_USED": 0
+    },
+    "mil_role": {
+      "CRITICAL": 3,
+      "IMPORTANT": 2,
+      "COMPLEMENTARY": 1,
+      "NOT_USED": 0
+    },
+    "competency_role": {
+      "CRITICAL": 3,
+      "IMPORTANT": 2,
+      "COMPLEMENTARY": 0,
+      "DIFFERENTIATOR": "report_only"
+    }
+  },
+  "thresholds": {
+    "mil_bands": [
+      {
+        "name": "INSUFFICIENT",
+        "min": 1,
+        "max": 17
+      },
+      {
+        "name": "LOW",
+        "min": 18,
+        "max": 37
+      },
+      {
+        "name": "ADEQUATE",
+        "min": 38,
+        "max": 56
+      },
+      {
+        "name": "EXCEEDS",
+        "min": 57,
+        "max": 81
+      },
+      {
+        "name": "EXCEPTIONAL",
+        "min": 82,
+        "max": 99
+      }
+    ],
+    "convergence": {
+      "strong_min": 70,
+      "partial_min": 55
+    },
+    "v360_consensus": {
+      "high_min": 70,
+      "medium_min": 40
+    },
+    "v360_confidence": {
+      "formula": {
+        "consensus_weight": 0.7,
+        "coverage_weight": 0.3
+      },
+      "high_min": 75,
+      "medium_min": 55,
+      "status": "PROVISIONAL"
+    }
+  },
+  "pca": {
+    "factor_scale": {
+      "min": 0,
+      "max": 100,
+      "midpoint": 50
+    },
+    "states": {
+      "ACTIVE": ">50",
+      "PASSIVE": "<50",
+      "NEUTRAL": "=50"
+    },
+    "match_formulas": {
+      "ACTIVE": "match = score",
+      "PASSIVE": "match = 100 - score",
+      "NEUTRAL": "match = max(0, 100 - 2*abs(score-50))",
+      "OPEN": "weight = 0; exclude from denominator"
+    },
+    "family_fit": "MAX(route_fits)"
+  },
+  "competencies": {
+    "scale": {
+      "min": 0,
+      "max": 4
+    },
+    "levels": {
+      "0": "Absent",
+      "1": "Utilization",
+      "2": "Contribution",
+      "3": "Skill",
+      "4": "Mastery"
+    },
+    "attainment": {
+      "CRITICAL": "min(100, level/2*100)",
+      "IMPORTANT": "min(100, level/1*100)"
+    },
+    "gate": {
+      "SATISFIED": "all critical levels >=2",
+      "CONDITIONED": "any critical level=1 and none=0",
+      "CRITICAL": "any critical level=0"
+    }
+  },
+  "mil": {
+    "subtests": [
+      "DC",
+      "RZ",
+      "VN",
+      "MT",
+      "OR"
+    ],
+    "family_fit": "sum(percentile_k * role_weight_k) / sum(role_weight_k)",
+    "relative_strength": "percentile_k / max(DC,RZ,VN,MT,OR) * 100",
+    "gate": {
+      "SATISFIED": "all critical percentiles >=38",
+      "CONDITIONED": "any critical percentile 18..37 and none <=17",
+      "CRITICAL": "any critical percentile <=17"
+    },
+    "dc_note": "Transversal: aprendizaje aplicado, instrucción/velocidad general, reconocimiento de patrones y requerimiento de acompañamiento."
+  },
+  "personality": {
+    "dimensions": [
+      {
+        "code": "EI",
+        "poles": [
+          "E",
+          "I"
+        ],
+        "meaning": "Energía"
+      },
+      {
+        "code": "SN",
+        "poles": [
+          "S",
+          "N"
+        ],
+        "meaning": "Procesamiento de información"
+      },
+      {
+        "code": "TF",
+        "poles": [
+          "T",
+          "F"
+        ],
+        "meaning": "Toma de decisiones"
+      },
+      {
+        "code": "JP",
+        "poles": [
+          "J",
+          "P"
+        ],
+        "meaning": "Estilo de vida/ejecución"
+      }
+    ],
+    "gate": "NONE",
+    "family_fit": "MAX(route_fits)"
+  },
+  "vocational_360": {
+    "variables": [
+      {
+        "code": "AN",
+        "question": "P1",
+        "construct": "Intereses Académicos",
+        "meaning": "Interés numérico, matemático, estadístico y financiero",
+        "base_weight_360": 0.024,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "AST",
+        "question": "P2",
+        "construct": "Intereses Académicos",
+        "meaning": "Interés científico, tecnológico e ingenieril (STEM)",
+        "base_weight_360": 0.024,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "ASH",
+        "question": "P3",
+        "construct": "Intereses Académicos",
+        "meaning": "Interés social-humanístico: ciencias sociales, idiomas, derecho y RR.II.",
+        "base_weight_360": 0.024,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "ABS",
+        "question": "P4",
+        "construct": "Intereses Académicos",
+        "meaning": "Interés biológico, salud, medicina y biotecnología",
+        "base_weight_360": 0.024,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "ACE",
+        "question": "P5",
+        "construct": "Intereses Académicos",
+        "meaning": "Interés creativo-espacial: diseño, arquitectura, artes y contenido",
+        "base_weight_360": 0.024,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "OH",
+        "question": "P6",
+        "construct": "Intereses Observados",
+        "meaning": "Disfrute por ayudar, enseñar o apoyar",
+        "base_weight_360": 0.0375,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "OL",
+        "question": "P7",
+        "construct": "Intereses Observados",
+        "meaning": "Disfrute por liderar, organizar o coordinar",
+        "base_weight_360": 0.0375,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "OA",
+        "question": "P8",
+        "construct": "Intereses Observados",
+        "meaning": "Disfrute por analizar, investigar o resolver problemas",
+        "base_weight_360": 0.0375,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "OC",
+        "question": "P9",
+        "construct": "Intereses Observados",
+        "meaning": "Disfrute por crear, diseñar o desarrollar ideas nuevas",
+        "base_weight_360": 0.0375,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "ME",
+        "question": "P10",
+        "construct": "Motivadores",
+        "meaning": "Estabilidad y seguridad económica",
+        "base_weight_360": 0.03,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "MA",
+        "question": "P11",
+        "construct": "Motivadores",
+        "meaning": "Autonomía, libertad y autogestión",
+        "base_weight_360": 0.03,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "MI",
+        "question": "P12",
+        "construct": "Motivadores",
+        "meaning": "Propósito, ayuda e impacto social",
+        "base_weight_360": 0.03,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "MR",
+        "question": "P13",
+        "construct": "Motivadores",
+        "meaning": "Reto, crecimiento, logro y resultados",
+        "base_weight_360": 0.03,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "PB",
+        "question": "P14",
+        "construct": "Proyecto de Vida",
+        "meaning": "Balance vida personal / vida profesional",
+        "base_weight_360": 0.0333333333,
+        "formmaps_role": "Ruta/Modulador",
+        "in_careerfit360_base": "No CareerFit360 base",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "PM",
+        "question": "P15",
+        "construct": "Proyecto de Vida",
+        "meaning": "Movilidad, internacionalización y experiencias globales",
+        "base_weight_360": 0.0333333333,
+        "formmaps_role": "Ruta/Modulador",
+        "in_careerfit360_base": "No CareerFit360 base",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "PE",
+        "question": "P16",
+        "construct": "Proyecto de Vida",
+        "meaning": "Emprendimiento, negocio o proyecto propio",
+        "base_weight_360": 0.0333333333,
+        "formmaps_role": "Ruta/Modulador",
+        "in_careerfit360_base": "No CareerFit360 base",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "EXPL",
+        "question": "P17",
+        "construct": "Exploración Vocacional",
+        "meaning": "Búsqueda activa de información sobre carreras y rutas",
+        "base_weight_360": 0.08,
+        "formmaps_role": "Madurez/Confianza",
+        "in_careerfit360_base": "No CareerFit360 base",
+        "scale": "Frecuencia 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "CLAR",
+        "question": "P18",
+        "construct": "Claridad Vocacional",
+        "meaning": "Claridad de dirección académica/profesional actual",
+        "base_weight_360": 0.05,
+        "formmaps_role": "Madurez/Confianza",
+        "in_careerfit360_base": "No CareerFit360 base",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "AE_ACAD",
+        "question": "P19",
+        "construct": "Autoeficacia",
+        "meaning": "Creencia de capacidad para rendir académicamente en el área de interés",
+        "base_weight_360": 0.05,
+        "formmaps_role": "Madurez/Confianza",
+        "in_careerfit360_base": "No CareerFit360 base",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "AE_EXEC",
+        "question": "P20",
+        "construct": "Autoeficacia",
+        "meaning": "Creencia de capacidad para ejecutar proyectos relevantes",
+        "base_weight_360": 0.05,
+        "formmaps_role": "Madurez/Confianza",
+        "in_careerfit360_base": "No CareerFit360 base",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "LD",
+        "question": "P21",
+        "construct": "Liderazgo Percibido",
+        "meaning": "D — iniciativa, decisión y ejecución bajo presión",
+        "base_weight_360": 0,
+        "formmaps_role": "Convergencia PCA×360",
+        "in_careerfit360_base": "No",
+        "scale": "Frecuencia 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "LI",
+        "question": "P22",
+        "construct": "Liderazgo Percibido",
+        "meaning": "I — influencia, persuasión y movilización social",
+        "base_weight_360": 0,
+        "formmaps_role": "Convergencia PCA×360",
+        "in_careerfit360_base": "No",
+        "scale": "Frecuencia 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "LS",
+        "question": "P23",
+        "construct": "Liderazgo Percibido",
+        "meaning": "S — soporte, conocimiento, orientación y confianza",
+        "base_weight_360": 0,
+        "formmaps_role": "Convergencia PCA×360",
+        "in_careerfit360_base": "No",
+        "scale": "Frecuencia 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "LC",
+        "question": "P24",
+        "construct": "Liderazgo Percibido",
+        "meaning": "C — precisión, organización, calidad y control",
+        "base_weight_360": 0,
+        "formmaps_role": "Convergencia PCA×360",
+        "in_careerfit360_base": "No",
+        "scale": "Frecuencia 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "CE",
+        "question": "P25",
+        "construct": "Contexto Preferido",
+        "meaning": "Preferencia por estructura, procesos, reglas y previsibilidad",
+        "base_weight_360": 0.04,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "CD",
+        "question": "P26",
+        "construct": "Contexto Preferido",
+        "meaning": "Preferencia por dinamismo, cambio, autonomía y libertad",
+        "base_weight_360": 0.04,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "EA",
+        "question": "P27",
+        "construct": "Engagement / Energizadores",
+        "meaning": "Engagement analítico — energía al analizar/resolver",
+        "base_weight_360": 0.0333333333,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "EI",
+        "question": "P28",
+        "construct": "Engagement / Energizadores",
+        "meaning": "Engagement interpersonal — energía al comunicar/interactuar",
+        "base_weight_360": 0.0333333333,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "EC",
+        "question": "P29",
+        "construct": "Engagement / Energizadores",
+        "meaning": "Engagement creativo — energía al crear/diseñar/construir",
+        "base_weight_360": 0.0333333333,
+        "formmaps_role": "Direccional",
+        "in_careerfit360_base": "Sí",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "ENV_FAM",
+        "question": "P30",
+        "construct": "Influencia del Entorno",
+        "meaning": "Influencia familiar sobre decisión vocacional",
+        "base_weight_360": 0,
+        "formmaps_role": "Diagnóstico",
+        "in_careerfit360_base": "No",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100; alto=alerta"
+      },
+      {
+        "code": "ENV_PEERS",
+        "question": "P31",
+        "construct": "Influencia del Entorno",
+        "meaning": "Influencia de pares/redes sobre decisión vocacional",
+        "base_weight_360": 0,
+        "formmaps_role": "Diagnóstico",
+        "in_careerfit360_base": "No",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100; alto=alerta"
+      },
+      {
+        "code": "FLEX",
+        "question": "P32",
+        "construct": "Apertura al Cambio",
+        "meaning": "Disposición a reconsiderar ruta/carrera",
+        "base_weight_360": 0,
+        "formmaps_role": "Diagnóstico",
+        "in_careerfit360_base": "No",
+        "scale": "Likert 1-5",
+        "scoring": "((r-1)/4)*100"
+      },
+      {
+        "code": "FORM_CONT",
+        "question": "P33",
+        "construct": "Ruta Formativa",
+        "meaning": "Disposición a continuar formación después del colegio",
+        "base_weight_360": 0,
+        "formmaps_role": "Gate de ruta",
+        "in_careerfit360_base": "No",
+        "scale": "Gate 1-5",
+        "scoring": "1→0; 2→25; 3→50; 4→75; 5→100"
+      },
+      {
+        "code": "ALT_ROUTE",
+        "question": "P34",
+        "construct": "Ruta Formativa",
+        "meaning": "Apertura a rutas no universitarias o híbridas",
+        "base_weight_360": 0,
+        "formmaps_role": "Gate de ruta",
+        "in_careerfit360_base": "No",
+        "scale": "Gate 1-5",
+        "scoring": "1→0; 2→25; 3→50; 4→75; 5→100"
+      },
+      {
+        "code": "RANK",
+        "question": "P35",
+        "construct": "Priorización Vocacional",
+        "meaning": "Ranking forzado de 20 áreas académicas/profesionales",
+        "base_weight_360": 0,
+        "formmaps_role": "Confirmación",
+        "in_careerfit360_base": "No",
+        "scale": "Ranking 1-20",
+        "scoring": "puntos=21-rank; normalización recomendada=(21-rank)/20*100"
+      },
+      {
+        "code": "IND",
+        "question": "P36",
+        "construct": "Afinidad por Industrias",
+        "meaning": "Vector de 20 industrias/sectores",
+        "base_weight_360": 0.1,
+        "formmaps_role": "Direccional vectorial",
+        "in_careerfit360_base": "Sí (vector)",
+        "scale": "Selección 5",
+        "scoring": "selección=100; no selección=0; integrar por fuente"
+      },
+      {
+        "code": "ACT",
+        "question": "P37",
+        "construct": "Priorización de Actividades",
+        "meaning": "Vector de 15 actividades preferidas",
+        "base_weight_360": 0,
+        "formmaps_role": "Confirmación",
+        "in_careerfit360_base": "No",
+        "scale": "Selección 5",
+        "scoring": "selección=100; no selección=0; integrar por fuente"
+      },
+      {
+        "code": "BARR",
+        "question": "P38",
+        "construct": "Barreras y preocupaciones",
+        "meaning": "Mapa de barreras, dudas y riesgos",
+        "base_weight_360": 0,
+        "formmaps_role": "Diagnóstico",
+        "in_careerfit360_base": "No",
+        "scale": "Selección máx.3",
+        "scoring": "frecuencia / frecuencia ponderada; no FIT"
+      },
+      {
+        "code": "OPEN_TALENT",
+        "question": "P39",
+        "construct": "Pregunta abierta",
+        "meaning": "Mayor talento o fortaleza percibida",
+        "base_weight_360": 0,
+        "formmaps_role": "Cualitativo",
+        "in_careerfit360_base": "No",
+        "scale": "Texto",
+        "scoring": "codificación temática; recurrencias; no FIT"
+      },
+      {
+        "code": "OPEN_10Y",
+        "question": "P40",
+        "construct": "Pregunta abierta",
+        "meaning": "Proyección académica/profesional a 10 años",
+        "base_weight_360": 0,
+        "formmaps_role": "Cualitativo",
+        "in_careerfit360_base": "No",
+        "scale": "Texto",
+        "scoring": "codificación temática; recurrencias; no FIT"
+      }
+    ],
+    "source_integration": "sum(score_i*weight_i)/sum(valid_weights); renormalize missing sources",
+    "consensus": "100 - (max(valid_source_scores)-min(valid_source_scores)); requires >=2 sources",
+    "career_fit_base": "sum(S_k*baseWeight_k*relevance_fk)/sum(baseWeight_k*relevance_fk)",
+    "ranking_and_activities": "confirmation only; do not double-count",
+    "project_life": "route modulator, not direct family direction"
+  },
+  "families": [
+    {
+      "family_id": 1,
+      "family_name": "Ingeniería",
+      "pca_routes": [
+        "Técnico",
+        "Jefe Técnico",
+        "Investigador",
+        "Creativo-Lógico",
+        "Gerencial",
+        "Director"
+      ],
+      "competencies": {
+        "critical": [
+          19,
+          22,
+          23
+        ],
+        "important": [
+          13,
+          14,
+          18,
+          20
+        ],
+        "differentiators": [
+          3,
+          5,
+          6
+        ]
+      },
+      "mil": {
+        "DC": "VAR",
+        "RZ": "VAR",
+        "VN": "I_MIN",
+        "MT": "VAR",
+        "OR": "VAR",
+        "note": "VN nunca < Importante. Subfamilia define críticas."
+      },
+      "personality_rule_text": "T suele sumar; S/N y J/P según especialidad; E/I abierto",
+      "v360": {
+        "central": [
+          "AST",
+          "OA",
+          "EA"
+        ],
+        "important": [
+          "AN",
+          "MR",
+          "IND"
+        ],
+        "route_modulators_text": "OC/EC→innovación; OL/EI→gerencial; MA/CD/PE→emprendimiento/dirección"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 2,
+      "family_name": "Tecnología / CS / Data",
+      "pca_routes": [
+        "Técnico",
+        "Investigador",
+        "Creativo-Lógico",
+        "Gerencial"
+      ],
+      "competencies": {
+        "critical": [
+          22,
+          14,
+          3
+        ],
+        "important": [
+          19,
+          1,
+          18
+        ],
+        "differentiators": [
+          5,
+          6
+        ]
+      },
+      "mil": {
+        "DC": "C",
+        "RZ": "C",
+        "VN": "I/VAR",
+        "MT": "I",
+        "OR": "CO",
+        "note": "VN sube a C en Data/IA; OR solo ramas espaciales."
+      },
+      "personality_rule_text": "N/T frecuentes; J/P según construcción vs exploración; E/I abierto",
+      "v360": {
+        "central": [
+          "AST",
+          "OA",
+          "EA"
+        ],
+        "important": [
+          "AN",
+          "OC",
+          "MR",
+          "IND"
+        ],
+        "route_modulators_text": "EC→producto/UX/innovación; OL→management; CD/MA→startups"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 3,
+      "family_name": "Finanzas / Contabilidad / Economía",
+      "pca_routes": [
+        "Administrativo",
+        "Técnico",
+        "Investigador",
+        "Gerencial",
+        "Director"
+      ],
+      "competencies": {
+        "critical": [
+          19,
+          22,
+          23
+        ],
+        "important": [
+          14,
+          21,
+          13
+        ],
+        "differentiators": [
+          5,
+          6,
+          4
+        ]
+      },
+      "mil": {
+        "DC": "I/VAR",
+        "RZ": "C/VAR",
+        "VN": "C",
+        "MT": "I",
+        "OR": "CO",
+        "note": "Contabilidad puede enfatizar DC; Economía/Finanzas RZ+VN."
+      },
+      "personality_rule_text": "T frecuente; S/J Contabilidad; N/T Economía/inversión; E/I abierto",
+      "v360": {
+        "central": [
+          "AN",
+          "OA",
+          "EA"
+        ],
+        "important": [
+          "ME",
+          "MR",
+          "CE",
+          "IND"
+        ],
+        "route_modulators_text": "OL→dirección financiera; PE/MA→inversión/emprendimiento; PM→internacional"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 4,
+      "family_name": "Administración / Negocios",
+      "pca_routes": [
+        "Administrativo",
+        "Gerencial",
+        "Director",
+        "Comercial Técnico",
+        "Asesor"
+      ],
+      "competencies": {
+        "critical": [
+          13,
+          21,
+          23
+        ],
+        "important": [
+          5,
+          6,
+          17
+        ],
+        "differentiators": [
+          4,
+          9
+        ]
+      },
+      "mil": {
+        "DC": "C",
+        "RZ": "C",
+        "VN": "I",
+        "MT": "I",
+        "OR": "CO",
+        "note": "Ajustar por operaciones, analítica o estrategia."
+      },
+      "personality_rule_text": "S operación; N estrategia; T/F por función; J ejecución",
+      "v360": {
+        "central": [
+          "OL",
+          "MR",
+          "IND"
+        ],
+        "important": [
+          "OA",
+          "EI",
+          "ME"
+        ],
+        "route_modulators_text": "PE/MA/CD→emprendimiento; CE→operación; PM→negocios internacionales"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 5,
+      "family_name": "Emprendimiento",
+      "pca_routes": [
+        "Gerencial",
+        "Director",
+        "Comercial Técnico",
+        "Creativo-Lógico"
+      ],
+      "competencies": {
+        "critical": [
+          1,
+          2,
+          3,
+          6
+        ],
+        "important": [
+          4,
+          5,
+          7
+        ],
+        "differentiators": [
+          9,
+          13
+        ]
+      },
+      "mil": {
+        "DC": "C",
+        "RZ": "C",
+        "VN": "I/VAR",
+        "MT": "I",
+        "OR": "CO",
+        "note": "Depende del tipo de emprendimiento."
+      },
+      "personality_rule_text": "N/P frecuentes; J diferenciador de ejecución; E/I abierto",
+      "v360": {
+        "central": [
+          "OL",
+          "MA",
+          "MR",
+          "CD"
+        ],
+        "important": [
+          "OC",
+          "OA",
+          "EC",
+          "IND"
+        ],
+        "route_modulators_text": "PE define intensidad de ruta; EI→relacional; EA→tech/analítico; EC→creativo"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 6,
+      "family_name": "Marketing / Comunicación / Publicidad",
+      "pca_routes": [
+        "Comercial Técnico",
+        "Asesor",
+        "Creativo-Lógico",
+        "Gerencial"
+      ],
+      "competencies": {
+        "critical": [
+          7,
+          9,
+          3
+        ],
+        "important": [
+          11,
+          14,
+          8
+        ],
+        "differentiators": [
+          4,
+          22
+        ]
+      },
+      "mil": {
+        "DC": "I/VAR",
+        "RZ": "I/VAR",
+        "VN": "CO/C",
+        "MT": "I",
+        "OR": "CO",
+        "note": "VN C en Analytics/Performance; RZ/DC más importantes en estrategia."
+      },
+      "personality_rule_text": "N frecuente; F marca/relación; T analytics; E/I según ruta",
+      "v360": {
+        "central": [
+          "OC",
+          "EC",
+          "EI"
+        ],
+        "important": [
+          "OL",
+          "ASH",
+          "ACE",
+          "MR",
+          "IND"
+        ],
+        "route_modulators_text": "OA/EA/AN→analytics; OL/EI→PR/comercial; CD/MA→agencia/creación"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 7,
+      "family_name": "Psicología",
+      "pca_routes": [
+        "Asesor",
+        "Servicio al Cliente",
+        "Investigador",
+        "Gerencial"
+      ],
+      "competencies": {
+        "critical": [
+          8,
+          15,
+          7,
+          24
+        ],
+        "important": [
+          14,
+          17,
+          22
+        ],
+        "differentiators": [
+          6,
+          9
+        ]
+      },
+      "mil": {
+        "DC": "I/C",
+        "RZ": "C",
+        "VN": "CO/I",
+        "MT": "I",
+        "OR": "CO",
+        "note": "VN sube en investigación/psicometría; DC sube en investigación."
+      },
+      "personality_rule_text": "F frecuente en ayuda; T investigación/diagnóstico; E/I abiertos",
+      "v360": {
+        "central": [
+          "ASH",
+          "OH",
+          "EI",
+          "MI"
+        ],
+        "important": [
+          "OA",
+          "EA",
+          "IND"
+        ],
+        "route_modulators_text": "OA/EA→investigación; OL→organizacional; ABS→salud/neuro"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 8,
+      "family_name": "Medicina / Salud",
+      "pca_routes": [
+        "Técnico",
+        "Servicio al Cliente",
+        "Asesor",
+        "Investigador",
+        "Gerencial"
+      ],
+      "competencies": {
+        "critical": [
+          19,
+          22,
+          23
+        ],
+        "important": [
+          15,
+          17,
+          18
+        ],
+        "differentiators": [
+          6,
+          1
+        ]
+      },
+      "mil": {
+        "DC": "C",
+        "RZ": "I/C",
+        "VN": "I",
+        "MT": "I/C",
+        "OR": "CO/C",
+        "note": "OR crítica solo en subespecialidades espaciales/imagen."
+      },
+      "personality_rule_text": "S/J frecuentes; F cuidado; T diagnóstico; E/I abiertos",
+      "v360": {
+        "central": [
+          "ABS",
+          "OH"
+        ],
+        "important": [
+          "OA",
+          "EA",
+          "EI",
+          "MI",
+          "MR",
+          "IND"
+        ],
+        "route_modulators_text": "OR/ACE→imagen/cirugía; OL→gestión; OA/EA→investigación"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 9,
+      "family_name": "Derecho",
+      "pca_routes": [
+        "Investigador",
+        "Director",
+        "Gerencial",
+        "Asesor",
+        "Comercial Técnico"
+      ],
+      "competencies": {
+        "critical": [
+          22,
+          7,
+          4
+        ],
+        "important": [
+          14,
+          24,
+          6
+        ],
+        "differentiators": [
+          9,
+          5
+        ]
+      },
+      "mil": {
+        "DC": "C",
+        "RZ": "C",
+        "VN": "CO/I",
+        "MT": "I",
+        "OR": "CO",
+        "note": "VN sube en tributario/económico."
+      },
+      "personality_rule_text": "T análisis; F mediación; N estrategia; S procedimiento; J estructura",
+      "v360": {
+        "central": [
+          "ASH",
+          "OA"
+        ],
+        "important": [
+          "OL",
+          "EA",
+          "MR",
+          "IND"
+        ],
+        "route_modulators_text": "EI/MI→familia/social/DD.HH.; AN/EA→corporativo/tributario; OL→litigio/dirección"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 10,
+      "family_name": "Arquitectura",
+      "pca_routes": [
+        "Creativo-Lógico",
+        "Técnico",
+        "Jefe Técnico",
+        "Gerencial"
+      ],
+      "competencies": {
+        "critical": [
+          3,
+          22,
+          19,
+          23
+        ],
+        "important": [
+          13,
+          21,
+          18
+        ],
+        "differentiators": [
+          5,
+          6
+        ]
+      },
+      "mil": {
+        "DC": "I",
+        "RZ": "C",
+        "VN": "I",
+        "MT": "I",
+        "OR": "C",
+        "note": "OR + RZ críticas; VN importante."
+      },
+      "personality_rule_text": "N/S aportan de forma distinta; T; P creatividad / J ejecución",
+      "v360": {
+        "central": [
+          "ACE",
+          "OC",
+          "EC",
+          "OA"
+        ],
+        "important": [
+          "AST",
+          "EA",
+          "MR",
+          "IND"
+        ],
+        "route_modulators_text": "OL/EI→dirección de obra; PE/MA→estudio propio; CE/CD según fase"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 11,
+      "family_name": "Diseño / Industrias Creativas",
+      "pca_routes": [
+        "Creativo-Lógico",
+        "Asesor",
+        "Comercial Técnico"
+      ],
+      "competencies": {
+        "critical": [
+          3,
+          19
+        ],
+        "important": [
+          14,
+          7,
+          1
+        ],
+        "differentiators": [
+          9,
+          13
+        ]
+      },
+      "mil": {
+        "DC": "I/VAR",
+        "RZ": "I/VAR",
+        "VN": "CO",
+        "MT": "I",
+        "OR": "VAR/C",
+        "note": "OR crítica en diseño espacial/producto; no universal."
+      },
+      "personality_rule_text": "N/P frecuentes; E/I abiertos; T/F por disciplina",
+      "v360": {
+        "central": [
+          "ACE",
+          "OC",
+          "EC"
+        ],
+        "important": [
+          "CD",
+          "MA",
+          "IND"
+        ],
+        "route_modulators_text": "EI→comunicación/moda; EA→UX/producto; PE→freelance/estudio; PM→global"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 12,
+      "family_name": "Educación",
+      "pca_routes": [
+        "Asesor",
+        "Servicio al Cliente",
+        "Gerencial",
+        "Investigador"
+      ],
+      "competencies": {
+        "critical": [
+          7,
+          8,
+          15,
+          10
+        ],
+        "important": [
+          17,
+          18,
+          13
+        ],
+        "differentiators": [
+          9,
+          1
+        ]
+      },
+      "mil": {
+        "DC": "C",
+        "RZ": "C",
+        "VN": "CO",
+        "MT": "I",
+        "OR": "CO",
+        "note": "Sube la capacidad específica según materia enseñada."
+      },
+      "personality_rule_text": "F frecuente; E facilitación / I profundidad; S/N por materia; J aporta",
+      "v360": {
+        "central": [
+          "OH",
+          "EI",
+          "MI"
+        ],
+        "important": [
+          "ASH",
+          "MR",
+          "IND"
+        ],
+        "route_modulators_text": "OL→gestión; OA/EA→investigación; EC→metodologías creativas; PM→internacional"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 13,
+      "family_name": "Ciencias Sociales",
+      "pca_routes": [
+        "Investigador",
+        "Asesor",
+        "Creativo-Lógico",
+        "Gerencial"
+      ],
+      "competencies": {
+        "critical": [
+          14,
+          22,
+          7
+        ],
+        "important": [
+          15,
+          8,
+          19
+        ],
+        "differentiators": [
+          3,
+          9
+        ]
+      },
+      "mil": {
+        "DC": "C",
+        "RZ": "C",
+        "VN": "CO/I",
+        "MT": "I",
+        "OR": "CO",
+        "note": "VN importante en investigación cuantitativa."
+      },
+      "personality_rule_text": "N frecuente; F social; T investigación; E/I abiertos",
+      "v360": {
+        "central": [
+          "ASH",
+          "OA"
+        ],
+        "important": [
+          "MI",
+          "OH",
+          "EA",
+          "EI",
+          "IND"
+        ],
+        "route_modulators_text": "PM→RR.II.; OL→política/gestión; AN→demografía/economía social"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 14,
+      "family_name": "Formación Técnica Especializada",
+      "pca_routes": [
+        "Técnico",
+        "Jefe Técnico",
+        "Administrativo"
+      ],
+      "competencies": {
+        "critical": [
+          19,
+          20,
+          23
+        ],
+        "important": [
+          18,
+          13,
+          21
+        ],
+        "differentiators": [
+          1,
+          3
+        ]
+      },
+      "mil": {
+        "DC": "C",
+        "RZ": "I",
+        "VN": "VAR",
+        "MT": "VAR",
+        "OR": "VAR",
+        "note": "Capacidad específica depende del oficio."
+      },
+      "personality_rule_text": "S/T/J suelen sumar; E/I abierto",
+      "v360": {
+        "central": [
+          "ACT específico; EA y/o EC según oficio"
+        ],
+        "important": [
+          "AST",
+          "CE",
+          "MR",
+          "IND"
+        ],
+        "route_modulators_text": "MA/CD→independiente; PE→negocio propio; OL→supervisión"
+      },
+      "inherit_occupation": false,
+      "notes": "Familia = paraguas. Crear subfamilia/carrera para mayor precisión; ninguna ruta es excluyente."
+    },
+    {
+      "family_id": 15,
+      "family_name": "Ruta Alternativa / No universitaria",
+      "pca_routes": [
+        "Hereda la ocupación"
+      ],
+      "competencies": {
+        "critical": [],
+        "important": [],
+        "differentiators": []
+      },
+      "mil": {
+        "DC": "INHERIT",
+        "RZ": "INHERIT",
+        "VN": "INHERIT",
+        "MT": "INHERIT",
+        "OR": "INHERIT",
+        "note": "Hereda la ocupación/ruta elegida."
+      },
+      "personality_rule_text": "Hereda la ocupación",
+      "v360": {
+        "central": [
+          "FORM_CONT + ALT_ROUTE + RANK + ACT + IND"
+        ],
+        "important": [
+          "No calcular Fit como 'no estudiar'"
+        ],
+        "route_modulators_text": "PE/MA/CD y Proyecto de Vida definen modalidad; siempre hereda requerimientos de la ocupación"
+      },
+      "inherit_occupation": true,
+      "notes": "No calcular 'No estudiar' como carrera; heredar ocupación."
+    }
+  ]
+}
