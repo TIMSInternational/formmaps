@@ -40,6 +40,23 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
     }
 
     [Fact]
+    public async Task LastMessageAt_is_iso_z_with_millisecond_precision()
+    {
+        var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();
+        await _fixture.SeedMessageAsync(conversationId, senderId: otherId, readAt: null);
+        await UpdateConversationPreviewAsync(conversationId, "hi", new DateTime(2026, 1, 1, 12, 34, 56, 789, DateTimeKind.Utc));
+
+        var results = await Repo().ListConversationsAsync(_fixture.Ctx(userId), userId);
+
+        // ISO-Z, not +00:00 and not a bare local time -- the column is timestamp-without-tz, so a raw
+        // DateTime would come back Kind.Unspecified and browsers would shift it by their UTC offset.
+        var conv = Assert.Single(results);
+        Assert.Equal("2026-01-01T12:34:56.789Z", conv.LastMessageAt);
+        Assert.EndsWith("Z", conv.LastMessageAt);
+        Assert.DoesNotContain("+00:00", conv.LastMessageAt);
+    }
+
+    [Fact]
     public async Task Lists_conversations_with_both_participantA_and_B_assignment_branches()
     {
         // Deterministically test both CASE-WHEN branches by forcing userId into A slot in one conversation and B slot in another

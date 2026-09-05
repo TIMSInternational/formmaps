@@ -1,7 +1,15 @@
+using System.Text;
+using System.Text.Json;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Messaging;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Messaging;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.AspNetCore.SignalR.Protocol;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Npgsql;
 
 namespace FormMaps.IntegrationTests.Messaging;
@@ -14,6 +22,9 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     public MessagesSendMessageTests(MessagingDatabaseFixture fixture) => _fixture = fixture;
     public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString); return Task.CompletedTask; }
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+
+    // Legacy's Prisma DateTime -> JSON wire format: "2026-01-01T00:00:00.000Z" (ms precision, Z marker).
+    private const string IsoZPattern = @"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$";
 
     private MessagesRepository Repo() => new(
         new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System,
@@ -32,6 +43,23 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
     }
 
     [Fact]
+    public async Task Sent_message_createdDate_is_iso_z_and_round_trips_the_stored_instant()
+    {
+        var (userId, _, conversationId) = await _fixture.SeedConversationAsync();
+
+        var result = await Repo().SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+
+        // ISO-Z, not +00:00 and not a bare local time -- this is the value the web's optimistic echo is
+        // replaced with, so a local-time string would make the sent message jump by the viewer's offset.
+        var createdDate = result.Message!.CreatedDate;
+        Assert.Matches(IsoZPattern, createdDate);
+        Assert.DoesNotContain("+00:00", createdDate);
+        Assert.Null(result.Message.ReadAt);
+        var (_, _, updatedAt) = await GetMessageAsync(result.Message.Id);
+        Assert.Equal(DateTime.SpecifyKind(updatedAt, DateTimeKind.Utc), DateTime.Parse(createdDate, null, System.Globalization.DateTimeStyles.AdjustToUniversal));
+    }
+
+    [Fact]
     public async Task Notifies_the_recipient_via_the_realtime_notifier_after_commit()
     {
         var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();
@@ -45,6 +73,49 @@ public sealed class MessagesSendMessageTests : IClassFixture<MessagingDatabaseFi
         Assert.Equal(otherId, notifier.LastRecipientUserId);
         var payloadId = notifier.LastPayload!.GetType().GetProperty("id")!.GetValue(notifier.LastPayload) as string;
         Assert.Equal(result.Message!.Id, payloadId);
+    }
+
+    [Fact]
+    public async Task Realtime_payload_createdDate_is_iso_z_matching_the_rest_response()
+    {
+        var (userId, _, conversationId) = await _fixture.SeedConversationAsync();
+        var notifier = new CapturingRealtimeNotifier();
+        var repo = new MessagesRepository(
+            new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System, notifier);
+
+        var result = await repo.SendMessageAsync(_fixture.Ctx(userId), userId, conversationId, "hello there");
+
+        // SignalRMessagesNotifier hands this object to hubContext.Clients.Group(...).SendAsync, which the
+        // hub's JSON protocol serializes as the "messageReceived" invocation frame -- so assert on that
+        // frame, produced by the protocol the app actually registers (AddSignalR in
+        // FormMaps.Api.DependencyInjection, resolved through the same IHubProtocolResolver the hub uses),
+        // not on the anonymous object's property. A raw DateTime (Kind.Unspecified) would go out as a bare
+        // local time and the recipient's browser would render it shifted by its UTC offset, unlike the
+        // poll that follows; a converter registered on the hub protocol would surface here too.
+        var frame = SerializeMessageReceivedFrame(notifier.LastPayload!);
+        using var doc = JsonDocument.Parse(frame);
+        var argument = doc.RootElement.GetProperty("arguments")[0];
+        var createdDate = argument.GetProperty("createdDate");
+        Assert.Equal(JsonValueKind.String, createdDate.ValueKind);
+        Assert.Matches(IsoZPattern, createdDate.GetString());
+        Assert.Equal(result.Message!.CreatedDate, createdDate.GetString());
+        Assert.DoesNotContain("+00:00", frame);
+        Assert.Equal(result.Message.Id, argument.GetProperty("id").GetString());
+    }
+
+    /// <summary>
+    /// Serializes <paramref name="payload"/> exactly as the hub sends it to a connected client: the JSON hub
+    /// protocol registered by the app (with its options -- a naming policy or converter added later
+    /// would show up here), wrapped in the "messageReceived" invocation frame. The trailing 0x1E record
+    /// separator is stripped so the frame parses as a plain JSON object.
+    /// </summary>
+    private static string SerializeMessageReceivedFrame(object payload)
+    {
+        using var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder => builder.UseEnvironment(Environments.Development));
+        var protocol = factory.Services.GetRequiredService<IHubProtocolResolver>().GetProtocol("json", null)!;
+        var bytes = protocol.GetMessageBytes(new InvocationMessage("messageReceived", [payload]));
+        return Encoding.UTF8.GetString(bytes.Span).TrimEnd('\u001e');
     }
 
     [Fact]

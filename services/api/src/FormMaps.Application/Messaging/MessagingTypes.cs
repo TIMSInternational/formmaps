@@ -1,14 +1,18 @@
 namespace FormMaps.Application.Messaging;
 
+// Timestamps are pre-formatted ISO-8601 strings with the Z marker ("2026-01-01T00:00:00.000Z"), not
+// DateTime: the columns are timestamp-without-tz so a DateTime would arrive Kind.Unspecified and
+// System.Text.Json would emit a bare local time that browsers shift by the viewer's UTC offset. The
+// string is the wire format legacy (Prisma DateTime -> JSON) produced; MessagesRepository formats it.
 public sealed record ContactRow(string Id, string? Name, string Email, string RoleName);
 
 public sealed record ConversationSummary(
     string Id, string OtherParticipantId, string? OtherParticipantName, string OtherParticipantEmail,
-    string? LastMessagePreview, DateTime? LastMessageAt, int UnreadCount);
+    string? LastMessagePreview, string? LastMessageAt, int UnreadCount);
 
 public sealed record MessageRow(
     string Id, string ConversationId, string SenderId, string? SenderName, string Content,
-    DateTime? ReadAt, DateTime CreatedDate);
+    string? ReadAt, string CreatedDate);
 
 public sealed record ConversationMessagesPage(
     IReadOnlyList<MessageRow> Data, int Total, int Page, int Limit, int TotalPages);
