@@ -50,7 +50,8 @@ public sealed record StudentCoursePlanResult(
 /// One enrollment. IsGraded distinguishes a completed-grade row (emits a <c>grade</c> key, possibly null) from a
 /// plan row (NO grade key). Order in the list is graded-first then plan (the legacy spread order). GradeLevel is
 /// NULLABLE: a graded row whose academic-year string fails JS parseInt propagates NaN → JSON null (legacy
-/// Math.max(9, x - NaN) = NaN → null); plan rows always carry a real level (user.gradeLevel || 11).
+/// Math.max(9, x - NaN) = NaN → null); plan rows always carry a real level — the grade the row was PLANNED for
+/// (#122: <c>p.gradeLevel ?? user.gradeLevel ?? 11</c>), NOT the student's current grade.
 /// </summary>
 public sealed record CoursePlanEnrollment(
     string Id,
