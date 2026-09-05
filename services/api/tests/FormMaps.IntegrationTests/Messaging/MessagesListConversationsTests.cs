@@ -46,7 +46,7 @@ public sealed class MessagesListConversationsTests : IClassFixture<MessagingData
         await _fixture.SeedMessageAsync(conversationId, senderId: otherId, readAt: null);
         await UpdateConversationPreviewAsync(conversationId, "hi", new DateTime(2026, 1, 1, 12, 34, 56, 789, DateTimeKind.Utc));
 
-        var results = await Repo().ListConversationsAsync(_fixture.Ctx(userId), userId);
+        var results = await Repo().ListConversationsAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId);
 
         // ISO-Z, not +00:00 and not a bare local time -- the column is timestamp-without-tz, so a raw
         // DateTime would come back Kind.Unspecified and browsers would shift it by their UTC offset.

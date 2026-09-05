@@ -56,9 +56,10 @@ public sealed class GraduationPlanRepositoryTests(GraduationPlanDatabaseFixture 
         Assert.Contains("student_graduation_targets", fixture.AppliedPolicyTables);
         Assert.Contains("notifications", fixture.AppliedPolicyTables);
 
-        // #135: policied in production by pilot.sql, not vendored here. Named so a future reader does not
-        // mistake its absence for "unpolicied in production".
-        Assert.DoesNotContain("student_course_plans", fixture.AppliedPolicyTables);
+        // #175 vendored pilot.sql, so student_course_plans is policied HERE too now, not only in
+        // production. This assertion was DoesNotContain when this lane was written against a main
+        // where pilot.sql was still unvendored (#135); the two landed together, so it inverts.
+        Assert.Contains("student_course_plans", fixture.AppliedPolicyTables);
 
         // Global catalogs — unpolicied here AND in production.
         Assert.DoesNotContain("courses", fixture.AppliedPolicyTables);

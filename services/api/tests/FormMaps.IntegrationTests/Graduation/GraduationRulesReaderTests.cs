@@ -45,11 +45,12 @@ public sealed class GraduationRulesReaderTests(GraduationDatabaseFixture fixture
         Assert.False(reader.GetBoolean(0));
         Assert.False(reader.GetBoolean(1));
 
-        // school_courses is absent on purpose — policied in production by pilot.sql, not vendored here (#135).
+        // school_courses is present because #175 vendored pilot.sql; it was absent when this lane was
+        // written against a main where that file was still unvendored (#135). The two landed together.
         Assert.Equal(
-            new[] { "academic_years", "category_requirements", "graduation_rule_sets", "special_requirements", "student_grades", "users" },
+            new[] { "academic_years", "category_requirements", "graduation_rule_sets", "school_courses", "special_requirements", "student_grades", "users" },
             fixture.AppliedPolicyTables.OrderBy(t => t, StringComparer.Ordinal).ToArray());
-        Assert.DoesNotContain("school_courses", fixture.AppliedPolicyTables);
+        Assert.Contains("school_courses", fixture.AppliedPolicyTables);
     }
 
     // ---------------------------------------------------------------- GET /graduation/rules

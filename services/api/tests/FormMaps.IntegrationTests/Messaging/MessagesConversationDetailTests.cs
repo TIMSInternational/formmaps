@@ -74,7 +74,7 @@ public sealed class MessagesConversationDetailTests : IClassFixture<MessagingDat
         var alreadyReadAt = new DateTime(2026, 1, 1, 12, 34, 56, 789, DateTimeKind.Utc);
         await _fixture.SeedMessageAsync(conversationId, otherId, readAt: alreadyReadAt);
 
-        var result = await Repo().GetConversationMessagesAsync(_fixture.Ctx(userId), userId, conversationId, page: 1, limit: 50);
+        var result = await Repo().GetConversationMessagesAsync(_fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId), userId, conversationId, page: 1, limit: 50);
 
         // ISO-Z, not +00:00 and not a bare local time (CalendarReaderTests style). The row that was
         // unread at read time still reports readAt == null (legacy reads before marking), while the
