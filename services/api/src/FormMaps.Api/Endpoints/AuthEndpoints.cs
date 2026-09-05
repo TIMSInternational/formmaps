@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using FormMaps.Api.Auth;
 using FormMaps.Api.Security;
+using FormMaps.Application.Assessments;
 using FormMaps.Application.Audit;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Email;
@@ -407,8 +408,17 @@ public static class AuthEndpoints
         var decision = guard.RequireIdentity(context);
         if (!decision.Allowed) return Deny(decision);
 
-        if (body is null || string.IsNullOrWhiteSpace(body.UserId) || string.IsNullOrWhiteSpace(body.NewEmail) || !LooksLikeEmail(body.NewEmail))
+        // Only an ABSENT newEmail is a missing field here: a present-but-empty/blank one is a zod
+        // "Invalid email" in legacy (z.string().email() runs on "" and "  " alike), so it must fall
+        // through to the check below rather than answer this aggregate message.
+        if (body is null || string.IsNullOrWhiteSpace(body.UserId) || body.NewEmail is null)
             return BadRequest("userId and a valid newEmail are required");
+
+        // Legacy's changeEmailSchema has `newEmail: z.string().email()` and surfaces errors[0].message,
+        // i.e. zod's default "Invalid email". Checked on the RAW body value, as zod does -- a padded
+        // "  x@y.com  " is a 400 here, not something NormalizeEmail below gets to rescue.
+        if (!ExternalEmailNormalization.IsValidZodEmail(body.NewEmail))
+            return BadRequest("Invalid email");
 
         // Item 2: newEmail must be pre-normalized before calling ChangeEmailAsync -- the repository
         // does not normalize it itself (Task 8's interface doc).
@@ -618,7 +628,9 @@ public static class AuthEndpoints
     private static IResult ForgotPasswordAsync(
         ForgotPasswordRequest? body, IServiceScopeFactory scopeFactory)
     {
-        if (body is null || string.IsNullOrWhiteSpace(body.Email) || !LooksLikeEmail(body.Email))
+        // forgotPasswordSchema is `email: z.string().email()`; the route answers a flat "Invalid email"
+        // for any parse failure (not errors[0].message), checked on the raw value before normalization.
+        if (body is null || !ExternalEmailNormalization.IsValidZodEmail(body.Email))
             return BadRequest("Invalid email");
 
         // Item 7: read against the real legacy handler (routes/auth.ts POST /forgot-password +
@@ -720,13 +732,9 @@ public static class AuthEndpoints
     /// <summary>Port of legacy lib/normalizeEmail.ts::normalizeEmail -- trim + lowercase.</summary>
     private static string NormalizeEmail(string email) => email.Trim().ToLowerInvariant();
 
-    /// <summary>
-    /// Minimal shape check standing in for zod's z.string().email() -- this task's coverage list
-    /// does not pin zod's exact per-field error text, only status codes/legacy override messages, so
-    /// this is a reasonable approximation (documented in task-12-report.md) rather than a full RFC
-    /// 5322 validator.
-    /// </summary>
-    private static bool LooksLikeEmail(string value) => value.Contains('@') && value.IndexOf('@') > 0 && value.IndexOf('@') < value.Length - 1;
+    // Email shape checks (change-email, forgot-password) go through the shared zod v3 port,
+    // ExternalEmailNormalization.IsValidZodEmail -- the former LooksLikeEmail ("has an interior '@'")
+    // accepted "a@b", "john doe@x" and "a@b c", all of which legacy's z.string().email() rejects.
 
     /// <summary>Port of legacy authService.ts's hashResetToken: SHA-256 hex digest of the raw token.</summary>
     private static string HashResetToken(string rawToken) => Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(rawToken)));
