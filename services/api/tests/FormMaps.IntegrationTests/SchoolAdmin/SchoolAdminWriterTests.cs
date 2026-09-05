@@ -20,20 +20,27 @@ public sealed class SchoolAdminWriterTests : IClassFixture<SchoolAdminDatabaseFi
     private const string Actor = "admin-1";
 
     private readonly SchoolAdminDatabaseFixture _fixture;
+
+    /// <summary>Restricted login (NOSUPERUSER NOBYPASSRLS) — the writer under test runs on this.</summary>
     private NpgsqlDataSource _dataSource = null!;
+
+    /// <summary>Container superuser — seeding and assertions ONLY.</summary>
+    private NpgsqlDataSource _adminDataSource = null!;
 
     public SchoolAdminWriterTests(SchoolAdminDatabaseFixture fixture) => _fixture = fixture;
 
     public async Task InitializeAsync()
     {
-        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            """TRUNCATE "school_assessment_settings","assessment_schedules" """, conn);
-        await cmd.ExecuteNonQueryAsync();
+        _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
+        _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
+        await _fixture.TruncateAsync("school_assessment_settings", "assessment_schedules");
     }
 
-    public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+    public async Task DisposeAsync()
+    {
+        await _dataSource.DisposeAsync();
+        await _adminDataSource.DisposeAsync();
+    }
 
     // ---------------------------------------------------------------- config
 
@@ -144,7 +151,7 @@ public sealed class SchoolAdminWriterTests : IClassFixture<SchoolAdminDatabaseFi
         Assert.Equal("creator-1", row.CreatedBy);       // preserved
         Assert.Equal("editor-9", row.UpdatedBy);        // set on update
 
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand("""SELECT COUNT(*) FROM "assessment_schedules" """, conn);
         Assert.Equal(1L, (long)(await cmd.ExecuteScalarAsync())!); // no duplicate row
     }
@@ -180,7 +187,7 @@ public sealed class SchoolAdminWriterTests : IClassFixture<SchoolAdminDatabaseFi
 
     private async Task<(string? CreatedBy, string? UpdatedBy)> ActorsAsync()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand(
             """SELECT "createdBy","updatedBy" FROM "school_assessment_settings" WHERE "schoolId"=@s""", conn);
         cmd.Parameters.AddWithValue("s", School);
@@ -191,7 +198,7 @@ public sealed class SchoolAdminWriterTests : IClassFixture<SchoolAdminDatabaseFi
 
     private async Task SeedSettingsAsync(string? windowStart, string retakePolicy, int reminderDaysBefore, string? aiWeightsJson)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand(
             """
             INSERT INTO "school_assessment_settings"

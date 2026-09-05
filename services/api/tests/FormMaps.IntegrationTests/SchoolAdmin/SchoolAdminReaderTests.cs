@@ -18,28 +18,36 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     private const string OtherSchool = "school-2";
 
     private readonly SchoolAdminDatabaseFixture _fixture;
+
+    /// <summary>Restricted login (NOSUPERUSER NOBYPASSRLS) — the reader under test runs on this.</summary>
     private NpgsqlDataSource _dataSource = null!;
+
+    /// <summary>Container superuser — seeding and assertions ONLY.</summary>
+    private NpgsqlDataSource _adminDataSource = null!;
 
     public SchoolAdminReaderTests(SchoolAdminDatabaseFixture fixture) => _fixture = fixture;
 
     public async Task InitializeAsync()
     {
-        _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
-        await using var conn = await _dataSource.OpenConnectionAsync();
-        await using var cmd = new NpgsqlCommand(
-            """TRUNCATE "users","evaluation_groups","pca_evaluations","pca_exam_sessions","lia_assessment_sessions","personality_assessment_sessions","school_assessment_settings","assessment_schedules" """,
-            conn);
-        await cmd.ExecuteNonQueryAsync();
+        _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString);
+        _adminDataSource = NpgsqlDataSource.Create(_fixture.AdminConnectionString);
+        await _fixture.TruncateAsync(
+            "users", "evaluation_groups", "pca_evaluations", "pca_exam_sessions", "lia_assessment_sessions",
+            "personality_assessment_sessions", "school_assessment_settings", "assessment_schedules");
     }
 
-    public async Task DisposeAsync() => await _dataSource.DisposeAsync();
+    public async Task DisposeAsync()
+    {
+        await _dataSource.DisposeAsync();
+        await _adminDataSource.DisposeAsync();
+    }
 
     // ---------------------------------------------------------------- scope rail
 
     [Fact]
     public async Task ScopeResolver_returns_school_for_a_user_with_one()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "admin-1", School, role: "SchoolAdmin");
 
         Assert.Equal(School, await Resolver().ResolveSchoolIdAsync(Ctx("admin-1")));
@@ -48,7 +56,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task ScopeResolver_returns_null_for_missing_user_or_null_school()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "no-school", schoolId: null, role: "SchoolAdmin");
 
         Assert.Null(await Resolver().ResolveSchoolIdAsync(Ctx("no-school")));  // null schoolId
@@ -60,7 +68,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Overview_aggregates_only_students_with_groups_active_only()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "s-a", School);
         await SeedUserAsync(conn, "s-b", School);
         await SeedUserAsync(conn, "s-c", School, isActive: false);   // inactive -> excluded from studentIds
@@ -86,7 +94,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Overview_self_not_flagged_when_self_group_incomplete()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "s-a", School);
         await SeedGroupAsync(conn, "s-a", "self", isCompleted: false);
 
@@ -99,7 +107,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Results_paginates_orders_by_name_and_derives_fields()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "u-charlie", School, name: "Charlie", gradeLevel: 11);
         await SeedUserAsync(conn, "u-alice", School, name: "Alice", gradeLevel: 12);
         await SeedUserAsync(conn, "u-bob", School, name: "Bob", gradeLevel: null, isActive: false); // still listed (no isActive)
@@ -131,7 +139,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Results_averageScore_rounds_half_away_from_zero()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "u-1", School, name: "One");
         await SeedExamAsync(conn, "u-1", 85.5);
         await SeedExamAsync(conn, "u-1", 85.0); // mean 85.25 -> *10 = 852.5 -> AwayFromZero 853 -> 85.3 (banker's would be 85.2)
@@ -143,7 +151,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Results_search_and_gradeLevel_filter()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "u-1", School, name: "Alice Ng", email: "alice@e.st", gradeLevel: 11);
         await SeedUserAsync(conn, "u-2", School, name: "Bob Lee", email: "bob@e.st", gradeLevel: 12);
 
@@ -159,7 +167,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task PcaStatus_null_for_missing_inactive_or_cross_school()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "in-school", School);
         await SeedUserAsync(conn, "inactive", School, isActive: false);
         await SeedUserAsync(conn, "elsewhere", OtherSchool);
@@ -172,7 +180,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task PcaStatus_completed_reflects_a_completed_pca_evaluation()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "with", School);
         await SeedUserAsync(conn, "without", School);
         await SeedPcaEvalAsync(conn, "with", isCompleted: true);
@@ -185,7 +193,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task PcaStatus_super_admin_is_scoped_to_own_db_school_not_the_token_claim()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         // Super-admin's OWN users.schoolId = School (A); their token claim says OtherSchool (B).
         await SeedUserAsync(conn, "super-1", School, role: "Super Admin");
         await SeedUserAsync(conn, "a-student", School);        // own school
@@ -207,7 +215,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task StudentReport_super_admin_is_scoped_to_own_db_school_not_the_token_claim()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         // Super-admin's OWN users.schoolId = School (A); their token claim says OtherSchool (B).
         await SeedUserAsync(conn, "super-1", School, role: "Super Admin");
         await SeedUserAsync(conn, "a-student", School, name: "Ana");     // own school
@@ -229,7 +237,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Both_role_spellings_are_counted_and_listed()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "upper", School, role: "Student", name: "Upper");
         await SeedUserAsync(conn, "lower", School, role: "student", name: "Lower"); // lowercase spelling
         await SeedGroupAsync(conn, "upper", "self", isCompleted: true);
@@ -264,7 +272,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Config_echoes_stored_values_and_falls_back_on_empty_string()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         // empty windowStart -> falsy -> default; windowEnd stored; custom aiWeights passthrough; allowSelfSchedule false verbatim.
         await SeedSettingsAsync(conn, School, windowStart: "", windowEnd: "2027-01-15", retakePolicy: "none",
             allowSelfSchedule: false, reminderDaysBefore: 3, aiWeightsJson: """{"academic":0.5,"social":0.25,"career":0.25}""");
@@ -281,7 +289,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Config_falls_back_to_default_weights_on_invalid_json()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedSettingsAsync(conn, School, windowStart: "2026-03-01", windowEnd: "2026-06-30", retakePolicy: "none",
             allowSelfSchedule: true, reminderDaysBefore: 7, aiWeightsJson: "not-json{");
 
@@ -294,7 +302,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Status_counts_all_students_and_pca_existence_ignoring_isCompleted()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "a", School);
         await SeedUserAsync(conn, "b", School, isActive: false); // counted (no isActive filter)
         await SeedUserAsync(conn, "c", School);
@@ -314,7 +322,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Status_completionRate_rounds_half_away_from_zero()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         for (var i = 0; i < 32; i++)
         {
             await SeedUserAsync(conn, $"u-{i}", School);
@@ -331,7 +339,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Schedule_returns_active_full_rows_with_isoZ()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedScheduleAsync(conn, "sch-1", School, 11, "PCA",
             new DateTime(2026, 3, 1, 8, 0, 0), new DateTime(2026, 6, 30, 17, 0, 0), isActive: true);
         await SeedScheduleAsync(conn, "sch-2", School, 12, "MIL",
@@ -358,7 +366,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task StudentReport_parity_lia_and_thresholds_make_overall_done()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "stu-1", School, name: "Ana", email: "ana@e.st", gradeLevel: 11);
         await SeedLiaAsync(conn, "stu-1", "completed");                        // parity -> all 5 subtests
         await SeedGroupAsync(conn, "stu-1", "self", isCompleted: true);
@@ -389,7 +397,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task StudentReport_legacyUnlockGrandfathered_is_overall_done_without_personality()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "stu-1", School, name: "Ana", email: "ana@e.st", gradeLevel: 11, legacyUnlockGrandfathered: true);
         await SeedLiaAsync(conn, "stu-1", "completed");
         await SeedGroupAsync(conn, "stu-1", "self", isCompleted: true);
@@ -407,7 +415,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task StudentReport_averageScore_rounds_away_from_zero_and_sessions_desc()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "stu-1", School);
         await SeedExamDetailAsync(conn, "stu-1", "PatternRecognition", "Completed", isCompleted: true,
             scorePercentage: 85.2, startTime: new DateTime(2026, 1, 1));
@@ -425,7 +433,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task StudentReport_cross_school_or_missing_returns_null()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "other", OtherSchool);
 
         Assert.Null(await Reader().GetStudentReportAsync(Ctx("admin-1"), School, "other"));  // cross-school
@@ -437,7 +445,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Export_has_exact_header_csvSafe_and_no_isActive_filter()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "s-1", School, name: "=SUM(A1)", email: "ok@e.st", gradeLevel: 11);   // formula-leading name
         await SeedUserAsync(conn, "s-2", School, name: "Bob", email: "bob@e.st", isActive: false);      // inactive -> still exported
         await SeedExamDetailAsync(conn, "s-1", "PatternRecognition", "Completed", isCompleted: true, scorePercentage: 85.2);
@@ -462,7 +470,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [InlineData("\r")]
     public async Task Export_csvSafe_prefixes_every_formula_leading_char(string trigger)
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         var name = trigger + "danger";
         await SeedUserAsync(conn, "s-1", School, name: name, email: "ok@e.st");
 
@@ -477,7 +485,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Pipeline_status_precedence_lia_overlay_states_and_filters()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "a", School, name: "Ana", gradeLevel: 11);
         await SeedUserAsync(conn, "b", School, name: "Bob", gradeLevel: 11);
         await SeedUserAsync(conn, "c", School, name: "Cy", gradeLevel: 12);
@@ -514,7 +522,7 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     [Fact]
     public async Task Pipeline_active_lia_marks_in_progress_unless_completed()
     {
-        await using var conn = await _dataSource.OpenConnectionAsync();
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUserAsync(conn, "a", School, gradeLevel: 11);
         await SeedLiaAsync(conn, "a", "in_progress");   // active run -> all 5 InProgress
 

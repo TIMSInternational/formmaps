@@ -1,8 +1,9 @@
 -- Schema-only harness DDL for the school-admin READS slice (FM-DOTNET, sub-slice 1). Hand-authored from
 -- prisma/schema.prisma with only the columns these six reads touch: users (scoping + student roster),
 -- evaluation_groups (overview), pca_evaluations (existence gates), pca_exam_sessions (Float scorePercentage),
--- school_assessment_settings (config), assessment_schedules (full-row list). NO foreign keys / RLS policies
--- (schema-only). The fixture pins a NON-UTC server timezone so ISO-Z timestamp emission is caught.
+-- school_assessment_settings (config), assessment_schedules (full-row list). NO foreign keys. RLS policies are
+-- NOT in this file: SchoolAdminDatabaseFixture applies the vendored production policies (TestSupport/Rls) on top
+-- (formmaps#125). The fixture pins a NON-UTC server timezone so ISO-Z timestamp emission is caught.
 
 CREATE TABLE "users" (
     "id" TEXT NOT NULL,
@@ -44,11 +45,14 @@ CREATE TABLE "schools" (
     CONSTRAINT "schools_pkey" PRIMARY KEY ("id")
 );
 
+-- parentUserId is not read here; it exists because 009-parent-links.sql's parent_own_links policies name it and the
+-- production policies are applied to this fixture (formmaps#125).
 CREATE TABLE "student_parent_links" (
     "id" TEXT NOT NULL,
     "studentId" TEXT NOT NULL,
     "parentEmail" TEXT NOT NULL,
     "parentName" TEXT,
+    "parentUserId" TEXT,
     "relation" TEXT,
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     CONSTRAINT "student_parent_links_pkey" PRIMARY KEY ("id")
