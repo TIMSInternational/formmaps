@@ -316,3 +316,200 @@ describe("next.config rewrites -- lookahead guards against param-over-literal sh
     expect(winner!.destination).toBe(`${DOTNET}/api/question360/:id`);
   });
 });
+
+/**
+ * Wave 3 (#109 / #114 / #120) -- mapped-but-unreachable .NET groups.
+ *
+ * Three correct .NET code paths had no rewrite at all, so the /api/:path* catch-all handed every
+ * request to Node and the .NET handler never ran -- the same defect class as #98:
+ *
+ *   #109  GET /api/v1/context/current (+ /protected-smoke)        RequestContextEndpoints
+ *   #109  GET /api/v1/assessments/me/timeline, /me/timeline/stats  AssessmentTimelineEndpoints
+ *   #114  PUT /api/v1/school-admin/users/:userId/role              SchoolUsersEndpoints.PutRoleAsync
+ *
+ * The timeline pair is the nasty one: Node ALSO answers 401 there, so a status-only smoke test
+ * passes forever while the .NET handler has never run. And the tempting fix -- an
+ * /api/v1/assessments/:path* prefix -- would steal live Node routes (assessmentProgressService.ts
+ * calls /api/v1/assessments/{id}/report today) and POST /me/timeline/export, which has no .NET
+ * twin. Hence the NODE_ONLY negative controls below, in BOTH flag states.
+ *
+ * /role is different: the twin already existed, it was simply missing from the school-users block,
+ * so flipping FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET moved /users and /grade-level but left /role on
+ * Node -- a half-moved cluster. It rides the existing flag, not a new one.
+ */
+describe("next.config rewrites -- mapped-but-unreachable .NET groups (#109 / #114 / #120)", () => {
+  const ROLE = "/api/v1/school-admin/users/u_1/role";
+  const ROLE_SOURCE = "/api/v1/school-admin/users/:userId/role";
+  const TIMELINE = "/api/v1/assessments/me/timeline";
+  const TIMELINE_STATS = "/api/v1/assessments/me/timeline/stats";
+  const CONTEXT_CURRENT = "/api/v1/context/current";
+  const CONTEXT_SMOKE = "/api/v1/context/protected-smoke";
+  // Node-only neighbours with no .NET twin. A prefix rule on either group would 404 all of these.
+  const ASSESSMENTS_NODE_ONLY = [
+    "/api/v1/assessments/me/timeline/export",
+    "/api/v1/assessments/asm_1/report",
+    "/api/v1/assessments/asm_1",
+  ];
+  const UNRELATED = "/api/v1/something/nobody/rewrote";
+
+  // Every flag asserted below is explicitly undefined per case (not merely omitted): loadAfterFiles
+  // clones the ambient process.env, so a flag exported in the shell would leak in and flip a control.
+  function env(on: Record<string, string> = {}): Record<string, string | undefined> {
+    return {
+      FORMMAPS_DOTNET_API_BASE_URL: DOTNET,
+      FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET: undefined,
+      FORMMAPS_ROUTE_ASSESSMENT_TIMELINE_TO_DOTNET: undefined,
+      FORMMAPS_ROUTE_REQUEST_CONTEXT_TO_DOTNET: undefined,
+      ...on,
+    };
+  }
+  const SCHOOL_USERS_ON = env({ FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET: "1" });
+  const TIMELINE_ON = env({ FORMMAPS_ROUTE_ASSESSMENT_TIMELINE_TO_DOTNET: "1" });
+  const CONTEXT_ON = env({ FORMMAPS_ROUTE_REQUEST_CONTEXT_TO_DOTNET: "1" });
+  const ALL_OFF = env();
+
+  function expectNode(afterFiles: Rewrite[], path: string) {
+    const winner = winningRule(afterFiles, path);
+    expect(winner).toBeDefined();
+    expect(winner!.source).toBe(CATCH_ALL);
+    expect(winner!.destination).not.toContain("dotnet.example.test");
+  }
+
+  function expectDotnet(afterFiles: Rewrite[], path: string, destinationPath: string) {
+    const winner = winningRule(afterFiles, path);
+    expect(winner).toBeDefined();
+    expect(winner!.destination).toBe(`${DOTNET}${destinationPath}`);
+    // Every rule that owns a moved path sits BEFORE the catch-all, or it would never match.
+    expect(afterFiles.indexOf(winner!)).toBeLessThan(afterFiles.findIndex((r) => r.source === CATCH_ALL));
+  }
+
+  // ---------------------------------------------------------------- #114 / #120: /role
+
+  it("#114: SCHOOL_USERS on -- /users/:userId/role moves WITH the rest of the cluster", async () => {
+    const afterFiles = await loadAfterFiles(SCHOOL_USERS_ON);
+
+    expect(afterFiles).toContainEqual({ source: ROLE_SOURCE, destination: `${DOTNET}${ROLE_SOURCE}` });
+    expectDotnet(afterFiles, ROLE, ROLE_SOURCE);
+    // The cluster it must co-flip with -- pinned so /role can never be half-moved again.
+    expectDotnet(afterFiles, "/api/v1/school-admin/users/u_1/grade-level", "/api/v1/school-admin/users/:userId/grade-level");
+    expectDotnet(afterFiles, "/api/v1/school-admin/users", "/api/v1/school-admin/users");
+  });
+
+  it("#114: SCHOOL_USERS off -- /role stays on Node with the rest of the cluster", async () => {
+    const afterFiles = await loadAfterFiles(ALL_OFF);
+
+    expect(afterFiles.some((r) => r.source === ROLE_SOURCE)).toBe(false);
+    expectNode(afterFiles, ROLE);
+    expectNode(afterFiles, "/api/v1/school-admin/users/u_1/grade-level");
+  });
+
+  // ---------------------------------------------------------------- #109: assessment timeline
+
+  it("#109: ASSESSMENT_TIMELINE on -- /me/timeline and /me/timeline/stats reach .NET", async () => {
+    const afterFiles = await loadAfterFiles(TIMELINE_ON);
+
+    expect(afterFiles).toContainEqual({ source: TIMELINE, destination: `${DOTNET}${TIMELINE}` });
+    expect(afterFiles).toContainEqual({ source: TIMELINE_STATS, destination: `${DOTNET}${TIMELINE_STATS}` });
+    expectDotnet(afterFiles, TIMELINE, TIMELINE);
+    expectDotnet(afterFiles, TIMELINE_STATS, TIMELINE_STATS);
+  });
+
+  it("#109: ASSESSMENT_TIMELINE off -- both timeline paths stay on Node", async () => {
+    const afterFiles = await loadAfterFiles(ALL_OFF);
+
+    expect(afterFiles.some((r) => r.source === TIMELINE)).toBe(false);
+    expect(afterFiles.some((r) => r.source === TIMELINE_STATS)).toBe(false);
+    expectNode(afterFiles, TIMELINE);
+    expectNode(afterFiles, TIMELINE_STATS);
+  });
+
+  // NEGATIVE CONTROL. The #109 trap: an /api/v1/assessments/:path* prefix would pass both cases
+  // above and 404 every one of these in production. They must stay on Node in BOTH flag states.
+  it.each([
+    ["flag on", TIMELINE_ON],
+    ["flag off", ALL_OFF],
+  ])("#109: never rewrites the Node-only /api/v1/assessments paths (%s)", async (_label, flagEnv) => {
+    const afterFiles = await loadAfterFiles(flagEnv);
+
+    expect(afterFiles.some((r) => r.source.startsWith("/api/v1/assessments/:"))).toBe(false);
+    for (const path of ASSESSMENTS_NODE_ONLY) {
+      expectNode(afterFiles, path);
+    }
+  });
+
+  // ---------------------------------------------------------------- #109: request context
+
+  it("#109: REQUEST_CONTEXT on -- the diagnostic pair reaches .NET", async () => {
+    const afterFiles = await loadAfterFiles(CONTEXT_ON);
+
+    expect(afterFiles).toContainEqual({ source: CONTEXT_CURRENT, destination: `${DOTNET}${CONTEXT_CURRENT}` });
+    expect(afterFiles).toContainEqual({ source: CONTEXT_SMOKE, destination: `${DOTNET}${CONTEXT_SMOKE}` });
+    expectDotnet(afterFiles, CONTEXT_CURRENT, CONTEXT_CURRENT);
+    expectDotnet(afterFiles, CONTEXT_SMOKE, CONTEXT_SMOKE);
+    // Path-specific, never /api/v1/context/:path* -- same rule as every other group in this file.
+    expect(afterFiles.some((r) => r.source.startsWith("/api/v1/context/:"))).toBe(false);
+  });
+
+  it("#109: REQUEST_CONTEXT off -- the anonymous-by-design /current is NOT exposed through the edge", async () => {
+    const afterFiles = await loadAfterFiles(ALL_OFF);
+
+    expect(afterFiles.filter((r) => r.source.startsWith("/api/v1/context"))).toEqual([]);
+    expectNode(afterFiles, CONTEXT_CURRENT);
+    expectNode(afterFiles, CONTEXT_SMOKE);
+  });
+
+  // ---------------------------------------------------------------- every other flag on
+
+  // The cases above pin one flag at a time, which cannot see a rule gated under some OTHER flag
+  // stealing these paths -- the H1/H2/H3 failure shape, where a :param or :path* rule at equal
+  // depth wins because it sits earlier in the array. So load the config with EVERY
+  // FORMMAPS_ROUTE_*_TO_DOTNET flag on and assert the exact-path rule still wins for each of the
+  // five paths. The flag list is scraped from next.config.ts itself so a flag added later is in
+  // the sweep without anyone remembering to list it here.
+  it("with every FORMMAPS_ROUTE_*_TO_DOTNET flag on, the exact-path rule still wins for all five paths", async () => {
+    const configSource = require("fs").readFileSync(require.resolve("./next.config"), "utf8");
+    const allFlags = Array.from(
+      new Set(Array.from(configSource.matchAll(/process\.env\.(FORMMAPS_ROUTE_[A-Z0-9_]+_TO_DOTNET)/g), (m: RegExpMatchArray) => m[1]))
+    );
+    // Sanity: the scrape found the three flags under test, or the case below proves nothing.
+    expect(allFlags).toEqual(
+      expect.arrayContaining([
+        "FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET",
+        "FORMMAPS_ROUTE_ASSESSMENT_TIMELINE_TO_DOTNET",
+        "FORMMAPS_ROUTE_REQUEST_CONTEXT_TO_DOTNET",
+      ])
+    );
+
+    const afterFiles = await loadAfterFiles(env(Object.fromEntries(allFlags.map((flag) => [flag, "1"]))));
+
+    const exact: Array<[string, string]> = [
+      [ROLE, ROLE_SOURCE],
+      [TIMELINE, TIMELINE],
+      [TIMELINE_STATS, TIMELINE_STATS],
+      [CONTEXT_CURRENT, CONTEXT_CURRENT],
+      [CONTEXT_SMOKE, CONTEXT_SMOKE],
+    ];
+    for (const [path, source] of exact) {
+      const winner = winningRule(afterFiles, path);
+      expect(winner).toBeDefined();
+      // The winner is the exact-path rule itself, not merely something pointing at .NET: a wider
+      // rule under another flag that happened to forward to the same origin would still be a bug
+      // waiting for the day that origin path diverges.
+      expect(winner!.source).toBe(source);
+      expect(winner!.destination).toBe(`${DOTNET}${source}`);
+    }
+    // And the Node-only neighbours are still Node-only with everything on.
+    for (const path of ASSESSMENTS_NODE_ONLY) {
+      expectNode(afterFiles, path);
+    }
+  });
+
+  // ---------------------------------------------------------------- the catch-all survives
+
+  it("keeps the /api/:path* catch-all catching an unrelated path in every flag state", async () => {
+    for (const flagEnv of [ALL_OFF, SCHOOL_USERS_ON, TIMELINE_ON, CONTEXT_ON]) {
+      const afterFiles = await loadAfterFiles(flagEnv);
+      expectNode(afterFiles, UNRELATED);
+    }
+  });
+});

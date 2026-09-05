@@ -7,6 +7,14 @@ namespace FormMaps.Api.Endpoints;
 /// Assessments timeline reads (legacy timelineRouter, mounted /api/v1/assessments with
 /// authenticate + tenantContext — NO requireSubscription). Both are self-scoped on the caller's id;
 /// guard = RequireIdentity only (RLS applied by the reader). No canAccessUser, no path userId.
+///
+/// <para>Reachability (formmaps#109): mapped here since the port, but until 2026-09-03 there was no
+/// rewrite for either path in apps/web/next.config.ts, so the /api/:path* catch-all sent both to Node —
+/// which ALSO answers 401 unauthenticated, so a status-only check never noticed these handlers had never
+/// run. Both now have exact-path rewrites gated by <c>FORMMAPS_ROUTE_ASSESSMENT_TIMELINE_TO_DOTNET</c>
+/// (default OFF). Deliberately NOT an /api/v1/assessments/:path* prefix: Node owns that prefix and
+/// serves live routes under it (/api/v1/assessments/{id}/report) plus the legacy
+/// POST /me/timeline/export, which has no twin here.</para>
 /// </summary>
 public static class AssessmentTimelineEndpoints
 {

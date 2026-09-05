@@ -17,7 +17,10 @@ namespace FormMaps.Api.Endpoints;
 /// <para>PUT /users/:userId/role is formmaps#114 + #120: the legacy route has existed and been live since
 /// 289776b4 (school.ts:92) with no .NET twin at all, so on a flag flip the web client's
 /// <c>useUpdateUserRole</c> would have started 404ing — and, once a twin existed, silently stopped writing the
-/// audit row and revoking the re-roled user's sessions unless both were ported with it. Both are.</para>
+/// audit row and revoking the re-roled user's sessions unless both were ported with it. Both are. The
+/// rewrite for /role was then missing from the FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET block in
+/// apps/web/next.config.ts (added 2026-09-03), so the flag co-flipped the other five paths and left /role on
+/// Node — the half-moved-cluster failure #114 was filed to prevent.</para>
 ///
 /// <para>No-school handling DIFFERS per route: the two GET reads (/users, /counselors/:id/students) return 200 with
 /// { data: [], total: 0 } (NO page/limit); the two WRITE routes (assign/unassign) return 400 "No school";
