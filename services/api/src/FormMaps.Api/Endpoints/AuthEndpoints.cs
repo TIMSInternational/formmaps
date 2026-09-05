@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json.Serialization;
 using FormMaps.Api.Auth;
 using FormMaps.Api.Security;
+using FormMaps.Application.Audit;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Email;
 using FormMaps.Domain.Auth;
@@ -237,7 +238,8 @@ public static class AuthEndpoints
 
     private static async Task<IResult> ChangePasswordAsync(
         ChangePasswordRequest? body, HttpContext httpContext, IRequestContextAccessor accessor, IProtectedRequestGuard guard,
-        IAuthRepository repository, IEmailSender emailSender, EmailTemplates emailTemplates, CancellationToken cancellationToken)
+        IAuthRepository repository, IEmailSender emailSender, EmailTemplates emailTemplates, IAuditEventWriter auditEventWriter,
+        ILoggerFactory loggerFactory, CancellationToken cancellationToken)
     {
         var context = accessor.Current;
         var decision = guard.RequireIdentity(context);
@@ -252,17 +254,24 @@ public static class AuthEndpoints
         var pwError = PasswordStrength.Validate(body.Password);
         if (pwError is not null) return BadRequest(pwError);
 
-        // Item 1 (role-scoping/existence-hiding, normalized uniformly across change-password/
-        // change-email/change-role): legacy's changePassword literally looks up the target BEFORE
-        // checking the caller's role (rawEmail ? findByEmail : findById(requesterId); THEN the role
-        // check only runs if isAdminAction). That ordering lets an unprivileged caller learn whether
-        // an arbitrary email exists in the system before ever being told they're not allowed to act
-        // on it. Task 12 is explicitly asked to resolve this: role-check-BEFORE-target-lookup,
-        // uniform across all three change-* routes, matching changeEmail's/changeRole's ordering
-        // instead of changePassword's. A request carrying `email` is therefore treated as an admin
-        // action a priori (self-service calls never populate it), and the caller's role is checked
-        // off the ALREADY-authenticated context.Actor -- no DB round-trip needed to know it -- before
-        // any target lookup happens.
+        // Item 1 (role-scoping/existence-hiding): legacy's changePassword resolves the target FIRST
+        // (rawEmail ? findByEmail : findById(requesterId)) and only then derives
+        // `isAdminAction = user.id !== requesterId` (authService.ts:191-207) -- the role check runs
+        // ONLY for an admin action, and the oldPassword requirement ONLY for self-service. Task 12's
+        // original port replaced that with "email present => admin action", but the self-service
+        // settings forms ALWAYS send the caller's own email (apps/web dashboard/settings and
+        // counselor/settings: `{ email: user.email, password, oldPassword }`), so every non-admin
+        // was 403'd from changing their own password, and an admin changing their OWN password was
+        // treated as an admin action: no oldPassword check, no audit line. The rule is now legacy's:
+        // self vs. other is decided by comparing the resolved target's id with the caller's id.
+        //
+        // What is deliberately KEPT from Task 12's hardening: the existence oracle stays closed. Legacy
+        // returns 404 "User not found" for an unknown email before any role check, which lets an
+        // unprivileged caller probe whether an arbitrary email is a user. Here a lookup miss on the
+        // email path is folded into "not the caller" -- a non-admin sees the same 403 whether the
+        // email belongs to someone else or to nobody, and only Super Admin/School Admin (who may act
+        // on others anyway) get the 404. The caller's role is still read off the ALREADY-authenticated
+        // context.Actor (see the JWT-trust note below), never re-fetched.
         // Review finding (JWT-trust trade-off, reviewed, accepted as a documented trade-off -- not
         // fixed, per explicit human decision -- distinct from this file's numbered "item 2"
         // elsewhere, which is about newEmail normalization): legacy re-reads the REQUESTER's
@@ -282,16 +291,29 @@ public static class AuthEndpoints
         // (RequestContextMiddleware's whole design, ChangeRoleAsync's "admin:users" permission gate
         // just below, every other RequireIdentity-gated endpoint in this codebase) rather than add a
         // one-off live DB re-read just for these two routes. Not fixed; documented per that decision.
-        AuthUserRow target;
-        bool isAdminAction;
+
+        // No email -> self-service change for the authenticated caller (legacy: findById(requesterId)).
+        AuthUserRow? found;
         if (!string.IsNullOrWhiteSpace(body.Email))
+        {
+            found = await repository.FindUserByEmailAsync(NormalizeEmail(body.Email), cancellationToken);
+        }
+        else
+        {
+            found = await repository.FindUserByIdWithRoleAsync(context.Tenant!.UserId, cancellationToken);
+            if (found is null) return NotFound("User not found");
+        }
+
+        // legacy: `const isAdminAction = user.id !== requesterId;` -- a lookup miss on the email path is
+        // "not the caller" too, so it takes the admin branch and the oracle-closing 403/404 below.
+        var isAdminAction = found is null || found.Id != context.Tenant!.UserId;
+        AuthUserRow target;
+        if (isAdminAction)
         {
             var requesterRole = context.Actor!.NormalizedRole;
             if (requesterRole is not (FormMapsRoles.SuperAdmin or FormMapsRoles.SchoolAdmin))
                 return Forbidden("Cannot change another user's password");
 
-            var normalizedEmail = NormalizeEmail(body.Email);
-            var found = await repository.FindUserByEmailAsync(normalizedEmail, cancellationToken);
             // Cross-school target and "not found" collapse to the SAME 404 -- an existence oracle
             // otherwise leaks via a 403-vs-404 status-code difference. Only Super Admin acts cross-school.
             if (found is null || (requesterRole == FormMapsRoles.SchoolAdmin &&
@@ -299,18 +321,10 @@ public static class AuthEndpoints
                 return NotFound("Not found");
 
             target = found;
-            isAdminAction = true;
         }
         else
         {
-            var found = await repository.FindUserByIdWithRoleAsync(context.Tenant!.UserId, cancellationToken);
-            if (found is null) return NotFound("User not found");
-            target = found;
-            isAdminAction = false;
-        }
-
-        if (!isAdminAction)
-        {
+            target = found!;
             // Self-service: require + verify the current password (blocks takeover via a stolen session).
             if (string.IsNullOrEmpty(body.OldPassword) || target.PasswordHash is null)
                 return BadRequest("Current password required");
@@ -321,6 +335,39 @@ public static class AuthEndpoints
 
         var hashed = PasswordHasher.Hash(body.Password);
         await repository.UpdatePasswordAsync(target.Id, hashed, cancellationToken);
+
+        if (isAdminAction)
+        {
+            // legacy: `logger.warn({ adminId: requesterId, targetUserId: user.id }, "Admin password
+            // change")` -- kept as a log line AND persisted as an audit_events row (the retrofit
+            // convention: the line survives an audit outage, where AuditEventWriter's
+            // audit.write_failed carries the subject but not the actor). IDs only, no email.
+            //
+            // Sequenced IMMEDIATELY after UpdatePasswordAsync, before the refresh-token revocation:
+            // the two repository calls run in independent sessions, so the password is already
+            // committed when the revoke starts, and a failure there must not leave a privileged
+            // rotation unrecorded. CancellationToken.None per IAuditEventWriter's contract (fail-soft,
+            // never changes the user-visible outcome).
+            //
+            // SchoolId is the TARGET's school -- audit_events.schoolId is "tenant context, for
+            // filtering only" and IAuditEventReader filters on it, so a Super Admin (no school of
+            // their own) resetting one of school X's users has to show up under school X. The
+            // actor's school rides along in metadata; both keys are ID-only and clear
+            // AuditMetadataGuard's denylist.
+            loggerFactory.CreateLogger(typeof(AuthEndpoints)).LogWarning(
+                "audit.auth.password.admin_changed actorUserId={ActorUserId} subjectUserId={SubjectUserId}",
+                context.Tenant!.UserId, target.Id);
+            await auditEventWriter.WriteAsync(
+                new AuditEvent(
+                    EventType: "audit.auth.password.admin_changed",
+                    ActorUserId: context.Tenant!.UserId,
+                    ActorRole: context.Actor!.NormalizedRole,
+                    SchoolId: target.SchoolId,
+                    SubjectType: "user",
+                    SubjectId: target.Id,
+                    Metadata: new Dictionary<string, object?> { ["actorSchoolId"] = context.Tenant.SchoolId }),
+                CancellationToken.None);
+        }
 
         var clientIp = AuthCookieWriter.GetClientIp(httpContext.Request);
         await repository.RevokeAllRefreshTokensAsync(target.Id, clientIp, cancellationToken);
