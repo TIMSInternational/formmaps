@@ -526,6 +526,9 @@ GRANT SELECT, INSERT ON TABLE
 -- ---------------------------------------------------------------------------
 GRANT SELECT, INSERT ON TABLE
     public."careerfit_shadow_comparisons"
+    TO formmaps_dotnet_svc;
+
+-- ---------------------------------------------------------------------------
 -- 4.9. Graduation rule-set CHILDREN (issue #55): SELECT, INSERT and DELETE -- and
 --    deliberately NOT UPDATE, which the read/write tier above would have carried.
 --
