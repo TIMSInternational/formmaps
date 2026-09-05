@@ -6,6 +6,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  actions: read # read formmaps-api-ci's verdict for the SHA being deployed
 
 env:
   AWS_REGION: us-east-1
@@ -17,6 +18,10 @@ jobs:
   deploy:
     name: Deploy staging API
     runs-on: ubuntu-latest
+    # Without this, GitHub's 6-hour default applies: the 2026-09-05 run sat on a
+    # runner for over two hours having reported nothing. A deploy that cannot
+    # finish in 30 minutes is stuck, not slow.
+    timeout-minutes: 30
     environment: staging
 
     steps:
@@ -33,8 +38,14 @@ jobs:
         with:
           node-version: 22
 
-      - name: Test API
-        run: npm run api:test
+      # Was `npm run api:test` -- the whole solution, unsharded, which is what made
+      # this job take ~2 hours (measured 122m on 1cf3cc85, 2026-09-05) while
+      # formmaps-api-ci proved the same commit green in 17m across six shards.
+      # Same invariant, read rather than re-derived; fails closed. See the script.
+      - name: Require a green CI run for this exact commit
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: .github/workflows/scripts/require-green-ci.sh
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
