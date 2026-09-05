@@ -62,20 +62,17 @@ public sealed class SchoolStudentsReaderTests : IClassFixture<SchoolStudentsData
             {
                 "academic_years", "community_service_entries", "course_change_requests", "evaluation_groups",
                 "graduation_rule_sets", "pca_evaluations", "pca_exam_sessions", "school_assessment_settings",
-                "student_alerts", "student_grades", "student_parent_links", "users",
+                "school_courses", "student_alerts", "student_course_plans", "student_grades",
+                "student_parent_links", "users",
             },
             _fixture.AppliedPolicyTables.ToArray());
 
-        // The three this fixture models that are unpolicied HERE. Asserted rather than assumed so a future policy
-        // file that closes one shows up here instead of silently changing the meaning of the app-layer tests below.
-        // NOT all three are unpolicied in production, and the distinction matters (formmaps#135):
-        //   schools              — genuinely unpolicied; the tenant root, no schoolId to scope it by.
-        //   school_courses       — POLICIED IN PRODUCTION by pilot.sql, which this harness does not vendor.
-        //   student_course_plans — likewise policied in production by pilot.sql.
-        // So the last two assertions describe the harness, not production. They are expected to flip when
-        // pilot.sql is vendored; that is the point of asserting them.
-        Assert.DoesNotContain("school_courses", _fixture.AppliedPolicyTables);
-        Assert.DoesNotContain("student_course_plans", _fixture.AppliedPolicyTables);
+        // The ONE table this fixture models that is unpolicied — asserted rather than assumed so a future policy
+        // file that closes it shows up here instead of silently changing the meaning of the app-layer tests below.
+        // school_courses and student_course_plans used to be asserted absent here too, with a note saying they
+        // were policied in production by pilot.sql and expected to flip when it was vendored. formmaps#135
+        // vendored it, so they flipped; they are in the applied list above now.
+        //   schools — genuinely unpolicied; the tenant root, no schoolId to scope it by.
         Assert.DoesNotContain("schools", _fixture.AppliedPolicyTables);
     }
 

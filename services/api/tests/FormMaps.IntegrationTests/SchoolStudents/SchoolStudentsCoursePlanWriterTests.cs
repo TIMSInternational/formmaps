@@ -206,22 +206,31 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
         await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
         await SeedPlan(conn, "plan-b", "student-b", SchoolA, "ay-a");
 
-        // formmaps#125 — WHY THIS TEST IS THE ONE THAT MATTERS IN THIS FILE. student_course_plans appears in NONE
-        // of prisma/rls/*.sql, so unlike every other table here it has no policy at all: the row is fully visible
-        // AND fully writable on the caller's own Identity session, as the two counts below state. `"studentId" =
-        // @sid` in the DELETE is therefore not a belt-and-braces predicate over an RLS backstop — it is the entire
-        // defence, and a school-scoped caller (student-a's admin, same tenant as student-b) is exactly the
-        // adversary it has to stop.
+        // formmaps#125 — WHY THIS TEST IS THE ONE THAT MATTERS IN THIS FILE. student_course_plans IS policied,
+        // by pilot.sql (formmaps#135 vendored it; this comment used to claim the table appeared in none of
+        // prisma/rls/*.sql, which was wrong). That changes nothing here, and the reason is the point: pilot's
+        // predicate is `"schoolId" = app.current_school_id` with no owner branch, so for two students of the SAME
+        // school it admits both rows — the row is fully visible AND fully writable on the caller's own Identity
+        // session, as the two counts below state. `"studentId" = @sid` in the DELETE is therefore not a
+        // belt-and-braces predicate over an RLS backstop; it is the entire defence for this adversary, and a
+        // school-scoped caller (student-a's admin, same tenant as student-b) is exactly the one it has to stop.
+        // Negative control for that claim, so "the policy admits it" is measured rather than asserted: a plan row
+        // belonging to ANOTHER school is invisible on the same session, which is the half of pilot.sql that does bite.
+        await SeedUser(conn, "student-c", SchoolB);
+        await SeedAcademicYear(conn, "ay-b", SchoolB, isCurrent: true);
+        await SeedPlan(conn, "plan-c", "student-c", SchoolB, "ay-b");
+
         await using var identity = await OpenIdentitySessionAsync("admin-a", SchoolA);
         Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(identity));
-        Assert.Equal(1L, await CountAsync(conn, """SELECT count(*) FROM "student_course_plans" """));
+        Assert.Equal(2L, await CountAsync(conn, """SELECT count(*) FROM "student_course_plans" """));
         Assert.Equal(1L, await CountAsync(identity, """SELECT count(*) FROM "student_course_plans" """));
+        Assert.Equal(0L, await CountAsync(identity, """SELECT count(*) FROM "student_course_plans" WHERE "id"='plan-c'"""));
 
         // Caller is authorised for student-a and passes student-b's enrollment id.
         var deleted = await Writer().DeleteCoursePlanCourseAsync(Ctx(), "student-a", "plan-b");
 
         Assert.False(deleted);                            // → 404 "Not found"
-        Assert.Equal(1, await PlanCount(conn));           // student-b's row survives
+        Assert.Equal(2, await PlanCount(conn));           // student-b's row survives, so does the SchoolB control
         Assert.True(await PlanExists(conn, "plan-b"));
 
         // Positive half: over the SAME seeded data the legitimate owner's delete does go through, so the assertion
@@ -229,6 +238,45 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
         await SeedPlan(conn, "plan-a", "student-a", SchoolA, "ay-a");
         Assert.True(await Writer().DeleteCoursePlanCourseAsync(Ctx(), "student-a", "plan-a"));
         Assert.True(await PlanExists(conn, "plan-b"));
+    }
+
+    // ---- pilot.sql's WITH CHECK half ----
+
+    /// <summary>
+    /// formmaps#135. pilot.sql's <c>tenant_isolation</c> carries a WITH CHECK identical to its USING, and every other
+    /// assertion this suite makes about the policy is a read-visibility one — so the write half would go vacuously
+    /// green if a refresh ever dropped it. It is the half that matters for THIS writer:
+    /// <c>SchoolStudentsCoursePlanWriter.CreateCoursePlanCourseAsync</c> resolves the INSERT's <c>schoolId</c> from
+    /// the STUDENT's <c>users</c> row and never from the caller, so nothing in the C# stops a school-A session from
+    /// writing a school-B row — only WITH CHECK does.
+    ///
+    /// <para>Not a live hole today, and the reason is why this is asserted rather than assumed: the users-row policy
+    /// hides the cross-school student first, so the writer bails with NoStudentSchool and never reaches the INSERT.
+    /// That is a TWO-policy argument, and nothing measured the second one. Raw SQL on the restricted login is the
+    /// only way to reach it while the first policy holds.</para>
+    /// </summary>
+    [Fact]
+    public async Task A_school_scoped_session_cannot_insert_another_schools_plan_row()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await SeedUser(conn, "student-a", SchoolA);
+        await SeedUser(conn, "student-c", SchoolB);
+        await SeedAcademicYear(conn, "ay-a", SchoolA, isCurrent: true);
+        await SeedAcademicYear(conn, "ay-b", SchoolB, isCurrent: true);
+
+        await using var identity = await OpenIdentitySessionAsync("admin-a", SchoolA);
+        Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(identity));
+
+        var denied = await Assert.ThrowsAsync<PostgresException>(
+            () => SeedPlan(identity, "plan-c", "student-c", SchoolB, "ay-b"));
+
+        Assert.Equal(PostgresErrorCodes.InsufficientPrivilege, denied.SqlState); // 42501, WITH CHECK violation
+        Assert.Equal(0, await PlanCount(conn));
+
+        // Positive half over the SAME session and the same statement shape: its own school's row goes in. So the
+        // 42501 above is the policy's schoolId predicate and not a missing INSERT grant on the restricted login.
+        await SeedPlan(identity, "plan-a", "student-a", SchoolA, "ay-a");
+        Assert.Equal(1, await PlanCount(conn));
     }
 
     [Fact]
@@ -302,7 +350,8 @@ public sealed class SchoolStudentsCoursePlanWriterTests : IClassFixture<SchoolSt
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
 
     /// <summary>A raw connection on the RESTRICTED login carrying an Identity caller's GUCs — states what the
-    /// POLICIES do (here: nothing, student_course_plans is unpolicied), independently of any repository.</summary>
+    /// POLICIES do (here: pilot.sql's school-only scope on student_course_plans, which admits every row of the
+    /// caller's own school), independently of any repository.</summary>
     private async Task<NpgsqlConnection> OpenIdentitySessionAsync(string userId, string? schoolId)
     {
         var conn = await _dataSource.OpenConnectionAsync();
