@@ -255,7 +255,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         for (var i = 0; i < 20; i++) students.Add(await _fixture.SeedUserAsync(schoolId, "student"));
         var poisoned = students[7];
 
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         // Make exactly one recipient's conversation upsert fail: a CHECK constraint that rejects any
         // conversation involving the poisoned user. Dropped in finally so sibling tests are unaffected
@@ -333,7 +333,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         Assert.Contains("pool has been exhausted", failure.Error);
         Assert.Equal(20, intercepting.WritableOpens); // the whole first chunk, and nothing of the second
 
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         await using var committed = new NpgsqlCommand("""SELECT count(*)::int FROM "messages" WHERE "content" = @content""", conn);
         committed.Parameters.AddWithValue("content", content);
@@ -365,7 +365,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         Assert.Equal(25, result.RecipientCount);
         Assert.Empty(result.Failures);
 
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         await using var committed = new NpgsqlCommand("""SELECT count(*)::int FROM "messages" WHERE "content" = @content""", conn);
         committed.Parameters.AddWithValue("content", content);
@@ -387,7 +387,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         const int maxPoolSize = 4;
         await using var smallPool = NpgsqlDataSource.Create(
-            new NpgsqlConnectionStringBuilder(_fixture.ConnectionString) { MaxPoolSize = maxPoolSize }.ConnectionString);
+            new NpgsqlConnectionStringBuilder(_fixture.AppConnectionString) { MaxPoolSize = maxPoolSize }.ConnectionString);
         var intercepting = new InterceptingSessionFactory(new NpgsqlFormMapsDatabaseSessionFactory(smallPool, new RlsSessionContextApplier()));
         var repo = new MessagesRepository(intercepting, TimeProvider.System, new NoopRealtimeNotifier(),
             Options.Create(new FormMapsDatabaseOptions { MaxPoolSize = maxPoolSize }));
@@ -416,7 +416,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         for (var i = 0; i < 25; i++) await _fixture.SeedUserAsync(schoolId, "student");
 
         var observing = new ObservingSessionFactory(
-            new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), _fixture.ConnectionString, content);
+            new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), _fixture.AdminConnectionString, content);
 
         var result = await Repo(observing).BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", content);
 

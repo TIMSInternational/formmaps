@@ -94,7 +94,19 @@ public sealed class BillingRlsHarnessTests(BillingDatabaseFixture fixture) : IAs
         var sessionFactory = fixture.SessionFactory;
         Assert.Null(await new LiveSubscriptionReader(sessionFactory).GetForUserAsync(Ctx(intruder, schoolB), victim));
         Assert.Null(await new LiveCustomerReader(sessionFactory).GetStripeCustomerIdAsync(Ctx(intruder, schoolB), victim));
-        Assert.Equal(0, await new LiveSubscriptionWriter(sessionFactory).MarkCancelledAsync(Ctx(intruder, schoolB), victim));
+        // #169 gave the writer a rowId so the cancel is pinned to the row the endpoint read. Target the
+        // victim's REAL row id, so the 0 below proves the "userId" predicate denies the write rather than
+        // the write simply missing a row that does not exist.
+        string victimRowId;
+        await using (var idConn = new NpgsqlConnection(fixture.AdminConnectionString))
+        {
+            await idConn.OpenAsync();
+            await using var idCmd = new NpgsqlCommand(
+                """SELECT "id" FROM "user_subscriptions" WHERE "userId" = @p LIMIT 1""", idConn);
+            idCmd.Parameters.AddWithValue("p", victim);
+            victimRowId = (string)(await idCmd.ExecuteScalarAsync())!;
+        }
+        Assert.Equal(0, await new LiveSubscriptionWriter(sessionFactory).MarkCancelledAsync(Ctx(intruder, schoolB), victim, victimRowId));
 
         var stored = await fixture.QueryLiveSubscriptionAsync(victim);
         Assert.Equal("active", stored!.Value.Status);

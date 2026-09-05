@@ -149,8 +149,8 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
         }
 
         Assert.Null(await Reader().GetForUserAsync(Context(intruder, schoolB), UserId, CancellationToken.None));
-        Assert.Equal(0, await Writer().MarkCancelledAsync(Context(intruder, schoolB), UserId, CancellationToken.None));
-        Assert.Equal(0, await Writer().MarkCancelAtPeriodEndAsync(Context(intruder, schoolB), UserId, CancellationToken.None));
+        Assert.Equal(0, await Writer().MarkCancelledAsync(Context(intruder, schoolB), UserId, NewerRowId, CancellationToken.None));
+        Assert.Equal(0, await Writer().MarkCancelAtPeriodEndAsync(Context(intruder, schoolB), UserId, NewerRowId, CancellationToken.None));
 
         var newer = await QueryRowAsync(NewerRowId);
         var older = await QueryRowAsync(OlderRowId);
@@ -534,7 +534,8 @@ public sealed class LiveSubscriptionDuplicateRowTests : IClassFixture<LiveSubscr
     /// </summary>
     private async Task DeactivateRowAsync(string id)
     {
-        await using var connection = await _fixture.DataSource.OpenConnectionAsync();
+        await using var connection = new NpgsqlConnection(_fixture.AdminConnectionString);
+        await connection.OpenAsync();
         await using var command = new NpgsqlCommand(
             """UPDATE "user_subscriptions" SET "isActive" = false WHERE "id" = @id""", connection);
         command.Parameters.AddWithValue("id", id);
