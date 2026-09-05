@@ -86,6 +86,7 @@ app.MapCounselorAlertsEndpoints();
 app.MapCounselorSessionsEndpoints();
 app.MapVideoEndpoints();
 app.MapMessagesEndpoints();
+app.MapModerationEndpoints();
 app.MapAuditEndpoints();
 app.MapAuthEndpoints();
 app.MapAuthAdminEndpoints();
@@ -120,6 +121,10 @@ app.MapPrerequisitesEndpoints();
 app.MapPathwaysEndpoints();
 app.MapCourseImportEndpoints();
 app.MapGradebookEndpoints();
+app.MapTranscriptEndpoints();
+app.MapGraduationRulesEndpoints();
+app.MapGraduationPlanEndpoints();
+app.MapCounselorGraduationEndpoints();
 app.MapCalendarEndpoints();
 app.MapQuestion360Endpoints();
 app.MapVocationalTakeEndpoints();
@@ -129,6 +134,9 @@ app.MapEvaluationExternalEndpoints();
 // none of these paths exists on the legacy Node backend, so with the flag off there is no CareerFit traffic
 // at all rather than traffic going somewhere else).
 app.MapCareerFitEndpoints();
+app.MapRecommendationsEndpoints();
+app.MapTelemetryEndpoints();
+app.MapTeacherEndpoints();
 
 app.Run();
 

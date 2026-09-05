@@ -744,3 +744,798 @@ describe("next.config rewrites -- CareerFit /api/v1/careerfit -> .NET (FM-CF-012
     }
   });
 });
+
+/**
+ * M4 no-decision ports -- moderation (#63), recommendation letters (#59), graduation +
+ * transcripts (#55). Three NEW flags, all default OFF.
+ *
+ * FLAG-OFF INERTNESS IS THE ACCEPTANCE CRITERION for all three lanes: "flag OFF: zero .NET
+ * traffic". apps/web auto-deploys to production on push to main, and none of these .NET route
+ * groups has ever served a request through app.formmaps.com -- the rewrite hop is unexercised
+ * until one of these flags is deliberately flipped. So the load-bearing assertions in this
+ * describe are the OFF cases and the cross-flag non-shadowing cases, not the ON cases.
+ *
+ * The other failure mode these guard is the one that produced #109/#114/#120: a broad prefix
+ * rewrite that silently shadows another flag's routes, leaving a mapped group unreachable. Every
+ * M4 entry is path-specific, and the cross-flag tests below pin that by driving each flag on
+ * ALONE and checking the neighbouring flags' paths still resolve to Node.
+ */
+describe("next.config rewrites -- M4 no-decision ports (#63 moderation, #59 recommendations, #55 graduation\n  + the recovery lanes: #65 telemetry, #62 teacher onboarding, #55 graduation-plan remainder)", () => {
+  const NODE = "https://node.example.test";
+
+  // Every M4 flag AND every neighbouring flag whose paths these tests assert on is listed
+  // explicitly per case rather than merely omitted. loadAfterFiles clones the ambient process.env,
+  // so a flag exported in the shell would leak in and turn an "off" control into an "on" case that
+  // still passes its absence assertions for the wrong reason -- the same trap the billing
+  // FLAG_OFF env above documents.
+  const ALL_OFF: Record<string, string | undefined> = {
+    FORMMAPS_DOTNET_API_BASE_URL: DOTNET,
+    API_PROXY_TARGET: NODE,
+    FORMMAPS_ROUTE_MODERATION_TO_DOTNET: undefined,
+    FORMMAPS_ROUTE_RECOMMENDATIONS_TO_DOTNET: undefined,
+    FORMMAPS_ROUTE_GRADUATION_TO_DOTNET: undefined,
+    // ── Recovery lanes. Two NEW flags; the graduation-plan remainder deliberately rides the
+    // EXISTING FORMMAPS_ROUTE_GRADUATION_TO_DOTNET above rather than adding a third.
+    FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET: undefined,
+    FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET: undefined,
+    // Neighbours whose paths the non-shadowing tests assert on.
+    FORMMAPS_ROUTE_SCHOOL_ADMIN_CALENDAR_TO_DOTNET: undefined,
+    FORMMAPS_ROUTE_GRADEBOOK_READ_TO_DOTNET: undefined,
+    FORMMAPS_ROUTE_SCHOOL_USERS_TO_DOTNET: undefined,
+    FORMMAPS_ROUTE_SCHOOL_ADMIN_READS_TO_DOTNET: undefined,
+    FORMMAPS_ROUTE_COUNSELOR_DASHBOARD_TO_DOTNET: undefined,
+    FORMMAPS_ROUTE_COUNSELOR_CASELOAD_TO_DOTNET: undefined,
+    // Neighbours of the graduation-plan remainder specifically: these own the OTHER
+    // /api/v1/student/* and /api/v1/counselor/* sub-trees the six new entries sit beside.
+    FORMMAPS_ROUTE_COUNSELOR_NOTES_TO_DOTNET: undefined,
+    FORMMAPS_ROUTE_STUDENT_PORTFOLIO_TO_DOTNET: undefined,
+    FORMMAPS_ROUTE_STUDENT_COURSE_PLAN_TO_DOTNET: undefined,
+  };
+
+  function envWith(...flags: string[]): Record<string, string | undefined> {
+    const env = { ...ALL_OFF };
+    for (const flag of flags) env[flag] = "1";
+    return env;
+  }
+
+  function expectNode(afterFiles: Rewrite[], path: string) {
+    const winner = winningRule(afterFiles, path);
+    expect(winner).toBeDefined();
+    expect(winner!.destination).not.toContain("dotnet.example.test");
+  }
+
+  function expectDotnet(afterFiles: Rewrite[], path: string, expectedSource: string) {
+    const winner = winningRule(afterFiles, path);
+    expect(winner).toBeDefined();
+    expect(winner!.source).toBe(expectedSource);
+    expect(winner!.destination).toBe(`${DOTNET}${expectedSource}`);
+  }
+
+  // ── Path inventories, one per lane. These ARE the ported surface; a path missing here is a
+  // route that never reaches .NET no matter what the flag says.
+  const MODERATION_PATHS: Array<[string, string]> = [
+    ["/api/v1/moderation/report", "/api/v1/moderation/report"],
+    ["/api/v1/moderation/reports", "/api/v1/moderation/reports"],
+    ["/api/v1/moderation/block/u_1", "/api/v1/moderation/block/:userId"],
+  ];
+
+  const RECOMMENDATION_PATHS: Array<[string, string]> = [
+    ["/api/v1/recommendations", "/api/v1/recommendations"],
+    ["/api/v1/recommendations/staff", "/api/v1/recommendations/staff"],
+    ["/api/v1/recommendations/dashboard", "/api/v1/recommendations/dashboard"],
+    ["/api/v1/recommendations/received", "/api/v1/recommendations/received"],
+    ["/api/v1/recommendations/r_1/respond", "/api/v1/recommendations/:id/respond"],
+    ["/api/v1/recommendations/r_1/status", "/api/v1/recommendations/:id/status"],
+    ["/api/v1/recommendations/r_1/letter", "/api/v1/recommendations/:id/letter"],
+    ["/api/v1/recommendations/r_1/link-applications", "/api/v1/recommendations/:id/link-applications"],
+  ];
+
+  const GRADUATION_PATHS: Array<[string, string]> = [
+    ["/api/v1/transcript", "/api/v1/transcript"],
+    ["/api/v1/transcript/gpa", "/api/v1/transcript/gpa"],
+    ["/api/v1/transcript/compute-gpa", "/api/v1/transcript/compute-gpa"],
+    ["/api/v1/transcript/students/s_1/transcript", "/api/v1/transcript/students/:id/transcript"],
+    ["/api/v1/transcript/students/s_1/gpa", "/api/v1/transcript/students/:id/gpa"],
+    ["/api/v1/transcript/school-admin/gpa-config", "/api/v1/transcript/school-admin/gpa-config"],
+    ["/api/v1/transcript/school-admin/class-ranks", "/api/v1/transcript/school-admin/class-ranks"],
+    ["/api/v1/school-admin/graduation/rules", "/api/v1/school-admin/graduation/rules"],
+    ["/api/v1/school-admin/graduation/rules/rs_1", "/api/v1/school-admin/graduation/rules/:ruleSetId"],
+    ["/api/v1/school-admin/graduation/progress", "/api/v1/school-admin/graduation/progress"],
+    ["/api/v1/school-admin/graduation/progress/s_1", "/api/v1/school-admin/graduation/progress/:studentId"],
+    ["/api/v1/school-admin/graduation/gap-analysis/s_1", "/api/v1/school-admin/graduation/gap-analysis/:studentId"],
+  ];
+
+  // ── Recovery lane inventories. ───────────────────────────────────────────────────────────────
+
+  // Telemetry (#65): the ONLY route in routes/telemetry.ts. Exact literal, source === destination.
+  // Deliberately NOT /api/v1/telemetry/:path* even though nothing else owns that namespace today:
+  // the #109/#114/#120 precedent is per-path, and there is exactly one path to name.
+  const TELEMETRY_PATHS: Array<[string, string]> = [["/api/v1/telemetry/events", "/api/v1/telemetry/events"]];
+
+  // Teacher onboarding (#62): 4 routes across a SPLIT AUTH BOUNDARY. The first two are
+  // PRE-AUTHENTICATION -- a teacher clicking an emailed invite link sends no cookie and no bearer
+  // token -- and /onboarding/complete SETS access_token + refresh_token cookies on its 200. Both
+  // facts are properties of the rewrite's placement (it must not sit behind auth-requiring
+  // middleware, and Set-Cookie must pass through), which is why they are named here.
+  const TEACHER_PATHS: Array<[string, string]> = [
+    ["/api/v1/teacher/onboarding/verify", "/api/v1/teacher/onboarding/verify"],
+    ["/api/v1/teacher/onboarding/complete", "/api/v1/teacher/onboarding/complete"],
+    ["/api/v1/teacher/profile", "/api/v1/teacher/profile"],
+    ["/api/v1/teacher/evaluations/pending", "/api/v1/teacher/evaluations/pending"],
+  ];
+
+  // Graduation-plan remainder (#55): routes/graduation-plan.ts + routes/counselor-graduation.ts,
+  // 8 routes over 6 paths, riding the EXISTING graduation flag. Kept as its own list rather than
+  // appended to GRADUATION_PATHS because the "no wildcard under /transcript or
+  // /school-admin/graduation" negative control counts GRADUATION_PATHS.length against a
+  // prefix filter these six paths do not fall under.
+  //
+  // EVERY ONE IS A LITERAL, and that is load-bearing, not stylistic:
+  //   * /api/v1/student/graduation-plan/:path* would sit at the same segment depth as the D1
+  //     carve-out /api/v1/student/graduation-plan/generate and swallow it on any reordering.
+  //   * /api/v1/counselor/me/students/:studentId/graduation-plan/:path* would capture the
+  //     seven-segment D1 carve-out .../graduation-plan/generate outright.
+  const GRADUATION_PLAN_PATHS: Array<[string, string]> = [
+    ["/api/v1/student/graduation-plan/target", "/api/v1/student/graduation-plan/target"],
+    ["/api/v1/student/graduation-plan/submit", "/api/v1/student/graduation-plan/submit"],
+    ["/api/v1/student/graduation-plan/supplemental", "/api/v1/student/graduation-plan/supplemental"],
+    ["/api/v1/student/graduation-plan", "/api/v1/student/graduation-plan"],
+    [
+      "/api/v1/counselor/me/students/s_1/graduation-plan",
+      "/api/v1/counselor/me/students/:studentId/graduation-plan",
+    ],
+    [
+      "/api/v1/counselor/me/students/s_1/graduation-plan/review",
+      "/api/v1/counselor/me/students/:studentId/graduation-plan/review",
+    ],
+  ];
+
+  // The full M4 surface, every lane. Used by the whole-block acceptance criteria and by the
+  // per-lane independence matrix, so a lane added to the config but forgotten here shows up as a
+  // path no test asserts on rather than as a silent gap.
+  const ALL_M4_PATHS: Array<[string, string]> = [
+    ...MODERATION_PATHS,
+    ...RECOMMENDATION_PATHS,
+    ...GRADUATION_PATHS,
+    ...GRADUATION_PLAN_PATHS,
+    ...TELEMETRY_PATHS,
+    ...TEACHER_PATHS,
+  ];
+
+  // ── The two #55 decision-D1 carve-outs. aiLimiter-rate-limited + Bedrock, NOT ported, no .NET
+  // handler at all -- they must resolve to Node in every flag state, forever.
+  const D1_STUDENT = "/api/v1/student/graduation-plan/generate";
+  const D1_COUNSELOR = "/api/v1/counselor/me/students/:studentId/graduation-plan/generate";
+  const D1_COUNSELOR_PATH = "/api/v1/counselor/me/students/s_1/graduation-plan/generate";
+
+  describe("moderation (#63) -- FORMMAPS_ROUTE_MODERATION_TO_DOTNET", () => {
+    it.each(MODERATION_PATHS)("routes %s to .NET when the flag is on", async (path, source) => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_MODERATION_TO_DOTNET"));
+      expectDotnet(afterFiles, path, source);
+    });
+
+    it("places every moderation rule BEFORE the Node catch-all, like the Messaging and Billing blocks", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_MODERATION_TO_DOTNET"));
+      const catchAllIndex = afterFiles.findIndex((r) => r.source === CATCH_ALL);
+      expect(catchAllIndex).toBeGreaterThanOrEqual(0);
+
+      for (const [, source] of MODERATION_PATHS) {
+        const index = afterFiles.findIndex((r) => r.source === source);
+        expect(index).toBeGreaterThanOrEqual(0);
+        expect(index).toBeLessThan(catchAllIndex);
+      }
+    });
+
+    // THE SHADOWING HAZARD THIS LANE CALLED OUT. /report and /reports are distinct paths and are
+    // written as two separate literal entries; a /api/v1/moderation/report:path* style source
+    // would swallow /reports and split a filed report from its own moderation queue.
+    it("keeps /report and /reports as two separate literal rules -- neither swallows the other", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_MODERATION_TO_DOTNET"));
+
+      expectDotnet(afterFiles, "/api/v1/moderation/report", "/api/v1/moderation/report");
+      expectDotnet(afterFiles, "/api/v1/moderation/reports", "/api/v1/moderation/reports");
+      // No wildcard/prefix source anywhere under /api/v1/moderation.
+      const moderationRules = afterFiles.filter((r) => r.source.startsWith("/api/v1/moderation"));
+      expect(moderationRules).toHaveLength(3);
+      expect(moderationRules.filter((r) => r.source.includes("*"))).toEqual([]);
+    });
+
+    // FLAG-OFF INERTNESS -- the acceptance criterion. Zero .NET traffic.
+    it("is completely inert with the flag off -- zero .NET traffic on any moderation path", async () => {
+      const afterFiles = await loadAfterFiles(ALL_OFF);
+
+      expect(afterFiles.filter((r) => r.source.startsWith("/api/v1/moderation"))).toEqual([]);
+      for (const [path] of MODERATION_PATHS) {
+        const winner = winningRule(afterFiles, path);
+        expect(winner!.source).toBe(CATCH_ALL);
+        expect(winner!.destination).toBe(`${NODE}${CATCH_ALL}`);
+      }
+    });
+  });
+
+  describe("recommendation letters (#59) -- FORMMAPS_ROUTE_RECOMMENDATIONS_TO_DOTNET", () => {
+    it.each(RECOMMENDATION_PATHS)("routes %s to .NET when the flag is on", async (path, source) => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_RECOMMENDATIONS_TO_DOTNET"));
+      expectDotnet(afterFiles, path, source);
+    });
+
+    it("places every recommendations rule BEFORE the Node catch-all", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_RECOMMENDATIONS_TO_DOTNET"));
+      const catchAllIndex = afterFiles.findIndex((r) => r.source === CATCH_ALL);
+
+      for (const [, source] of RECOMMENDATION_PATHS) {
+        const index = afterFiles.findIndex((r) => r.source === source);
+        expect(index).toBeGreaterThanOrEqual(0);
+        expect(index).toBeLessThan(catchAllIndex);
+      }
+    });
+
+    // The three literal segments are grouped ahead of the :id block the way legacy's router
+    // declares them (recommendations.ts:111). There is no GET /:id route today so nothing can
+    // shadow them yet -- this pins that a future /api/v1/recommendations/:id source cannot be
+    // dropped in above them without turning this red.
+    it("keeps /staff, /dashboard and /received ahead of every :id rule", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_RECOMMENDATIONS_TO_DOTNET"));
+
+      const literalIndexes = ["/staff", "/dashboard", "/received"].map((suffix) =>
+        afterFiles.findIndex((r) => r.source === `/api/v1/recommendations${suffix}`),
+      );
+      const paramIndexes = afterFiles
+        .map((r, i) => ({ r, i }))
+        .filter(({ r }) => r.source.startsWith("/api/v1/recommendations/:"))
+        .map(({ i }) => i);
+
+      expect(paramIndexes.length).toBeGreaterThan(0);
+      for (const literalIndex of literalIndexes) {
+        expect(literalIndex).toBeGreaterThanOrEqual(0);
+        expect(literalIndex).toBeLessThan(Math.min(...paramIndexes));
+      }
+    });
+
+    // ONE source co-flips GET and POST on /:id/letter -- Next matches by path, not method. That is
+    // intended (POST is the multipart upload, GET the download), and it is pinned so nobody
+    // "fixes" it into two half-moved methods.
+    it("covers the letter upload and download with one path rule (rewrites are method-agnostic)", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_RECOMMENDATIONS_TO_DOTNET"));
+
+      const letterRules = afterFiles.filter((r) => r.source === "/api/v1/recommendations/:id/letter");
+      expect(letterRules).toHaveLength(1);
+      expect(letterRules[0].destination).toBe(`${DOTNET}/api/v1/recommendations/:id/letter`);
+    });
+
+    // FLAG-OFF INERTNESS -- the acceptance criterion.
+    it("is completely inert with the flag off -- zero .NET traffic on any recommendations path", async () => {
+      const afterFiles = await loadAfterFiles(ALL_OFF);
+
+      expect(afterFiles.filter((r) => r.source.startsWith("/api/v1/recommendations"))).toEqual([]);
+      for (const [path] of RECOMMENDATION_PATHS) {
+        const winner = winningRule(afterFiles, path);
+        expect(winner!.source).toBe(CATCH_ALL);
+        expect(winner!.destination).toBe(`${NODE}${CATCH_ALL}`);
+      }
+    });
+  });
+
+  describe("graduation + transcripts (#55) -- FORMMAPS_ROUTE_GRADUATION_TO_DOTNET", () => {
+    it.each(GRADUATION_PATHS)("routes %s to .NET when the flag is on", async (path, source) => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+      expectDotnet(afterFiles, path, source);
+    });
+
+    it("places every graduation rule BEFORE the Node catch-all", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+      const catchAllIndex = afterFiles.findIndex((r) => r.source === CATCH_ALL);
+
+      for (const [, source] of GRADUATION_PATHS) {
+        const index = afterFiles.findIndex((r) => r.source === source);
+        expect(index).toBeGreaterThanOrEqual(0);
+        expect(index).toBeLessThan(catchAllIndex);
+      }
+    });
+
+    // NEGATIVE CONTROL: no prefix rules. A /api/v1/school-admin/:path* or
+    // /api/v1/transcript/:path* entry would pass every ON assertion above and silently shadow the
+    // calendar block and /grades/import.
+    it("uses only path-specific sources -- no wildcard under /transcript or /school-admin/graduation", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+
+      const mine = afterFiles.filter(
+        (r) => r.source.startsWith("/api/v1/transcript") || r.source.startsWith("/api/v1/school-admin/graduation"),
+      );
+      expect(mine).toHaveLength(GRADUATION_PATHS.length);
+      expect(mine.filter((r) => r.source.includes("*"))).toEqual([]);
+      // source === destination on every one, the shape every pair in this file uses.
+      for (const rule of mine) expect(rule.destination).toBe(`${DOTNET}${rule.source}`);
+    });
+
+    // FLAG-OFF INERTNESS -- the acceptance criterion.
+    it("is completely inert with the flag off -- zero .NET traffic on any graduation path", async () => {
+      const afterFiles = await loadAfterFiles(ALL_OFF);
+
+      expect(
+        afterFiles.filter(
+          (r) => r.source.startsWith("/api/v1/transcript") || r.source.startsWith("/api/v1/school-admin/graduation"),
+        ),
+      ).toEqual([]);
+      for (const [path] of GRADUATION_PATHS) {
+        const winner = winningRule(afterFiles, path);
+        expect(winner!.source).toBe(CATCH_ALL);
+        expect(winner!.destination).toBe(`${NODE}${CATCH_ALL}`);
+      }
+    });
+  });
+
+  describe("telemetry (#65) -- FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET", () => {
+    it.each(TELEMETRY_PATHS)("routes %s to .NET when the flag is on", async (path, source) => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET"));
+      expectDotnet(afterFiles, path, source);
+    });
+
+    it("places the telemetry rule BEFORE the Node catch-all", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET"));
+      const catchAllIndex = afterFiles.findIndex((r) => r.source === CATCH_ALL);
+
+      for (const [, source] of TELEMETRY_PATHS) {
+        const index = afterFiles.findIndex((r) => r.source === source);
+        expect(index).toBeGreaterThanOrEqual(0);
+        expect(index).toBeLessThan(catchAllIndex);
+      }
+    });
+
+    // NEGATIVE CONTROL: a /api/v1/telemetry/:path* prefix would pass every ON assertion above.
+    // Nothing else routes under /api/v1/telemetry today, so the prefix would be harmless RIGHT
+    // NOW and would silently become a shadow the moment a second telemetry path is added.
+    it("uses one path-specific source -- no wildcard under /api/v1/telemetry", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET"));
+
+      const mine = afterFiles.filter((r) => r.source.startsWith("/api/v1/telemetry"));
+      expect(mine).toHaveLength(TELEMETRY_PATHS.length);
+      expect(mine.filter((r) => r.source.includes("*"))).toEqual([]);
+      for (const rule of mine) expect(rule.destination).toBe(`${DOTNET}${rule.source}`);
+    });
+
+    // FLAG-OFF INERTNESS -- the acceptance criterion. The flag is new and set nowhere.
+    it("is completely inert with the flag off -- zero .NET traffic on any telemetry path", async () => {
+      const afterFiles = await loadAfterFiles(ALL_OFF);
+
+      expect(afterFiles.filter((r) => r.source.startsWith("/api/v1/telemetry"))).toEqual([]);
+      for (const [path] of TELEMETRY_PATHS) {
+        const winner = winningRule(afterFiles, path);
+        expect(winner!.source).toBe(CATCH_ALL);
+        expect(winner!.destination).toBe(`${NODE}${CATCH_ALL}`);
+      }
+    });
+  });
+
+  describe("teacher onboarding (#62) -- FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET", () => {
+    it.each(TEACHER_PATHS)("routes %s to .NET when the flag is on", async (path, source) => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET"));
+      expectDotnet(afterFiles, path, source);
+    });
+
+    it("places every teacher rule BEFORE the Node catch-all", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET"));
+      const catchAllIndex = afterFiles.findIndex((r) => r.source === CATCH_ALL);
+
+      for (const [, source] of TEACHER_PATHS) {
+        const index = afterFiles.findIndex((r) => r.source === source);
+        expect(index).toBeGreaterThanOrEqual(0);
+        expect(index).toBeLessThan(catchAllIndex);
+      }
+    });
+
+    // NEGATIVE CONTROL: a /api/v1/teacher/:path* prefix, or even /api/v1/teacher/onboarding/:path*,
+    // would pass every ON assertion above while collapsing the split auth boundary into a single
+    // rule -- and would capture any future /api/v1/teacher/* route that is NOT ported.
+    it("uses only path-specific sources -- no wildcard under /api/v1/teacher", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET"));
+
+      const mine = afterFiles.filter((r) => r.source.startsWith("/api/v1/teacher"));
+      expect(mine).toHaveLength(TEACHER_PATHS.length);
+      expect(mine.filter((r) => r.source.includes("*"))).toEqual([]);
+      for (const rule of mine) expect(rule.destination).toBe(`${DOTNET}${rule.source}`);
+    });
+
+    // THE PRE-AUTH PAIR. These two are reached by a teacher clicking an emailed invite link with no
+    // cookie and no bearer token, and /complete SETS access_token + refresh_token on its 200. A
+    // rewrite is a pure origin swap -- it adds no middleware and strips no Set-Cookie -- so what
+    // this asserts is the property that keeps that true: they are ORDINARY entries in the same flat
+    // afterFiles array as every other rule, resolved by path alone, identity-mapped, with no
+    // request-condition of their own. If anyone ever moves them behind a has/missing cookie
+    // matcher, the anonymous invite click stops matching and this goes red.
+    it("keeps the two PRE-AUTHENTICATION onboarding paths unconditional and identity-mapped", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET"));
+
+      for (const source of ["/api/v1/teacher/onboarding/verify", "/api/v1/teacher/onboarding/complete"]) {
+        const rule = afterFiles.find((r) => r.source === source) as (Rewrite & { has?: unknown; missing?: unknown }) | undefined;
+        expect(rule).toBeDefined();
+        expect(rule!.destination).toBe(`${DOTNET}${source}`);
+        expect(rule!.has).toBeUndefined();
+        expect(rule!.missing).toBeUndefined();
+      }
+    });
+
+    // FLAG-OFF INERTNESS -- the acceptance criterion. The flag is new and set nowhere.
+    it("is completely inert with the flag off -- zero .NET traffic on any teacher path", async () => {
+      const afterFiles = await loadAfterFiles(ALL_OFF);
+
+      expect(afterFiles.filter((r) => r.source.startsWith("/api/v1/teacher"))).toEqual([]);
+      for (const [path] of TEACHER_PATHS) {
+        const winner = winningRule(afterFiles, path);
+        expect(winner!.source).toBe(CATCH_ALL);
+        expect(winner!.destination).toBe(`${NODE}${CATCH_ALL}`);
+      }
+    });
+  });
+
+  describe("graduation-plan remainder (#55) -- rides FORMMAPS_ROUTE_GRADUATION_TO_DOTNET", () => {
+    it.each(GRADUATION_PLAN_PATHS)("routes %s to .NET when the graduation flag is on", async (path, source) => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+      expectDotnet(afterFiles, path, source);
+    });
+
+    // NO NEW FLAG. The remainder co-flips and co-rolls-back with the transcript/graduation-rules
+    // half already on this flag; a separate flag would let a plan submit land on .NET while the
+    // graduation rules it is validated against stayed on Node.
+    it("introduces no third graduation flag -- the remainder rides the SAME flag", async () => {
+      const graduationOn = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+      for (const [path, source] of GRADUATION_PLAN_PATHS) expectDotnet(graduationOn, path, source);
+      // ...and the transcript half moves in the very same flip.
+      for (const [path, source] of GRADUATION_PATHS) expectDotnet(graduationOn, path, source);
+    });
+
+    it("places every graduation-plan rule BEFORE the Node catch-all", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+      const catchAllIndex = afterFiles.findIndex((r) => r.source === CATCH_ALL);
+
+      for (const [, source] of GRADUATION_PLAN_PATHS) {
+        const index = afterFiles.findIndex((r) => r.source === source);
+        expect(index).toBeGreaterThanOrEqual(0);
+        expect(index).toBeLessThan(catchAllIndex);
+      }
+    });
+
+    // NEGATIVE CONTROL, and the one that matters most in this lane: either prefix form would pass
+    // every ON assertion above AND swallow a D1 /generate carve-out.
+    it("uses only literal sources -- no wildcard under /graduation-plan on either tree", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+
+      const mine = afterFiles.filter((r) => r.source.includes("/graduation-plan"));
+      // The six flag-gated entries plus the two UNCONDITIONAL D1 /generate carve-outs.
+      expect(mine).toHaveLength(GRADUATION_PLAN_PATHS.length + 2);
+      expect(mine.filter((r) => r.source.includes("*"))).toEqual([]);
+    });
+
+    // THE BARE PATH SITS AFTER THE DEEPER ONES. Defensive -- Next will not match a literal parent
+    // against a deeper path -- and it matches how the landed transcript block is written.
+    it("orders the bare /api/v1/student/graduation-plan after its three deeper siblings", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+      const indexOf = (source: string) => afterFiles.findIndex((r) => r.source === source);
+
+      const bare = indexOf("/api/v1/student/graduation-plan");
+      expect(bare).toBeGreaterThanOrEqual(0);
+      for (const deeper of [
+        "/api/v1/student/graduation-plan/target",
+        "/api/v1/student/graduation-plan/submit",
+        "/api/v1/student/graduation-plan/supplemental",
+      ]) {
+        expect(indexOf(deeper)).toBeGreaterThanOrEqual(0);
+        expect(indexOf(deeper)).toBeLessThan(bare);
+      }
+    });
+
+    // The six-segment counselor read must not capture the SEVEN-segment /review or /generate.
+    it("keeps the six- and seven-segment counselor paths distinct", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+
+      expectDotnet(
+        afterFiles,
+        "/api/v1/counselor/me/students/s_1/graduation-plan",
+        "/api/v1/counselor/me/students/:studentId/graduation-plan",
+      );
+      expectDotnet(
+        afterFiles,
+        "/api/v1/counselor/me/students/s_1/graduation-plan/review",
+        "/api/v1/counselor/me/students/:studentId/graduation-plan/review",
+      );
+      // ...and the seven-segment D1 carve-out still lands on Node, not on either of them.
+      const generate = winningRule(afterFiles, "/api/v1/counselor/me/students/s_1/graduation-plan/generate");
+      expect(generate!.source).toBe(D1_COUNSELOR);
+      expect(generate!.destination).toBe(`${NODE}${D1_COUNSELOR}`);
+    });
+
+    // FLAG-OFF INERTNESS. With the flag off the ONLY rules under these two sub-trees are the two
+    // unconditional D1 carve-outs, which pin to Node.
+    it("is completely inert with the flag off -- zero .NET traffic on any graduation-plan path", async () => {
+      const afterFiles = await loadAfterFiles(ALL_OFF);
+
+      expect(
+        afterFiles.filter((r) => r.source.includes("/graduation-plan") && r.destination.startsWith(DOTNET)),
+      ).toEqual([]);
+
+      for (const [path] of GRADUATION_PLAN_PATHS) {
+        const winner = winningRule(afterFiles, path);
+        expect(winner!.source).toBe(CATCH_ALL);
+        expect(winner!.destination).toBe(`${NODE}${CATCH_ALL}`);
+      }
+    });
+  });
+
+  describe("#55 decision D1 -- the two AI generate routes stay on Node, unconditionally", () => {
+    // These are UNCONDITIONAL carve-outs. aiLimiter (index.ts:306/:307) + Bedrock, not ported, no
+    // .NET handler -- if a flag rewrite ever covers their path they 404 the instant it flips.
+    it.each([
+      ["all flags off", ALL_OFF],
+      ["graduation flag on", envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET")],
+      ["counselor flags on", envWith("FORMMAPS_ROUTE_COUNSELOR_DASHBOARD_TO_DOTNET", "FORMMAPS_ROUTE_COUNSELOR_CASELOAD_TO_DOTNET")],
+    ])("pins both AI generate routes to Node (%s)", async (_label, env) => {
+      const afterFiles = await loadAfterFiles(env);
+
+      expectDotnetFree(afterFiles, D1_STUDENT);
+      expectDotnetFree(afterFiles, D1_COUNSELOR_PATH);
+    });
+
+    function expectDotnetFree(afterFiles: Rewrite[], path: string) {
+      const winner = winningRule(afterFiles, path);
+      expect(winner).toBeDefined();
+      expect(winner!.destination).not.toContain("dotnet.example.test");
+      expect(winner!.destination).toBe(`${NODE}${winner!.source}`);
+    }
+
+    // ORDERING IS THE WHOLE POINT: a carve-out placed AFTER a flag rewrite that covers the same
+    // path does nothing. These sit at the top of the array, ahead of every flag-gated rule, so
+    // they cannot be defeated by a future /api/v1/student/* or /api/v1/counselor/* flag block.
+    it("places both carve-outs ahead of EVERY flag-gated rewrite and the catch-all", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+
+      const studentIndex = afterFiles.findIndex((r) => r.source === D1_STUDENT);
+      const counselorIndex = afterFiles.findIndex((r) => r.source === D1_COUNSELOR);
+      expect(studentIndex).toBeGreaterThanOrEqual(0);
+      expect(counselorIndex).toBeGreaterThanOrEqual(0);
+
+      const firstDotnetIndex = afterFiles.findIndex((r) => r.destination.startsWith(DOTNET));
+      expect(firstDotnetIndex).toBeGreaterThanOrEqual(0);
+      expect(studentIndex).toBeLessThan(firstDotnetIndex);
+      expect(counselorIndex).toBeLessThan(firstDotnetIndex);
+
+      const catchAllIndex = afterFiles.findIndex((r) => r.source === CATCH_ALL);
+      expect(studentIndex).toBeLessThan(catchAllIndex);
+      expect(counselorIndex).toBeLessThan(catchAllIndex);
+    });
+
+    // The carve-outs must survive the .NET base URL being unset -- they pin to `target`, which
+    // always has a value, so no dotnetApiBaseUrl guard applies to them.
+    it("survives an unset .NET base URL and never renders an 'undefined' destination", async () => {
+      const afterFiles = await loadAfterFiles({
+        ...ALL_OFF,
+        FORMMAPS_DOTNET_API_BASE_URL: undefined,
+      });
+
+      expect(afterFiles.some((r) => r.source === D1_STUDENT)).toBe(true);
+      expect(afterFiles.some((r) => r.source === D1_COUNSELOR)).toBe(true);
+      expect(afterFiles.filter((r) => r.destination.startsWith("undefined"))).toEqual([]);
+    });
+  });
+
+  describe("cross-flag non-shadowing -- M4 must not steal a neighbouring flag's routes", () => {
+    // The calendar half of routes/school-grades.ts, already flagged separately. #55 ports the
+    // GRADUATION half of the SAME legacy file, which is exactly how a careless
+    // /api/v1/school-admin/:path* prefix would have swallowed both.
+    const CALENDAR_PATHS = [
+      "/api/v1/school-admin/calendar/academic-years",
+      "/api/v1/school-admin/calendar/academic-years/ay_1",
+      "/api/v1/school-admin/calendar/academic-years/ay_1/set-current",
+      "/api/v1/school-admin/calendar/assessment-periods",
+      "/api/v1/school-admin/calendar/assessment-periods/ap_1",
+      "/api/v1/school-admin/calendar/holidays",
+      "/api/v1/school-admin/calendar/holidays/h_1",
+    ];
+    // NOT ported at all. Must keep resolving to Node in every flag state.
+    const GRADES_IMPORT_PATHS = [
+      "/api/v1/school-admin/grades/import",
+      "/api/v1/school-admin/grades/import/j_1",
+      "/api/v1/school-admin/grades/import/j_1/download-failures",
+    ];
+    const GRADEBOOK_PATH = "/api/v1/school-admin/gradebook/students/s_1";
+    const SCHOOL_USERS_PATHS = ["/api/v1/school-admin/users", "/api/v1/school-admin/users/u_1/grade-level"];
+
+    it("graduation ON does not touch the calendar, gradebook or school-users paths", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+
+      for (const path of [...CALENDAR_PATHS, ...SCHOOL_USERS_PATHS, GRADEBOOK_PATH]) {
+        const winner = winningRule(afterFiles, path);
+        expect(winner!.source).toBe(CATCH_ALL);
+        expect(winner!.destination).toBe(`${NODE}${CATCH_ALL}`);
+      }
+    });
+
+    // /grades/import* is not ported by ANY flag. It stays Node whatever is on.
+    it.each([
+      ["graduation on", envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET")],
+      ["graduation + calendar + gradebook on", envWith(
+        "FORMMAPS_ROUTE_GRADUATION_TO_DOTNET",
+        "FORMMAPS_ROUTE_SCHOOL_ADMIN_CALENDAR_TO_DOTNET",
+        "FORMMAPS_ROUTE_GRADEBOOK_READ_TO_DOTNET",
+      )],
+    ])("never rewrites the unported /grades/import paths (%s)", async (_label, env) => {
+      const afterFiles = await loadAfterFiles(env);
+
+      for (const path of GRADES_IMPORT_PATHS) {
+        const winner = winningRule(afterFiles, path);
+        expect(winner!.source).toBe(CATCH_ALL);
+        expect(winner!.destination).toBe(`${NODE}${CATCH_ALL}`);
+      }
+    });
+
+    // The reverse direction: the neighbouring flags must not swallow the M4 paths either, and the
+    // two transcript-vs-gradebook student reads are DIFFERENT legacy routes under DIFFERENT flags.
+    it("calendar + gradebook ON does not move any graduation or transcript path", async () => {
+      const afterFiles = await loadAfterFiles(
+        envWith("FORMMAPS_ROUTE_SCHOOL_ADMIN_CALENDAR_TO_DOTNET", "FORMMAPS_ROUTE_GRADEBOOK_READ_TO_DOTNET"),
+      );
+
+      // The neighbours really are on...
+      expectDotnet(afterFiles, GRADEBOOK_PATH, "/api/v1/school-admin/gradebook/students/:studentId");
+      // ...and the M4 paths are still entirely on Node.
+      for (const [path] of GRADUATION_PATHS) expectNode(afterFiles, path);
+    });
+
+    it("keeps the transcript and gradebook student reads on separate flags", async () => {
+      const graduationOnly = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+      expectDotnet(graduationOnly, "/api/v1/transcript/students/s_1/transcript", "/api/v1/transcript/students/:id/transcript");
+      expectNode(graduationOnly, GRADEBOOK_PATH);
+
+      const gradebookOnly = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADEBOOK_READ_TO_DOTNET"));
+      expectDotnet(gradebookOnly, GRADEBOOK_PATH, "/api/v1/school-admin/gradebook/students/:studentId");
+      expectNode(gradebookOnly, "/api/v1/transcript/students/s_1/transcript");
+    });
+
+    // The three M4 lanes are independent of each other too: flipping one must move only its own
+    // routes. This is the per-lane rollback guarantee.
+    it.each([
+      ["FORMMAPS_ROUTE_MODERATION_TO_DOTNET", MODERATION_PATHS],
+      ["FORMMAPS_ROUTE_RECOMMENDATIONS_TO_DOTNET", RECOMMENDATION_PATHS],
+      // The graduation flag owns BOTH halves: the landed transcript/rules paths and the
+      // graduation-plan remainder that this merge adds. Listing them as one own-set is the
+      // assertion that the remainder did not quietly get a flag of its own.
+      ["FORMMAPS_ROUTE_GRADUATION_TO_DOTNET", [...GRADUATION_PATHS, ...GRADUATION_PLAN_PATHS]],
+      ["FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET", TELEMETRY_PATHS],
+      ["FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET", TEACHER_PATHS],
+    ])("%s moves its own paths and no other lane's", async (flag, ownPaths) => {
+      const afterFiles = await loadAfterFiles(envWith(flag as string));
+      const own = new Set((ownPaths as Array<[string, string]>).map(([path]) => path));
+
+      for (const [path, source] of ownPaths as Array<[string, string]>) {
+        expectDotnet(afterFiles, path, source);
+      }
+      for (const [path] of ALL_M4_PATHS) {
+        if (!own.has(path)) expectNode(afterFiles, path);
+      }
+    });
+
+    // ── Recovery-lane neighbours. The graduation-plan remainder is the only lane that lands
+    // entries in sub-trees other flags already occupy (/api/v1/student/*, /api/v1/counselor/*),
+    // so it gets the same two-directional check the transcript half got against calendar.
+    const COUNSELOR_NEIGHBOUR_PATHS = [
+      "/api/v1/counselor/me/students",
+      "/api/v1/counselor/me/students/s_1",
+      "/api/v1/counselor/dashboard",
+      "/api/v1/counselor/students/s_1/notes",
+    ];
+    const STUDENT_NEIGHBOUR_PATHS = [
+      "/api/v1/student/portfolio",
+      "/api/v1/student/portfolio/p_1",
+      "/api/v1/student/course-plan",
+      "/api/v1/student/course-plan/courses",
+    ];
+
+    it("graduation ON does not touch the counselor caseload/notes or student portfolio/course-plan paths", async () => {
+      const afterFiles = await loadAfterFiles(envWith("FORMMAPS_ROUTE_GRADUATION_TO_DOTNET"));
+
+      for (const path of [...COUNSELOR_NEIGHBOUR_PATHS, ...STUDENT_NEIGHBOUR_PATHS]) {
+        const winner = winningRule(afterFiles, path);
+        expect(winner!.source).toBe(CATCH_ALL);
+        expect(winner!.destination).toBe(`${NODE}${CATCH_ALL}`);
+      }
+    });
+
+    // The reverse direction. In particular /api/v1/counselor/me/students/:studentId is FIVE
+    // segments and must not capture the SIX-segment .../graduation-plan.
+    it("counselor + student neighbour flags ON do not move any graduation-plan path", async () => {
+      const afterFiles = await loadAfterFiles(
+        envWith(
+          "FORMMAPS_ROUTE_COUNSELOR_DASHBOARD_TO_DOTNET",
+          "FORMMAPS_ROUTE_COUNSELOR_CASELOAD_TO_DOTNET",
+          "FORMMAPS_ROUTE_COUNSELOR_NOTES_TO_DOTNET",
+          "FORMMAPS_ROUTE_STUDENT_PORTFOLIO_TO_DOTNET",
+          "FORMMAPS_ROUTE_STUDENT_COURSE_PLAN_TO_DOTNET",
+        ),
+      );
+
+      // The neighbours really are on...
+      expectDotnet(afterFiles, "/api/v1/counselor/me/students/s_1", "/api/v1/counselor/me/students/:studentId");
+      expectDotnet(afterFiles, "/api/v1/student/portfolio", "/api/v1/student/portfolio");
+      // ...and every graduation-plan path is still entirely on Node.
+      for (const [path] of GRADUATION_PLAN_PATHS) expectNode(afterFiles, path);
+    });
+
+    // Telemetry and teacher own namespaces nothing else in this config touches. Asserting that
+    // explicitly is what turns "no shadow today" into a regression guard.
+    it("no other rewrite in the entire config claims /api/v1/telemetry or /api/v1/teacher", async () => {
+      const allOn = await loadAfterFiles(
+        envWith("FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET", "FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET"),
+      );
+
+      for (const [path, source] of [...TELEMETRY_PATHS, ...TEACHER_PATHS]) {
+        // Exactly one rule ahead of the catch-all matches, and it is this lane's own.
+        const matching = allOn.filter((r) => r.source !== CATCH_ALL && sourceToRegExp(r.source).test(path));
+        expect(matching.map((r) => r.source)).toEqual([source]);
+      }
+    });
+
+    it("flipping telemetry or teacher moves nothing under /graduation-plan, /transcript or /school-admin", async () => {
+      const afterFiles = await loadAfterFiles(
+        envWith("FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET", "FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET"),
+      );
+
+      for (const [path] of [...GRADUATION_PATHS, ...GRADUATION_PLAN_PATHS]) expectNode(afterFiles, path);
+      expectNode(afterFiles, GRADEBOOK_PATH);
+      for (const path of CALENDAR_PATHS) expectNode(afterFiles, path);
+    });
+  });
+
+  // ── The whole-block acceptance criterion, stated once. ───────────────────────────────────────
+  it("ALL FLAGS OFF: not one M4 path reaches .NET", async () => {
+    const afterFiles = await loadAfterFiles(ALL_OFF);
+
+    for (const [path] of ALL_M4_PATHS) {
+      const winner = winningRule(afterFiles, path);
+      expect(winner).toBeDefined();
+      expect(winner!.source).toBe(CATCH_ALL);
+      expect(winner!.destination).toBe(`${NODE}${CATCH_ALL}`);
+    }
+  });
+
+  it("stays inert and build-safe when the .NET base URL is unset (no 'undefined' destination)", async () => {
+    // Flags ON but no base URL: the `dotnetApiBaseUrl && ...` half of every helper must still keep
+    // the whole block out, or the destinations render the literal "undefined/api/..." and fail
+    // `next build`.
+    const afterFiles = await loadAfterFiles({
+      ...ALL_OFF,
+      FORMMAPS_DOTNET_API_BASE_URL: undefined,
+      FORMMAPS_ROUTE_MODERATION_TO_DOTNET: "1",
+      FORMMAPS_ROUTE_RECOMMENDATIONS_TO_DOTNET: "1",
+      FORMMAPS_ROUTE_GRADUATION_TO_DOTNET: "1",
+      FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET: "1",
+      FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET: "1",
+    });
+
+    expect(afterFiles.filter((r) => r.destination.startsWith("undefined"))).toEqual([]);
+    for (const [path] of ALL_M4_PATHS) {
+      expect(winningRule(afterFiles, path)!.source).toBe(CATCH_ALL);
+    }
+  });
+
+  // EVERY M4 FLAG ON AT ONCE. Each lane's paths must still resolve to its OWN source -- the state
+  // in which a prefix rule from one lane would visibly steal another's routes.
+  it("ALL FLAGS ON: every M4 path resolves to its own lane's rule, none stolen", async () => {
+    const afterFiles = await loadAfterFiles(
+      envWith(
+        "FORMMAPS_ROUTE_MODERATION_TO_DOTNET",
+        "FORMMAPS_ROUTE_RECOMMENDATIONS_TO_DOTNET",
+        "FORMMAPS_ROUTE_GRADUATION_TO_DOTNET",
+        "FORMMAPS_ROUTE_TELEMETRY_TO_DOTNET",
+        "FORMMAPS_ROUTE_TEACHER_ONBOARDING_TO_DOTNET",
+      ),
+    );
+
+    for (const [path, source] of ALL_M4_PATHS) expectDotnet(afterFiles, path, source);
+
+    // ...and the two unconditional D1 carve-outs survive the fully-flipped state, which is the
+    // only state in which a graduation-plan prefix rule could actually swallow them.
+    for (const path of [D1_STUDENT, "/api/v1/counselor/me/students/s_1/graduation-plan/generate"]) {
+      const winner = winningRule(afterFiles, path);
+      expect(winner!.destination).toBe(`${NODE}${winner!.source}`);
+    }
+  });
+});

@@ -14,6 +14,14 @@ public static class FormMapsPermissions
     public const string SchoolManage = "school:manage";
     public const string SchoolUsers = "school:users";
     public const string CalendarManage = "calendar:manage";
+
+    /// <summary>
+    /// The graduation half of routes/school-grades.ts (issue #55). LIVE, unlike <see cref="AuditRead"/>:
+    /// RolePermissions already emits it for SuperAdmin and SchoolAdmin, matching Node ROLE_PERMISSIONS
+    /// (lib/auth.ts:61 / :76), so holding it grants exactly what legacy grants. Note it is NOT the same gate
+    /// as calendar:manage even though the two routers share a file and a role set.
+    /// </summary>
+    public const string GraduationManage = "graduation:manage";
     public const string CoursesRead = "courses:read";
     public const string CoursesWrite = "courses:write";
     public const string CurriculumManage = "curriculum:manage";
@@ -22,6 +30,14 @@ public static class FormMapsPermissions
     public const string CounselorSessions = "counselor:sessions";
     public const string CounselorNotes = "counselor:notes";
     public const string AlertsRead = "alerts:read";
+
+    /// <summary>
+    /// A LIVE gate, unlike <see cref="AuditRead"/> below: <see cref="RolePermissions"/> already grants this string
+    /// to counselor, school_admin, teacher and coach (mirroring Node's ROLE_PERMISSIONS in lib/auth.ts), and
+    /// formmaps#59 gates four recommendation routes on it — GET /received, PUT /:id/respond, PUT /:id/status,
+    /// POST /:id/letter. GET /:id/letter deliberately does NOT use it; see RecommendationsEndpoints.
+    /// </summary>
+    public const string RecommendationsRespond = "recommendations:respond";
 
     /// <summary>
     /// FORWARD-COMPAT MARKER — NOT YET A LIVE GATE. <c>GET /api/v1/audit/events</c> gates on

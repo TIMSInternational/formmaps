@@ -15,6 +15,8 @@ using FormMaps.Application.Prerequisites;
 using FormMaps.Application.Email;
 using FormMaps.Application.Reports;
 using FormMaps.Application.Gradebook;
+using FormMaps.Application.Graduation;
+using FormMaps.Application.Transcript;
 using FormMaps.Application.SchoolAdmin;
 using FormMaps.Application.SchoolAnalytics;
 using FormMaps.Application.SchoolProfile;
@@ -39,8 +41,10 @@ using FormMaps.Application.ParentChildReads;
 using FormMaps.Application.StudentCoursePlan;
 using FormMaps.Application.StudentParents;
 using FormMaps.Application.StudentPortfolio;
+using FormMaps.Application.Teacher;
 using FormMaps.Application.Video;
 using FormMaps.Application.Messaging;
+using FormMaps.Application.Recommendations;
 using FormMaps.Infrastructure.Assessments;
 using FormMaps.Infrastructure.Auth;
 using FormMaps.Infrastructure.Calendar;
@@ -52,8 +56,11 @@ using FormMaps.Infrastructure.Pathways;
 using FormMaps.Infrastructure.Prerequisites;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.Email;
+using FormMaps.Infrastructure.Recommendations;
 using FormMaps.Infrastructure.Reports;
 using FormMaps.Infrastructure.Gradebook;
+using FormMaps.Infrastructure.Graduation;
+using FormMaps.Infrastructure.Transcript;
 using FormMaps.Infrastructure.SchoolAdmin;
 using FormMaps.Infrastructure.SchoolAnalytics;
 using FormMaps.Infrastructure.SchoolProfile;
@@ -79,6 +86,7 @@ using FormMaps.Infrastructure.ParentChildReads;
 using FormMaps.Infrastructure.StudentCoursePlan;
 using FormMaps.Infrastructure.StudentParents;
 using FormMaps.Infrastructure.StudentPortfolio;
+using FormMaps.Infrastructure.Teacher;
 using FormMaps.Infrastructure.Video;
 using FormMaps.Infrastructure.Messaging;
 using Microsoft.Extensions.Configuration;
@@ -184,6 +192,16 @@ public static class DependencyInjection
         services.AddScoped<IVideoSessionsRepository, VideoSessionsRepository>();
         // Domain 7b: messaging (FM-DOTNET-098+; routes/messages.ts, all 7 endpoints under /api/v1/messages).
         services.AddScoped<IMessagesRepository, MessagesRepository>();
+        // formmaps#63: UGC moderation (routes/moderation.ts, all 4 endpoints under /api/v1/moderation).
+        // NOTE the session asymmetry inside it: everything runs on the caller's Identity session EXCEPT
+        // CanModerateUserAsync, which opens under RequestContext.System() (Bypass) — legacy's runAsSystem.
+        // A safety action must not depend on the actor being able to SEE the target in the tenant sense;
+        // formmaps#80 is what happens when it does. See MessagesRepository.cs:518 for the long form.
+        services.AddScoped<FormMaps.Application.Moderation.IModerationRepository, FormMaps.Infrastructure.Moderation.ModerationRepository>();
+        // formmaps#65: product telemetry ingest (routes/telemetry.ts:45). Opens on the CALLER's Identity
+        // session — telemetry_events IS policied in production (003-fk-users.sql) and every row it writes
+        // belongs to the caller, so there is nothing here that wants a bypass.
+        services.AddScoped<FormMaps.Application.Telemetry.ITelemetryEventWriter, FormMaps.Infrastructure.Telemetry.TelemetryEventWriter>();
         // formmaps#52: the ONLY sanctioned write path to audit_events. The table's RLS policy admits
         // bypass-mode sessions only, so this writer opens under RequestContext.System() internally —
         // nothing else should ever INSERT there, and no tenant-scoped session can.
@@ -254,6 +272,11 @@ public static class DependencyInjection
         // FM-DOTNET-078: parent portal self-scoped surface (profile, notifications, evaluations/pending, delete-link).
         // Onboarding (auth-cookie), invite/resend (SES), and child-link reads stay in Node.
         services.AddScoped<IParentPortalRepository, ParentPortalRepository>();
+        // formmaps#62: routes/teacher.ts. FOUR routes across a SPLIT auth boundary — the onboarding pair runs
+        // pre-auth on System (bypass) sessions, the profile pair on the CALLER's Identity session. The repository
+        // encodes that split in its method signatures (pre-auth methods take no RequestContext); see
+        // ITeacherOnboardingRepository and TeacherEndpoints.
+        services.AddScoped<ITeacherOnboardingRepository, TeacherOnboardingRepository>();
         // FM-DOTNET-079: parent child-link-scoped reads (children/:id/progress + course-plan). course-plan reads the
         // plan/target/course-plan on a System (RLS-bypass) session, mirroring legacy runAsSystem.
         services.AddScoped<IParentChildReader, ParentChildReader>();
@@ -291,6 +314,27 @@ public static class DependencyInjection
         services.AddScoped<ICourseImportReader, CourseImportReader>();
         services.AddScoped<ICourseImportWriter, CourseImportWriter>();
         services.AddScoped<IGradebookReader, GradebookReader>();
+        // issue #55 (graduation + transcripts lane): routes/transcript.ts, all nine routes, under
+        // FORMMAPS_ROUTE_GRADUATION_TO_DOTNET. The getTranscriptData/resolveGpaConfig half is SHARED with
+        // GradebookReader via TranscriptDataQuery rather than reimplemented — there is exactly one GPA
+        // computation in this codebase (FormMaps.Application.Gradebook.GpaComputation) and it stays that way.
+        services.AddScoped<ITranscriptReader, TranscriptReader>();
+        services.AddScoped<ITranscriptWriter, TranscriptWriter>();
+        // issue #55, second file: the GRADUATION half of routes/school-grades.ts (six routes under
+        // /graduation/*). The calendar half of that same legacy file is already .NET under its own flag and is
+        // untouched; the grade-import half stays in Node. Same lane flag as the transcript reader above.
+        services.AddScoped<IGraduationRulesReader, GraduationRulesReader>();
+        services.AddScoped<IGraduationRulesWriter, GraduationRulesWriter>();
+        // issue #55 REMAINDER, third and fourth files: routes/graduation-plan.ts (6 of 7 routes) and
+        // routes/counselor-graduation.ts (2 of 3). The two POST /generate routes are NOT here and never will
+        // be -- DECISION D1 keeps them on Node permanently (aiLimiter + Bedrock), with unconditional
+        // next.config.ts carve-outs ahead of every flag rewrite. Same lane flag as the two readers above.
+        // GraduationNotificationWriter is the lane's ONLY System-session component; see its doc comment for
+        // the runAsSystem port and the lazy-PrismaPromise trap (planWorkflowService.ts:20-27) it must not
+        // reproduce.
+        services.AddScoped<IGraduationNotificationWriter, GraduationNotificationWriter>();
+        services.AddScoped<IGraduationPlanRepository, GraduationPlanRepository>();
+        services.AddScoped<ICounselorGraduationRepository, CounselorGraduationRepository>();
         services.AddScoped<ICalendarReader, CalendarReader>();
         services.AddScoped<ICalendarWriter, CalendarWriter>();
         services.AddScoped<ISchoolAdminWriter, SchoolAdminWriter>();
@@ -342,6 +386,14 @@ public static class DependencyInjection
             _ => new AmazonS3Client(RegionEndpoint.GetBySystemName(objectStorageOptions.Region)));
         services.AddScoped<IObjectStorage, S3ObjectStorage>();
         services.AddScoped<IUploadRepository, UploadRepository>();
+
+        // formmaps#59: letters of recommendation (routes/recommendations.ts + services/recommendationsService.ts).
+        // Reuses the S3 rail above for the letter PDF and IUserAccessGuard (the canAccessUser port) for the
+        // download gate. RecommendationEmails is a pure template builder over the shared EmailTemplates/EmailOptions.
+        services.AddSingleton(sp => new RecommendationEmails(
+            sp.GetRequiredService<EmailTemplates>(), sp.GetRequiredService<EmailOptions>()));
+        services.AddScoped<IRecommendationsRepository, RecommendationsRepository>();
+        services.AddScoped<RecommendationsService>();
 
         // FM-DOTNET-089: resume section + template writes (routes/resume.ts, /api/resume). Self-scoped jsonb-array
         // manipulation; resumes has NO RLS so ownership is code-only. The resume CRUD + cross-user + AI routes stay Node.

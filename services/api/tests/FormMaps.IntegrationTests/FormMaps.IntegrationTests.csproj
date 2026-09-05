@@ -109,6 +109,15 @@
     <EmbeddedResource Include="SchoolStudents\Data\school-admin-course-plan-writes.parity.json" />
     <!-- Schema-only DDL for the Testcontainers gradebook transcript read harness (FM-DOTNET Phase-B). -->
     <EmbeddedResource Include="Gradebook\Data\gradebook-schema.sql" />
+    <!-- RLS-enabled DDL for the Testcontainers transcript + GPA harness (issue #55, routes/transcript.ts). -->
+    <EmbeddedResource Include="Transcript\Data\transcript-schema.sql" />
+    <!-- RLS-enabled DDL for the graduation-rules/progress/gap-analysis harness (issue #55, school-grades.ts). -->
+    <EmbeddedResource Include="Graduation\Data\graduation-schema.sql" />
+    <!-- RLS-enabled DDL for the graduation-PLAN + counselor-review harness (issue #55 remainder,
+         routes/graduation-plan.ts + routes/counselor-graduation.ts). -->
+    <EmbeddedResource Include="Graduation\Data\graduation-plan-schema.sql" />
+    <!-- RLS-enabled DDL for the telemetry ingest harness (issue #65, routes/telemetry.ts). -->
+    <EmbeddedResource Include="Telemetry\Data\telemetry-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers school academic-calendar reads harness (FM-DOTNET-047 Phase-B). -->
     <EmbeddedResource Include="Calendar\Data\calendar-schema.sql" />
     <!-- Schema-only DDL (with FK ON DELETE CASCADE) for the calendar WRITES harness (FM-DOTNET-048 Phase-B). -->
@@ -185,6 +194,11 @@
     <EmbeddedResource Include="Video\Data\video-sessions-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers messaging unread-count reads harness (FM-DOTNET-098 Domain 7b). -->
     <EmbeddedResource Include="Messaging\messaging-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers UGC moderation harness (formmaps#63). Converted to
+         RlsEnabledDatabaseFixture, so the three policied tables in it (users/conversations/messages) run
+         under the real production policies while reports/user_blocks stay unpolicied exactly as production
+         leaves them. -->
+    <EmbeddedResource Include="Moderation\Data\moderation-schema.sql" />
     <!-- Schema-only DDL (shadow_* tables + minimal live-side stubs) for the Testcontainers billing shadow-repository write harness (Domain 9a, Task 3). -->
     <EmbeddedResource Include="Billing\Data\billing-shadow-schema.sql" />
     <!-- Constraint-absent user_subscriptions DDL (no userId unique) for the formmaps#108 duplicate-row contract tests; embedded since formmaps#125 moved that fixture onto RlsEnabledDatabaseFixture. -->
@@ -221,6 +235,12 @@
                       Link="CareerFit\Data\careerfit-shadow-tables.sql" />
     <!-- Schema-only DDL mirroring the live Node/Prisma auth tables (users/roles/refresh_tokens/login_attempts/password_reset_tokens/user_settings + touched-column schools subset) for the Testcontainers IAuthRepository harness (Domain 10, Task 5). -->
     <EmbeddedResource Include="Auth\Data\auth-schema.sql" />
+    <!-- Schema-only DDL for the Testcontainers letters-of-recommendation harness (formmaps#59). -->
+    <EmbeddedResource Include="Recommendations\Data\recommendations-schema.sql" />
+    <!-- RLS-enabled DDL for the teacher onboarding + teacher portal harness (formmaps#62, routes/teacher.ts).
+         teacher_invites / users / evaluation_groups run under the real production policies; schools is left
+         unpolicied because production leaves it unpolicied. -->
+    <EmbeddedResource Include="Teacher\Data\teacher-schema.sql" />
     <!-- formmaps#125: byte-for-byte copies of the production RLS policy files (formmaps-platform/api/prisma/rls/*.sql),
          embedded so converted fixtures assert against the policies Aurora actually enforces rather than a transcription
          of them. A GLOB, not a list: a policy file copied into that directory MUST get applied, and a hand-maintained

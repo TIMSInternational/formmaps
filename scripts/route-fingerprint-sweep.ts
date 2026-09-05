@@ -722,6 +722,38 @@ export const PATH_DOMAIN_MAP: [string, string][] = [
   ["/api/v1/upload", "documents-and-resume"],
   ["/api/v1/video", "video"],
   ["/api/v1/messages", "messaging"],
+  // M4 no-decision ports. Keyed on the path, longest prefix wins, so
+  // /api/v1/school-admin/graduation/* already resolves via the school-admin entry above and
+  // needs no row of its own -- these three prefixes are the ones that had no owner at all and
+  // would otherwise be reported as `unmapped` for the rest of the M4 rollout.
+  // /api/v1/moderation rides with messaging deliberately: user_blocks is the messaging read
+  // path (MessagesRepository reads the blocks ModerationRepository writes), which is the same
+  // reason the Moderation integration namespace shares Messaging's CI shard.
+  ["/api/v1/moderation", "messaging"],
+  ["/api/v1/recommendations", "student-counselor-parent-workflows"],
+  // /api/v1/transcript is the reads half of the #55 flag whose writes live under
+  // /api/v1/school-admin/graduation; both halves therefore report the same domain, which is
+  // what a single-flag unit should do.
+  ["/api/v1/transcript", "schools-rosters-organizations"],
+  // issue #65. /api/v1/telemetry has no natural product owner -- it is the ingest side of
+  // platform observability, written by every surface and read by none of them -- so it reports
+  // as platform-health rather than being attached to whichever feature happened to emit the
+  // event. Without a row here it would report as `unmapped` for the whole rollout.
+  ["/api/v1/telemetry", "platform-health"],
+  // issue #62, ADDED BY THE INTEGRATOR, not by the teacher lane -- flagged for a reviewer's eye.
+  // The lane ported four routes under a prefix that had no row here, so the moment its rewrite
+  // landed the sweep would have reported all four as `unmapped-domain`. That is a reporting
+  // defect introduced by landing the rewrite, hence fixed here rather than left for the flip.
+  //
+  // JUDGEMENT CALL, and the arguable one in this merge: /api/v1/teacher is a STAFF IDENTITY
+  // prefix, not assessment content. Three of its four routes (onboarding verify, onboarding
+  // complete, profile) are staff provisioning and self-read, which is squarely
+  // schools-rosters-organizations alongside /api/v1/school-admin/users. The fourth,
+  // /evaluations/pending, is a teacher's own work queue rather than an assessment instrument --
+  // it returns which evaluations this teacher still owes, not any evaluation's content -- so it
+  // does not pull the prefix into assessments-and-readiness. If the domain owner disagrees, this
+  // is one row to change and it affects reporting only; no rewrite and no flag depends on it.
+  ["/api/v1/teacher", "schools-rosters-organizations"],
   ["/hubs", "messaging"],
   ["/authapi", "auth"],
 ];

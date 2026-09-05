@@ -254,6 +254,8 @@ public sealed class ResumeCrossUserEndpointsTests
             throw new NotSupportedException();
         public Task<string> GetPresignedReadUrlAsync(string key, int ttlSeconds, bool inline, string contentType, CancellationToken ct = default) =>
             Task.FromResult(Url);
+        // Unused here; part of IObjectStorage since formmaps#59's letter-upload orphan cleanup.
+        public Task DeleteAsync(string key, CancellationToken ct = default) => Task.CompletedTask;
     }
 
     private sealed class FakeRepo : IResumeRepository
