@@ -14,7 +14,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
     private NpgsqlDataSource _dataSource = null!;
 
     public MessagesBroadcastTests(MessagingDatabaseFixture fixture) => _fixture = fixture;
-    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
+    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString); return Task.CompletedTask; }
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     private MessagesRepository Repo(IFormMapsDatabaseSessionFactory? factory = null) => new(
@@ -102,7 +102,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "hello there");
 
         var (pa, pb) = string.CompareOrdinal(admin, student) < 0 ? (admin, student) : (student, admin);
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
 
         await using var convCmd = new NpgsqlCommand(
@@ -137,7 +137,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "first");
 
         var (pa, pb) = string.CompareOrdinal(admin, student) < 0 ? (admin, student) : (student, admin);
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         DateTime firstUpdatedAt;
         string firstConversationId;
@@ -179,7 +179,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
 
         await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "hi all");
 
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
             """SELECT count(*)::int FROM "notification_outbox" WHERE "type" = 'unread_message' AND "payload"->>'preview' = 'hi all'""",
@@ -208,7 +208,7 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
             _fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", preview);
         Assert.Equal(2, count.RecipientCount);
 
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
 
         // Every outbox row for this broadcast must JOIN to a real "messages" row -- and that row must be

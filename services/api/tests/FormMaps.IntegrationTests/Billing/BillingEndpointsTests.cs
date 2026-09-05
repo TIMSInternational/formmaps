@@ -234,11 +234,17 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
 
     /// <summary>
     /// formmaps#30. Another user's row must be untouchable, and NOT merely because the caller cannot see
-    /// it. This fixture applies no RLS policies at all (see BillingDatabaseFixture) -- so if the endpoint
-    /// leaned on tenant visibility instead of its own explicit <c>"userId" = caller</c> predicates, the
-    /// victim's row would be found and cancelled here and this test would fail. That is the point: the
-    /// production RLS policy on user_subscriptions (api/prisma/rls/003-fk-users.sql) also admits any user
-    /// in the SAME SCHOOL as the row's owner, so visibility alone was never sufficient.
+    /// it. Both parties are deliberately seeded into the SAME SCHOOL and the caller's session carries that
+    /// schoolId, because the production policy on user_subscriptions
+    /// (TestSupport/Rls/003-fk-users.sql tenant_isolation) ADMITS a same-school caller: its third branch
+    /// matches any row whose owner's <c>users."schoolId"</c> equals <c>app.current_school_id</c>. So RLS
+    /// hands this row to the endpoint and the endpoint's own <c>"userId" = caller</c> predicate is the only
+    /// thing that can deny it — which is exactly what this test isolates.
+    ///
+    /// Seed them school-less (or omit the header) and the policy hides the row before the handler runs:
+    /// the test still passes, and it passes for a reason that has nothing to do with the code it claims to
+    /// guard. That is how it read before the fixture was converted to real RLS. Mutation check: drop
+    /// <c>"userId" = @userId</c> from LiveSubscriptionReader/Writer and these four Theory cases must fail.
     /// </summary>
     [Theory]
     [InlineData(CancelV1Path)]
@@ -246,11 +252,13 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     public async Task PostCancelSubscription_AnotherUsersSubscription_Returns404_AndLeavesItUntouched(string path)
     {
         await fixture.ResetAsync();
+        await fixture.SeedUserAsync("victim_user", stripeCustomerId: null, schoolId: SharedSchoolId);
+        await fixture.SeedUserAsync("attacker_user", stripeCustomerId: null, schoolId: SharedSchoolId);
         await fixture.SeedLiveSubscriptionAsync("victim_user", stripeSubscriptionId: null);
         var gateway = new FakeStripeGateway();
         using var factory = FactoryWith(gateway);
         using var client = factory.CreateClient();
-        AddDevIdentity(client, "attacker_user", "school_admin");
+        AddDevIdentity(client, "attacker_user", "school_admin", SharedSchoolId);
 
         var response = await client.PostAsync(path, null);
 
@@ -268,9 +276,9 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     /// <summary>
     /// formmaps#30, the other half of "not by visibility alone". The test above is denied by the READ, so
     /// it cannot say anything about the WRITE. Here the caller legitimately owns a cancellable row and a
-    /// second user's row also exists: the endpoint must cancel exactly one. With no RLS in this fixture, a
-    /// LiveSubscriptionWriter whose UPDATE dropped its own <c>"userId" = @userId</c> predicate would cancel
-    /// both, and only this test would notice.
+    /// second user's row also exists in the SAME SCHOOL — so the policy's same-school branch admits the
+    /// bystander's row to the UPDATE's scope too, and a LiveSubscriptionWriter that dropped its own
+    /// <c>"userId" = @userId</c> predicate would cancel both. Only this test would notice.
     /// </summary>
     [Theory]
     [InlineData(CancelV1Path)]
@@ -278,11 +286,13 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
     public async Task PostCancelSubscription_CancelsOnlyTheCallersRow_NeverAnotherUsers(string path)
     {
         await fixture.ResetAsync();
+        await fixture.SeedUserAsync("owner_user", stripeCustomerId: null, schoolId: SharedSchoolId);
+        await fixture.SeedUserAsync("bystander_user", stripeCustomerId: null, schoolId: SharedSchoolId);
         await fixture.SeedLiveSubscriptionAsync("owner_user", stripeSubscriptionId: null);
         await fixture.SeedLiveSubscriptionAsync("bystander_user", stripeSubscriptionId: null);
         using var factory = FactoryWith(new FakeStripeGateway());
         using var client = factory.CreateClient();
-        AddDevIdentity(client, "owner_user", "student");
+        AddDevIdentity(client, "owner_user", "student", SharedSchoolId);
 
         var response = await client.PostAsync(path, null);
 
@@ -548,9 +558,20 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
-    private static void AddDevIdentity(HttpClient client, string userId, string role)
+    /// <summary>
+    /// The school the cross-user cancel tests put every party in. Any non-empty value works: the policy
+    /// compares it to the row owner's users."schoolId", and an EMPTY app.current_school_id disables the
+    /// same-school branch entirely — which is what made those tests pass on visibility alone.
+    /// </summary>
+    private const string SharedSchoolId = "school_shared";
+
+    private static void AddDevIdentity(HttpClient client, string userId, string role, string? schoolId = null)
     {
         client.DefaultRequestHeaders.Add(DevelopmentRequestContextFactory.UserIdHeader, userId);
         client.DefaultRequestHeaders.Add(DevelopmentRequestContextFactory.RoleHeader, role);
+        if (schoolId is not null)
+        {
+            client.DefaultRequestHeaders.Add(DevelopmentRequestContextFactory.SchoolIdHeader, schoolId);
+        }
     }
 }

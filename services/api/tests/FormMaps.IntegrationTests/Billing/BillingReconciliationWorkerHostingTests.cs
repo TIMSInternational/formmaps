@@ -63,7 +63,7 @@ public class BillingReconciliationWorkerGuardTests(BillingDatabaseFixture fixtur
     [Fact]
     public async Task ExecuteAsync_ShadowTablesAbsent_SkipsReconciliationAndLogsOnce()
     {
-        await using var shadowless = await ShadowlessDatabaseHandle.CreateAsync(fixture.ConnectionString);
+        await using var shadowless = await ShadowlessDatabaseHandle.CreateAsync(fixture.AdminConnectionString);
 
         var (spy, log) = await RunOneTickAsync(shadowless.SessionFactory);
 

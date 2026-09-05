@@ -39,22 +39,10 @@ CREATE TABLE "notification_outbox" (
   "processed_at" timestamp, "attempts" int NOT NULL DEFAULT 0, "createdDate" timestamp NOT NULL DEFAULT now()
 );
 
-ALTER TABLE "conversations" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "conversations" FORCE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation ON "conversations"
-  USING (
-    current_setting('app.bypass_rls', true) = 'on'
-    OR ("participantAId" = current_setting('app.current_user_id', true) AND current_setting('app.current_user_id', true) <> '')
-    OR ("participantBId" = current_setting('app.current_user_id', true) AND current_setting('app.current_user_id', true) <> '')
-  )
-  WITH CHECK (
-    current_setting('app.bypass_rls', true) = 'on'
-    OR ("participantAId" = current_setting('app.current_user_id', true) AND current_setting('app.current_user_id', true) <> '')
-    OR ("participantBId" = current_setting('app.current_user_id', true) AND current_setting('app.current_user_id', true) <> '')
-  );
-
-ALTER TABLE "messages" ENABLE ROW LEVEL SECURITY;
-ALTER TABLE "messages" FORCE ROW LEVEL SECURITY;
-CREATE POLICY tenant_isolation ON "messages"
-  USING (current_setting('app.bypass_rls', true) = 'on' OR EXISTS (SELECT 1 FROM conversations c WHERE c.id = "messages"."conversationId"))
-  WITH CHECK (current_setting('app.bypass_rls', true) = 'on' OR EXISTS (SELECT 1 FROM conversations c WHERE c.id = "messages"."conversationId"));
+-- formmaps#125: the hand-written conversations/messages policies that used to end this file are GONE.
+-- The fixture derives from RlsEnabledDatabaseFixture, which applies the VENDORED production files
+-- (TestSupport/Rls/*.sql) to every table above that production policies -- users, conversations,
+-- messages, counselor_student_assignments, student_parent_links -- and runs the repository as a
+-- NOSUPERUSER NOBYPASSRLS login. The old copies were both redundant (the applier issues DROP POLICY IF
+-- EXISTS tenant_isolation before CREATE) and misleading: they were only ever exercised by the container
+-- superuser, which bypasses RLS outright, so they enforced nothing.

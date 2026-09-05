@@ -32,7 +32,7 @@ public sealed class MessagesEndToEndLifecycleTests : IClassFixture<MessagingData
     private NpgsqlDataSource _dataSource = null!;
 
     public MessagesEndToEndLifecycleTests(MessagingDatabaseFixture fixture) => _fixture = fixture;
-    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString); return Task.CompletedTask; }
+    public Task InitializeAsync() { _dataSource = NpgsqlDataSource.Create(_fixture.AppConnectionString); return Task.CompletedTask; }
     public async Task DisposeAsync() => await _dataSource.DisposeAsync();
 
     private MessagesRepository Repo() => new(
@@ -183,7 +183,7 @@ public sealed class MessagesEndToEndLifecycleTests : IClassFixture<MessagingData
     /// </summary>
     private async Task AssertOutboxResolvesToRealMessageAsync(string? expectedMessageId, string preview, string? expectedSenderId = null)
     {
-        await using var conn = new NpgsqlConnection(_fixture.ConnectionString);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
         await conn.OpenAsync();
 
         await using var joined = new NpgsqlCommand(
