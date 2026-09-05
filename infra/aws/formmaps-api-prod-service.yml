@@ -126,6 +126,24 @@ Parameters:
       the service, absent from this template. NOTE staging currently points at this
       SAME bucket, so staging uploads land in the production bucket — tracked
       separately, not changed here.
+
+      Also the bucket the instance role's S3 policy below is scoped to — the two must
+      name the same bucket or the service reads an env var it has no access to.
+  SesIdentityDomain:
+    Type: String
+    Default: formmaps.com
+    Description: >-
+      Verified SES identity the instance role may send as, scoping the SES policy
+      below to arn:aws:ses:<region>:<account>:identity/<this>.
+
+      This value is the domain the plan writes out in full for the STAGING policy
+      (docs/superpowers/plans/2026-07-27-wave3-infra-gates.md Task 7 Step 2). The prod
+      policy was created by patching an existing one in place (Step 1), so the plan
+      records prod's ACTIONS but never prints its Resource. CONFIRM against the live
+      role before the first deploy:
+      `aws iam get-role-policy --role-name formmaps-api-prod-instance --policy-name
+      formmaps-prod-ses-send` — if the live policy is scoped to a different identity,
+      pass that one rather than widening this to "*".
   LegacyApiBaseUrl:
     Type: String
     Default: https://5t8ch34ijm.us-east-1.awsapprunner.com
@@ -204,6 +222,58 @@ Resources:
                   # fail to fetch it and the deployment fail -- keep the two in sync.
                   - !Ref StripeSecretKeyArn
                   - !Ref StripeWebhookSecretArn
+        # ── Declared drift recovery (Wave 3 tasks 3.1/3.2) ───────────────────
+        # The two policies below reproduce, statement for statement, the INLINE
+        # policies that were put on this role by hand with `aws iam
+        # put-role-policy` and recorded only in
+        # docs/superpowers/plans/2026-07-27-wave3-infra-gates.md (Task 6 Step 1
+        # and Task 7 Steps 1-2). They were never stack-managed, so a deploy of
+        # this template neither reproduced nor removed them: recreating the role
+        # from the template alone produced a service that could not upload to S3
+        # or send mail, and nothing detected the disagreement.
+        #
+        # The names deliberately DIFFER from the hand-made ones
+        # (formmaps-dotnet-s3-uploads, formmaps-prod-ses-send) so the first
+        # deploy is purely additive — a matching name would have CloudFormation
+        # overwrite an inline policy it does not own.
+        #
+        # OPS STEP, AFTER the first successful deploy: the hand-made inline
+        # policies are then redundant duplicates. Delete them so the role has
+        # exactly one source of truth (a stack deploy cannot do this for you):
+        #   aws iam delete-role-policy --role-name formmaps-api-prod-instance \
+        #     --policy-name formmaps-dotnet-s3-uploads
+        #   aws iam delete-role-policy --role-name formmaps-api-prod-instance \
+        #     --policy-name formmaps-prod-ses-send
+        # Leaving them in place is safe but keeps the drift the post-deploy
+        # drift check in formmaps-api-prod-deploy.yml exists to surface.
+        - PolicyName: stack-managed-s3-uploads
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: S3Uploads
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                Resource: !Sub arn:${AWS::Partition}:s3:::${S3Bucket}/*
+              - Sid: S3List
+                Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub arn:${AWS::Partition}:s3:::${S3Bucket}
+        - PolicyName: stack-managed-ses-send
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              # Both actions, not just SendEmail: attachment-bearing mail goes out
+              # through SendRawEmail, which is a separately authorised action.
+              - Sid: FormMapsProdSesSend
+                Effect: Allow
+                Action:
+                  - ses:SendEmail
+                  - ses:SendRawEmail
+                Resource: !Sub arn:${AWS::Partition}:ses:${AWS::Region}:${AWS::AccountId}:identity/${SesIdentityDomain}
       Tags:
         - Key: Project
           Value: formmaps
