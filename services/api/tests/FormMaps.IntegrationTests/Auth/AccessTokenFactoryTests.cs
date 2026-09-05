@@ -1,3 +1,5 @@
+using System.Text;
+using System.Text.Json;
 using FormMaps.Api.Auth;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.FileProviders;
@@ -46,6 +48,46 @@ public class AccessTokenFactoryTests : IDisposable
                 ClockSkew = TimeSpan.Zero
             }),
             new TestHostEnvironment());
+
+    // The OTHER direction of interop, which the round-trip test above cannot see: once
+    // FORMMAPS_ROUTE_AUTH_TO_DOTNET flips, every route still owned by Node validates this token
+    // with jsonwebtoken and assigns the claim straight to req.permissions, then calls
+    // .includes(permission) on it (legacy middleware/authenticate.ts). Node's own generateAccessToken
+    // signs `permissions: string[]`, so the payload must carry a JSON ARRAY. Written as a plain
+    // string claim it decodes to the text "[\"a\",\"b\"]" -- a substring test in Node and a string
+    // handed to the SPA through GET /api/v1/user/me where string[] is expected. This decodes the raw
+    // payload, bypassing every .NET claim reader, and pins the wire shape.
+    [Fact]
+    public void CreateAccessToken_WritesPermissions_AsAJsonArrayOnTheWire()
+    {
+        Environment.SetEnvironmentVariable("JWT_SECRET", Secret);
+        try
+        {
+            var token = CreateFactory().CreateAccessToken(new AccessTokenClaims(
+                UserId: "user_123", Name: "Ada Lovelace", Email: "ada@example.com",
+                Role: "school_admin", SchoolId: "school_1",
+                Permissions: ["school:manage", "students:read"]));
+
+            using var payload = JsonDocument.Parse(DecodeSegment(token.Split('.')[1]));
+            var permissions = payload.RootElement.GetProperty("permissions");
+
+            Assert.Equal(JsonValueKind.Array, permissions.ValueKind);
+            Assert.Equal(
+                new[] { "school:manage", "students:read" },
+                permissions.EnumerateArray().Select(e => e.GetString()).ToArray());
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("JWT_SECRET", null);
+        }
+    }
+
+    private static string DecodeSegment(string base64Url)
+    {
+        var padded = base64Url.Replace('-', '+').Replace('_', '/');
+        padded = padded.PadRight(padded.Length + (4 - padded.Length % 4) % 4, '=');
+        return Encoding.UTF8.GetString(Convert.FromBase64String(padded));
+    }
 
     [Fact]
     public void CreateAccessToken_RoundTripsThrough_LegacyJwtRequestContextFactory()

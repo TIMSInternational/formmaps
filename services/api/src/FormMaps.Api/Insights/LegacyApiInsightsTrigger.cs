@@ -169,7 +169,9 @@ public sealed class LegacyApiInsightsTrigger(
                 // Legacy generateAccessToken writes `schoolId: user.schoolId || ""` — mirror the
                 // empty-string (never absent) shape.
                 new Claim("schoolId", user.SchoolId ?? string.Empty),
-                new Claim("permissions", permissionsJson),
+                // JsonArray so Node receives `permissions` as a real string[] (its own jwt.sign shape),
+                // not a JSON text it would substring-match -- same rule as AccessTokenFactory.
+                new Claim("permissions", permissionsJson, JsonClaimValueTypes.JsonArray),
             ],
             notBefore: now - NotBeforeBackdate,
             expires: now + TriggerTokenLifetime,
