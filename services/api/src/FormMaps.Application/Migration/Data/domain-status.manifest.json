@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "lastUpdated": "2026-09-03",
+  "lastUpdated": "2026-09-05",
   "howToKeepThisCurrent": "This file is the single source of truth for GET /api/v1/migration/roadmap (see MigrationRoadmapProvider.cs). It is domain-grained (one entry per product domain), not task-grained -- for per-slice code-completion detail see agentic-migration.manifest.json. Update ONE entry whenever a domain's real-world status changes: (1) status changes when a domain's .NET port is code-complete/in-progress/deferred; (2) liveInProd flips only once its FORMMAPS_ROUTE_*_TO_DOTNET flag(s) are verified serving real production traffic (a Vercel env flip + confirmed canary/curl check), NOT just merged to main -- git history under-counts prod state because the live frontend deploys via direct `vercel --prod`, not a merge gate. Bump lastVerified on the entry and lastUpdated at the top of this file. Reference this file in the commit that completes or cuts over a domain, e.g. `docs(migration): mark <domain> live in domain-status manifest`. (3) RECORD UNCERTAINTY RATHER THAN GUESS. If a flag's production state cannot be established from something committed to this repo, say so in the entry's `note` and leave liveInProd alone -- an uncommitted measurement from a past session is not evidence, and neither is `status`, which tracks code completion only. Do NOT bump `lastVerified` when you merely edited this file; it means 'someone checked prod on this date', so only a real measurement moves it. `note` is deliberately NOT part of the API response shape (MigrationDomainStatus has no Note property), so it is free-form and safe to extend; the file is an EmbeddedResource, so changes to the served fields need a rebuild to take effect.",
   "domains": [
     {
@@ -22,8 +22,8 @@
       "risk": "high",
       "status": "completed",
       "liveInProd": true,
-      "lastVerified": "2026-07-17",
-      "note": "Foundational -- every other live domain below depends on this being in prod. The diagnostic GET /api/v1/context/{current,protected-smoke} pair (RequestContextEndpoints) is separate from the foundation itself: it was mapped-but-unreachable through app.formmaps.com until 2026-09-03 (formmaps#109), and is now behind FORMMAPS_ROUTE_REQUEST_CONTEXT_TO_DOTNET as two exact-path rewrites, default OFF -- it is a smoke test, not a verification instrument like /api/v1/migration, so it is not exposed unconditionally."
+      "lastVerified": "2026-09-05",
+      "note": "Foundational -- every other live domain below depends on this being in prod. The diagnostic GET /api/v1/context/{current,protected-smoke} pair (RequestContextEndpoints) is separate from the foundation itself: it was mapped-but-unreachable through app.formmaps.com until 2026-09-03 (formmaps#109), and is now behind FORMMAPS_ROUTE_REQUEST_CONTEXT_TO_DOTNET as two exact-path rewrites. That flag was turned ON in production 2026-09-05 and verified: /api/v1/context/current returns 200 (it echoes the caller's own context, so anonymous is a valid answer) and /context/protected-smoke returns 401, both carrying x-formmaps-service: formmaps-api. It remains a smoke test rather than a verification instrument like /api/v1/migration, which is why it is flag-gated at all rather than exposed unconditionally."
     },
     {
       "domain": "audit-events",
@@ -120,9 +120,9 @@
       "firstMove": "Domain 7b: SignalR MessagesHub + REST CRUD + realtime broadcast ported behind one dark flag (FORMMAPS_ROUTE_MESSAGES_TO_DOTNET); poll remains the fallback.",
       "risk": "high",
       "status": "completed",
-      "liveInProd": false,
-      "lastVerified": "2026-07-31",
-      "note": "Added 2026-07-31 (Domain 7b) -- code-complete and pushed 2026-07-31, but NOT deployed/flagged. The textbook case this manifest exists for: code-complete is not the same as live."
+      "liveInProd": true,
+      "lastVerified": "2026-09-05",
+      "note": "LIVE 2026-09-05 (REST half). FORMMAPS_ROUTE_MESSAGES_TO_DOTNET was flipped in Vercel and verified by curl against app.formmaps.com: /api/v1/messages/unread-count and /messages/contacts both return 401 carrying x-formmaps-service: formmaps-api, i.e. .NET is serving them. PARTIAL, deliberately: FORMMAPS_ROUTE_MESSAGES_REALTIME_TO_DOTNET (the SignalR hub) is still OFF and gates nothing else -- the two flags are split precisely so REST can ship and soak first. The hub stays off until formmaps-api-prod's App Runner autoscaling max is pinned to 1 instance, the decision approved in the 2026-07-30 Domain 7b design doc (issue #39 re-litigates a settled call). The frontend's 15-second poll remains the guaranteed delivery path meanwhile, so no message is lost by the hub being off. liveInProd is true because the product surface -- send, receive, read -- is served by .NET; it is NOT a claim that every messaging flag is on."
     },
     {
       "domain": "auth",
