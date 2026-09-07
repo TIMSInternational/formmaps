@@ -127,6 +127,88 @@ public sealed class BillingShadowRepositoryTests : IClassFixture<BillingDatabase
     }
 
     [Fact]
+    public async Task ApplySubscriptionEvent_LosesRaceOnSubscriptionIndex_ReturnsFalse_RollsBackWrite()
+    {
+        // formmaps#188 — the deterministic reproduction of the CI failure on #186 (run 33996237782):
+        //   23505: duplicate key value violates unique constraint "shadow_user_subscriptions_stripeSubscriptionId_key"
+        // raised from INSIDE `write`, not from the event-row insert the old catch guarded. The winner is an admin
+        // transaction that has written its shadow row AND its event row but not yet committed; the loser passes
+        // the fast-path SELECT (the winner's event row is invisible), then its upsert blocks on the winner's
+        // in-progress index entry for the subscription id, and gets 23505 the moment the winner commits.
+        // The winner uses a different userId only because the ON CONFLICT ("userId") arbiter is the one lever the
+        // test has over WHICH index fires first: a same-user winner is seen by the arbiter and takes the DO UPDATE
+        // path (covered by ..._LosesRaceOnEventRow_... below). The exception shape is identical to production's.
+        var sub = new StripeSubscriptionLite("sub_race", "past_due", 1893456000, null, null, false);
+
+        await using var winner = await _adminDataSource.OpenConnectionAsync();
+        await using var winnerTx = await winner.BeginTransactionAsync();
+        await SeedWinnerAsync(winner, winnerTx, "evt_race", "user_race_winner", "sub_race");
+
+        var loser = Repository().ApplySubscriptionEventAsync(
+            "evt_race", "customer.subscription.updated", "user_race_loser", "plan_1", sub, CancellationToken.None);
+
+        await WaitUntilBlockedOnLockAsync(loser);
+        await winnerTx.CommitAsync();
+
+        Assert.False(await loser);
+
+        Assert.Equal(0L, await CountAsync("""SELECT COUNT(*) FROM "shadow_user_subscriptions" WHERE "userId" = 'user_race_loser'"""));
+        var row = await QueryShadowSubscriptionAsync("user_race_winner");
+        Assert.Equal("sub_race", row.StripeSubscriptionId);
+        Assert.Equal("active", row.Status);
+        Assert.Equal(1L, await CountAsync("""SELECT COUNT(*) FROM "shadow_stripe_events" WHERE "id" = 'evt_race'"""));
+    }
+
+    [Fact]
+    public async Task ApplySubscriptionEvent_LosesRaceOnEventRow_ReturnsFalse_RollsBackUpdate()
+    {
+        // The other ordering of the same race, made deterministic: a same-user winner is seen by the
+        // ON CONFLICT ("userId") arbiter, so the loser blocks there, takes the DO UPDATE path once the winner
+        // commits, and then hits the shadow_stripe_events PRIMARY KEY. The loser's DO UPDATE (status ->
+        // past_due) must roll back with the rest of its transaction — the row keeps the winner's "active".
+        var sub = new StripeSubscriptionLite("sub_same", "past_due", 1893456000, null, null, false);
+
+        await using var winner = await _adminDataSource.OpenConnectionAsync();
+        await using var winnerTx = await winner.BeginTransactionAsync();
+        await SeedWinnerAsync(winner, winnerTx, "evt_same", "user_same", "sub_same");
+
+        var loser = Repository().ApplySubscriptionEventAsync(
+            "evt_same", "customer.subscription.updated", "user_same", "plan_1", sub, CancellationToken.None);
+
+        await WaitUntilBlockedOnLockAsync(loser);
+        await winnerTx.CommitAsync();
+
+        Assert.False(await loser);
+
+        var row = await QueryShadowSubscriptionAsync("user_same");
+        Assert.Equal("active", row.Status);
+        Assert.Equal(1L, await CountAsync("""SELECT COUNT(*) FROM "shadow_user_subscriptions" WHERE "userId" = 'user_same'"""));
+        Assert.Equal(1L, await CountAsync("""SELECT COUNT(*) FROM "shadow_stripe_events" WHERE "id" = 'evt_same'"""));
+    }
+
+    [Fact]
+    public async Task ApplySubscriptionEvent_GenuineSubscriptionConflict_StillThrows_RecordsNothing()
+    {
+        // formmaps#188's negative control — the reason the fix is not "widen the try". The SAME constraint as
+        // the race case fires here, but nobody else processed this event: user_a already holds sub_shared
+        // (committed long ago), and a NEW event now claims sub_shared for user_b. That is a real conflict in the
+        // ledger #44 exists to trust, and it must surface, not become a quiet `false`. This test is green before
+        // and after the fix; it pins the discriminator so a future "just catch it" cannot pass.
+        await _fixture.SeedShadowOnlySubscriptionAsync("user_a", "sub_shared");
+        var conflicting = new StripeSubscriptionLite("sub_shared", "active", 1893456000, null, null, false);
+
+        var ex = await Assert.ThrowsAsync<PostgresException>(() => Repository().ApplySubscriptionEventAsync(
+            "evt_conflict", "checkout.session.completed", "user_b", "plan_1", conflicting, CancellationToken.None));
+
+        Assert.Equal(PostgresErrorCodes.UniqueViolation, ex.SqlState);
+        Assert.Equal("shadow_user_subscriptions_stripeSubscriptionId_key", ex.ConstraintName);
+        Assert.Equal(0L, await CountAsync("""SELECT COUNT(*) FROM "shadow_stripe_events" WHERE "id" = 'evt_conflict'"""));
+        Assert.Equal(0L, await CountAsync("""SELECT COUNT(*) FROM "shadow_user_subscriptions" WHERE "userId" = 'user_b'"""));
+        var row = await QueryShadowSubscriptionAsync("user_a");
+        Assert.Equal("sub_shared", row.StripeSubscriptionId);
+    }
+
+    [Fact]
     public async Task MarkSubscriptionCancelled_ExistingSubscription_UpdatesStatus()
     {
         var repository = Repository();
@@ -222,6 +304,64 @@ public sealed class BillingShadowRepositoryTests : IClassFixture<BillingDatabase
         var row = await QueryShadowSubscriptionAsync("user_pastdue");
         Assert.Equal("past_due", row.Status);
         Assert.True(row.IsActive);
+    }
+
+    /// <summary>
+    /// Plays the WINNING delivery of a redelivery race, up to but not including its commit: the shadow row and
+    /// the event row are written on <paramref name="transaction"/> and stay invisible to the loser's fast-path
+    /// SELECT until the test commits. Runs on the admin connection so the rows are seeded exactly, not through
+    /// the code under test.
+    /// </summary>
+    private static async Task SeedWinnerAsync(NpgsqlConnection connection, NpgsqlTransaction transaction, string eventId, string userId, string stripeSubscriptionId)
+    {
+        await using var shadow = new NpgsqlCommand("""
+            INSERT INTO "shadow_user_subscriptions" ("id", "userId", "planId", "status", "stripeSubscriptionId", "isActive")
+            VALUES (@id, @userId, 'plan_1', 'active', @subId, true)
+            """, connection, transaction);
+        shadow.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
+        shadow.Parameters.AddWithValue("userId", userId);
+        shadow.Parameters.AddWithValue("subId", stripeSubscriptionId);
+        await shadow.ExecuteNonQueryAsync();
+
+        await using var evt = new NpgsqlCommand(
+            """INSERT INTO "shadow_stripe_events" ("id", "eventType") VALUES (@id, 'customer.subscription.updated')""",
+            connection, transaction);
+        evt.Parameters.AddWithValue("id", eventId);
+        await evt.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>
+    /// Waits until the in-flight repository call is parked on a Postgres lock (pg_stat_activity, wait_event_type
+    /// = 'Lock', on the shadow table) — i.e. it has passed the fast-path dedup SELECT and is now blocked behind the
+    /// winner's uncommitted row. Polls instead of sleeping so the test is not timing-dependent, and fails loudly
+    /// if the call completes without ever blocking, because then it did not reproduce the race at all.
+    /// </summary>
+    private async Task WaitUntilBlockedOnLockAsync(Task inFlight)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(15);
+        while (DateTime.UtcNow < deadline)
+        {
+            Assert.False(inFlight.IsCompleted, "the repository call completed without blocking, so the race was not reproduced");
+            var blocked = await CountAsync("""
+                SELECT COUNT(*) FROM pg_stat_activity
+                WHERE wait_event_type = 'Lock' AND state = 'active' AND query ILIKE '%shadow_user_subscriptions%'
+                """);
+            if (blocked > 0)
+            {
+                return;
+            }
+
+            await Task.Delay(25);
+        }
+
+        Assert.Fail("the repository call never blocked on the winner's uncommitted row within 15s");
+    }
+
+    private async Task<long> CountAsync(string sql)
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand(sql, conn);
+        return (long)(await cmd.ExecuteScalarAsync())!;
     }
 
     /// <summary>Minimal in-memory ILogger so the warning path can be asserted on directly.</summary>

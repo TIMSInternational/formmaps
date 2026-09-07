@@ -122,44 +122,76 @@ public sealed class BillingShadowRepository(
     /// Runs `write` then records the event id LAST — matches legacy's rollback-on-failure idempotency guarantee.
     /// Returns false without running `write` if eventId was already processed. The leading SELECT is a fast-path
     /// dedup check only, not the source of truth: it's a plain read under ReadCommitted (not Serializable), so two
-    /// truly concurrent deliveries of the same eventId can both pass it. The real guarantee comes from "id" being
-    /// PRIMARY KEY on shadow_stripe_events — the losing transaction's final INSERT hits a unique-violation, which
-    /// we catch here and translate into the documented `false` return instead of letting it propagate. The
-    /// transaction is never committed in that case, so `write`'s state change rolls back too (DisposeAsync rolls
-    /// back any transaction that wasn't committed) — no partial/duplicate write survives.
+    /// truly concurrent deliveries of the same eventId can both pass it. The real guarantee is that the LOSER's
+    /// transaction cannot commit: it hits a unique violation on whichever index the winner's committed rows reach
+    /// first — "id" being PRIMARY KEY on shadow_stripe_events, or (formmaps#188) one of the unique indexes on
+    /// shadow_user_subscriptions that `write` itself touches on the way there. Either way the transaction is never
+    /// committed, so `write`'s state change rolls back too (DisposeAsync rolls back any transaction that wasn't
+    /// committed) — no partial/duplicate write survives.
     /// </summary>
+    /// <remarks>
+    /// formmaps#188: the catch covers `write` as well as the event insert, and it decides "documented loser" vs
+    /// "genuine conflict" on ONE fact rather than on which constraint fired — did another delivery of THIS event
+    /// commit? A constraint-name allowlist cannot make that call: shadow_user_subscriptions."stripeSubscriptionId"
+    /// fires for a redelivery race AND for a real conflict (the same Stripe subscription arriving for a different
+    /// user), and only the second must surface. The re-check is exact because Postgres blocks a conflicting insert
+    /// until the other transaction ends, and raises 23505 only if that transaction COMMITTED — so by the time the
+    /// loser sees 23505 in a race, the winner's event row is committed and visible to a fresh session. If the event
+    /// is not recorded, nobody else processed it and the violation is a genuine conflict: rethrown, so the ledger
+    /// #44 exists to trust does not silently swallow it. Before this, a loser that raced on the subscription index
+    /// escaped as an unhandled 23505 -> a 500 to Stripe -> MORE retries, during the very observation window that
+    /// is supposed to be clean.
+    /// </remarks>
     private async Task<bool> RunTransactionAsync(string eventId, string eventType, Func<FormMapsDatabaseSession, Task> write, CancellationToken cancellationToken)
     {
         await using var session = await databaseSessionFactory.OpenWritableAsync(RequestContext.System(), cancellationToken);
 
-        await using var existing = Command(session, """SELECT 1 FROM "shadow_stripe_events" WHERE "id" = @id""");
-        AddParameter(existing, "id", eventId);
-        if (await existing.ExecuteScalarAsync(cancellationToken) is not null)
+        if (await IsEventRecordedAsync(session, eventId, cancellationToken))
         {
             return false;
         }
 
-        await write(session);
-
-        await using var recordEvent = Command(session, """
-            INSERT INTO "shadow_stripe_events" ("id", "eventType") VALUES (@id, @eventType)
-            """);
-        AddParameter(recordEvent, "id", eventId);
-        AddParameter(recordEvent, "eventType", eventType);
-
         try
         {
+            await write(session);
+
+            await using var recordEvent = Command(session, """
+                INSERT INTO "shadow_stripe_events" ("id", "eventType") VALUES (@id, @eventType)
+                """);
+            AddParameter(recordEvent, "id", eventId);
+            AddParameter(recordEvent, "eventType", eventType);
             await recordEvent.ExecuteNonQueryAsync(cancellationToken);
         }
         catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
         {
-            // Concurrent redelivery of the same eventId raced us to the event-row insert and won.
-            // Don't commit: session.DisposeAsync() rolls back the whole transaction, including `write`.
-            return false;
+            // This transaction is aborted either way; session.DisposeAsync() rolls it back, including `write`.
+            // An aborted transaction cannot run the re-check itself, so it goes through a fresh session.
+            if (await IsEventRecordedByAnotherSessionAsync(eventId, cancellationToken))
+            {
+                logger.LogInformation(
+                    "billing.shadow.redelivery-race lost to a concurrent delivery of the same event eventId={EventId} eventType={EventType} constraint={ConstraintName}",
+                    eventId, eventType, ex.ConstraintName);
+                return false;
+            }
+
+            throw;
         }
 
         await session.CommitAsync(cancellationToken);
         return true;
+    }
+
+    private static async Task<bool> IsEventRecordedAsync(FormMapsDatabaseSession session, string eventId, CancellationToken cancellationToken)
+    {
+        await using var existing = Command(session, """SELECT 1 FROM "shadow_stripe_events" WHERE "id" = @id""");
+        AddParameter(existing, "id", eventId);
+        return await existing.ExecuteScalarAsync(cancellationToken) is not null;
+    }
+
+    private async Task<bool> IsEventRecordedByAnotherSessionAsync(string eventId, CancellationToken cancellationToken)
+    {
+        await using var probe = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
+        return await IsEventRecordedAsync(probe, eventId, cancellationToken);
     }
 
     private static DbCommand Command(FormMapsDatabaseSession session, string sql)
