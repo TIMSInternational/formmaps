@@ -93,9 +93,11 @@ public sealed class AesGcmFieldCipher : IFieldCipher
     }
 
     // Node getKey(): a 64-char all-hex string ⇒ Buffer.from(key,"hex"); otherwise Buffer.from(key,"base64") then
-    // .subarray(0,32). A 32-byte result is required by AES-256; anything else surfaces as a BouncyCastle key-length
-    // error, mirroring Node's createCipheriv throwing on a bad key. (Base64 parsing is .NET-strict re padding vs
-    // Node's lenient decoder — a documented edge for malformed keys; a real key is clean 64-hex or padded base64.)
+    // .subarray(0,32). The 32-byte length is then enforced explicitly: BouncyCastle's AesEngine accepts 16/24/32-byte
+    // keys, so a base64 secret that decodes short would SILENTLY downgrade to AES-128/192 and write ciphertext Node
+    // could never read — whereas Node's createCipheriv("aes-256-gcm", ...) throws "Invalid key length" on the same
+    // input. Fail the same way. (Base64 parsing is .NET-strict re padding vs Node's lenient decoder — a documented
+    // edge for malformed keys; a real key is clean 64-hex or padded base64.)
     private static byte[] DeriveKey(string? key)
     {
         if (string.IsNullOrEmpty(key))
@@ -109,7 +111,15 @@ public sealed class AesGcmFieldCipher : IFieldCipher
         }
 
         var decoded = Convert.FromBase64String(key);
-        return decoded.Length > 32 ? decoded[..32] : decoded;
+        var derived = decoded.Length > 32 ? decoded[..32] : decoded;
+        if (derived.Length != 32)
+        {
+            throw new InvalidOperationException(
+                "FIELD_ENCRYPTION_KEY must be a 32-byte AES-256 key: 64 hex chars, or base64 decoding to at least 32 bytes " +
+                $"(got {derived.Length} bytes)");
+        }
+
+        return derived;
     }
 
     private static bool IsHex(string value)
