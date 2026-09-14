@@ -70,6 +70,23 @@ Parameters:
       signing secret per endpoint -- reusing Node's makes .NET reject every event
       as an invalid signature. Create the endpoint first (formmaps#43), then
       store THAT endpoint's signing secret here.
+  FieldEncryptionKeyArn:
+    Type: String
+    NoEcho: true
+    Description: >-
+      Full ARN of the Secrets Manager secret containing FIELD_ENCRYPTION_KEY --
+      the AES-256-GCM key AesGcmFieldCipher uses to encrypt iSAMS vendor
+      credentials on POST /integrations/isams (FM-DOTNET-087). The key is read
+      lazily, so its absence does NOT stop the service booting: it surfaces
+      much later as a 500 on the first encrypting write, which is exactly how
+      this gap went unnoticed. No such key existed anywhere before 2026-09-03
+      -- not on nexa-api either (wave3 design 3.3, verified against all three
+      App Runner services and every secret name in the account), so nothing is
+      encrypted with it yet and one is generated fresh. The SAME secret ARN
+      must ALSO be set as FIELD_ENCRYPTION_KEY on the nexa-api service (that
+      wiring is out of band, nexa-api is not managed by this repo) before the
+      first .NET iSAMS write, or a credential written by .NET cannot be
+      decrypted by the Node iSAMS sync path that still owns that vendor call.
   ProdWebOrigin:
     Type: String
     Default: https://app.formmaps.com
@@ -222,6 +239,7 @@ Resources:
                   # fail to fetch it and the deployment fail -- keep the two in sync.
                   - !Ref StripeSecretKeyArn
                   - !Ref StripeWebhookSecretArn
+                  - !Ref FieldEncryptionKeyArn
         # ── Declared drift recovery (Wave 3 tasks 3.1/3.2) ───────────────────
         # The two policies below reproduce, statement for statement, the INLINE
         # policies that were put on this role by hand with `aws iam
@@ -322,6 +340,8 @@ Resources:
                 Value: !Ref StripeSecretKeyArn
               - Name: STRIPE_WEBHOOK_SECRET
                 Value: !Ref StripeWebhookSecretArn
+              - Name: FIELD_ENCRYPTION_KEY
+                Value: !Ref FieldEncryptionKeyArn
       InstanceConfiguration:
         Cpu: !Ref Cpu
         Memory: !Ref Memory
