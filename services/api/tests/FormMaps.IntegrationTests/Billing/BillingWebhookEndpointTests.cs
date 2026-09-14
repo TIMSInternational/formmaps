@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Stripe;
 using Xunit;
 
@@ -17,12 +18,23 @@ namespace FormMaps.IntegrationTests.Billing;
 [Collection(nameof(BillingDatabaseCollection))]
 public class BillingWebhookEndpointTests(BillingDatabaseFixture fixture) : IClassFixture<WebApplicationFactory<Program>>
 {
-    private WebApplicationFactory<Program> CreateFactory() => new WebApplicationFactory<Program>()
+    private WebApplicationFactory<Program> CreateFactory(
+        CapturingLoggerProvider? logs = null, IBillingShadowRepository? repository = null) => new WebApplicationFactory<Program>()
         .WithWebHostBuilder(builder =>
         {
             builder.UseEnvironment(Environments.Development);
+            if (logs is not null)
+            {
+                builder.ConfigureLogging(logging => logging.AddProvider(logs));
+            }
+
             builder.ConfigureTestServices(services =>
             {
+                if (repository is not null)
+                {
+                    services.AddScoped(_ => repository);
+                }
+
                 services.AddSingleton(fixture.SessionFactory);
                 services.AddScoped<IStripeWebhookVerifier>(_ => new FakeVerifier());
                 // Task 8 retrofit: checkout.session.completed now calls IStripeGateway.GetSubscriptionAsync
@@ -412,5 +424,123 @@ public class BillingWebhookEndpointTests(BillingDatabaseFixture fixture) : IClas
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var row = await fixture.QueryShadowSubscriptionAsync("user_mw");
         Assert.Equal("sub_mw", row.StripeSubscriptionId);
+    }
+
+    [Fact]
+    public async Task Webhook_GenuineShadowConflict_IsAcknowledgedWith200_AndLoggedAsError()
+    {
+        // formmaps#188. A permanent conflict: user_conflict_a already holds sub_conflict, and a NEW event
+        // claims the same Stripe subscription for user_conflict_b. The shadow write cannot succeed now or on
+        // any retry. The endpoint must still acknowledge, because Stripe retries non-2xx and eventually
+        // DISABLES an endpoint that keeps failing -- which would end #44's observation window silently.
+        // The Error log is the other half of the contract: fail-soft is only acceptable because it is loud.
+        await fixture.ResetAsync();
+        await fixture.SeedShadowOnlySubscriptionAsync("user_conflict_a", "sub_conflict");
+        var logs = new CapturingLoggerProvider();
+        using var factory = CreateFactory(logs);
+        using var client = factory.CreateClient();
+
+        var payload = FakeVerifier.SubscriptionCreatedEventJson(
+            "evt_web_conflict", "user_conflict_b", "plan_1", "sub_conflict");
+        var response = await client.PostAsync("/api/v1/billing/webhook",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // Acknowledged, but NOT applied: no row for the claimant, no event row, winner untouched.
+        Assert.Equal(0L, await CountAsync("""SELECT COUNT(*) FROM "shadow_user_subscriptions" WHERE "userId" = 'user_conflict_b'"""));
+        Assert.Equal(0L, await CountAsync("""SELECT COUNT(*) FROM "shadow_stripe_events" WHERE "id" = 'evt_web_conflict'"""));
+        var winner = await fixture.QueryShadowSubscriptionAsync("user_conflict_a");
+        Assert.Equal("sub_conflict", winner.StripeSubscriptionId);
+
+        // Matched on the event name, not on "the only Error": the hourly reconciliation worker legitimately
+        // logs its own Error here, because a shadow row with no live twin is exactly the divergence it exists
+        // to report. That is worth stating rather than filtering away -- it is the evidence that acknowledging
+        // a conflict does not bury it. The endpoint's own line must still be there, carrying the constraint.
+        var error = Assert.Single(
+            logs.Entries,
+            e => e.Level == LogLevel.Error && e.Message.Contains("billing.shadow.write_conflict", StringComparison.Ordinal));
+        Assert.Contains("evt_web_conflict", error.Message, StringComparison.Ordinal);
+        Assert.Contains("shadow_user_subscriptions_stripeSubscriptionId_key", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Webhook_TransientShadowFailure_IsNotSwallowed()
+    {
+        // The negative control for the test above, and the reason its catch is narrow rather than a blanket
+        // `catch (Exception)`. A transient fault is precisely what Stripe's retry exists for, so it must NOT
+        // be acknowledged. In production UseExceptionHandler turns this into the 500 Stripe will retry; the
+        // test host runs Development, where minimal hosting's developer exception page answers 500 instead.
+        // Either way the assertion that matters is the same: not a 200.
+        await fixture.ResetAsync();
+        using var factory = CreateFactory(repository: new ThrowingShadowRepository());
+        using var client = factory.CreateClient();
+
+        var payload = FakeVerifier.SubscriptionCreatedEventJson("evt_transient", "user_t", "plan_1", "sub_t");
+        var response = await client.PostAsync("/api/v1/billing/webhook",
+            new StringContent(payload, Encoding.UTF8, "application/json"));
+
+        Assert.NotEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    private async Task<long> CountAsync(string sql)
+    {
+        await using var conn = new Npgsql.NpgsqlConnection(fixture.AdminConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new Npgsql.NpgsqlCommand(sql, conn);
+        return (long)(await cmd.ExecuteScalarAsync())!;
+    }
+
+    /// <summary>Stands in for a shadow rail that is transiently unavailable — a fault a retry could heal.</summary>
+    private sealed class ThrowingShadowRepository : IBillingShadowRepository
+    {
+        public Task<bool> ApplySubscriptionEventAsync(
+            string eventId, string eventType, string userId, string? planId, StripeSubscriptionLite subscription,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("shadow rail unavailable");
+
+        public Task<bool> MarkSubscriptionCancelledAsync(
+            string eventId, string eventType, string stripeSubscriptionId, StripeSubscriptionLite subscription,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("shadow rail unavailable");
+
+        public Task<bool> MarkSubscriptionPastDueAsync(
+            string eventId, string eventType, string stripeSubscriptionId,
+            CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("shadow rail unavailable");
+    }
+
+    /// <summary>Captures log entries from the real host so the alert half of fail-soft-but-alert is assertable.</summary>
+    private sealed class CapturingLoggerProvider : ILoggerProvider
+    {
+        private readonly object _gate = new();
+
+        public List<(LogLevel Level, string Message)> Entries { get; } = [];
+
+        public ILogger CreateLogger(string categoryName) => new CapturingLogger(this);
+
+        public void Dispose()
+        {
+        }
+
+        private void Add(LogLevel level, string message)
+        {
+            lock (_gate)
+            {
+                Entries.Add((level, message));
+            }
+        }
+
+        private sealed class CapturingLogger(CapturingLoggerProvider owner) : ILogger
+        {
+            public IDisposable? BeginScope<TState>(TState state) where TState : notnull => null;
+
+            public bool IsEnabled(LogLevel logLevel) => true;
+
+            public void Log<TState>(
+                LogLevel logLevel, EventId eventId, TState state, Exception? exception,
+                Func<TState, Exception?, string> formatter) =>
+                owner.Add(logLevel, formatter(state, exception));
+        }
     }
 }

@@ -51,12 +51,19 @@ public class MigrationRoadmapProviderTests
         var provider = new MigrationRoadmapProvider();
 
         var roadmap = provider.GetRoadmap();
-        var messaging = Assert.Single(roadmap, item => item.Domain == "messaging");
 
-        // Domain 7b: code-complete and pushed 2026-07-31, but deliberately not deployed/flagged.
-        // This is the exact case formmaps#13 asked the manifest to be able to represent.
-        Assert.Equal("completed", messaging.Status);
-        Assert.False(messaging.LiveInProd);
+        // The invariant formmaps#13 actually asked for: the manifest must be ABLE to express
+        // "code-complete but not live". Asserted structurally so a cutover does not break this
+        // test. Messaging was the original worked example and stopped being one on 2026-09-05,
+        // when FORMMAPS_ROUTE_MESSAGES_TO_DOTNET was flipped and its REST half went live.
+        Assert.Contains(roadmap, item => item.Status == "completed" && !item.LiveInProd);
+
+        // One concrete instance, for readability. Billing is the durable choice: its cutover is
+        // gated behind a one-full-billing-cycle shadow observation window (formmaps#44), so it
+        // stays code-complete-but-dark far longer than any other domain.
+        var billing = Assert.Single(roadmap, item => item.Domain == "billing-and-integrations");
+        Assert.Equal("completed", billing.Status);
+        Assert.False(billing.LiveInProd);
     }
 
     [Fact]
