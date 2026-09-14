@@ -32,7 +32,8 @@ public static class BillingWebhookEndpoints
 
     private static async Task<IResult> HandleWebhookAsync(
         HttpRequest request, IStripeWebhookVerifier verifier, IBillingShadowRepository repository,
-        IStripeGateway gateway, IConfiguration configuration, CancellationToken cancellationToken)
+        IStripeGateway gateway, IConfiguration configuration, ILoggerFactory loggerFactory,
+        CancellationToken cancellationToken)
     {
         request.EnableBuffering();
         using var reader = new StreamReader(request.Body, leaveOpen: true);
@@ -52,52 +53,71 @@ public static class BillingWebhookEndpoints
             return Results.BadRequest(new { success = false, message = "Invalid webhook signature" });
         }
 
-        switch (stripeEvent.Type)
+        try
         {
-            case "checkout.session.completed":
+            switch (stripeEvent.Type)
             {
-                var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
-                if (session?.Mode == "subscription" &&
-                    session.Metadata is not null &&
-                    session.Metadata.TryGetValue("userId", out var userId) &&
-                    session.Metadata.TryGetValue("planId", out var planId) &&
-                    !string.IsNullOrEmpty(session.SubscriptionId))
+                case "checkout.session.completed":
                 {
-                    var lite = await gateway.GetSubscriptionAsync(session.SubscriptionId, cancellationToken);
-                    await repository.ApplySubscriptionEventAsync(stripeEvent.Id, stripeEvent.Type, userId, planId, lite, cancellationToken);
+                    var session = stripeEvent.Data.Object as Stripe.Checkout.Session;
+                    if (session?.Mode == "subscription" &&
+                        session.Metadata is not null &&
+                        session.Metadata.TryGetValue("userId", out var userId) &&
+                        session.Metadata.TryGetValue("planId", out var planId) &&
+                        !string.IsNullOrEmpty(session.SubscriptionId))
+                    {
+                        var lite = await gateway.GetSubscriptionAsync(session.SubscriptionId, cancellationToken);
+                        await repository.ApplySubscriptionEventAsync(stripeEvent.Id, stripeEvent.Type, userId, planId, lite, cancellationToken);
+                    }
+                    break;
                 }
-                break;
-            }
-            case "customer.subscription.updated":
-            case "customer.subscription.deleted":
-            {
-                var sub = stripeEvent.Data.Object as Stripe.Subscription;
-                if (sub is not null)
+                case "customer.subscription.updated":
+                case "customer.subscription.deleted":
                 {
-                    // Final-review fix wave (Important 1): this used to hand-build the lite record as
-                    // `new StripeSubscriptionLite(sub.Id, sub.Status, null, null, null, sub.CancelAtPeriodEnd)`,
-                    // hardcoding all three period-end fields to null. StripeSubscriptionMapper.ToRecord
-                    // resolves nextBillingDate from exactly those fields, so every customer.subscription.updated
-                    // event -- i.e. every renewal, the single most common lifecycle event -- wrote a NULL
-                    // nextBillingDate over the correct one. StripeSubscriptionMapper.ToLite extracts them
-                    // properly from the real Stripe.Subscription already on hand.
-                    var lite = StripeSubscriptionMapper.ToLite(sub);
-                    await repository.MarkSubscriptionCancelledAsync(stripeEvent.Id, stripeEvent.Type, sub.Id, lite, cancellationToken);
+                    var sub = stripeEvent.Data.Object as Stripe.Subscription;
+                    if (sub is not null)
+                    {
+                        // Final-review fix wave (Important 1): this used to hand-build the lite record as
+                        // `new StripeSubscriptionLite(sub.Id, sub.Status, null, null, null, sub.CancelAtPeriodEnd)`,
+                        // hardcoding all three period-end fields to null. StripeSubscriptionMapper.ToRecord
+                        // resolves nextBillingDate from exactly those fields, so every customer.subscription.updated
+                        // event -- i.e. every renewal, the single most common lifecycle event -- wrote a NULL
+                        // nextBillingDate over the correct one. StripeSubscriptionMapper.ToLite extracts them
+                        // properly from the real Stripe.Subscription already on hand.
+                        var lite = StripeSubscriptionMapper.ToLite(sub);
+                        await repository.MarkSubscriptionCancelledAsync(stripeEvent.Id, stripeEvent.Type, sub.Id, lite, cancellationToken);
+                    }
+                    break;
                 }
-                break;
-            }
-            case "invoice.payment_failed":
-            {
-                // Final-review fix wave (Important 3). BillingShadowRepository's class summary claimed this
-                // event was ported, but no case existed for it. Legacy stripeService.ts sets exactly one
-                // column on the matching subscription: status = "past_due".
-                var subscriptionId = ResolveInvoiceSubscriptionId(stripeEvent.Data.Object as Invoice);
-                if (!string.IsNullOrEmpty(subscriptionId))
+                case "invoice.payment_failed":
                 {
-                    await repository.MarkSubscriptionPastDueAsync(stripeEvent.Id, stripeEvent.Type, subscriptionId, cancellationToken);
+                    // Final-review fix wave (Important 3). BillingShadowRepository's class summary claimed this
+                    // event was ported, but no case existed for it. Legacy stripeService.ts sets exactly one
+                    // column on the matching subscription: status = "past_due".
+                    var subscriptionId = ResolveInvoiceSubscriptionId(stripeEvent.Data.Object as Invoice);
+                    if (!string.IsNullOrEmpty(subscriptionId))
+                    {
+                        await repository.MarkSubscriptionPastDueAsync(stripeEvent.Id, stripeEvent.Type, subscriptionId, cancellationToken);
+                    }
+                    break;
                 }
-                break;
             }
+        }
+        catch (BillingShadowConflictException conflict)
+        {
+            // formmaps#188 — fail-soft-but-alert, the rule AuditEventWriter already follows here: a
+            // shadow-ledger outage must never fail the real delivery. This is the PERMANENT class of
+            // failure. The same event conflicts identically on every retry, so answering non-2xx would ask
+            // Stripe to retry something that cannot succeed, and sustained failures get a live endpoint
+            // DISABLED — which would silently end #44's observation window. Node stays authoritative, so
+            // nothing user-facing rides on this write, and the hourly reconciliation diff is what surfaces
+            // the resulting divergence.
+            // Deliberately narrow: any other exception still propagates, because a transient fault is
+            // exactly what Stripe's retry is for.
+            loggerFactory.CreateLogger(typeof(BillingWebhookEndpoints)).LogError(
+                conflict,
+                "billing.shadow.write_conflict acknowledged to Stripe without applying eventId={EventId} eventType={EventType} constraint={ConstraintName}",
+                conflict.EventId, conflict.EventType, conflict.ConstraintName);
         }
 
         return Results.Ok(new { received = true });
