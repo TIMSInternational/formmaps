@@ -21,6 +21,9 @@ public sealed class BillingShadowRepository(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     ILogger<BillingShadowRepository> logger) : IBillingShadowRepository
 {
+    /// <summary>Names the subtransaction that makes conflict classification possible without a second connection.</summary>
+    private const string BeforeWriteSavepoint = "before_shadow_write";
+
     public async Task<bool> ApplySubscriptionEventAsync(
         string eventId, string eventType, string userId, string? planId, StripeSubscriptionLite subscription,
         CancellationToken cancellationToken = default)
@@ -136,11 +139,16 @@ public sealed class BillingShadowRepository(
     /// fires for a redelivery race AND for a real conflict (the same Stripe subscription arriving for a different
     /// user), and only the second must surface. The re-check is exact because Postgres blocks a conflicting insert
     /// until the other transaction ends, and raises 23505 only if that transaction COMMITTED — so by the time the
-    /// loser sees 23505 in a race, the winner's event row is committed and visible to a fresh session. If the event
-    /// is not recorded, nobody else processed it and the violation is a genuine conflict: rethrown, so the ledger
-    /// #44 exists to trust does not silently swallow it. Before this, a loser that raced on the subscription index
-    /// escaped as an unhandled 23505 -> a 500 to Stripe -> MORE retries, during the very observation window that
-    /// is supposed to be clean.
+    /// loser sees 23505 in a race, the winner's event row is committed and a fresh read sees it.
+    /// <para>That re-check runs on THIS session, behind a savepoint, and deliberately not on a second one. The
+    /// first cut of this fix opened another session for it, which is correct in isolation and unsafe in
+    /// production: <c>MaxPoolSize</c> is 10 (<c>FormMapsDatabaseOptions</c>) and shared by the whole process, so a
+    /// nested acquisition on the failure path competes with every other in-flight request at exactly the moment
+    /// Stripe is redelivering in bulk — the fix would have amplified the storm it exists to damp.</para>
+    /// <para>What is left after classification is a permanent conflict, raised as
+    /// <see cref="BillingShadowConflictException" /> so the caller can tell it from a transient fault without
+    /// touching Npgsql error codes. Before all this, a loser that raced on the subscription index escaped as a raw
+    /// unhandled 23505 -> a 500 to Stripe -> MORE retries, during the very observation window meant to be clean.</para>
     /// </remarks>
     private async Task<bool> RunTransactionAsync(string eventId, string eventType, Func<FormMapsDatabaseSession, Task> write, CancellationToken cancellationToken)
     {
@@ -150,6 +158,11 @@ public sealed class BillingShadowRepository(
         {
             return false;
         }
+
+        // Taken BEFORE `write` so a unique violation aborts only this subtransaction, leaving the session
+        // usable for the classification below. The RLS GUCs were applied when the session opened, i.e.
+        // before this savepoint, so rolling back to it does not disturb them.
+        await session.Transaction.SaveAsync(BeforeWriteSavepoint, cancellationToken);
 
         try
         {
@@ -162,22 +175,59 @@ public sealed class BillingShadowRepository(
             AddParameter(recordEvent, "eventType", eventType);
             await recordEvent.ExecuteNonQueryAsync(cancellationToken);
         }
-        catch (PostgresException ex) when (ex.SqlState == PostgresErrorCodes.UniqueViolation)
+        catch (PostgresException violation) when (violation.SqlState == PostgresErrorCodes.UniqueViolation)
         {
-            // This transaction is aborted either way; session.DisposeAsync() rolls it back, including `write`.
-            // An aborted transaction cannot run the re-check itself, so it goes through a fresh session.
-            if (await IsEventRecordedByAnotherSessionAsync(eventId, cancellationToken))
+            // Nothing is committed on either branch; session.DisposeAsync() rolls the transaction back,
+            // including `write`.
+            if (await LostRedeliveryRaceAsync(session, eventId, eventType, violation, cancellationToken))
             {
-                logger.LogInformation(
-                    "billing.shadow.redelivery-race lost to a concurrent delivery of the same event eventId={EventId} eventType={EventType} constraint={ConstraintName}",
-                    eventId, eventType, ex.ConstraintName);
                 return false;
             }
 
-            throw;
+            throw new BillingShadowConflictException(eventId, eventType, violation.ConstraintName, violation);
         }
 
         await session.CommitAsync(cancellationToken);
+        return true;
+    }
+
+    /// <summary>
+    /// True when the unique violation is explained by another delivery of the SAME event having committed —
+    /// the documented <c>false</c> path. False means nobody else processed this event, so the violation is a
+    /// genuine conflict and belongs to the caller.
+    /// </summary>
+    private async Task<bool> LostRedeliveryRaceAsync(
+        FormMapsDatabaseSession session, string eventId, string eventType,
+        PostgresException violation, CancellationToken cancellationToken)
+    {
+        bool eventRecorded;
+        try
+        {
+            // The violation aborted the subtransaction the savepoint opened, not the whole transaction, so
+            // this restores a usable session on the connection already in hand.
+            await session.Transaction.RollbackAsync(BeforeWriteSavepoint, cancellationToken);
+            eventRecorded = await IsEventRecordedAsync(session, eventId, cancellationToken);
+        }
+        catch (Exception classificationFailure)
+        {
+            // Could not tell a race from a conflict. Say so loudly and let the ORIGINAL violation stand:
+            // its constraint name is the diagnostic fact, and letting a secondary failure replace it would
+            // leave an operator with nothing to go on.
+            logger.LogError(
+                classificationFailure,
+                "billing.shadow.conflict-classification-failed treating the violation as a genuine conflict eventId={EventId} eventType={EventType} constraint={ConstraintName}",
+                eventId, eventType, violation.ConstraintName);
+            return false;
+        }
+
+        if (!eventRecorded)
+        {
+            return false;
+        }
+
+        logger.LogInformation(
+            "billing.shadow.redelivery-race lost to a concurrent delivery of the same event eventId={EventId} eventType={EventType} constraint={ConstraintName}",
+            eventId, eventType, violation.ConstraintName);
         return true;
     }
 
@@ -186,12 +236,6 @@ public sealed class BillingShadowRepository(
         await using var existing = Command(session, """SELECT 1 FROM "shadow_stripe_events" WHERE "id" = @id""");
         AddParameter(existing, "id", eventId);
         return await existing.ExecuteScalarAsync(cancellationToken) is not null;
-    }
-
-    private async Task<bool> IsEventRecordedByAnotherSessionAsync(string eventId, CancellationToken cancellationToken)
-    {
-        await using var probe = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
-        return await IsEventRecordedAsync(probe, eventId, cancellationToken);
     }
 
     private static DbCommand Command(FormMapsDatabaseSession session, string sql)

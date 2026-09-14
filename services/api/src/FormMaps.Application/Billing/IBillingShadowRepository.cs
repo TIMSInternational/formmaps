@@ -1,5 +1,17 @@
 namespace FormMaps.Application.Billing;
 
+/// <summary>
+/// Domain 9a shadow-table writer. Every method is idempotent on <c>eventId</c> and returns false when the
+/// event was already processed — including when a concurrent delivery of the same event won the race.
+/// </summary>
+/// <remarks>
+/// formmaps#188. A unique violation is classified inside the repository, so callers see exactly two
+/// outcomes and never a raw driver error for the case that matters: a redelivery race is the documented
+/// <c>false</c>, and a PERMANENT conflict (the same Stripe subscription arriving for a different user, say)
+/// is <see cref="BillingShadowConflictException" />. That distinction is the caller's cue: a conflict will
+/// fail identically on every retry and must be acknowledged rather than retried, while any OTHER exception
+/// is a transient fault worth retrying. See BillingWebhookEndpoints for the rule applied to Stripe.
+/// </remarks>
 public interface IBillingShadowRepository
 {
     /// <summary>Applies a subscription-create/update event to shadow tables. Returns false if eventId was already processed (dedup hit, no-op).</summary>

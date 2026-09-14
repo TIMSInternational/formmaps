@@ -197,15 +197,61 @@ public sealed class BillingShadowRepositoryTests : IClassFixture<BillingDatabase
         await _fixture.SeedShadowOnlySubscriptionAsync("user_a", "sub_shared");
         var conflicting = new StripeSubscriptionLite("sub_shared", "active", 1893456000, null, null, false);
 
-        var ex = await Assert.ThrowsAsync<PostgresException>(() => Repository().ApplySubscriptionEventAsync(
+        var ex = await Assert.ThrowsAsync<BillingShadowConflictException>(() => Repository().ApplySubscriptionEventAsync(
             "evt_conflict", "checkout.session.completed", "user_b", "plan_1", conflicting, CancellationToken.None));
 
-        Assert.Equal(PostgresErrorCodes.UniqueViolation, ex.SqlState);
+        // The domain type is what callers branch on (a conflict can never succeed on retry; anything else
+        // is transient and SHOULD be retried), and it must not lose the underlying diagnosis on the way up.
+        Assert.Equal("evt_conflict", ex.EventId);
         Assert.Equal("shadow_user_subscriptions_stripeSubscriptionId_key", ex.ConstraintName);
+        var inner = Assert.IsType<PostgresException>(ex.InnerException);
+        Assert.Equal(PostgresErrorCodes.UniqueViolation, inner.SqlState);
         Assert.Equal(0L, await CountAsync("""SELECT COUNT(*) FROM "shadow_stripe_events" WHERE "id" = 'evt_conflict'"""));
         Assert.Equal(0L, await CountAsync("""SELECT COUNT(*) FROM "shadow_user_subscriptions" WHERE "userId" = 'user_b'"""));
         var row = await QueryShadowSubscriptionAsync("user_a");
         Assert.Equal("sub_shared", row.StripeSubscriptionId);
+    }
+
+    [Fact]
+    public async Task ApplySubscriptionEvent_LosesRace_ClassifiesWithoutTakingASecondConnection()
+    {
+        // formmaps#188 follow-up, and the one test in this file that is about POOL behaviour rather than SQL.
+        // Classification re-reads shadow_stripe_events to tell a redelivery race from a genuine conflict. The
+        // first cut of the fix did that on a second session, which is correct in isolation and wrong in
+        // production: MaxPoolSize is 10 (FormMapsDatabaseOptions), shared by the whole process, and this path
+        // runs exactly when Stripe redelivers in bulk -- so the failure path would have doubled its own
+        // connection demand mid-storm.
+        //
+        // A pool of ONE states that constraint in its strictest form: if the repository needs a nested
+        // connection it cannot get one, and this fails on the pool timeout instead of passing slowly. Note
+        // that NO other test here could catch this -- they all build their data source from the raw container
+        // connection string, which carries Npgsql's default MaxPoolSize of 100, while production gets 10 from
+        // FormMapsConnectionStringResolver. The harness diverged from production on precisely the parameter
+        // that made the bug invisible.
+        var oneConnection = new NpgsqlConnectionStringBuilder(_fixture.AppConnectionString)
+        {
+            MaxPoolSize = 1,
+            Timeout = 5,
+        }.ConnectionString;
+
+        await using var pool = NpgsqlDataSource.Create(oneConnection);
+        var repository = new BillingShadowRepository(
+            new NpgsqlFormMapsDatabaseSessionFactory(pool, new RlsSessionContextApplier()),
+            NullLogger<BillingShadowRepository>.Instance);
+        var sub = new StripeSubscriptionLite("sub_pool", "past_due", 1893456000, null, null, false);
+
+        await using var winner = await _adminDataSource.OpenConnectionAsync();
+        await using var winnerTx = await winner.BeginTransactionAsync();
+        await SeedWinnerAsync(winner, winnerTx, "evt_pool", "user_pool_winner", "sub_pool");
+
+        var loser = repository.ApplySubscriptionEventAsync(
+            "evt_pool", "customer.subscription.updated", "user_pool_loser", "plan_1", sub, CancellationToken.None);
+
+        await WaitUntilBlockedOnLockAsync(loser);
+        await winnerTx.CommitAsync();
+
+        Assert.False(await loser);
+        Assert.Equal(0L, await CountAsync("""SELECT COUNT(*) FROM "shadow_user_subscriptions" WHERE "userId" = 'user_pool_loser'"""));
     }
 
     [Fact]
