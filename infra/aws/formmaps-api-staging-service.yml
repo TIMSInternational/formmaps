@@ -120,6 +120,12 @@ Parameters:
     # as DRIFTED on Cpu and Memory forever, no matter what anyone does. That permanently-red
     # signal would make the post-deploy drift check added in formmaps#102/#180 worthless.
     # Same values, notation the live resource actually echoes back.
+    #
+    # The deploy workflow MUST pass Cpu and Memory explicitly. A Default is only applied when a
+    # stack is CREATED: on an UPDATE, `aws cloudformation deploy` sends UsePreviousValue for every
+    # parameter it is not given, so an existing stack keeps its old "1 GB" and CreateChangeSet
+    # fails with "Parameter 'Memory' must be one of AllowedValues". That is exactly how the first
+    # attempt at this change died on staging.
     Default: 512
     AllowedValues:
       - 256

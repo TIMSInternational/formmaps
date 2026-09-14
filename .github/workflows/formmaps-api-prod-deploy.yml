@@ -302,7 +302,9 @@ jobs:
               StripeWebhookSecretArn="$STRIPE_WEBHOOK_SECRET_ARN" \
               FieldEncryptionKeyArn="$FIELD_ENCRYPTION_KEY_ARN" \
               ProdWebOrigin="$PROD_WEB_ORIGIN" \
-              FrontendBaseUrl="$FRONTEND_BASE_URL"
+              FrontendBaseUrl="$FRONTEND_BASE_URL" \
+              Cpu="512" \
+              Memory="1024"
 
       - name: Read App Runner URL
         id: service
