@@ -10,6 +10,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import Link from "next/link";
+import { Illustration, type IllustrationName } from "@/components/illustration/Illustration";
 
 type EmptyStateType =
   | "no_data"
@@ -26,11 +27,29 @@ const DEFAULT_ICONS: Record<EmptyStateType, LucideIcon> = {
   permission_denied: Lock,
 };
 
+/**
+ * Each state has a drawn mark from the brand set. They replace a 20px Lucide
+ * glyph in a 64px disc — five different empty states that all looked alike at a
+ * glance and gave the reader nothing to recognise them by.
+ *
+ * A caller passing an explicit `icon` still gets the old treatment, so the
+ * escape hatch that already existed keeps working.
+ */
+const DEFAULT_ILLUSTRATIONS: Record<EmptyStateType, IllustrationName> = {
+  no_data: "no-data",
+  no_results: "no-results",
+  not_started: "not-started",
+  loading_error: "connection-lost",
+  permission_denied: "locked",
+};
+
 interface EmptyStateProps {
   type: EmptyStateType;
   title: string;
   description?: string;
   icon?: LucideIcon;
+  /** Override the state's default mark, or pass null for the icon treatment. */
+  illustration?: IllustrationName | null;
   actionLabel?: string;
   actionHref?: string;
   onAction?: () => void;
@@ -44,6 +63,7 @@ export function EmptyState({
   title,
   description,
   icon,
+  illustration,
   actionLabel,
   actionHref,
   onAction,
@@ -51,7 +71,10 @@ export function EmptyState({
   secondaryHref,
   onSecondary,
 }: EmptyStateProps) {
+  // An explicit icon, or an explicit `illustration={null}`, opts back out.
+  const useIcon = icon !== undefined || illustration === null;
   const Icon = icon ?? DEFAULT_ICONS[type];
+  const mark = illustration ?? DEFAULT_ILLUSTRATIONS[type];
 
   return (
     <motion.div
@@ -68,18 +91,30 @@ export function EmptyState({
       <motion.div
         animate={{ y: [0, -4, 0] }}
         transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-        className="flex items-center justify-center rounded-full mb-4"
-        style={{
-          width: 64,
-          height: 64,
-          background: "var(--admin-bg-hover, var(--secondary))",
-          border: "1px solid var(--admin-border-default, var(--border))",
-        }}
+        className={
+          useIcon
+            ? "flex items-center justify-center rounded-full mb-4"
+            : "flex items-center justify-center mb-3"
+        }
+        style={
+          useIcon
+            ? {
+                width: 64,
+                height: 64,
+                background: "var(--admin-bg-hover, var(--secondary))",
+                border: "1px solid var(--admin-border-default, var(--border))",
+              }
+            : undefined
+        }
       >
-        <Icon
-          className="h-7 w-7"
-          style={{ color: "var(--admin-font-tertiary, var(--muted-foreground))" }}
-        />
+        {useIcon ? (
+          <Icon
+            className="h-7 w-7"
+            style={{ color: "var(--admin-font-tertiary, var(--muted-foreground))" }}
+          />
+        ) : (
+          <Illustration name={mark} size={132} />
+        )}
       </motion.div>
 
       <h3

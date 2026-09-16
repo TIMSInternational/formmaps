@@ -1,10 +1,12 @@
 import Link from "next/link";
+import { Illustration } from "@/components/illustration/Illustration";
 
 export default function NotFound() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6">
       <div className="text-center max-w-md">
-        <h1 className="text-7xl font-bold text-[#2E9098] mb-4">404</h1>
+        <Illustration name="not-found" size={168} className="mx-auto mb-4" priority />
+        <p className="text-xs font-semibold tracking-[0.2em] text-[#2E9098] mb-2">404</p>
         <h2 className="text-2xl font-semibold mb-2">Page Not Found</h2>
         <p className="text-muted-foreground mb-8">
           The page you&apos;re looking for doesn&apos;t exist or has been moved.

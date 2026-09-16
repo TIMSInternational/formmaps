@@ -23,6 +23,7 @@ import {
 } from "@/services/studentOnboardingService";
 import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { Illustration } from "@/components/illustration/Illustration";
 
 const makePasswordSchema = (t: TFunction) =>
   z
@@ -234,6 +235,11 @@ export default function StudentOnboardingPage({
         </motion.div>
 
         <div className="absolute -bottom-32 -right-32 w-96 h-96 rounded-full" style={{ background: "rgba(255,214,0,0.08)" }} />
+        <Illustration
+          name="welcome"
+          size={260}
+          className="absolute bottom-10 right-10 z-0 opacity-90 pointer-events-none hidden lg:block"
+        />
         <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full" style={{ background: "rgba(255,255,255,0.04)" }} />
       </div>
 

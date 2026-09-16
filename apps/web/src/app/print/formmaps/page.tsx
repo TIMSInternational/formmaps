@@ -2,14 +2,17 @@ import React from "react";
 import { Glasses, Settings, Calculator, Puzzle, Timer } from "lucide-react";
 import type { AssessmentReportData } from "@/types/assessmentReport";
 
-// Default mock data used for standalone preview at /print/formmaps
+// Default mock data used for standalone preview at /print/formmaps.
+// NOTE: /print is not behind the middleware guard, so this page is publicly
+// reachable. Every value here must stay obviously fictional -- it previously
+// carried two real-person-shaped names, one with a full results profile.
 const defaultMockData: AssessmentReportData = {
   candidate: {
-    name: "Maria Paula Mendoza",
+    name: "Valentina Ejemplo",
     assessmentDate: "Septiembre 23/2025",
   },
   executiveSummary: {
-    text: "Maria Paula shows two exceptional cognitive markers: Detection of Characteristics = 96% (Exceptional) and Spatial Orientation / Visualization = Exceptional (78%). Her PCA shows high Influence, a service orientation, a strong concern for quality, and low Dominance. In simple terms: she has a keen eye for detail, can visualize in 2D/3D with ease, and relates very well to others — making her an ideal candidate for Architecture, Industrial Design, and programs that combine design with technical precision.",
+    text: "Valentina shows two exceptional cognitive markers: Detection of Characteristics = 96% (Exceptional) and Spatial Orientation / Visualization = Exceptional (78%). Her PCA shows high Influence, a service orientation, a strong concern for quality, and low Dominance. In simple terms: she has a keen eye for detail, can visualize in 2D/3D with ease, and relates very well to others — making her an ideal candidate for Architecture, Industrial Design, and programs that combine design with technical precision.",
     summaryTitle: "Influence / Technical precision",
     steps: [
       { number: 1, text: "Translate LIA and PCA results into clear study recommendations." },
@@ -168,8 +171,8 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
             <div className="w-[40%] flex flex-col items-center mt-[-3mm] pr-2">
               <div className="bg-[#eff6ff] rounded-[2.5rem] p-6 relative overflow-hidden shadow-sm border border-slate-100">
                 <p className="text-[rgb(0,59,89)] font-bold text-[1.1rem] leading-tight mb-5 text-left font-roboto tracking-tight">
-                  This report practically integrates the results of Sara
-                  Decarlini’s Work Intelligence Assessment (LIA) and Personal
+                  This report practically integrates the results of Valentina
+                  Ejemplo’s Work Intelligence Assessment (LIA) and Personal
                   Competences Analysis (PCA) to guide her vocational decision.
                   The structure provides a clear presentation and an appropriate
                   level of detail, with a practical focus designed to support
