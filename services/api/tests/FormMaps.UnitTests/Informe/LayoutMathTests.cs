@@ -106,15 +106,30 @@ public class LayoutMathTests
     }
 
     [Fact]
-    public void A_word_wider_than_the_column_gets_its_own_line_and_is_not_broken()
+    public void A_word_too_wide_for_the_column_is_filled_by_character_exactly_as_pdfkit_fills_it()
     {
-        // pdfkit does not break inside a word, so neither does this — the ported geometry has to
-        // behave the same. The containment detector is what catches the result if one ever overflows.
+        // A word that cannot fit a line however it is placed — a long university name in a narrow
+        // card — is not given a line of its own to overflow. pdfkit stops wrapping words and packs
+        // characters, CONTINUING the line already in progress, and that is why it never runs a word
+        // past a column. Both expectations below are pdfkit's own output, captured from the legacy
+        // renderer; see PdfkitLineBreakParityTests for the 1,928-case version of this.
         using var canvas = new InformeCanvas();
 
-        var lines = LayoutMath.WrapLines(canvas, "a Supercalifragilisticoexpialidoso b", 30, "Poppins-Regular", 9.5);
+        Assert.Equal(
+            // The leading space on the last line is pdfkit's too: the space that followed the long word
+            // is what is left of its segment once the character fill stops, and it opens the next line.
+            ["hola superc", "alifragilistic", "oexpialidoso", " adios"],
+            LayoutMath.WrapLines(canvas, "hola supercalifragilisticoexpialidoso adios", 60, "Poppins-Regular", 9.5));
 
-        Assert.Contains("Supercalifragilisticoexpialidoso", lines);
+        Assert.Equal(
+            ["Conscientiousnes", "s"],
+            LayoutMath.WrapLines(canvas, "Conscientiousness", 158.43, "Poppins-Bold", 17));
+
+        // Every emitted line fits, which is the point of the whole exercise.
+        foreach (var line in LayoutMath.WrapLines(canvas, "hola supercalifragilisticoexpialidoso adios", 60, "Poppins-Regular", 9.5))
+        {
+            Assert.True(LayoutMath.AdvanceWidth(canvas, line, "Poppins-Regular", 9.5) <= 60, $"\"{line}\" overflows");
+        }
     }
 
     [Fact]

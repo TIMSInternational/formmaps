@@ -34,6 +34,15 @@
          tools/careerfit/export_v360_fixture.py (out = this path); if the C# and the fixture disagree,
          the C# is wrong. -->
     <EmbeddedResource Include="CareerFit\Data\v360-parity-fixture.json" />
+    <!-- Informe line-break ground truth: pdfkit's own wrapping of every string in the informe label
+         dictionary and interpretive library, across the four Poppins faces and the document's real
+         column widths. Captured by running the LEGACY renderer (tafurfede/formmaps-platform,
+         origin/main, api/node_modules/pdfkit) and intercepting PDFDocument._line. The .NET port's
+         page counts only match the shipped document if LayoutMath.WrapLines agrees with pdfkit, and
+         this is the evidence that it does; if the C# and the fixture disagree, the C# is wrong.
+         Regenerate ONLY from pdfkit; never hand-edit. NOTE: not named *golden.json — LiaCoreGoldenTests
+         resolves its own fixture by that suffix with Single(), so a second one breaks it. -->
+    <EmbeddedResource Include="Informe\Data\pdfkit-linebreaks.json" />
   </ItemGroup>
 
   <ItemGroup>

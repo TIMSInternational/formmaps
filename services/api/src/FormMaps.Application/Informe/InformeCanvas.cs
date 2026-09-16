@@ -1,4 +1,6 @@
 using System.Globalization;
+using System.Reflection;
+using System.Text;
 using PdfSharp.Drawing;
 using PdfSharp.Fonts;
 using PdfSharp.Pdf;
@@ -79,6 +81,7 @@ public sealed class InformeCanvas : IGlyphWidths, IDisposable
     private readonly Dictionary<string, XSolidBrush> _brushes = new(StringComparer.OrdinalIgnoreCase);
     private readonly XGraphics _measure;
     private XGraphics? _gfx;
+    private StringBuilder? _content;
     private byte[]? _saved;
     private bool _disposed;
 
@@ -108,6 +111,15 @@ public sealed class InformeCanvas : IGlyphWidths, IDisposable
 
     /// <summary>How many pages the document has. Readable after <see cref="Save"/>, which seals the document.</summary>
     public int PageCount { get; private set; }
+
+    /// <summary>
+    /// Whether tracked text can be drawn as one PDF text run with a real character-spacing operator
+    /// rather than glyph by glyph — see <see cref="DrawLine"/>. False means the fallback is in use:
+    /// the page still looks identical, but a text extractor reads tracked labels back with spaces
+    /// inside the words. <c>CharacterSpacingIsNative</c> is asserted by the test suite, so a PDFsharp
+    /// upgrade that moves the hook fails loudly instead of quietly degrading every kicker.
+    /// </summary>
+    public bool CharacterSpacingIsNative => _content is not null;
 
     // ── Pages ────────────────────────────────────────────────────────────────────────────────────
 
@@ -142,6 +154,7 @@ public sealed class InformeCanvas : IGlyphWidths, IDisposable
 
         _gfx?.Dispose();
         _gfx = XGraphics.FromPdfPage(_document.Pages[pageNumber - 1], XGraphicsPdfPageOptions.Append, XGraphicsUnit.Point, XPageDirection.Downwards);
+        _content = ResolveContentBuilder(_gfx);
         PageNumber = pageNumber;
     }
 
@@ -153,6 +166,7 @@ public sealed class InformeCanvas : IGlyphWidths, IDisposable
 
         _gfx?.Dispose();
         _gfx = XGraphics.FromPdfPage(page, XGraphicsPdfPageOptions.Append, XGraphicsUnit.Point, XPageDirection.Downwards);
+        _content = ResolveContentBuilder(_gfx);
         PageCount = _document.PageCount;
         PageNumber = PageCount;
     }
@@ -376,21 +390,66 @@ public sealed class InformeCanvas : IGlyphWidths, IDisposable
             return;
         }
 
-        // PDFsharp has no character-spacing setting, so tracking is drawn glyph by glyph. The advance
-        // per glyph is its own width plus the tracking, which is exactly what AdvanceWidth measures.
-        //
-        // The cost is that a tracked run is many one-glyph text-show operations rather than one with a
-        // Tc set, so a text extractor reads "PREPARADO PARA" back as "PREP ARADO P ARA". Tracking is
-        // only ever applied to kickers and small uppercase labels, so no sentence a reader would copy
-        // is affected — but the glyph-coverage check the layout invariants call for (assert every
-        // character of a rendered PDF has a Poppins glyph) must read the label dictionary, not the
-        // extracted text, or it will trip over these.
+        // Tracking. PDFsharp models no text state beyond the font, so it has no setting for PDF's
+        // character-spacing operator (Tc) — the whole library, public and internal, has no such
+        // concept. Two ways to get it, and the difference is only visible to a text extractor.
+        if (_content is { } content)
+        {
+            // Write Tc into the content stream PDFsharp is building, around one ordinary DrawString.
+            // Tc is a text-state parameter: legal inside a text object and outside one (a tracked
+            // kicker is often the first text on a page, before PDFsharp has opened BT), and it
+            // survives until reset. The run then draws as ONE text-showing operator, so an extractor
+            // reads "PREPARADO PARA" rather than "PREP ARADO P ARA".
+            //
+            // Positioning is unaffected: PDFsharp moves between draws with Td, which is relative to
+            // the previous LINE matrix and not to where the last Tj happened to end, so the extra
+            // advance Tc introduces cannot push a later draw off its mark.
+            content.Append(Pdf(style.Tracking)).Append(" Tc\n");
+            try
+            {
+                Gfx.DrawString(text, font, brush, new XPoint(x, y), XStringFormats.TopLeft);
+            }
+            finally
+            {
+                content.Append("0 Tc\n");
+            }
+
+            return;
+        }
+
+        // Fallback, if a PDFsharp upgrade ever moves the hook: draw the run glyph by glyph. The page
+        // looks the same — Tc spaces glyphs exactly as this does, which is why both agree with
+        // AdvanceWidth — but each glyph becomes its own text-showing operator and extraction suffers.
         var cx = x;
         foreach (var ch in text)
         {
             var glyph = ch.ToString();
             Gfx.DrawString(glyph, font, brush, new XPoint(cx, y), XStringFormats.TopLeft);
             cx += _measure.MeasureString(glyph, font).Width + style.Tracking;
+        }
+    }
+
+    /// <summary>A number as PDF writes them: invariant, no exponent, no trailing zeros.</summary>
+    private static string Pdf(double value) => value.ToString("0.####", CultureInfo.InvariantCulture);
+
+    /// <summary>
+    /// The StringBuilder PDFsharp accumulates this page's content stream into, reached through the
+    /// public <c>XGraphics.Internals</c> property. The property it hangs off is declared on an
+    /// internal nested type, hence the reflection; a failure to resolve it is not an error, it just
+    /// selects the glyph-by-glyph fallback.
+    /// </summary>
+    private static StringBuilder? ResolveContentBuilder(XGraphics gfx)
+    {
+        try
+        {
+            var internals = gfx.Internals;
+            return internals?.GetType()
+                .GetProperty("ContentStringBuilder", BindingFlags.Public | BindingFlags.Instance)?
+                .GetValue(internals) as StringBuilder;
+        }
+        catch (TargetInvocationException)
+        {
+            return null;
         }
     }
 

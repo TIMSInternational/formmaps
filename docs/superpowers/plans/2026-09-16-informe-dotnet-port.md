@@ -1,7 +1,8 @@
 # Career & University Informe — .NET port plan
 
 **Date:** 2026-09-16
-**Status:** Slices 0 and 1 landed (pure layer, PDFsharp, layout core, containment, cover + front page)
+**Status:** Slices 0 and 1 landed (pure layer, PDFsharp, layout core, containment, cover + front page;
+wrapping verified against pdfkit 1,928/1,928)
 **Branch:** `feat/informe-dotnet-port`
 **Design reference:** `docs/superpowers/specs/2026-09-16-informe-design-spec-v2.md` (renderer-agnostic; §7 is the page architecture and colour rule)
 **Legacy source:** `tafurfede/formmaps-platform` `api/src/services/informe/` (PR #352, in production from 2026-09-16)
@@ -108,9 +109,39 @@ printed for the port to calibrate on).
    because pdfkit counts its trailing space (132.485pt). Fixed, and the shipped line breaks of the
    two densest descriptions are now pinned as a test.
 
-**Known gap:** pdfkit breaks at every UAX #14 opportunity — after a hyphen or an em dash as well as a
-space. `WrapLines` breaks on spaces only. Nothing in the shipped document depends on the difference,
-but it is the first thing to suspect if a slice-2 page count fails to match.
+**Both of slice 1's known gaps are now closed, and closing them needed pdfkit as an oracle rather
+than a specification.**
+
+*Line breaking.* The wrapper is checked against pdfkit's own output over the document's own copy:
+the legacy renderer was run with `PDFDocument._line` intercepted, over all 482 strings of the label
+dictionary and the interpretive library, in all four Poppins faces at the real column widths — 1,928
+wraps, committed as `tests/FormMaps.UnitTests/Informe/Data/pdfkit-linebreaks.json` and asserted by
+`PdfkitLineBreakParityTests`. **Agreement is 1,928 / 1,928.** Getting there corrected three beliefs
+that were wrong and would each have moved a page count:
+
+1. pdfkit measures a candidate line WITH the space that would follow it (found at 98.65% agreement).
+2. It breaks after a hyphen, an en dash, an em dash, a pipe and a solidus — but NOT between digits,
+   so "2026-09-16" and "24/24" stay whole, while "0–100" does break after the en dash (99.79%).
+3. A word too wide for its column is NOT given a line of its own to overflow. pdfkit stops wrapping
+   words and fills by character, continuing the line already in progress —
+   `"Steadiness, and C" / "onscientiousness."`. This is the one that mattered most: the old behaviour
+   would have run a long university or career name straight out of a narrow card, which is precisely
+   what the containment detector exists to prevent (100.00%).
+
+The fixture is ground truth from pdfkit, so if the C# and the fixture disagree, the C# is wrong.
+Regenerate it only from the legacy renderer.
+
+*Tracking.* PDFsharp models no text state beyond the font — it has no character-spacing concept
+anywhere, public or internal — so tracked kickers were first drawn glyph by glyph. That was visually
+correct and a real regression anywhere else: the legacy document extracts "PREPARADO PARA", the port
+extracted "PREP ARADO P ARA". Fixed by writing PDF's own `Tc` operator into the content stream
+PDFsharp is building, reached through the public `XGraphics.Internals.ContentStringBuilder`, around
+one ordinary `DrawString`. A tracked run is now a single text-showing operator and extraction matches
+the legacy byte for byte. Positioning is unaffected because PDFsharp moves between draws with `Td`,
+which is relative to the previous line matrix rather than to where the last `Tj` ended.
+`InformeCanvas.CharacterSpacingIsNative` reports whether the hook resolved and the test suite asserts
+it, so a PDFsharp upgrade that moves it fails loudly instead of quietly degrading every kicker; the
+glyph-by-glyph path remains as the fallback.
 
 **Not in slice 1:** the raster assets. `IInformeAssets` is the seam (logo, part marks); the cover and
 the dividers draw nothing when it is absent, exactly as the legacy `try/catch` skipped a missing

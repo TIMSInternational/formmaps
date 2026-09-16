@@ -84,22 +84,23 @@ public static class LayoutMath
     /// <summary>
     /// Breaks <paramref name="text"/> into the lines that will actually be drawn, at <paramref name="width"/>.
     ///
-    /// Greedy fill on spaces, honouring every explicit newline. A word wider than the column gets a
-    /// line to itself and is NOT broken mid-word — the same thing pdfkit does, so the ported geometry
-    /// behaves identically; the containment detector is what catches the result if one ever overflows.
+    /// Greedy fill, honouring every explicit newline, over the same break opportunities pdfkit uses.
     ///
-    /// A candidate line is measured WITH the space that would follow it, because that is what pdfkit
-    /// does: its line breaker takes each segment up to the next break opportunity, trailing whitespace
-    /// included. The difference is one space wide and it really does move words between lines — the
-    /// MIL instrument card breaks after "capacidad numérica," in the shipped document because
-    /// "capacidad numérica, memoria" measures 130.268pt, fits the 132.43pt column, and then does not
-    /// fit it once its trailing space is counted (132.485pt). Ignoring the space re-wrapped that card.
-    /// The last word of a line has no following space and is measured without one.
+    /// The text is cut into SEGMENTS at every break opportunity, and each segment carries the
+    /// whitespace that followed it. A candidate line is measured as the concatenation of its segments
+    /// INCLUDING that trailing whitespace, and emitted with it trimmed. Both halves of that matter and
+    /// both were found by diffing against pdfkit over 4,810 wraps of the document's own copy:
     ///
-    /// KNOWN GAP: pdfkit breaks at every UAX #14 opportunity, so it can also break after a hyphen or
-    /// an em dash. This breaks on spaces only. No line in the shipped document depends on it (the
-    /// three instrument descriptions, which are the densest copy in the document, reproduce exactly —
-    /// see LayoutMathTests), but a long hyphenated word is where the two would still part company.
+    ///   - Measuring with the trailing space is why the MIL instrument card breaks after
+    ///     "capacidad numérica," in the shipped document. "capacidad numérica, memoria" is 130.268pt
+    ///     and fits the 132.43pt column; with its space it is 132.485pt and does not.
+    ///   - Breaking only at spaces put "4-dimension" and "step-by-step" on lines pdfkit splits. A
+    ///     hyphen is a break opportunity, and the hyphen stays with the line above it.
+    ///
+    /// A segment that cannot fit a line even on its own — a long university name in a narrow card, a
+    /// compound nobody anticipated — is filled CHARACTER by character instead, continuing on the line
+    /// already in progress, which is what pdfkit does and is why it never overflows a column. That was
+    /// also measured rather than assumed: the first port let such a word run past its box.
     /// </summary>
     public static IReadOnlyList<string> WrapLines(IGlyphWidths widths, string? text, double width, string font, double size, double tracking = 0)
     {
@@ -116,27 +117,125 @@ public static class LayoutMath
                 continue;
             }
 
-            var words = hardLine.Split(' ');
             string? current = null;
-            for (var i = 0; i < words.Length; i++)
+            foreach (var segment in Segments(hardLine))
             {
-                var candidate = current is null ? words[i] : current + " " + words[i];
-                var probe = i == words.Length - 1 ? candidate : candidate + " ";
-                if (current is null || AdvanceWidth(widths, probe, font, size, tracking) <= width)
+                var candidate = current is null ? segment : current + segment;
+                if (AdvanceWidth(widths, candidate, font, size, tracking) <= width)
                 {
                     current = candidate;
+                    continue;
                 }
-                else
+
+                if (AdvanceWidth(widths, segment.TrimEnd(), font, size, tracking) > width)
                 {
-                    lines.Add(current);
-                    current = words[i];
+                    // The segment cannot fit a line however it is placed, so stop wrapping words and
+                    // fill by character — starting on the line already in progress, not on a fresh one.
+                    current = FillByCharacter(widths, lines, current ?? string.Empty, segment, width, font, size, tracking);
+                    continue;
                 }
+
+                if (current is null)
+                {
+                    current = segment;
+                    continue;
+                }
+
+                lines.Add(current.TrimEnd());
+                current = segment;
             }
 
-            lines.Add(current ?? string.Empty);
+            lines.Add((current ?? string.Empty).TrimEnd());
         }
 
         return lines;
+    }
+
+    /// <summary>
+    /// Packs <paramref name="segment"/> into <paramref name="buffer"/> one character at a time, emitting
+    /// a line each time the column is full, and returns what is left over as the new current line.
+    /// A single character that does not fit an empty line is kept anyway rather than looping forever.
+    /// </summary>
+    private static string FillByCharacter(IGlyphWidths widths, List<string> lines, string buffer, string segment, double width, string font, double size, double tracking)
+    {
+        foreach (var ch in segment)
+        {
+            var candidate = buffer + ch;
+            if (buffer.Length > 0 && AdvanceWidth(widths, candidate, font, size, tracking) > width)
+            {
+                lines.Add(buffer.TrimEnd());
+                buffer = ch.ToString();
+                continue;
+            }
+
+            buffer = candidate;
+        }
+
+        return buffer;
+    }
+
+    /// <summary>
+    /// Characters a line may break AFTER, beyond the space — the subset of UAX #14's break-after
+    /// classes that the informe's copy actually exercises, each one established by a disagreement with
+    /// pdfkit over the label dictionary and the interpretive library rather than read off the spec.
+    /// </summary>
+    private static bool IsBreakAfter(char c) => c is '-' or '\u2013' or '\u2014' or '|' or '/';
+
+    /// <summary>
+    /// Whether a hyphen or solidus sits in a numeric context, where UAX #14 (LB25) forbids the break.
+    /// "2026-09-16" and "24/24" are single tokens; splitting a date or a coverage count across two
+    /// lines is exactly the kind of thing nobody notices until it is in a student's report. The DASHES
+    /// are not covered by this: pdfkit breaks "0–100" after the en dash, and so does this.
+    /// </summary>
+    private static bool IsNumericJoin(char c, char next) => c is '-' or '/' && char.IsDigit(next);
+
+    /// <summary>
+    /// Cuts a line into segments at every break opportunity. Each segment keeps the break character
+    /// that ends it and any whitespace that follows, so a caller can measure with the whitespace and
+    /// emit without it.
+    /// </summary>
+    private static IEnumerable<string> Segments(string line)
+    {
+        var start = 0;
+        var i = 0;
+        while (i < line.Length)
+        {
+            if (line[i] == ' ')
+            {
+                while (i < line.Length && line[i] == ' ')
+                {
+                    i++;
+                }
+
+                yield return line[start..i];
+                start = i;
+                continue;
+            }
+
+            if (IsBreakAfter(line[i]) && i + 1 < line.Length && !IsNumericJoin(line[i], line[i + 1]))
+            {
+                i++;
+
+                // Whatever whitespace follows the break character belongs to the line ABOVE, or the
+                // next line starts with a space: "spaced repetition — " breaks after the dash, and the
+                // continuation begins at "can", not at " can".
+                while (i < line.Length && line[i] == ' ')
+                {
+                    i++;
+                }
+
+                yield return line[start..i];
+                start = i;
+                continue;
+            }
+
+            i++;
+        }
+
+        if (start < line.Length)
+        {
+            yield return line[start..];
+        }
     }
 
     /// <summary>

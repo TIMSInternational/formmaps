@@ -108,6 +108,54 @@ public class ContainmentSelfCheckTests
     }
 
     [Fact]
+    public void Tracked_text_is_one_run_with_a_real_character_spacing_operator()
+    {
+        // A tracked kicker used to be drawn glyph by glyph, because PDFsharp models no text state
+        // beyond the font. Every glyph became its own text-showing operator, and a text extractor read
+        // "PREPARADO PARA" back as "PREP ARADO P ARA" — the legacy pdfkit document extracts it
+        // cleanly, so it was a regression the port introduced, not a limitation it inherited.
+        //
+        // The kicker is also the FIRST text drawn on the cover, before PDFsharp has opened a text
+        // object, so this covers Tc landing outside BT as well as inside.
+        using var canvas = new InformeCanvas(compressContentStreams: false);
+        canvas.NewFullBleedPage(InformeColors.Navy);
+        canvas.DrawText("PREPARADO PARA", InformeLayout.Margin, 300, new InformeTextStyle("Poppins-Regular", 10, Tracking: 1), InformeColors.White);
+        canvas.DrawText("SIN TRACKING", InformeLayout.Margin, 340, new InformeTextStyle("Poppins-Regular", 10), InformeColors.White);
+
+        Assert.True(canvas.CharacterSpacingIsNative, "the PDFsharp content-stream hook no longer resolves — tracked text has fallen back to glyph-by-glyph drawing");
+
+        var content = Encoding.Latin1.GetString(canvas.Save());
+
+        Assert.Contains("1 Tc", content, StringComparison.Ordinal);
+        Assert.Contains("(PREPARADO PARA) Tj", content, StringComparison.Ordinal);
+        Assert.Contains("0 Tc", content, StringComparison.Ordinal);
+
+        // The untracked run must not inherit it.
+        var tracked = content.IndexOf("(PREPARADO PARA) Tj", StringComparison.Ordinal);
+        var plain = content.IndexOf("(SIN TRACKING) Tj", StringComparison.Ordinal);
+        Assert.InRange(content.IndexOf("0 Tc", tracked, StringComparison.Ordinal), tracked, plain);
+    }
+
+    [Fact]
+    public void Tracking_places_glyphs_where_the_measurement_says_they_are()
+    {
+        // Tc adds the spacing after every glyph, so the run's INKED extent is still
+        // sum(widths) + tracking × (n − 1) — which is what AdvanceWidth returns and what the recorder
+        // logs. If these ever part company, every containment result on a tracked run is wrong.
+        using var canvas = new InformeCanvas();
+        canvas.NewContentPage();
+        var style = new InformeTextStyle("Poppins-SemiBold", 8.5, Tracking: 1.2);
+        const string kicker = "INTRODUCCIÓN";
+
+        canvas.DrawText(kicker, InformeLayout.Margin, 100, style, InformeColors.Teal);
+
+        var run = Assert.Single(canvas.Recording.Texts);
+        var expected = canvas.Width(kicker, "Poppins-SemiBold", 8.5) + (1.2 * (kicker.Length - 1));
+        Assert.Equal(expected, run.W, 10);
+        Assert.Equal(canvas.WidthOf(kicker, style), run.W, 10);
+    }
+
+    [Fact]
     public void The_dashed_edge_reaches_the_pdf_as_three_points_on_and_three_off()
     {
         // White with a 1pt dashed [3,3] edge is the ENTIRE empty-state signal — the dashed edge, the em
