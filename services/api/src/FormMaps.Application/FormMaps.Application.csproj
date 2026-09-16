@@ -43,6 +43,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Career & University Informe (port of tafurfede/formmaps-platform api/src/services/informe, PR #352).
+         informe-labels.es-en.json is the bilingual label dictionary exported verbatim from the legacy theme.ts
+         LABELS (207 keys; Spanish is the source of truth, key parity asserted by InformeLabelsTests).
+         interpret.es-en.json is the legacy interpretive-content library, unchanged. Both live INSIDE
+         services/api because the Docker build context is this directory (see the CareerFit note below). -->
+    <EmbeddedResource Include="Informe\Data\informe-labels.es-en.json" />
+    <EmbeddedResource Include="Informe\Data\interpret.es-en.json" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
     <PackageReference Include="Stripe.net" Version="52.2.0" />
   </ItemGroup>
