@@ -43,7 +43,31 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Career & University Informe (port of tafurfede/formmaps-platform api/src/services/informe, PR #352).
+         informe-labels.es-en.json is the bilingual label dictionary exported verbatim from the legacy theme.ts
+         LABELS (207 keys; Spanish is the source of truth, key parity asserted by InformeLabelsTests).
+         interpret.es-en.json is the legacy interpretive-content library, unchanged. Both live INSIDE
+         services/api because the Docker build context is this directory (see the CareerFit note below). -->
+    <EmbeddedResource Include="Informe\Data\informe-labels.es-en.json" />
+    <EmbeddedResource Include="Informe\Data\interpret.es-en.json" />
+    <!-- Poppins (SIL Open Font License 1.1, redistributable) — the informe's only
+         typeface. Embedded so the renderer needs no font installed on the host;
+         App Runner containers have none. -->
+    <EmbeddedResource Include="Informe\Fonts\Poppins-Regular.ttf" />
+    <EmbeddedResource Include="Informe\Fonts\Poppins-Medium.ttf" />
+    <EmbeddedResource Include="Informe\Fonts\Poppins-SemiBold.ttf" />
+    <EmbeddedResource Include="Informe\Fonts\Poppins-Bold.ttf" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="BCrypt.Net-Next" Version="4.2.0" />
+    <!-- Career & University Informe renderer. MIT, no revenue condition (QuestPDF's Community
+         licence covers companies under USD 1M only, which this repository cannot assert). Chosen
+         because it is pdfkit's shape — MeasureString/DrawString at (x, y) — so the legacy renderer's
+         4,000 lines of imperative measure-and-fit port one-to-one instead of being rewritten, and
+         because it measures Poppins at exactly 1.5000 x size like pdfkit, so every card height in
+         the design spec transfers unchanged (PoppinsMetricsTests). -->
+    <PackageReference Include="PDFsharp" Version="6.2.4" />
     <PackageReference Include="Stripe.net" Version="52.2.0" />
   </ItemGroup>
 

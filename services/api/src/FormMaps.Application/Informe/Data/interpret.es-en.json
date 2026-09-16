@@ -1,0 +1,248 @@
+{
+  "disc": {
+    "D": {
+      "high": {
+        "es": "Decides rápido y con orientación a resultados. Tomas el control con comodidad, asumes retos y avanzas cuando hay presión. Tu energía impulsa proyectos y equipos hacia adelante.",
+        "en": "You are decisive and results-driven. You feel at ease taking charge, embracing challenges, and moving quickly under pressure. Your energy propels projects and teams forward."
+      },
+      "med": {
+        "es": "Tienes una orientación moderada a los resultados: actúas con determinación cuando el contexto lo requiere, pero sabes ceder el paso cuando la situación pide colaboración. Equilibras la acción con la reflexión.",
+        "en": "You have a moderate results orientation: you act with determination when the situation calls for it, but know when to step back and collaborate. You balance action with reflection."
+      },
+      "low": {
+        "es": "Prefieres un ritmo más calmado y consensuado. En lugar de imponer decisiones, buscas la participación del equipo y disfrutas construir acuerdos. Tu fortaleza está en la cohesión, no en la velocidad.",
+        "en": "You prefer a calmer, consensus-driven pace. Rather than imposing decisions, you invite team input and enjoy building agreement. Your strength lies in cohesion, not speed."
+      }
+    },
+    "I": {
+      "high": {
+        "es": "Tu presencia es extrovertida y entusiasta. Conectas con facilidad con personas nuevas, te comunicas con calidez y motivas a otros con tu energía. Los entornos sociales y creativos son tu zona de confort.",
+        "en": "You are outgoing, enthusiastic, and magnetic. You connect easily with new people, communicate with warmth, and energize those around you. Social and creative environments are where you thrive."
+      },
+      "med": {
+        "es": "Combinas la comunicación efectiva con la precisión. Sabes persuadir cuando hace falta, pero prefieres que los hechos hablen por sí mismos. Te adaptas al tono del grupo sin perder tu voz.",
+        "en": "You blend effective communication with precision. You can be persuasive when needed, but prefer to let facts speak for themselves. You adapt to the group's tone without losing your own voice."
+      },
+      "low": {
+        "es": "Prefieres los hechos a la persuasión social. Comunicas con precisión más que con efusividad, y valoras la sustancia sobre la visibilidad. Tu influencia es discreta pero sólida.",
+        "en": "You prefer facts over social persuasion. You communicate with precision rather than effusiveness, and value substance over visibility. Your influence is understated but solid."
+      }
+    },
+    "S": {
+      "high": {
+        "es": "Trabajas con constancia, fiabilidad y paciencia. Das estabilidad al equipo en momentos de cambio, y tu lealtad y consistencia generan confianza a largo plazo. Prefieres los entornos predecibles y estructurados.",
+        "en": "You are steady, reliable, and patient. You anchor the team during change, and your loyalty and consistency build lasting trust. You thrive in predictable, structured environments."
+      },
+      "med": {
+        "es": "Equilibras la constancia con la apertura al cambio. Mantienes la calma, pero no temes ajustar el rumbo cuando los datos lo aconsejan. Eres un punto de apoyo flexible para quienes te rodean.",
+        "en": "You balance steadiness with openness to change. You stay calm, but aren't afraid to adjust course when the data suggest it. You serve as a flexible anchor for those around you."
+      },
+      "low": {
+        "es": "Te mueves con agilidad y te adaptas rápido. Te energiza la variedad y el cambio, y respondes con rapidez ante nuevas situaciones. Tu flexibilidad es un activo en entornos dinámicos y cambiantes.",
+        "en": "You are agile and adaptable. Variety and change energize you, and you respond quickly to new situations. Your flexibility is an asset in dynamic, fast-moving environments."
+      }
+    },
+    "C": {
+      "high": {
+        "es": "Trabajas con rigor, análisis y atención al detalle. Te apoyas en estándares, estructura y calidad para tomar decisiones bien fundamentadas. Para ti, la precisión no es opcional: es el estándar mínimo.",
+        "en": "You are rigorous, analytical, and detail-oriented. You rely on standards, structure, and quality to make well-grounded decisions. For you, precision is not optional — it is the minimum standard."
+      },
+      "med": {
+        "es": "Valoras la calidad sin sacrificar la velocidad. Aplicas criterios y estructura donde agregan valor, y eres capaz de avanzar aunque no tengas todos los datos. Sabes cuándo el rigor es un activo y cuándo es un freno.",
+        "en": "You value quality without sacrificing speed. You apply criteria and structure where they add value, and can move forward without having all the data. You know when rigor is an asset and when it becomes a bottleneck."
+      },
+      "low": {
+        "es": "Prefieres actuar sobre analizar. Te mueves mejor en entornos donde la velocidad importa más que la perfección, y donde la experimentación está permitida. Delegas el detalle y te enfocas en el cuadro general.",
+        "en": "You prefer acting over analyzing. You feel more comfortable in environments where speed matters more than perfection, and where experimentation is welcome. You delegate detail and focus on the big picture."
+      }
+    }
+  },
+  "cognitive": {
+    "razonamiento": {
+      "high": {
+        "es": "Tu capacidad de razonamiento es sobresaliente. Resuelves problemas lógicos y abstractos con rapidez y precisión, y encuentras patrones donde otros ven complejidad. Esta habilidad es central en disciplinas científicas, tecnológicas y de gestión avanzada.",
+        "en": "Your reasoning ability is outstanding. You solve logical and abstract problems quickly and accurately, finding patterns where others see complexity. This skill is central to scientific, technological, and advanced management fields."
+      },
+      "med": {
+        "es": "Tu razonamiento lógico está en un nivel sólido. Puedes resolver problemas estructurados con eficacia y aprendes nuevos marcos conceptuales con relativa facilidad. Con práctica deliberada, puedes llevar esta habilidad a un nivel superior.",
+        "en": "Your logical reasoning is at a solid level. You can solve structured problems effectively and learn new conceptual frameworks with relative ease. With deliberate practice, you can push this skill further."
+      },
+      "low": {
+        "es": "El razonamiento abstracto es un área con margen de crecimiento para ti. Fortalecer esta habilidad con ejercicios de lógica y resolución de problemas paso a paso puede marcar una diferencia significativa en tu desempeño académico y profesional.",
+        "en": "Abstract reasoning is an area with room for growth. Strengthening this skill through logic exercises and step-by-step problem solving can make a meaningful difference in your academic and professional performance."
+      }
+    },
+    "deteccion": {
+      "high": {
+        "es": "Tienes una aguda capacidad de detección: identificas errores, inconsistencias y patrones con rapidez y precisión. Esta habilidad es muy valorada en roles de control de calidad, auditoría, análisis de datos y cualquier campo que exija atención sostenida.",
+        "en": "You have sharp detection ability: you spot errors, inconsistencies, and patterns quickly and accurately. This skill is highly valued in quality control, auditing, data analysis, and any field that demands sustained attention."
+      },
+      "med": {
+        "es": "Tu capacidad de detección está en un buen nivel. Identificas errores con regularidad y puedes seguir instrucciones complejas sin perder el hilo. Practicar tareas de revisión y control de calidad puede llevar este dominio al siguiente nivel.",
+        "en": "Your detection ability is at a good level. You regularly spot errors and can follow complex instructions without losing the thread. Practicing review and quality-control tasks can take this domain to the next level."
+      },
+      "low": {
+        "es": "La detección de patrones y errores es un área que puedes desarrollar. Ejercicios de atención focalizada y revisión sistemática de información pueden mejorar significativamente tu precisión y velocidad en este dominio.",
+        "en": "Pattern and error detection is an area you can develop. Focused attention exercises and systematic review of information can significantly improve your precision and speed in this domain."
+      }
+    },
+    "numerico": {
+      "high": {
+        "es": "Tu capacidad numérica es destacada. Operas y razonas con datos cuantitativos con naturalidad, y tu mente traduce números en significado con rapidez. Esta fortaleza es ideal para disciplinas como ingeniería, finanzas, ciencia de datos y ciencias exactas.",
+        "en": "Your numerical ability is exceptional. You work with quantitative data naturally, and your mind translates numbers into meaning quickly. This strength is ideal for engineering, finance, data science, and exact sciences."
+      },
+      "med": {
+        "es": "Tienes una buena capacidad numérica. Manejas datos y operaciones cuantitativas con solidez, y puedes resolver problemas matemáticos en contextos aplicados. Con práctica constante, este dominio puede convertirse en una de tus mayores ventajas.",
+        "en": "You have solid numerical ability. You handle data and quantitative operations well, and can solve mathematical problems in applied contexts. With consistent practice, this domain can become one of your strongest advantages."
+      },
+      "low": {
+        "es": "La capacidad numérica es un área donde tienes espacio para crecer. Trabajar con ejercicios de matemáticas aplicadas y práctica regular de cálculo puede fortalecer tu confianza y precisión con los datos.",
+        "en": "Numerical ability is an area where you have room to grow. Working through applied math exercises and regular calculation practice can strengthen your confidence and accuracy with data."
+      }
+    },
+    "memoria": {
+      "high": {
+        "es": "Tu memoria de trabajo es excelente. Retienes y recuperas información con facilidad, lo que te permite aprender nuevos contenidos rápidamente y mantener múltiples hilos de información activos al mismo tiempo. Es una ventaja clara en entornos académicos exigentes.",
+        "en": "Your working memory is excellent. You retain and recall information with ease, allowing you to learn new content quickly and keep multiple threads active simultaneously. This is a clear advantage in demanding academic environments."
+      },
+      "med": {
+        "es": "Tu memoria de trabajo está en un buen nivel. Puedes retener y manejar información nueva sin dificultad en la mayoría de los contextos. Técnicas de estudio como la repetición espaciada pueden ayudarte a consolidar aún más este dominio.",
+        "en": "Your working memory is at a good level. You can retain and manage new information without difficulty in most contexts. Study techniques like spaced repetition can help you consolidate this domain further."
+      },
+      "low": {
+        "es": "La retención de información es un área con margen de mejora. Usar estrategias activas de memoria — como resúmenes, mapas conceptuales y repetición espaciada — puede mejorar significativamente tu desempeño en este dominio.",
+        "en": "Information retention is an area with room for improvement. Using active memory strategies — such as summaries, concept maps, and spaced repetition — can significantly improve your performance in this domain."
+      }
+    },
+    "orientacion": {
+      "high": {
+        "es": "Tu sentido de orientación espacial y seguimiento de reglas es sobresaliente. Navegas sistemas complejos con facilidad, sigues instrucciones multi-paso con precisión y mantienes el rumbo incluso en entornos cambiantes. Es una habilidad muy valiosa en roles técnicos y operativos.",
+        "en": "Your spatial orientation and rule-following is outstanding. You navigate complex systems with ease, follow multi-step instructions accurately, and stay on course even in changing environments. This is a highly valuable skill in technical and operational roles."
+      },
+      "med": {
+        "es": "Tu orientación espacial y capacidad de seguir procedimientos está en un nivel sólido. Puedes mantener el rumbo en la mayoría de las situaciones y seguir instrucciones estructuradas con eficacia. Con práctica, puedes agudizar aún más esta habilidad.",
+        "en": "Your spatial orientation and ability to follow procedures is at a solid level. You can stay on course in most situations and follow structured instructions effectively. With practice, you can sharpen this skill further."
+      },
+      "low": {
+        "es": "La orientación espacial y el seguimiento de procedimientos complejos es un área para trabajar. Practicar tareas que requieran seguir secuencias de pasos y mantener el enfoque en múltiples instrucciones simultáneas puede fortalecer este dominio.",
+        "en": "Spatial orientation and following complex procedures is an area to work on. Practicing tasks that require following step sequences and maintaining focus across multiple simultaneous instructions can strengthen this domain."
+      }
+    }
+  },
+  "competence": {
+    "1": {
+      "es": "Esta competencia está en una etapa inicial de desarrollo. Con exposición y práctica deliberada, tienes plena capacidad de fortalecerla. Es una oportunidad concreta de crecimiento que vale la pena priorizar.",
+      "en": "This competency is in an early stage of development. With exposure and deliberate practice, you have every capacity to strengthen it. It is a concrete growth opportunity worth prioritizing."
+    },
+    "2": {
+      "es": "Esta competencia está en desarrollo. La aplicas en situaciones conocidas, pero aún estás construyendo la confianza para hacerlo en contextos nuevos o más exigentes. La práctica constante consolidará este avance.",
+      "en": "This competency is developing. You apply it in familiar situations, but are still building the confidence to do so in new or more demanding contexts. Consistent practice will consolidate this progress."
+    },
+    "3": {
+      "es": "Esta competencia está bien establecida. La aplicas con eficacia en la mayoría de las situaciones y puedes adaptarla a contextos variados. Seguir buscando retos te permitirá llevarla al siguiente nivel.",
+      "en": "This competency is well established. You apply it effectively in most situations and can adapt it to varied contexts. Continuing to seek challenges will allow you to take it to the next level."
+    },
+    "4": {
+      "es": "Esta competencia es una de tus fortalezas destacadas. La aplicas con naturalidad, consistencia y eficacia incluso en entornos complejos o de alta presión. Es un diferenciador real en tu perfil.",
+      "en": "This competency is one of your standout strengths. You apply it naturally, consistently, and effectively even in complex or high-pressure environments. It is a genuine differentiator in your profile."
+    }
+  },
+  "methodology": {
+    "es": "Tus puntuaciones provienen directamente de tus evaluaciones, sin estimaciones. Las coincidencias de carrera combinan tu perfil de comportamiento (PCA) y tu capacidad cognitiva (MIL) con tus intereses y motivadores cuando están medidos, y después aplican la puerta competencial de cada familia; los instrumentos pendientes no aportan puntos ni se estiman. Las universidades se evalúan por ajuste académico, programa, preferencias, presupuesto y resultados. La interpretación personalizada se genera con inteligencia artificial sobre tus datos reales y se revisa contra reglas de calidad.",
+    "en": "Your scores come directly from your assessments, with no estimates. Career matches combine your behavioural profile (PCA) and cognitive ability (MIL) with your interests and motivators where these were measured, then apply each family's competency gate; pending instruments contribute no points and are never estimated. Universities are evaluated by academic fit, programme, preferences, budget and outcomes. Personalised interpretation is generated with artificial intelligence on your real data and reviewed against quality rules."
+  },
+  "glossary": {
+    "es": [
+      {
+        "term": "PCA",
+        "def": "Modelo de personalidad: Dominancia, Influencia, Estabilidad y Cumplimiento."
+      },
+      {
+        "term": "LIA",
+        "def": "Inteligencia Laboral — capacidad cognitiva medida en 5 dominios por precisión y velocidad."
+      },
+      {
+        "term": "360°",
+        "def": "Evaluación de competencias por personas a tu alrededor, contrastando autopercepción con la valoración externa."
+      },
+      {
+        "term": "Compuesto",
+        "def": "Puntuación global que resume varios indicadores en una sola cifra."
+      },
+      {
+        "term": "Match / Coincidencia",
+        "def": "Qué tan bien encaja una carrera o universidad con tu perfil (escala 0–100)."
+      },
+      {
+        "term": "Banda de confianza",
+        "def": "Nivel de certeza de una recomendación según la completitud de tus datos."
+      },
+      {
+        "term": "Alta (≥67)",
+        "def": "Puntuación que indica una fortaleza clara y consistente en ese rasgo o dominio."
+      },
+      {
+        "term": "Media (34–66)",
+        "def": "Puntuación que indica presencia moderada del rasgo; se activa según el contexto."
+      },
+      {
+        "term": "Baja (<34)",
+        "def": "Puntuación que señala un área con menor intensidad o con espacio de desarrollo."
+      },
+      {
+        "term": "Puerta competencial",
+        "def": "Filtro por familia de carreras: verifica que tus competencias críticas alcanzan el nivel mínimo. Puede estar satisfecha, condicionada o crítica."
+      },
+      {
+        "term": "Convergencia",
+        "def": "Grado en que tus instrumentos apuntan a la misma familia de carreras. Con instrumentos pendientes queda en parcial o divergente."
+      }
+    ],
+    "en": [
+      {
+        "term": "PCA",
+        "def": "Personality model: Dominance, Influence, Steadiness, and Conscientiousness."
+      },
+      {
+        "term": "LIA",
+        "def": "Labor Intelligence Assessment — cognitive ability measured across 5 domains by accuracy and speed."
+      },
+      {
+        "term": "360°",
+        "def": "Competency evaluation by people around you, contrasting self-perception with external feedback."
+      },
+      {
+        "term": "Composite",
+        "def": "Overall score that summarizes several indicators into a single figure."
+      },
+      {
+        "term": "Match",
+        "def": "How well a career or university fits your profile (scale 0–100)."
+      },
+      {
+        "term": "Confidence band",
+        "def": "Certainty level of a recommendation based on the completeness of your data."
+      },
+      {
+        "term": "High (≥67)",
+        "def": "Score indicating a clear, consistent strength in that trait or domain."
+      },
+      {
+        "term": "Medium (34–66)",
+        "def": "Score indicating moderate presence of the trait; activated depending on context."
+      },
+      {
+        "term": "Low (<34)",
+        "def": "Score indicating lower intensity in the trait or an area with development potential."
+      },
+      {
+        "term": "Competency gate",
+        "def": "A per-family filter: checks that your critical competencies reach the minimum level. It can be satisfied, conditioned or critical."
+      },
+      {
+        "term": "Convergence",
+        "def": "How far your instruments point to the same career family. With instruments pending it stays partial or divergent."
+      }
+    ]
+  }
+}
