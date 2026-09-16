@@ -28,6 +28,7 @@ import { useTelemetryAnalytics } from "@/hooks/useTelemetryAnalytics";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { AddUserDialog } from "./_components/AddUserDialog";
+import { InviteUserWizard } from "./_components/invite-wizard/InviteUserWizard";
 import { UserDetailDialog } from "./_components/UserDetailDialog";
 import { UsersTable } from "./_components/UsersTable";
 
@@ -156,6 +157,7 @@ export default function AdminUsersPage() {
             </Select>
           </div>
 
+          <InviteUserWizard onInvited={() => refetch()} />
           <AddUserDialog onUserCreated={() => refetch()} />
         </div>
       </div>

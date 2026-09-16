@@ -1522,7 +1522,70 @@
       "fillRequired": "Por favor completa todos los campos obligatorios",
       "success": "¡Usuario creado con éxito!",
       "error": "No se pudo crear el usuario",
-      "openMenu": "Abrir menú"
+      "openMenu": "Abrir menú",
+      "invite": {
+        "trigger": "Invitar",
+        "title": "Invitar a alguien a un colegio",
+        "description": "Crea una cuenta pendiente en el colegio que elijas y le envía un enlace para establecer su contraseña.",
+        "steps": {
+          "person": "Persona",
+          "school": "Colegio",
+          "review": "Revisar",
+          "result": "Listo"
+        },
+        "person": {
+          "nameLabel": "Nombre completo",
+          "namePlaceholder": "Alex Morgan",
+          "emailLabel": "Correo electrónico",
+          "emailPlaceholder": "nombre@ejemplo.com",
+          "emailInvalid": "Introduce un correo electrónico válido.",
+          "roleLabel": "Rol"
+        },
+        "roles": {
+          "student": {
+            "label": "Estudiante",
+            "description": "Realiza las evaluaciones. Ocupa un cupo del colegio."
+          },
+          "counselor": {
+            "label": "Consejero",
+            "description": "Acompaña a los estudiantes y consulta sus expedientes. No ocupa cupo."
+          },
+          "school_admin": {
+            "label": "Administrador del colegio",
+            "description": "Gestiona el colegio, su listado y su personal. No ocupa cupo."
+          }
+        },
+        "school": {
+          "searchPlaceholder": "Buscar colegios…",
+          "loading": "Cargando colegios…",
+          "loadFailed": "No se pudo cargar la lista de colegios.",
+          "noResults": "Ningún colegio coincide con esa búsqueda.",
+          "seats": "{{used}} / {{max}} cupos usados",
+          "full": "lleno",
+          "staffNoSeat": "Los roles de personal no ocupan cupos de estudiante."
+        },
+        "review": {
+          "person": "Persona",
+          "role": "Rol",
+          "school": "Colegio",
+          "emailNote": "Se enviará una invitación a {{email}}. El enlace caduca en 48 horas."
+        },
+        "result": {
+          "createdTitle": "Invitación enviada",
+          "resentTitle": "Invitación reenviada",
+          "failedTitle": "No se envió la invitación",
+          "summary": "{{name}} fue invitado a {{school}} como {{role}}.",
+          "emailSent": "La invitación se envió a {{email}} y caduca en 48 horas.",
+          "emailFailed": "La cuenta se creó, pero no se pudo entregar el correo a {{email}}. Reenvíala cuando el correo funcione.",
+          "alreadyActiveHint": "Esa dirección ya pertenece a alguien que terminó de configurar su cuenta. Una invitación no puede mover una cuenta existente: vincúlala al colegio desde la fila del usuario."
+        },
+        "back": "Atrás",
+        "next": "Siguiente",
+        "send": "Enviar invitación",
+        "sending": "Enviando…",
+        "inviteAnother": "Invitar a otra persona",
+        "done": "Listo"
+      }
     },
     "careers": {
       "title": "Carreras",
@@ -1874,6 +1937,9 @@
       "settingsTitle": "Configuración de la escuela",
       "settingsDesc": "Configura las preferencias de notificación de tu escuela.",
       "alreadyCompleted": "Ya completaste el registro."
+    },
+    "invite": {
+      "context": "Te han invitado a {{school}} como {{role}}."
     }
   },
   "compare": {

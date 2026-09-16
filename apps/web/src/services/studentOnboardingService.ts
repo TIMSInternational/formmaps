@@ -9,6 +9,14 @@ export interface VerifyTokenResponse {
     email: string;
     avatar?: string;
   };
+  /**
+   * The token is role-agnostic: the same onboarding token is issued to students
+   * by the school-admin invite and to counselors/school admins by the
+   * platform-admin invite. These two let one page name what the person was
+   * actually invited to instead of assuming "student".
+   */
+  roleName?: string;
+  schoolName?: string | null;
   message?: string;
 }
 
@@ -44,6 +52,8 @@ export async function verifyStudentToken(token: string): Promise<VerifyTokenResp
         name: result.data.name,
         email: result.data.email
       } : undefined,
+      roleName: result.data?.roleName,
+      schoolName: result.data?.schoolName ?? null,
       message: result.message
     };
 
