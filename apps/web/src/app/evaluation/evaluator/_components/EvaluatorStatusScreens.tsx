@@ -2,7 +2,8 @@
 
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
-import { CheckCircle2, LinkIcon, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { Illustration } from "@/components/illustration/Illustration";
 
 export function LoadingScreen() {
   const { t } = useTranslation();
@@ -25,9 +26,7 @@ export function ErrorScreen({ error }: ErrorScreenProps) {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="max-w-sm w-full text-center">
-        <div className="w-14 h-14 rounded-2xl bg-secondary flex items-center justify-center mx-auto mb-4">
-          <LinkIcon className="w-7 h-7 text-muted-foreground" />
-        </div>
+        <Illustration name="connection-lost" size={148} className="mx-auto mb-3" />
         <h2 className="text-lg font-bold text-foreground mb-2">{t("evaluation.evaluator.linkNotAvailable")}</h2>
         <p className="text-sm text-muted-foreground mb-4">{error}</p>
         <p className="text-xs text-muted-foreground">{t("evaluation.evaluator.contactAdmin")}</p>
@@ -45,9 +44,7 @@ export function SuccessScreen({ returnHref }: { returnHref?: string }) {
         animate={{ opacity: 1, scale: 1 }}
         className="max-w-sm w-full text-center"
       >
-        <div className="w-16 h-16 rounded-2xl bg-emerald-50 border border-emerald-200 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="w-8 h-8 text-emerald-600" />
-        </div>
+        <Illustration name="completed" size={168} className="mx-auto mb-3" priority />
         <h2 className="text-xl font-bold text-foreground mb-2">{t("evaluation.evaluator.thankYou")}</h2>
         <p className="text-sm text-muted-foreground">
           {t("evaluation.evaluator.successBody")}
@@ -74,9 +71,7 @@ export function AlreadySubmittedScreen() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <div className="max-w-sm w-full text-center">
-        <div className="w-14 h-14 rounded-2xl bg-blue-50 border border-blue-200 flex items-center justify-center mx-auto mb-4">
-          <CheckCircle2 className="w-7 h-7 text-blue-600" />
-        </div>
+        <Illustration name="already-done" size={148} className="mx-auto mb-3" />
         <h2 className="text-lg font-bold text-foreground mb-2">{t("evaluation.evaluator.alreadySubmitted")}</h2>
         <p className="text-sm text-muted-foreground">
           {t("evaluation.evaluator.alreadyBody")}
