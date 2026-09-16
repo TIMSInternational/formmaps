@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { captureError } from "@/lib/sentry";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { roleHomeMap, normalizeRole } from "@/lib/roleUtils";
+import { Illustration } from "@/components/illustration/Illustration";
 
 // This is the route error boundary — it must be self-contained and never throw.
 // It reads the locale + role defensively (no hooks/providers that a broken
@@ -61,7 +62,8 @@ export default function GlobalError({
   return (
     <main className="flex min-h-screen flex-col items-center justify-center px-6">
       <div className="text-center max-w-md">
-        <h1 className="text-7xl font-bold text-red-500 mb-4">500</h1>
+        <Illustration name="broke" size={168} className="mx-auto mb-4" priority />
+        <p className="text-xs font-semibold tracking-[0.2em] text-[#2E9098] mb-2">500</p>
         <h2 className="text-2xl font-semibold mb-2">{copy.title}</h2>
         <p className="text-muted-foreground mb-8">{copy.desc}</p>
         <div className="flex gap-3 justify-center">

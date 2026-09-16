@@ -32,7 +32,10 @@ export type IllustrationName =
   | "no-data"
   | "locked"
   | "connection-lost"
-  | "already-done";
+  | "already-done"
+  | "not-found"
+  | "broke"
+  | "welcome";
 
 interface IllustrationProps {
   name: IllustrationName;

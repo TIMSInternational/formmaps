@@ -1,6 +1,6 @@
 # Illustration set
 
-Eight flat geometric marks in the brand palette, used by
+Eleven flat geometric marks in the brand palette, used by
 `src/components/illustration/Illustration.tsx`.
 
 Served as a `.webp` pair per mark — `@320` (1x–2x) and `@640` (3x). 416 KB for
@@ -16,7 +16,10 @@ in `~/Downloads/formmaps-illustrations/masters/`.
 | `connection-lost` | `EmptyState` type `loading_error`; evaluator `ErrorScreen` |
 | `completed` | evaluator `SuccessScreen` |
 | `already-done` | evaluator `AlreadySubmittedScreen` |
-| `journey` | onboarding (not yet wired) |
+| `journey` | spare — the alternate onboarding mark |
+| `welcome` | student invite hero (`onboarding/student/[token]`) |
+| `not-found` | `app/not-found.tsx` (404) |
+| `broke` | `app/error.tsx` (500) |
 
 ## Two rules any new mark has to follow
 
@@ -32,6 +35,12 @@ on `#0A0A0A`**. That rules out two things that are easy to produce by accident:
 
 Verify a new mark before adding it: corner pixel alpha must be 0, and the share
 of ink darker than roughly `rgb(70, 80, 110)` must be 0%.
+
+**A dark-ink check is not sufficient on its own.** The cutout also leaves a veil
+of *pale*, partly-transparent pixels that passes that test and still shows as a
+grey blob on a dark background. Strip anything with alpha < 150, or further than
+~90 in RGB distance from the three inks while not fully opaque — two of the three
+most recent marks needed it.
 
 ## How these were made
 
