@@ -699,7 +699,70 @@
         "editDetails": "Edit Details",
         "deactivateUser": "Deactivate User"
       },
-      "openMenu": "Open menu"
+      "openMenu": "Open menu",
+      "invite": {
+        "trigger": "Invite",
+        "title": "Invite someone to a school",
+        "description": "Creates a pending account in the school you choose and emails them a link to set their password.",
+        "steps": {
+          "person": "Person",
+          "school": "School",
+          "review": "Review",
+          "result": "Done"
+        },
+        "person": {
+          "nameLabel": "Full name",
+          "namePlaceholder": "Alex Morgan",
+          "emailLabel": "Email address",
+          "emailPlaceholder": "name@example.com",
+          "emailInvalid": "Enter a valid email address.",
+          "roleLabel": "Role"
+        },
+        "roles": {
+          "student": {
+            "label": "Student",
+            "description": "Takes the assessments. Uses one of the school's seats."
+          },
+          "counselor": {
+            "label": "Counselor",
+            "description": "Supports students and reads their records. Uses no seat."
+          },
+          "school_admin": {
+            "label": "School admin",
+            "description": "Manages the school, its roster and its staff. Uses no seat."
+          }
+        },
+        "school": {
+          "searchPlaceholder": "Search schools…",
+          "loading": "Loading schools…",
+          "loadFailed": "Could not load the list of schools.",
+          "noResults": "No schools match that search.",
+          "seats": "{{used}} / {{max}} seats used",
+          "full": "full",
+          "staffNoSeat": "Staff roles do not use a school's student seats."
+        },
+        "review": {
+          "person": "Person",
+          "role": "Role",
+          "school": "School",
+          "emailNote": "An invitation will be emailed to {{email}}. The link expires in 48 hours."
+        },
+        "result": {
+          "createdTitle": "Invitation sent",
+          "resentTitle": "Invitation re-sent",
+          "failedTitle": "Invitation not sent",
+          "summary": "{{name}} was invited to {{school}} as {{role}}.",
+          "emailSent": "The invitation went to {{email}} and expires in 48 hours.",
+          "emailFailed": "The account was created, but the email to {{email}} could not be delivered. Resend it once mail is working.",
+          "alreadyActiveHint": "That address already belongs to someone who finished setting up their account. An invitation cannot move an existing account — link it to the school from the user's row instead."
+        },
+        "back": "Back",
+        "next": "Next",
+        "send": "Send invitation",
+        "sending": "Sending…",
+        "inviteAnother": "Invite another",
+        "done": "Done"
+      }
     },
     "schools": {
       "title": "Schools Management",
@@ -1874,6 +1937,9 @@
       "settingsTitle": "School Settings",
       "settingsDesc": "Configure notification preferences for your school.",
       "alreadyCompleted": "You have already completed onboarding."
+    },
+    "invite": {
+      "context": "You've been invited to {{school}} as {{role}}."
     }
   },
   "compare": {
