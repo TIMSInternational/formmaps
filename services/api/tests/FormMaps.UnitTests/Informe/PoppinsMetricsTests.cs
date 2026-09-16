@@ -1,5 +1,4 @@
 using FormMaps.Application.Informe;
-using PdfSharp.Fonts;
 using PdfSharp.Drawing;
 
 namespace FormMaps.UnitTests.Informe;
@@ -20,22 +19,10 @@ namespace FormMaps.UnitTests.Informe;
 /// </summary>
 public class PoppinsMetricsTests
 {
-    private sealed class EmbeddedPoppins : IFontResolver
-    {
-        public byte[]? GetFont(string faceName) => PoppinsFonts.Load(faceName);
-
-        public FontResolverInfo? ResolveTypeface(string familyName, bool isBold, bool isItalic)
-        {
-            var face = familyName switch
-            {
-                "Poppins-Medium" or "Poppins-SemiBold" or "Poppins-Bold" or "Poppins-Regular" => familyName,
-                _ => isBold ? "Poppins-Bold" : "Poppins-Regular",
-            };
-            return new FontResolverInfo(face);
-        }
-    }
-
-    static PoppinsMetricsTests() => GlobalFontSettings.FontResolver = new EmbeddedPoppins();
+    // PDFsharp refuses to swap a font resolver once glyphs have been made, and this assembly now has a
+    // real one in the application (PoppinsFontResolver). Registering that same one here keeps the whole
+    // process on a single resolver whatever order xunit runs these classes in.
+    static PoppinsMetricsTests() => PoppinsFontResolver.Register();
 
     /// <summary>The informe type scale, as sizes in points.</summary>
     public static TheoryData<double> Sizes => [6.8, 7.5, 8.5, 9, 9.5, 10.5, 11, 13, 17, 28];

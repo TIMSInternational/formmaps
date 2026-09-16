@@ -1,7 +1,7 @@
 # Career & University Informe — .NET port plan
 
 **Date:** 2026-09-16
-**Status:** Slice 0 landed (pure layer + tests); renderer choice pending Federico
+**Status:** Slices 0 and 1 landed (pure layer, PDFsharp, layout core, containment, cover + front page)
 **Branch:** `feat/informe-dotnet-port`
 **Design reference:** `docs/superpowers/specs/2026-09-16-informe-design-spec-v2.md` (renderer-agnostic; §7 is the page architecture and colour rule)
 **Legacy source:** `tafurfede/formmaps-platform` `api/src/services/informe/` (PR #352, in production from 2026-09-16)
@@ -80,10 +80,41 @@ FormMaps.Application, SIL OFL, because the container has no fonts installed) and
 `PoppinsMetricsTests` (faces load; the ratio is stable across the scale; the number is
 printed for the port to calibrate on).
 
-Still to build in this slice: `LayoutMath` (grid, spacing, the measured line height), the
-containment recorder + its three self-checks (the detector must fail on a deliberately
-overflowing card and on a deliberate collision, and must NOT fire on a chip legitimately
-nested in a panel), and the cover + front page rendered from a fixture.
+**Landed (slice 1 proper):**
+
+- `LayoutMath` — measure, wrap, card height, shrink-to-fit, clamp, the page-bottom test. It carries
+  no PDF dependency: it measures through an `IGlyphWidths` the renderer implements, so the layout is
+  unit-testable without a document. The measure/draw identity that pdfkit got for free — both sides
+  handing the wrapping to the library — is now bought by both sides calling the same `WrapLines`.
+- `InformeCanvas` — the PDFsharp surface, and the containment recorder in the same object. pdfkit's
+  recorder was a patch on `PDFDocument.prototype` and therefore unbypassable; `XGraphics` is sealed,
+  so the property is bought the other way: there is no second way to draw. Recording is always on.
+- `Containment` — the three checks, in the application rather than the test project, because they are
+  the guarantee the document ships with and every later slice asserts against them.
+- `InformeCover` and `InformeFrontPage`, rendered from fictional fixtures in es and en, complete and
+  sparse, with zero violations.
+
+**Two things were measured rather than assumed, and both changed the code:**
+
+1. **PDFsharp writes dash arrays in multiples of the pen width.** A `[3,3]` pattern under the 1.2pt
+   pending-ring pen would have come out at 3.6pt. The canvas divides by the width, and a test reads
+   the operators back out of an uncompressed content stream (`[3 3]0 d`, `[2 2]0 d`). The dashed edge
+   is the entire empty-state signal; getting it wrong is invisible in review and wrong in every empty
+   card of the document.
+2. **pdfkit measures a line WITH the space that would follow it.** Widths agree with pdfkit to a
+   thousandth of a point (verified by running the legacy renderer's own `widthOfString` against the
+   same strings), but the first port of the wrapper re-wrapped the MIL instrument card:
+   "capacidad numérica, memoria" is 130.268pt, fits the 132.43pt column, and is still the wrong break
+   because pdfkit counts its trailing space (132.485pt). Fixed, and the shipped line breaks of the
+   two densest descriptions are now pinned as a test.
+
+**Known gap:** pdfkit breaks at every UAX #14 opportunity — after a hyphen or an em dash as well as a
+space. `WrapLines` breaks on spaces only. Nothing in the shipped document depends on the difference,
+but it is the first thing to suspect if a slice-2 page count fails to match.
+
+**Not in slice 1:** the raster assets. `IInformeAssets` is the seam (logo, part marks); the cover and
+the dividers draw nothing when it is absent, exactly as the legacy `try/catch` skipped a missing
+asset. `assets.ts` + `marks.ts` (487 lines of vector marks) come with slice 2.
 
 ### Slice 2 — sections
 Port order follows the legacy render order: resumen (banner, paragraph-breaking panel) · dividers
