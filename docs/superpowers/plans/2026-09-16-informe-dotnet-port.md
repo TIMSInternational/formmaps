@@ -47,25 +47,43 @@ was finished in TypeScript first so the port inherits a settled document, not a 
   parity, band thresholds, interpret lookups.
 - No PDF dependency yet.
 
-### Slice 1 — renderer choice + layout core (needs a decision)
-Two candidates. Both run on App Runner Linux x64.
+### Slice 1 — renderer: **PDFsharp** (decided 2026-09-16), then the layout core
 
-| | QuestPDF | PDFsharp 6 |
-|---|---|---|
-| model | declarative fluent layout; containers, auto-pagination, `Layers`, `Background` — banner and bleed bands are one call | imperative, pdfkit-like: `XGraphics.DrawString` at (x, y), `MeasureString` |
-| overflow | throws `DocumentLayoutException` when content cannot fit — the no-overflow invariant becomes a construction property | nothing; the invariant must be re-asserted by a recorder (as today) |
-| containment test | wrap the fluent API in a recorder that logs container rectangles + text runs from the rendered output (QuestPDF exposes `Element` trees; or assert on the PDF's content stream via PdfPig) | the legacy recorder ports 1:1: wrap `XGraphics` and log every `DrawRectangle`/`DrawString` |
-| port cost | rewrite the sections in the fluent model (≈ 2–3 weeks); measure-and-fit disappears | transliterate the sections (≈ 1–2 weeks); every `measure`/`textBlock` call maps directly |
-| fonts | `FontManager.RegisterFont` (Poppins TTF, OFL) | `XFont` via a font resolver (Poppins TTF) |
-| licence | **Community MIT-like licence only for companies under USD 1M annual gross revenue; otherwise Professional/Enterprise (paid)** — must be confirmed for TIMS International before adding the package | MIT |
-| natives | bundles SkiaSharp natives (Linux x64 fine; needs `libfontconfig1` in the image) | pure managed |
+**Decision: PDFsharp 6.2.4, MIT.** QuestPDF was the other candidate and is the nicer
+model on paper — a declarative layout that makes overflow impossible by construction,
+with the banner and bleed pages as one call each. Three things decided against it:
 
-Recommendation: **QuestPDF if the licence condition holds** — the page shapes of §7 are what its
-model does natively and overflow becomes impossible by construction; otherwise **PDFsharp** and a
-1:1 transliteration. Either way Slice 1 delivers: font registration, `LayoutMath` (grid, spacing,
-line height RE-MEASURED for the chosen engine), the containment recorder + its three self-checks
-(the detector must fail on a deliberately overflowing card and a deliberate collision, and not fire
-on a chip nested in a panel), and the cover + front page rendered from a fixture.
+1. **Licence.** QuestPDF's Community licence covers companies under USD 1M annual gross
+   revenue only. TIMS International's revenue is not something this repository can
+   assert, and shipping a paid-tier dependency by accident is not a risk worth taking
+   for a rendering library. PDFsharp is MIT with no condition.
+2. **The overflow guarantee is already owned.** QuestPDF's headline advantage largely
+   duplicates an asset that exists and has earned its keep four times: the containment
+   recorder. Porting it to PDFsharp is a direct translation (wrap `XGraphics`, log every
+   `DrawRectangle` / `DrawString`) of a detector whose design is already proven.
+3. **The 4,000 lines are imperative measure-and-fit.** PDFsharp is pdfkit's shape:
+   `MeasureString` / `DrawString` at (x, y). Every `measure()` and `textBlock()` call maps
+   one-to-one. QuestPDF would be a rewrite that discards the layout layer rather than a
+   port that preserves it.
+
+**And the metric that mattered most transfers exactly.** Every card height in the
+document derives from a line height MEASURED in pdfkit as `1.5 × size + lineGap` — a
+fact about that library's treatment of Poppins, not a general truth, which the layout
+invariants say must be re-measured first thing in any other renderer. It was, in
+`PoppinsMetricsTests`: **PDFsharp reports 1.5000 for Poppins, constant across the whole
+type scale.** The calibration carries over unchanged, so no geometry in the spec needs
+restating. That is the strongest evidence available that this port is a translation and
+not a redesign.
+
+Landed with the decision: `PoppinsFonts` (the four faces embedded in
+FormMaps.Application, SIL OFL, because the container has no fonts installed) and
+`PoppinsMetricsTests` (faces load; the ratio is stable across the scale; the number is
+printed for the port to calibrate on).
+
+Still to build in this slice: `LayoutMath` (grid, spacing, the measured line height), the
+containment recorder + its three self-checks (the detector must fail on a deliberately
+overflowing card and on a deliberate collision, and must NOT fire on a chip legitimately
+nested in a panel), and the cover + front page rendered from a fixture.
 
 ### Slice 2 — sections
 Port order follows the legacy render order: resumen (banner, paragraph-breaking panel) · dividers

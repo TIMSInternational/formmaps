@@ -50,6 +50,13 @@
          services/api because the Docker build context is this directory (see the CareerFit note below). -->
     <EmbeddedResource Include="Informe\Data\informe-labels.es-en.json" />
     <EmbeddedResource Include="Informe\Data\interpret.es-en.json" />
+    <!-- Poppins (SIL Open Font License 1.1, redistributable) — the informe's only
+         typeface. Embedded so the renderer needs no font installed on the host;
+         App Runner containers have none. -->
+    <EmbeddedResource Include="Informe\Fonts\Poppins-Regular.ttf" />
+    <EmbeddedResource Include="Informe\Fonts\Poppins-Medium.ttf" />
+    <EmbeddedResource Include="Informe\Fonts\Poppins-SemiBold.ttf" />
+    <EmbeddedResource Include="Informe\Fonts\Poppins-Bold.ttf" />
   </ItemGroup>
 
   <ItemGroup>
