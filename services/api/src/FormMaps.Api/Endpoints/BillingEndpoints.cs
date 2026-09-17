@@ -57,6 +57,28 @@ public static class BillingEndpoints
         // /api/stripe/create-checkout-session, none of which have a .NET twin. Only the two paths whose
         // behaviour is ported and verified are listed. Note the portal's legacy spelling is
         // "billing-portal", not "portal".
+        //
+        // formmaps#127 — /api/stripe/create-checkout-session STAYS ON NODE. This is a decision, not a
+        // gap waiting to be filled, and it is recorded here because this is where someone would come to
+        // "finish" it.
+        //
+        // Legacy create-checkout-session is multi-mode: a subscription when a planId resolves, a
+        // coach-BOOKING charge when metadata.bookingId is present (the booking row, never the client,
+        // is the source of truth for the amount), and an amount-only one-time charge otherwise. The
+        // .NET handler below implements the subscription mode only. Aliasing the legacy path to it —
+        // the way cancel-subscription and billing-portal were aliased — would 400 every booking and
+        // one-time checkout the moment FORMMAPS_ROUTE_BILLING_TO_DOTNET flips, because those callers
+        // send no planId. That is a paying path.
+        //
+        // Porting the two missing modes would mean a booking reader, a payments writer, Stripe
+        // price_data line items and an open-redirect guard, all on the checkout path. Measured against
+        // what it would protect: 30 payments, 9 distinct payers, $179.88 lifetime revenue. The
+        // direct-to-consumer pricing model those modes serve was never built out (formmaps-platform#331).
+        // So the cost is a payment-code rewrite and the benefit is retiring one Node route.
+        //
+        // Consequence for Domain 11 (#66): decommissioning Node cannot mean "delete everything" while
+        // this route lives there. Revisit if DTC revenue becomes material, or fold it into whatever
+        // replaces the checkout flow rather than porting it as-is.
         var legacy = app.MapGroup("/api/stripe").WithTags("Billing");
         legacy.MapPost("/cancel-subscription", cancelSubscription);
         legacy.MapPost("/billing-portal", billingPortal);
@@ -75,6 +97,11 @@ public static class BillingEndpoints
         return app;
     }
 
+    /// <summary>
+    /// Subscription mode only, by decision (formmaps#127). The legacy endpoint also serves
+    /// coach-booking and amount-only one-time charges; those stay on Node — see the note above the
+    /// legacy alias group. A caller that sends no planId is rejected rather than silently charged.
+    /// </summary>
     public sealed record CreateCheckoutSessionRequest(string? PlanId);
 
     private static async Task<IResult> CreateCheckoutSessionAsync(
