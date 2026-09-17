@@ -29,3 +29,5 @@ graphify-out/
 # Python bytecode (tools/careerfit harness)
 __pycache__/
 *.pyc
+.vercel
+.env*.local
