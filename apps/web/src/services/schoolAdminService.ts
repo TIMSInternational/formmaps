@@ -88,18 +88,71 @@ export async function getStudent(studentId: string): Promise<Student> {
   return toCamel(res.data || res);
 }
 
-export async function inviteStudent(
-  data: StudentInvitePayload
-): Promise<{ success: boolean; message: string; student?: any }> {
-  const payload = { students: [data] };
+/** Per-row outcome codes returned by POST /school-admin/students/invite. */
+export type InviteRowCode =
+  | "INVITED"
+  | "RESENT"
+  | "ALREADY_ACTIVE"
+  | "DEACTIVATED"
+  | "OTHER_SCHOOL"
+  | "INVALID_EMAIL"
+  | "ERROR";
+
+export interface InviteRowResult {
+  /** True only when an invitation actually left the building. */
+  sent: boolean;
+  code: InviteRowCode;
+  email: string;
+  message: string;
+  userId?: string;
+  /**
+   * ALREADY_ACTIVE only: the account exists but belongs to no school, so it can
+   * be adopted with linkExistingStudent. False means it is another school's and
+   * must not be touched.
+   */
+  schoolLess?: boolean;
+}
+
+/**
+ * Invites exactly one student and reports what happened to THAT row.
+ *
+ * The endpoint is a batch endpoint: it answers 200 with a per-row `results`
+ * array even when every row failed. Reading only the envelope — which is what
+ * this did — made an already-registered student, a cross-tenant refusal and a
+ * bounced email all indistinguishable from a delivered invitation.
+ */
+export async function inviteStudent(data: StudentInvitePayload): Promise<InviteRowResult> {
   const result = await apiRequest(`/api/v1/school-admin/students/invite${buildQueryString()}`, {
     method: "POST",
-    data: payload,
+    data: { students: [data] },
   });
   if (!result.success) {
     throw new Error(result.message || result.error?.message || "Failed to invite student");
   }
-  return result;
+  const row = (result.results || [])[0];
+  if (!row) throw new Error("The server returned no result for this invitation.");
+  return {
+    sent: row.success === true,
+    code: (row.code || "ERROR") as InviteRowCode,
+    email: row.email ?? data.email,
+    message: row.error || row.message || "",
+    userId: row.userId,
+    schoolLess: row.schoolLess,
+  };
+}
+
+/**
+ * Adopt an already-registered, school-less account into this school. The
+ * counterpart to an ALREADY_ACTIVE invite row: an account that already has a
+ * password cannot be invited, only linked.
+ */
+export async function linkExistingStudent(email: string): Promise<{ name: string; schoolName: string }> {
+  const result = await apiRequest(`/api/v1/school-admin/students/link${buildQueryString()}`, {
+    method: "POST",
+    data: { email },
+    showErrorToast: false,
+  });
+  return result.data ?? result;
 }
 
 export async function bulkInviteStudents(

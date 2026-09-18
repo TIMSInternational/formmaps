@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useInviteStudent } from "@/hooks/useSchoolAdmin";
+import { linkExistingStudent } from "@/services/schoolAdminService";
 import { useInviteStaff } from "@/hooks/useSchoolProfileQueries";
 
 type InviteRole = "student" | "counselor" | "teacher" | "coach" | "staff";
@@ -36,6 +37,7 @@ const roleConfig: Record<InviteRole, { label: string; color: string; icon: any; 
 export function InvitePanel() {
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<InviteRole>("student");
+  const [pendingLinks, setPendingLinks] = useState<string[]>([]);
   const [rows, setRows] = useState<InviteRow[]>([{ name: "", email: "", classLevel: "Freshman" }]);
 
   const inviteStudent = useInviteStudent();
@@ -77,27 +79,54 @@ export function InvitePanel() {
 
     let successCount = 0;
     let failCount = 0;
+    // Accounts that already exist with no school. They cannot be invited — only
+    // adopted — so they are collected and offered as an explicit action rather
+    // than being silently counted as sent, which is what used to happen.
+    const linkable: string[] = [];
+    const problems: string[] = [];
 
     for (const row of validRows) {
       try {
         if (selectedRole === "student") {
-          await inviteStudent.mutateAsync({ email: row.email, name: row.name });
+          // A batch endpoint answers 200 even when the row failed, so the ROW is
+          // what decides, not the HTTP status.
+          const res = await inviteStudent.mutateAsync({ email: row.email, name: row.name });
+          if (res.sent) {
+            successCount++;
+          } else {
+            failCount++;
+            if (res.code === "ALREADY_ACTIVE" && res.schoolLess) linkable.push(res.email);
+            else problems.push(`${row.email}: ${res.message || res.code}`);
+          }
         } else {
           await inviteStaff.mutateAsync({ email: row.email, name: row.name, roleName: selectedRole });
+          successCount++;
         }
-        successCount++;
-      } catch (err: any) {
+      } catch (err: unknown) {
         failCount++;
-        console.error(`Failed to invite ${row.email}:`, err);
+        problems.push(`${row.email}: ${err instanceof Error ? err.message : "failed"}`);
       }
     }
 
     if (successCount > 0) {
-      toast.success(`${successCount} invitation${successCount > 1 ? "s" : ""} sent successfully.`);
+      toast.success(`${successCount} invitation${successCount > 1 ? "s" : ""} sent.`);
       setRows([{ name: "", email: "", classLevel: "Freshman" }]);
     }
-    if (failCount > 0) {
-      toast.error(`${failCount} invitation${failCount > 1 ? "s" : ""} failed. Check for duplicates.`);
+    for (const p of problems.slice(0, 4)) toast.error(p);
+    if (linkable.length > 0) setPendingLinks(linkable);
+    if (failCount > 0 && problems.length === 0 && linkable.length === 0) {
+      toast.error(`${failCount} invitation${failCount > 1 ? "s" : ""} could not be sent.`);
+    }
+  };
+
+  const handleLink = async (email: string) => {
+    try {
+      const res = await linkExistingStudent(email);
+      toast.success(`${res.name || email} was added to ${res.schoolName}.`);
+      setPendingLinks((prev) => prev.filter((e) => e !== email));
+    } catch (err: unknown) {
+      const body = (err as { data?: { message?: string } })?.data;
+      toast.error(body?.message || (err instanceof Error ? err.message : "Could not link this account."));
     }
   };
 
@@ -112,6 +141,34 @@ export function InvitePanel() {
           Invite students, counselors, coaches, or staff members to your school.
         </p>
       </div>
+
+      {/* Accounts that already exist with no school. An invitation cannot move
+          them — it does nothing at all — so the only real action is to adopt
+          them, offered explicitly here instead of failing silently. */}
+      {pendingLinks.length > 0 && (
+        <div style={{ border: "1px solid var(--admin-border-default)", borderRadius: 8, padding: 14, background: "var(--admin-bg-card)" }}>
+          <p style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+            {pendingLinks.length === 1 ? "This person already has a FormMaps account" : `${pendingLinks.length} of these already have FormMaps accounts`}
+          </p>
+          <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
+            They signed up on their own, so an invitation does nothing. Add them to your school instead — they keep the password they already chose.
+          </p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
+            {pendingLinks.map((email) => (
+              <div key={email} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12 }}>
+                <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>{email}</span>
+                <button
+                  type="button"
+                  onClick={() => handleLink(email)}
+                  style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", cursor: "pointer" }}
+                >
+                  Add to my school
+                </button>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Role Selector */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
