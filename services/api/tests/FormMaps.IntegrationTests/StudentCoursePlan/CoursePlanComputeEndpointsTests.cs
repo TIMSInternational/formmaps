@@ -16,7 +16,8 @@ namespace FormMaps.IntegrationTests.StudentCoursePlan;
 
 /// <summary>
 /// Guard + result mapping for the course-plan compute reads (FM-DOTNET-086; reader faked). Pins: anonymous → 401;
-/// recommendations locked payload { data:[], locked:true, completion:{7 fields incl readyForInsights} } vs the scored
+/// recommendations locked payload { data:[], locked:true, completion:{8 fields incl personalityCompleted and
+/// readyForInsights} } vs the scored
 /// list (full course row + matchScore); eligibility { data:[] } on no-school vs the reduced entries.
 /// </summary>
 public class CoursePlanComputeEndpointsTests
@@ -58,6 +59,9 @@ public class CoursePlanComputeEndpointsTests
         Assert.Equal(1, completion.GetProperty("evalCompleted").GetInt32());
         Assert.Equal(3, completion.GetProperty("evalTotal").GetInt32());
         Assert.False(completion.GetProperty("pcaCompleted").GetBoolean());
+        // The verdict has always carried this; the payload did not, so the one assessment a
+        // student could still owe was the one the page could not name.
+        Assert.False(completion.GetProperty("personalityCompleted").GetBoolean());
         Assert.False(completion.GetProperty("allDone").GetBoolean());
         Assert.False(completion.GetProperty("readyForInsights").GetBoolean());
     }

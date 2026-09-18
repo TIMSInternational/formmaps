@@ -37,7 +37,7 @@ export interface CounselorStudent {
   gradeLevel: number;
   status: string;
   assessmentStatus: Record<AssessmentType, "completed" | "in_progress" | "not_started">;
-  creditProgress: { earned: number; required: number; percentage: number };
+  creditProgress: { earned: number; required: number | null; percentage: number | null };
   gpa: number;
   alertCount: number;
   careerPath: string;

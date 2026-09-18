@@ -2689,7 +2689,8 @@
     "desc": "Download the complete career guidance report (PDF)",
     "download": "Download report",
     "downloaded": "Report downloaded",
-    "downloadFailed": "Failed to download the report"
+    "downloadFailed": "Failed to download the report",
+    "notReady": "Complete at least one assessment and your report will be ready to download."
   },
   "resume": {
     "saveFailed": "Couldn't save your changes. Check your connection and try again."

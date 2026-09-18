@@ -125,7 +125,7 @@ export default function ChildProgressPage() {
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("progress.credits")}</span>
           </div>
           <p className="text-2xl font-bold text-foreground tracking-tight">
-            {progress.creditsEarned}/{progress.creditsRequired}
+            {progress.creditsEarned}/{progress.creditsRequired ?? "\u2014"}
           </p>
         </div>
 
@@ -172,7 +172,7 @@ export default function ChildProgressPage() {
           <Progress value={creditPercent} className="h-3" />
           <p className="text-sm text-muted-foreground">
             {progress.creditsEarned}{" "}
-            {t("progress.of")} {progress.creditsRequired}{" "}
+            {t("progress.of")} {progress.creditsRequired ?? "\u2014"}{" "}
             {t("progress.creditsRequired")}
           </p>
         </div>

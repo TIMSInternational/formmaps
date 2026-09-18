@@ -17,7 +17,7 @@ const ASSESSMENT_COLORS: Record<string, string> = {
 interface StudentStatCardsProps {
   student: {
     gpa?: number;
-    creditProgress?: { earned: number; required: number; percentage: number };
+    creditProgress?: { earned: number; required: number | null; percentage: number | null };
     lastActive?: string;
     assessmentStatus?: Record<string, string>;
   };
@@ -46,7 +46,10 @@ export function StudentStatCards({ student }: StudentStatCardsProps) {
           <div className="text-2xl font-bold">
             {student.creditProgress?.earned ?? "\u2014"}/{student.creditProgress?.required ?? "\u2014"}
           </div>
-          {student.creditProgress && (
+          {/* A null percentage means the school has not configured a graduation rule
+              set, so there is no requirement to be a fraction of. An empty bar would
+              read as "0% done" rather than "not set up yet". */}
+          {student.creditProgress?.percentage != null && (
             <Progress
               value={student.creditProgress.percentage}
               className="h-1.5 mt-2"

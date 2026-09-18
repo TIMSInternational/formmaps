@@ -112,11 +112,13 @@ public sealed class CoursePlanComputeReader(IFormMapsDatabaseSessionFactory data
         }
 
         var liaExamTypes = parityDone ? ParityLiaSubtests : completedExamTypes.ToArray();
+        // The verdict is still computed and still returned — the page shows what is
+        // outstanding — but it no longer decides whether recommendations are produced.
+        // Scoring here is LOCAL keyword matching over the course catalog, and its two
+        // inputs are the caller's own preferredFields and their engine-matched career
+        // titles. A student mid-assessment already has the first of those, so gating on
+        // allDone withheld a list that could be scored from what they had.
         var verdict = StudentCompletion.Compute(liaExamTypes, evalGroupsCompleted, pcaEvalsCompleted, personalityCompleted, legacyUnlockGrandfathered);
-        if (!verdict.AllDone)
-        {
-            return new RecommendationsData(verdict, Done: false, [], EmptySet, [], []);
-        }
 
         // Enrolled course ids (to exclude).
         var enrolled = new HashSet<string>(StringComparer.Ordinal);
@@ -175,6 +177,22 @@ public sealed class CoursePlanComputeReader(IFormMapsDatabaseSessionFactory data
         var engineCareersLower = EngineCareerTitleExtractor.Extract(careerMatches)
             .Select(t => t.ToLowerInvariant())
             .ToList();
+
+        // Strictly a widening: AllDone still serves, exactly as before, so no student who
+        // is served today can be refused by this change — including a finished student
+        // who never stated a preferred field and has no career profile yet.
+        //
+        // What it adds is the student mid-assessment WITH something to score from. What it
+        // still refuses is a list with nothing behind it: with neither a preferred field nor
+        // an engine career the scorer gives every course the identical base, so the
+        // "recommendations" are just the catalog in id order — advice-shaped noise. That is
+        // the course-plan equivalent of the informe's empty-document refusal, and it keeps
+        // the locked payload the page already knows how to render.
+        var hasScoringSignal = preferredFieldsLower.Count > 0 || engineCareersLower.Count > 0;
+        if (!verdict.AllDone && !hasScoringSignal)
+        {
+            return new RecommendationsData(verdict, Done: false, [], EmptySet, [], []);
+        }
 
         return new RecommendationsData(verdict, Done: true, courses, enrolled, preferredFieldsLower, engineCareersLower);
     }
