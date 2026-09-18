@@ -460,6 +460,75 @@ public sealed class CoursePlanComputeReaderTests : IClassFixture<CoursePlanCompu
         Assert.False(data.Verdict.PersonalityCompleted);
     }
 
+    // ── The completion gate is a widening, not an all-or-nothing lock ──────────────
+    // A partial student with something to score from is served; one with nothing behind
+    // the list is still refused; a finished student is served exactly as before.
+
+    [Fact]
+    public async Task Recommendations_partial_student_with_preferred_fields_is_served()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await UserRow(conn, User, School, 11);
+        // Two of the four assessments only — nowhere near allDone.
+        await PcaEval(conn, User, completed: true);
+        await EvalGroup(conn, User, completed: true);
+        await Prefs(conn, User, "science");
+        await Course_(conn, "c1", title: "Science 1", language: "English");
+
+        var data = await Repo().GetRecommendationsAsync(Ctx(), User);
+        Assert.False(data.Verdict.AllDone);           // still incomplete, and the page is told so
+        Assert.True(data.Done);                       // but the list is produced
+        Assert.Equal(["c1"], data.Courses.Select(c => c.Id));
+        Assert.Equal(["science"], data.PreferredFieldsLower);
+    }
+
+    [Fact]
+    public async Task Recommendations_partial_student_with_engine_careers_is_served()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await UserRow(conn, User, School, 11);
+        await PcaEval(conn, User, completed: true);
+        await CareerProfile(conn, User, """{"Civil Engineering": "insight A"}""");
+        await Course_(conn, "c1", title: "Statics", language: "English");
+
+        var data = await Repo().GetRecommendationsAsync(Ctx(), User);
+        Assert.False(data.Verdict.AllDone);
+        Assert.True(data.Done);
+        Assert.Equal(["civil engineering"], data.EngineCareersLower);
+    }
+
+    [Fact]
+    public async Task Recommendations_partial_student_with_no_signal_at_all_is_still_refused()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await UserRow(conn, User, School, 11);
+        await PcaEval(conn, User, completed: true);
+        // No user_preferences row, no user_career_profiles row: every course would score the
+        // identical base, so the "recommendations" would be the catalog in id order.
+        await Course_(conn, "c1", title: "Anything", language: "English");
+
+        var data = await Repo().GetRecommendationsAsync(Ctx(), User);
+        Assert.False(data.Verdict.AllDone);
+        Assert.False(data.Done);
+        Assert.Empty(data.Courses);
+    }
+
+    [Fact]
+    public async Task Recommendations_finished_student_with_no_signal_is_unaffected_by_the_widening()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await UserRow(conn, User, School, 11);
+        await CompleteAllAssessments(conn, User);
+        // Neither preferences nor a career profile — this student is served today and must
+        // stay served: the new condition may only ever add, never subtract.
+        await Course_(conn, "c1", title: "Anything", language: "English");
+
+        var data = await Repo().GetRecommendationsAsync(Ctx(), User);
+        Assert.True(data.Verdict.AllDone);
+        Assert.True(data.Done);
+        Assert.Equal(["c1"], data.Courses.Select(c => c.Id));
+    }
+
     [Fact]
     public async Task Recommendations_legacyUnlockGrandfathered_is_done_without_personality()
     {

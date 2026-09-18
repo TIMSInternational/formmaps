@@ -37,8 +37,9 @@ public static class CoursePlanComputeEndpoints
 
         if (!data.Done)
         {
-            // Gate: no recommendations until all 4 assessments (MIL, 360, PCA, Personality)
-            // are complete, or the student is legacyUnlockGrandfathered.
+            // Not "assessments incomplete" any more — the reader returns Done:false only when
+            // there is no signal to score from at all (no preferred field, no engine career).
+            // The verdict still rides along so the page can say what is outstanding.
             return Results.Ok(new
             {
                 success = true,
@@ -78,7 +79,9 @@ public static class CoursePlanComputeEndpoints
         });
     }
 
-    // computeStudentCompletion's return shape (7 fields — readyForInsights == allDone; the ported verdict carries 6).
+    // computeStudentCompletion's return shape. personalityCompleted was missing here while the
+    // verdict record carried it, so the one assessment a student could still owe was the one the
+    // payload could not name — the page's "still needed" list can only report what it is sent.
     private static object CompletionJson(StudentCompletionVerdict v) => new
     {
         liaCompleted = v.LiaCompleted,
@@ -86,6 +89,7 @@ public static class CoursePlanComputeEndpoints
         evalCompleted = v.EvalCompleted,
         evalTotal = v.EvalTotal,
         pcaCompleted = v.PcaCompleted,
+        personalityCompleted = v.PersonalityCompleted,
         allDone = v.AllDone,
         readyForInsights = v.AllDone
     };
