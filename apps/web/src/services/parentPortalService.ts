@@ -36,7 +36,7 @@ export async function getChildProgress(
     student?: { id?: string; name?: string; gradeLevel?: number };
     gpa?: number | null;
     isOnTrack?: boolean;
-    creditProgress?: { earned?: number; required?: number; percentage?: number };
+    creditProgress?: { earned?: number; required?: number | null; percentage?: number | null };
     assessments?: {
       pca?: { completed?: boolean };
       mil?: { completed?: number; total?: number };
@@ -55,8 +55,11 @@ export async function getChildProgress(
     gpa: d.gpa ?? null, // keep null so the page shows "N/A", not a fake "0.00"
     isOnTrack: d.isOnTrack ?? true,
     creditsEarned: d.creditProgress?.earned ?? 0,
-    creditsRequired: d.creditProgress?.required ?? 0,
-    creditPercentage: d.creditProgress?.percentage ?? 0,
+    // null means the school has not configured a graduation rule set. Collapsing it to 0
+    // renders "18 / 0 credits" and a 0% bar, which reads as a requirement of zero rather
+    // than an unknown one — and reverts the server-side fix at the UI layer.
+    creditsRequired: d.creditProgress?.required ?? null,
+    creditPercentage: d.creditProgress?.percentage ?? null,
     assessmentStatus: { completed: completedCount, total: 3 },
     careerPath: "",
     recentActivity: [],

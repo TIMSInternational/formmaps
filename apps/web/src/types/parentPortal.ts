@@ -9,8 +9,9 @@ export interface ChildProgressSummary {
   gpa: number | null;
   isOnTrack: boolean;
   creditsEarned: number;
-  creditsRequired: number;
-  creditPercentage: number;
+  /** null when the school has not configured a graduation rule set — not a zero. */
+  creditsRequired: number | null;
+  creditPercentage: number | null;
   assessmentStatus: {
     completed: number;
     total: number;

@@ -411,10 +411,12 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
               {participantInfo.creditProgress && (
                 <div style={{ textAlign: "right", alignSelf: "flex-start", flexShrink: 0 }}>
                   <p style={{ fontSize: 11, color: "var(--admin-font-light)", marginBottom: 4 }}>
-                    Credits: {participantInfo.creditProgress.earned}/{participantInfo.creditProgress.required}
+                    Credits: {participantInfo.creditProgress.earned}/{participantInfo.creditProgress.required ?? "\u2014"}
                   </p>
                   <p style={{ fontSize: 11, color: "var(--admin-font-light)" }}>
-                    Progress: {participantInfo.creditProgress.percentage}%
+                    {participantInfo.creditProgress.percentage == null
+                      ? "Graduation requirement not set"
+                      : `Progress: ${participantInfo.creditProgress.percentage}%`}
                   </p>
                 </div>
               )}
