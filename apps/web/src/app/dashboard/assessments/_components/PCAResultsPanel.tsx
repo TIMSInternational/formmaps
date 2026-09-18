@@ -116,7 +116,13 @@ export default function PCAResultsPanel({
       a.download = `Informe-Orientacion-${userId}.pdf`; a.click();
       URL.revokeObjectURL(url);
       toast.success(t("informe.downloaded"));
-    } catch { toast.error(t("informe.downloadFailed")); }
+    } catch (err) {
+      // 409 is the assembler refusing an EMPTY profile (below both PCA and MIL there
+      // is nothing to put in the document) — not a transport failure. Reporting both
+      // as "Failed to download" left the student with a button that just didn't work.
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      toast.error(t(status === 409 ? "informe.notReady" : "informe.downloadFailed"));
+    }
     setReportLoading(null);
   };
 

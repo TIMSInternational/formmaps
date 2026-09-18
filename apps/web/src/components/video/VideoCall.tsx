@@ -28,7 +28,7 @@ interface ParticipantInfo {
   gradeLevel?: number;
   gpa?: number | null;
   status?: string;
-  creditProgress?: { earned: number; required: number; percentage: number };
+  creditProgress?: { earned: number; required: number | null; percentage: number | null };
   assessmentStatus?: { PCA: string; MIL: string; Eval360: string };
 }
 

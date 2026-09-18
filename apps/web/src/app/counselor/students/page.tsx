@@ -132,7 +132,7 @@ export default function CounselorStudentsPage() {
                   <TableCell>
                     <div className="space-y-1 min-w-[120px]">
                       <Progress value={s.creditProgress?.percentage ?? 0} className="h-2" />
-                      <p className="text-xs text-muted-foreground">{s.creditProgress?.earned ?? 0}/{s.creditProgress?.required ?? 120}</p>
+                      <p className="text-xs text-muted-foreground">{s.creditProgress?.earned ?? 0}/{s.creditProgress?.required ?? "\u2014"}</p>
                     </div>
                   </TableCell>
                   <TableCell>

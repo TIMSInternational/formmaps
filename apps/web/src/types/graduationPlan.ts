@@ -75,6 +75,14 @@ export interface AssessmentCompletion {
   pcaCompleted: boolean;
   evalCompleted: number;
   evalTotal: number;
+  /**
+   * Optional because the .NET course-plan payload omitted it until 2026-09-18 and an
+   * older deploy may still be answering. Consumers must test `=== false` rather than
+   * `!completion.personalityCompleted`, so a missing field is never read as "missing
+   * assessment" — that is how Personality became the one thing a locked card could
+   * not name.
+   */
+  personalityCompleted?: boolean;
 }
 
 /** POST /graduation-plan/generate returns the locked shape until assessments are done. */

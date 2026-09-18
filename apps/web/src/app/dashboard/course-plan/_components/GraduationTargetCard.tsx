@@ -52,12 +52,22 @@ export function GraduationTargetCard({
     if (completion) {
       if (completion.liaCompleted < 5) parts.push(`LIA ${completion.liaCompleted}/5`);
       if (!completion.pcaCompleted) parts.push("PCA");
+      // Personality became a required 4th assessment on 2026-07-30 and was never
+      // added here, so a student who owed only Personality saw a lock with nothing
+      // listed beside it. `=== false` on purpose: an older payload that omits the
+      // field must not be read as "missing".
+      if (completion.personalityCompleted === false) parts.push("Personality");
       // Same threshold the server unlocks careers/course-plan with — a
       // student who finished min(evalTotal,3) evaluators is done, even if
       // more were invited (see EVAL_REQUIRED_RULE).
       const evalRequired = EVAL_REQUIRED_RULE(completion.evalTotal);
-      if (completion.evalTotal === 0 || completion.evalCompleted < evalRequired)
+      if (completion.evalTotal === 0) {
+        // min(0,3) is 0, so this used to render "360° 0/0" — the one condition that
+        // locks a student out until someone else acts, shown as a satisfied counter.
+        parts.push("360° (no evaluators invited yet)");
+      } else if (completion.evalCompleted < evalRequired) {
         parts.push(`360° ${completion.evalCompleted}/${evalRequired}`);
+      }
     }
     return (
       <section className="rounded-xl p-5 bg-[#102B47] text-white">

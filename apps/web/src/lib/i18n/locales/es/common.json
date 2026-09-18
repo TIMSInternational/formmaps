@@ -2689,7 +2689,8 @@
     "desc": "Descargar informe completo de orientación (PDF)",
     "download": "Descargar informe",
     "downloaded": "Informe descargado",
-    "downloadFailed": "No se pudo descargar el informe"
+    "downloadFailed": "No se pudo descargar el informe",
+    "notReady": "Completa al menos una evaluación y tu informe estará listo para descargar."
   },
   "resume": {
     "saveFailed": "No pudimos guardar tus cambios. Revisa tu conexión e inténtalo de nuevo."
