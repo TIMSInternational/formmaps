@@ -75,11 +75,16 @@
 .admin-twenty .border-gray-100,
 .admin-twenty .border-gray-200 { border-color: var(--admin-border-default) !important; }
 
-/* Shadows — remove for clean Twenty look */
-.admin-twenty .shadow-sm,
-.admin-twenty .shadow-lg,
-.admin-twenty .hover\:shadow-lg:hover,
-.admin-twenty .hover\:shadow-md:hover { box-shadow: none !important; }
+/* Shadows — DELETED (2026-09-22).
+ *
+ * This block used to be `box-shadow: none !important` on .shadow-sm, .shadow-lg and both hover
+ * variants, which silently deleted 386 authored shadows across the app. Card is written with a
+ * soft shadow and a 40px radius and rendered flat with an 8px corner, so the components were not
+ * "plain" -- they were being overridden. The !important made that invisible from the component.
+ *
+ * .shadow-2xl keeps its remap: 2xl is Tailwind's most extreme shadow and a dialog that reaches
+ * for it wants depth, not a drop-shadow the size of the dialog. That one IS a taste decision and
+ * survives as one. */
 .admin-twenty .shadow-2xl { box-shadow: 2px 4px 16px rgba(0,0,0,0.16) !important; }
 
 /* Colored backgrounds — low opacity via tokens */
@@ -110,15 +115,20 @@
 .admin-twenty .min-h-screen { min-height: auto !important; background: transparent !important; }
 .admin-twenty .p-6.md\:p-8 { padding: 0 !important; }
 .admin-twenty .max-w-7xl { max-width: 100% !important; }
-.admin-twenty .rounded-2xl,
-.admin-twenty .rounded-xl { border-radius: var(--admin-radius-lg, 8px) !important; }
+/* Radii — DELETED (2026-09-22). `.rounded-2xl, .rounded-xl { border-radius: 8px !important }`
+ * clamped 155 large radii down to the Twenty-CRM 8px, so a component asking for a 16px or 24px
+ * corner got 8 regardless. The corner is a component's decision; the theme should not be
+ * answering it in every case. */
 .admin-twenty .hover\:-translate-y-1:hover { transform: none !important; }
 
-/* ── Typography Normalization ── */
-.admin-twenty .text-4xl { font-size: 20px !important; font-weight: 600 !important; }
-.admin-twenty .text-3xl { font-size: 24px !important; }
-.admin-twenty .text-xl { font-size: 16px !important; }
-.admin-twenty .text-lg { font-size: 14px !important; }
+/* ── Typography Normalization — DELETED (2026-09-22) ──
+ *
+ * The clamp was not merely tight, it was INVERTED: text-4xl was forced to 20px while text-3xl
+ * kept 24px, so the largest heading in the scale rendered SMALLER than the one below it. Every
+ * page using text-4xl for its title had a title quieter than its own section headings, and no
+ * amount of editing the component could fix it, because of the !important.
+ *
+ * Only the heading COLOUR survives -- that is a theme decision, and it carries no !important. */
 .admin-twenty h1, .admin-twenty h2, .admin-twenty h3, .admin-twenty h4 { color: var(--admin-font-primary); }
 .admin-twenty p { color: var(--admin-font-secondary); }
 .admin-twenty .mb-8 { margin-bottom: 16px !important; }
@@ -313,8 +323,10 @@
 .admin-twenty .shadow-sm,
 .admin-twenty [class*="shadow-gray"],
 .admin-twenty [class*="shadow-blue"],
+/* shadow-indigo-* is from the unrelated "Micro SaaS" indigo system (design system #2 of the four
+ * stacked here); neutralising its coloured glow is a real decision and stays. hover:shadow-xl is
+ * an authored hover affordance like the others above, and no longer suppressed. */
 .admin-twenty [class*="shadow-indigo"] { box-shadow: none !important; }
-.admin-twenty .hover\:shadow-xl:hover { box-shadow: none !important; }
 
 /* ── Hover Transforms — disable lift effects ── */
 .admin-twenty .hover\:-translate-y-0\.5:hover,
@@ -326,8 +338,10 @@
   background: var(--admin-bg-card) !important;
   border-color: var(--admin-border-default) !important;
   color: var(--admin-font-primary) !important;
-  border-radius: 8px !important;
-  box-shadow: none !important;
+  /* The radius clamp and the shadow suppression are gone (2026-09-22). This is the specific pair
+   * the audit named: Card is authored with a 40px radius and a soft shadow, and these two lines
+   * rendered every card in the app as an 8px flat rectangle. Surface colour and border stay
+   * themed; the card's own shape is the card's to decide. */
 }
 .admin-twenty [data-slot="card"]:hover {
   border-color: var(--admin-border-hover) !important;
