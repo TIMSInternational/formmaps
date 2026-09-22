@@ -28,7 +28,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <AdminThemeProvider>
       <ChatProvider>
         <ErrorBoundary>
-          <AppShell sidebar={<SchoolAdminSidebar />}>
+          <AppShell
+      sidebarClassName="hidden md:block" sidebar={<SchoolAdminSidebar />}>
             {children}
           </AppShell>
         </ErrorBoundary>

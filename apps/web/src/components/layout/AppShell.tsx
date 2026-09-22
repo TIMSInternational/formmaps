@@ -2,6 +2,7 @@
 
 import { SidePanelContextProvider, SidePanelRenderer } from "@/components/side-panel/SidePanel";
 import { PageTopBar } from "@/components/layout/PageTopBar";
+import { SkipToMain } from "@/components/ui/accessibility";
 
 interface AppShellProps {
   sidebar: React.ReactNode;
@@ -15,6 +16,10 @@ interface AppShellProps {
 export function AppShell({ sidebar, children, sidebarClassName, overlay }: AppShellProps) {
   return (
     <SidePanelContextProvider>
+      {/* Mounted here rather than per-layout: the shell is every signed-in role's entry
+          point, and this component already existed in TWO duplicate modules imported by nothing
+          while the `#main-content` target it jumps to was right there below. */}
+      <SkipToMain />
       <div
         className="admin-twenty"
         style={{
