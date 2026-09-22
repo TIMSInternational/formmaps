@@ -99,8 +99,12 @@ export function scrubEvent<T extends Record<string, unknown>>(event: T): T {
     }
   }
 
-  if (event.extra) event.extra = scrubDeep(event.extra) as T["extra"];
-  if (event.contexts) event.contexts = scrubDeep(event.contexts) as T["contexts"];
+  // `event` is a type parameter, so TypeScript refuses a write through a dot access on it even
+  // though the constraint carries an index signature. Write through the constraint: same object,
+  // mutated in place, exactly as the request and breadcrumb passes above do.
+  const mutable = event as Record<string, unknown>;
+  if (mutable.extra) mutable.extra = scrubDeep(mutable.extra);
+  if (mutable.contexts) mutable.contexts = scrubDeep(mutable.contexts);
 
   return event;
 }
@@ -118,7 +122,7 @@ export function initSentry() {
     // psychometric results, class rank, essay drafts or a counselor's notes about them. There is no
     // sampling rate at which shipping that to a third party is a debugging trade-off worth making.
     replaysOnErrorSampleRate: 0,
-    beforeSend: (event) => scrubEvent(event as unknown as Record<string, unknown>) as typeof event,
+    beforeSend: (event) => scrubEvent(event as unknown as Record<string, unknown>) as unknown as typeof event,
     beforeBreadcrumb: (crumb) => {
       if (crumb.data) crumb.data = scrubDeep(crumb.data) as typeof crumb.data;
       if (typeof crumb.message === "string") crumb.message = scrubUrl(crumb.message);
