@@ -14,7 +14,7 @@ namespace FormMaps.Api.Endpoints;
 
 /// <summary>
 /// Domain 10 (Auth) admin-surface issuance endpoints -- port of routes/auth-admin.ts's 3 in-scope
-/// routes (POST /signup, GET /unsubscribe, PUT /admin/set-password), mounted under /authapi
+/// routes (POST /signup, GET /unsubscribe), mounted under /authapi
 /// (same mount path as AuthEndpoints -- both auth.ts and auth-admin.ts mount there in legacy's
 /// index.ts). A SEPARATE endpoint group/repository from AuthEndpoints/IAuthRepository per this
 /// task's plan, even though both live under the same /authapi prefix.
@@ -29,7 +29,6 @@ public static class AuthAdminEndpoints
         var group = app.MapGroup("/authapi").WithTags("AuthAdmin");
         group.MapPost("/signup", SignupAsync).RequireRateLimiting(FormMapsRateLimitPolicies.Auth);
         group.MapGet("/unsubscribe", UnsubscribeAsync);
-        group.MapPut("/admin/set-password", AdminSetPasswordAsync);
         return app;
     }
 
@@ -252,59 +251,20 @@ public static class AuthAdminEndpoints
         Results.Text(body, "text/html", Encoding.UTF8, statusCode);
 
     // =========================================================================================
-    // PUT /authapi/admin/set-password (Super Admin / School Admin onboarding bypass)
+    // REMOVED: PUT /authapi/admin/set-password
     // =========================================================================================
-
-    public sealed record AdminSetPasswordRequest(string? Email, string? Password);
-
-    private static async Task<IResult> AdminSetPasswordAsync(
-        AdminSetPasswordRequest? body, IRequestContextAccessor accessor, IProtectedRequestGuard guard,
-        IAuthAdminRepository repository, CancellationToken cancellationToken)
-    {
-        var context = accessor.Current;
-        var decision = guard.RequireIdentity(context);
-        if (!decision.Allowed) return Deny(decision);
-
-        if (!context.Permissions.Contains(FormMapsPermissions.SchoolManage))
-            return Results.Json(
-                new { success = false, code = "missing_permission", message = "Insufficient permissions" },
-                statusCode: StatusCodes.Status403Forbidden);
-
-        if (body is null || string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
-            return BadRequest("email and password required");
-
-        var pwError = PasswordStrength.Validate(body.Password);
-        if (pwError is not null) return BadRequest(pwError);
-
-        var email = NormalizeEmail(body.Email);
-        var target = await repository.FindUserByEmailForAdminAsync(email, cancellationToken);
-        if (target is null) return NotFound("Not found");
-
-        // Inline schoolId-scoping check, ported EXACTLY from auth-admin.ts:203-221 -- deliberately
-        // NOT Task 12's change-password/change-email 404-collapse convention. This route's legacy
-        // behavior is a 403 for a cross-school target (and for a caller with no schoolId at all),
-        // never a 404 -- a real, documented divergence from ChangePasswordAsync/ChangeEmailAsync's
-        // "cross-school and not-found collapse to the SAME 404" rule, kept exactly as legacy has it
-        // per this task's explicit instruction not to "consistency-fix" it.
-        //
-        // The caller's schoolId is also a LIVE DB re-read (GetUserSchoolIdAsync), not the
-        // JWT-derived context.Tenant.SchoolId Task 12 chose to trust for change-password/change-email
-        // -- legacy re-reads it live here too (auth-admin.ts:214), and this task's brief is explicit
-        // that this route's check must be ported exactly, not unified with Task 12's JWT-trust
-        // trade-off.
-        var callerSchoolId = await repository.GetUserSchoolIdAsync(context.Tenant!.UserId, cancellationToken);
-        if (string.IsNullOrEmpty(callerSchoolId) || target.SchoolId != callerSchoolId)
-            return Forbidden("Not authorized");
-
-        var hashedPassword = PasswordHasher.Hash(body.Password);
-        await repository.SetPasswordForSchoolUserAsync(target.Id, hashedPassword, cancellationToken);
-
-        // No "message" key in the success envelope -- deliberately verbatim from auth-admin.ts:220:
-        // `res.json({ success: true, data: { userId: user.id, email: user.email } });` -- unlike
-        // every other route in this domain, legacy omits "message" here. Confirmed directly against
-        // that exact line before writing this; not an oversight.
-        return Results.Ok(new { success = true, data = new { userId = target.Id, email = target.Email } });
-    }
+    // Deleted alongside the legacy route it was ported from (auth-admin.ts). It wrote another
+    // person's password with no current-password check, no notification and -- the one that
+    // mattered -- no revocation, so the victim's live sessions and refresh tokens survived the
+    // reset. Its guard was `school:manage`, which school_admin holds, while the schoolId check
+    // under it required a non-null caller schoolId and so excluded the Super Admins its own
+    // comment named. Measured 2026-09-22: this service answers 401 (not 404) on that path from
+    // the public App Runner URL, so it was reachable with any school-admin token regardless of
+    // the FORMMAPS_ROUTE_AUTH_TO_DOTNET rewrite flag being unset.
+    //
+    // PUT /authapi/change-password's admin branch is the supported path: it checks the role,
+    // scopes school_admin to its own school, revokes the target's refresh tokens and emails the
+    // account holder.
 
     // =========================================================================================
     // helpers
