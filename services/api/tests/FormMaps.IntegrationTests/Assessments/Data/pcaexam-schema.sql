@@ -123,3 +123,12 @@ CREATE TABLE IF NOT EXISTS "audit_events" (
     "outcome" TEXT NOT NULL DEFAULT 'success',
     "metadata" JSONB
 );
+
+-- Simplified "users", table shape only (no RLS, no FKs), same convention as the audit_events
+-- stub above. AllResultsReader's school predicate resolves a session's school by joining here,
+-- because pca_exam_sessions carries only a userId. The real users table is far wider; these are
+-- the two columns the predicate touches.
+CREATE TABLE IF NOT EXISTS "users" (
+    "id"       TEXT PRIMARY KEY,
+    "schoolId" TEXT
+);
