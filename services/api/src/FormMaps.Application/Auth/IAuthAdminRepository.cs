@@ -12,19 +12,20 @@ public sealed record CreatedAdminUserRow(string Id, string Name, string Email, s
 /// path).</summary>
 public sealed record AdminRoleRow(string Id, string Name);
 
-/// <summary>Target-user lookup backing PUT /admin/set-password's schoolId-scoping check. Deliberately
-/// minimal -- just the columns auth-admin.ts:203-221's inline check and response actually touch
-/// (id/email/schoolId), NOT the full <see cref="AuthUserRow"/> shape.</summary>
-public sealed record AdminTargetUserRow(string Id, string Email, string? SchoolId);
-
 /// <summary>
-/// Domain 10 (Auth) admin-surface reads/writes backing routes/auth-admin.ts's three in-scope routes
-/// (POST /signup, GET /unsubscribe, PUT /admin/set-password) -- a SEPARATE repository/interface from
+/// Domain 10 (Auth) admin-surface reads/writes backing routes/auth-admin.ts's two in-scope routes
+/// (POST /signup, GET /unsubscribe) -- a SEPARATE repository/interface from
 /// <see cref="IAuthRepository"/> per this task's plan, even though both ultimately touch the same
 /// "users"/"roles"/"user_settings"/"refresh_tokens" tables as Tasks 6-12's IAuthRepository. Runs
-/// entirely under <see cref="RequestContext.System"/> -- signup and unsubscribe are pre-auth public
-/// routes, and admin/set-password's caller-schoolId re-read (<see cref="GetUserSchoolIdAsync"/>) is a
-/// live DB lookup, not an RLS-scoped read off the caller's own tenant context.
+/// entirely under <see cref="RequestContext.System"/>, because signup and unsubscribe are both
+/// pre-auth public routes.
+///
+/// A third route, PUT /admin/set-password, was removed in 2026-09 along with the legacy handler it
+/// was ported from: it reset another person's password without revoking their sessions, and its
+/// `school:manage` guard did not mean what its "Super Admin only" comment claimed. The three
+/// members that backed it (FindUserByEmailForAdminAsync, GetUserSchoolIdAsync,
+/// SetPasswordForSchoolUserAsync) went with it -- a repository method that writes someone else's
+/// password hash is not something to leave lying around unwired.
 ///
 /// signup-coach/signup-coach-bulk/coaches/coach/:id/invite-coach (the rest of auth-admin.ts) are
 /// explicitly OUT of scope for this task -- a future Coaching domain's problem.
@@ -79,31 +80,4 @@ public interface IAuthAdminRepository
     /// repository" instruction.
     /// </summary>
     Task<string> CreateRefreshTokenAsync(string userId, string clientIp, CancellationToken cancellationToken = default);
-
-    /// <summary>Target-user lookup for PUT /admin/set-password, per auth-admin.ts:211: `const user =
-    /// await prisma.user.findUnique({ where: { email: email.toLowerCase() } });`. Returns null for an
-    /// unknown email -- the endpoint layer maps that to 404 "Not found".</summary>
-    Task<AdminTargetUserRow?> FindUserByEmailForAdminAsync(string normalizedEmail, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Live re-read of the CALLING admin's own "schoolId", per auth-admin.ts:214: `const admin =
-    /// await prisma.user.findUnique({ where: { id: req.userId! }, select: { schoolId: true } });`.
-    /// Deliberately a live DB lookup, NOT a read off the JWT-derived RequestContext.Tenant.SchoolId --
-    /// this is the one place in this task that must NOT follow Task 12's JWT-trust convention, since
-    /// legacy itself re-reads it here (unlike changePassword/changeEmail, which legacy also re-reads
-    /// live but Task 12 deliberately chose to trust the JWT for instead). Returns null if the caller's
-    /// own user row has no schoolId (or has vanished) -- the endpoint layer maps that to 403 "Not
-    /// authorized", same as a schoolId mismatch.
-    /// </summary>
-    Task<string?> GetUserSchoolIdAsync(string userId, CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Sets a new password for a school user via the admin onboarding-bypass route, per
-    /// auth-admin.ts:216-219: `await prisma.user.update({ where: { id: user.id }, data: { password:
-    /// await hashPassword(password), onboardingToken: null, passwordNeedsMigration: false } });`. The
-    /// caller (this task's endpoint handler) has already authorized the schoolId-scoping check and
-    /// hashed the password before calling this -- this method trusts that already happened, same
-    /// convention as IAuthRepository.UpdatePasswordAsync.
-    /// </summary>
-    Task SetPasswordForSchoolUserAsync(string userId, string passwordHash, CancellationToken cancellationToken = default);
 }
