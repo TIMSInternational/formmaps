@@ -29,7 +29,8 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
     <AdminThemeProvider>
       <ChatProvider>
         <ErrorBoundary>
-          <AppShell sidebar={<ParentSidebar />}>
+          <AppShell
+      sidebarClassName="hidden md:block" sidebar={<ParentSidebar />}>
             {children}
           </AppShell>
         </ErrorBoundary>
