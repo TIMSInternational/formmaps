@@ -6,14 +6,15 @@ interface NumericalSpeedItemProps {
   data: NumericalSpeedData;
   onAnswer: (answer: string) => void;
   disabled?: boolean;
+  language?: 'es' | 'en';
 }
 
-export function NumericalSpeedItem({ data, onAnswer, disabled }: NumericalSpeedItemProps) {
+export function NumericalSpeedItem({ data, onAnswer, disabled, language = 'es' }: NumericalSpeedItemProps) {
   // Guard against undefined data
   if (!data || !data.numbers) {
     return (
       <div className="flex items-center justify-center p-8">
-        <p className="text-gray-500">Loading question...</p>
+        <p className="text-gray-500">{language === 'es' ? 'Cargando pregunta...' : 'Loading question...'}</p>
       </div>
     );
   }
@@ -25,7 +26,9 @@ export function NumericalSpeedItem({ data, onAnswer, disabled }: NumericalSpeedI
     <div className="flex flex-col items-center space-y-8">
       {/* Instructions */}
       <p className="text-gray-600 dark:text-gray-400 text-center">
-        ¿Cuál número está más lejos del valor medio?
+        {language === 'es'
+          ? '¿Cuál número está más lejos del valor medio?'
+          : 'Which number is farthest from the middle value?'}
       </p>
 
       {/* Numbers display */}
