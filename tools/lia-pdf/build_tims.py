@@ -454,11 +454,15 @@ def story(pass2):
     A_(Paragraph(L('Solo <b>Razonamiento Verbal</b> tiene contenido que dependa del idioma, y está completamente '
         'traducido: los 3 ítems de práctica y los 50 calificados existen en español y en inglés, con revisión '
         'humana. Las otras cuatro subpruebas son <b>neutras por construcción</b> — sus ítems son letras, números y '
-        'figuras, así que el mismo ítem sirve para los dos idiomas.',
+        'figuras, así que el mismo ítem sirve para los dos idiomas. Con <b>una salvedad</b>: Memoria de Trabajo '
+        'tiene ítems neutros pero mide sobre el <b>alfabeto</b>, y el alfabeto sí depende del idioma. Ver el aviso '
+        'al final de esta sección.',
         'Only <b>Verbal Reasoning</b> has content that depends on language, and it is fully translated: the 3 '
         'practice items and the 50 scored ones exist in Spanish and English, human-reviewed. The other four '
         'subtests are <b>language-neutral by construction</b> — their items are letters, numbers and figures, so '
-        'the same item serves both languages.'), BODY))
+        'the same item serves both languages. With <b>one caveat</b>: Working Memory has neutral items but measures '
+        'over the <b>alphabet</b>, and the alphabet does depend on the language. See the caution at the end of this '
+        'section.'), BODY))
     d=[[Paragraph(L('Subprueba','Subtest'),TH),Paragraph(L('Contenido del ítem','Item content'),TH),
         Paragraph(L('Enunciado en pantalla','On-screen instruction'),TH)]]
     for k,es,en,*_ in SUBTESTS:
@@ -469,6 +473,11 @@ def story(pass2):
                                 'Translated — Spanish and English') + '</b></font>',CELL),
                       Paragraph(L('No lleva enunciado aparte: la pregunta del ítem hace ese papel, y va traducida',
                                   'No separate instruction: the item\'s own question does that job, and it is translated'),CELL)])
+        elif k=='working_memory':
+            d.append([Paragraph(f'<b>{nm}</b>',CELL),
+                      Paragraph(L('Ítems neutros, <font color="#A05A00"><b>pero mide sobre el alfabeto</b></font>',
+                                  'Neutral items, <font color="#A05A00"><b>but it measures over the alphabet</b></font>'),CELL),
+                      Paragraph('<font color="#1B6B44"><b>' + L('Español e inglés','Spanish and English') + '</b></font>',CELL)])
         else:
             d.append([Paragraph(f'<b>{nm}</b>',CELL),
                       Paragraph(L('Neutro al idioma','Language-neutral'),CELL),
@@ -503,16 +512,62 @@ def story(pass2):
         'is now closed. One honest caveat remains: parity proves the translation <i>exists</i>, not that it is '
         'well written.'), BODY))
     A_(Spacer(1,10))
-    A_(Paragraph(L('No existe portugués','There is no Portuguese'), H2))
-    A_(Paragraph(L('La aplicación solo trae español e inglés. Un estudiante con el navegador en portugués queda '
-        'resuelto a <b>inglés</b> sin ningún aviso. Añadir portugués no es solo traducir: como LIA informa '
-        '<b>percentiles</b>, traducir los ítems cambia su dificultad, y habría que volver a baremar el instrumento '
-        'con población de habla portuguesa antes de poder informar esos percentiles con honestidad.',
-        'The application ships Spanish and English only. A student whose browser is set to Portuguese is resolved '
-        'to <b>English</b> with no warning at all. Adding Portuguese is not just translation: because the LIA '
-        'reports <b>percentiles</b>, translating the items changes their difficulty, and the instrument would have '
-        'to be re-normed on a Portuguese-speaking population before those percentiles could be reported '
-        'honestly.'), BODY))
+    A_(Paragraph(L('Añadir portugués son cinco trabajos, no uno',
+                   'Adding Portuguese is five jobs, not one'), H2))
+    A_(Paragraph(L('La aplicación solo trae español e inglés, y un estudiante con el navegador en portugués queda '
+        'resuelto a <b>inglés</b> sin ningún aviso. Pero «añadir portugués» no es una sola tarea. Cada subprueba '
+        'cuesta algo distinto, y <b>solo dos de las cinco</b> obligan a volver a baremar. Decirlo en bloque, en '
+        'cualquiera de los dos sentidos, lleva a decidir mal.',
+        'The application ships Spanish and English only, and a student whose browser is set to Portuguese is '
+        'resolved to <b>English</b> with no warning at all. But \u201cadding Portuguese\u201d is not one task. Each '
+        'subtest costs something different, and <b>only two of the five</b> force a re-norm. Stating it in the '
+        'aggregate, in either direction, leads to the wrong decision.'), BODY))
+    A_(Spacer(1,4))
+    ptrows=[(L('Reconocimiento de Patrones','Pattern Recognition'),
+             L('Solo el enunciado. Los ítems son letras latinas, sin cambio.',
+               'The instruction line only. Items are Latin letters, unchanged.'), L('No','No')),
+            (L('Velocidad Numérica','Numerical Speed'),
+             L('Solo el enunciado. Los ítems son enteros, sin cambio.',
+               'The instruction line only. Items are integers, unchanged.'), L('No','No')),
+            (L('Rotación Visual','Visual Rotation'),
+             L('Solo el enunciado. Los ítems son figuras R giradas, sin cambio.',
+               'The instruction line only. Items are rotated R figures, unchanged.'), L('No','No')),
+            (L('Memoria de Trabajo','Working Memory'),
+             L('El enunciado <b>y una revisión de los ítems</b> — ver el aviso de abajo.',
+               'The instruction line <b>and an item review</b> — see the caution below.'),
+             L('Sí, si cambian los ítems','Yes, if items change')),
+            (L('Razonamiento Verbal','Verbal Reasoning'),
+             L('<b>53 ítems escritos de nuevo</b> en portugués. El ítem es su propia dificultad.',
+               '<b>53 items authored afresh</b> in Portuguese. The item is the difficulty.'), L('Sí','Yes'))]
+    d=[[Paragraph(L('Subprueba','Subtest'),TH),
+        Paragraph(L('Qué haría falta en portugués','What Portuguese would need'),TH),
+        Paragraph(L('¿Rebaremar?','Re-norm?'),THC)]]
+    for a_,b_,c_ in ptrows:
+        d.append([Paragraph(f'<b>{a_}</b>',CELL),Paragraph(b_,CELL),Paragraph(c_,CELLC)])
+    t=Table(d,colWidths=[124,CW-124-92,92],repeatRows=1,hAlign='LEFT'); t.setStyle(gstyle()); A_(t)
+    A_(Spacer(1,10))
+    A_(box(L('Memoria de Trabajo no es tan neutra como parece',
+             'Working Memory is not as language-neutral as it looks'),
+        L('Su construcción mide la <b>distancia en el alfabeto</b>, y el alfabeto depende del idioma. El '
+          'calificador usa A=1 … Z=26.<br/><br/>'
+          '• En <b>español</b> (RAE, 27 letras, con la Ñ entre la N y la O): <b>1 de los 63 ítems calificados</b> '
+          'se resuelve distinto para un estudiante que recita el alfabeto español. En <b>M P T</b> la clave es '
+          '<b>der.</b>; contando la Ñ las dos distancias quedan iguales.<br/>'
+          '• En <b>portugués anterior al acuerdo de 1990</b> (23 letras, sin K, W ni Y): <b>19 de los 63 ítems</b> '
+          'usan una letra que ese alfabeto no tiene, y de los 44 restantes <b>3 se resuelven distinto</b>.<br/><br/>'
+          'Lo primero <b>ya afecta al español que se aplica hoy</b>, no solo a un portugués hipotético. Lo segundo '
+          'dice que para portugués esta subprueba necesita revisión de ítems, no solo traducción del enunciado.',
+          'Its construct measures <b>distance in the alphabet</b>, and the alphabet depends on the language. The '
+          'scorer uses A=1 … Z=26.<br/><br/>'
+          '• In <b>Spanish</b> (RAE, 27 letters, with Ñ between N and O): <b>1 of the 63 scored items</b> resolves '
+          'differently for a student reciting the Spanish alphabet. On <b>M P T</b> the key is <b>right</b>; '
+          'counting Ñ, the two distances come out equal.<br/>'
+          '• In <b>Portuguese as taught before the 1990 accord</b> (23 letters, no K, W or Y): <b>19 of the 63 '
+          'items</b> use a letter that alphabet does not contain, and of the 44 that remain <b>3 resolve '
+          'differently</b>.<br/><br/>'
+          'The first <b>already affects the Spanish now in the field</b>, not just a hypothetical Portuguese. The '
+          'second says that for Portuguese this subtest needs an item review, not just a translated '
+          'instruction.'), WARN, WARNBG))
     A_(PageBreak())
 
     # ---- 05..09
@@ -611,15 +666,27 @@ def story(pass2):
          '10-second warnings appeared in Spanish for everyone. No longer. Outstanding: a <b>native-speaker '
          'review</b> of the English wordings.')),
         (L('El portugués se resuelve a inglés en silencio','Portuguese silently resolves to English'), WARN, WARNBG,
-         L('No hay versión en portugués. El navegador en portugués queda resuelto a inglés sin aviso al estudiante '
-         'ni a quien aplica la prueba.',
-         'There is no Portuguese version. A browser set to Portuguese resolves to English with no warning to the '
-         'student or to whoever is administering the test.')),
+         L('No hay versión en portugués, y el navegador en portugués queda resuelto a inglés sin aviso al '
+         'estudiante ni a quien aplica la prueba. Si se añade, hágalo <b>por subprueba</b>: tres solo necesitan el '
+         'enunciado, <b>Memoria de Trabajo necesita revisión de ítems</b> (19 de 63 usan K, W o Y) y Razonamiento '
+         'Verbal necesita 53 ítems nuevos. Ver la sección 04.',
+         'There is no Portuguese version, and a browser set to Portuguese resolves to English with no warning to '
+         'the student or to whoever is administering the test. If it is added, do it <b>per subtest</b>: three need '
+         'only the instruction line, <b>Working Memory needs an item review</b> (19 of 63 use K, W or Y) and '
+         'Verbal Reasoning needs 53 new items. See section 04.')),
         (L('Editar un ítem mueve su respuesta','Editing an item moves its answer'), WARN, WARNBG,
          L('Cuatro de las cinco subpruebas calculan la clave desde los datos del ítem. Regenere este documento '
          'después de cualquier cambio en el banco.',
          'Four of the five subtests compute the key from the item\'s data. Regenerate this document after any '
          'change to the bank.')),
+        (L('La Ñ mueve un ítem de Memoria de Trabajo, hoy, en español',
+           'Ñ moves one Working Memory item, today, in Spanish'), WARN, WARNBG,
+         L('El calificador ordena el alfabeto A=1 … Z=26, sin Ñ. Un estudiante que recita el alfabeto español '
+         '(27 letras) mide distinto a partir de la O. En <b>1 de los 63 ítems calificados</b> eso cambia la '
+         'respuesta percibida. Es pequeño, pero es real y ya está en campo.',
+         'The scorer orders the alphabet A=1 … Z=26, with no Ñ. A student reciting the Spanish alphabet (27 '
+         'letters) measures differently from O onwards. On <b>1 of the 63 scored items</b> that changes the '
+         'perceived answer. It is small, but it is real and it is already in the field.')),
         (L('Lo que decide una coincidencia es la lateralidad, no el giro',
            'What decides a match is handedness, not rotation'), NAVY, COOLBG,
          L('Conviene repetirlo a quien revise Rotación Visual a ojo: dos R normales en ángulos distintos SÍ '
