@@ -107,9 +107,10 @@ export function LIATimer({ totalSeconds, startedAt, onTimeout, onWarning }: LIAT
 interface TimerWarningToastProps {
   secondsLeft: number;
   onClose: () => void;
+  language?: 'es' | 'en';
 }
 
-export function TimerWarningToast({ secondsLeft, onClose }: TimerWarningToastProps) {
+export function TimerWarningToast({ secondsLeft, onClose, language = 'es' }: TimerWarningToastProps) {
   // onClose via ref: parents pass inline arrows, and re-creating the timeout
   // on every parent re-render would keep the toast alive indefinitely while
   // the candidate answers quickly.
@@ -130,8 +131,8 @@ export function TimerWarningToast({ secondsLeft, onClose }: TimerWarningToastPro
           secondsLeft <= 10 ? 'bg-red-600' : 'bg-orange-500'
         }`}
       >
-        {secondsLeft === 30 && '¡30 segundos restantes!'}
-        {secondsLeft === 10 && '¡10 segundos! Responde rápido.'}
+        {secondsLeft === 30 && (language === 'es' ? '¡30 segundos restantes!' : '30 seconds left!')}
+        {secondsLeft === 10 && (language === 'es' ? '¡10 segundos! Responde rápido.' : '10 seconds! Answer quickly.')}
       </div>
     </div>
   );
