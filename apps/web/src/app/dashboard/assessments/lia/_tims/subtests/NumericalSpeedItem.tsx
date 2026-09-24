@@ -28,7 +28,7 @@ export function NumericalSpeedItem({ data, onAnswer, disabled, language = 'es' }
       <p className="text-gray-600 dark:text-gray-400 text-center">
         {language === 'es'
           ? '¿Cuál número está más lejos del valor medio?'
-          : 'Which number is farthest from the middle value?'}
+          : 'Which number is farther from the middle number?'}
       </p>
 
       {/* Numbers display */}

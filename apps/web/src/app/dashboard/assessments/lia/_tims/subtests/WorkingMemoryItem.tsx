@@ -28,7 +28,7 @@ export function WorkingMemoryItem({ data, onAnswer, disabled, language = 'es' }:
       <p className="text-gray-600 dark:text-gray-400 text-center">
         {language === 'es'
           ? '¿Cuál letra exterior está más lejos alfabéticamente de la letra del centro?'
-          : 'Which outer letter is alphabetically farther from the center letter?'}
+          : 'Which outer letter is alphabetically farther from the middle letter?'}
       </p>
 
       {/* Letters display */}
