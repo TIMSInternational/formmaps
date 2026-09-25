@@ -20,10 +20,11 @@ using Microsoft.IdentityModel.Tokens;
 namespace FormMaps.IntegrationTests.Auth;
 
 /// <summary>
-/// HTTP-level coverage for AuthAdminEndpoints (routes/auth-admin.ts's in-scope slice: POST /signup,
-/// GET /unsubscribe, PUT /admin/set-password), mirroring AuthEndpointsTests's style exactly: a
+/// HTTP-level coverage for AuthAdminEndpoints (routes/auth-admin.ts's in-scope slice: POST /signup
+/// and GET /unsubscribe -- PUT /admin/set-password was removed, and one test below holds it
+/// removed), mirroring AuthEndpointsTests's style exactly: a
 /// WebApplicationFactory&lt;Program&gt; with a swapped-in fake IAuthAdminRepository, exercised via real
-/// HTTP calls (dev-header identity for admin/set-password's RequireIdentity gate; real cookies/JSON
+/// HTTP calls (dev-header identity where a route needs one; real cookies/JSON
 /// bodies for the pre-auth signup/unsubscribe routes). No Testcontainers/AuthDatabaseFixture usage --
 /// this task's file list has no separate AuthAdminRepository SQL-correctness suite (unlike
 /// AuthRepositoryLoginTests/etc. for IAuthRepository); IAuthAdminRepository's SQL is exercised only
@@ -396,157 +397,38 @@ public class AuthAdminEndpointsTests : IDisposable
         Assert.Null(repo.LastMarketingSettingsUserId);
     }
 
-    // ---- Admin set-password ----
+    // ---- Admin set-password: REMOVED ----
 
+    /// <summary>
+    /// PUT /authapi/admin/set-password is gone, in both backends.
+    ///
+    /// It reset another person's password with no current-password check, no notification and no
+    /// revocation, so the victim's live sessions and refresh tokens outlived the reset. Its guard
+    /// was `school:manage` -- held by school_admin -- while its schoolId check required a non-null
+    /// caller schoolId and therefore excluded the Super Admins its own comment named.
+    ///
+    /// This one matters more here than in the legacy repo: measured 2026-09-22, this service
+    /// answers that path from its public App Runner URL with 401 rather than 404, so it was live
+    /// with any school-admin token whether or not FORMMAPS_ROUTE_AUTH_TO_DOTNET was set.
+    ///
+    /// The seven tests that used to sit here asserted the details of a route that should not
+    /// exist. They are replaced by one that asserts it does not.
+    /// </summary>
     [Fact]
-    public async Task AdminSetPassword_happy_path_sets_password_for_same_school_target()
-    {
-        var repo = new FakeAuthAdminRepository
-        {
-            TargetUser = new AdminTargetUserRow("target-1", "target@example.test", "school-1"),
-            CallerSchoolId = "school-1",
-        };
-        using var factory = CreateFactory(repo);
-        using var client = factory.CreateClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/admin/set-password")
-        {
-            Content = JsonBody(new { email = "target@example.test", password = "NewPass1$" }),
-        };
-        AddDevIdentity(request, userId: "admin-1", role: FormMapsRoles.SchoolAdmin, schoolId: "school-1", permissions: "school:manage");
-        var response = await client.SendAsync(request);
-
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
-        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.True(doc.RootElement.GetProperty("success").GetBoolean());
-        // Deliberately no "message" property -- matches auth-admin.ts:220 exactly (see
-        // AuthAdminEndpoints.AdminSetPasswordAsync's comment).
-        Assert.False(doc.RootElement.TryGetProperty("message", out _));
-        var data = doc.RootElement.GetProperty("data");
-        Assert.Equal("target-1", data.GetProperty("userId").GetString());
-        Assert.Equal("target@example.test", data.GetProperty("email").GetString());
-        Assert.Equal("target-1", repo.LastSetPasswordUserId);
-    }
-
-    [Fact]
-    public async Task AdminSetPassword_caller_with_no_schoolId_is_403_not_404()
-    {
-        var repo = new FakeAuthAdminRepository
-        {
-            TargetUser = new AdminTargetUserRow("target-1", "target@example.test", "school-1"),
-            CallerSchoolId = null,
-        };
-        using var factory = CreateFactory(repo);
-        using var client = factory.CreateClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/admin/set-password")
-        {
-            Content = JsonBody(new { email = "target@example.test", password = "NewPass1$" }),
-        };
-        AddDevIdentity(request, userId: "admin-1", role: FormMapsRoles.SchoolAdmin, permissions: "school:manage");
-        var response = await client.SendAsync(request);
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.Equal("Not authorized", doc.RootElement.GetProperty("message").GetString());
-        Assert.Null(repo.LastSetPasswordUserId);
-    }
-
-    [Fact]
-    public async Task AdminSetPassword_cross_school_target_is_403_not_404()
-    {
-        var repo = new FakeAuthAdminRepository
-        {
-            TargetUser = new AdminTargetUserRow("target-1", "target@example.test", "other-school"),
-            CallerSchoolId = "school-1",
-        };
-        using var factory = CreateFactory(repo);
-        using var client = factory.CreateClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/admin/set-password")
-        {
-            Content = JsonBody(new { email = "target@example.test", password = "NewPass1$" }),
-        };
-        AddDevIdentity(request, userId: "admin-1", role: FormMapsRoles.SchoolAdmin, schoolId: "school-1", permissions: "school:manage");
-        var response = await client.SendAsync(request);
-
-        // The load-bearing assertion for this task: cross-school MUST be 403, never 404 -- a
-        // DIFFERENT rule from Task 12's change-password/change-email 404-collapse convention.
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.Equal("Not authorized", doc.RootElement.GetProperty("message").GetString());
-        Assert.Null(repo.LastSetPasswordUserId);
-    }
-
-    [Fact]
-    public async Task AdminSetPassword_unknown_target_email_is_404()
-    {
-        var repo = new FakeAuthAdminRepository { TargetUser = null, CallerSchoolId = "school-1" };
-        using var factory = CreateFactory(repo);
-        using var client = factory.CreateClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/admin/set-password")
-        {
-            Content = JsonBody(new { email = "nobody@example.test", password = "NewPass1$" }),
-        };
-        AddDevIdentity(request, userId: "admin-1", role: FormMapsRoles.SchoolAdmin, schoolId: "school-1", permissions: "school:manage");
-        var response = await client.SendAsync(request);
-
-        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
-        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.Equal("Not found", doc.RootElement.GetProperty("message").GetString());
-    }
-
-    [Fact]
-    public async Task AdminSetPassword_missing_permission_is_403()
-    {
-        var repo = new FakeAuthAdminRepository();
-        using var factory = CreateFactory(repo);
-        using var client = factory.CreateClient();
-
-        var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/admin/set-password")
-        {
-            Content = JsonBody(new { email = "target@example.test", password = "NewPass1$" }),
-        };
-        AddDevIdentity(request, userId: "admin-1", role: FormMapsRoles.Student);
-        var response = await client.SendAsync(request);
-
-        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
-        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        Assert.Equal("missing_permission", doc.RootElement.GetProperty("code").GetString());
-    }
-
-    [Fact]
-    public async Task AdminSetPassword_without_identity_is_401()
+    public async Task AdminSetPassword_route_no_longer_exists()
     {
         using var factory = CreateFactory(new FakeAuthAdminRepository());
         using var client = factory.CreateClient();
 
-        var response = await client.PutAsync("/authapi/admin/set-password", JsonBody(new { email = "e@example.test", password = "NewPass1$" }));
-
-        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
-    }
-
-    [Fact]
-    public async Task AdminSetPassword_weak_password_is_400()
-    {
-        var repo = new FakeAuthAdminRepository
-        {
-            TargetUser = new AdminTargetUserRow("target-1", "target@example.test", "school-1"),
-            CallerSchoolId = "school-1",
-        };
-        using var factory = CreateFactory(repo);
-        using var client = factory.CreateClient();
-
         var request = new HttpRequestMessage(HttpMethod.Put, "/authapi/admin/set-password")
         {
-            Content = JsonBody(new { email = "target@example.test", password = "weak" }),
+            Content = JsonBody(new { email = "target@example.test", password = "NewPass1$" }),
         };
+        // The exact caller that used to succeed.
         AddDevIdentity(request, userId: "admin-1", role: FormMapsRoles.SchoolAdmin, schoolId: "school-1", permissions: "school:manage");
         var response = await client.SendAsync(request);
 
-        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Null(repo.LastSetPasswordUserId);
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     // ---- helpers ----
@@ -711,14 +593,11 @@ public class AuthAdminEndpointsTests : IDisposable
     {
         public bool EmailExists { get; set; }
         public AdminRoleRow? RoleById { get; set; }
-        public AdminTargetUserRow? TargetUser { get; set; }
-        public string? CallerSchoolId { get; set; }
 
         public bool EnsureRoleWasCalled { get; private set; }
         public CreatedAdminUserRow? LastCreatedUser { get; private set; }
         public string? LastMarketingSettingsUserId { get; private set; }
         public bool LastMarketingEmails { get; private set; }
-        public string? LastSetPasswordUserId { get; private set; }
 
         public Task<bool> EmailExistsAsync(string normalizedEmail, CancellationToken cancellationToken = default) =>
             Task.FromResult(EmailExists);
@@ -750,17 +629,5 @@ public class AuthAdminEndpointsTests : IDisposable
 
         public Task<string> CreateRefreshTokenAsync(string userId, string clientIp, CancellationToken cancellationToken = default) =>
             Task.FromResult("new-refresh-token-from-signup");
-
-        public Task<AdminTargetUserRow?> FindUserByEmailForAdminAsync(string normalizedEmail, CancellationToken cancellationToken = default) =>
-            Task.FromResult(TargetUser);
-
-        public Task<string?> GetUserSchoolIdAsync(string userId, CancellationToken cancellationToken = default) =>
-            Task.FromResult(CallerSchoolId);
-
-        public Task SetPasswordForSchoolUserAsync(string userId, string passwordHash, CancellationToken cancellationToken = default)
-        {
-            LastSetPasswordUserId = userId;
-            return Task.CompletedTask;
-        }
     }
 }

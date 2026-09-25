@@ -616,25 +616,48 @@ function shouldRouteTeacherOnboardingToDotnet() {
 
 const nextConfig: NextConfig = {
   /**
-   * Allow external image hosts used in the app (e.g. Unsplash)
+   * Allow external image hosts used in the app (e.g. Unsplash).
+   *
+   * EVERY entry must carry a `pathname`. An entry without one defaults to `/**`, which hands the
+   * image optimizer an attacker-chosen byte stream to decode: three of these four hosts accept
+   * uploads from the general public (`images.unsplash.com` most obviously), so "we trust the
+   * hostname" is not the same statement as "we trust the bytes". The decoder behind that fetch is
+   * the one that shipped GHSA-2xp9-vwfh-vxw4 (AVIF path, next >=16.0.0 <16.3.3), so the blast
+   * radius of a too-wide pattern is remote code execution, not a broken thumbnail.
+   *
+   * `remote-patterns-are-constrained.test.ts` fails if a future entry omits `pathname`.
    */
   images: {
     remotePatterns: [
       {
+        // Admin-entered course thumbnails; the form placeholder is literally an /photo- URL.
         protocol: "https",
         hostname: "images.unsplash.com",
+        pathname: "/photo-**",
       },
       {
+        // One decorative noise texture, referenced from two CSS backgrounds.
         protocol: "https",
         hostname: "grainy-gradients.vercel.app",
+        pathname: "/noise.svg",
       },
       {
+        // Coursera's image proxy. NOTE: no code in this repo references either Coursera host and
+        // no writer sets `thumbnailUrl` from an import, so both entries look vestigial. Left in
+        // place (scoped) rather than deleted, because that is a data question for production, not
+        // a code question -- if prod has no Coursera-hosted thumbnails, delete both.
         protocol: "https",
         hostname: "d3njjcbhbojbot.cloudfront.net",
+        pathname: "/api/utilities/v1/imageproxy/**",
       },
       {
+        // Deliberately still `/**`, and the test knows it: Coursera's object keys are opaque
+        // hashes and guessing their shape here would break real thumbnails to buy nothing. It is
+        // listed in BROAD_PATHNAME_EXCEPTIONS so the exception is reviewed, not inherited -- a
+        // NEW host cannot be added this way.
         protocol: "https",
         hostname: "coursera-course-photos.s3.amazonaws.com",
+        pathname: "/**",
       },
     ],
   },
