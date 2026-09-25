@@ -102,8 +102,8 @@ export default function AssessmentsPage() {
     {
       key: "pca",
       icon: Brain,
-      iconBg: "bg-[#2E9098]/10",
-      iconColor: "text-[#2E9098]",
+      iconBg: "bg-[var(--admin-accent-blue)]/10",
+      iconColor: "text-[var(--admin-accent-blue)]",
       title: t("dashboard.pcaTitle"),
       description: t("dashboard.pcaDescription"),
       status: pcaStatus,
@@ -289,7 +289,7 @@ export default function AssessmentsPage() {
               <p className="text-sm font-semibold text-foreground">Vocational 360 Report</p>
               <p className="text-[11px] text-muted-foreground mt-0.5">Your personalized vocational profile and recommendations</p>
             </div>
-            <Link href="/dashboard/assessments/vocational" className="inline-flex items-center gap-2 text-sm font-medium" style={{ color: "#2E9098" }}>
+            <Link href="/dashboard/assessments/vocational" className="inline-flex items-center gap-2 text-sm font-medium" style={{ color: "var(--admin-accent-blue)" }}>
               View my Vocational 360 report →
             </Link>
           </div>

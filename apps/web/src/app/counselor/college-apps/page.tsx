@@ -124,7 +124,7 @@ export default function CollegeAppsPage() {
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
         {[
           { label: "TOTAL APPLICATIONS", value: totalApps, icon: GraduationCap, color: "var(--admin-font-primary)" },
-          { label: "SUBMITTED", value: submittedCount, icon: Send, color: "#2E9098" },
+          { label: "SUBMITTED", value: submittedCount, icon: Send, color: "var(--admin-accent-blue)" },
           { label: "ACCEPTED", value: acceptedCount, icon: CheckCircle2, color: "#10b981" },
           { label: "PENDING", value: pendingCount, icon: Clock, color: "#f59e0b" },
         ].map((stat) => (

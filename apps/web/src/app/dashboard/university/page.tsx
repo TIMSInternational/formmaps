@@ -307,7 +307,7 @@ export default function UniversityPage() {
                   <Filter className="h-3.5 w-3.5" />
                   {t("Filters", "Filtros")}
                   {activeFilterCount > 0 && (
-                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#2E9098] text-[10px] text-white font-bold">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[var(--admin-accent-blue)] text-[10px] text-white font-bold">
                       {activeFilterCount}
                     </span>
                   )}

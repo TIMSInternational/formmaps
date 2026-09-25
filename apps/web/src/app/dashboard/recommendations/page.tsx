@@ -86,7 +86,7 @@ export default function RecommendationsPage() {
             display: "flex",
             alignItems: "center",
             gap: 6,
-            background: "var(--admin-accent-blue, #2E9098)",
+            background: "var(--admin-accent-blue)",
             color: "#fff",
             border: "none",
             cursor: "pointer",

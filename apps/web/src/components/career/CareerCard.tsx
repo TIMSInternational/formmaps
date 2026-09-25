@@ -141,8 +141,8 @@ function CareerCardInner({ career, rank, isFavorite = false, onToggleFavorite, o
           </Badge>
         )}
         {career.remoteEligible && (
-          <Badge variant="secondary" className="bg-[#2E9098]/10 text-[#2E9098] hover:bg-[#2E9098]/20 border-[#2E9098]/20 font-medium px-2.5 py-1">
-            <Globe className="h-3 w-3 mr-1 text-[#2E9098]" aria-hidden="true" />
+          <Badge variant="secondary" className="bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/20 border-[var(--admin-accent-blue)]/20 font-medium px-2.5 py-1">
+            <Globe className="h-3 w-3 mr-1 text-[var(--admin-accent-blue)]" aria-hidden="true" />
             {t("career.remote", "Remote")}
           </Badge>
         )}

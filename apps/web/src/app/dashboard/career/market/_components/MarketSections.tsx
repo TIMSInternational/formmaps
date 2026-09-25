@@ -101,13 +101,13 @@ export function HiringVolumeCard({ hoveredRole, setHoveredRole }: { hoveredRole:
       whileHover={{ y: -5, transition: { duration: 0.2 } }}
       className="md:col-span-4 bg-white border border-slate-200/60 rounded-[2rem] p-6 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-slate-200/60 transition-all relative overflow-hidden"
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-[#2E9098]/10 rounded-full blur-3xl -mr-10 -mt-10" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--admin-accent-blue)]/10 rounded-full blur-3xl -mr-10 -mt-10" />
       <div className="relative z-10 flex flex-col h-full justify-between">
         <div>
           <div className="flex items-center justify-between mb-6">
             <div className="flex items-center gap-3">
-              <div className="p-2.5 bg-[#2E9098]/10 rounded-xl border border-[#2E9098]/20">
-                <Search className="w-5 h-5 text-[#2E9098]" />
+              <div className="p-2.5 bg-[var(--admin-accent-blue)]/10 rounded-xl border border-[var(--admin-accent-blue)]/20">
+                <Search className="w-5 h-5 text-[var(--admin-accent-blue)]" />
               </div>
               <span className="font-bold text-slate-700">Open Roles</span>
             </div>
@@ -132,7 +132,7 @@ export function HiringVolumeCard({ hoveredRole, setHoveredRole }: { hoveredRole:
                 {roleDemandData.map((_, index) => (
                   <Cell
                     key={`cell-${index}`}
-                    fill={hoveredRole === index ? "#2E9098" : "#cbd5e1"}
+                    fill={hoveredRole === index ? "var(--admin-accent-blue)" : "#cbd5e1"}
                     className="transition-all duration-300"
                     onMouseEnter={() => setHoveredRole(index)}
                     onMouseLeave={() => setHoveredRole(null)}

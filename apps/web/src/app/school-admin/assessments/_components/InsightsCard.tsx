@@ -47,7 +47,7 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
               <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
                 <strong style={{ color: "var(--admin-font-primary)", fontWeight: 700 }}>{`${completion.complete} / ${completion.total}`}</strong> students completed all assessments
               </span>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "#2E9098" }}>{pct}%</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-accent-blue)" }}>{pct}%</span>
             </div>
             <div style={{ height: 6, borderRadius: 4, background: "var(--admin-bg-hover)", overflow: "hidden", marginBottom: 10 }}>
               <div style={{ height: "100%", width: `${pct}%`, background: "#102B47", borderRadius: 4, transition: "width 0.3s ease" }} />
@@ -136,7 +136,7 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
 
       {/* Metric chips */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        <MetricChip label="Students" value={agg.totalStudents} color="#2E9098" />
+        <MetricChip label="Students" value={agg.totalStudents} color="var(--admin-accent-blue)" />
         <MetricChip label="Profiles" value={agg.profilesComplete} color="#10b981" />
         <MetricChip label="360 Reviews" value={agg.eval360Count} color="#f59e0b" />
         {Object.entries(agg.pcaAverages).map(([k, v]) => (

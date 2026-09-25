@@ -275,7 +275,7 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
                               </div>
                               <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                                 {p.isHonors && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>Honors</span>}
-                                {p.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "#2E9098" }}>{p.frameworkType}</span>}
+                                {p.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "var(--admin-accent-blue)" }}>{p.frameworkType}</span>}
                                 {Number(p.credits) > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>{p.credits} cr</span>}
                               </div>
                             </div>
@@ -312,7 +312,7 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
           <div style={{ display: "flex", gap: 8, paddingTop: 4 }}>
             <button onClick={openEdit} style={{
               flex: 1, height: 40, borderRadius: 8, fontSize: 13, fontWeight: 600,
-              background: "var(--admin-accent-blue, #2E9098)", color: "#fff", border: "none", cursor: "pointer",
+              background: "var(--admin-accent-blue)", color: "#fff", border: "none", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
             }}>
               <Save style={{ width: 14, height: 14 }} /> Edit Course

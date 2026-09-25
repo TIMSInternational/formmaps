@@ -28,8 +28,8 @@ const statusColors: Record<TimelineStatus, { dot: string; line: string; text: st
     text: "var(--admin-font-primary, #ebebeb)",
   },
   active: {
-    dot: "var(--admin-accent-blue, #2E9098)",
-    line: "var(--admin-accent-blue, #2E9098)",
+    dot: "var(--admin-accent-blue)",
+    line: "var(--admin-accent-blue)",
     text: "var(--admin-font-primary, #ebebeb)",
   },
   pending: {

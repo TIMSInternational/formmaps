@@ -8,7 +8,7 @@ import { useTranslation } from "react-i18next";
 import { AnimatePresence, motion } from "motion/react";
 import Link from "next/link";
 
-const BRAND = "#2E9098";
+const BRAND = "var(--admin-accent-blue)";
 const BRAND_DARK = "#0b1f33";
 
 /**

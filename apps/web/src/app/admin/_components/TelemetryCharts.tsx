@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const COLORS = ["#2E9098", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+const COLORS = ["var(--admin-accent-blue)", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 interface EventChartItem {
   name: string;
@@ -77,7 +77,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
         <Card className="border border-gray-100 bg-white rounded-2xl shadow-none hover:shadow-md transition-shadow">
           <CardHeader className="border-b border-gray-50 bg-gray-50/30 py-5">
             <CardTitle className="text-base font-semibold text-gray-800 flex items-center gap-1.5">
-              <UserPlus className="h-4 w-4 text-[#2E9098]" />
+              <UserPlus className="h-4 w-4 text-[var(--admin-accent-blue)]" />
               {t("telemetry.charts.newVsReturning")}
             </CardTitle>
           </CardHeader>
@@ -88,7 +88,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
                   <PieChart>
                     <Pie
                       data={[
-                        { name: t("telemetry.charts.newLabel").replace(": ", ""), value: newUsers, color: '#2E9098' },
+                        { name: t("telemetry.charts.newLabel").replace(": ", ""), value: newUsers, color: 'var(--admin-accent-blue)' },
                         { name: t("telemetry.charts.returningLabel").replace(": ", ""), value: returningUsers, color: '#10b981' }
                       ]}
                       cx="50%"
@@ -99,7 +99,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
                       dataKey="value"
                       strokeWidth={0}
                     >
-                      <Cell fill="#2E9098" />
+                      <Cell fill="var(--admin-accent-blue)" />
                       <Cell fill="#10b981" />
                     </Pie>
                     <Tooltip content={<CustomTooltip />} />
@@ -115,7 +115,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
 
               <div className="flex items-center justify-center gap-6 mt-4 w-full">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#2E9098]" />
+                  <div className="w-3 h-3 rounded-full bg-[var(--admin-accent-blue)]" />
                   <div className="text-sm">
                     <span className="text-gray-500">{t("telemetry.charts.newLabel")}</span>
                     <span className="font-semibold text-gray-900">{newUsers.toLocaleString()}</span>
@@ -162,7 +162,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
                     axisLine={false}
                   />
                   <Tooltip cursor={{fill: 'rgba(0,0,0,0.02)'}} content={<CustomTooltip />} />
-                  <Bar dataKey="views" fill="#2E9098" radius={[0, 4, 4, 0]} barSize={24} />
+                  <Bar dataKey="views" fill="var(--admin-accent-blue)" radius={[0, 4, 4, 0]} barSize={24} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
@@ -244,7 +244,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
           <CardContent className="p-6">
             <div className="space-y-6 mt-2">
               {[
-                  { labelKey: "telemetry.charts.resumeBuilder", key: "resumeBuilder" as const, color: "bg-[#2E9098]" },
+                  { labelKey: "telemetry.charts.resumeBuilder", key: "resumeBuilder" as const, color: "bg-[var(--admin-accent-blue)]" },
                   { labelKey: "telemetry.charts.assessments", key: "assessments" as const, color: "bg-emerald-500" },
                   { labelKey: "telemetry.charts.coachOnboarding", key: "coachOnboarding" as const, color: "bg-violet-500" },
                   { labelKey: "telemetry.charts.profileSetup", key: "profileSetup" as const, color: "bg-orange-500" },
@@ -274,7 +274,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
         <Card className="border border-gray-100 bg-white rounded-2xl shadow-none hover:shadow-md transition-shadow">
           <CardHeader className="border-b border-gray-50 bg-gray-50/30 py-5">
             <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-1.5">
-              <TrendingUp className="h-5 w-5 text-[#2E9098]" />
+              <TrendingUp className="h-5 w-5 text-[var(--admin-accent-blue)]" />
               {t("telemetry.charts.dauTrend")}
             </CardTitle>
             <CardDescription>{t("telemetry.charts.dauTrendDesc")}</CardDescription>
@@ -284,8 +284,8 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
               <AreaChart data={dailyActiveUsersTrend} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorTrend" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2E9098" stopOpacity={0.1}/>
-                    <stop offset="95%" stopColor="#2E9098" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--admin-accent-blue)" stopOpacity={0.1}/>
+                    <stop offset="95%" stopColor="var(--admin-accent-blue)" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -308,7 +308,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
                 <Area
                   type="monotone"
                   dataKey="users"
-                  stroke="#2E9098"
+                  stroke="var(--admin-accent-blue)"
                   fill="url(#colorTrend)"
                   strokeWidth={2}
                 />

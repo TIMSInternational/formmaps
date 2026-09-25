@@ -63,7 +63,7 @@ export function CalendarSyncStep({
           className={cn(
             "relative group p-6 border rounded-2xl transition-all duration-300 flex items-center justify-between",
             integrations.google
-              ? "border-[#2E9098]/30 bg-[#2E9098]/10 shadow-sm"
+              ? "border-[var(--admin-accent-blue)]/30 bg-[var(--admin-accent-blue)]/10 shadow-sm"
               : "border-gray-200 hover:border-gray-300 hover:shadow-md bg-white"
           )}
         >
@@ -89,7 +89,7 @@ export function CalendarSyncStep({
             className={cn(
               "min-w-[120px] transition-all",
               integrations.google
-                ? "border-[#2E9098]/30 text-[#2E9098] hover:bg-[#2E9098]/10 hover:text-[#2E9098] bg-[#2E9098]/10"
+                ? "border-[var(--admin-accent-blue)]/30 text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/10 hover:text-[var(--admin-accent-blue)] bg-[var(--admin-accent-blue)]/10"
                 : "bg-black text-white hover:bg-gray-800"
             )}
             aria-label={integrations.google ? t("onboarding.calendar.googleConnected", "Google Calendar Connected") : t("onboarding.calendar.connectGoogle", "Connect Google Calendar")}
@@ -109,7 +109,7 @@ export function CalendarSyncStep({
           className={cn(
             "relative group p-6 border rounded-2xl transition-all duration-300 flex items-center justify-between",
             integrations.outlook
-              ? "border-[#2E9098]/30 bg-[#2E9098]/10 shadow-sm"
+              ? "border-[var(--admin-accent-blue)]/30 bg-[var(--admin-accent-blue)]/10 shadow-sm"
               : "border-gray-200 hover:border-gray-300 hover:shadow-md bg-white",
             integrations.google && "opacity-50 pointer-events-none"
           )}
@@ -135,7 +135,7 @@ export function CalendarSyncStep({
             className={cn(
               "min-w-[120px] transition-all",
               integrations.outlook
-                ? "border-[#2E9098]/30 text-[#2E9098] hover:bg-[#2E9098]/10 hover:text-[#2E9098] bg-[#2E9098]/10"
+                ? "border-[var(--admin-accent-blue)]/30 text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/10 hover:text-[var(--admin-accent-blue)] bg-[var(--admin-accent-blue)]/10"
                 : "bg-black text-white hover:bg-gray-800"
             )}
             aria-label={integrations.outlook ? t("onboarding.calendar.outlookConnected", "Outlook Calendar Connected") : t("onboarding.calendar.connectOutlook", "Connect Outlook Calendar")}

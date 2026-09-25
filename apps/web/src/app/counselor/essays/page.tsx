@@ -43,14 +43,14 @@ interface Comment {
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
   draft: { label: "Draft", color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
   in_review: { label: "In Review", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-  revision: { label: "Revision", color: "#2E9098", bg: "rgba(59,130,246,0.1)" },
+  revision: { label: "Revision", color: "var(--admin-accent-blue)", bg: "rgba(59,130,246,0.1)" },
   final: { label: "Final", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
 };
 
 const TYPE_CONFIG: Record<string, { color: string; bg: string }> = {
   personal_statement: { color: "#8b5cf6", bg: "rgba(139,92,246,0.1)" },
-  supplemental: { color: "#2E9098", bg: "rgba(59,130,246,0.1)" },
-  common_app: { color: "#2E9098", bg: "rgba(99,102,241,0.1)" },
+  supplemental: { color: "var(--admin-accent-blue)", bg: "rgba(59,130,246,0.1)" },
+  common_app: { color: "var(--admin-accent-blue)", bg: "rgba(99,102,241,0.1)" },
   coalition: { color: "#14b8a6", bg: "rgba(20,184,166,0.1)" },
   scholarship: { color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   other: { color: "#6b7280", bg: "rgba(107,114,128,0.1)" },

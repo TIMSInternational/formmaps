@@ -99,7 +99,7 @@ export function SkillBridgingCard({ className }: { className?: string }) {
                 </p>
                 <p className="text-xs text-slate-500 truncate">{gap.detail}</p>
                 {gap.recommendedPath && (
-                  <p className="text-xs text-[#2E9098] mt-1">
+                  <p className="text-xs text-[var(--admin-accent-blue)] mt-1">
                     {gap.recommendedPath}
                   </p>
                 )}
@@ -112,7 +112,7 @@ export function SkillBridgingCard({ className }: { className?: string }) {
       {gaps.length > 0 && (
         <Link
           href="/dashboard/career-paths"
-          className="inline-flex items-center gap-1 text-xs font-medium text-[#2E9098] hover:text-[#2E9098]/80 mt-4"
+          className="inline-flex items-center gap-1 text-xs font-medium text-[var(--admin-accent-blue)] hover:text-[var(--admin-accent-blue)]/80 mt-4"
         >
           See all <ArrowRight className="w-3 h-3" />
         </Link>

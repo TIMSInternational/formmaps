@@ -113,7 +113,7 @@ export function StudentReportModal({ studentId, open, onOpenChange }: {
       }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ color: "var(--admin-font-primary)" }}>
-            <Award style={{ width: 18, height: 18, color: "#2E9098" }} />
+            <Award style={{ width: 18, height: 18, color: "var(--admin-accent-blue)" }} />
             Student Assessment Report
           </DialogTitle>
           <DialogDescription style={{ color: "var(--admin-font-tertiary)" }}>
@@ -169,7 +169,7 @@ export function StudentReportModal({ studentId, open, onOpenChange }: {
 
             {/* Cognitive (MIL) */}
             <div>
-              <SectionHeading icon={Brain} color="#2E9098" title="MIL Exams"
+              <SectionHeading icon={Brain} color="var(--admin-accent-blue)" title="MIL Exams"
                 sub={`avg ${report.mil.averageScore}% · ${report.mil.completedCount} completed`} />
               {report.mil.sessions.length === 0 ? (
                 <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", padding: "8px 0" }}>No MIL exam sessions yet.</div>

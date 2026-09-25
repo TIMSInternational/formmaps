@@ -237,7 +237,7 @@ export default function PCAResultsPanel({
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as "results" | "competences" | "analysis")}
                 className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === tab.id
-                  ? "border-[#2E9098] text-[#2E9098]"
+                  ? "border-[var(--admin-accent-blue)] text-[var(--admin-accent-blue)]"
                   : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
                   }`}
               >
@@ -263,7 +263,7 @@ export default function PCAResultsPanel({
                   else if (activeTab === "competences") loadCompetences();
                   else if (activeTab === "analysis") loadAnalysis();
                 }}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-[#2E9098] text-white rounded-lg hover:bg-[#2E9098]/90 transition-colors text-sm font-medium"
+                className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--admin-accent-blue)] text-white rounded-lg hover:bg-[var(--admin-accent-blue)]/90 transition-colors text-sm font-medium"
               >
                 <RefreshCw className="h-4 w-4" />
                 Retry
@@ -420,7 +420,7 @@ export default function PCAResultsPanel({
                     onClick={downloadInforme}
                     disabled={reportLoading !== null}
                     className="w-full flex items-center gap-4 text-left px-5 py-4 rounded-xl transition-colors disabled:opacity-60"
-                    style={{ background: "var(--brand-blue, #2E9098)", color: "#fff" }}
+                    style={{ background: "var(--brand-blue, var(--admin-accent-blue))", color: "#fff" }}
                   >
                     <span className="flex items-center justify-center rounded-lg shrink-0 bg-white/15" style={{ width: 44, height: 44 }}>
                       {reportLoading === "informe" ? (
@@ -452,7 +452,7 @@ export default function PCAResultsPanel({
                           key={type}
                           onClick={() => downloadReport(type, slug)}
                           disabled={reportLoading !== null}
-                          className="inline-flex items-center justify-center px-4 py-3 bg-[#2E9098]/10 text-[#2E9098] rounded-xl hover:bg-[#2E9098]/20 transition-colors font-medium border border-[#2E9098]/20 disabled:opacity-60"
+                          className="inline-flex items-center justify-center px-4 py-3 bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] rounded-xl hover:bg-[var(--admin-accent-blue)]/20 transition-colors font-medium border border-[var(--admin-accent-blue)]/20 disabled:opacity-60"
                         >
                           {reportLoading === type ? (
                             <Loader2 className="w-5 h-5 mr-2 animate-spin" />
@@ -494,7 +494,7 @@ export default function PCAResultsPanel({
                                 <span
                                   key={n}
                                   className="inline-block w-6 h-2 rounded-full"
-                                  style={{ background: n <= level ? "#2E9098" : "#e5e7eb" }}
+                                  style={{ background: n <= level ? "var(--admin-accent-blue)" : "#e5e7eb" }}
                                 />
                               ))}
                             </div>
@@ -530,7 +530,7 @@ export default function PCAResultsPanel({
                     setAnalysis(null); // clear the old result…
                     loadAnalysis(jca); // …and immediately re-fetch for the new job (else it sticks on "Analysing…")
                   }}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 bg-gray-50 focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2.5 bg-gray-50 focus:ring-2 focus:ring-[var(--admin-accent-blue)] focus:border-[var(--admin-accent-blue)] outline-none"
                 >
                   {Object.entries(JCA_CODES).map(([code, name]) => (
                     <option key={code} value={code}>
@@ -547,7 +547,7 @@ export default function PCAResultsPanel({
                   <p className="text-sm text-gray-500 mb-2">
                     Competency match with {JCA_CODES[selectedJCA]}
                   </p>
-                  <p className="text-5xl font-bold" style={{ color: "#2E9098" }}>
+                  <p className="text-5xl font-bold" style={{ color: "var(--admin-accent-blue)" }}>
                     {Number(analysis.val) || 0}%
                   </p>
                   <div className="mt-4 mx-auto max-w-sm h-2.5 rounded-full bg-gray-200 overflow-hidden">

@@ -266,7 +266,7 @@ export function InviteOnboarding({ token }: { token: string }) {
             <img src="/fm-icon.png" alt="FormMaps" className="h-10 w-auto" />
             <div>
               <span className="text-xl font-bold" style={{ color: "#102B47" }}>FORM</span>
-              <span className="text-xl font-bold" style={{ color: "#2E9098" }}>MAPS</span>
+              <span className="text-xl font-bold" style={{ color: "var(--admin-accent-blue)" }}>MAPS</span>
             </div>
           </div>
 
@@ -278,7 +278,7 @@ export function InviteOnboarding({ token }: { token: string }) {
               {t("onboarding.student.createPassword")}
             </p>
             {inviteSchool && (
-              <p className="text-sm mt-2 font-medium" style={{ color: "#2E9098" }}>
+              <p className="text-sm mt-2 font-medium" style={{ color: "var(--admin-accent-blue)" }}>
                 {t("onboarding.invite.context", {
                   school: inviteSchool,
                   role: t(`admin.users.invite.roles.${inviteRole}.label`, { defaultValue: inviteRole ?? "" }),
@@ -305,7 +305,7 @@ export function InviteOnboarding({ token }: { token: string }) {
                           {...field}
                           className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
                           style={{ background: "#F8F9FA", borderColor: errors.password ? "#dc2626" : "#E0E0E0", color: "#111" }}
-                          onFocus={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue)"; }}
                           onBlur={(e) => { e.currentTarget.style.borderColor = errors.password ? "#dc2626" : "#E0E0E0"; }}
                         />
                       </FormControl>
@@ -334,7 +334,7 @@ export function InviteOnboarding({ token }: { token: string }) {
                           {...field}
                           className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
                           style={{ background: "#F8F9FA", borderColor: errors.confirmPassword ? "#dc2626" : "#E0E0E0", color: "#111" }}
-                          onFocus={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue)"; }}
                           onBlur={(e) => { e.currentTarget.style.borderColor = errors.confirmPassword ? "#dc2626" : "#E0E0E0"; }}
                         />
                       </FormControl>
@@ -375,7 +375,7 @@ export function InviteOnboarding({ token }: { token: string }) {
 
           <p className="text-center mt-6 text-xs" style={{ color: "#999" }}>
             {t("onboarding.student.alreadyHaveAccount")}{" "}
-            <a href="/login" className="font-medium" style={{ color: "#2E9098" }}>{t("onboarding.student.signIn")}</a>
+            <a href="/login" className="font-medium" style={{ color: "var(--admin-accent-blue)" }}>{t("onboarding.student.signIn")}</a>
           </p>
         </motion.div>
       </div>

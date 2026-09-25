@@ -28,8 +28,8 @@ export function CollegeFitCard({ result }: CollegeFitCardProps) {
       className="dash-card p-5"
     >
       <div className="flex items-center gap-3 mb-4">
-        <div className="w-8 h-8 rounded-lg bg-[#2E9098]/10 flex items-center justify-center">
-          <GraduationCap className="w-4 h-4 text-[#2E9098]" />
+        <div className="w-8 h-8 rounded-lg bg-[var(--admin-accent-blue)]/10 flex items-center justify-center">
+          <GraduationCap className="w-4 h-4 text-[var(--admin-accent-blue)]" />
         </div>
         <div>
           <h3 className="font-semibold text-sm text-foreground">College Fit</h3>

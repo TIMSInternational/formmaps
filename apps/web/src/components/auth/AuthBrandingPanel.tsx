@@ -3,7 +3,7 @@
 import { motion } from "motion/react";
 
 // Shared left-hand brand panel for the auth pages (login + signup) so both
-// screens are visually identical. Solid FormMaps blue (#2E9098) with the
+// screens are visually identical. Solid FormMaps blue (var(--admin-accent-blue)) with the
 // FORMMAPS wordmark, tagline, feature bullets, and decorative circles.
 export function AuthBrandingPanel() {
   return (

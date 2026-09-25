@@ -36,7 +36,7 @@ export function DraftPlanSection({
       {plan.status === "draft" && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[#FFD23F] bg-[#FFD23F]/10 px-4 py-3">
           <div className="flex items-center gap-2 text-xs text-gray-900">
-            <Sparkles className="h-4 w-4 text-[#2E9098]" />
+            <Sparkles className="h-4 w-4 text-[var(--admin-accent-blue)]" />
             <span>
               <span className="font-semibold">Draft plan ready</span> —{" "}
               {plan.items.length} proposed courses ({plan.totalPlannedCredits} credits).
@@ -76,8 +76,8 @@ export function DraftPlanSection({
       )}
 
       {plan.status === "proposed" && (
-        <div className="flex items-center gap-2 rounded-lg border border-[#2E9098]/30 bg-[#2E9098]/10 px-4 py-3 text-xs text-gray-900">
-          <Send className="h-4 w-4 text-[#2E9098]" />
+        <div className="flex items-center gap-2 rounded-lg border border-[var(--admin-accent-blue)]/30 bg-[var(--admin-accent-blue)]/10 px-4 py-3 text-xs text-gray-900">
+          <Send className="h-4 w-4 text-[var(--admin-accent-blue)]" />
           <span>
             <span className="font-semibold">Submitted</span> — your counselor is
             reviewing this plan. You&apos;ll be notified when it&apos;s approved.

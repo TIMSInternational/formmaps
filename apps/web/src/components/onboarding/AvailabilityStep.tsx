@@ -80,15 +80,15 @@ export function AvailabilityStep({ data, onNext, onBack }: AvailabilityStepProps
 
   return (
     <form onSubmit={handleSubmit} className="space-y-8">
-      <div className="bg-[#2E9098]/10 p-6 rounded-xl border border-[#2E9098]/20 flex items-start gap-4">
-        <div className="p-2 bg-[#2E9098]/10 rounded-lg text-[#2E9098]" aria-hidden="true">
+      <div className="bg-[var(--admin-accent-blue)]/10 p-6 rounded-xl border border-[var(--admin-accent-blue)]/20 flex items-start gap-4">
+        <div className="p-2 bg-[var(--admin-accent-blue)]/10 rounded-lg text-[var(--admin-accent-blue)]" aria-hidden="true">
           <Globe className="h-5 w-5" />
         </div>
         <div className="flex-1">
           <Label htmlFor="timezone" className="text-[#102B47] font-semibold">{t("onboarding.availability.timezone", "Timezone")}</Label>
           <p className="text-sm text-[#102B47]/80 mb-3">{t("onboarding.availability.timezoneDesc", "Set your local timezone for accurate scheduling.")}</p>
           <Select value={timezone} onValueChange={setTimezone}>
-            <SelectTrigger className="bg-white border-[#2E9098]/30 text-[#102B47] focus:ring-[#2E9098]/30">
+            <SelectTrigger className="bg-white border-[var(--admin-accent-blue)]/30 text-[#102B47] focus:ring-[var(--admin-accent-blue)]/30">
               <SelectValue placeholder={t("onboarding.availability.selectTimezone", "Select timezone")} />
             </SelectTrigger>
             <SelectContent className="max-h-[300px]">
@@ -201,7 +201,7 @@ export function AvailabilityStep({ data, onNext, onBack }: AvailabilityStepProps
                           <button
                             type="button"
                             onClick={() => handleAddTimeSlot(dayIndex)}
-                            className="text-xs font-medium text-[#2E9098] hover:text-[#2E9098]/80 flex items-center transition-colors"
+                            className="text-xs font-medium text-[var(--admin-accent-blue)] hover:text-[var(--admin-accent-blue)]/80 flex items-center transition-colors"
                           >
                             <Plus className="h-3 w-3 mr-1" aria-hidden="true" /> {t("onboarding.availability.addPeriod", "Add another period")}
                           </button>

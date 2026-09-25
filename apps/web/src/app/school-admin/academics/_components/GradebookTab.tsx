@@ -17,7 +17,7 @@ interface StudentRow { id: string; name?: string; email?: string; gradeLevel?: n
 function gradeColor(g: string | null): { bg: string; fg: string } {
   if (!g) return { bg: "var(--admin-bg-hover)", fg: "var(--admin-font-tertiary)" };
   if (g.startsWith("A")) return { bg: "rgba(16,185,129,0.1)", fg: "#10b981" };
-  if (g.startsWith("B")) return { bg: "rgba(46,144,152,0.1)", fg: "#2E9098" };
+  if (g.startsWith("B")) return { bg: "rgba(46,144,152,0.1)", fg: "var(--admin-accent-blue)" };
   if (g.startsWith("F")) return { bg: "rgba(239,68,68,0.1)", fg: "#ef4444" };
   return { bg: "rgba(245,158,11,0.1)", fg: "#f59e0b" };
 }
@@ -87,7 +87,7 @@ export function GradebookTab() {
                 <button key={s.id} onClick={() => setSelectedId(s.id)} style={{
                   width: "100%", textAlign: "left", padding: "10px 12px", border: "none", cursor: "pointer",
                   borderBottom: "1px solid var(--admin-border-default)",
-                  background: active ? "#2E9098" : "transparent",
+                  background: active ? "var(--admin-accent-blue)" : "transparent",
                 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: active ? "#fff" : "var(--admin-font-primary)" }}>{s.name || s.email}</div>
                   <div style={{ fontSize: 11, color: active ? "rgba(255,255,255,0.8)" : "var(--admin-font-tertiary)" }}>{s.gradeLevel ? `Grade ${s.gradeLevel} · ` : ""}{s.email}</div>
@@ -130,7 +130,7 @@ export function GradebookTab() {
                 <div key={year} style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
                   <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{year}</span>
-                    <button onClick={() => openAdd(year)} style={{ fontSize: 11, fontWeight: 600, color: "#2E9098", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
+                    <button onClick={() => openAdd(year)} style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-accent-blue)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
                       <Plus style={{ width: 12, height: 12 }} /> Add
                     </button>
                   </div>

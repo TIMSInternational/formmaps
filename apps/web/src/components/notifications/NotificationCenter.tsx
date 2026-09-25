@@ -113,7 +113,7 @@ export function NotificationCenter() {
         {unreadCount > 0 && (
           <span
             className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full text-[9px] font-bold text-white"
-            style={{ background: "var(--admin-accent-blue, #2E9098)" }}
+            style={{ background: "var(--admin-accent-blue)" }}
           >
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>

@@ -79,14 +79,14 @@ export default function PaymentSuccess() {
         <img src="/fm-icon.png" alt="FormMaps" className="h-8 w-auto" />
         <div className="flex items-center">
           <span className="text-lg font-bold tracking-tight" style={{ color: "#102B47" }}>FORM</span>
-          <span className="text-lg font-bold tracking-tight" style={{ color: "#2E9098" }}>MAPS</span>
+          <span className="text-lg font-bold tracking-tight" style={{ color: "var(--admin-accent-blue)" }}>MAPS</span>
         </div>
       </div>
 
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8" style={{ border: "1px solid rgba(46,144,152,0.1)" }}>
         {status === "loading" && (
           <div className="text-center">
-            <div className="w-16 h-16 border-4 rounded-full animate-spin mx-auto mb-4" style={{ borderColor: "rgba(46,144,152,0.2)", borderTopColor: "#2E9098" }}></div>
+            <div className="w-16 h-16 border-4 rounded-full animate-spin mx-auto mb-4" style={{ borderColor: "rgba(46,144,152,0.2)", borderTopColor: "var(--admin-accent-blue)" }}></div>
             <h2 className="text-xl font-semibold mb-2" style={{ color: "#102B47" }}>
               {t("payments.verifying")}
             </h2>
@@ -206,7 +206,7 @@ export default function PaymentSuccess() {
               <button
                 onClick={handleContinue}
                 className="w-full py-3 px-4 rounded-xl font-semibold transition-colors hover:bg-gray-50"
-                style={{ border: "1px solid #2E9098", color: "#2E9098" }}
+                style={{ border: "1px solid var(--admin-accent-blue)", color: "var(--admin-accent-blue)" }}
               >
                 {t("payments.backToDashboard")}
               </button>

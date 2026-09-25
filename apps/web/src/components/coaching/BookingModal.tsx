@@ -415,12 +415,12 @@ export function BookingModal({
                       ),
                       day_button: cn(
                         "h-10 w-10 p-0 font-normal rounded-full transition-all duration-200",
-                        "hover:bg-[#2E9098]/10 hover:text-[#2E9098]",
-                        "focus:outline-none focus:ring-2 focus:ring-[#2E9098] focus:ring-offset-2"
+                        "hover:bg-[var(--admin-accent-blue)]/10 hover:text-[var(--admin-accent-blue)]",
+                        "focus:outline-none focus:ring-2 focus:ring-[var(--admin-accent-blue)] focus:ring-offset-2"
                       ),
                       selected: cn(
-                        "!bg-[#2E9098] !text-white font-semibold",
-                        "hover:!bg-[#2E9098] hover:!text-white",
+                        "!bg-[var(--admin-accent-blue)] !text-white font-semibold",
+                        "hover:!bg-[var(--admin-accent-blue)] hover:!text-white",
                         "shadow-md"
                       ),
                       today: "bg-gray-100 text-gray-900 font-semibold",
@@ -445,7 +445,7 @@ export function BookingModal({
                     </div>
                     {/* Timezone Helper Text */}
                     {slotsData?.timezone && slotsData.timezone !== timezone && (
-                      <p className="text-xs text-[#2E9098]">
+                      <p className="text-xs text-[var(--admin-accent-blue)]">
                         {t('booking.convertedToLocal', { timezone })}
                       </p>
                     )}
@@ -531,8 +531,8 @@ export function BookingModal({
                             className={cn(
                               "w-full justify-center font-medium h-11 transition-all rounded-lg",
                               isSelected
-                                ? "bg-[#2E9098] text-white border-[#2E9098] hover:bg-[#2E9098] shadow-md"
-                                : "border-gray-200 text-[#2E9098] hover:bg-[#2E9098]/10 hover:border-[#2E9098] hover:text-[#2E9098]"
+                                ? "bg-[var(--admin-accent-blue)] text-white border-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)] shadow-md"
+                                : "border-gray-200 text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/10 hover:border-[var(--admin-accent-blue)] hover:text-[var(--admin-accent-blue)]"
                             )}
                             onClick={() => handleTimeSelect(time)}
                           >
@@ -547,7 +547,7 @@ export function BookingModal({
                   {selectedTime && (
                     <div className="mt-4 pt-4 border-t border-gray-200">
                       <Button
-                        className="w-full bg-[#2E9098] hover:bg-[#2E9098] text-white h-11 font-medium"
+                        className="w-full bg-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)] text-white h-11 font-medium"
                         onClick={() => setStep("details")}
                       >
                         {t('booking.continue')}

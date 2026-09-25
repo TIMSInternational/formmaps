@@ -132,8 +132,8 @@ export default function EarningsPage() {
       label: "Sessions Completed",
       value: earningsStats?.totalSessions?.toLocaleString() || "0",
       icon: DollarSign,
-      iconBg: "bg-[#2E9098]/10",
-      iconColor: "text-[#2E9098]",
+      iconBg: "bg-[var(--admin-accent-blue)]/10",
+      iconColor: "text-[var(--admin-accent-blue)]",
       subtext: `Currency: ${earningsStats?.currency || "USD"}`,
     },
   ];
@@ -191,7 +191,7 @@ export default function EarningsPage() {
               {t("coaching.earnings.subtitle")}
             </p>
             <div className="flex items-center gap-2 mt-2">
-              <Badge variant="secondary" className="bg-[#2E9098]/10 text-[#2E9098] hover:bg-[#2E9098]/20 border-[#2E9098]/30">
+              <Badge variant="secondary" className="bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/20 border-[var(--admin-accent-blue)]/30">
                 Platform Commission: {commissionRate}%
               </Badge>
             </div>

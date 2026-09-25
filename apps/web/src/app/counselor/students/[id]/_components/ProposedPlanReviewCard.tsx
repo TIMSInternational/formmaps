@@ -68,10 +68,10 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
   };
 
   return (
-    <Card className="border-[#2E9098]/30 bg-[#2E9098]/5">
+    <Card className="border-[var(--admin-accent-blue)]/30 bg-[var(--admin-accent-blue)]/5">
       <CardHeader>
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <CardTitle className="text-sm font-semibold text-[#2E9098] flex items-center gap-2">
+          <CardTitle className="text-sm font-semibold text-[var(--admin-accent-blue)] flex items-center gap-2">
             <GraduationCap className="h-4 w-4" />
             {t("planReview.title", "Proposed Graduation Plan")}
             {target && (
@@ -108,12 +108,12 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
           {byGrade.map(([grade, agg]) => (
             <span
               key={grade}
-              className="text-xs px-2.5 py-1 rounded-full bg-white border border-[#2E9098]/20 text-gray-700"
+              className="text-xs px-2.5 py-1 rounded-full bg-white border border-[var(--admin-accent-blue)]/20 text-gray-700"
             >
               {t("studentDetail.gradeN", { n: grade })}: {t(agg.count === 1 ? "planReview.courseCount_one" : "planReview.courseCount_other", { count: agg.count })} · {agg.credits} cr
             </span>
           ))}
-          <span className="text-xs px-2.5 py-1 rounded-full bg-white border border-[#2E9098]/20 text-gray-500">
+          <span className="text-xs px-2.5 py-1 rounded-full bg-white border border-[var(--admin-accent-blue)]/20 text-gray-500">
             {plan.totalPlannedCredits} {t("planReview.creditsTotal", "credits total")}
           </span>
         </div>
@@ -121,7 +121,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
         <button
           type="button"
           onClick={() => setExpanded((e) => !e)}
-          className="flex items-center gap-1 text-xs font-semibold text-[#2E9098] hover:underline"
+          className="flex items-center gap-1 text-xs font-semibold text-[var(--admin-accent-blue)] hover:underline"
         >
           {expanded ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
           {t("planReview.viewFullPlan", "View full plan")}

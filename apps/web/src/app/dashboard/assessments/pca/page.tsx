@@ -217,7 +217,7 @@ export default function PCAAssessmentPage() {
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-lg bg-[#102B47]/5 flex items-center justify-center">
-                <Brain className="w-4.5 h-4.5 text-[#2E9098]" />
+                <Brain className="w-4.5 h-4.5 text-[var(--admin-accent-blue)]" />
               </div>
               <div className="text-left">
                 <h3 className="font-semibold text-foreground text-sm">
@@ -322,7 +322,7 @@ export default function PCAAssessmentPage() {
                 t("dashboard.pcaLanguages"),
               ].map((item, i) => (
                 <li key={i} className="flex items-start gap-1.5 text-[11px] text-muted-foreground leading-tight">
-                  <CheckCircle2 className="w-3 h-3 text-[#2E9098] mt-0.5 shrink-0" />
+                  <CheckCircle2 className="w-3 h-3 text-[var(--admin-accent-blue)] mt-0.5 shrink-0" />
                   <span>{item}</span>
                 </li>
               ))}

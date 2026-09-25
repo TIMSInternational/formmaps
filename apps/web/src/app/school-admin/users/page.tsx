@@ -195,8 +195,8 @@ export default function StudentsPage() {
           background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.2)",
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <CheckSquare style={{ width: 16, height: 16, color: "#2E9098" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#2E9098" }}>{t("users.bulk.selected", { count: selected.size })}</span>
+            <CheckSquare style={{ width: 16, height: 16, color: "var(--admin-accent-blue)" }} />
+            <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-accent-blue)" }}>{t("users.bulk.selected", { count: selected.size })}</span>
             <button onClick={clearSelection} style={{ background: "none", border: "none", cursor: "pointer", padding: 2 }}>
               <X style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
             </button>

@@ -29,7 +29,7 @@ function getStatusBadge(status: string, t: (k: string) => string) {
     case "confirmed":
     case "rescheduled":
       return (
-        <Badge className="bg-[#2E9098]/10 text-[#2E9098] hover:bg-[#2E9098]/10 border-[#2E9098]/20">
+        <Badge className="bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/10 border-[var(--admin-accent-blue)]/20">
           {t("coach:sessionsPage.statusBadge.upcoming")}
         </Badge>
       );
@@ -86,7 +86,7 @@ export function SessionCard({
           >
             <Avatar className="h-10 w-10 border border-[var(--border)]">
               <AvatarImage src={session.studentAvatar} />
-              <AvatarFallback className="text-sm bg-[#2E9098]/10 text-[#2E9098] font-semibold">
+              <AvatarFallback className="text-sm bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] font-semibold">
                 {session.studentName?.charAt(0)}
               </AvatarFallback>
             </Avatar>
@@ -112,7 +112,7 @@ export function SessionCard({
 
           <div className="flex items-center gap-2 flex-shrink-0">
             {isActive && session.meetingLink && (
-              <Button size="sm" className="bg-[#2E9098] hover:bg-[#2E9098] text-white h-8 px-3 text-xs rounded-lg" asChild>
+              <Button size="sm" className="bg-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)] text-white h-8 px-3 text-xs rounded-lg" asChild>
                 <a href={session.meetingLink} target="_blank" rel="noreferrer">
                   <Video className="w-3.5 h-3.5 mr-1" /> {t("coach:sessionsPage.card.join")}
                 </a>
