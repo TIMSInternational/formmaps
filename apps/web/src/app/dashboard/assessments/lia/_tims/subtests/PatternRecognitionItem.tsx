@@ -7,9 +7,10 @@ interface PatternRecognitionItemProps {
   data: PatternRecognitionData;
   onAnswer: (answer: string) => void;
   disabled?: boolean;
+  language?: 'es' | 'en';
 }
 
-export function PatternRecognitionItem({ data, onAnswer, disabled }: PatternRecognitionItemProps) {
+export function PatternRecognitionItem({ data, onAnswer, disabled, language = 'es' }: PatternRecognitionItemProps) {
   const [clickedButton, setClickedButton] = useState<number | null>(null);
 
   // Reset clicked button when question data changes
@@ -21,7 +22,7 @@ export function PatternRecognitionItem({ data, onAnswer, disabled }: PatternReco
   if (!data || !data.row1 || !data.row2) {
     return (
       <div className="flex items-center justify-center p-8">
-        <p className="text-gray-500">Loading question...</p>
+        <p className="text-gray-500">{language === 'es' ? 'Cargando pregunta...' : 'Loading question...'}</p>
       </div>
     );
   }
@@ -39,7 +40,9 @@ export function PatternRecognitionItem({ data, onAnswer, disabled }: PatternReco
     <div className="flex flex-col items-center space-y-8">
       {/* Instructions */}
       <p className="text-gray-600 text-center">
-        ¿Cuántas columnas tienen letras iguales? (sin importar mayúsculas/minúsculas)
+        {language === 'es'
+          ? '¿Cuántas columnas tienen letras iguales? (sin importar mayúsculas/minúsculas)'
+          : 'How many columns contain the same letter? (case is ignored)'}
       </p>
 
       {/* Letter grid */}

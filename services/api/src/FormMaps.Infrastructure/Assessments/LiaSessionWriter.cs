@@ -65,7 +65,7 @@ public sealed class LiaSessionWriter(
     /// the user-visible outcome of a completion.
     /// </para>
     /// </remarks>
-    private Task WriteCompletionAuditAsync(string sessionId, string ownerUserId, LiaCompletionResult result) =>
+    private Task WriteCompletionAuditAsync(string sessionId, string ownerUserId) =>
         auditEventWriter.WriteAsync(
             new AuditEvent(
                 EventType: "audit.assessment.lia.completed",
@@ -74,11 +74,21 @@ public sealed class LiaSessionWriter(
                 SchoolId: null,
                 SubjectType: "lia_session",
                 SubjectId: sessionId,
-                Metadata: new Dictionary<string, object?>
-                {
-                    ["globalPercentile"] = result.GlobalPercentile,
-                    ["performanceLevel"] = result.PerformanceLevel,
-                }),
+                // NO METADATA, and specifically not globalPercentile / performanceLevel.
+                //
+                // `audit_events` is immutable BY CONSTRUCTION: infra/aws/sql/audit-events-schema.sql
+                // REVOKEs UPDATE and DELETE and installs an ENABLE ALWAYS trigger that rejects both.
+                // That is the right design for an audit trail, and it is exactly why a child's
+                // cognitive score must not go in one. Writing a minor's percentile and performance
+                // band into a table nothing can rewrite puts that score permanently beyond the reach
+                // of an erasure request -- `gdprDeleteUser` does not know this table exists, and
+                // could not honour it here if it did.
+                //
+                // The compliance value of this row is "this session completed, at this time, for
+                // this subject, by this actor". EventType, SubjectId, ActorUserId and Outcome carry
+                // all of that. The score is available from `lia_assessment_sessions`, which IS
+                // erasable, so nothing is lost except the copy nobody can delete.
+                Metadata: null),
             CancellationToken.None);
 
     private static readonly JsonSerializerOptions JsonOptions = new();
@@ -239,7 +249,7 @@ public sealed class LiaSessionWriter(
 
         // formmaps#52 Task 8: the DURABLE half of the log line above — same actor, same subject, same
         // commit-first guarantee. First of the two side effects, per the ordering note on this method.
-        await WriteCompletionAuditAsync(sessionId, actorUserId, completion);
+        await WriteCompletionAuditAsync(sessionId, actorUserId);
 
         // formmaps#144: completing LIA may make the student insight-ready — the polyglot mirror of
         // legacy completeSession's own trigger (services/lia/lia-results-service.ts:130-138).
