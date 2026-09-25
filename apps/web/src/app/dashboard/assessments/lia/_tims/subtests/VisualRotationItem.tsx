@@ -6,6 +6,7 @@ interface VisualRotationItemProps {
   data: VisualRotationData;
   onAnswer: (answer: string) => void;
   disabled?: boolean;
+  language?: 'es' | 'en';
 }
 
 function RenderFigure({ figure }: { figure: VisualRotationFigure }) {
@@ -28,12 +29,12 @@ function RenderFigure({ figure }: { figure: VisualRotationFigure }) {
   );
 }
 
-export function VisualRotationItem({ data, onAnswer, disabled }: VisualRotationItemProps) {
+export function VisualRotationItem({ data, onAnswer, disabled, language = 'es' }: VisualRotationItemProps) {
   // Guard against undefined data
   if (!data || !data.topRow || !data.bottomRow) {
     return (
       <div className="flex items-center justify-center p-8">
-        <p className="text-gray-500">Loading question...</p>
+        <p className="text-gray-500">{language === 'es' ? 'Cargando pregunta...' : 'Loading question...'}</p>
       </div>
     );
   }
@@ -44,7 +45,9 @@ export function VisualRotationItem({ data, onAnswer, disabled }: VisualRotationI
     <div className="flex flex-col items-center space-y-8">
       {/* Instructions */}
       <p className="text-gray-600 dark:text-gray-400 text-center">
-        ¿Cuántas columnas tienen figuras iguales? (rotaciones permitidas, espejos no)
+        {language === 'es'
+          ? '¿Cuántas columnas tienen figuras iguales? (rotaciones permitidas, espejos no)'
+          : 'How many columns contain the same figure? (rotations allowed, mirrors not)'}
       </p>
 
       {/* Figure grid */}

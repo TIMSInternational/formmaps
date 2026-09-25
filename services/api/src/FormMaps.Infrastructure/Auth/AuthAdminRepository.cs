@@ -5,12 +5,11 @@ using FormMaps.Application.Data;
 namespace FormMaps.Infrastructure.Auth;
 
 /// <summary>
-/// SQL for routes/auth-admin.ts's in-scope slice (signup, unsubscribe, admin/set-password) -- see
+/// SQL for routes/auth-admin.ts's in-scope slice (signup, unsubscribe) -- see
 /// IAuthAdminRepository's class doc for why this is a separate class/interface from
 /// Tasks 6-12's AuthRepository despite touching the same tables. Every method runs under
-/// <see cref="RequestContext.System"/>, same convention as AuthRepository -- these are either
-/// pre-auth operations (signup/unsubscribe) or a deliberate live-DB re-read
-/// (GetUserSchoolIdAsync) that must NOT be scoped by the caller's own RLS session.
+/// <see cref="RequestContext.System"/>, same convention as AuthRepository -- these are all
+/// pre-auth operations (signup/unsubscribe), so there is no caller RLS session to scope by.
 /// </summary>
 public sealed class AuthAdminRepository(IFormMapsDatabaseSessionFactory databaseSessionFactory) : IAuthAdminRepository
 {
@@ -145,55 +144,6 @@ public sealed class AuthAdminRepository(IFormMapsDatabaseSessionFactory database
         await command.ExecuteNonQueryAsync(cancellationToken);
         await session.CommitAsync(cancellationToken);
         return token;
-    }
-
-    public async Task<AdminTargetUserRow?> FindUserByEmailForAdminAsync(string normalizedEmail, CancellationToken cancellationToken = default)
-    {
-        var context = RequestContext.System();
-        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
-        await using var command = Command(session, """
-            SELECT "id","email","schoolId" FROM "users" WHERE "email" = @email
-            """);
-        AddParameter(command, "email", normalizedEmail);
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken)) return null;
-
-        return new AdminTargetUserRow(
-            reader.GetString(0), reader.GetString(1),
-            reader.IsDBNull(2) ? null : reader.GetString(2));
-    }
-
-    public async Task<string?> GetUserSchoolIdAsync(string userId, CancellationToken cancellationToken = default)
-    {
-        var context = RequestContext.System();
-        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
-        await using var command = Command(session, """SELECT "schoolId" FROM "users" WHERE "id" = @userId""");
-        AddParameter(command, "userId", userId);
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-        if (!await reader.ReadAsync(cancellationToken)) return null;
-        return reader.IsDBNull(0) ? null : reader.GetString(0);
-    }
-
-    /// <summary>
-    /// Also clears "onboardingToken", matching auth-admin.ts:216-219's
-    /// `data: { password: ..., onboardingToken: null, passwordNeedsMigration: false }` exactly --
-    /// this admin-bypass route is how a school admin completes onboarding for a user who hasn't set
-    /// their own password yet, so the (now-consumed) onboarding token must be cleared same as
-    /// UpdatePasswordAsync clears "passwordNeedsMigration". "updatedAt" bound explicitly, same
-    /// NOT-NULL-no-database-default convention as every write in this domain.
-    /// </summary>
-    public async Task SetPasswordForSchoolUserAsync(string userId, string passwordHash, CancellationToken cancellationToken = default)
-    {
-        var context = RequestContext.System();
-        await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
-        await using var command = Command(session, """
-            UPDATE "users" SET "password" = @password, "onboardingToken" = NULL, "passwordNeedsMigration" = false, "updatedAt" = now()
-            WHERE "id" = @userId
-            """);
-        AddParameter(command, "userId", userId);
-        AddParameter(command, "password", passwordHash);
-        await command.ExecuteNonQueryAsync(cancellationToken);
-        await session.CommitAsync(cancellationToken);
     }
 
     private static DbCommand Command(FormMapsDatabaseSession session, string sql)
