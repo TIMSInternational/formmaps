@@ -6,14 +6,15 @@ interface VerbalReasoningItemProps {
   data: VerbalReasoningData;
   onAnswer: (answer: string) => void;
   disabled?: boolean;
+  language?: 'es' | 'en';
 }
 
-export function VerbalReasoningItem({ data, onAnswer, disabled }: VerbalReasoningItemProps) {
+export function VerbalReasoningItem({ data, onAnswer, disabled, language = 'es' }: VerbalReasoningItemProps) {
   // Guard against undefined data
   if (!data || !data.premises || !data.options) {
     return (
       <div className="flex items-center justify-center p-8">
-        <p className="text-gray-500">Loading question...</p>
+        <p className="text-gray-500">{language === 'es' ? 'Cargando pregunta...' : 'Loading question...'}</p>
       </div>
     );
   }

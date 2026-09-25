@@ -47,4 +47,14 @@ regexes = [
   # Nothing to rotate — an App Runner service id is not a rotatable secret.
   '''8bd33e9ff2d34265af9c75a6d4a01ef4''',
   '''03ad64cdfc934080a9d21d0984a6fe91''',
+
+  # apps/web/src/lib/__tests__/sentry.test.ts
+  # The two token-shaped strings the URL scrubber is fed as INPUT, each asserted to
+  # come back as `[redacted]`. Both are hand-written for the test: the first is 32
+  # hex characters, the second is the keyboard-walk "abc123def456ghi789jkl012".
+  # Neither was ever issued by this system — onboarding and reset tokens are minted
+  # per request and no fixture in this repo mints one. Nothing to rotate.
+  # Flagged only because a redaction test necessarily contains the shape it redacts.
+  '''7f3a9c21e84b4d0fa1c6b2d5e8f0a3c7''',
+  '''abc123def456ghi789jkl012''',
 ]

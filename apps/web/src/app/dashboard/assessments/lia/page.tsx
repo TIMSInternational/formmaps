@@ -224,7 +224,7 @@ export default function LIAAssessmentPage() {
       <div className="min-h-screen bg-gray-50">
         {proctored(
         <>
-        {timerWarning !== null && <TimerWarningToast secondsLeft={timerWarning} onClose={() => setTimerWarning(null)} />}
+        {timerWarning !== null && <TimerWarningToast secondsLeft={timerWarning} onClose={() => setTimerWarning(null)} language={language} />}
         <ProgressHeader
           language={language}
           currentSubtest={flow.currentSubtest}
@@ -248,15 +248,15 @@ export default function LIAAssessmentPage() {
             <div className="mb-8">
               {data ? (
                 flow.currentSubtest === "pattern_recognition" ? (
-                  <PatternRecognitionItem data={data as PatternRecognitionData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} />
+                  <PatternRecognitionItem data={data as PatternRecognitionData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} language={language} />
                 ) : flow.currentSubtest === "verbal_reasoning" ? (
-                  <VerbalReasoningItem data={data as VerbalReasoningData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} />
+                  <VerbalReasoningItem data={data as VerbalReasoningData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} language={language} />
                 ) : flow.currentSubtest === "numerical_speed" ? (
-                  <NumericalSpeedItem data={data as NumericalSpeedData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} />
+                  <NumericalSpeedItem data={data as NumericalSpeedData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} language={language} />
                 ) : flow.currentSubtest === "working_memory" ? (
-                  <WorkingMemoryItem data={data as WorkingMemoryData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} />
+                  <WorkingMemoryItem data={data as WorkingMemoryData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} language={language} />
                 ) : (
-                  <VisualRotationItem data={data as VisualRotationData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} />
+                  <VisualRotationItem data={data as VisualRotationData} onAnswer={flow.submitAssessmentAnswer} disabled={flow.isSubmitting} language={language} />
                 )
               ) : (
                 <div className="flex items-center justify-center p-8">

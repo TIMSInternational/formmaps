@@ -277,11 +277,19 @@ public sealed class LiaSessionWriterTests : IClassFixture<LiaWriteDatabaseFixtur
         Assert.Equal("success", row.Outcome);
         Assert.False(string.IsNullOrWhiteSpace(row.Id));
 
-        // Metadata carries the same two scalars the log line already carried — nothing more.
-        Assert.NotNull(row.MetadataJson);
-        Assert.Contains("globalPercentile", row.MetadataJson!, StringComparison.Ordinal);
-        Assert.Contains(
-            expected.PerformanceLevel, row.MetadataJson!, StringComparison.Ordinal);
+        // Metadata carries NO scores. `audit_events` REVOKEs UPDATE and DELETE and installs an
+        // ENABLE ALWAYS trigger rejecting both, so a child's cognitive percentile and performance
+        // band written here would be permanently beyond the reach of an erasure request --
+        // gdprDeleteUser does not know this table exists, and could not honour it if it did. The
+        // compliance value is "this session completed, for this subject, by this actor"; the score
+        // lives in lia_assessment_sessions, which IS erasable.
+        var metadata = row.MetadataJson ?? string.Empty;
+        Assert.DoesNotContain("globalPercentile", metadata, StringComparison.Ordinal);
+        Assert.DoesNotContain("performanceLevel", metadata, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            expected.PerformanceLevel, metadata, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            expected.GlobalPercentile.ToString(CultureInfo.InvariantCulture), metadata, StringComparison.Ordinal);
 
         // The whole point of the denylist guard: the persisted row is PII-free even though the actor
         // in scope carries a real name and email.

@@ -178,9 +178,9 @@ export function LIASubtestIntro({
       en: 'Read the premises and answer the question by selecting the correct option (A, B, or C).',
       example: (
         <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg space-y-2 text-gray-700">
-          <p className="italic">"Mateo es más lento que Liam"</p>
-          <p className="italic">"Liam es más rápido que Pedro"</p>
-          <p className="font-semibold mt-2 text-gray-900">¿Quién es el más lento?</p>
+          <p className="italic">{language === 'es' ? '"Mateo es más lento que Liam"' : '"Mateo is slower than Liam"'}</p>
+          <p className="italic">{language === 'es' ? '"Liam es más rápido que Pedro"' : '"Liam is faster than Pedro"'}</p>
+          <p className="font-semibold mt-2 text-gray-900">{language === 'es' ? '¿Quién es el más lento?' : 'Who is the slowest?'}</p>
           <p className="text-sm text-gray-500">
             {language === 'es' ? 'Respuesta: Mateo o Pedro (depende de los datos)' : 'Answer: Mateo or Pedro (depends on data)'}
           </p>
@@ -189,7 +189,7 @@ export function LIASubtestIntro({
     },
     numerical_speed: {
       es: 'Verás 3 números. Identifica cuál está más lejos del valor medio.',
-      en: "You'll see 3 numbers. Identify which one is furthest from the middle value.",
+      en: "You'll see 3 numbers. Identify which one is farther from the middle number.",
       example: (
         <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
           <div className="flex justify-center gap-8 text-2xl font-bold text-gray-900">
@@ -200,14 +200,14 @@ export function LIASubtestIntro({
           <p className="text-center mt-4 text-sm text-gray-500">
             {language === 'es'
               ? 'El valor medio es 11. |6-11|=5, |17-11|=6. Respuesta: C'
-              : 'Middle value is 11. |6-11|=5, |17-11|=6. Answer: C'}
+              : 'The middle number is 11. |6-11|=5, |17-11|=6. Answer: C'}
           </p>
         </div>
       ),
     },
     working_memory: {
       es: 'Verás 3 letras. Determina cuál letra exterior está más lejos alfabéticamente de la letra central.',
-      en: "You'll see 3 letters. Determine which outer letter is furthest alphabetically from the middle letter.",
+      en: "You'll see 3 letters. Determine which outer letter is farther alphabetically from the middle letter.",
       example: (
         <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg">
           <div className="flex justify-center gap-8 text-4xl font-mono font-bold">

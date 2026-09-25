@@ -6,14 +6,15 @@ interface WorkingMemoryItemProps {
   data: WorkingMemoryData;
   onAnswer: (answer: string) => void;
   disabled?: boolean;
+  language?: 'es' | 'en';
 }
 
-export function WorkingMemoryItem({ data, onAnswer, disabled }: WorkingMemoryItemProps) {
+export function WorkingMemoryItem({ data, onAnswer, disabled, language = 'es' }: WorkingMemoryItemProps) {
   // Guard against undefined data
   if (!data || !data.letters || data.letters.length < 3) {
     return (
       <div className="flex items-center justify-center p-8">
-        <p className="text-gray-500">Loading question...</p>
+        <p className="text-gray-500">{language === 'es' ? 'Cargando pregunta...' : 'Loading question...'}</p>
       </div>
     );
   }
@@ -25,7 +26,9 @@ export function WorkingMemoryItem({ data, onAnswer, disabled }: WorkingMemoryIte
     <div className="flex flex-col items-center space-y-8">
       {/* Instructions */}
       <p className="text-gray-600 dark:text-gray-400 text-center">
-        ¿Cuál letra exterior está más lejos alfabéticamente de la letra del centro?
+        {language === 'es'
+          ? '¿Cuál letra exterior está más lejos alfabéticamente de la letra del centro?'
+          : 'Which outer letter is alphabetically farther from the middle letter?'}
       </p>
 
       {/* Letters display */}
