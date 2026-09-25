@@ -9,8 +9,12 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
+        // FormMaps navy (#102B47), not indigo-600. The indigo came from the generic "Micro SaaS"
+        // design system that was layered in -- one of four stacked here -- and has nothing to do
+        // with this brand. The primary button is the single most repeated brand surface in the
+        // product, so it was the loudest wrong colour on every screen. Navy on white is 14.4:1.
         default:
-          "bg-indigo-600 text-white hover:bg-indigo-700",
+          "bg-[#102B47] text-white hover:bg-[#0B1F34]",
         destructive:
           "bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600/20",
         // Token-based, NOT hardcoded slate: slate-900 text is invisible on the
@@ -21,7 +25,7 @@ const buttonVariants = cva(
           "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost:
           "hover:bg-accent text-foreground",
-        link: "text-indigo-600 underline-offset-4 hover:underline",
+        link: "text-[#102B47] underline-offset-4 hover:underline",
       },
       size: {
         default: "h-9 px-4 py-2 has-[>svg]:px-3",
