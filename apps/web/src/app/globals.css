@@ -128,6 +128,23 @@
   html,
   body {
     height: 100%;
+  }
+
+  /*
+   * Scroll locking belongs to the app shell, not to every page.
+   *
+   * This used to be `html, body { overflow: hidden }`, unconditionally. AppShell manages its own
+   * scrolling inside a 100dvh column, so inside the shell that was invisible -- but the 17 routes
+   * that render WITHOUT the shell (/privacy, /terms, /login, the onboarding and 360-evaluator
+   * pages) have no scroll container of their own, so everything below the first viewport was
+   * unreachable. /privacy and /terms are the ones that matter: a legal notice nobody can read
+   * past the first screen has not been given.
+   *
+   * `:has(.admin-twenty)` is the shell's own root class, so the lock now follows the shell rather
+   * than the document, with no change to any component. A browser without :has() support simply
+   * scrolls -- which is the safe direction to fail.
+   */
+  body:has(.admin-twenty) {
     overflow: hidden;
   }
   body {
