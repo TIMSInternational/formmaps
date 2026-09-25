@@ -193,7 +193,7 @@ export function InviteUserWizard({ onInvited }: InviteUserWizardProps) {
 
       <DialogContent className="overflow-hidden rounded-2xl border-gray-100 p-0 shadow-2xl sm:max-w-[560px]">
         <DialogHeader className="flex flex-col items-center border-b border-gray-100 bg-gray-50/50 p-6 text-center">
-          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[#2E9098]/10 text-[#2E9098] shadow-sm ring-4 ring-white">
+          <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] shadow-sm ring-4 ring-white">
             <UserPlus className="h-6 w-6" />
           </div>
           <DialogTitle className="text-xl font-bold text-gray-900">
@@ -219,7 +219,7 @@ export function InviteUserWizard({ onInvited }: InviteUserWizardProps) {
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   placeholder={t("admin.users.invite.person.namePlaceholder")}
-                  className="h-11 rounded-xl border-gray-200 transition-all focus:border-[#2E9098] focus:ring-[#2E9098]/20"
+                  className="h-11 rounded-xl border-gray-200 transition-all focus:border-[var(--admin-accent-blue)] focus:ring-[var(--admin-accent-blue)]/20"
                 />
               </div>
 
@@ -234,7 +234,7 @@ export function InviteUserWizard({ onInvited }: InviteUserWizardProps) {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder={t("admin.users.invite.person.emailPlaceholder")}
                   aria-invalid={email.length > 0 && !emailValid}
-                  className="h-11 rounded-xl border-gray-200 transition-all focus:border-[#2E9098] focus:ring-[#2E9098]/20"
+                  className="h-11 rounded-xl border-gray-200 transition-all focus:border-[var(--admin-accent-blue)] focus:ring-[var(--admin-accent-blue)]/20"
                 />
                 {email.length > 0 && !emailValid && (
                   <p className="ml-1 text-xs text-red-500">
@@ -260,14 +260,14 @@ export function InviteUserWizard({ onInvited }: InviteUserWizardProps) {
                         className={[
                           "flex items-start gap-3 rounded-xl border p-3 text-left transition-all",
                           active
-                            ? "border-[#2E9098] bg-[#2E9098]/5 ring-1 ring-[#2E9098]/20"
+                            ? "border-[var(--admin-accent-blue)] bg-[var(--admin-accent-blue)]/5 ring-1 ring-[var(--admin-accent-blue)]/20"
                             : "border-gray-200 bg-white hover:border-gray-300",
                         ].join(" ")}
                       >
                         <span
                           className={[
                             "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                            active ? "bg-[#2E9098] text-white" : "bg-gray-100 text-gray-500",
+                            active ? "bg-[var(--admin-accent-blue)] text-white" : "bg-gray-100 text-gray-500",
                           ].join(" ")}
                         >
                           <Icon className="h-4 w-4" />
@@ -296,7 +296,7 @@ export function InviteUserWizard({ onInvited }: InviteUserWizardProps) {
                   value={schoolQuery}
                   onChange={(e) => setSchoolQuery(e.target.value)}
                   placeholder={t("admin.users.invite.school.searchPlaceholder")}
-                  className="h-11 rounded-xl border-gray-200 pl-9 transition-all focus:border-[#2E9098] focus:ring-[#2E9098]/20"
+                  className="h-11 rounded-xl border-gray-200 pl-9 transition-all focus:border-[var(--admin-accent-blue)] focus:ring-[var(--admin-accent-blue)]/20"
                 />
               </div>
 
@@ -330,14 +330,14 @@ export function InviteUserWizard({ onInvited }: InviteUserWizardProps) {
                         blocked
                           ? "cursor-not-allowed border-gray-200 bg-gray-50 opacity-60"
                           : active
-                            ? "border-[#2E9098] bg-[#2E9098]/5 ring-1 ring-[#2E9098]/20"
+                            ? "border-[var(--admin-accent-blue)] bg-[var(--admin-accent-blue)]/5 ring-1 ring-[var(--admin-accent-blue)]/20"
                             : "border-gray-200 bg-white hover:border-gray-300",
                       ].join(" ")}
                     >
                       <span
                         className={[
                           "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg",
-                          active ? "bg-[#2E9098] text-white" : "bg-gray-100 text-gray-500",
+                          active ? "bg-[var(--admin-accent-blue)] text-white" : "bg-gray-100 text-gray-500",
                         ].join(" ")}
                       >
                         <Building2 className="h-4 w-4" />
@@ -386,8 +386,8 @@ export function InviteUserWizard({ onInvited }: InviteUserWizardProps) {
                   sub={selectedSchool.adminEmail}
                 />
               </dl>
-              <div className="flex items-start gap-2 rounded-xl bg-[#2E9098]/5 p-3 text-xs text-gray-600">
-                <Send className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#2E9098]" />
+              <div className="flex items-start gap-2 rounded-xl bg-[var(--admin-accent-blue)]/5 p-3 text-xs text-gray-600">
+                <Send className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--admin-accent-blue)]" />
                 <p>{t("admin.users.invite.review.emailNote", { email: email.trim() })}</p>
               </div>
             </div>

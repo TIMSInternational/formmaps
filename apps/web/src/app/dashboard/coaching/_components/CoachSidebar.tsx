@@ -76,7 +76,7 @@ function NavItem({ href, icon: Icon, label, active, collapsed, colors }: {
         gap: collapsed ? 0 : 8, height: 28,
         padding: collapsed ? "0 4px" : "0 8px", borderRadius: 4,
         fontSize: 13, color: active ? "#fff" : colors.fontSecondary,
-        background: active ? "#2E9098" : "transparent",
+        background: active ? "var(--admin-accent-blue)" : "transparent",
         textDecoration: "none", transition: "background 0.1s ease", cursor: "pointer",
       }}
       onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = colors.hoverBg; }}
@@ -144,7 +144,7 @@ export function CoachSidebar() {
     fontTertiary: themeColors.font.tertiary,
     fontLight: themeColors.font.sectionLabel,
     hoverBg: themeColors.bg.hover,
-    activeBg: "#2E9098",
+    activeBg: "var(--admin-accent-blue)",
   };
 
   const changeTheme = (newMode: ThemeMode) => {
@@ -182,7 +182,7 @@ export function CoachSidebar() {
         <img src="/fm-icon.png" alt="FormMaps" style={{ height: 24, width: "auto", flexShrink: 0 }} />
         {!collapsed && (
           <span style={{ fontSize: 15, fontWeight: 700, color: C.fontPrimary, letterSpacing: "-0.02em", flex: 1 }}>
-            <span style={{ color: "#102B47" }}>FORM</span><span style={{ color: "#2E9098" }}>MAPS</span>
+            <span style={{ color: "#102B47" }}>FORM</span><span style={{ color: "var(--admin-accent-blue)" }}>MAPS</span>
           </span>
         )}
         {!collapsed && (

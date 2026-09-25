@@ -149,7 +149,7 @@ export function MILResults({ className, milDataProp }: MILResultsProps) {
       : null,
     fill:
       (subtest as any).color ||
-      ["#2E9098", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"][index % 5],
+      ["var(--admin-accent-blue)", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6"][index % 5],
   }));
 
   return (

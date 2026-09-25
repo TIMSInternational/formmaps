@@ -74,10 +74,10 @@ export default function AdminTransactionsPage() {
       value: data?.total?.toLocaleString() || "0",
       growth: null,
       icon: Receipt,
-      color: "text-[#2E9098]",
-      bg: "bg-[#2E9098]/10",
-      border: "border-[#2E9098]/20",
-      blobColor: "bg-[#2E9098]"
+      color: "text-[var(--admin-accent-blue)]",
+      bg: "bg-[var(--admin-accent-blue)]/10",
+      border: "border-[var(--admin-accent-blue)]/20",
+      blobColor: "bg-[var(--admin-accent-blue)]"
     },
     {
       label: tPO("transactions.stats.activeUsers"),

@@ -23,7 +23,7 @@ import { PasswordInput } from "./_components/PasswordInput";
 import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
 
 const inputStyle = { background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" } as const;
-const focusOn = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = "#2E9098"; };
+const focusOn = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue)"; };
 const focusOff = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = "#E0E0E0"; };
 
 export default function SignupPage() {
@@ -146,7 +146,7 @@ export default function SignupPage() {
             <img src="/fm-icon.png" alt="FormMaps" className="h-10 w-auto" />
             <div>
               <span className="text-xl font-bold" style={{ color: "#102B47" }}>FORM</span>
-              <span className="text-xl font-bold" style={{ color: "#2E9098" }}>MAPS</span>
+              <span className="text-xl font-bold" style={{ color: "var(--admin-accent-blue)" }}>MAPS</span>
             </div>
           </div>
 
@@ -243,9 +243,9 @@ export default function SignupPage() {
                     className="w-3.5 h-3.5 mt-0.5" style={{ accentColor: "#102B47" }} />
                   <label htmlFor="terms" className="text-xs leading-5" style={{ color: "#666" }}>
                     {t("auth.signup.agreePrefix")}{" "}
-                    <Link href="/terms" className="font-medium no-underline" style={{ color: "#2E9098" }}>{t("auth.signup.termsOfService")}</Link>{" "}
+                    <Link href="/terms" className="font-medium no-underline" style={{ color: "var(--admin-accent-blue)" }}>{t("auth.signup.termsOfService")}</Link>{" "}
                     {t("auth.signup.and")}{" "}
-                    <Link href="/privacy" className="font-medium no-underline" style={{ color: "#2E9098" }}>{t("auth.signup.privacyPolicy")}</Link>
+                    <Link href="/privacy" className="font-medium no-underline" style={{ color: "var(--admin-accent-blue)" }}>{t("auth.signup.privacyPolicy")}</Link>
                   </label>
                 </div>
                 {errors.acceptTerms && (
@@ -280,7 +280,7 @@ export default function SignupPage() {
 
           <p className="mt-8 text-center text-sm" style={{ color: "#666" }}>
             {t("auth.signup.haveAccountText")}{" "}
-            <Link href="/login" className="font-medium no-underline" style={{ color: "#2E9098" }}>
+            <Link href="/login" className="font-medium no-underline" style={{ color: "var(--admin-accent-blue)" }}>
               {t("auth.signup.signIn")}
             </Link>
           </p>

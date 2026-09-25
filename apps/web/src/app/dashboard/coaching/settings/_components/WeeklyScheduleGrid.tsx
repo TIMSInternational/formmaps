@@ -107,7 +107,7 @@ export function WeeklyScheduleGrid({
                 variant="ghost"
                 size="sm"
                 onClick={() => onAddTimeSlot(dayIndex)}
-                className="text-[#2E9098] hover:text-[#2E9098] hover:bg-[#2E9098]/10 font-medium text-xs h-8 px-2"
+                className="text-[var(--admin-accent-blue)] hover:text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/10 font-medium text-xs h-8 px-2"
               >
                 <Plus className="h-3 w-3 mr-1.5" />
                 Add Interval

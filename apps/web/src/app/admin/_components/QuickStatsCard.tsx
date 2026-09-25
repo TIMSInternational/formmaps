@@ -22,7 +22,7 @@ export function QuickStatsCard() {
       label: t("quickStats.activeSchools"),
       value: (s?.activeSchools ?? s?.ActiveSchools)?.toLocaleString() || "—",
       icon: School,
-      color: "#2E9098",
+      color: "var(--admin-accent-blue)",
     },
     {
       label: t("quickStats.totalCoaches"),

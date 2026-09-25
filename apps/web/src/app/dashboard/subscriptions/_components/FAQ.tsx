@@ -122,7 +122,7 @@ export function FAQ({ className }: FAQProps) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.6 }}
-        className="text-center mt-12 p-8 bg-gradient-to-r from-[#2E9098]/10 to-purple-50 rounded-2xl border border-[#2E9098]/20"
+        className="text-center mt-12 p-8 bg-gradient-to-r from-[var(--admin-accent-blue)]/10 to-purple-50 rounded-2xl border border-[var(--admin-accent-blue)]/20"
       >
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
           Still have questions?
@@ -130,7 +130,7 @@ export function FAQ({ className }: FAQProps) {
         <p className="text-gray-600 mb-4">
           Our support team is here to help you choose the right plan
         </p>
-        <button className="bg-[#2E9098] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#2E9098]/90 transition-colors">
+        <button className="bg-[var(--admin-accent-blue)] text-white px-6 py-3 rounded-lg font-medium hover:bg-[var(--admin-accent-blue)]/90 transition-colors">
           Contact Support
         </button>
       </motion.div>

@@ -108,7 +108,7 @@ export function GraduationTargetCard({
       <section className="rounded-xl p-5 bg-[var(--admin-bg-panel)] border border-[var(--admin-border-default)]">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-start gap-3 min-w-0">
-            <Target className="h-5 w-5 mt-0.5 shrink-0 text-[#2E9098]" />
+            <Target className="h-5 w-5 mt-0.5 shrink-0 text-[var(--admin-accent-blue)]" />
             <div className="min-w-0">
               <h2 className="text-sm font-semibold text-[var(--admin-font-primary)]">
                 Where do you want to graduate to?
@@ -138,7 +138,7 @@ export function GraduationTargetCard({
     <section className="rounded-xl p-5 bg-[var(--admin-bg-panel)] border border-[var(--admin-border-default)]">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-start gap-3 min-w-0">
-          <GraduationCap className="h-5 w-5 mt-0.5 shrink-0 text-[#2E9098]" />
+          <GraduationCap className="h-5 w-5 mt-0.5 shrink-0 text-[var(--admin-accent-blue)]" />
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-sm font-semibold text-[var(--admin-font-primary)]">

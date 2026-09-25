@@ -98,7 +98,7 @@ function TeacherOnboardingContent() {
   // No token
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[#2E9098]/10 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[var(--admin-accent-blue)]/10 flex items-center justify-center p-4">
         <Card className="max-w-md w-full border-0 shadow-xl">
           <CardContent className="pt-10 pb-8 text-center">
             <AlertTriangle className="h-12 w-12 text-orange-400 mx-auto mb-4" />
@@ -120,9 +120,9 @@ function TeacherOnboardingContent() {
   // Verifying
   if (verifying) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[#2E9098]/10 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[var(--admin-accent-blue)]/10 flex items-center justify-center p-4">
         <div className="space-y-4 text-center">
-          <Loader2 className="h-10 w-10 mx-auto animate-spin" style={{ color: "#2E9098" }} />
+          <Loader2 className="h-10 w-10 mx-auto animate-spin" style={{ color: "var(--admin-accent-blue)" }} />
           <p className="text-gray-500">{t("onboarding.states.verifying")}</p>
         </div>
       </div>
@@ -132,7 +132,7 @@ function TeacherOnboardingContent() {
   // Token invalid or expired
   if (tokenInvalid) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[#2E9098]/10 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[var(--admin-accent-blue)]/10 flex items-center justify-center p-4">
         <Card className="max-w-md w-full border-0 shadow-xl">
           <CardContent className="pt-10 pb-8 text-center">
             <AlertTriangle className="h-12 w-12 text-red-400 mx-auto mb-4" />
@@ -155,7 +155,7 @@ function TeacherOnboardingContent() {
   // Success
   if (done) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[#2E9098]/10 flex items-center justify-center p-4">
+      <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[var(--admin-accent-blue)]/10 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -183,7 +183,7 @@ function TeacherOnboardingContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[#2E9098]/10 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[var(--admin-accent-blue)]/10 flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -213,7 +213,7 @@ function TeacherOnboardingContent() {
               <CardContent className="pt-4 pb-4">
                 <div className="flex flex-wrap gap-x-6 gap-y-3 items-center">
                   <div className="flex items-center gap-2">
-                    <School className="h-4 w-4" style={{ color: "#2E9098" }} />
+                    <School className="h-4 w-4" style={{ color: "var(--admin-accent-blue)" }} />
                     <div>
                       <p className="text-[10px] text-gray-500 uppercase tracking-wide">
                         {t("onboarding.inviteDetails.schoolLabel")}
@@ -225,7 +225,7 @@ function TeacherOnboardingContent() {
                   </div>
 
                   {tokenData.email && (
-                    <Badge className="self-center" style={{ background: "rgba(46,144,152,0.12)", color: "#2E9098", borderColor: "rgba(46,144,152,0.20)" }}>
+                    <Badge className="self-center" style={{ background: "rgba(46,144,152,0.12)", color: "var(--admin-accent-blue)", borderColor: "rgba(46,144,152,0.20)" }}>
                       {tokenData.email}
                     </Badge>
                   )}
@@ -346,7 +346,7 @@ function TeacherOnboardingContent() {
 
               <p className="text-xs text-center text-gray-400 pt-1">
                 {t("onboarding.form.signInPrompt")}{" "}
-                <Link href="/login" style={{ color: "#2E9098" }} className="hover:underline">
+                <Link href="/login" style={{ color: "var(--admin-accent-blue)" }} className="hover:underline">
                   {t("onboarding.form.signInLink")}
                 </Link>
               </p>
@@ -362,8 +362,8 @@ export default function TeacherOnboardingPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[#2E9098]/10 flex items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin" style={{ color: "#2E9098" }} />
+        <div className="min-h-screen bg-gradient-to-br from-[#F2F0E7] via-white to-[var(--admin-accent-blue)]/10 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin" style={{ color: "var(--admin-accent-blue)" }} />
         </div>
       }
     >

@@ -119,7 +119,7 @@ export default function LoginPage() {
             <img src="/fm-icon.png" alt="FormMaps" className="h-10 w-auto" />
             <div>
               <span className="text-xl font-bold" style={{ color: "#102B47" }}>FORM</span>
-              <span className="text-xl font-bold" style={{ color: "#2E9098" }}>MAPS</span>
+              <span className="text-xl font-bold" style={{ color: "var(--admin-accent-blue)" }}>MAPS</span>
             </div>
           </div>
 
@@ -148,7 +148,7 @@ export default function LoginPage() {
                         {...field}
                         className="h-11 px-3 text-sm rounded-lg border outline-none transition-colors w-full"
                         style={{ background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" }}
-                        onFocus={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
+                        onFocus={(e) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue)"; }}
                         onBlur={(e) => { e.currentTarget.style.borderColor = "#E0E0E0"; }}
                       />
                     </FormControl>
@@ -167,7 +167,7 @@ export default function LoginPage() {
                       <FormLabel className="text-xs font-medium" style={{ color: "#333" }}>
                         {t("auth.login.passwordLabel")}
                       </FormLabel>
-                      <Link href="/forgot-password" className="text-xs no-underline" style={{ color: "#2E9098" }}>
+                      <Link href="/forgot-password" className="text-xs no-underline" style={{ color: "var(--admin-accent-blue)" }}>
                         {t("auth.login.forgotPassword")}
                       </Link>
                     </div>
@@ -179,7 +179,7 @@ export default function LoginPage() {
                           {...field}
                           className="h-11 px-3 pr-10 text-sm rounded-lg border outline-none transition-colors w-full"
                           style={{ background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" }}
-                          onFocus={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
+                          onFocus={(e) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue)"; }}
                           onBlur={(e) => { e.currentTarget.style.borderColor = "#E0E0E0"; }}
                         />
                       </FormControl>
@@ -236,7 +236,7 @@ export default function LoginPage() {
 
           <p className="mt-8 text-center text-sm" style={{ color: "#666" }}>
             {t("auth.login.noAccountText")}{" "}
-            <Link href="/signup" className="font-medium no-underline" style={{ color: "#2E9098" }}>
+            <Link href="/signup" className="font-medium no-underline" style={{ color: "var(--admin-accent-blue)" }}>
               {t("auth.login.signUp")}
             </Link>
           </p>

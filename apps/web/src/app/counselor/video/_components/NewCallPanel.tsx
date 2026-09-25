@@ -68,12 +68,12 @@ export function NewCallPanel({
         {/* Mode Toggle */}
         <div style={{ display: "flex", gap: 4, marginBottom: 12, padding: 3, borderRadius: 8, background: "var(--admin-bg-hover)" }}>
           <button onClick={() => { onModeChange("call"); onClearParticipant(); }}
-            style={{ flex: 1, padding: "7px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", background: mode === "call" ? "#2E9098" : "transparent", color: mode === "call" ? "#fff" : "var(--admin-font-tertiary)", transition: "all 0.15s" }}>
+            style={{ flex: 1, padding: "7px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", background: mode === "call" ? "var(--admin-accent-blue)" : "transparent", color: mode === "call" ? "#fff" : "var(--admin-font-tertiary)", transition: "all 0.15s" }}>
             <Video style={{ width: 14, height: 14, display: "inline", verticalAlign: -2, marginRight: 6 }} />
             Call Now
           </button>
           <button onClick={() => onModeChange("schedule")}
-            style={{ flex: 1, padding: "7px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", background: mode === "schedule" ? "#2E9098" : "transparent", color: mode === "schedule" ? "#fff" : "var(--admin-font-tertiary)", transition: "all 0.15s" }}>
+            style={{ flex: 1, padding: "7px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", background: mode === "schedule" ? "var(--admin-accent-blue)" : "transparent", color: mode === "schedule" ? "#fff" : "var(--admin-font-tertiary)", transition: "all 0.15s" }}>
             <Calendar style={{ width: 14, height: 14, display: "inline", verticalAlign: -2, marginRight: 6 }} />
             Schedule
           </button>
@@ -107,7 +107,7 @@ export function NewCallPanel({
                     <div style={{ fontSize: 14, fontWeight: 500 }}>{c.name}</div>
                     <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{c.roleName?.replace("_", " ")} · {c.email}</div>
                   </div>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 6, background: mode === "call" ? "linear-gradient(135deg, #22c55e, #16a34a)" : "#2E9098", color: "#fff", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 6, background: mode === "call" ? "linear-gradient(135deg, #22c55e, #16a34a)" : "var(--admin-accent-blue)", color: "#fff", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
                     {mode === "call" ? <Video style={{ width: 14, height: 14 }} /> : <Calendar style={{ width: 14, height: 14 }} />}
                     {mode === "call" ? "Call" : "Select"}
                   </div>
@@ -166,7 +166,7 @@ export function NewCallPanel({
 
             {/* Submit */}
             <button onClick={onSchedule} disabled={!scheduleDate || scheduling}
-              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 20px", borderRadius: 10, border: "none", background: !scheduleDate ? "var(--admin-bg-hover)" : "#2E9098", color: !scheduleDate ? "var(--admin-font-tertiary)" : "#fff", cursor: !scheduleDate || scheduling ? "default" : "pointer", fontSize: 14, fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s" }}>
+              style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 20px", borderRadius: 10, border: "none", background: !scheduleDate ? "var(--admin-bg-hover)" : "var(--admin-accent-blue)", color: !scheduleDate ? "var(--admin-font-tertiary)" : "#fff", cursor: !scheduleDate || scheduling ? "default" : "pointer", fontSize: 14, fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s" }}>
               <CalendarClock style={{ width: 16, height: 16 }} />
               {scheduling ? "Scheduling..." : "Schedule Call"}
             </button>

@@ -102,7 +102,7 @@ export function CounselorCard({
         {/* Stats row */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 16 }}>
           {[
-            { icon: Users, label: t("counselorWorkload.card.students"), value: counselor.studentCount, color: "#2E9098" },
+            { icon: Users, label: t("counselorWorkload.card.students"), value: counselor.studentCount, color: "var(--admin-accent-blue)" },
             { icon: CalendarCheck, label: t("counselorWorkload.card.sessions"), value: counselor.sessionCount, color: "#14b8a6" },
             { icon: FileText, label: t("counselorWorkload.card.notes"), value: counselor.noteCount, color: "#f59e0b" },
           ].map((stat) => (
@@ -134,7 +134,7 @@ export function CounselorCard({
             onClick={() => setExpanded(!expanded)}
             style={{
               display: "flex", alignItems: "center", gap: 6, marginTop: 14,
-              fontSize: 12, fontWeight: 600, color: "var(--admin-accent-blue, #2E9098)",
+              fontSize: 12, fontWeight: 600, color: "var(--admin-accent-blue)",
               background: "none", border: "none", cursor: "pointer", padding: 0, fontFamily: "inherit",
             }}
           >

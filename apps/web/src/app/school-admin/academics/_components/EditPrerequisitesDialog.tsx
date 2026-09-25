@@ -23,7 +23,7 @@ const BTN_PRIMARY: React.CSSProperties = {
 const CHIP: React.CSSProperties = {
   display: "inline-flex", alignItems: "center", gap: 6, padding: "4px 8px",
   borderRadius: 6, fontSize: 12, fontFamily: "monospace", fontWeight: 600,
-  background: "rgba(46,144,152,0.08)", color: "#2E9098", border: "1px solid rgba(46,144,152,0.2)",
+  background: "rgba(46,144,152,0.08)", color: "var(--admin-accent-blue)", border: "1px solid rgba(46,144,152,0.2)",
 };
 
 const norm = (code: string) => code.trim().toUpperCase();
@@ -114,7 +114,7 @@ export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDi
 
         {catalogLoading ? (
           <div className="flex justify-center py-10">
-            <Loader2 style={{ width: 24, height: 24, color: "#2E9098", animation: "spin 1s linear infinite" }} />
+            <Loader2 style={{ width: 24, height: 24, color: "var(--admin-accent-blue)", animation: "spin 1s linear infinite" }} />
           </div>
         ) : (
           <div className="space-y-4">

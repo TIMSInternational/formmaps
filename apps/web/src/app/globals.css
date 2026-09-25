@@ -116,6 +116,21 @@
   --sidebar-border: #D4D4D8;
   --sidebar-ring: #2E9098;
   --brand-blue: #2E9098;
+
+  /*
+   * --admin-accent-blue, defined statically so it resolves on EVERY page.
+   *
+   * AdminThemeProvider sets the --admin-* custom properties at runtime, but it only mounts inside
+   * the role layouts (dashboard, admin, counselor, school-admin, teacher, parent, careers). The 17
+   * routes that render WITHOUT a shell -- /login, /privacy, /terms, onboarding, the 360 evaluator --
+   * never get it, so a component reading var(--admin-accent-blue) there resolved to nothing and the
+   * declaration was dropped: teal links rendered near-black on the login screen.
+   *
+   * This is the light-theme value from colorsLight.accent.blue. The provider still overrides it per
+   * theme wherever it mounts, so the shell keeps its dark-mode teal; this is only the floor for
+   * pages that have no provider above them.
+   */
+  --admin-accent-blue: #21707B;
   --brand-yellow: #FFD23F;
   --brand-black: #102B47;
   --brand-white: #FFFFFF;

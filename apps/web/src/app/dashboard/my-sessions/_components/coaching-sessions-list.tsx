@@ -139,7 +139,7 @@ export function CoachingSessionsList({
                           </p>
                         )}
                         <div className="flex items-center gap-2 mt-1.5">
-                          <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-[#2E9098]/30 bg-[#2E9098]/10 text-[#2E9098]">
+                          <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-[var(--admin-accent-blue)]/30 bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)]">
                             {session.topic}
                           </span>
                           {getStatusBadge(session.status, t)}

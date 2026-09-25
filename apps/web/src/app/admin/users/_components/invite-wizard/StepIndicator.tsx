@@ -27,9 +27,9 @@ export function StepIndicator({ current, labels }: StepIndicatorProps) {
                 className={[
                   "flex h-8 w-8 items-center justify-center rounded-full text-[13px] font-bold transition-all",
                   done
-                    ? "bg-[#2E9098] text-white"
+                    ? "bg-[var(--admin-accent-blue)] text-white"
                     : active
-                      ? "bg-[#2E9098] text-white ring-4 ring-[#2E9098]/15"
+                      ? "bg-[var(--admin-accent-blue)] text-white ring-4 ring-[var(--admin-accent-blue)]/15"
                       : "bg-gray-100 text-gray-400 ring-1 ring-gray-200",
                 ].join(" ")}
               >
@@ -38,7 +38,7 @@ export function StepIndicator({ current, labels }: StepIndicatorProps) {
               <span
                 className={[
                   "whitespace-nowrap text-[11px]",
-                  active ? "font-semibold text-gray-900" : done ? "text-[#2E9098]" : "text-gray-400",
+                  active ? "font-semibold text-gray-900" : done ? "text-[var(--admin-accent-blue)]" : "text-gray-400",
                 ].join(" ")}
               >
                 {label}
@@ -49,7 +49,7 @@ export function StepIndicator({ current, labels }: StepIndicatorProps) {
                 aria-hidden="true"
                 className={[
                   "mb-5 mx-2 h-0.5 w-10 transition-colors sm:w-14",
-                  done ? "bg-[#2E9098]" : "bg-gray-200",
+                  done ? "bg-[var(--admin-accent-blue)]" : "bg-gray-200",
                 ].join(" ")}
               />
             )}

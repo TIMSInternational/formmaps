@@ -96,7 +96,7 @@ export function UsersTable({ users, loading, page, totalPages, onPageChange, onV
                 </TableCell>
                 <TableCell className="py-4">
                   {user.subscriptionStatus ? (
-                    <Badge variant="outline" className="capitalize border-[#2E9098]/20 text-[#2E9098] bg-[#2E9098]/10">
+                    <Badge variant="outline" className="capitalize border-[var(--admin-accent-blue)]/20 text-[var(--admin-accent-blue)] bg-[var(--admin-accent-blue)]/10">
                       {user.subscriptionStatus}
                     </Badge>
                   ) : (

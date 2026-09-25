@@ -289,7 +289,7 @@ export function CoachDashboard() {
         className="grid grid-cols-2 lg:grid-cols-4 gap-4"
       >
         {[
-          { label: t("coach.stats.totalSessions"), value: upcomingSessions.length + pastSessions.length, icon: CalendarDays, iconColor: "text-[#2E9098]", iconBg: "bg-[#2E9098]/10" },
+          { label: t("coach.stats.totalSessions"), value: upcomingSessions.length + pastSessions.length, icon: CalendarDays, iconColor: "text-[var(--admin-accent-blue)]", iconBg: "bg-[var(--admin-accent-blue)]/10" },
           { label: t("coach.stats.activeStudents"), value: students.length, icon: Users, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
           { label: t("coach.sessions.upcoming"), value: upcomingSessions.length, icon: Clock, iconColor: "text-purple-500", iconBg: "bg-purple-500/10" },
           { label: t("coach.sessions.completed"), value: pastSessions.length, icon: Star, iconColor: "text-amber-500", iconBg: "bg-amber-500/10" },
@@ -352,7 +352,7 @@ export function CoachDashboard() {
                         <div className="flex items-center gap-3 flex-1 min-w-0">
                           <Avatar className="h-10 w-10 border border-[var(--border)]">
                             <AvatarImage src={session.studentImage} />
-                            <AvatarFallback className="bg-[#2E9098]/10 text-[#2E9098] font-semibold text-sm">
+                            <AvatarFallback className="bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] font-semibold text-sm">
                               {session.studentName?.charAt(0) || "S"}
                             </AvatarFallback>
                           </Avatar>
@@ -505,10 +505,10 @@ export function CoachDashboard() {
                     week: "flex justify-between w-full mb-2",
                     day: "h-9 w-9 text-center text-sm relative flex items-center justify-center p-0",
                     day_button: cn(
-                      "h-9 w-9 p-0 font-normal rounded-full transition-all duration-200 hover:bg-[#2E9098]/10 hover:text-[#2E9098] focus:outline-none",
+                      "h-9 w-9 p-0 font-normal rounded-full transition-all duration-200 hover:bg-[var(--admin-accent-blue)]/10 hover:text-[var(--admin-accent-blue)] focus:outline-none",
                       "aria-selected:opacity-100",
                     ),
-                    selected: "bg-[#2E9098] !text-white hover:!bg-[#2E9098] hover:!text-white shadow-md font-semibold",
+                    selected: "bg-[var(--admin-accent-blue)] !text-white hover:!bg-[var(--admin-accent-blue)] hover:!text-white shadow-md font-semibold",
                     today: "bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))] text-foreground font-semibold",
                     outside: "text-muted-foreground opacity-50 pointer-events-none",
                     disabled: "text-muted-foreground opacity-50 cursor-not-allowed",
@@ -523,7 +523,7 @@ export function CoachDashboard() {
               <h3 className="font-semibold text-foreground mb-4">{t("coach.sessions.availableTimes")}</h3>
               {isLoadingSlots ? (
                 <div className="flex-1 flex items-center justify-center">
-                  <Loader2 className="h-6 w-6 animate-spin text-[#2E9098]" />
+                  <Loader2 className="h-6 w-6 animate-spin text-[var(--admin-accent-blue)]" />
                 </div>
               ) : availableSlots.length > 0 ? (
                 <div className="grid grid-cols-2 gap-2 flex-1 content-start">
@@ -531,7 +531,7 @@ export function CoachDashboard() {
                     <Button
                       key={slot}
                       variant={selectedTime === slot ? "default" : "outline"}
-                      className={cn("h-11 rounded-xl font-medium", selectedTime === slot && "bg-[#2E9098] text-white border-[#2E9098]")}
+                      className={cn("h-11 rounded-xl font-medium", selectedTime === slot && "bg-[var(--admin-accent-blue)] text-white border-[var(--admin-accent-blue)]")}
                       onClick={() => setSelectedTime(slot)}
                     >
                       {slot}

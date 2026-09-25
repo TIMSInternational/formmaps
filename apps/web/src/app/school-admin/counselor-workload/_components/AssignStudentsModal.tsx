@@ -187,7 +187,7 @@ export function AssignStudentsModal({
             disabled={selected.size === 0 || assigning}
             style={{
               padding: "8px 16px", borderRadius: 8, fontSize: 13, fontWeight: 600,
-              background: selected.size === 0 || assigning ? "var(--admin-bg-hover)" : "#2E9098",
+              background: selected.size === 0 || assigning ? "var(--admin-bg-hover)" : "var(--admin-accent-blue)",
               color: selected.size === 0 || assigning ? "var(--admin-font-tertiary)" : "#fff",
               border: "none", cursor: selected.size === 0 || assigning ? "not-allowed" : "pointer",
               fontFamily: "inherit",

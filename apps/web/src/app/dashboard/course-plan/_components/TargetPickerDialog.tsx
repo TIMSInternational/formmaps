@@ -114,7 +114,7 @@ export function TargetPickerDialog({
                       className="w-full flex items-center justify-between text-left text-xs"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        <GraduationCap className="h-4 w-4 shrink-0 text-[#2E9098]" />
+                        <GraduationCap className="h-4 w-4 shrink-0 text-[var(--admin-accent-blue)]" />
                         <div className="min-w-0">
                           <p className="font-medium truncate text-[var(--admin-font-primary)]">
                             {rec.university.name}
@@ -125,7 +125,7 @@ export function TargetPickerDialog({
                         </div>
                       </div>
                       {isSelected && (
-                        <CheckCircle2 className="h-4 w-4 shrink-0 text-[#2E9098]" />
+                        <CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--admin-accent-blue)]" />
                       )}
                     </button>
                     {isSelected && rec.recommendedPrograms?.length > 0 && (
@@ -138,7 +138,7 @@ export function TargetPickerDialog({
                             className={cn(
                               "text-[10px] px-2 py-1 rounded-full border",
                               major === p.name
-                                ? "bg-[#102B47] text-white border-[#2E9098]"
+                                ? "bg-[#102B47] text-white border-[var(--admin-accent-blue)]"
                                 : "border-[var(--admin-border-default)] text-[var(--admin-font-secondary)] hover:bg-[var(--admin-bg-hover)]",
                             )}
                           >
@@ -188,7 +188,7 @@ export function TargetPickerDialog({
                       {u.name}
                     </span>
                     {selected?.id === u.id && (
-                      <CheckCircle2 className="h-4 w-4 shrink-0 text-[#2E9098]" />
+                      <CheckCircle2 className="h-4 w-4 shrink-0 text-[var(--admin-accent-blue)]" />
                     )}
                   </button>
                 ))
