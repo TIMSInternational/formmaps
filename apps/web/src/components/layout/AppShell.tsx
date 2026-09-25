@@ -2,6 +2,7 @@
 
 import { SidePanelContextProvider, SidePanelRenderer } from "@/components/side-panel/SidePanel";
 import { PageTopBar } from "@/components/layout/PageTopBar";
+import { SkipToMain } from "@/components/ui/accessibility";
 
 interface AppShellProps {
   sidebar: React.ReactNode;
@@ -15,6 +16,10 @@ interface AppShellProps {
 export function AppShell({ sidebar, children, sidebarClassName, overlay }: AppShellProps) {
   return (
     <SidePanelContextProvider>
+      {/* Mounted here rather than per-layout: the shell is every signed-in role's entry
+          point, and this component already existed in TWO duplicate modules imported by nothing
+          while the `#main-content` target it jumps to was right there below. */}
+      <SkipToMain />
       <div
         className="admin-twenty"
         style={{
@@ -23,8 +28,16 @@ export function AppShell({ sidebar, children, sidebarClassName, overlay }: AppSh
           height: "100dvh",
           width: "100%",
           position: "relative",
-          fontFamily: "var(--admin-font-family, Inter, -apple-system, system-ui, sans-serif)",
-          fontSize: 13,
+          // Poppins is the FormMaps brand face, and it is already loaded and mounted --
+          // `--font-poppins` is set on <body> by next/font. The old fallback chain named Inter,
+          // which is not mounted at all, so every screen fell through to system-ui: the app was
+          // not rendering in any of its own fonts. `--admin-font-family` stays as the override
+          // hook, but it is set only by generateCssVars(), which has zero call sites, so it has
+          // always resolved to nothing.
+          fontFamily: "var(--admin-font-family, var(--font-poppins, Inter, -apple-system, system-ui, sans-serif))",
+          // 13px was the Twenty-CRM density default. At 14 the body copy is readable by the
+          // parents and teachers who use this, not only by the people who built it.
+          fontSize: 14,
           background: "var(--admin-bg-noisy) repeat, var(--admin-bg-outer)",
         }}
       >

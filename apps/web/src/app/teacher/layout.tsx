@@ -31,7 +31,8 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
     <AdminThemeProvider>
       <ChatProvider>
         <ErrorBoundary>
-          <AppShell sidebar={<TeacherSidebar />}>
+          <AppShell
+      sidebarClassName="hidden md:block" sidebar={<TeacherSidebar />}>
             {children}
           </AppShell>
         </ErrorBoundary>

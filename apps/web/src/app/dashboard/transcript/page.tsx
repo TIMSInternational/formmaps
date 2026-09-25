@@ -301,7 +301,7 @@ export default function TranscriptPage() {
                   <Line
                     type="monotone"
                     dataKey="gpaUnweighted"
-                    stroke="var(--admin-accent-blue)"
+                    stroke="var(--chart-1)"
                     strokeWidth={2}
                     dot={false}
                   />

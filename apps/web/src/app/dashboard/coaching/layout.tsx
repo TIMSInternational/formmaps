@@ -27,7 +27,8 @@ export default function CoachingLayout({
     <ErrorBoundary>
       <AdminThemeProvider>
         <ChatProvider>
-          <AppShell sidebar={<CoachSidebar />}>
+          <AppShell
+      sidebarClassName="hidden md:block" sidebar={<CoachSidebar />}>
             {children}
           </AppShell>
         </ChatProvider>
