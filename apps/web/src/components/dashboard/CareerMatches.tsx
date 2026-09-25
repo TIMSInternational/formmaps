@@ -71,7 +71,7 @@ export function CareerMatches() {
                     cy="24"
                     r="20"
                     fill="transparent"
-                    stroke="#2E9098"
+                    stroke="var(--chart-1)"
                     strokeWidth="4"
                     strokeDasharray={`${2 * Math.PI * 20}`}
                     strokeDashoffset={`${2 * Math.PI * 20 * (1 - match.progress / 100)}`}
