@@ -77,7 +77,8 @@ public interface IAuthAdminRepository
     /// shape/table as Task 6's IAuthRepository.CreateRefreshTokenAsync (both write to
     /// "refresh_tokens"), duplicated here rather than cross-calling IAuthRepository so this endpoint
     /// group's only repository dependency is IAuthAdminRepository, matching this task's "separate
-    /// repository" instruction.
+    /// repository" instruction. Expires at <paramref name="expiresAtUtc"/>, the session deadline
+    /// (<see cref="SessionPolicy.NewDeadline"/>).
     /// </summary>
-    Task<string> CreateRefreshTokenAsync(string userId, string clientIp, CancellationToken cancellationToken = default);
+    Task<string> CreateRefreshTokenAsync(string userId, string clientIp, DateTime expiresAtUtc, CancellationToken cancellationToken = default);
 }

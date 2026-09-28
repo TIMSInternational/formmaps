@@ -8,11 +8,15 @@ public sealed record LockoutStatus(bool IsLocked, DateTimeOffset? LockedUntil);
 
 /// <summary>
 /// Result of a successful <see cref="IAuthRepository.RotateRefreshTokenAsync"/> call: the freshly
-/// minted replacement token and the user it belongs to. A <c>null</c> return from that method
+/// minted replacement token, the user it belongs to, and the session deadline it carries
+/// (<paramref name="ExpiresAtUtc"/> -- inherited from the presented token, see
+/// <see cref="SessionPolicy.CapRotation"/>). Returned rather than recomputed so the JWT exp, the
+/// cookie lifetimes and the response body all use exactly the value that was written. A
+/// <c>null</c> return from that method
 /// (rather than this record) is the collapsed-null contract covering every invalid case --
 /// unknown/revoked/expired token or a since-deactivated user -- matching legacy rotateRefreshToken.
 /// </summary>
-public sealed record RotateResult(string NewToken, string UserId);
+public sealed record RotateResult(string NewToken, string UserId, DateTime ExpiresAtUtc);
 
 /// <summary>
 /// Profile read backing GET /auth/profile (authService.ts's getProfile). <c>SubscriptionStatus</c>
@@ -86,16 +90,21 @@ public interface IAuthRepository
 
     Task<string> GetLanguageAsync(string userId, CancellationToken cancellationToken = default);
 
-    /// <summary>Mints and persists a new opaque refresh token for <paramref name="userId"/>.</summary>
-    Task<string> CreateRefreshTokenAsync(string userId, string clientIp, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Mints and persists a new opaque refresh token for <paramref name="userId"/>, expiring at
+    /// <paramref name="expiresAtUtc"/> -- the session deadline, from <see cref="SessionPolicy.NewDeadline"/>.
+    /// The caller passes it so the same instant also bounds the JWT and the cookies.
+    /// </summary>
+    Task<string> CreateRefreshTokenAsync(string userId, string clientIp, DateTime expiresAtUtc, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Single-use refresh-token rotation: looks up <paramref name="oldToken"/>, revokes it, and (only
     /// if it was valid -- not unknown/already-revoked/expired, and its owning user is still active)
     /// mints and persists a replacement token in the same transaction. Returns <c>null</c> on any
-    /// invalid case; see <see cref="RotateResult"/>.
+    /// invalid case; see <see cref="RotateResult"/>. The replacement inherits the presented token's
+    /// deadline, capped by <paramref name="policy"/> -- rotation never extends a session.
     /// </summary>
-    Task<RotateResult?> RotateRefreshTokenAsync(string oldToken, string clientIp, CancellationToken cancellationToken = default);
+    Task<RotateResult?> RotateRefreshTokenAsync(string oldToken, string clientIp, SessionPolicy policy, CancellationToken cancellationToken = default);
 
     /// <summary>Revokes every currently-active refresh token for <paramref name="userId"/> (logout-all-sessions).</summary>
     Task RevokeAllRefreshTokensAsync(string userId, string clientIp, CancellationToken cancellationToken = default);

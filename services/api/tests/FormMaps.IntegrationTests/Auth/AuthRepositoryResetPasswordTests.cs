@@ -43,8 +43,8 @@ public class AuthRepositoryResetPasswordTests(AuthDatabaseFixture fixture)
         await fixture.ResetAsync();
         var userId = await fixture.SeedUserAsync(email: "reset-happy@example.com", passwordHash: "original-hash", isActive: true);
         var repo = CreateRepository();
-        await repo.CreateRefreshTokenAsync(userId, "1.1.1.1", CancellationToken.None);
-        await repo.CreateRefreshTokenAsync(userId, "2.2.2.2", CancellationToken.None);
+        await repo.CreateRefreshTokenAsync(userId, "1.1.1.1", DateTime.UtcNow.AddHours(12), CancellationToken.None);
+        await repo.CreateRefreshTokenAsync(userId, "2.2.2.2", DateTime.UtcNow.AddHours(12), CancellationToken.None);
         var tokenId = await fixture.SeedPasswordResetTokenAsync(userId, "digest-happy", DateTimeOffset.UtcNow.AddHours(1));
 
         await repo.ApplyPasswordResetAsync(tokenId, userId, "new-hash", "9.9.9.9", CancellationToken.None);
@@ -210,7 +210,7 @@ public class AuthRepositoryResetPasswordTests(AuthDatabaseFixture fixture)
         await fixture.ResetAsync();
         var userId = await fixture.SeedUserAsync(email: "reset-atomic@example.com", passwordHash: "original-hash", isActive: true);
         var repo = CreateRepository();
-        await repo.CreateRefreshTokenAsync(userId, "1.1.1.1", CancellationToken.None);
+        await repo.CreateRefreshTokenAsync(userId, "1.1.1.1", DateTime.UtcNow.AddHours(12), CancellationToken.None);
         var tokenId = await fixture.SeedPasswordResetTokenAsync(userId, "digest-atomic", DateTimeOffset.UtcNow.AddHours(1));
 
         // The embedded null byte lives ONLY in clientIp, which is bound ONLY on the third statement
@@ -243,7 +243,7 @@ public class AuthRepositoryResetPasswordTests(AuthDatabaseFixture fixture)
             await fixture.ResetAsync();
             var userId = await fixture.SeedUserAsync(email: $"reset-atomic-repeat-{i}@example.com", passwordHash: "original-hash", isActive: true);
             var repo = CreateRepository();
-            await repo.CreateRefreshTokenAsync(userId, "1.1.1.1", CancellationToken.None);
+            await repo.CreateRefreshTokenAsync(userId, "1.1.1.1", DateTime.UtcNow.AddHours(12), CancellationToken.None);
             var tokenId = await fixture.SeedPasswordResetTokenAsync(userId, $"digest-atomic-repeat-{i}", DateTimeOffset.UtcNow.AddHours(1));
 
             await Assert.ThrowsAsync<PostgresException>(() =>

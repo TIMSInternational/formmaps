@@ -10,16 +10,33 @@ API must preserve.
   - `httpOnly`
   - `sameSite=lax`
   - `path=/`
+  - lifetime = min(access TTL, time left in the session)
 - `refresh_token`
   - refresh token
   - `httpOnly`
   - `sameSite=lax`
   - `path=/authapi`
-  - 14-day lifetime
+  - lifetime = time left in the session (the token's `expiresAt`; was a fixed 14 days)
 - `logged_in=true`
   - JS-readable session sentinel
   - `path=/`
   - used by the frontend to decide whether refresh should be attempted
+- `session_expires_at`
+  - JS-readable; value = the session deadline as epoch **milliseconds**
+  - `sameSite=lax`, `path=/`, lifetime = time left in the session
+  - lets the frontend sign the user out at the deadline, not on the next request after it
+
+## Session Lifetime
+
+A sign-in lasts at most `SESSION_MAX_HOURS` (default **12**; `.NET` also reads
+`Auth:SessionMaxHours`, which wins). The refresh token's `expiresAt` is the
+session deadline: a fresh sign-in (login, signup, onboarding) sets it to
+now + the max, and every rotation **inherits** it, capped at now + the max — so
+refreshing never extends a session, and 14-day tokens issued before this
+contract are cut to one session on their first refresh. Access JWT `exp` is
+min(now + access TTL, deadline). Login and refresh responses carry
+`data.sessionExpiresAt` (ISO-8601 UTC). The 30-minute idle timeout is
+frontend-only.
 
 ## Access Token Lookup Order
 

@@ -771,7 +771,7 @@ public class TeacherEndpointsTests : IDisposable
     /// </summary>
     private sealed class StubRefreshTokenRepository : IAuthRepository
     {
-        public Task<string> CreateRefreshTokenAsync(string userId, string clientIp, CancellationToken cancellationToken = default) =>
+        public Task<string> CreateRefreshTokenAsync(string userId, string clientIp, DateTime expiresAtUtc, CancellationToken cancellationToken = default) =>
             Task.FromResult("refresh-token-1");
 
         public Task<AuthUserRow?> FindUserByEmailAsync(string normalizedEmail, CancellationToken cancellationToken = default) => throw new NotSupportedException();
@@ -784,7 +784,7 @@ public class TeacherEndpointsTests : IDisposable
 
         public Task<string> GetLanguageAsync(string userId, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
-        public Task<RotateResult?> RotateRefreshTokenAsync(string oldToken, string clientIp, CancellationToken cancellationToken = default) => throw new NotSupportedException();
+        public Task<RotateResult?> RotateRefreshTokenAsync(string oldToken, string clientIp, SessionPolicy policy, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 
         public Task RevokeAllRefreshTokensAsync(string userId, string clientIp, CancellationToken cancellationToken = default) => throw new NotSupportedException();
 

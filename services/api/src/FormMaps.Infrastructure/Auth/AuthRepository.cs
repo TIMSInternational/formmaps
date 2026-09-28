@@ -112,7 +112,7 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
     /// convention as "login_attempts"/"users" -- see auth-schema.sql's header comment and
     /// RecordFailedLoginAsync above). Bound explicitly (inline now()) on this INSERT.
     /// </summary>
-    public async Task<string> CreateRefreshTokenAsync(string userId, string clientIp, CancellationToken cancellationToken = default)
+    public async Task<string> CreateRefreshTokenAsync(string userId, string clientIp, DateTime expiresAtUtc, CancellationToken cancellationToken = default)
     {
         var token = RefreshTokenGenerator.Generate();
         var context = RequestContext.System();
@@ -123,7 +123,7 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
             """);
         AddParameter(command, "userId", userId);
         AddParameter(command, "token", token);
-        AddParameter(command, "expiresAt", DateTime.UtcNow.AddDays(14));
+        AddParameter(command, "expiresAt", expiresAtUtc);
         AddParameter(command, "ip", clientIp);
         await command.ExecuteNonQueryAsync(cancellationToken);
         await session.CommitAsync(cancellationToken);
@@ -163,7 +163,7 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
     /// revoke UPDATE to keep the app-managed timestamp current on every actual row mutation,
     /// matching RecordFailedLoginAsync's established convention.
     /// </summary>
-    public async Task<RotateResult?> RotateRefreshTokenAsync(string oldToken, string clientIp, CancellationToken cancellationToken = default)
+    public async Task<RotateResult?> RotateRefreshTokenAsync(string oldToken, string clientIp, SessionPolicy policy, CancellationToken cancellationToken = default)
     {
         var context = RequestContext.System();
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
@@ -213,6 +213,10 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
             throw new InvalidOperationException($"Refresh token rotation revoke-old update affected 0 rows for token id {tokenId}");
         }
 
+        // The replacement carries the SESSION's deadline, not a fresh window: rotating keeps a
+        // sign-in alive only until the sign-in itself expires (SessionPolicy). Capped, so a 14-day
+        // token minted before the hard limit shipped drops to at most one session from now.
+        var newExpiresAt = policy.CapRotation(DateTime.SpecifyKind(expiresAt, DateTimeKind.Utc), DateTime.UtcNow);
         var newToken = RefreshTokenGenerator.Generate();
         await using var insert = Command(session, """
             INSERT INTO "refresh_tokens" ("id","userId","token","expiresAt","createdByIp","updatedAt")
@@ -220,12 +224,12 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
             """);
         AddParameter(insert, "userId", userId);
         AddParameter(insert, "token", newToken);
-        AddParameter(insert, "expiresAt", DateTime.UtcNow.AddDays(14));
+        AddParameter(insert, "expiresAt", newExpiresAt);
         AddParameter(insert, "ip", clientIp);
         await insert.ExecuteNonQueryAsync(cancellationToken);
 
         await session.CommitAsync(cancellationToken);
-        return new RotateResult(newToken, userId);
+        return new RotateResult(newToken, userId, newExpiresAt);
     }
 
     /// <summary>

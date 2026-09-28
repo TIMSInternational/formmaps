@@ -132,6 +132,36 @@ public sealed class AuthDatabaseFixture : IAsyncLifetime
     }
 
     /// <summary>
+    /// Seeds a live "refresh_tokens" row with an explicit deadline -- e.g. the 14-day tokens minted
+    /// before the hard session limit shipped, which rotation must cap rather than inherit.
+    /// </summary>
+    public async Task SeedRefreshTokenAsync(string userId, string token, DateTime expiresAtUtc)
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "refresh_tokens" ("id","userId","token","expiresAt","updatedAt")
+            VALUES (gen_random_uuid()::text, @userId, @token, @expiresAt, now())
+            """, conn);
+        cmd.Parameters.AddWithValue("userId", userId);
+        cmd.Parameters.AddWithValue("token", token);
+        cmd.Parameters.AddWithValue("expiresAt", expiresAtUtc);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>The stored deadline of a refresh token, as UTC.</summary>
+    public async Task<DateTime> GetRefreshTokenExpiresAtAsync(string token)
+    {
+        await using var conn = new NpgsqlConnection(ConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand("""SELECT "expiresAt" FROM "refresh_tokens" WHERE "token" = @token""", conn);
+        cmd.Parameters.AddWithValue("token", token);
+        var value = (DateTime)(await cmd.ExecuteScalarAsync())!;
+        return DateTime.SpecifyKind(value, DateTimeKind.Utc);
+    }
+
+    /// <summary>
     /// Flips a previously-seeded user's "isActive" to false, simulating an admin deactivating the
     /// account mid-session, for AuthRepositoryRefreshTests' TOCTOU-safety test (Task 7). "updatedAt"
     /// bound explicitly, same NOT-NULL-no-default column.

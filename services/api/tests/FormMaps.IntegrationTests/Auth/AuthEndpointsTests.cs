@@ -71,6 +71,108 @@ public class AuthEndpointsTests : IDisposable
         Assert.Contains("admin:users", permissions.EnumerateArray().Select(p => p.GetString()));
     }
 
+    // ---- The hard session limit (12h) ----
+
+    [Fact]
+    public async Task Login_starts_a_12h_session_and_tells_the_client_when_it_ends()
+    {
+        var repo = new FakeAuthRepository
+        {
+            UserByEmail = new AuthUserRow("u1", "Ada", "ada@example.test", PasswordHasher.Hash("Sup3r$ecret"), "role_x", FormMapsRoles.Student, null, true),
+        };
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var before = DateTime.UtcNow;
+        var response = await client.PostAsync("/authapi/login", JsonBody(new { email = "ada@example.test", password = "Sup3r$ecret" }));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+
+        // The refresh token is written with a 12h deadline -- not 14 days.
+        var deadline = repo.LastRefreshTokenExpiresAt!.Value;
+        Assert.InRange(deadline, before.AddHours(12), DateTime.UtcNow.AddHours(12));
+
+        // The body and the JS-readable cookie both carry exactly that deadline.
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var bodyDeadline = DateTime.Parse(doc.RootElement.GetProperty("data").GetProperty("sessionExpiresAt").GetString()!,
+            System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal);
+        Assert.InRange(bodyDeadline, deadline.AddMilliseconds(-1), deadline.AddMilliseconds(1));
+
+        var setCookies = response.Headers.TryGetValues("Set-Cookie", out var cookies) ? cookies.ToList() : [];
+        var sessionCookie = Assert.Single(setCookies, c => c.StartsWith("session_expires_at="));
+        var epochMs = long.Parse(sessionCookie.Split(';')[0].Split('=')[1]);
+        Assert.Equal(new DateTimeOffset(DateTime.SpecifyKind(deadline, DateTimeKind.Utc)).ToUnixTimeMilliseconds(), epochMs);
+        Assert.DoesNotContain("httponly", sessionCookie.ToLowerInvariant());
+
+        // refresh_token and logged_in expire with the session, not 14 days out.
+        Assert.InRange(MaxAgeSeconds(setCookies, "refresh_token"), 12 * 3600 - 5, 12 * 3600);
+        Assert.InRange(MaxAgeSeconds(setCookies, "logged_in"), 12 * 3600 - 5, 12 * 3600);
+    }
+
+    [Fact]
+    public async Task Refresh_near_the_deadline_caps_the_JWT_and_every_cookie_at_the_deadline()
+    {
+        // A session with 10 minutes left: the usual 60-minute access token must not outlive it.
+        var deadline = DateTime.UtcNow.AddMinutes(10);
+        var repo = new FakeAuthRepository
+        {
+            RotateResult = new RotateResult("new-refresh-token", "u1", deadline),
+            UserById = new AuthUserRow("u1", "Ada", "ada@example.test", null, "role_x", FormMapsRoles.Student, null, true),
+        };
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "/authapi/refresh");
+        request.Headers.Add("Cookie", "refresh_token=old-refresh-token");
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.NotNull(repo.LastRotationPolicy);
+        Assert.Equal(TimeSpan.FromHours(12), repo.LastRotationPolicy!.MaxSessionLength);
+
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var data = doc.RootElement.GetProperty("data");
+        var expiresIn = data.GetProperty("expiresIn").GetInt32();
+        Assert.InRange(expiresIn, 590, 600);
+
+        // The JWT's own exp is the capped value, not now+60min.
+        var jwt = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().ReadJwtToken(data.GetProperty("token").GetString());
+        Assert.InRange(jwt.ValidTo, deadline.AddSeconds(-11), deadline.AddSeconds(1));
+
+        var bodyDeadline = DateTime.Parse(data.GetProperty("sessionExpiresAt").GetString()!,
+            System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AdjustToUniversal);
+        Assert.InRange(bodyDeadline, deadline.AddMilliseconds(-1), deadline.AddMilliseconds(1));
+
+        var setCookies = response.Headers.TryGetValues("Set-Cookie", out var cookies) ? cookies.ToList() : [];
+        Assert.InRange(MaxAgeSeconds(setCookies, "access_token"), 590, 600);
+        Assert.InRange(MaxAgeSeconds(setCookies, "refresh_token"), 590, 600);
+        Assert.InRange(MaxAgeSeconds(setCookies, "logged_in"), 590, 600);
+        Assert.InRange(MaxAgeSeconds(setCookies, "session_expires_at"), 590, 600);
+    }
+
+    [Fact]
+    public async Task Failed_refresh_also_deletes_the_session_expiry_cookie()
+    {
+        using var factory = CreateFactory(new FakeAuthRepository());
+        using var client = factory.CreateClient();
+
+        var request = new HttpRequestMessage(HttpMethod.Post, "/authapi/refresh");
+        request.Headers.Add("Cookie", "refresh_token=stale-token"); // RotateResult null -> 401 + ClearAuthCookies
+        var response = await client.SendAsync(request);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+        var setCookies = response.Headers.TryGetValues("Set-Cookie", out var cookies) ? cookies.ToList() : [];
+        var cleared = Assert.Single(setCookies, c => c.StartsWith("session_expires_at="));
+        Assert.Contains("expires=Thu, 01 Jan 1970", cleared);
+    }
+
+    private static int MaxAgeSeconds(IEnumerable<string> setCookies, string name)
+    {
+        var cookie = Assert.Single(setCookies, c => c.StartsWith(name + "="));
+        var part = cookie.Split(';').Select(p => p.Trim()).Single(p => p.StartsWith("max-age=", StringComparison.OrdinalIgnoreCase));
+        return int.Parse(part["max-age=".Length..], System.Globalization.CultureInfo.InvariantCulture);
+    }
+
     [Fact]
     public async Task Login_wrong_password_is_401_uniform_message_and_increments_lockout()
     {
@@ -142,7 +244,7 @@ public class AuthEndpointsTests : IDisposable
     {
         var repo = new FakeAuthRepository
         {
-            RotateResult = new RotateResult("new-refresh-token", "u1"),
+            RotateResult = new RotateResult("new-refresh-token", "u1", DateTime.UtcNow.AddHours(6)),
             UserById = new AuthUserRow("u1", "Ada", "ada@example.test", null, "role_x", FormMapsRoles.Student, null, true),
         };
         using var factory = CreateFactory(repo);
@@ -1328,11 +1430,20 @@ public class AuthEndpointsTests : IDisposable
 
         public Task<string> GetLanguageAsync(string userId, CancellationToken cancellationToken = default) => Task.FromResult(Language);
 
-        public Task<string> CreateRefreshTokenAsync(string userId, string clientIp, CancellationToken cancellationToken = default) =>
-            Task.FromResult("new-refresh-token-from-login");
+        public DateTime? LastRefreshTokenExpiresAt { get; private set; }
+        public SessionPolicy? LastRotationPolicy { get; private set; }
 
-        public Task<RotateResult?> RotateRefreshTokenAsync(string oldToken, string clientIp, CancellationToken cancellationToken = default) =>
-            Task.FromResult(RotateResult);
+        public Task<string> CreateRefreshTokenAsync(string userId, string clientIp, DateTime expiresAtUtc, CancellationToken cancellationToken = default)
+        {
+            LastRefreshTokenExpiresAt = expiresAtUtc;
+            return Task.FromResult("new-refresh-token-from-login");
+        }
+
+        public Task<RotateResult?> RotateRefreshTokenAsync(string oldToken, string clientIp, SessionPolicy policy, CancellationToken cancellationToken = default)
+        {
+            LastRotationPolicy = policy;
+            return Task.FromResult(RotateResult);
+        }
 
         public Task RevokeAllRefreshTokensAsync(string userId, string clientIp, CancellationToken cancellationToken = default)
         {
