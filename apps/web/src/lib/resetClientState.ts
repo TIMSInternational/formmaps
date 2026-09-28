@@ -11,6 +11,9 @@ const PRESERVED_KEYS = new Set<string>([
   "telemetry_consent", // analytics consent — legal, must persist per device
   "admin-theme", // light/dark theme preference
   "auth_message", // transient message shown on /login after a forced logout
+  // Cross-tab sign-out signal (<SessionTimeout />). Written just BEFORE the logout that
+  // wipes storage, so it must survive that wipe or the other tabs would see a deletion.
+  "fm_session_logout",
 ]);
 
 function wipeExceptAllowlist(store: Storage): void {

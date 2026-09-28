@@ -60,6 +60,12 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const redirectParam = searchParams.get("redirect");
+  // Set by <SessionTimeout /> when it signs someone out.
+  const reason = searchParams.get("reason");
+  const signedOutNotice =
+    reason === "idle" ? t("auth.login.signedOutIdle")
+    : reason === "expired" ? t("auth.login.signedOutExpired")
+    : null;
 
   const onSubmit = async (data: LoginFormData) => {
     setApiError(null);
@@ -130,6 +136,16 @@ export default function LoginPage() {
             <p className="text-sm" style={{ color: "#666" }}>{t("auth.login.subtitle")}</p>
           </div>
 
+          {signedOutNotice && (
+            <div
+              role="status"
+              className="mb-5 rounded-lg px-3 py-2.5 text-sm"
+              style={{ background: "#EAF3F4", color: "#102B47", border: "1px solid #C7DFE2" }}
+            >
+              {signedOutNotice}
+            </div>
+          )}
+
           <Form {...form}>
             <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-5">
               {/* Email */}
@@ -197,19 +213,6 @@ export default function LoginPage() {
                   </FormItem>
                 )}
               />
-
-              {/* Remember Me */}
-              <div className="flex items-center gap-2">
-                <input
-                  id="remember"
-                  type="checkbox"
-                  className="w-3.5 h-3.5"
-                  style={{ accentColor: "#102B47" }}
-                />
-                <label htmlFor="remember" className="text-xs" style={{ color: "#666" }}>
-                  {t("auth.login.remember")}
-                </label>
-              </div>
 
               {apiError && <AuthErrorMessage message={apiError} />}
 

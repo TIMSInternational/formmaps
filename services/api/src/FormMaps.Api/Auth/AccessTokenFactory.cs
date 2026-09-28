@@ -7,6 +7,9 @@ using Microsoft.IdentityModel.Tokens;
 
 namespace FormMaps.Api.Auth;
 
+/// <summary>An access token and the exact lifetime (seconds) written into its exp.</summary>
+public sealed record IssuedAccessToken(string Token, int ExpiresInSeconds);
+
 public sealed record AccessTokenClaims(
     string UserId, string Name, string Email, string Role, string SchoolId, IReadOnlyList<string> Permissions);
 
@@ -46,7 +49,30 @@ public sealed class AccessTokenFactory(IOptions<LegacyJwtOptions> options)
         }
     }
 
-    public string CreateAccessToken(AccessTokenClaims claims)
+    public string CreateAccessToken(AccessTokenClaims claims) => Issue(claims, sessionDeadlineUtc: null).Token;
+
+    /// <summary>
+    /// Mints the access token for a session whose hard deadline is <paramref name="sessionDeadlineUtc"/>:
+    /// exp = min(now + the configured access lifetime, deadline), so no JWT outlives the sign-in that
+    /// produced it (otherwise a stolen access token stays good for up to an hour past the deadline).
+    /// <see cref="IssuedAccessToken.ExpiresInSeconds"/> is the exact lifetime written into the token,
+    /// for the response body's <c>expiresIn</c> and the access_token cookie. Floored at 1 second:
+    /// a JWT whose exp equals its nbf is rejected at construction, and a session that close to its
+    /// deadline is better served a one-second token than a 500.
+    /// </summary>
+    public IssuedAccessToken Issue(AccessTokenClaims claims, DateTime? sessionDeadlineUtc)
+    {
+        var now = DateTime.UtcNow;
+        var lifetimeSeconds = ExpiresInSeconds;
+        if (sessionDeadlineUtc is { } deadline)
+        {
+            var remaining = (int)Math.Floor((deadline - now).TotalSeconds);
+            lifetimeSeconds = Math.Max(1, Math.Min(lifetimeSeconds, remaining));
+        }
+        return new IssuedAccessToken(Mint(claims, now, lifetimeSeconds), lifetimeSeconds);
+    }
+
+    private string Mint(AccessTokenClaims claims, DateTime now, int lifetimeSeconds)
     {
         var secret = Environment.GetEnvironmentVariable(JwtSecretEnvironmentVariable)
             ?? throw new InvalidOperationException("JWT_SECRET is not configured.");
@@ -54,7 +80,6 @@ public sealed class AccessTokenFactory(IOptions<LegacyJwtOptions> options)
         var handler = new JwtSecurityTokenHandler();
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secret));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-        var now = DateTime.UtcNow;
         var permissionsJson = JsonSerializer.Serialize(claims.Permissions);
 
         var token = new JwtSecurityToken(
@@ -70,7 +95,7 @@ public sealed class AccessTokenFactory(IOptions<LegacyJwtOptions> options)
                 new Claim("permissions", permissionsJson, JsonClaimValueTypes.JsonArray),
             ],
             notBefore: now,
-            expires: now.AddSeconds(ExpiresInSeconds),
+            expires: now.AddSeconds(lifetimeSeconds),
             signingCredentials: credentials);
 
         return handler.WriteToken(token);

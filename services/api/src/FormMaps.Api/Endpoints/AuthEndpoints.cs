@@ -59,7 +59,7 @@ public static class AuthEndpoints
 
     private static async Task<IResult> LoginAsync(
         LoginRequest? body, HttpContext httpContext, IAuthRepository repository,
-        AccessTokenFactory tokenFactory, IEmailSender emailSender, EmailTemplates emailTemplates,
+        AccessTokenFactory tokenFactory, SessionPolicy sessionPolicy, IEmailSender emailSender, EmailTemplates emailTemplates,
         CancellationToken cancellationToken)
     {
         if (body is null || string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
@@ -95,13 +95,17 @@ public static class AuthEndpoints
 
         await repository.ClearLoginAttemptsAsync(email, cancellationToken);
 
+        // A sign-in starts the session clock: this deadline is written onto the refresh token and
+        // bounds the JWT and every cookie, and no later refresh can move it (SessionPolicy).
+        var sessionDeadline = sessionPolicy.NewDeadline(DateTime.UtcNow);
         var permissions = RolePermissions.For(user.RoleName);
-        var accessToken = tokenFactory.CreateAccessToken(new AccessTokenClaims(
-            user.Id, user.Name, user.Email, user.RoleName, user.SchoolId ?? "", permissions));
-        var refreshToken = await repository.CreateRefreshTokenAsync(user.Id, clientIp, cancellationToken);
+        var issued = tokenFactory.Issue(new AccessTokenClaims(
+            user.Id, user.Name, user.Email, user.RoleName, user.SchoolId ?? "", permissions), sessionDeadline);
+        var accessToken = issued.Token;
+        var refreshToken = await repository.CreateRefreshTokenAsync(user.Id, clientIp, sessionDeadline, cancellationToken);
         var language = await repository.GetLanguageAsync(user.Id, cancellationToken);
 
-        AuthCookieWriter.SetAuthCookies(httpContext.Response, accessToken, refreshToken, tokenFactory.ExpiresInSeconds);
+        AuthCookieWriter.SetAuthCookies(httpContext.Response, accessToken, refreshToken, issued.ExpiresInSeconds, sessionDeadline);
 
         // NOTE (item, documented in task-12-report.md): legacy's user object also carries
         // avatarUrl/coverUrl from a "profiles" table join. Task 8 deliberately scoped that join out
@@ -118,6 +122,7 @@ public static class AuthEndpoints
                 refreshToken,
                 language,
                 user = new { id = user.Id, name = user.Name, email = user.Email, roleId = user.RoleId, roleName = user.RoleName, schoolId = user.SchoolId, permissions },
+                sessionExpiresAt = AuthCookieWriter.ToIsoUtc(sessionDeadline),
             },
         });
     }
@@ -130,7 +135,7 @@ public static class AuthEndpoints
 
     private static async Task<IResult> RefreshAsync(
         RefreshRequest? body, HttpContext httpContext, IAuthRepository repository, AccessTokenFactory tokenFactory,
-        CancellationToken cancellationToken)
+        SessionPolicy sessionPolicy, CancellationToken cancellationToken)
     {
         var refreshTokenValue = httpContext.Request.Cookies["refresh_token"];
         if (string.IsNullOrEmpty(refreshTokenValue)) refreshTokenValue = body?.RefreshToken;
@@ -138,7 +143,7 @@ public static class AuthEndpoints
             return BadRequest("Refresh token is required");
 
         var clientIp = AuthCookieWriter.GetClientIp(httpContext.Request);
-        var rotated = await repository.RotateRefreshTokenAsync(refreshTokenValue, clientIp, cancellationToken);
+        var rotated = await repository.RotateRefreshTokenAsync(refreshTokenValue, clientIp, sessionPolicy, cancellationToken);
         if (rotated is null)
         {
             AuthCookieWriter.ClearAuthCookies(httpContext.Response);
@@ -156,18 +161,25 @@ public static class AuthEndpoints
             return Unauthorized("Invalid or expired refresh token");
         }
 
+        // The deadline comes back from the rotation that wrote it -- inherited from the sign-in, never
+        // recomputed here -- so the JWT, the cookies and the body all agree with the stored row.
         var permissions = RolePermissions.For(user.RoleName);
-        var accessToken = tokenFactory.CreateAccessToken(new AccessTokenClaims(
-            user.Id, user.Name, user.Email, user.RoleName, user.SchoolId ?? "", permissions));
-        var expiresIn = tokenFactory.ExpiresInSeconds;
+        var issued = tokenFactory.Issue(new AccessTokenClaims(
+            user.Id, user.Name, user.Email, user.RoleName, user.SchoolId ?? "", permissions), rotated.ExpiresAtUtc);
+        var accessToken = issued.Token;
+        var expiresIn = issued.ExpiresInSeconds;
 
-        AuthCookieWriter.SetAuthCookies(httpContext.Response, accessToken, rotated.NewToken, expiresIn);
+        AuthCookieWriter.SetAuthCookies(httpContext.Response, accessToken, rotated.NewToken, expiresIn, rotated.ExpiresAtUtc);
 
         return Results.Ok(new
         {
             success = true,
             message = "Token refreshed successfully",
-            data = new { token = accessToken, accessToken, refreshToken = rotated.NewToken, expiresIn },
+            data = new
+            {
+                token = accessToken, accessToken, refreshToken = rotated.NewToken, expiresIn,
+                sessionExpiresAt = AuthCookieWriter.ToIsoUtc(rotated.ExpiresAtUtc),
+            },
         });
     }
 

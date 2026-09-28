@@ -39,6 +39,12 @@ public static class DependencyInjection
         // reads the same options type.
         services.AddSingleton<AccessTokenFactory>();
 
+        // Hard session limit (default 12h): the deadline every refresh token carries and every JWT
+        // and auth cookie is capped at. SESSION_MAX_HOURS is the env name the Node service reads,
+        // so one setting governs both services writing the shared "refresh_tokens" table.
+        services.AddSingleton(SessionPolicy.FromSettings(
+            configuration["Auth:SessionMaxHours"], Environment.GetEnvironmentVariable("SESSION_MAX_HOURS")));
+
         // formmaps#144: the polyglot insights trigger — the funnel signal legacy fires after 360
         // feedback submits and LIA completions, which the .NET assessment writes were dropping.
         // The implementation lives in the Api layer (like SignalRMessagesNotifier above) because

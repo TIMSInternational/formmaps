@@ -175,6 +175,7 @@ public static class TeacherEndpoints
         ITeacherOnboardingRepository repository,
         AccessTokenFactory tokenFactory,
         IAuthRepository authRepository,
+        SessionPolicy sessionPolicy,
         CancellationToken cancellationToken)
     {
         // :36 -- `if (!token || !password)`. JS falsiness, so "" is missing too. `name` is optional.
@@ -227,11 +228,14 @@ public static class TeacherEndpoints
         // :71-73 -- log the new teacher straight in. schoolId on the JWT is the INVITE's schoolId (which may be
         // null; "" is what this codebase's factory takes for absent, same as AuthEndpoints' login path).
         var permissions = RolePermissions.For(role.Name);
-        var accessToken = tokenFactory.CreateAccessToken(new AccessTokenClaims(
-            result.UserId, result.Name, result.Email, role.Name, invite.SchoolId ?? string.Empty, permissions));
+        // Onboarding signs the teacher in, so it starts the hard session clock (SessionPolicy).
+        var sessionDeadline = sessionPolicy.NewDeadline(DateTime.UtcNow);
+        var issued = tokenFactory.Issue(new AccessTokenClaims(
+            result.UserId, result.Name, result.Email, role.Name, invite.SchoolId ?? string.Empty, permissions), sessionDeadline);
+        var accessToken = issued.Token;
         var refreshToken = await authRepository.CreateRefreshTokenAsync(
-            result.UserId, AuthCookieWriter.GetClientIp(http.Request), cancellationToken);
-        AuthCookieWriter.SetAuthCookies(http.Response, accessToken, refreshToken, tokenFactory.ExpiresInSeconds);
+            result.UserId, AuthCookieWriter.GetClientIp(http.Request), sessionDeadline, cancellationToken);
+        AuthCookieWriter.SetAuthCookies(http.Response, accessToken, refreshToken, issued.ExpiresInSeconds, sessionDeadline);
 
         return Results.Ok(new
         {

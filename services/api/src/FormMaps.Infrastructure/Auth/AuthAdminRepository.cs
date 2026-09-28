@@ -128,7 +128,7 @@ public sealed class AuthAdminRepository(IFormMapsDatabaseSessionFactory database
     /// comment for why. "refresh_tokens"."updatedAt" is NOT NULL with no database default -- bound
     /// explicitly (inline now()).
     /// </summary>
-    public async Task<string> CreateRefreshTokenAsync(string userId, string clientIp, CancellationToken cancellationToken = default)
+    public async Task<string> CreateRefreshTokenAsync(string userId, string clientIp, DateTime expiresAtUtc, CancellationToken cancellationToken = default)
     {
         var token = RefreshTokenGenerator.Generate();
         var context = RequestContext.System();
@@ -139,7 +139,7 @@ public sealed class AuthAdminRepository(IFormMapsDatabaseSessionFactory database
             """);
         AddParameter(command, "userId", userId);
         AddParameter(command, "token", token);
-        AddParameter(command, "expiresAt", DateTime.UtcNow.AddDays(14));
+        AddParameter(command, "expiresAt", expiresAtUtc);
         AddParameter(command, "ip", clientIp);
         await command.ExecuteNonQueryAsync(cancellationToken);
         await session.CommitAsync(cancellationToken);

@@ -41,7 +41,7 @@ public static class AuthAdminEndpoints
 
     private static async Task<IResult> SignupAsync(
         SignupRequest? body, HttpContext httpContext, IAuthAdminRepository repository, AccessTokenFactory tokenFactory,
-        CancellationToken cancellationToken)
+        SessionPolicy sessionPolicy, CancellationToken cancellationToken)
     {
         // Only an ABSENT email is a missing field here: a present-but-empty/blank one is a zod
         // "Invalid email" in legacy (z.string().email() runs on "" and "   " alike), so it must fall
@@ -128,11 +128,14 @@ public static class AuthAdminEndpoints
         // Same issuance mechanism as Task 6/7's login (AccessTokenFactory + a refresh-token write +
         // AuthCookieWriter) -- a self-serve signup user has no schoolId yet, matching login's
         // `user.SchoolId ?? ""` fallback for the same claim.
-        var accessToken = tokenFactory.CreateAccessToken(new AccessTokenClaims(
-            user.Id, user.Name, user.Email, user.RoleName, "", permissions));
-        var refreshToken = await repository.CreateRefreshTokenAsync(user.Id, clientIp, cancellationToken);
+        // Signing up signs you in, so it starts the same hard session clock as login.
+        var sessionDeadline = sessionPolicy.NewDeadline(DateTime.UtcNow);
+        var issued = tokenFactory.Issue(new AccessTokenClaims(
+            user.Id, user.Name, user.Email, user.RoleName, "", permissions), sessionDeadline);
+        var accessToken = issued.Token;
+        var refreshToken = await repository.CreateRefreshTokenAsync(user.Id, clientIp, sessionDeadline, cancellationToken);
 
-        AuthCookieWriter.SetAuthCookies(httpContext.Response, accessToken, refreshToken, tokenFactory.ExpiresInSeconds);
+        AuthCookieWriter.SetAuthCookies(httpContext.Response, accessToken, refreshToken, issued.ExpiresInSeconds, sessionDeadline);
 
         return Results.Json(new
         {

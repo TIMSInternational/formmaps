@@ -217,6 +217,8 @@ export async function logout(): Promise<void> {
     await fetch(`${API_BASE}/authapi/refresh`, {
       method: "DELETE",
       credentials: "include",
+      // Forced sign-outs navigate away immediately; keepalive lets the revoke finish anyway.
+      keepalive: true,
     }).catch(() => {}); // Best-effort
   } finally {
     clearTokens();

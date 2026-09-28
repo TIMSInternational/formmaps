@@ -540,10 +540,10 @@ public class AuthAdminEndpointsTests : IDisposable
 
         public Task<string> GetLanguageAsync(string userId, CancellationToken cancellationToken = default) => Task.FromResult("en");
 
-        public Task<string> CreateRefreshTokenAsync(string userId, string clientIp, CancellationToken cancellationToken = default) =>
+        public Task<string> CreateRefreshTokenAsync(string userId, string clientIp, DateTime expiresAtUtc, CancellationToken cancellationToken = default) =>
             Task.FromResult("noop-refresh-token");
 
-        public Task<RotateResult?> RotateRefreshTokenAsync(string oldToken, string clientIp, CancellationToken cancellationToken = default) =>
+        public Task<RotateResult?> RotateRefreshTokenAsync(string oldToken, string clientIp, SessionPolicy policy, CancellationToken cancellationToken = default) =>
             Task.FromResult<RotateResult?>(null);
 
         public Task RevokeAllRefreshTokensAsync(string userId, string clientIp, CancellationToken cancellationToken = default) =>
@@ -627,7 +627,12 @@ public class AuthAdminEndpointsTests : IDisposable
             return Task.CompletedTask;
         }
 
-        public Task<string> CreateRefreshTokenAsync(string userId, string clientIp, CancellationToken cancellationToken = default) =>
-            Task.FromResult("new-refresh-token-from-signup");
+        public DateTime? LastRefreshTokenExpiresAt { get; private set; }
+
+        public Task<string> CreateRefreshTokenAsync(string userId, string clientIp, DateTime expiresAtUtc, CancellationToken cancellationToken = default)
+        {
+            LastRefreshTokenExpiresAt = expiresAtUtc;
+            return Task.FromResult("new-refresh-token-from-signup");
+        }
     }
 }

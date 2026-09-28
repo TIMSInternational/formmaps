@@ -164,6 +164,52 @@ public class AccessTokenFactoryTests : IDisposable
         }
     }
 
+    // The hard session limit: no access token may outlive the sign-in that produced it.
+    [Fact]
+    public void Issue_CapsExpAtTheSessionDeadline_AndStillRoundTrips()
+    {
+        Environment.SetEnvironmentVariable("JWT_SECRET", Secret);
+        Environment.SetEnvironmentVariable("JWT_EXPIRES_IN_MINUTES", null);
+        try
+        {
+            var deadline = DateTime.UtcNow.AddMinutes(5); // well inside the default 60-minute lifetime
+            var issued = CreateFactory().Issue(
+                new AccessTokenClaims("user_1", "Sam", "sam@example.com", "student", "", []), deadline);
+
+            Assert.InRange(issued.ExpiresInSeconds, 290, 300);
+            var jwt = new System.IdentityModel.Tokens.Jwt.JwtSecurityTokenHandler().ReadJwtToken(issued.Token);
+            Assert.InRange(jwt.ValidTo, deadline.AddSeconds(-11), deadline.AddSeconds(1));
+
+            // Capping exp changes nothing else: the token still verifies on the live read path.
+            var httpContext = new DefaultHttpContext();
+            httpContext.Request.Headers.Authorization = $"Bearer {issued.Token}";
+            Assert.True(CreateVerifier().Create(httpContext).IsAuthenticated);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("JWT_SECRET", null);
+        }
+    }
+
+    [Fact]
+    public void Issue_FarDeadline_KeepsTheConfiguredLifetime_AndAPassedDeadlineGetsOneSecond()
+    {
+        Environment.SetEnvironmentVariable("JWT_SECRET", Secret);
+        Environment.SetEnvironmentVariable("JWT_EXPIRES_IN_MINUTES", null);
+        try
+        {
+            var claims = new AccessTokenClaims("user_1", "Sam", "sam@example.com", "student", "", []);
+            Assert.Equal(3600, CreateFactory().Issue(claims, DateTime.UtcNow.AddHours(12)).ExpiresInSeconds);
+            Assert.Equal(3600, CreateFactory().Issue(claims, sessionDeadlineUtc: null).ExpiresInSeconds);
+            // A deadline already reached must not throw (exp == nbf is rejected at construction).
+            Assert.Equal(1, CreateFactory().Issue(claims, DateTime.UtcNow.AddSeconds(-5)).ExpiresInSeconds);
+        }
+        finally
+        {
+            Environment.SetEnvironmentVariable("JWT_SECRET", null);
+        }
+    }
+
     private sealed class TestHostEnvironment : IHostEnvironment
     {
         public string EnvironmentName { get; set; } = "Production";
