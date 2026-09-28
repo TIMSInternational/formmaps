@@ -3,6 +3,7 @@ import { Fragment, useEffect, useState, useMemo, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { LoadingSpinner } from "./LoadingSpinner";
+import { SessionTimeout } from "./session/SessionTimeout";
 import { useSubscriptionStatus } from "@/hooks/useSubscription";
 import { useTokenMonitor } from "@/hooks/useTokenMonitor";
 import { usePermission } from "@/hooks/usePermission";
@@ -194,7 +195,13 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
           changes (login / signup / logout), React remounts everything below,
           discarding any in-memory state (e.g. a prior student's assessment
           scores held in useState) that would otherwise leak across accounts. */}
-      <Fragment key={user.id ?? "anon"}>{children}</Fragment>
+      <Fragment key={user.id ?? "anon"}>
+        {children}
+        {/* Idle + 12h sign-out. Here, in the root layout's wrapper, so it covers every
+            signed-in route (shells, assessment runner, evaluator, onboarding), and it is
+            keyed with the user so a new account never inherits the previous one's timers. */}
+        <SessionTimeout />
+      </Fragment>
     </>
   );
 }

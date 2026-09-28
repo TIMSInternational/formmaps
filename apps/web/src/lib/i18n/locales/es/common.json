@@ -1055,12 +1055,24 @@
       "emailPlaceholder": "juan@ejemplo.com",
       "passwordLabel": "Contraseña",
       "passwordPlaceholder": "Ingresa tu contraseña",
-      "remember": "Recordarme durante 30 días",
       "submit": "Iniciar sesión",
       "submitting": "Iniciando sesión...",
       "noAccountText": "¿No tienes una cuenta?",
       "signUp": "Regístrate gratis",
-      "forgotPassword": "¿Olvidaste tu contraseña?"
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "signedOutIdle": "Cerramos tu sesión tras 30 minutos de inactividad.",
+      "signedOutExpired": "Tu sesión alcanzó su límite de 12 horas. Vuelve a iniciar sesión."
+    },
+    "session": {
+      "idleTitle": "Tu sesión se cerrará pronto por inactividad",
+      "idleBody": "Por tu seguridad, FormMaps cierra la sesión tras 30 minutos sin actividad.",
+      "idleBodyAssessment": "Por tu seguridad, FormMaps cierra la sesión tras 30 minutos sin actividad. Las respuestas no guardadas podrían perderse.",
+      "expiryTitle": "Tu sesión está por terminar",
+      "expiryBody": "Por seguridad, las sesiones duran 12 horas. Guarda tu trabajo.",
+      "countdown": "Cerrando sesión en {{time}}",
+      "staySignedIn": "Seguir conectado",
+      "signOut": "Cerrar sesión",
+      "signInAgain": "Volver a iniciar sesión"
     },
     "signup": {
       "title": "Crear cuenta",

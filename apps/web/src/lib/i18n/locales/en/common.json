@@ -1618,12 +1618,24 @@
       "emailPlaceholder": "john@example.com",
       "passwordLabel": "Password",
       "passwordPlaceholder": "Enter your password",
-      "remember": "Remember me for 30 days",
       "submit": "Sign in",
       "submitting": "Signing in...",
       "noAccountText": "Don't have an account?",
       "signUp": "Sign up for free",
-      "forgotPassword": "Forgot password?"
+      "forgotPassword": "Forgot password?",
+      "signedOutIdle": "You were signed out after 30 minutes of inactivity.",
+      "signedOutExpired": "Your session reached its 12-hour limit. Please sign in again."
+    },
+    "session": {
+      "idleTitle": "You'll be signed out soon due to inactivity",
+      "idleBody": "For your security, FormMaps signs you out after 30 minutes without activity.",
+      "idleBodyAssessment": "For your security, FormMaps signs you out after 30 minutes without activity. Unsaved answers may be lost.",
+      "expiryTitle": "Your session is ending",
+      "expiryBody": "For security, sessions last 12 hours. Save your work.",
+      "countdown": "Signing out in {{time}}",
+      "staySignedIn": "Stay signed in",
+      "signOut": "Sign out",
+      "signInAgain": "Sign in again"
     },
     "signup": {
       "title": "Create account",
