@@ -69,6 +69,11 @@ export function AdminThemeProvider({ children }: { children: React.ReactNode }) 
     root.style.setProperty("--admin-accent-red", colors.accent.red);
     root.style.setProperty("--admin-accent-blue", colors.accent.blue);
 
+    // --admin-frame-ground, --admin-frame-text-idle, ... -- read only by shells that opt in
+    for (const [key, value] of Object.entries(colors.frame)) {
+      root.style.setProperty(`--admin-frame-${key.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`, value);
+    }
+
     // Set shadcn overrides so components pick up the right colors
     const overrides = getShadcnOverrides(isDark ? "dark" : "light");
     for (const [key, value] of Object.entries(overrides)) {

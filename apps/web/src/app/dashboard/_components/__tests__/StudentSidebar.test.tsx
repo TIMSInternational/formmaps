@@ -43,6 +43,12 @@ jest.mock("@/contexts/AdminThemeContext", () => ({
       bg: { hover: "#eee", active: "#ddd", overlay: "#fff", cardHover: "#f5f5f5" },
       border: { light: "#eee", hover: "#ddd", default: "#ccc", panel: "#eee" },
       font: { primary: "#111", secondary: "#333", tertiary: "#666", sectionLabel: "#999", light: "#aaa" },
+      frame: {
+        ground: "#102B47", textStrong: "#fff", textIdle: "#ccc", label: "#999", icon: "#999",
+        hover: "#123", selected: "#234", activeBg: "#1E3C5C", activeText: "#fff", activeIcon: "#7FBEC4",
+        brandAccent: "#7FBEC4", avatar: "#1E3C5C", control: "#1E3C5C", controlBorder: "#2A4463",
+        divider: "#2A4463", panelBorder: "transparent",
+      },
     },
   }),
 }));

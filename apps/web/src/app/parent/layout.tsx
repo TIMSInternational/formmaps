@@ -30,7 +30,7 @@ export default function ParentLayout({ children }: { children: React.ReactNode }
       <ChatProvider>
         <ErrorBoundary>
           <AppShell
-      sidebarClassName="hidden md:block" sidebar={<ParentSidebar />}>
+      sidebarClassName="hidden md:block" frame sidebar={<ParentSidebar />}>
             {children}
           </AppShell>
         </ErrorBoundary>

@@ -158,7 +158,7 @@ function SubItemBreadcrumb({ isLast, isActive }: { isLast: boolean; isActive: bo
 function NavItem({ href, icon: Icon, label, active, hasSub, expanded, onToggle, colors }: {
   href: string; icon: React.ElementType; label: string; active: boolean;
   hasSub?: boolean; expanded?: boolean; onToggle?: () => void;
-  colors: { fontSecondary: string; fontTertiary: string; hoverBg: string };
+  colors: { fontSecondary: string; fontTertiary: string; hoverBg: string; activeBg: string; activeText: string; activeIcon: string };
 }) {
   return (
     <Link
@@ -167,14 +167,14 @@ function NavItem({ href, icon: Icon, label, active, hasSub, expanded, onToggle, 
       style={{
         display: "flex", alignItems: "center", gap: 8, minHeight: 28, padding: "4px 8px",
         borderRadius: 4, fontSize: 13, fontWeight: 500, textDecoration: "none", cursor: "pointer",
-        color: active && !hasSub ? "#fff" : colors.fontSecondary,
-        background: active && !hasSub ? "var(--admin-accent-blue)" : "transparent",
+        color: active && !hasSub ? colors.activeText : colors.fontSecondary,
+        background: active && !hasSub ? colors.activeBg : "transparent",
         transition: "background 0.1s ease",
       }}
       onMouseEnter={(e) => { if (!(active && !hasSub)) e.currentTarget.style.background = colors.hoverBg; }}
       onMouseLeave={(e) => { if (!(active && !hasSub)) e.currentTarget.style.background = "transparent"; }}
     >
-      <Icon style={{ width: 16, height: 16, color: active && !hasSub ? "#fff" : colors.fontTertiary, flexShrink: 0 }} />
+      <Icon style={{ width: 16, height: 16, color: active && !hasSub ? colors.activeIcon : colors.fontTertiary, flexShrink: 0 }} />
       {/* Wrap long labels (e.g. "Counseling & Coaching") instead of truncating; title gives a fallback. */}
       <span title={label} style={{ flex: 1, minWidth: 0, lineHeight: 1.25, wordBreak: "break-word" }}>{label}</span>
       {hasSub && (
@@ -226,14 +226,37 @@ export function StudentSidebar() {
   const [themeSubmenu, setThemeSubmenu] = useState(false);
   const [activeTab, setActiveTab] = useState<SidebarTab>("home");
 
+  // The rail sits on the frame (navy in light theme), so its colours come from `frame`, not from
+  // the panel palette. The theme-picker menu floats on its own light surface and keeps the panel's.
+  const F = themeColors.frame;
   const C = {
+    fontPrimary: F.textStrong,
+    fontSecondary: F.textIdle,
+    fontTertiary: F.icon,
+    fontLight: F.label,
+    hoverBg: F.hover,
+    activeBg: F.activeBg,
+    activeText: F.activeText,
+    activeIcon: F.activeIcon,
+  };
+  const M = {
     fontPrimary: themeColors.font.primary,
     fontSecondary: themeColors.font.secondary,
     fontTertiary: themeColors.font.tertiary,
     fontLight: themeColors.font.sectionLabel,
     hoverBg: themeColors.bg.hover,
-    activeBg: themeColors.bg.active,
   };
+  // Children that read the --admin-* vars (tab row, chat history, sub-item rails) get the frame too.
+  const railVars = {
+    "--admin-font-primary": F.textStrong,
+    "--admin-font-secondary": F.textIdle,
+    "--admin-font-tertiary": F.icon,
+    "--admin-font-light": F.label,
+    "--admin-bg-hover": F.hover,
+    "--admin-bg-active": F.selected,
+    "--admin-bg-card-hover": F.control,
+    "--admin-border-default": F.divider,
+  } as React.CSSProperties;
 
   const toggleExpand = (label: string) => {
     setExpanded(prev => prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]);
@@ -279,6 +302,7 @@ export function StudentSidebar() {
       background: "transparent", fontFamily: "var(--font-poppins), Poppins, Inter, -apple-system, system-ui, sans-serif",
       fontSize: 13, userSelect: "none", overflow: "hidden", transition: "width 0.2s ease",
       position: "relative",
+      ...railVars,
     }}>
 
       {/* ── Logo bar ── */}
@@ -291,7 +315,7 @@ export function StudentSidebar() {
             <img src="/fm-icon.png" alt="FormMaps" style={{ height: 28, width: "auto" }} />
             <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em" }}>
               <span style={{ color: C.fontPrimary }}>FORM</span>
-              <span style={{ color: "var(--admin-accent-blue)" }}>MAPS</span>
+              <span style={{ color: F.brandAccent }}>MAPS</span>
             </span>
           </div>
         ) : (
@@ -390,12 +414,12 @@ export function StudentSidebar() {
                           style={{
                             display: "flex", alignItems: "center", justifyContent: "center",
                             height: 28, borderRadius: 4,
-                            background: itemActive ? "var(--admin-accent-blue)" : "transparent", textDecoration: "none",
+                            background: itemActive ? C.activeBg : "transparent", textDecoration: "none",
                           }}
                           onMouseEnter={(e) => { if (!itemActive) e.currentTarget.style.background = C.hoverBg; }}
                           onMouseLeave={(e) => { if (!itemActive) e.currentTarget.style.background = "transparent"; }}
                         >
-                          <item.icon style={{ width: 16, height: 16, color: itemActive ? "#fff" : C.fontTertiary }} />
+                          <item.icon style={{ width: 16, height: 16, color: itemActive ? C.activeIcon : C.fontTertiary }} />
                         </Link>
                       ) : (
                         <NavItem
@@ -418,15 +442,15 @@ export function StudentSidebar() {
                                   display: "flex", alignItems: "center", gap: 8, height: 28,
                                   padding: "0 4px 0 0", borderRadius: 4, fontSize: 13, fontWeight: 500,
                                   textDecoration: "none", transition: "background 0.1s",
-                                  color: subActive ? "#fff" : C.fontSecondary,
-                                  background: subActive ? "var(--admin-accent-blue)" : "transparent",
+                                  color: subActive ? C.activeText : C.fontSecondary,
+                                  background: subActive ? C.activeBg : "transparent",
                                 }}
                                 onMouseEnter={(e) => { if (!subActive) e.currentTarget.style.background = C.hoverBg; }}
                                 onMouseLeave={(e) => { if (!subActive) e.currentTarget.style.background = "transparent"; }}
                               >
                                 <SubItemBreadcrumb isLast={isLast} isActive={subActive || idx <= selectedSubIndex} />
                                 <span style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, flexShrink: 0 }}>
-                                  <SubIcon style={{ width: 14, height: 14, color: subActive ? "#fff" : C.fontTertiary }} />
+                                  <SubIcon style={{ width: 14, height: 14, color: subActive ? C.activeIcon : C.fontTertiary }} />
                                 </span>
                                 <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                                   {resolveLabel(sub.label)}
@@ -522,7 +546,7 @@ export function StudentSidebar() {
       )}
 
       {/* ── User profile — bottom ── */}
-      <div style={{ padding: collapsed ? "8px 6px" : "8px 8px", borderTop: `1px solid ${themeColors.border.light}`, position: "relative" }}>
+      <div style={{ padding: collapsed ? "8px 6px" : "8px 8px", borderTop: `1px solid ${F.divider}`, position: "relative" }}>
         <button
           onClick={() => {
             if (collapsed) { setCollapsed(false); return; }
@@ -543,7 +567,7 @@ export function StudentSidebar() {
         >
           <div style={{
             width: collapsed ? 24 : 28, height: collapsed ? 24 : 28, borderRadius: 7,
-            background: "#102B47", color: "#fff",
+            background: F.avatar, color: "#fff",
             display: "flex", alignItems: "center", justifyContent: "center",
             fontSize: 11, fontWeight: 700, flexShrink: 0,
           }}>{user.name?.charAt(0)?.toUpperCase() || "S"}</div>
@@ -603,26 +627,26 @@ export function StudentSidebar() {
                   <button onClick={() => setThemeSubmenu(true)} style={{
                     display: "flex", alignItems: "center", gap: 12, width: "100%",
                     padding: "8px 10px", borderRadius: 4, border: "none", background: "transparent",
-                    color: C.fontSecondary, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
+                    color: M.fontSecondary, fontSize: 13, cursor: "pointer", fontFamily: "inherit",
                     transition: "background 0.1s", textAlign: "left",
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = M.hoverBg; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                    <Moon style={{ width: 16, height: 16, color: C.fontTertiary, flexShrink: 0 }} />
+                    <Moon style={{ width: 16, height: 16, color: M.fontTertiary, flexShrink: 0 }} />
                     <span style={{ flex: 1 }}>{t("shell.theme")} · {themeLabel}</span>
-                    <ChevronRight style={{ width: 12, height: 12, color: C.fontLight }} />
+                    <ChevronRight style={{ width: 12, height: 12, color: M.fontLight }} />
                   </button>
                 ) : (
                   <>
                     <button onClick={() => setThemeSubmenu(false)} style={{
                       display: "flex", alignItems: "center", gap: 8, width: "100%",
                       padding: "8px 10px", borderRadius: 4, border: "none", background: "transparent",
-                      color: C.fontSecondary, fontSize: 12, cursor: "pointer", fontFamily: "inherit",
+                      color: M.fontSecondary, fontSize: 12, cursor: "pointer", fontFamily: "inherit",
                       transition: "background 0.1s", textAlign: "left", fontWeight: 500,
                     }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = M.hoverBg; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                      <ChevronDown style={{ width: 12, height: 12, transform: "rotate(90deg)", color: C.fontLight }} />
+                      <ChevronDown style={{ width: 12, height: 12, transform: "rotate(90deg)", color: M.fontLight }} />
                       <span>{t("shell.theme")}</span>
                     </button>
                     <div style={{ height: 1, background: themeColors.border.hover, margin: "2px 6px" }} />
@@ -634,15 +658,15 @@ export function StudentSidebar() {
                       <button key={themeOption.mode} onClick={() => changeTheme(themeOption.mode)} style={{
                         display: "flex", alignItems: "center", gap: 12, width: "100%",
                         padding: "8px 10px", borderRadius: 4, border: "none", background: "transparent",
-                        color: mode === themeOption.mode ? C.fontPrimary : C.fontSecondary,
+                        color: mode === themeOption.mode ? M.fontPrimary : M.fontSecondary,
                         fontSize: 13, cursor: "pointer", fontFamily: "inherit",
                         transition: "background 0.1s", textAlign: "left",
                       }}
-                      onMouseEnter={(e) => { e.currentTarget.style.background = C.hoverBg; }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = M.hoverBg; }}
                       onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}>
-                        <themeOption.icon style={{ width: 16, height: 16, color: mode === themeOption.mode ? C.fontPrimary : C.fontTertiary, flexShrink: 0 }} />
+                        <themeOption.icon style={{ width: 16, height: 16, color: mode === themeOption.mode ? M.fontPrimary : M.fontTertiary, flexShrink: 0 }} />
                         <span style={{ flex: 1 }}>{themeOption.label}</span>
-                        {mode === themeOption.mode && <span style={{ color: C.fontTertiary, fontSize: 14 }}>✓</span>}
+                        {mode === themeOption.mode && <span style={{ color: M.fontTertiary, fontSize: 14 }}>✓</span>}
                       </button>
                     ))}
                   </>

@@ -18,6 +18,7 @@ function StudentShell({ children }: { children: React.ReactNode }) {
     <AppShell
       sidebar={<StudentSidebar />}
       sidebarClassName="hidden md:block"
+      frame
       overlay={
         <>
           <MobileNav />

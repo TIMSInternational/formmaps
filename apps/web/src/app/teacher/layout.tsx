@@ -32,7 +32,7 @@ export default function TeacherLayout({ children }: { children: React.ReactNode 
       <ChatProvider>
         <ErrorBoundary>
           <AppShell
-      sidebarClassName="hidden md:block" sidebar={<TeacherSidebar />}>
+      sidebarClassName="hidden md:block" frame sidebar={<TeacherSidebar />}>
             {children}
           </AppShell>
         </ErrorBoundary>

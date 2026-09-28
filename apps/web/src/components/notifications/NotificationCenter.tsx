@@ -106,7 +106,7 @@ export function NotificationCenter() {
       <button
         onClick={() => setOpen((o) => !o)}
         className="relative flex items-center justify-center rounded-md p-1.5 transition-colors"
-        style={{ color: "var(--admin-font-tertiary)" }}
+        style={{ color: "var(--shell-icon, var(--admin-font-tertiary))" }}
         aria-label={`${t("shell.notifications")}${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
       >
         <Bell className="h-4 w-4" />
