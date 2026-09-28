@@ -330,9 +330,9 @@ export default function CounselorSessionsPage() {
                             </div>
                           )}
                           {session.counselorNotes && (
-                            <div className="pl-3 border-l-2 border-[#2E9098]/40">
+                            <div className="pl-3 border-l-2 border-[var(--admin-accent-blue)]/40">
                               <p className="text-xs text-muted-foreground">
-                                <span className="font-medium text-[#2E9098]">{t("sessions.yourNotes", "Your notes:")} </span>{session.counselorNotes}
+                                <span className="font-medium text-[var(--admin-accent-blue)]">{t("sessions.yourNotes", "Your notes:")} </span>{session.counselorNotes}
                               </p>
                             </div>
                           )}
@@ -406,7 +406,7 @@ export default function CounselorSessionsPage() {
           </div>
           <DialogFooter className="gap-2">
             <Button variant="outline" onClick={() => setCompleteOpen(false)}>{t("sessions.cancelAction", "Cancel")}</Button>
-            <Button onClick={handleComplete} disabled={isProcessing} className="bg-[#2E9098] hover:bg-[#257379] text-white">
+            <Button onClick={handleComplete} disabled={isProcessing} className="bg-[var(--admin-accent-blue)] hover:bg-[#257379] text-white">
               {isProcessing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
               {t("sessions.markComplete", "Mark Complete")}
             </Button>

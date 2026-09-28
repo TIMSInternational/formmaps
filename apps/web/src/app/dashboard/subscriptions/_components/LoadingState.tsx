@@ -120,7 +120,7 @@ export function ErrorState({
       {onRetry && (
         <button
           onClick={onRetry}
-          className="bg-[#2E9098] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#2E9098]/90 transition-colors"
+          className="bg-[var(--admin-accent-blue)] text-white px-6 py-3 rounded-lg font-medium hover:bg-[var(--admin-accent-blue)]/90 transition-colors"
         >
           Try Again
         </button>

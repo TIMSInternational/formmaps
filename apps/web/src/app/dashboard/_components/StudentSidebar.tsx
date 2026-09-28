@@ -168,7 +168,7 @@ function NavItem({ href, icon: Icon, label, active, hasSub, expanded, onToggle, 
         display: "flex", alignItems: "center", gap: 8, minHeight: 28, padding: "4px 8px",
         borderRadius: 4, fontSize: 13, fontWeight: 500, textDecoration: "none", cursor: "pointer",
         color: active && !hasSub ? "#fff" : colors.fontSecondary,
-        background: active && !hasSub ? "#2E9098" : "transparent",
+        background: active && !hasSub ? "var(--admin-accent-blue)" : "transparent",
         transition: "background 0.1s ease",
       }}
       onMouseEnter={(e) => { if (!(active && !hasSub)) e.currentTarget.style.background = colors.hoverBg; }}
@@ -291,7 +291,7 @@ export function StudentSidebar() {
             <img src="/fm-icon.png" alt="FormMaps" style={{ height: 28, width: "auto" }} />
             <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em" }}>
               <span style={{ color: C.fontPrimary }}>FORM</span>
-              <span style={{ color: "#2E9098" }}>MAPS</span>
+              <span style={{ color: "var(--admin-accent-blue)" }}>MAPS</span>
             </span>
           </div>
         ) : (
@@ -390,7 +390,7 @@ export function StudentSidebar() {
                           style={{
                             display: "flex", alignItems: "center", justifyContent: "center",
                             height: 28, borderRadius: 4,
-                            background: itemActive ? "#2E9098" : "transparent", textDecoration: "none",
+                            background: itemActive ? "var(--admin-accent-blue)" : "transparent", textDecoration: "none",
                           }}
                           onMouseEnter={(e) => { if (!itemActive) e.currentTarget.style.background = C.hoverBg; }}
                           onMouseLeave={(e) => { if (!itemActive) e.currentTarget.style.background = "transparent"; }}
@@ -419,7 +419,7 @@ export function StudentSidebar() {
                                   padding: "0 4px 0 0", borderRadius: 4, fontSize: 13, fontWeight: 500,
                                   textDecoration: "none", transition: "background 0.1s",
                                   color: subActive ? "#fff" : C.fontSecondary,
-                                  background: subActive ? "#2E9098" : "transparent",
+                                  background: subActive ? "var(--admin-accent-blue)" : "transparent",
                                 }}
                                 onMouseEnter={(e) => { if (!subActive) e.currentTarget.style.background = C.hoverBg; }}
                                 onMouseLeave={(e) => { if (!subActive) e.currentTarget.style.background = "transparent"; }}

@@ -186,7 +186,7 @@ export function CoursesPanel() {
           </button>
           <button onClick={() => aiFileRef.current?.click()} disabled={aiImporting} style={{
             height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
-            background: "linear-gradient(135deg, #8b5cf6, #2E9098)", color: "#fff", border: "none", cursor: aiImporting ? "wait" : "pointer",
+            background: "linear-gradient(135deg, #8b5cf6, var(--admin-accent-blue))", color: "#fff", border: "none", cursor: aiImporting ? "wait" : "pointer",
             opacity: aiImporting ? 0.7 : 1,
           }}>
             {aiImporting ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Sparkles style={{ width: 14, height: 14 }} />}
@@ -201,7 +201,7 @@ export function CoursesPanel() {
           </button>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
-              <button style={{ height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "#2E9098", color: "#fff", border: "none", cursor: "pointer" }}>
+              <button style={{ height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "var(--admin-accent-blue)", color: "#fff", border: "none", cursor: "pointer" }}>
                 <Plus style={{ width: 14, height: 14 }} /> Add Course
               </button>
             </DialogTrigger>
@@ -239,7 +239,7 @@ export function CoursesPanel() {
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setAddOpen(false)} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>Cancel</Button>
-                <button onClick={handleCreate} disabled={createCourse.isPending} style={{ height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600, background: "#2E9098", color: "#fff", border: "none", cursor: "pointer" }}>
+                <button onClick={handleCreate} disabled={createCourse.isPending} style={{ height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600, background: "var(--admin-accent-blue)", color: "#fff", border: "none", cursor: "pointer" }}>
                   {createCourse.isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : "Create"}
                 </button>
               </DialogFooter>
@@ -294,7 +294,7 @@ export function CoursesPanel() {
                 <TableCell className="py-3 px-4"><Badge variant="outline" className="text-xs" style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)" }}>{c.department || "\u2014"}</Badge></TableCell>
                 <TableCell className="py-3 px-4 text-center" style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{c.credits}</TableCell>
                 <TableCell className="py-3 px-4">
-                  {c.frameworkType ? <Badge className="text-xs" style={{ background: "rgba(59,130,246,0.1)", color: "#2E9098", border: "none" }}>{c.frameworkType}</Badge> : <span style={{ color: "var(--admin-font-tertiary)" }}>{"\u2014"}</span>}
+                  {c.frameworkType ? <Badge className="text-xs" style={{ background: "rgba(59,130,246,0.1)", color: "var(--admin-accent-blue)", border: "none" }}>{c.frameworkType}</Badge> : <span style={{ color: "var(--admin-font-tertiary)" }}>{"\u2014"}</span>}
                 </TableCell>
                 <TableCell className="py-3 px-4">
                   <Badge className="text-xs font-medium shadow-none border-0" style={{ background: c.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(107,114,128,0.1)", color: c.status === "active" ? "#10b981" : "#6b7280" }}>{c.status || "active"}</Badge>

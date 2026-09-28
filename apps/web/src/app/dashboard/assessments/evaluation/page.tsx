@@ -103,7 +103,7 @@ export default function EvaluatorsPage() {
           className="bg-card rounded-xl border shadow-sm p-8 text-center"
         >
           <div className="w-16 h-16 bg-[#102B47]/10 rounded-full flex items-center justify-center mx-auto mb-5">
-            <ClipboardList className="w-8 h-8 text-[#2E9098]" />
+            <ClipboardList className="w-8 h-8 text-[var(--admin-accent-blue)]" />
           </div>
 
           <h1 className="text-xl font-bold text-foreground mb-2">

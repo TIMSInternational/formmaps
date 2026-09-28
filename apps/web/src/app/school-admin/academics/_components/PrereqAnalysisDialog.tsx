@@ -65,7 +65,7 @@ function ConfidenceChip({ level }: { level: PrereqSuggestion["confidence"] }) {
 // ── Source chip ────────────────────────────────────────────────────────────────
 function SourceChip({ source }: { source: PrereqSuggestion["source"] }) {
   return source === "pattern"
-    ? <span style={{ ...CHIP_BASE, border: "1px solid #2E9098", color: "#2E9098", background: "transparent" }}>Pattern</span>
+    ? <span style={{ ...CHIP_BASE, border: "1px solid var(--admin-accent-blue)", color: "var(--admin-accent-blue)", background: "transparent" }}>Pattern</span>
     : <span style={{ ...CHIP_BASE, background: "#FFD23F", color: "#102B47", border: "none" }}>AI</span>;
 }
 
@@ -136,7 +136,7 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
   function renderBody() {
     if (analyze.isPending) {
       return (
-        <CenteredState icon={<Loader2 style={{ width: 28, height: 28, color: "#2E9098", animation: "spin 1s linear infinite" }} />}>
+        <CenteredState icon={<Loader2 style={{ width: 28, height: 28, color: "var(--admin-accent-blue)", animation: "spin 1s linear infinite" }} />}>
           <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>Analyzing your catalog&hellip;</p>
         </CenteredState>
       );
@@ -228,7 +228,7 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
         style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", width: "90vw" }}>
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ color: "var(--admin-font-primary)" }}>
-            <Network style={{ width: 18, height: 18, color: "#2E9098" }} />
+            <Network style={{ width: 18, height: 18, color: "var(--admin-accent-blue)" }} />
             Analyze Prerequisites
           </DialogTitle>
         </DialogHeader>
@@ -241,7 +241,7 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
             <button onClick={handleApply} disabled={selectedCount === 0 || apply.isPending}
               style={{
                 ...BTN_PRIMARY,
-                background: selectedCount === 0 ? "var(--admin-bg-hover)" : "#2E9098",
+                background: selectedCount === 0 ? "var(--admin-bg-hover)" : "var(--admin-accent-blue)",
                 color: selectedCount === 0 ? "var(--admin-font-tertiary)" : "#fff",
                 border: selectedCount === 0 ? "1px solid var(--admin-border-default)" : "none",
                 cursor: selectedCount === 0 || apply.isPending ? "not-allowed" : "pointer",

@@ -46,7 +46,7 @@ export function RequestsTable({
           background: "var(--admin-bg-hover)",
         }}
       >
-        <Users style={{ width: 14, height: 14, color: "#2E9098" }} />
+        <Users style={{ width: 14, height: 14, color: "var(--admin-accent-blue)" }} />
         <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
           {t("recommendations.allRequests", "All Requests")}
         </span>
@@ -96,7 +96,7 @@ export function RequestsTable({
               return (
                 <TableRow
                   key={req.id}
-                  style={{ background: isMe ? "var(--admin-accent-blue, #2E9098)08" : undefined }}
+                  style={{ background: isMe ? "var(--admin-accent-blue)08" : undefined }}
                 >
                   <TableCell>
                     <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
@@ -105,7 +105,7 @@ export function RequestsTable({
                         background: "#102B4715",
                         display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                       }}>
-                        <User style={{ width: 12, height: 12, color: "#2E9098" }} />
+                        <User style={{ width: 12, height: 12, color: "var(--admin-accent-blue)" }} />
                       </div>
                       <div>
                         <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
@@ -124,7 +124,7 @@ export function RequestsTable({
                         <span style={{
                           marginLeft: 6, fontSize: 10, fontWeight: 600,
                           padding: "1px 5px", borderRadius: 3,
-                          background: "#102B4715", color: "#2E9098",
+                          background: "#102B4715", color: "var(--admin-accent-blue)",
                         }}>
                           {t("recommendations.you", "You")}
                         </span>

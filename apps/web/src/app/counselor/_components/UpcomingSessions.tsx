@@ -29,11 +29,11 @@ export function UpcomingSessions({ sessions, isLoading }: UpcomingSessionsProps)
       <Card className="dash-card">
         <CardHeader className="pb-3 flex flex-row items-center justify-between">
           <CardTitle className="flex items-center gap-2 text-base text-foreground">
-            <CalendarClock className="h-4 w-4 text-[#2E9098]" />
+            <CalendarClock className="h-4 w-4 text-[var(--admin-accent-blue)]" />
             {t("dashboard.upcomingSessions", "Upcoming Counseling Sessions")}
           </CardTitle>
           <Link href="/counselor/sessions">
-            <Button variant="ghost" size="sm" className="text-xs text-[#2E9098] hover:bg-[#2E9098]/10">
+            <Button variant="ghost" size="sm" className="text-xs text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/10">
               {t("dashboard.manageSessions", "Manage Sessions")} →
             </Button>
           </Link>
@@ -57,7 +57,7 @@ export function UpcomingSessions({ sessions, isLoading }: UpcomingSessionsProps)
                   </div>
                   <div className="flex items-start gap-3 relative z-10">
                     <Avatar className="h-10 w-10 border shadow-sm">
-                      <AvatarFallback className="bg-[#2E9098]/10 text-[#2E9098] font-semibold text-xs">
+                      <AvatarFallback className="bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] font-semibold text-xs">
                         {session.studentName?.charAt(0) || "S"}
                       </AvatarFallback>
                     </Avatar>
@@ -68,10 +68,10 @@ export function UpcomingSessions({ sessions, isLoading }: UpcomingSessionsProps)
                   </div>
                   <div className="mt-3 flex items-center justify-between relative z-10 text-xs text-gray-600 font-medium">
                     <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-md">
-                      <Clock className="w-3.5 h-3.5 text-[#2E9098]" />
+                      <Clock className="w-3.5 h-3.5 text-[var(--admin-accent-blue)]" />
                       {new Date(session.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </div>
-                    <span className="text-[#2E9098]">{new Date(session.startTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
+                    <span className="text-[var(--admin-accent-blue)]">{new Date(session.startTime).toLocaleDateString([], { month: 'short', day: 'numeric' })}</span>
                   </div>
                 </div>
               ))}

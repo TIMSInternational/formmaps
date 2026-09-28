@@ -138,7 +138,7 @@ export function GraduationPanel() {
           { label: "On Track", value: onTrack, icon: CheckCircle2, color: "#10b981" },
           { label: "At Risk", value: atRisk, icon: AlertTriangle, color: "#f59e0b" },
           { label: "Off Track", value: offTrack, icon: XCircle, color: "#ef4444" },
-          { label: "Avg Progress", value: `${avgProgress}%`, icon: TrendingUp, color: "#2E9098" },
+          { label: "Avg Progress", value: `${avgProgress}%`, icon: TrendingUp, color: "var(--admin-accent-blue)" },
         ].map((stat) => (
           <div key={stat.label} style={{
             padding: 16, borderRadius: 8, border: "1px solid var(--admin-border-default)",
@@ -163,7 +163,7 @@ export function GraduationPanel() {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
             <div style={{ width: 32, height: 32, borderRadius: 8, background: "rgba(59,130,246,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <GraduationCap style={{ width: 16, height: 16, color: "#2E9098" }} />
+              <GraduationCap style={{ width: 16, height: 16, color: "var(--admin-accent-blue)" }} />
             </div>
             <div>
               <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Graduation Requirements</div>
@@ -175,7 +175,7 @@ export function GraduationPanel() {
           <button onClick={() => setRuleDialogOpen(true)} style={{
             height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 6,
-            background: rules ? "var(--admin-bg-card)" : "#2E9098",
+            background: rules ? "var(--admin-bg-card)" : "var(--admin-accent-blue)",
             color: rules ? "var(--admin-font-primary)" : "#fff",
             border: rules ? "1px solid var(--admin-border-default)" : "none", cursor: "pointer",
           }}>

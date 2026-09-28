@@ -68,7 +68,7 @@ export function RevenueOverviewCard() {
                 title={`${m.month}: $${m.revenue.toLocaleString()}`}
                 style={{
                   width: "100%", borderRadius: 3,
-                  background: m.revenue > 0 ? "#2E9098" : "var(--admin-bg-hover)",
+                  background: m.revenue > 0 ? "var(--admin-accent-blue)" : "var(--admin-bg-hover)",
                   minHeight: 3,
                 }}
               />

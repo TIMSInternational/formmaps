@@ -14,8 +14,10 @@ describe("LoadingSpinner", () => {
     const { container } = render(<LoadingSpinner />);
     const spinner = container.querySelector(".animate-spin") as HTMLElement;
     expect(spinner).not.toBeNull();
-    // jsdom normalizes #2E9098 to rgb(46, 144, 152)
-    expect(spinner.style.borderTopColor).toBe("rgb(46, 144, 152)");
+    // The spinner reads the brand accent from the token, not a literal, so the
+    // palette change in the token layer reaches it. jsdom does not resolve
+    // custom properties, so the declared value is what we assert.
+    expect(spinner.style.borderTopColor).toBe("var(--admin-accent-blue)");
   });
 
   it("renders as a fixed overlay when overlay is set (AuthWrapper redirect)", () => {

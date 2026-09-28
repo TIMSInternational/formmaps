@@ -135,7 +135,7 @@ export function CareerMatches({ className }: CareerMatchesProps) {
                           ? "#10b981"
                           : match.progress > 60
                             ? "#f59e0b"
-                            : "#2E9098"
+                            : "var(--admin-accent-blue)"
                       }
                       strokeWidth="3"
                       strokeDasharray={`${2 * Math.PI * 16}`}

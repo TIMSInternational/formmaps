@@ -241,8 +241,8 @@ export default function CounselorSettingsPage() {
         <div className="dash-card overflow-hidden">
           <div className="p-4 md:p-5 border-b border-[var(--border)]">
             <div className="flex items-center gap-3">
-              <div className="h-8 w-8 bg-[#2E9098]/10 rounded-lg flex items-center justify-center">
-                <CalendarDays className="h-4 w-4 text-[#2E9098]" />
+              <div className="h-8 w-8 bg-[var(--admin-accent-blue)]/10 rounded-lg flex items-center justify-center">
+                <CalendarDays className="h-4 w-4 text-[var(--admin-accent-blue)]" />
               </div>
               <div>
                 <h2 className="text-sm font-semibold text-foreground">{t("settings.availabilityTitle", "Session Availability")}</h2>

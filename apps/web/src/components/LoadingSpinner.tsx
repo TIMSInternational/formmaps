@@ -21,7 +21,7 @@ export function LoadingSpinner({
         <img src="/fm-icon.png" alt="FormMaps" className="h-12 w-auto" />
         <div
           className="w-8 h-8 border-[3px] rounded-full animate-spin"
-          style={{ borderColor: "#E5EAF0", borderTopColor: "#2E9098" }}
+          style={{ borderColor: "#E5EAF0", borderTopColor: "var(--admin-accent-blue)" }}
           aria-hidden="true"
         />
         {label && (

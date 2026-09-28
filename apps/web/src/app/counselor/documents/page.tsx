@@ -36,7 +36,7 @@ const DOC_TYPES = [
 ];
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  requested: { label: "Requested", color: "#2E9098", bg: "rgba(59,130,246,0.1)" },
+  requested: { label: "Requested", color: "var(--admin-accent-blue)", bg: "rgba(59,130,246,0.1)" },
   in_progress: { label: "In Progress", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   sent: { label: "Sent", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
   confirmed: { label: "Confirmed", color: "#059669", bg: "rgba(5,150,105,0.1)" },

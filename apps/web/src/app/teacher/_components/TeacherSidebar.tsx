@@ -51,7 +51,7 @@ function NavItem({ href, icon: Icon, label, active, collapsed, colors }: {
         gap: collapsed ? 0 : 8, height: 28,
         padding: collapsed ? "0 4px" : "0 8px", borderRadius: 4,
         fontSize: 13, color: active ? "#fff" : colors.fontSecondary,
-        background: active ? "#2E9098" : "transparent",
+        background: active ? "var(--admin-accent-blue)" : "transparent",
         textDecoration: "none", transition: "background 0.1s ease", cursor: "pointer",
       }}
       onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = colors.hoverBg; }}
@@ -150,7 +150,7 @@ export function TeacherSidebar() {
             <img src="/fm-icon.png" alt="FormMaps" style={{ height: 28, width: "auto" }} />
             <span style={{ fontSize: 15, fontWeight: 700, letterSpacing: "-0.01em" }}>
               <span style={{ color: C.fontPrimary }}>FORM</span>
-              <span style={{ color: "#2E9098" }}>MAPS</span>
+              <span style={{ color: "var(--admin-accent-blue)" }}>MAPS</span>
             </span>
           </div>
         ) : (

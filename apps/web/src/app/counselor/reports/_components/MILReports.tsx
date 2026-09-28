@@ -32,7 +32,7 @@ export function MILReports({ student }: { student: ReportStudent }) {
   // API keys are the canonical ExamType names; older payloads used lowercase.
   const cognitiveScores = hasMIL ? [
     { label: "Reasoning", key: "VerbalReasoning", legacyKey: "reasoning", color: "#8b5cf6" },
-    { label: "Detection", key: "PatternRecognition", legacyKey: "detection", color: "#2E9098" },
+    { label: "Detection", key: "PatternRecognition", legacyKey: "detection", color: "var(--admin-accent-blue)" },
     { label: "Numeric", key: "NumericVelocity", legacyKey: "numeric", color: "#14b8a6" },
     { label: "Memory", key: "WorkingMemory", legacyKey: "memory", color: "#f59e0b" },
     { label: "Orientation", key: "VisualRotation", legacyKey: "orientation", color: "#ef4444" },
@@ -77,7 +77,7 @@ export function MILReports({ student }: { student: ReportStudent }) {
 
   return (
     <div>
-      <StudentInfoHeader student={student} icon={Brain} iconColor="#2E9098" subtitle="MIL / LIA Assessment" />
+      <StudentInfoHeader student={student} icon={Brain} iconColor="var(--admin-accent-blue)" subtitle="MIL / LIA Assessment" />
       <div className="p-5 space-y-5">
         {!fetched ? (
           <div className="space-y-3">
@@ -123,7 +123,7 @@ export function MILReports({ student }: { student: ReportStudent }) {
               className="rounded-lg border bg-card p-4 space-y-3"
             >
               <div className="text-sm font-semibold flex items-center gap-2">
-                <Brain className="h-4 w-4 text-[#2E9098]" />
+                <Brain className="h-4 w-4 text-[var(--admin-accent-blue)]" />
                 MIL Profile
               </div>
               <div className="space-y-2.5">

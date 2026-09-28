@@ -214,7 +214,7 @@ function TimelineEventCard({ event, isLast, onClick }: TimelineEventCardProps) {
       >
         <div
           className={cn(
-            "rounded-xl border bg-white p-5 transition-all duration-300 hover:shadow-sm hover:border-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#2E9098]",
+            "rounded-xl border bg-white p-5 transition-all duration-300 hover:shadow-sm hover:border-gray-300 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[var(--admin-accent-blue)]",
             "border-gray-100"
           )}
           onClick={() => onClick?.() || setIsExpanded(!isExpanded)}
@@ -380,7 +380,7 @@ function EventMetadata({
               {language === "spanish" ? "Evaluador" : "Evaluator"}
             </span>
             <span className="font-semibold text-gray-900 flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full bg-[#2E9098]/10 flex items-center justify-center text-[#2E9098] text-[10px] font-bold border border-[#2E9098]/20">
+              <div className="h-6 w-6 rounded-full bg-[var(--admin-accent-blue)]/10 flex items-center justify-center text-[var(--admin-accent-blue)] text-[10px] font-bold border border-[var(--admin-accent-blue)]/20">
                 {metadata.evaluatorName.charAt(0)}
               </div>
               {metadata.evaluatorName}
@@ -542,7 +542,7 @@ export function TimelineView({
               className={cn(
                 "px-4 py-1.5 rounded-full text-xs font-bold shadow-sm border backdrop-blur-md transition-all duration-300 pointer-events-auto",
                 group.isToday
-                  ? "bg-[#2E9098] text-white border-[#2E9098] shadow-[#2E9098]/20"
+                  ? "bg-[var(--admin-accent-blue)] text-white border-[var(--admin-accent-blue)] shadow-[var(--admin-accent-blue)]/20"
                   : "bg-white/80 text-gray-600 border-gray-200"
               )}
             >
@@ -615,7 +615,7 @@ function TimelineEmptyState({ language }: { language: "english" | "spanish" }) {
           : "Complete assessments to see your progress."}
       </p>
       <div className="mt-6">
-        <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#2E9098] text-white text-sm font-semibold hover:bg-[#2E9098]/90 transition-colors shadow-sm shadow-[#2E9098]/20">
+        <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--admin-accent-blue)] text-white text-sm font-semibold hover:bg-[var(--admin-accent-blue)]/90 transition-colors shadow-sm shadow-[var(--admin-accent-blue)]/20">
           {language === "spanish" ? "Ir a Evaluaciones" : "Go to Assessments"}
           <ArrowRight className="w-4 h-4" />
         </button>

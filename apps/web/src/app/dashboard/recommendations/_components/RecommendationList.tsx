@@ -31,7 +31,7 @@ function StatusTimeline({ status }: { status: string }) {
       {TIMELINE_STEPS.map((step, i) => {
         const reached = currentIndex >= 0 && i <= currentIndex;
         const isLast = i === TIMELINE_STEPS.length - 1;
-        const dotColor = reached ? "#2E9098" : "var(--admin-border-default)";
+        const dotColor = reached ? "var(--admin-accent-blue)" : "var(--admin-border-default)";
         return (
           <div
             key={step.key}
@@ -57,7 +57,7 @@ function StatusTimeline({ status }: { status: string }) {
                 style={{
                   fontSize: 9,
                   fontWeight: reached ? 600 : 500,
-                  color: reached ? "#2E9098" : "var(--admin-font-tertiary)",
+                  color: reached ? "var(--admin-accent-blue)" : "var(--admin-font-tertiary)",
                   whiteSpace: "nowrap",
                 }}
               >
@@ -71,7 +71,7 @@ function StatusTimeline({ status }: { status: string }) {
                   height: 2,
                   margin: "0 4px",
                   marginBottom: 16,
-                  background: i < currentIndex ? "#2E9098" : "var(--admin-border-default)",
+                  background: i < currentIndex ? "var(--admin-accent-blue)" : "var(--admin-border-default)",
                 }}
               />
             )}
@@ -125,7 +125,7 @@ export default function RecommendationList({ requests }: RecommendationListProps
           background: "var(--admin-bg-hover)",
         }}
       >
-        <FileText style={{ width: 14, height: 14, color: "#2E9098" }} />
+        <FileText style={{ width: 14, height: 14, color: "var(--admin-accent-blue)" }} />
         <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
           My Requests
         </span>
@@ -206,7 +206,7 @@ export default function RecommendationList({ requests }: RecommendationListProps
                       flexShrink: 0,
                     }}
                   >
-                    <User style={{ width: 14, height: 14, color: "#2E9098" }} />
+                    <User style={{ width: 14, height: 14, color: "var(--admin-accent-blue)" }} />
                   </div>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div

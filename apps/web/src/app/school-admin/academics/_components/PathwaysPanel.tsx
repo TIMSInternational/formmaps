@@ -31,9 +31,9 @@ const BTN_SECONDARY: React.CSSProperties = {
 function CourseNode({ course, onClick }: { course: PathwayCourse; onClick: () => void }) {
   return (
     <button onClick={(e) => { e.stopPropagation(); onClick(); }} title={`${course.name} — click to edit prerequisites`} style={NODE_BTN}
-      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
+      onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}
-      onFocus={(e) => { e.currentTarget.style.borderColor = "#2E9098"; }}
+      onFocus={(e) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue)"; }}
       onBlur={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}>
       <span style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{course.code}</span>
       <span className="hidden md:inline" style={{ fontSize: 11, color: "var(--admin-font-tertiary)", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course.name}</span>
@@ -134,7 +134,7 @@ export function PathwaysPanel() {
                   </span>
                 ))}
                 <span className="ml-auto opacity-0 group-hover:opacity-100 flex items-center gap-1"
-                  style={{ fontSize: 12, fontWeight: 600, color: "#2E9098", transition: "opacity 0.15s" }}>
+                  style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-accent-blue)", transition: "opacity 0.15s" }}>
                   Open editor <ArrowRight style={{ width: 13, height: 13 }} />
                 </span>
               </div>

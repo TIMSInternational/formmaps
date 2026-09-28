@@ -196,11 +196,11 @@ export function RescheduleDialog({
                   week: "flex justify-between w-full mb-2",
                   day: "h-9 w-9 text-center text-sm relative flex items-center justify-center p-0 hover:bg-transparent focus-within:relative focus-within:z-20",
                   day_button: cn(
-                    "h-9 w-9 p-0 font-normal rounded-full transition-all duration-200 hover:bg-[#2E9098]/10 hover:text-[#2E9098] focus:outline-none",
+                    "h-9 w-9 p-0 font-normal rounded-full transition-all duration-200 hover:bg-[var(--admin-accent-blue)]/10 hover:text-[var(--admin-accent-blue)] focus:outline-none",
                     "aria-selected:opacity-100"
                   ),
                   selected:
-                    "bg-[#2E9098] !text-white hover:!bg-[#2E9098] hover:!text-white shadow-md font-semibold",
+                    "bg-[var(--admin-accent-blue)] !text-white hover:!bg-[var(--admin-accent-blue)] hover:!text-white shadow-md font-semibold",
                   today: "bg-gray-100 text-foreground font-semibold",
                   outside: "text-gray-300 opacity-50 pointer-events-none",
                   disabled: "text-gray-300 opacity-50 cursor-not-allowed",
@@ -223,7 +223,7 @@ export function RescheduleDialog({
                   <AvatarImage
                     src={session?.studentImage || session?.studentAvatar}
                   />
-                  <AvatarFallback className="bg-[#2E9098]/10 text-[#2E9098] text-xs font-semibold">
+                  <AvatarFallback className="bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] text-xs font-semibold">
                     {session?.studentName?.charAt(0)}
                   </AvatarFallback>
                 </Avatar>
@@ -240,7 +240,7 @@ export function RescheduleDialog({
 
             <div className="flex-1 p-6 flex flex-col min-h-[300px]">
               <h4 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-                <Clock className="w-4 h-4 text-[#2E9098]" />
+                <Clock className="w-4 h-4 text-[var(--admin-accent-blue)]" />
                 {t("coach:sessionsPage.reschedule.availableTimes")}
                 {rescheduleDate && (
                   <span className="text-muted-foreground font-normal ml-auto text-xs">
@@ -252,7 +252,7 @@ export function RescheduleDialog({
               <div className="flex-1 overflow-y-auto custom-scrollbar -mr-2 pr-2">
                 {isLoadingSlots ? (
                   <div className="h-full flex flex-col items-center justify-center text-muted-foreground space-y-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#2E9098]" />
+                    <Loader2 className="h-8 w-8 animate-spin text-[var(--admin-accent-blue)]" />
                     <p className="text-xs">{t("coach:sessionsPage.reschedule.checking")}</p>
                   </div>
                 ) : !rescheduleDate ? (
@@ -279,8 +279,8 @@ export function RescheduleDialog({
                         className={cn(
                           "px-3 py-2 text-sm font-medium rounded-xl border transition-all text-center",
                           selectedTime === time
-                            ? "bg-[#2E9098] text-white border-[#2E9098] shadow-md transform scale-[1.02]"
-                            : "bg-white border-gray-200 text-gray-700 hover:border-[#2E9098]/50 hover:text-[#2E9098] hover:bg-[#2E9098]/10"
+                            ? "bg-[var(--admin-accent-blue)] text-white border-[var(--admin-accent-blue)] shadow-md transform scale-[1.02]"
+                            : "bg-white border-gray-200 text-gray-700 hover:border-[var(--admin-accent-blue)]/50 hover:text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/10"
                         )}
                       >
                         {time}
@@ -303,7 +303,7 @@ export function RescheduleDialog({
                 <Button
                   onClick={confirmReschedule}
                   disabled={!selectedTime || isLoadingSlots}
-                  className="flex-1 bg-[#2E9098] hover:bg-[#2E9098] text-white h-11 rounded-xl font-semibold disabled:opacity-50"
+                  className="flex-1 bg-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)] text-white h-11 rounded-xl font-semibold disabled:opacity-50"
                 >
                   {t("coach:sessionsPage.reschedule.confirm")}
                 </Button>

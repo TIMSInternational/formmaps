@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
-const COLORS = ["#2E9098", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
+const COLORS = ["var(--admin-accent-blue)", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"];
 
 interface EventChartItem {
   name: string;
@@ -77,7 +77,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
         <Card className="border border-gray-100 bg-white rounded-2xl shadow-none hover:shadow-md transition-shadow">
           <CardHeader className="border-b border-gray-50 bg-gray-50/30 py-5">
             <CardTitle className="text-base font-semibold text-gray-800 flex items-center gap-1.5">
-              <UserPlus className="h-4 w-4 text-[#2E9098]" />
+              <UserPlus className="h-4 w-4 text-[var(--admin-accent-blue)]" />
               {t("telemetry.charts.newVsReturning")}
             </CardTitle>
           </CardHeader>
@@ -88,7 +88,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
                   <PieChart>
                     <Pie
                       data={[
-                        { name: t("telemetry.charts.newLabel").replace(": ", ""), value: newUsers, color: '#2E9098' },
+                        { name: t("telemetry.charts.newLabel").replace(": ", ""), value: newUsers, color: 'var(--admin-accent-blue)' },
                         { name: t("telemetry.charts.returningLabel").replace(": ", ""), value: returningUsers, color: '#10b981' }
                       ]}
                       cx="50%"
@@ -115,7 +115,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
 
               <div className="flex items-center justify-center gap-6 mt-4 w-full">
                 <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full bg-[#2E9098]" />
+                  <div className="w-3 h-3 rounded-full bg-[var(--admin-accent-blue)]" />
                   <div className="text-sm">
                     <span className="text-gray-500">{t("telemetry.charts.newLabel")}</span>
                     <span className="font-semibold text-gray-900">{newUsers.toLocaleString()}</span>
@@ -244,7 +244,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
           <CardContent className="p-6">
             <div className="space-y-6 mt-2">
               {[
-                  { labelKey: "telemetry.charts.resumeBuilder", key: "resumeBuilder" as const, color: "bg-[#2E9098]" },
+                  { labelKey: "telemetry.charts.resumeBuilder", key: "resumeBuilder" as const, color: "bg-[var(--admin-accent-blue)]" },
                   { labelKey: "telemetry.charts.assessments", key: "assessments" as const, color: "bg-emerald-500" },
                   { labelKey: "telemetry.charts.coachOnboarding", key: "coachOnboarding" as const, color: "bg-violet-500" },
                   { labelKey: "telemetry.charts.profileSetup", key: "profileSetup" as const, color: "bg-orange-500" },
@@ -274,7 +274,7 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
         <Card className="border border-gray-100 bg-white rounded-2xl shadow-none hover:shadow-md transition-shadow">
           <CardHeader className="border-b border-gray-50 bg-gray-50/30 py-5">
             <CardTitle className="text-lg font-semibold text-gray-800 flex items-center gap-1.5">
-              <TrendingUp className="h-5 w-5 text-[#2E9098]" />
+              <TrendingUp className="h-5 w-5 text-[var(--admin-accent-blue)]" />
               {t("telemetry.charts.dauTrend")}
             </CardTitle>
             <CardDescription>{t("telemetry.charts.dauTrendDesc")}</CardDescription>

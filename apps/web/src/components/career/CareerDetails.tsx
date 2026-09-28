@@ -19,7 +19,7 @@ import {
   Users,
 } from "lucide-react";
 
-const BRAND_BLUE = "#2E9098";
+const BRAND_BLUE = "var(--admin-accent-blue)";
 const BRAND_YELLOW = "#FFD23F";
 
 interface CareerProfile {
@@ -303,7 +303,7 @@ export default function CareerDetails() {
                       <p className="text-xs text-gray-400 uppercase tracking-wider mb-2">{t("careers.details.interests")}</p>
                       <div className="flex flex-wrap gap-1.5">
                         {interests.map((i) => (
-                          <span key={i} className="text-xs bg-[#2E9098]/10 text-[#2E9098] px-2 py-1 rounded-full capitalize">
+                          <span key={i} className="text-xs bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] px-2 py-1 rounded-full capitalize">
                             {i.replace(/_/g, " ")}
                           </span>
                         ))}

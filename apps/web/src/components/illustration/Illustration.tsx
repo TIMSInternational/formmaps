@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 /**
  * The FormMaps illustration set.
  *
- * Flat geometric marks in the brand palette — deep teal #2E9098, golden yellow
+ * Flat geometric marks in the brand palette — deep teal var(--admin-accent-blue), golden yellow
  * #FFD23F, mid grey #8A93A3 — built from the same vocabulary as the marks drawn
  * in the PDF informe (arcs from a common origin, dots on a grid, nodes joined by
  * paths, a set of shapes with one picked out), so the report and the product

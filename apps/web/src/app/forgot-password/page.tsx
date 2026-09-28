@@ -21,7 +21,7 @@ const inputStyle: React.CSSProperties = {
   color: "#111",
 };
 const onFocus = (e: React.FocusEvent<HTMLInputElement>) => {
-  e.currentTarget.style.borderColor = "#2E9098";
+  e.currentTarget.style.borderColor = "var(--admin-accent-blue)";
 };
 const onBlur = (e: React.FocusEvent<HTMLInputElement>) => {
   e.currentTarget.style.borderColor = "#E0E0E0";
@@ -132,7 +132,7 @@ export default function ForgotPasswordPage() {
             <img src="/fm-icon.png" alt="FormMaps" className="h-10 w-auto" />
             <div>
               <span className="text-xl font-bold" style={{ color: "#102B47" }}>FORM</span>
-              <span className="text-xl font-bold" style={{ color: "#2E9098" }}>MAPS</span>
+              <span className="text-xl font-bold" style={{ color: "var(--admin-accent-blue)" }}>MAPS</span>
             </div>
           </div>
 
@@ -186,7 +186,7 @@ export default function ForgotPasswordPage() {
               <button
                 onClick={() => { setSent(false); setError(null); }}
                 className="text-sm cursor-pointer bg-transparent border-none"
-                style={{ color: "#2E9098", fontWeight: 500 }}
+                style={{ color: "var(--admin-accent-blue)", fontWeight: 500 }}
               >
                 {t("auth.forgotPassword.tryAgainLink")}
               </button>
@@ -270,7 +270,7 @@ export default function ForgotPasswordPage() {
               <Link
                 href="/login"
                 className="font-medium no-underline inline-flex items-center gap-1"
-                style={{ color: "#2E9098" }}
+                style={{ color: "var(--admin-accent-blue)" }}
               >
                 <ArrowLeft className="w-3.5 h-3.5" />
                 {t("auth.forgotPassword.backToLogin")}

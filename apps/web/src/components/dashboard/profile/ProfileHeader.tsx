@@ -184,7 +184,7 @@ export function ProfileHeader() {
               </Avatar>
             </div>
             <button
-              className="absolute bottom-4 right-4 p-3 bg-[#2E9098] text-white rounded-full shadow-lg hover:bg-[#2E9098]/90 transition-all border-2 border-white dark:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="absolute bottom-4 right-4 p-3 bg-[var(--admin-accent-blue)] text-white rounded-full shadow-lg hover:bg-[var(--admin-accent-blue)]/90 transition-all border-2 border-white dark:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
               aria-label="Change profile picture"
               onClick={() => avatarInputRef.current?.click()}
               disabled={isUploadingAvatar}

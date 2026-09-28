@@ -48,7 +48,7 @@ export default function TeacherDashboard() {
         <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("dashboard.badge")}</p>
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
           {t("dashboard.welcome")},{" "}
-          <span style={{ color: "#2E9098" }}>{profile?.name || t("role")}</span>
+          <span style={{ color: "var(--admin-accent-blue)" }}>{profile?.name || t("role")}</span>
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
           {t("dashboard.subtitle")}
@@ -60,7 +60,7 @@ export default function TeacherDashboard() {
         <div className="dash-card p-5">
           <div className="flex items-center gap-3 mb-3">
             <div className="h-9 w-9 rounded-lg flex items-center justify-center" style={{ background: "rgba(46,144,152,0.10)" }}>
-              <FileCheck className="h-4 w-4" style={{ color: "#2E9098" }} strokeWidth={1.8} />
+              <FileCheck className="h-4 w-4" style={{ color: "var(--admin-accent-blue)" }} strokeWidth={1.8} />
             </div>
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
               {t("dashboard.pendingEvaluations")}
@@ -129,7 +129,7 @@ export default function TeacherDashboard() {
                 <div>
                   <p className="font-medium text-foreground">
                     {t("dashboard.evaluationFor")}{" "}
-                    <span style={{ color: "#2E9098" }}>{evaluation.studentName}</span>
+                    <span style={{ color: "var(--admin-accent-blue)" }}>{evaluation.studentName}</span>
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {t("dashboard.dueBy")}:{" "}

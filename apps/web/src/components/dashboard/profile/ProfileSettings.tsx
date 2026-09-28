@@ -18,7 +18,7 @@ export function ProfileSettings() {
       <Card className="border-none shadow-md bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
         <CardHeader>
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-[#2E9098]/10 rounded-lg text-[#2E9098] dark:bg-[#2E9098]/20">
+            <div className="p-2 bg-[var(--admin-accent-blue)]/10 rounded-lg text-[var(--admin-accent-blue)] dark:bg-[var(--admin-accent-blue)]/20">
               <FiLink size={20} />
             </div>
             <div>
@@ -66,7 +66,7 @@ export function ProfileSettings() {
         <CardContent className="glass-card">
           <Link
             href="/dashboard/settings"
-            className="inline-flex items-center gap-2 text-sm font-medium text-[#2E9098] hover:text-[#2E9098]/80 dark:text-[#2E9098]"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--admin-accent-blue)] hover:text-[var(--admin-accent-blue)]/80 dark:text-[var(--admin-accent-blue)]"
           >
             Open Settings
             <FiArrowRight size={16} />

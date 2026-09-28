@@ -178,7 +178,7 @@ export default function CoachStudentsPage() {
               <div style={{ display: "flex", gap: 16 }}>
                 <div>
                   <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", margin: 0 }}>Sessions</p>
-                  <p style={{ fontSize: 16, fontWeight: 600, color: "#2E9098", margin: 0 }}>
+                  <p style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-accent-blue)", margin: 0 }}>
                     {student.totalSessions ?? 0}
                   </p>
                 </div>

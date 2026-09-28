@@ -156,7 +156,7 @@ export default function SubscribePage() {
           <img src="/fm-icon.png" alt="FormMaps" className="h-8 w-auto" />
           <div className="flex items-center">
             <span className="text-lg font-bold tracking-tight" style={{ color: "#102B47" }}>FORM</span>
-            <span className="text-lg font-bold tracking-tight" style={{ color: "#2E9098" }}>MAPS</span>
+            <span className="text-lg font-bold tracking-tight" style={{ color: "var(--admin-accent-blue)" }}>MAPS</span>
           </div>
         </div>
 
@@ -166,7 +166,7 @@ export default function SubscribePage() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <Badge className="mb-3 border-0 px-4 py-1.5 font-semibold" style={{ background: "rgba(46,144,152,0.1)", color: "#2E9098" }}>
+          <Badge className="mb-3 border-0 px-4 py-1.5 font-semibold" style={{ background: "rgba(46,144,152,0.1)", color: "var(--admin-accent-blue)" }}>
             Choose Your Plan
           </Badge>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2" style={{ color: "#102B47" }}>
@@ -175,7 +175,7 @@ export default function SubscribePage() {
           <p className="text-base text-gray-500 max-w-xl mx-auto">
             Unlock AI-powered career tools, assessments, and personalized guidance to accelerate your professional journey.
           </p>
-          <p className="text-sm font-semibold mt-2" style={{ color: "#2E9098" }}>
+          <p className="text-sm font-semibold mt-2" style={{ color: "var(--admin-accent-blue)" }}>
             Start with a 7-day free trial. No charge until your trial ends.
           </p>
         </motion.div>
@@ -195,7 +195,7 @@ export default function SubscribePage() {
                     ? "shadow-lg scale-[1.02]"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
-                style={plan.popular ? { borderColor: "#2E9098", boxShadow: "0 10px 30px rgba(46,144,152,0.15)" } : undefined}
+                style={plan.popular ? { borderColor: "var(--admin-accent-blue)", boxShadow: "0 10px 30px rgba(46,144,152,0.15)" } : undefined}
               >
                 {plan.badge && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
@@ -244,7 +244,7 @@ export default function SubscribePage() {
                       style={
                         plan.popular
                           ? { background: "#102B47", color: "#fff" }
-                          : { background: "#fff", color: "#2E9098", border: "1px solid #2E9098" }
+                          : { background: "#fff", color: "var(--admin-accent-blue)", border: "1px solid var(--admin-accent-blue)" }
                       }
                       disabled={processingPlan !== null}
                     >
@@ -260,7 +260,7 @@ export default function SubscribePage() {
                   <div className="space-y-2">
                     {plan.features.map((feature, j) => (
                       <div key={j} className="flex items-start gap-3">
-                        <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: feature.highlighted ? "#2E9098" : "#9ca3af" }} />
+                        <Check className="w-4 h-4 mt-0.5 flex-shrink-0" style={{ color: feature.highlighted ? "var(--admin-accent-blue)" : "#9ca3af" }} />
                         <span className={`text-sm ${feature.highlighted ? "font-medium" : ""}`} style={{ color: feature.highlighted ? "#102B47" : "#4b5563" }}>
                           {feature.text}
                         </span>

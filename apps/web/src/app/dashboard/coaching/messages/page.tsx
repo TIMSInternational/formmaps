@@ -166,7 +166,7 @@ export default function CoachMessagesPage() {
                 )}
                 <button onClick={() => setShowNewMessage(!showNewMessage)} style={{
                   width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
-                  background: showNewMessage ? "#2E9098" : "var(--admin-bg-hover)",
+                  background: showNewMessage ? "var(--admin-accent-blue)" : "var(--admin-bg-hover)",
                   color: showNewMessage ? "#fff" : "var(--admin-font-tertiary)",
                   border: "none", cursor: "pointer",
                 }}>
@@ -184,8 +184,8 @@ export default function CoachMessagesPage() {
           {/* New Message Contact Picker */}
           {showNewMessage && (
             <div style={{ borderBottom: "1px solid var(--admin-border-default)", padding: "8px 12px" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid #2E9098", marginBottom: 8 }}>
-                <UserPlus style={{ width: 14, height: 14, color: "#2E9098", flexShrink: 0 }} />
+              <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-accent-blue)", marginBottom: 8 }}>
+                <UserPlus style={{ width: 14, height: 14, color: "var(--admin-accent-blue)", flexShrink: 0 }} />
                 <input placeholder="Search by name or email..." value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} autoFocus
                   style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
               </div>
@@ -241,7 +241,7 @@ export default function CoachMessagesPage() {
                         onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
                         onMouseLeave={(e) => { e.currentTarget.style.background = active ? "var(--admin-bg-active)" : "transparent"; }}
                       >
-                        <div style={{ width: 36, height: 36, borderRadius: 18, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, background: active ? "#2E9098" : "var(--admin-bg-hover)", color: active ? "#fff" : "var(--admin-font-tertiary)" }}>
+                        <div style={{ width: 36, height: 36, borderRadius: 18, flexShrink: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, background: active ? "var(--admin-accent-blue)" : "var(--admin-bg-hover)", color: active ? "#fff" : "var(--admin-font-tertiary)" }}>
                           {getInitials(conv.otherParticipant.name)}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
@@ -307,7 +307,7 @@ export default function CoachMessagesPage() {
                         <motion.div key={msg.id} initial={{ opacity: 0, y: 6, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ duration: 0.15 }}
                           style={{ display: "flex", justifyContent: isOwn ? "flex-end" : "flex-start" }}>
                           <div style={{ maxWidth: "70%", display: "flex", flexDirection: "column", gap: 3, alignItems: isOwn ? "flex-end" : "flex-start" }}>
-                            <div style={{ padding: "10px 14px", fontSize: 13, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word", borderRadius: isOwn ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: isOwn ? "#2E9098" : "var(--admin-bg-hover)", color: isOwn ? "#fff" : "var(--admin-font-primary)" }}>
+                            <div style={{ padding: "10px 14px", fontSize: 13, lineHeight: 1.5, whiteSpace: "pre-wrap", wordBreak: "break-word", borderRadius: isOwn ? "18px 18px 4px 18px" : "18px 18px 18px 4px", background: isOwn ? "var(--admin-accent-blue)" : "var(--admin-bg-hover)", color: isOwn ? "#fff" : "var(--admin-font-primary)" }}>
                               {msg.content}
                             </div>
                             <span style={{ fontSize: 10, color: "var(--admin-font-light)", padding: "0 4px" }}>{formatTime(msg.createdDate)}</span>
@@ -326,7 +326,7 @@ export default function CoachMessagesPage() {
                     placeholder="Type a message..." rows={1} disabled={sending}
                     style={{ flex: 1, resize: "none", border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit", lineHeight: 1.5, maxHeight: 120, overflowY: "auto", padding: "2px 0", fieldSizing: "content" } as React.CSSProperties} />
                   <button onClick={handleSend} disabled={!inputValue.trim() || sending}
-                    style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: inputValue.trim() ? "#2E9098" : "var(--admin-bg-card)", color: inputValue.trim() ? "#fff" : "var(--admin-font-light)", border: "none", cursor: inputValue.trim() ? "pointer" : "default", transition: "all 0.15s" }}>
+                    style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: inputValue.trim() ? "var(--admin-accent-blue)" : "var(--admin-bg-card)", color: inputValue.trim() ? "#fff" : "var(--admin-font-light)", border: "none", cursor: inputValue.trim() ? "pointer" : "default", transition: "all 0.15s" }}>
                     <Send style={{ width: 14, height: 14 }} />
                   </button>
                 </div>

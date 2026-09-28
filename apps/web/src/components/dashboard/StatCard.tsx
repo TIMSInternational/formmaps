@@ -25,7 +25,7 @@ export function StatCard({ title, subtitle, icon, buttonText, variant = 'primary
       <button 
         className={`w-full py-2 px-4 rounded text-sm font-medium transition ${
           variant === 'primary' 
-            ? 'bg-[#2E9098] text-white hover:bg-[#2E9098]'
+            ? 'bg-[var(--admin-accent-blue)] text-white hover:bg-[var(--admin-accent-blue)]'
             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
         }`}
       >

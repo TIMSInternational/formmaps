@@ -68,7 +68,7 @@ export function StudentDetailsSheet({
 
         {isLoading ? (
           <div className="flex justify-center items-center h-64">
-            <Loader2 className="w-8 h-8 animate-spin text-[#2E9098]" />
+            <Loader2 className="w-8 h-8 animate-spin text-[var(--admin-accent-blue)]" />
           </div>
         ) : student ? (
           <div className="space-y-8">
@@ -76,7 +76,7 @@ export function StudentDetailsSheet({
             <div className="flex flex-col items-center text-center">
               <Avatar className="w-24 h-24 mb-4 border-4 border-white shadow-xl">
                 <AvatarImage src={student.image} alt={student.name} />
-                <AvatarFallback className="text-2xl bg-[#2E9098]/10 text-[#2E9098]">
+                <AvatarFallback className="text-2xl bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)]">
                   {student.name?.charAt(0)}
                 </AvatarFallback>
               </Avatar>
@@ -106,7 +106,7 @@ export function StudentDetailsSheet({
             {/* Past Sessions */}
             <div>
               <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-[#2E9098]" />
+                <Calendar className="w-5 h-5 text-[var(--admin-accent-blue)]" />
                 {t("coach:studentDetails.runHistory")}
               </h3>
               <div className="space-y-3">
@@ -117,7 +117,7 @@ export function StudentDetailsSheet({
                       className="flex items-center justify-between p-3 rounded-xl bg-gray-50 border border-gray-100"
                     >
                       <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-[#2E9098]/10 flex items-center justify-center text-[#2E9098]">
+                        <div className="w-10 h-10 rounded-full bg-[var(--admin-accent-blue)]/10 flex items-center justify-center text-[var(--admin-accent-blue)]">
                           <Clock className="w-5 h-5" />
                         </div>
                         <div>

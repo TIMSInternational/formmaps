@@ -138,7 +138,7 @@ export function ResultsReport({ results, language }: { results: LIAResultsType; 
               <div key={subtest}>
                 <div className="flex justify-between items-center mb-2">
                   <div className="flex items-center gap-2">
-                    <span className="text-[#2E9098]">{subtestIcons[subtest]}</span>
+                    <span className="text-[var(--admin-accent-blue)]">{subtestIcons[subtest]}</span>
                     <span className="text-sm font-medium text-gray-700">{description.name[language]}</span>
                   </div>
                   <div className="flex items-center gap-3">
@@ -251,7 +251,7 @@ export function ResultsReport({ results, language }: { results: LIAResultsType; 
             <ul className="space-y-2 mb-4">
               {content.interpretations[language].map((item, i) => (
                 <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
-                  <span className="text-[#2E9098] mt-0.5 flex-shrink-0">*</span>
+                  <span className="text-[var(--admin-accent-blue)] mt-0.5 flex-shrink-0">*</span>
                   {item}
                 </li>
               ))}
