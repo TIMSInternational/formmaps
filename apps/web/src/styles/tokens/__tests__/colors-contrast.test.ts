@@ -76,6 +76,27 @@ describe("light palette text contrast", () => {
   });
 });
 
+describe("light frame (the navy rail) text contrast", () => {
+  const F = colorsLight.frame;
+
+  it.each([
+    ["textStrong on the ground", F.textStrong, F.ground],
+    ["textIdle on the ground", F.textIdle, F.ground],
+    ["label on the ground", F.label, F.ground],
+    ["icon on the ground", F.icon, F.ground],
+    ["brandAccent on the ground", F.brandAccent, F.ground],
+    ["activeText on the active item", F.activeText, F.activeBg],
+    ["activeIcon on the active item", F.activeIcon, F.activeBg],
+    ["textIdle on a control", F.textIdle, F.control],
+  ])("%s clears AA for body text (4.5:1)", (_name, text, surface) => {
+    expect(round(contrast(text, surface))).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it("the panel still reads as inset against the ground", () => {
+    expect(round(contrast(colorsLight.bg.panel, F.ground))).toBeGreaterThanOrEqual(3);
+  });
+});
+
 describe("the palette is warm, not the grey it replaced", () => {
   /** Warm = red channel at or above blue. A neutral grey has them equal; #f0f0f0 is neutral. */
   const isWarm = (hex: string) => {

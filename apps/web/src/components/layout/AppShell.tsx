@@ -11,9 +11,23 @@ interface AppShellProps {
   sidebarClassName?: string;
   /** Elements rendered at the end of the root container (e.g. MobileNav, CommandPalette) */
   overlay?: React.ReactNode;
+  /** Paint the ground around the panel with the frame tokens (navy in light theme). The sidebar
+   *  passed in must read `colors.frame` too, or its navy-on-cream text lands on navy. */
+  frame?: boolean;
 }
 
-export function AppShell({ sidebar, children, sidebarClassName, overlay }: AppShellProps) {
+// Scoped `--shell-*` vars: undefined outside a framed shell, so every consumer falls back to what
+// it rendered before. Set here rather than on :root so the other role shells are untouched.
+const FRAME_VARS = {
+  "--shell-ground": "var(--admin-frame-ground)",
+  "--shell-icon": "var(--admin-frame-icon)",
+  "--shell-control": "var(--admin-frame-control)",
+  "--shell-control-border": "var(--admin-frame-control-border)",
+  "--shell-control-text": "var(--admin-frame-text-idle)",
+  "--shell-panel-border": "var(--admin-frame-panel-border)",
+} as React.CSSProperties;
+
+export function AppShell({ sidebar, children, sidebarClassName, overlay, frame }: AppShellProps) {
   return (
     <SidePanelContextProvider>
       {/* Mounted here rather than per-layout: the shell is every signed-in role's entry
@@ -38,7 +52,8 @@ export function AppShell({ sidebar, children, sidebarClassName, overlay }: AppSh
           // 13px was the Twenty-CRM density default. At 14 the body copy is readable by the
           // parents and teachers who use this, not only by the people who built it.
           fontSize: 14,
-          background: "var(--admin-bg-noisy) repeat, var(--admin-bg-outer)",
+          background: "var(--shell-ground, var(--admin-bg-noisy) repeat, var(--admin-bg-outer))",
+          ...(frame ? FRAME_VARS : null),
         }}
       >
         <div style={{ display: "flex", flex: "1 1 auto", flexDirection: "row", minHeight: 0 }}>
@@ -59,7 +74,7 @@ export function AppShell({ sidebar, children, sidebarClassName, overlay }: AppSh
                   id="main-content"
                   style={{
                     background: "var(--admin-bg-panel)",
-                    border: "1px solid var(--admin-border-panel)",
+                    border: "1px solid var(--shell-panel-border, var(--admin-border-panel))",
                     borderRadius: 8,
                     display: "flex", flexDirection: "column",
                     flex: 1, overflowX: "auto", overflowY: "hidden",

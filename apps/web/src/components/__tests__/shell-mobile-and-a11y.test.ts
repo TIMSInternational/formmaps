@@ -19,7 +19,8 @@ const SRC = join(process.cwd(), "src");
 const read = (...p: string[]) => readFileSync(join(SRC, ...p), "utf8");
 
 const SHELL_LAYOUTS = [
-  "admin", "counselor", "dashboard", "dashboard/coaching", "parent", "school-admin", "teacher",
+  "admin", "careers", "counselor", "dashboard", "dashboard/coaching", "parent", "school-admin",
+  "teacher",
 ];
 
 describe("mobile", () => {

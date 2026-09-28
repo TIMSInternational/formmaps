@@ -55,7 +55,10 @@ export function MobileNav() {
       {menuOpen && (
         <div className="md:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/50" onClick={() => setMenuOpen(false)} />
-          <div className="absolute left-0 top-0 bottom-0 w-[260px] animate-in slide-in-from-left duration-200">
+          <div
+            className="absolute left-0 top-0 bottom-0 w-[260px] animate-in slide-in-from-left duration-200"
+            style={{ background: "var(--admin-frame-ground)" }}
+          >
             <StudentSidebar />
           </div>
         </div>

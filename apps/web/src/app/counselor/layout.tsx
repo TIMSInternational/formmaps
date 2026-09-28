@@ -29,7 +29,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       <AdminThemeProvider>
         <ChatProvider>
           <AppShell
-      sidebarClassName="hidden md:block" sidebar={<CounselorSidebar />}>
+      sidebarClassName="hidden md:block" frame sidebar={<CounselorSidebar />}>
             {children}
           </AppShell>
         </ChatProvider>

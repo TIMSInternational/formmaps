@@ -19,7 +19,7 @@ export function PageTopBar() {
       <div className="flex items-center gap-1">
         <button
           className="flex items-center gap-2 px-2 py-1 rounded-md transition-colors"
-          style={{ color: "var(--admin-font-tertiary, #818181)" }}
+          style={{ color: "var(--shell-icon, var(--admin-font-tertiary, #818181))" }}
           title={t("shell.searchShortcut")}
           onClick={() => window.dispatchEvent(new CustomEvent(OPEN_COMMAND_PALETTE_EVENT))}
         >
@@ -27,9 +27,9 @@ export function PageTopBar() {
           <kbd
             className="hidden sm:inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium"
             style={{
-              background: "var(--admin-bg-hover, rgba(255,255,255,0.06))",
-              border: "1px solid var(--admin-border-default, #2a2a2a)",
-              color: "var(--admin-font-light, #555)",
+              background: "var(--shell-control, var(--admin-bg-hover, rgba(255,255,255,0.06)))",
+              border: "1px solid var(--shell-control-border, var(--admin-border-default, #2a2a2a))",
+              color: "var(--shell-control-text, var(--admin-font-light, #555))",
             }}
           >
             Cmd+K

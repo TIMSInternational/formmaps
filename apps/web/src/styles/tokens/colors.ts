@@ -55,6 +55,26 @@ export const colorsDark = {
     amber: "rgba(245,158,11,0.15)",
     orange: "rgba(249,115,22,0.15)",
   },
+  // The shell frame (sidebar rail + the ground around the panel). Dark keeps exactly what it
+  // rendered before the frame had tokens of its own.
+  frame: {
+    ground: "var(--admin-bg-noisy) repeat, var(--admin-bg-outer)",
+    textStrong: "#ebebeb",
+    textIdle: "#b3b3b3",
+    label: "#666",
+    icon: "#818181",
+    hover: "rgba(255,255,255,0.06)",
+    selected: "rgba(255,255,255,0.10)",
+    activeBg: "var(--admin-accent-blue)",
+    activeText: "#fff",
+    activeIcon: "#fff",
+    brandAccent: "var(--admin-accent-blue)",
+    avatar: "#102B47",
+    control: "#222",
+    controlBorder: "#2a2a2a",
+    divider: "#2a2a2a",
+    panelBorder: "#333",
+  },
 } as const;
 
 /**
@@ -132,6 +152,26 @@ export const colorsLight = {
     purple: "rgba(139,92,246,0.20)",
     amber: "rgba(245,158,11,0.20)",
     orange: "rgba(249,115,22,0.20)",
+  },
+  // Frame A, signed off 9/23: navy ground + rail, warm-white panel. The active item is carried by
+  // white text on a lifted navy plus a light-teal icon -- never a teal pill, which is 2.52:1 on navy.
+  frame: {
+    ground: "#102B47",
+    textStrong: "#FFFFFF",
+    textIdle: "#C9D2DC",
+    label: "#8FA0B4",
+    icon: "#8FA0B4",
+    hover: "rgba(255,255,255,0.06)",
+    selected: "rgba(255,255,255,0.12)",
+    activeBg: "#1E3C5C",
+    activeText: "#FFFFFF",
+    activeIcon: "#7FBEC4",
+    brandAccent: "#7FBEC4",
+    avatar: "#1E3C5C",
+    control: "#1E3C5C",
+    controlBorder: "#2A4463",
+    divider: "#2A4463",
+    panelBorder: "transparent", // no border on a dark frame
   },
 } as const;
 

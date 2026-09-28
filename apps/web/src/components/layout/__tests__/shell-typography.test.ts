@@ -10,13 +10,12 @@ import { join } from "node:path";
  * to system-ui at a hard 13px, while Poppins, the brand face, was loaded by next/font and sitting
  * unused on `--font-poppins`.
  *
- * Both shells are pinned here because the bug was duplicated in both, and the careers layout is
- * the copy an earlier fix missed.
+ * The bug was duplicated in the careers layout, which carried its own copy of the shell. That
+ * copy is gone -- careers now renders AppShell -- so AppShell is the one place left to pin.
  */
 
 const SHELLS = [
   ["AppShell", join(process.cwd(), "src", "components", "layout", "AppShell.tsx")],
-  ["careers/layout", join(process.cwd(), "src", "app", "careers", "layout.tsx")],
 ] as const;
 
 describe.each(SHELLS)("%s", (_name, path) => {
