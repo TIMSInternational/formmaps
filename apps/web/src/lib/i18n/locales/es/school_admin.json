@@ -1,19 +1,19 @@
 {
   "dashboard": {
-    "title": "Panel de la Institución",
+    "title": "Panel de la institución",
     "subtitle": "Vista en tiempo real del desempeño de tu institución y análisis con IA",
     "aiBriefing": {
-      "title": "Informe Escolar con IA",
+      "title": "Informe escolar con IA",
       "subtitle": "Obtén un análisis generado por IA del estado actual, riesgos y recomendaciones para tu institución",
-      "generate": "Generar Informe",
+      "generate": "Generar informe",
       "analyzing": "Analizando los datos de tu institución...",
       "analyzingSubtitle": "Revisando estudiantes, evaluaciones, calificaciones y progreso de graduación",
       "label": "Informe IA",
-      "fullAnalysis": "Análisis Completo",
+      "fullAnalysis": "Análisis completo",
       "impactLabel": "impacto {{impact}}"
     },
     "atRisk": {
-      "title": "Requiere Atención",
+      "title": "Requiere atención",
       "viewAll": "Ver todo",
       "allOnTrack": "Todos los estudiantes al día",
       "pcaMissing": "{{count}} PCA pendiente",
@@ -22,13 +22,13 @@
       "moreStudents": "+{{count}} más"
     },
     "assessmentProgress": {
-      "title": "Progreso de Evaluaciones",
+      "title": "Progreso de evaluaciones",
       "completed": "Completado",
-      "inProgress": "En Progreso",
-      "notStarted": "Sin Iniciar"
+      "inProgress": "En progreso",
+      "notStarted": "Sin iniciar"
     },
     "actionItems": {
-      "title": "Acciones Pendientes",
+      "title": "Acciones pendientes",
       "allClear": "Todo en orden",
       "criticalAlert_one": "{{count}} alerta crítica",
       "criticalAlert_other": "{{count}} alertas críticas",
@@ -36,17 +36,17 @@
       "newSinceLogin": "{{count}} nuevas desde el último acceso"
     },
     "recentStudents": {
-      "title": "Estudiantes Recientes",
+      "title": "Estudiantes recientes",
       "viewAll": "Ver todo",
       "noStudents": "Aún no hay estudiantes"
     },
     "stats": {
       "students": "Estudiantes",
       "assessments": "Evaluaciones",
-      "avgExamScore": "Puntaje Prom. Examen",
+      "avgExamScore": "Puntaje prom. Examen",
       "courses": "Cursos"
     },
-    "quickNav": "Navegación Rápida",
+    "quickNav": "Navegación rápida",
     "navCards": {
       "students": { "label": "Estudiantes", "sub": "Listado, invitaciones, personal" },
       "academics": { "label": "Académico", "sub": "Cursos, GPA, graduación" },
@@ -59,9 +59,9 @@
     "subtitle": "Gestiona estudiantes, orientadores, tutores y personal de tu institución",
     "tabs": {
       "roster": "Listado",
-      "onboard": "Invitar y Registrar",
-      "staff": "Personal y Roles",
-      "counselors": "Asignaciones de Orientadores"
+      "onboard": "Invitar y registrar",
+      "staff": "Personal y roles",
+      "counselors": "Asignaciones de orientadores"
     },
     "search": "Buscar estudiantes...",
     "searchPlaceholder": "Buscar estudiantes...",
@@ -71,7 +71,7 @@
       "pending": "Pendiente",
       "inactive": "Inactivo"
     },
-    "inviteStudent": "Invitar Estudiante",
+    "inviteStudent": "Invitar estudiante",
     "emailCopied_one": "{{count}} correo copiado",
     "emailCopied_other": "{{count}} correos copiados",
     "exportedStudents": "{{count}} estudiantes exportados",
@@ -82,27 +82,27 @@
       "inactive": "Inactivo"
     },
     "stats": {
-      "totalStudents": "Total Estudiantes",
+      "totalStudents": "Total estudiantes",
       "totalStudentsSub": "inscritos en la institución",
       "enrolledInSchool": "inscritos en la institución",
-      "activeStudents": "Estudiantes Activos",
+      "activeStudents": "Estudiantes activos",
       "activeStudentsSub": "actualmente activos",
       "currentlyActive": "actualmente activos",
-      "assessmentsDone": "Evaluaciones Completadas",
+      "assessmentsDone": "Evaluaciones completadas",
       "assessmentsDoneSub": "evaluaciones completadas",
       "completedAssessments": "evaluaciones completadas",
-      "avgScore": "Puntaje Prom.",
+      "avgScore": "Puntaje prom.",
       "avgScoreSub": "entre todos los estudiantes",
       "acrossAllStudents": "entre todos los estudiantes"
     },
     "bulk": {
       "selected": "{{count}} seleccionado",
-      "copyEmails": "Copiar Correos",
+      "copyEmails": "Copiar correos",
       "exportCsv": "Exportar CSV"
     },
     "bulkActions": {
       "selected": "{{count}} seleccionado",
-      "copyEmails": "Copiar Correos",
+      "copyEmails": "Copiar correos",
       "exportCsv": "Exportar CSV",
       "emailCopied_one": "{{count}} correo copiado",
       "emailCopied_other": "{{count}} correos copiados",
@@ -120,8 +120,8 @@
     "noStudents": "No se encontraron estudiantes",
     "actions": {
       "label": "Acciones",
-      "viewProfile": "Ver Perfil",
-      "copyEmail": "Copiar Correo",
+      "viewProfile": "Ver perfil",
+      "copyEmail": "Copiar correo",
       "emailCopied": "Correo copiado"
     },
     "pagination": {
@@ -138,19 +138,19 @@
     "exportedSuccess": "Analítica exportada",
     "exportFailed": "Error al exportar",
     "metrics": {
-      "atRisk": "Estudiantes en Riesgo",
+      "atRisk": "Estudiantes en riesgo",
       "gpaBelow": "GPA menor a 2.0",
       "noAtRisk": "Sin estudiantes en riesgo",
-      "counselorCoverage": "Cobertura de Orientadores",
+      "counselorCoverage": "Cobertura de orientadores",
       "goodCoverage": "Buena cobertura",
       "assignMore": "Asigna más estudiantes",
       "fullyAssessed": "Evaluados al 100%",
-      "avgGpa": "GPA Promedio",
+      "avgGpa": "GPA promedio",
       "weightedAvg": "Promedio no ponderado",
       "studentsOf": "{{done}} de {{total}} estudiantes",
       "view": "Ver"
     },
-    "completionByGrade": "Finalización de Evaluaciones por Grado",
+    "completionByGrade": "Finalización de evaluaciones por grado",
     "noAssessmentData": "Aún no hay datos de evaluación disponibles.",
     "gradeLabel": "{{grade}} ({{count}} estudiantes)",
     "gradeLabels": {
@@ -163,20 +163,20 @@
     "students": "{{count}} estudiantes",
     "pipelineSummary": "Resumen del Pipeline",
     "pipeline": {
-      "pcaComplete": "PCA Completo",
-      "milComplete": "MIL/LIA Completo",
+      "pcaComplete": "PCA completo",
+      "milComplete": "MIL/LIA completo",
       "eval360Complete": "360° Completo",
-      "fullyAssessed": "Evaluados Completamente"
+      "fullyAssessed": "Evaluados completamente"
     },
-    "cognitiveProfile": "Perfil MIL Institucional",
-    "topCareerInterests": "Principales Intereses Vocacionales",
+    "cognitiveProfile": "Perfil MIL institucional",
+    "topCareerInterests": "Principales intereses vocacionales",
     "careerDataEmpty": "Los datos de carrera aparecerán tras el análisis de perfil.",
     "aiInsights": "Insights IA",
     "cached": "CACHÉ",
     "discDistribution": "Distribución PCA",
     "aiAnalysisEmpty": "El análisis de IA estará disponible una vez que suficientes estudiantes completen sus evaluaciones.",
     "topPerformers": {
-      "title": "Mejores Desempeños",
+      "title": "Mejores desempeños",
       "byGpa": "Por puntaje GPA",
       "headers": {
         "rank": "#",
@@ -191,12 +191,12 @@
     }
   },
   "assessments": {
-    "title": "Centro de Mando de Evaluaciones",
+    "title": "Centro de mando de evaluaciones",
     "subtitle": "Programa evaluaciones, monitorea el progreso, envía recordatorios y consulta insights con IA",
     "tabs": {
-      "commandCenter": "Centro de Mando",
+      "commandCenter": "Centro de mando",
       "evaluations": "Evaluaciones 360",
-      "results": "Resultados e Informes"
+      "results": "Resultados e informes"
     },
     "insightsRefreshed": "Insights actualizados",
     "insightsRefreshFailed": "Error al actualizar los insights",
@@ -218,7 +218,7 @@
     "setup360Failed": "Error al configurar las evaluaciones 360"
   },
   "insights": {
-    "title": "Insights Escolares con IA",
+    "title": "Insights escolares con IA",
     "subtitle": "Análisis impulsado por IA de los datos, tendencias y recomendaciones de tu institución",
     "regenerate": "Regenerar",
     "checkProgress": "Verificar progreso",
@@ -229,21 +229,21 @@
     "refreshFailed": "Error al actualizar",
     "gateTitle": "Los insights de IA se activan al 90% de finalización de evaluaciones",
     "gateSubtitle": "{{completed}}/{{total}} estudiantes han completado todas las evaluaciones ({{rate}}%). Los insights se generan automáticamente al 90% y 100%.",
-    "executiveSummary": "Resumen Ejecutivo",
+    "executiveSummary": "Resumen ejecutivo",
     "generatedAt": "Generado el {{date}}",
     "metrics": {
       "students": "Estudiantes",
-      "avgGpa": "GPA Promedio",
-      "milCompleted": "MIL Completado",
+      "avgGpa": "GPA promedio",
+      "milCompleted": "MIL completado",
       "milAvg": "Prom.: {{pct}}%",
       "eval360Done": "360° Realizado"
     },
     "urgentActions": {
-      "title": "Acciones Urgentes",
+      "title": "Acciones urgentes",
       "subtitle": "Elementos que requieren atención inmediata"
     },
     "keyInsights": {
-      "title": "Insights Clave",
+      "title": "Insights clave",
       "subtitle": "Observaciones basadas en datos",
       "noInsights": "No hay insights disponibles"
     },
@@ -254,38 +254,38 @@
       "confidence": "confianza {{level}}"
     },
     "recommendations": {
-      "title": "Recomendaciones Estratégicas",
+      "title": "Recomendaciones estratégicas",
       "subtitle": "Mejoras sugeridas por IA para tu institución"
     },
     "dataSummary": {
-      "title": "Resumen de Datos",
-      "topCourses": "Cursos con Más Matrículas",
-      "byGrade": "Estudiantes por Grado",
+      "title": "Resumen de datos",
+      "topCourses": "Cursos con más matrículas",
+      "byGrade": "Estudiantes por grado",
       "students": "{{count}} estudiantes",
       "gradeLabel": "Grado {{grade}}"
     }
   },
   "grades": {
-    "title": "Calificaciones y Progreso",
+    "title": "Calificaciones y progreso",
     "subtitle": "Importa calificaciones, configura el GPA, monitorea el progreso de graduación e identifica brechas académicas",
     "tabs": {
       "grades": "Calificaciones y GPA",
       "graduation": "Graduación",
-      "gaps": "Brechas Académicas"
+      "gaps": "Brechas académicas"
     }
   },
   "graduation": {
     "stats": {
-      "totalStudents": "Total Estudiantes",
-      "onTrack": "Al Día",
-      "atRisk": "En Riesgo",
+      "totalStudents": "Total estudiantes",
+      "onTrack": "Al día",
+      "atRisk": "En riesgo",
       "offTrack": "Rezagado",
-      "avgProgress": "Progreso Prom."
+      "avgProgress": "Progreso prom."
     },
     "noRules": "Sin reglas configuradas — establece requisitos para monitorear el progreso",
     "creditsRequired": "{{total}} créditos totales requeridos",
-    "editRules": "Editar Reglas",
-    "setupRules": "Configurar Reglas",
+    "editRules": "Editar reglas",
+    "setupRules": "Configurar reglas",
     "table": {
       "student": "Estudiante",
       "grade": "Grado",
@@ -305,19 +305,19 @@
   },
   "academicGaps": {
     "stats": {
-      "totalStudents": "Total Estudiantes",
-      "onTrack": "Al Día",
-      "atRisk": "En Riesgo",
+      "totalStudents": "Total estudiantes",
+      "onTrack": "Al día",
+      "atRisk": "En riesgo",
       "offTrack": "Rezagado",
-      "avgProgress": "Progreso Prom."
+      "avgProgress": "Progreso prom."
     },
     "search": "Buscar estudiantes...",
     "table": {
       "student": "Estudiante",
       "grade": "Grado",
       "credits": "Créditos",
-      "creditGap": "Déficit de Créditos",
-      "missingCourses": "Cursos Faltantes",
+      "creditGap": "Déficit de créditos",
+      "missingCourses": "Cursos faltantes",
       "status": "Estado"
     },
     "noRules": "Configura las reglas de graduación para monitorear brechas académicas",
@@ -327,7 +327,7 @@
     "title": "Informes",
     "subtitle": "Descarga informes de evaluación y exportaciones de datos por estudiante",
     "tabs": {
-      "pca": "PCA — Análisis de Competencia Personal",
+      "pca": "PCA — Análisis de competencia personal",
       "mil": "MIL / LIA",
       "eval360": "Evaluación 360°",
       "360": "Evaluación 360°"
@@ -335,13 +335,13 @@
     "search": "Buscar estudiantes...",
     "searchPlaceholder": "Buscar estudiantes...",
     "statusActive": "activo",
-    "viewReports": "Ver Informes →",
+    "viewReports": "Ver informes →",
     "table": {
       "student": "Estudiante",
       "email": "Correo",
       "grade": "Grado",
       "status": "Estado",
-      "viewReports": "Ver Informes →"
+      "viewReports": "Ver informes →"
     },
     "noStudents": "No se encontraron estudiantes",
     "pagination": "Página {{page}} de {{total}}",
@@ -358,13 +358,13 @@
     "tabs": {
       "messages": "Mensajes",
       "broadcast": "Difusión",
-      "alerts": "Alertas y Notificaciones"
+      "alerts": "Alertas y notificaciones"
     },
     "conversations": "Conversaciones",
     "search": "Buscar conversaciones...",
     "searchConversations": "Buscar conversaciones...",
     "searchContacts": "Buscar contactos...",
-    "newMessage": "Nuevo Mensaje",
+    "newMessage": "Nuevo mensaje",
     "searching": "Buscando...",
     "noContacts": "No se encontraron contactos",
     "noConversations": "Aún no hay conversaciones",
@@ -390,30 +390,30 @@
     "subtitle": "Gestiona cursos, currículo, rutas, calificaciones y graduación",
     "tabs": {
       "courses": "Cursos",
-      "gradebook": "Libro de Calificaciones",
+      "gradebook": "Libro de calificaciones",
       "curriculum": "Currículo",
-      "pathways": "Rutas Académicas",
+      "pathways": "Rutas académicas",
       "gpa": "Configuración GPA",
       "graduation": "Graduación",
-      "gaps": "Brechas Académicas"
+      "gaps": "Brechas académicas"
     }
   },
   "counselorWorkload": {
     "label": "Administración",
-    "title": "Carga de Orientadores",
+    "title": "Carga de orientadores",
     "subtitle": "Resumen de la carga de casos, sesiones y notas de cada orientador",
     "stats": {
       "counselors": "Orientadores",
-      "totalStudents": "Total de Estudiantes Asignados",
-      "totalSessions": "Total de Sesiones"
+      "totalStudents": "Total de estudiantes asignados",
+      "totalSessions": "Total de sesiones"
     },
     "noCounselors": "No se encontraron orientadores en tu institución.",
     "card": {
-      "assignStudents": "Asignar Estudiantes",
+      "assignStudents": "Asignar estudiantes",
       "students": "Estudiantes",
       "sessions": "Sesiones",
       "notes": "Notas",
-      "studentLoad": "Carga de Estudiantes",
+      "studentLoad": "Carga de estudiantes",
       "showStudents": "Mostrar estudiantes asignados ({{count}})",
       "hideStudents": "Ocultar estudiantes asignados ({{count}})",
       "unassignStudent": "Desasignar estudiante",
@@ -424,7 +424,7 @@
       "studentFallback": "estudiante"
     },
     "assignModal": {
-      "title": "Asignar Estudiantes",
+      "title": "Asignar estudiantes",
       "to": "a {{name}}",
       "searchPlaceholder": "Buscar estudiantes por nombre o correo...",
       "loading": "Cargando estudiantes...",
@@ -434,7 +434,7 @@
       "gradeShort": "Gr {{grade}}",
       "selected": "{{count}} seleccionados",
       "assigning": "Asignando...",
-      "assignSelected": "Asignar Seleccionados",
+      "assignSelected": "Asignar seleccionados",
       "assignSuccess": "Se asignaron {{count}} estudiante(s) a {{name}}",
       "assignFailed": "No se pudieron asignar los estudiantes"
     },
@@ -451,33 +451,33 @@
     "title": "Padres",
     "subtitle": "Consulta todos los vínculos entre padres y estudiantes de tu institución",
     "inviteForm": {
-      "title": "Invitar Padre",
+      "title": "Invitar padre",
       "student": "Estudiante",
       "searchStudent": "Buscar estudiante...",
-      "parentEmail": "Correo del Padre",
+      "parentEmail": "Correo del padre",
       "parentEmailPlaceholder": "padre@correo.com",
       "parentName": "Nombre del Padre (opcional)",
       "parentNamePlaceholder": "Juana Pérez",
       "sending": "Enviando...",
-      "sendInvitation": "Enviar Invitación"
+      "sendInvitation": "Enviar invitación"
     },
     "searchPlaceholder": "Buscar por nombre o correo...",
-    "invite": "Invitar Padre",
+    "invite": "Invitar padre",
     "cancel": "Cancelar",
     "stats": {
-      "totalParents": "Total de Padres",
+      "totalParents": "Total de padres",
       "totalParentsSub": "vinculados a estudiantes",
-      "linkedStudents": "Estudiantes Vinculados",
+      "linkedStudents": "Estudiantes vinculados",
       "linkedStudentsSub": "con vínculos de padres",
-      "pendingInvites": "Invitaciones Pendientes",
+      "pendingInvites": "Invitaciones pendientes",
       "pendingInvitesSub": "esperando aceptación"
     },
     "table": {
-      "parentName": "Nombre del Padre",
-      "parentEmail": "Correo del Padre",
+      "parentName": "Nombre del padre",
+      "parentEmail": "Correo del padre",
       "linkedStudents": "Estudiante(s) Vinculado(s)",
       "status": "Estado",
-      "joinedDate": "Fecha de Ingreso",
+      "joinedDate": "Fecha de ingreso",
       "actions": "Acciones"
     },
     "unnamed": "Sin nombre",
@@ -505,7 +505,7 @@
     "stats": {
       "connected": "Conectadas",
       "available": "Disponibles",
-      "total": "Total de Integraciones"
+      "total": "Total de integraciones"
     },
     "status": {
       "connected": "Conectada",
@@ -525,49 +525,49 @@
   "settings": {
     "tabs": {
       "general": "General",
-      "profile": "Perfil de la Institución",
+      "profile": "Perfil de la institución",
       "calendar": "Calendario",
       "integrations": "Integraciones"
     },
     "mockToggle": {
-      "previewMode": "Modo Vista Previa",
-      "liveMode": "Modo en Vivo",
+      "previewMode": "Modo vista previa",
+      "liveMode": "Modo en vivo",
       "usingMock": "Usando datos de prueba",
       "usingReal": "Usando datos reales"
     },
     "profilePanel": {
-      "title": "Perfil de la Institución",
+      "title": "Perfil de la institución",
       "subtitle": "Gestiona la información y la identidad de marca de tu institución",
-      "saveChanges": "Guardar Cambios",
+      "saveChanges": "Guardar cambios",
       "updated": "Perfil actualizado",
       "updateFailed": "No se pudo actualizar el perfil",
       "logoUploaded": "Logo cargado",
       "logoUploadFailed": "No se pudo cargar el logo",
       "maxSize": "Máximo 2MB",
-      "contractStatus": "Estado del Contrato",
+      "contractStatus": "Estado del contrato",
       "contractStatusSub": "Información de suscripción e inscripción",
       "status": "Estado",
       "students": "Estudiantes",
       "contract": "Contrato",
-      "basicInfo": "Información Básica",
+      "basicInfo": "Información básica",
       "basicInfoSub": "Nombre, contacto y sitio web de la institución",
-      "schoolName": "Nombre de la Institución",
+      "schoolName": "Nombre de la institución",
       "phone": "Teléfono",
-      "contactEmail": "Correo de Contacto",
-      "website": "Sitio Web",
-      "timezone": "Zona Horaria",
+      "contactEmail": "Correo de contacto",
+      "website": "Sitio web",
+      "timezone": "Zona horaria",
       "selectTimezone": "Seleccionar zona horaria",
       "address": "Dirección",
       "addressSub": "Ubicación física",
       "street": "Calle",
       "city": "Ciudad",
-      "stateProvince": "Estado / Provincia",
+      "stateProvince": "Estado / provincia",
       "country": "País",
-      "postalCode": "Código Postal",
-      "logo": "Logo de la Institución",
+      "postalCode": "Código postal",
+      "logo": "Logo de la institución",
       "logoSub": "Identidad de marca",
       "logoFormats": "PNG, JPG hasta 2MB",
-      "schoolInfo": "Información de la Institución",
+      "schoolInfo": "Información de la institución",
       "name": "Nombre",
       "email": "Correo",
       "location": "Ubicación"
@@ -590,41 +590,41 @@
       "unknown": "Desconocido",
       "connected": "Conectado",
       "disconnected": "Desconectado",
-      "lastSync": "Última Sincronización",
+      "lastSync": "Última sincronización",
       "never": "Nunca",
       "integrationsStat": "Integraciones",
-      "dataSource": "Fuente de Datos",
-      "studentInfoSystem": "Sistema de Información Estudiantil",
-      "notConnected": "No Conectado",
-      "syncNow": "Sincronizar Ahora",
+      "dataSource": "Fuente de datos",
+      "studentInfoSystem": "Sistema de información estudiantil",
+      "notConnected": "No conectado",
+      "syncNow": "Sincronizar ahora",
       "isamsIntro": "Conéctate a tu instancia de iSAMS para sincronizar automáticamente listas de estudiantes, calificaciones y datos de cursos.",
       "apiEndpoint": "Endpoint de la API de iSAMS",
-      "apiKey": "Clave API / Secreto de Cliente",
+      "apiKey": "Clave API / secreto de cliente",
       "apiKeyPlaceholder": "Ingresa tu clave API",
-      "testConnection": "Probar Conexión",
+      "testConnection": "Probar conexión",
       "save": "Guardar",
       "saved": "Guardado",
       "verified": "Conexión verificada — lista para sincronizar",
       "failedCheck": "Conexión fallida — verifica el endpoint y las credenciales",
-      "syncCapabilities": "Capacidades de Sincronización",
+      "syncCapabilities": "Capacidades de sincronización",
       "syncCapabilitiesSub": "Tipos de datos sincronizados desde iSAMS",
       "caps": {
-        "rosterLabel": "Lista de Estudiantes",
+        "rosterLabel": "Lista de estudiantes",
         "rosterDesc": "Nombres, identificadores, niveles de grado, estado de inscripción",
-        "courseLabel": "Catálogo de Cursos",
+        "courseLabel": "Catálogo de cursos",
         "courseDesc": "Códigos de curso, créditos, departamentos, requisitos previos",
-        "gradesLabel": "Registros de Calificaciones",
+        "gradesLabel": "Registros de calificaciones",
         "gradesDesc": "Calificaciones del período, cálculos de GPA, expedientes",
         "attendanceLabel": "Asistencia",
         "attendanceDesc": "Asistencia diaria, tardanzas, ausencias",
-        "staffLabel": "Directorio de Personal",
+        "staffLabel": "Directorio de personal",
         "staffDesc": "Docentes, orientadores, asignaciones por departamento",
-        "scheduleLabel": "Datos de Horarios",
+        "scheduleLabel": "Datos de horarios",
         "scheduleDesc": "Horarios de clases, asignación de aulas, períodos"
       }
     },
     "calendarPanel": {
-      "title": "Calendario Académico",
+      "title": "Calendario académico",
       "subtitle": "Gestiona años, ventanas de evaluación y días festivos",
       "fillAllFields": "Completa todos los campos",
       "fillNameDate": "Completa el nombre y la fecha",
@@ -637,26 +637,26 @@
       "deleted": "Eliminado",
       "removed": "Eliminado",
       "stats": {
-        "academicYears": "Años Académicos",
+        "academicYears": "Años académicos",
         "academicYearsSub": "configurados",
-        "assessmentWindows": "Ventanas de Evaluación",
+        "assessmentWindows": "Ventanas de evaluación",
         "assessmentWindowsSub": "períodos activos",
-        "holidays": "Días Festivos",
+        "holidays": "Días festivos",
         "holidaysSub": "programados"
       },
       "deadline": {
-        "title": "Fecha Límite de Solicitud de Cursos",
+        "title": "Fecha límite de solicitud de cursos",
         "subtitle": "Establece una fecha límite para que los estudiantes envíen solicitudes de cambio de curso",
-        "deadlineDate": "Fecha Límite",
-        "setDeadline": "Establecer Fecha Límite",
+        "deadlineDate": "Fecha límite",
+        "setDeadline": "Establecer fecha límite",
         "clear": "Borrar",
         "current": "Fecha límite actual:",
         "expired": "Vencida"
       },
       "years": {
-        "title": "Años Académicos",
+        "title": "Años académicos",
         "subtitle": "Define la línea de tiempo educativa",
-        "createTitle": "Crear Año Académico",
+        "createTitle": "Crear año académico",
         "createSubtitle": "Establece las fechas de inicio y fin",
         "name": "Nombre",
         "start": "Inicio",
@@ -667,9 +667,9 @@
         "active": "Activo"
       },
       "periods": {
-        "title": "Ventanas de Evaluación",
+        "title": "Ventanas de evaluación",
         "subtitle": "Períodos de prueba activos",
-        "createTitle": "Crear Período de Evaluación",
+        "createTitle": "Crear período de evaluación",
         "name": "Nombre",
         "namePlaceholder": "Parcial",
         "type": "Tipo",
@@ -682,11 +682,11 @@
         "empty": "No hay ventanas activas"
       },
       "holidays": {
-        "title": "Días Festivos Escolares",
+        "title": "Días festivos escolares",
         "subtitle": "Días no lectivos",
-        "createTitle": "Agregar Día Festivo",
+        "createTitle": "Agregar día festivo",
         "name": "Nombre",
-        "namePlaceholder": "Vacaciones de Invierno",
+        "namePlaceholder": "Vacaciones de invierno",
         "date": "Fecha",
         "type": "Tipo",
         "national": "Nacional",
@@ -700,14 +700,14 @@
   },
   "calendar": {
     "label": "Académico",
-    "title": "Calendario Académico",
+    "title": "Calendario académico",
     "yearRange": "{{name}} — {{start}} a {{end}}",
     "noYear": "No hay año académico configurado",
     "stats": {
-      "academicYear": "Año Académico",
+      "academicYear": "Año académico",
       "terms": "Períodos",
-      "holidays": "Días Festivos",
-      "assessmentWindows": "Ventanas de Evaluación"
+      "holidays": "Días festivos",
+      "assessmentWindows": "Ventanas de evaluación"
     },
     "weekdays": {
       "sun": "Dom",
@@ -746,19 +746,19 @@
       "empty": "No hay períodos configurados"
     },
     "holidaysSection": {
-      "title": "Días Festivos y Recesos",
+      "title": "Días festivos y recesos",
       "namePlaceholder": "Nombre del día festivo",
       "startDate": "Fecha de inicio",
       "endDate": "Fecha de fin",
       "endDateHint": "(opcional — para varios días)",
       "adding": "Agregando...",
-      "addHoliday": "Agregar Día Festivo",
+      "addHoliday": "Agregar día festivo",
       "empty": "No hay días festivos agregados"
     },
     "assessmentsSection": {
-      "title": "Ventanas de Evaluación",
+      "title": "Ventanas de evaluación",
       "adding": "Agregando...",
-      "addWindow": "Agregar Ventana",
+      "addWindow": "Agregar ventana",
       "empty": "No hay ventanas de evaluación",
       "fallback": "Evaluación",
       "gradeOption": "Grado {{grade}}"
@@ -779,11 +779,11 @@
     "label": "Comunicación",
     "title": "Videollamadas",
     "subtitle": "Inicia o programa videollamadas 1:1 con estudiantes y personal.",
-    "notAvailable": "Videollamadas No Disponibles",
+    "notAvailable": "Videollamadas no disponibles",
     "notAvailableHint": "Las videollamadas no están habilitadas para tu institución. Contacta a tu administrador para habilitar esta función.",
-    "newCall": "Nueva Llamada",
+    "newCall": "Nueva llamada",
     "cancel": "Cancelar",
-    "callNow": "Llamar Ahora",
+    "callNow": "Llamar ahora",
     "schedule": "Programar",
     "searchCall": "Busca por nombre o correo para iniciar una llamada...",
     "searchSchedule": "Busca un contacto para programar...",
@@ -792,7 +792,7 @@
     "call": "Llamar",
     "select": "Seleccionar",
     "schedulingCall": "Programando videollamada",
-    "dateTime": "Fecha y Hora",
+    "dateTime": "Fecha y hora",
     "duration": "Duración",
     "minutes": "{{count}} minutos",
     "oneHour": "1 hora",
@@ -801,7 +801,7 @@
     "notesOptional": "Notas (opcional)",
     "notesPlaceholder": "Agenda o temas a tratar...",
     "scheduling": "Programando...",
-    "scheduleCall": "Programar Llamada",
+    "scheduleCall": "Programar llamada",
     "toast": {
       "callFailed": "No se pudo iniciar la videollamada",
       "scheduled": "Llamada programada con {{name}}",
@@ -812,18 +812,18 @@
     }
   },
   "notes": {
-    "title": "Notas de Sesión",
+    "title": "Notas de sesión",
     "subtitle": "Todas las notas de sesión de los orientadores de los estudiantes de tu institución",
     "searchPlaceholder": "Buscar por nombre del estudiante o contenido de la nota...",
     "noteCount_one": "{{count}} nota",
     "noteCount_other": "{{count}} notas",
     "groupBy": {
       "timeline": "Cronología",
-      "byStudent": "Por Estudiante",
-      "byType": "Por Tipo"
+      "byStudent": "Por estudiante",
+      "byType": "Por tipo"
     },
     "types": {
-      "all": "Todos los Tipos",
+      "all": "Todos los tipos",
       "general": "General",
       "meeting": "Reunión",
       "follow_up": "Seguimiento",

@@ -1,6 +1,6 @@
 {
   "nav": {
-    "dashboard": "Panel de Control",
+    "dashboard": "Panel de control",
     "evaluations": "Evaluaciones",
     "recommendations": "Recomendaciones"
   },
@@ -9,16 +9,16 @@
     "badge": "Profesor",
     "welcome": "Bienvenido de nuevo",
     "subtitle": "Completa las evaluaciones 360° que la escuela te ha solicitado llenar.",
-    "pendingEvaluations": "Evaluaciones Pendientes",
+    "pendingEvaluations": "Evaluaciones pendientes",
     "overdue": "Vencidas",
     "upcoming": "Próximas",
-    "pendingEvalsTitle": "Evaluaciones 360° Pendientes",
+    "pendingEvalsTitle": "Evaluaciones 360° pendientes",
     "viewAll": "Ver todas",
     "allDone": "Todo al día",
     "noEvals": "No tienes evaluaciones pendientes en este momento.",
     "evaluationFor": "Evaluación 360° para",
     "dueBy": "Fecha límite",
-    "completeEvaluation": "Completar Evaluación"
+    "completeEvaluation": "Completar evaluación"
   },
   "evaluations": {
     "badge": "Profesor",
@@ -36,7 +36,7 @@
     "card": {
       "evaluationFor": "Evaluación 360° para",
       "due": "Fecha límite:",
-      "completeNow": "Completar Ahora",
+      "completeNow": "Completar ahora",
       "urgency": {
         "overdue": "Vencida",
         "dueToday": "Vence hoy",
@@ -46,7 +46,7 @@
     }
   },
   "onboarding": {
-    "title": "Configura Tu Cuenta del Portal Docente",
+    "title": "Configura tu cuenta del portal docente",
     "subtitle": "Has sido invitado a unirte a tu escuela en FormMaps",
     "inviteDetails": {
       "schoolLabel": "Escuela",
@@ -56,7 +56,7 @@
       "cardTitle": "Crea tu cuenta",
       "cardDescription": "Configura tus credenciales para acceder al portal docente",
       "fullName": {
-        "label": "Nombre Completo",
+        "label": "Nombre completo",
         "placeholder": "Tu nombre completo"
       },
       "password": {
@@ -64,11 +64,11 @@
         "placeholder": "Al menos 8 caracteres"
       },
       "confirmPassword": {
-        "label": "Confirmar Contraseña",
+        "label": "Confirmar contraseña",
         "placeholder": "Repite tu contraseña",
         "mismatch": "Las contraseñas no coinciden"
       },
-      "submit": "Activar Mi Cuenta",
+      "submit": "Activar mi cuenta",
       "signInPrompt": "¿Ya tienes una cuenta?",
       "signInLink": "Inicia sesión aquí"
     },
@@ -80,15 +80,15 @@
     },
     "states": {
       "noToken": {
-        "title": "Enlace de Invitación Inválido",
+        "title": "Enlace de invitación inválido",
         "message": "Este enlace de invitación no tiene un token. Revisa el correo que recibiste o comunícate con tu escuela.",
-        "goToLogin": "Ir al Inicio de Sesión"
+        "goToLogin": "Ir al inicio de sesión"
       },
       "verifying": "Verificando tu invitación…",
       "expired": {
-        "title": "Invitación Expirada o Inválida",
+        "title": "Invitación expirada o inválida",
         "fallbackMessage": "Este enlace de invitación ha expirado o ya no es válido. Comunícate con la escuela para obtener una nueva invitación.",
-        "goToLogin": "Ir al Inicio de Sesión"
+        "goToLogin": "Ir al inicio de sesión"
       },
       "success": {
         "title": "¡Bienvenido!",

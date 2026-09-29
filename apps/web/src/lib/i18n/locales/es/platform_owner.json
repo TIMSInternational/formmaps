@@ -73,7 +73,7 @@
       "userBehavior": "Comportamiento del usuario"
     },
     "stats": {
-      "revenuePerUser": "Ingresos / Usuario",
+      "revenuePerUser": "Ingresos / usuario",
       "avgLifetimeValue": "valor promedio de vida",
       "avgTransaction": "Transacción promedio",
       "totalTransactions": "{{count}} transacciones en total",
@@ -115,7 +115,7 @@
     },
     "engagement": {
       "pageViews": "Vistas de página",
-      "pagesPerSession": "Páginas/Sesión",
+      "pagesPerSession": "Páginas/sesión",
       "bounceRate": "Tasa de rebote",
       "completion": "Completación",
       "completionValue": "Alta"
