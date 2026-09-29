@@ -1,7 +1,7 @@
 "use client";
 
 import { toast } from "sonner";
-import { Mail, UserCheck, UserX, Users } from "lucide-react";
+import { Mail, MailPlus, UserCheck, UserX, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -9,28 +9,27 @@ import {
   DialogContent,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-interface UserRecord {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-  joinedDate: string;
-  subscriptionStatus?: string;
-}
+import type { UserRecord } from "./UsersTable";
+import { UserStatusBadge } from "./UserStatusBadge";
+import { UserAccessEditor } from "./UserAccessEditor";
+import { displayStatus } from "./userStatus";
 
 interface UserDetailDialogProps {
   user: UserRecord | null;
   onClose: () => void;
   onDeactivate: (user: UserRecord) => void;
+  onResendInvite: (user: UserRecord) => void;
+  /** Role or school changed — the list should refetch. */
+  onChanged: () => void;
 }
 
-export function UserDetailDialog({ user, onClose, onDeactivate }: UserDetailDialogProps) {
+export function UserDetailDialog({ user, onClose, onDeactivate, onResendInvite, onChanged }: UserDetailDialogProps) {
   const { t } = useTranslation("platform_owner");
+  const { t: tc } = useTranslation();
+  const pendingInvite = user ? ["invited", "expired"].includes(displayStatus(user)) : false;
   return (
     <Dialog open={!!user} onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent className="sm:max-w-[420px] rounded-2xl border-gray-100 shadow-2xl p-0 overflow-hidden">
+      <DialogContent className="sm:max-w-[440px] rounded-2xl border-gray-100 shadow-2xl p-0 overflow-hidden max-h-[90dvh] overflow-y-auto">
         {user && (
           <>
             <div className="bg-gray-50/50 p-6 border-b border-gray-100">
@@ -41,7 +40,7 @@ export function UserDetailDialog({ user, onClose, onDeactivate }: UserDetailDial
                 <div>
                   <DialogTitle className="text-lg font-bold text-gray-900">{user.name}</DialogTitle>
                   <Badge variant="outline" className="capitalize font-medium border-gray-200 text-gray-600 bg-white mt-1">
-                    {user.role}
+                    {tc(`admin.users.roleNames.${(user.role || "").toLowerCase().replace(/\s+/g, "_")}`, { defaultValue: user.role })}
                   </Badge>
                 </div>
               </div>
@@ -53,19 +52,30 @@ export function UserDetailDialog({ user, onClose, onDeactivate }: UserDetailDial
               </div>
               <div className="flex items-center gap-3 text-sm">
                 <UserCheck className="h-4 w-4 text-gray-400" />
-                <Badge variant={user.status === "active" ? "default" : "secondary"}
-                  className={`font-medium shadow-none border-0 ${user.status === "active" ? "bg-emerald-50 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
-                  {user.status}
-                </Badge>
+                <UserStatusBadge user={user} />
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-500">
                 <Users className="h-4 w-4 text-gray-400" />
                 {t("users.joinedOn", { date: new Date(user.joinedDate).toLocaleDateString() })}
               </div>
             </div>
+
+            <UserAccessEditor user={user} onChanged={onChanged} />
+
             <div className="border-t border-gray-100 p-4 space-y-2">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t("users.detailActions")}</p>
-              <button onClick={() => { navigator.clipboard.writeText(user.email); toast.success("Email copied"); }}
+              {pendingInvite && (
+                <button onClick={() => onResendInvite(user)}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left">
+                  <MailPlus className="h-4 w-4 text-gray-400" /> {tc("admin.users.dropdown.resendInvite")}
+                </button>
+              )}
+              <button onClick={() => {
+                  navigator.clipboard?.writeText(user.email).then(
+                    () => toast.success(tc("admin.users.emailCopied")),
+                    () => undefined,
+                  );
+                }}
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left">
                 <Mail className="h-4 w-4 text-gray-400" /> {t("users.copyEmail")}
               </button>

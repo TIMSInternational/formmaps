@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api/apiClient";
+import { currentLanguage } from "@/lib/i18n/currentLanguage";
 
 export interface AdminUser {
   id: string;
@@ -8,6 +9,14 @@ export interface AdminUser {
   status: "active" | "inactive";
   joinedDate: string;
   subscriptionStatus: "active" | "expired" | "none";
+  /**
+   * Whether the person has finished setting up. An invited account is `isActive` from the
+   * moment it is invited, so `status` alone cannot tell "onboarded" from "never opened the
+   * email" — this can. Absent on a backend that predates it; treat absent as "active".
+   */
+  inviteStatus?: "active" | "invited" | "expired";
+  /** ISO expiry of the pending invitation link, when there is one. */
+  inviteExpiresAt?: string | null;
 }
 
 export interface AdminUsersResponse {
@@ -132,7 +141,8 @@ export async function inviteUser(payload: InviteUserPayload): Promise<InviteUser
   try {
     const response = await apiRequest("/api/v1/admin/users/invite", {
       method: "POST",
-      data: payload,
+      // The invite email goes out in the inviter's current language.
+      data: { ...payload, language: currentLanguage() },
       showErrorToast: false, // the wizard renders the failure in place
     });
     return (response?.data ?? response) as InviteUserResult;
@@ -141,4 +151,55 @@ export async function inviteUser(payload: InviteUserPayload): Promise<InviteUser
     const message = body?.message || (err instanceof Error ? err.message : "Could not send the invitation.");
     throw new InviteError(body?.code ?? "UNKNOWN", message);
   }
+}
+
+// =============================================================================
+// PENDING INVITES, ROLE AND SCHOOL CHANGES
+// =============================================================================
+// Before these, the only way to re-send an invite, change someone's role or move them to
+// another school was SQL against production. The backend routes (audited) already existed.
+
+export interface ResendUserInviteResult {
+  expiresAt?: string;
+  emailSent?: boolean;
+}
+
+/** Re-issue a pending (or expired) invitation. 409 when the account is already set up. */
+export async function resendUserInvite(userId: string): Promise<ResendUserInviteResult> {
+  const response = await apiRequest(`/api/v1/admin/users/${encodeURIComponent(userId)}/resend-invite`, {
+    method: "POST",
+    data: { language: currentLanguage() },
+    showErrorToast: false,
+  });
+  return (response?.data ?? response ?? {}) as ResendUserInviteResult;
+}
+
+export interface RoleOption {
+  id: string;
+  name: string;
+}
+
+/** Active roles with their ids — PUT /admin/users/:id takes a roleId, not a name. */
+export async function getActiveRoles(): Promise<RoleOption[]> {
+  const response = await apiRequest("/api/role/active", { method: "GET" });
+  const rows = (response?.data ?? response ?? []) as Array<{ id?: string; name?: string }>;
+  return rows.filter((r): r is RoleOption => typeof r.id === "string" && typeof r.name === "string");
+}
+
+/** Change a user's role (audited server-side as USER_UPDATE with before/after). */
+export async function updateUserRole(userId: string, roleId: string): Promise<void> {
+  await apiRequest(`/api/v1/admin/users/${encodeURIComponent(userId)}`, {
+    method: "PUT",
+    data: { roleId },
+    showErrorToast: false,
+  });
+}
+
+/** Move a user to another school (audited server-side as USER_LINK_SCHOOL). */
+export async function linkUserToSchool(userId: string, schoolId: string): Promise<{ schoolName?: string }> {
+  const response = await apiRequest(
+    `/api/v1/admin/users/${encodeURIComponent(userId)}/link-school/${encodeURIComponent(schoolId)}`,
+    { method: "POST", showErrorToast: false },
+  );
+  return (response?.data ?? response ?? {}) as { schoolName?: string };
 }
