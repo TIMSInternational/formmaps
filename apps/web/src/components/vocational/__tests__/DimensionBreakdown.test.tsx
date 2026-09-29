@@ -2,6 +2,18 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { DimensionBreakdown } from "../_components/DimensionBreakdown";
 import type { DimensionScore } from "@/services/vocationalReportService";
 
+// Real i18next over the shipped common.json, so assertions check rendered copy.
+let mockLang: "en" | "es" = "en";
+jest.mock("react-i18next", () => {
+  const { createTestI18n } = require("@/test-utils/realI18n");
+  const insts = { en: createTestI18n("en"), es: createTestI18n("es") };
+  return {
+    initReactI18next: { type: "3rdParty", init: () => {} },
+    useTranslation: () => ({ t: insts[mockLang].t.bind(insts[mockLang]), i18n: insts[mockLang] }),
+  };
+});
+beforeEach(() => { mockLang = "en"; });
+
 const dims = [
   { key: "intereses", nameEs: "Intereses Académicos", score: 75, band: "moderateHigh", byGroup: { self: 80, parent: 70 } },
   { key: "habilidades", nameEs: "Habilidades", score: null, band: null, byGroup: {} as Record<string, number> },

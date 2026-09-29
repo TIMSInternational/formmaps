@@ -43,15 +43,27 @@
     "stats": {
       "students": "Estudiantes",
       "assessments": "Evaluaciones",
-      "avgExamScore": "Puntaje prom. Examen",
+      "avgExamScore": "Puntaje prom. de examen",
       "courses": "Cursos"
     },
     "quickNav": "Navegación rápida",
     "navCards": {
-      "students": { "label": "Estudiantes", "sub": "Listado, invitaciones, personal" },
-      "academics": { "label": "Académico", "sub": "Cursos, GPA, graduación" },
-      "assessments": { "label": "Evaluaciones", "sub": "Pipeline, horario, 360" },
-      "aiInsights": { "label": "Análisis IA", "sub": "Análisis institucional" }
+      "students": {
+        "label": "Estudiantes",
+        "sub": "Listado, invitaciones, personal"
+      },
+      "academics": {
+        "label": "Académico",
+        "sub": "Cursos, GPA, graduación"
+      },
+      "assessments": {
+        "label": "Evaluaciones",
+        "sub": "Pipeline, horario, 360"
+      },
+      "aiInsights": {
+        "label": "Análisis IA",
+        "sub": "Análisis institucional"
+      }
     }
   },
   "users": {
@@ -96,12 +108,12 @@
       "acrossAllStudents": "entre todos los estudiantes"
     },
     "bulk": {
-      "selected": "{{count}} seleccionado",
+      "selected": "Seleccionados: {{count}}",
       "copyEmails": "Copiar correos",
       "exportCsv": "Exportar CSV"
     },
     "bulkActions": {
-      "selected": "{{count}} seleccionado",
+      "selected": "Seleccionados: {{count}}",
       "copyEmails": "Copiar correos",
       "exportCsv": "Exportar CSV",
       "emailCopied_one": "{{count}} correo copiado",
@@ -132,7 +144,7 @@
     }
   },
   "analytics": {
-    "title": "Analítica e Insights",
+    "title": "Analítica y hallazgos",
     "subtitle": "Inteligencia accionable sobre evaluaciones, calificaciones y preparación estudiantil",
     "exportCsv": "Exportar CSV",
     "exportedSuccess": "Analítica exportada",
@@ -161,17 +173,18 @@
       "12": "4.° año"
     },
     "students": "{{count}} estudiantes",
-    "pipelineSummary": "Resumen del Pipeline",
+    "pipelineSummary": "Resumen del pipeline",
     "pipeline": {
+      "personalityComplete": "Personalidad completa",
       "pcaComplete": "PCA completo",
       "milComplete": "MIL/LIA completo",
-      "eval360Complete": "360° Completo",
+      "eval360Complete": "360° completo",
       "fullyAssessed": "Evaluados completamente"
     },
     "cognitiveProfile": "Perfil MIL institucional",
     "topCareerInterests": "Principales intereses vocacionales",
     "careerDataEmpty": "Los datos de carrera aparecerán tras el análisis de perfil.",
-    "aiInsights": "Insights IA",
+    "aiInsights": "Análisis IA",
     "cached": "CACHÉ",
     "discDistribution": "Distribución PCA",
     "aiAnalysisEmpty": "El análisis de IA estará disponible una vez que suficientes estudiantes completen sus evaluaciones.",
@@ -192,14 +205,14 @@
   },
   "assessments": {
     "title": "Centro de mando de evaluaciones",
-    "subtitle": "Programa evaluaciones, monitorea el progreso, envía recordatorios y consulta insights con IA",
+    "subtitle": "Programa evaluaciones, monitorea el progreso, envía recordatorios y consulta análisis con IA",
     "tabs": {
       "commandCenter": "Centro de mando",
       "evaluations": "Evaluaciones 360",
       "results": "Resultados e informes"
     },
-    "insightsRefreshed": "Insights actualizados",
-    "insightsRefreshFailed": "Error al actualizar los insights",
+    "insightsRefreshed": "Análisis actualizados",
+    "insightsRefreshFailed": "Error al actualizar los análisis",
     "scheduleSaved": "Horario guardado",
     "scheduleSaveFailed": "Error al guardar el horario",
     "scheduleFailed": "Error al guardar el horario",
@@ -211,24 +224,42 @@
     "remindersFailed": "Error al enviar recordatorios",
     "remindersError": "Error al enviar recordatorios",
     "setup360Success": "Configuración 360 completa: {{created}} grupos creados, {{emails}} invitaciones enviadas",
-    "setup360Skipped_one": "{{count}} ya existían",
+    "setup360Skipped_one": "{{count}} ya existía",
     "setup360Skipped_other": "{{count}} ya existían",
     "setup360Skipped": "{{count}} ya existían",
     "setup360Error": "Error al configurar las evaluaciones 360",
-    "setup360Failed": "Error al configurar las evaluaciones 360"
+    "setup360Failed": "Error al configurar las evaluaciones 360",
+    "pipeline": {
+      "overallCompletion": "Avance general",
+      "evaluatorResponses": "Respuestas de los evaluadores",
+      "personalityType": "Tipo de personalidad de 4 letras",
+      "viewFullProfile": "Ver perfil completo",
+      "studentCount_one": "{{count}} estudiante",
+      "studentCount_other": "{{count}} estudiantes",
+      "remind": "Recordar ({{count}})",
+      "setup360": "Configurar 360",
+      "colPersonality": "Personalidad"
+    },
+    "schedule": {
+      "title": "Calendario de evaluaciones",
+      "save": "Guardar calendario",
+      "saved": "Guardado",
+      "start": "Inicio",
+      "end": "Fin"
+    }
   },
   "insights": {
-    "title": "Insights escolares con IA",
+    "title": "Análisis escolar con IA",
     "subtitle": "Análisis impulsado por IA de los datos, tendencias y recomendaciones de tu institución",
     "regenerate": "Regenerar",
     "checkProgress": "Verificar progreso",
     "analyzing": "Analizando...",
     "refreshing": "Actualizando...",
-    "regeneratedSuccess": "Insights regenerados",
-    "regenerateFailed": "Error al regenerar los insights",
+    "regeneratedSuccess": "Análisis regenerados",
+    "regenerateFailed": "Error al regenerar los análisis",
     "refreshFailed": "Error al actualizar",
-    "gateTitle": "Los insights de IA se activan al 90% de finalización de evaluaciones",
-    "gateSubtitle": "{{completed}}/{{total}} estudiantes han completado todas las evaluaciones ({{rate}}%). Los insights se generan automáticamente al 90% y 100%.",
+    "gateTitle": "Los análisis de IA se activan al 90% de finalización de evaluaciones",
+    "gateSubtitle": "{{completed}}/{{total}} estudiantes han completado todas las evaluaciones ({{rate}}%). Los análisis se generan automáticamente al 90% y 100%.",
     "executiveSummary": "Resumen ejecutivo",
     "generatedAt": "Generado el {{date}}",
     "metrics": {
@@ -236,16 +267,16 @@
       "avgGpa": "GPA promedio",
       "milCompleted": "MIL completado",
       "milAvg": "Prom.: {{pct}}%",
-      "eval360Done": "360° Realizado"
+      "eval360Done": "360° realizado"
     },
     "urgentActions": {
       "title": "Acciones urgentes",
       "subtitle": "Elementos que requieren atención inmediata"
     },
     "keyInsights": {
-      "title": "Insights clave",
+      "title": "Hallazgos clave",
       "subtitle": "Observaciones basadas en datos",
-      "noInsights": "No hay insights disponibles"
+      "noInsights": "No hay hallazgos disponibles"
     },
     "predictions": {
       "title": "Predicciones",
@@ -263,6 +294,18 @@
       "byGrade": "Estudiantes por grado",
       "students": "{{count}} estudiantes",
       "gradeLabel": "Grado {{grade}}"
+    },
+    "card": {
+      "studentsCompletedAll_one": "estudiante completó todas las evaluaciones",
+      "studentsCompletedAll_other": "estudiantes completaron todas las evaluaciones",
+      "unlockHint": "Los análisis se activan cuando el 100 % de los estudiantes termina.",
+      "emptyFallback": "Los análisis aparecerán cuando suficientes estudiantes completen las evaluaciones.",
+      "cached": "En caché",
+      "refresh": "Actualizar",
+      "profiles": "Perfiles",
+      "reviews360": "Evaluaciones 360",
+      "pcaDistribution": "Distribución PCA",
+      "topCareerClusters": "Principales grupos de carreras"
     }
   },
   "grades": {
@@ -327,10 +370,10 @@
     "title": "Informes",
     "subtitle": "Descarga informes de evaluación y exportaciones de datos por estudiante",
     "tabs": {
+      "360": "Evaluación 360°",
       "pca": "PCA — Análisis de competencia personal",
       "mil": "MIL / LIA",
-      "eval360": "Evaluación 360°",
-      "360": "Evaluación 360°"
+      "eval360": "Evaluación 360°"
     },
     "search": "Buscar estudiantes...",
     "searchPlaceholder": "Buscar estudiantes...",
@@ -363,7 +406,7 @@
     "conversations": "Conversaciones",
     "search": "Buscar conversaciones...",
     "searchConversations": "Buscar conversaciones...",
-    "searchContacts": "Buscar contactos...",
+    "searchContacts": "Buscar por nombre o correo...",
     "newMessage": "Nuevo mensaje",
     "searching": "Buscando...",
     "noContacts": "No se encontraron contactos",
@@ -387,7 +430,7 @@
   },
   "academics": {
     "title": "Académico",
-    "subtitle": "Gestiona cursos, currículo, rutas, calificaciones y graduación",
+    "subtitle": "Gestiona tu catálogo de cursos, marcos curriculares y rutas de cursos",
     "tabs": {
       "courses": "Cursos",
       "gradebook": "Libro de calificaciones",
@@ -431,7 +474,7 @@
       "noMatch": "Ningún estudiante coincide con tu búsqueda",
       "noStudents": "No hay estudiantes en esta institución",
       "assigned": "Asignado",
-      "gradeShort": "Gr {{grade}}",
+      "gradeShort": "Gr. {{grade}}",
       "selected": "{{count}} seleccionados",
       "assigning": "Asignando...",
       "assignSelected": "Asignar seleccionados",
@@ -451,18 +494,18 @@
     "title": "Padres",
     "subtitle": "Consulta todos los vínculos entre padres y estudiantes de tu institución",
     "inviteForm": {
-      "title": "Invitar padre",
+      "title": "Invitar padre/madre",
       "student": "Estudiante",
       "searchStudent": "Buscar estudiante...",
       "parentEmail": "Correo del padre",
       "parentEmailPlaceholder": "padre@correo.com",
-      "parentName": "Nombre del Padre (opcional)",
+      "parentName": "Nombre del padre/madre (opcional)",
       "parentNamePlaceholder": "Juana Pérez",
       "sending": "Enviando...",
       "sendInvitation": "Enviar invitación"
     },
     "searchPlaceholder": "Buscar por nombre o correo...",
-    "invite": "Invitar padre",
+    "invite": "Invitar padre/madre",
     "cancel": "Cancelar",
     "stats": {
       "totalParents": "Total de padres",
@@ -475,7 +518,7 @@
     "table": {
       "parentName": "Nombre del padre",
       "parentEmail": "Correo del padre",
-      "linkedStudents": "Estudiante(s) Vinculado(s)",
+      "linkedStudents": "Estudiante(s) vinculado(s)",
       "status": "Estado",
       "joinedDate": "Fecha de ingreso",
       "actions": "Acciones"
@@ -511,7 +554,7 @@
       "connected": "Conectada",
       "available": "Disponible",
       "comingSoon": "Próximamente",
-      "included": "Incluido"
+      "included": "Incluida"
     },
     "configure": "Configurar",
     "providers": {
@@ -668,7 +711,7 @@
       },
       "periods": {
         "title": "Ventanas de evaluación",
-        "subtitle": "Períodos de prueba activos",
+        "subtitle": "Períodos de evaluación activos",
         "createTitle": "Crear período de evaluación",
         "name": "Nombre",
         "namePlaceholder": "Parcial",

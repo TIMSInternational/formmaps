@@ -12,10 +12,13 @@ import {
   type CalendarProviderName,
   type CalendarStatus,
 } from "@/services/calendarService";
+import { useTranslation } from "react-i18next";
 
 const EMPTY: CalendarStatus = { configured: false, connected: false, email: null, connectedAt: null };
+const PROVIDER_NAMES: Record<CalendarProviderName, string> = { google: "Google", outlook: "Outlook" };
 
 export function CalendarIntegrationPanel() {
+  const { t } = useTranslation();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -40,26 +43,26 @@ export function CalendarIntegrationPanel() {
   useEffect(() => {
     const result = searchParams.get("calendar");
     if (!result) return;
-    if (result === "connected") toast.success("Calendar connected");
-    else toast.error("Calendar connection failed. Please try again.");
+    if (result === "connected") toast.success(t("calendarIntegration.connectedToast"));
+    else toast.error(t("calendarIntegration.connectFailedToast"));
     refresh();
     const params = new URLSearchParams(searchParams.toString());
     params.delete("calendar");
     router.replace(params.size ? `${pathname}?${params}` : pathname);
-  }, [searchParams, pathname, router, refresh]);
+  }, [searchParams, pathname, router, refresh, t]);
 
   const handleConnect = async (provider: CalendarProviderName) => {
     try {
       setIsBusy(true);
       const res = await getCalendarAuthUrl(provider);
       if (!res.configured || !res.url) {
-        toast.error("Calendar sync isn't enabled on this server yet.");
+        toast.error(t("coach:settings.calendar.notConfigured"));
         setIsBusy(false);
         return;
       }
       window.location.href = res.url;
     } catch {
-      toast.error(`Failed to connect to ${provider}`);
+      toast.error(t("calendarIntegration.connectProviderFailed", { provider: PROVIDER_NAMES[provider] }));
       setIsBusy(false);
     }
   };
@@ -68,10 +71,10 @@ export function CalendarIntegrationPanel() {
     try {
       setIsBusy(true);
       await disconnectCalendar(provider);
-      toast.success("Calendar disconnected");
+      toast.success(t("calendarIntegration.disconnectedToast"));
       await refresh();
     } catch {
-      toast.error("Failed to disconnect calendar");
+      toast.error(t("coach:settings.calendar.disconnectError"));
     } finally {
       setIsBusy(false);
     }
@@ -81,8 +84,8 @@ export function CalendarIntegrationPanel() {
     return (
       <div className="space-y-4">
         <div>
-          <h3 className="text-sm font-semibold text-foreground mb-1">Calendar Integration</h3>
-          <p className="text-xs text-muted-foreground">Loading calendar settings...</p>
+          <h3 className="text-sm font-semibold text-foreground mb-1">{t("calendarIntegration.title")}</h3>
+          <p className="text-xs text-muted-foreground">{t("calendarIntegration.loading")}</p>
         </div>
       </div>
     );
@@ -98,17 +101,16 @@ export function CalendarIntegrationPanel() {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-foreground mb-1">Calendar Integration</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">{t("calendarIntegration.title")}</h3>
         <p className="text-xs text-muted-foreground mb-4">
-          Connect your Google or Microsoft calendar — sessions you book on FormMaps appear on your calendar
-          automatically.
+          {t("calendarIntegration.description")}
         </p>
       </div>
 
       <div className="max-w-2xl">
         {!configured ? (
           <p className="text-xs text-muted-foreground p-4 border border-dashed rounded-xl" data-testid="calendar-not-configured">
-            Calendar sync isn&apos;t enabled on this server yet.
+            {t("coach:settings.calendar.notConfigured")}
           </p>
         ) : connectedProvider ? (
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl">
@@ -117,8 +119,8 @@ export function CalendarIntegrationPanel() {
                 <Check className="h-5 w-5 text-emerald-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-emerald-600 capitalize">
-                  {connectedProvider} Calendar Connected
+                <p className="text-sm font-medium text-emerald-600">
+                  {t("calendarIntegration.connectedTitle", { provider: PROVIDER_NAMES[connectedProvider] })}
                 </p>
                 {status[connectedProvider].email && (
                   <p className="text-xs text-muted-foreground mt-0.5">{status[connectedProvider].email}</p>
@@ -132,7 +134,7 @@ export function CalendarIntegrationPanel() {
               onClick={() => handleDisconnect(connectedProvider)}
               disabled={isBusy}
             >
-              {isBusy ? "Disconnecting..." : "Disconnect"}
+              {isBusy ? t("calendarIntegration.disconnecting") : t("calendarIntegration.disconnect")}
             </Button>
           </div>
         ) : staleProvider ? (
@@ -142,16 +144,18 @@ export function CalendarIntegrationPanel() {
                 <AlertTriangle className="h-5 w-5 text-amber-500" />
               </div>
               <div>
-                <p className="text-sm font-medium text-amber-600 capitalize">
-                  {staleProvider} connection expired
+                <p className="text-sm font-medium text-amber-600">
+                  {t("calendarIntegration.expiredTitle", { provider: PROVIDER_NAMES[staleProvider] })}
                 </p>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  Reconnect to keep your sessions syncing{status[staleProvider].email ? ` (${status[staleProvider].email})` : ""}.
+                  {status[staleProvider].email
+                    ? t("calendarIntegration.reconnectHintEmail", { email: status[staleProvider].email })
+                    : t("calendarIntegration.reconnectHint")}
                 </p>
               </div>
             </div>
             <Button size="sm" onClick={() => handleConnect(staleProvider)} disabled={isBusy}>
-              {isBusy ? "Connecting..." : "Reconnect"}
+              {isBusy ? t("calendarIntegration.connecting") : t("calendarIntegration.reconnect")}
             </Button>
           </div>
         ) : (
@@ -167,8 +171,8 @@ export function CalendarIntegrationPanel() {
                   </svg>
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-foreground">Google Calendar</h4>
-                  <p className="text-[11px] text-muted-foreground">Sync with Google</p>
+                  <h4 className="text-sm font-medium text-foreground">{t("onboarding.calendar.google")}</h4>
+                  <p className="text-[11px] text-muted-foreground">{t("calendarIntegration.syncGoogle")}</p>
                 </div>
               </div>
               <Button
@@ -177,7 +181,7 @@ export function CalendarIntegrationPanel() {
                 onClick={() => handleConnect("google")}
                 disabled={isBusy}
               >
-                {isBusy ? "Connecting..." : "Connect Google"}
+                {isBusy ? t("calendarIntegration.connecting") : t("calendarIntegration.connectGoogle")}
               </Button>
             </div>
 
@@ -187,8 +191,8 @@ export function CalendarIntegrationPanel() {
                   <Calendar className="w-5 h-5 text-[#0078D4]" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-medium text-foreground">Outlook Calendar</h4>
-                  <p className="text-[11px] text-muted-foreground">Sync with Microsoft</p>
+                  <h4 className="text-sm font-medium text-foreground">{t("onboarding.calendar.outlook")}</h4>
+                  <p className="text-[11px] text-muted-foreground">{t("calendarIntegration.syncMicrosoft")}</p>
                 </div>
               </div>
               <Button
@@ -197,7 +201,7 @@ export function CalendarIntegrationPanel() {
                 onClick={() => handleConnect("outlook")}
                 disabled={isBusy}
               >
-                {isBusy ? "Connecting..." : "Connect Outlook"}
+                {isBusy ? t("calendarIntegration.connecting") : t("calendarIntegration.connectOutlook")}
               </Button>
             </div>
           </div>

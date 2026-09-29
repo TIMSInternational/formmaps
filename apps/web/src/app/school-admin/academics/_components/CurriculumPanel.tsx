@@ -134,7 +134,7 @@ export function CurriculumPanel() {
                 <TableRow>
                   <TableCell colSpan={5} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
                     <GraduationCap className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} />
-                    <p className="text-sm">No courses found</p>
+                    <p className="text-sm">{t("courses.noCoursesFound")}</p>
                   </TableCell>
                 </TableRow>
               ) : (

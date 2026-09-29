@@ -114,7 +114,7 @@ export function TimelinePDFDocument({
 }: TimelinePDFDocumentProps) {
   const locale = language === "sp" ? es : enUS;
   const title =
-    language === "sp" ? "Reporte de Línea de Tiempo" : "Timeline Report";
+    language === "sp" ? "Reporte de línea de tiempo" : "Timeline Report";
   const generatedOn =
     language === "sp" ? "Generado el" : "Generated on";
 

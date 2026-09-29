@@ -31,6 +31,7 @@ interface PCAResultsPanelProps {
 // CoKey — never reaches the browser and isn't CSP-blocked. Renders the whole
 // card; returns null if the chart can't be loaded so there's no empty shell.
 function DiscChartImage({ pcaCod }: { pcaCod: string }) {
+  const { t } = useTranslation();
   const [src, setSrc] = useState<string | null>(null);
   const [failed, setFailed] = useState(false);
   useEffect(() => {
@@ -57,12 +58,12 @@ function DiscChartImage({ pcaCod }: { pcaCod: string }) {
   if (failed) return null;
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">PCA Profile Graph</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-4">{t("pca.panel.profileGraph")}</h3>
       <div style={{ textAlign: "center" }}>
         {src ? (
           <img
             src={src}
-            alt="PCA Profile Graph"
+            alt={t("pca.panel.profileGraph")}
             style={{ maxWidth: "100%", borderRadius: 8, border: "1px solid #e5e7eb" }}
           />
         ) : (
@@ -150,7 +151,7 @@ export default function PCAResultsPanel({
       const data = await getPCAResult(userId);
       setResults(data);
     } catch {
-      setError("Failed to load results");
+      setError(t("pca.panel.loadResultsFailed"));
     } finally {
       setLoading(false);
     }
@@ -163,7 +164,7 @@ export default function PCAResultsPanel({
       const data = await getPCACompetences(userId, "1"); // TIMS format
       setCompetences(data);
     } catch {
-      setError("Failed to load competences");
+      setError(t("pca.panel.loadCompetencesFailed"));
     } finally {
       setLoading(false);
     }
@@ -176,7 +177,7 @@ export default function PCAResultsPanel({
       const analysisData = await getPCAVsJCAAnalysis(userId, jca, "g");
       setAnalysis(analysisData);
     } catch {
-      setError("Failed to load analysis");
+      setError(t("pca.panel.loadAnalysisFailed"));
     } finally {
       setLoading(false);
     }
@@ -255,7 +256,7 @@ export default function PCAResultsPanel({
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <AlertCircle className="h-8 w-8 text-red-400 mb-3" />
               <p className="text-gray-700 font-medium mb-1">{error}</p>
-              <p className="text-gray-500 text-sm mb-4">Please try again or contact support if the issue persists.</p>
+              <p className="text-gray-500 text-sm mb-4">{t("pca.panel.errorHint")}</p>
               <button
                 onClick={() => {
                   setError(null);
@@ -266,7 +267,7 @@ export default function PCAResultsPanel({
                 className="inline-flex items-center gap-2 px-4 py-2 bg-[var(--admin-accent-blue)] text-white rounded-lg hover:bg-[var(--admin-accent-blue)]/90 transition-colors text-sm font-medium"
               >
                 <RefreshCw className="h-4 w-4" />
-                Retry
+                {t("pca.panel.retry")}
               </button>
             </div>
           )}
@@ -279,29 +280,29 @@ export default function PCAResultsPanel({
                   {/* Personal Information */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      Personal Information
+                      {t("pca.panel.personalInfo")}
                     </h3>
                     <div className="grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
                       <div className="flex justify-between gap-3 min-w-0 border-b border-gray-50 pb-2">
-                        <span className="text-gray-500 shrink-0">Name:</span>
+                        <span className="text-gray-500 shrink-0">{t("pca.panel.name")}</span>
                         <span className="font-medium text-gray-900 text-right break-words min-w-0">
                           {getVal(results, "perNom")} {getVal(results, "perApe")}
                         </span>
                       </div>
                       <div className="flex justify-between gap-3 min-w-0 border-b border-gray-50 pb-2">
-                        <span className="text-gray-500 shrink-0">ID:</span>
+                        <span className="text-gray-500 shrink-0">{t("pca.panel.id")}</span>
                         <span className="font-medium text-gray-900 text-right break-words min-w-0">
                           {getVal(results, "perNumIde")}
                         </span>
                       </div>
                       <div className="flex justify-between gap-3 min-w-0 border-b border-gray-50 pb-2">
-                        <span className="text-gray-500 shrink-0">Gender:</span>
+                        <span className="text-gray-500 shrink-0">{t("pca.panel.gender")}</span>
                         <span className="font-medium text-gray-900 text-right break-words min-w-0">
-                          {getVal(results, "perGen") === "M" ? "Male" : "Female"}
+                          {getVal(results, "perGen") === "M" ? t("pca.panel.male") : t("pca.panel.female")}
                         </span>
                       </div>
                       <div className="col-span-2 flex justify-between gap-3 border-b border-gray-50 pb-2">
-                        <span className="text-gray-500 shrink-0">Email:</span>
+                        <span className="text-gray-500 shrink-0">{t("pca.panel.email")}</span>
                         <span className="font-medium text-gray-900 text-right whitespace-nowrap">
                           {getVal(results, "perMail") || getVal(results, "perEmail")}
                         </span>
@@ -312,12 +313,12 @@ export default function PCAResultsPanel({
                   {/* DISC Profile Scores */}
                   <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">
-                      PCA Profile Scores
+                      {t("pca.panel.profileScores")}
                     </h3>
                     {!hasDISCScores(results) ? (
                       <div className="flex items-center gap-3 py-8 justify-center text-gray-500">
                         <AlertCircle className="h-5 w-5" />
-                        <span className="text-sm font-medium">Results not available — PCA scores are incomplete or still processing.</span>
+                        <span className="text-sm font-medium">{t("pca.panel.scoresUnavailable")}</span>
                       </div>
                     ) : (
                     <>
@@ -325,14 +326,14 @@ export default function PCAResultsPanel({
                       {/* Primary Scores */}
                       <div>
                         <h4 className="font-medium text-gray-700 mb-4 border-b pb-2">
-                          Primary Dimensions
+                          {t("pca.panel.primaryDimensions")}
                         </h4>
                         <div className="space-y-4">
                           {[
-                            { label: "Dominance (D)", val: getPercentage(results, "pcaD1") ?? 0, color: "bg-red-500", text: "text-red-600" },
-                            { label: "Influence (I)", val: getPercentage(results, "pcaI1") ?? 0, color: "bg-blue-600", text: "text-blue-700" },
-                            { label: "Solidity (S)", val: getPercentage(results, "pcaS1") ?? 0, color: "bg-green-500", text: "text-green-600" },
-                            { label: "Control (C)", val: getPercentage(results, "pcaC1") ?? 0, color: "bg-yellow-500", text: "text-yellow-600" }
+                            { label: `${t("pca.dominance")} (D)`, val: getPercentage(results, "pcaD1") ?? 0, color: "bg-red-500", text: "text-red-600" },
+                            { label: `${t("pca.influence")} (I)`, val: getPercentage(results, "pcaI1") ?? 0, color: "bg-blue-600", text: "text-blue-700" },
+                            { label: `${t("pca.steadiness")} (S)`, val: getPercentage(results, "pcaS1") ?? 0, color: "bg-green-500", text: "text-green-600" },
+                            { label: `${t("pca.conscientiousness")} (C)`, val: getPercentage(results, "pcaC1") ?? 0, color: "bg-yellow-500", text: "text-yellow-600" }
                           ].map((item, idx) => (
                             <div key={idx} className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
@@ -353,14 +354,14 @@ export default function PCAResultsPanel({
                       {/* Secondary Scores */}
                       <div>
                         <h4 className="font-medium text-gray-700 mb-4 border-b pb-2">
-                          Secondary Dimensions
+                          {t("pca.panel.secondaryDimensions")}
                         </h4>
                         <div className="space-y-4">
                           {[
-                            { label: "Dominance 2 (D2)", val: getPercentage(results, "pcaD2") ?? 0, color: "bg-red-400/80", text: "text-red-500" },
-                            { label: "Influence 2 (I2)", val: getPercentage(results, "pcaI2") ?? 0, color: "bg-blue-500/80", text: "text-blue-600" },
-                            { label: "Solidity 2 (S2)", val: getPercentage(results, "pcaS2") ?? 0, color: "bg-green-400/80", text: "text-green-500" },
-                            { label: "Control 2 (C2)", val: getPercentage(results, "pcaC2") ?? 0, color: "bg-yellow-400/80", text: "text-yellow-500" }
+                            { label: `${t("pca.dominance")} 2 (D2)`, val: getPercentage(results, "pcaD2") ?? 0, color: "bg-red-400/80", text: "text-red-500" },
+                            { label: `${t("pca.influence")} 2 (I2)`, val: getPercentage(results, "pcaI2") ?? 0, color: "bg-blue-500/80", text: "text-blue-600" },
+                            { label: `${t("pca.steadiness")} 2 (S2)`, val: getPercentage(results, "pcaS2") ?? 0, color: "bg-green-400/80", text: "text-green-500" },
+                            { label: `${t("pca.conscientiousness")} 2 (C2)`, val: getPercentage(results, "pcaC2") ?? 0, color: "bg-yellow-400/80", text: "text-yellow-500" }
                           ].map((item, idx) => (
                             <div key={idx} className="space-y-1">
                               <div className="flex items-center justify-between text-sm">
@@ -382,14 +383,14 @@ export default function PCAResultsPanel({
                     {/* Graph 3: Self-Image */}
                     <div className="mt-6">
                       <h4 className="font-medium text-gray-700 mb-4 border-b pb-2">
-                        Self-Image
+                        {t("pca.panel.selfImage")}
                       </h4>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
                         {[
-                          { label: "Dominance 3 (D3)", val: getPercentage(results, "pcaD3") ?? 0, color: "bg-red-500/70", text: "text-red-500" },
-                          { label: "Influence 3 (I3)", val: getPercentage(results, "pcaI3") ?? 0, color: "bg-blue-500/70", text: "text-blue-600" },
-                          { label: "Solidity 3 (S3)", val: getPercentage(results, "pcaS3") ?? 0, color: "bg-green-500/70", text: "text-green-500" },
-                          { label: "Control 3 (C3)", val: getPercentage(results, "pcaC3") ?? 0, color: "bg-yellow-500/70", text: "text-yellow-500" }
+                          { label: `${t("pca.dominance")} 3 (D3)`, val: getPercentage(results, "pcaD3") ?? 0, color: "bg-red-500/70", text: "text-red-500" },
+                          { label: `${t("pca.influence")} 3 (I3)`, val: getPercentage(results, "pcaI3") ?? 0, color: "bg-blue-500/70", text: "text-blue-600" },
+                          { label: `${t("pca.steadiness")} 3 (S3)`, val: getPercentage(results, "pcaS3") ?? 0, color: "bg-green-500/70", text: "text-green-500" },
+                          { label: `${t("pca.conscientiousness")} 3 (C3)`, val: getPercentage(results, "pcaC3") ?? 0, color: "bg-yellow-500/70", text: "text-yellow-500" }
                         ].map((item, idx) => (
                           <div key={idx} className="space-y-1">
                             <div className="flex items-center justify-between text-sm">
@@ -470,7 +471,7 @@ export default function PCAResultsPanel({
               ) : (
                 <div className="text-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Initializing results data...</p>
+                  <p className="text-gray-500">{t("pca.panel.initializing")}</p>
                 </div>
               )}
             </div>
@@ -481,7 +482,7 @@ export default function PCAResultsPanel({
             <div>
               {competences && Array.isArray(competences.pcaCmps) ? (
                 <div className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">Competency Levels</h3>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">{t("pca.panel.competencyLevels")}</h3>
                   <div className="space-y-3">
                     {(competences.pcaCmps as Array<{ cmpNom?: string; level?: number }>).map((c, i) => {
                       const level = Math.max(0, Math.min(3, Number(c.level) || 0));
@@ -499,7 +500,7 @@ export default function PCAResultsPanel({
                               ))}
                             </div>
                             <span className="text-xs text-gray-500 w-14 text-right">
-                              {["—", "Low", "Medium", "High"][level]}
+                              {["—", t("pca.panel.levelLow"), t("pca.panel.levelMedium"), t("pca.panel.levelHigh")][level]}
                             </span>
                           </div>
                         </div>
@@ -509,7 +510,7 @@ export default function PCAResultsPanel({
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <p className="text-gray-500">No competence data available.</p>
+                  <p className="text-gray-500">{t("pca.panel.noCompetenceData")}</p>
                 </div>
               )}
             </div>
@@ -520,7 +521,7 @@ export default function PCAResultsPanel({
             <div>
               <div className="mb-6 bg-white p-4 rounded-xl border border-gray-100 shadow-sm">
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Compared against Job Competency Analysis (JCA):
+                  {t("pca.panel.comparedAgainst")}
                 </label>
                 <select
                   value={selectedJCA}
@@ -528,7 +529,7 @@ export default function PCAResultsPanel({
                     const jca = e.target.value as JCACode;
                     setSelectedJCA(jca);
                     setAnalysis(null); // clear the old result…
-                    loadAnalysis(jca); // …and immediately re-fetch for the new job (else it sticks on "Analysing…")
+                    loadAnalysis(jca); // …and immediately re-fetch for the new job (else it sticks on "Analyzing…")
                   }}
                   className="w-full border border-gray-300 rounded-lg px-3 py-2.5 bg-gray-50 focus:ring-2 focus:ring-[var(--admin-accent-blue)] focus:border-[var(--admin-accent-blue)] outline-none"
                 >
@@ -545,7 +546,7 @@ export default function PCAResultsPanel({
                 // embeds the vendor CoKey, which must never reach the client UI.
                 <div className="bg-white p-6 rounded-xl border border-gray-100 shadow-sm text-center">
                   <p className="text-sm text-gray-500 mb-2">
-                    Competency match with {JCA_CODES[selectedJCA]}
+                    {t("pca.panel.matchWith", { job: JCA_CODES[selectedJCA] })}
                   </p>
                   <p className="text-5xl font-bold" style={{ color: "var(--admin-accent-blue)" }}>
                     {Number(analysis.val) || 0}%
@@ -557,13 +558,13 @@ export default function PCAResultsPanel({
                     />
                   </div>
                   <p className="text-xs text-gray-400 mt-4">
-                    How closely your assessed competencies align with this job profile.
+                    {t("pca.panel.matchHint")}
                   </p>
                 </div>
               ) : (
                 <div className="text-center py-12">
                   <Loader2 className="h-8 w-8 animate-spin text-gray-300 mx-auto mb-4" />
-                  <p className="text-gray-500">Analysing data against JCA...</p>
+                  <p className="text-gray-500">{t("pca.panel.analyzing")}</p>
                 </div>
               )}
             </div>

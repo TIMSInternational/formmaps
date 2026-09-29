@@ -27,6 +27,7 @@ import type {
   StudentParentLink,
 } from "@/types/parentPortal";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n";
 import {
   optimisticId,
   patchBy,
@@ -158,7 +159,7 @@ export function useInviteParent() {
       );
     },
 
-    onSuccess: () => toast.success("Invite sent successfully"),
+    onSuccess: () => toast.success(i18n.t("profile.inviteParent.inviteSent")),
 
     onError: (err: Error, _payload, context) => {
       optimistic.rollback(context);
@@ -244,7 +245,7 @@ export function useInviteMyParent() {
       ]);
     },
 
-    onSuccess: () => toast.success("Invite sent successfully"),
+    onSuccess: () => toast.success(i18n.t("profile.inviteParent.inviteSent")),
 
     onError: (err: Error, _payload, context) => {
       optimistic.rollback(context);

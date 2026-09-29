@@ -3,9 +3,9 @@
 import React, { useState, useEffect } from "react";
 import { Calendar, Loader2 } from "lucide-react";
 import type { AssessmentSchedule } from "@/services/assessmentCommandService";
+import { useTranslation } from "react-i18next";
 
 const GRADES = [9, 10, 11, 12];
-const GRADE_LABELS: Record<number, string> = { 9: "Freshman", 10: "Sophomore", 11: "Junior", 12: "Senior" };
 const ASSESSMENT_TYPES = ["PCA", "MIL", "360", "Personality"] as const;
 
 export interface ScheduleSaveItem {
@@ -20,6 +20,9 @@ export function ScheduleGrid({ schedules, onSave, isSaving }: {
   onSave: (s: ScheduleSaveItem[]) => void;
   isSaving: boolean;
 }) {
+  const { t } = useTranslation("school_admin");
+  // Assessment-type codes are data keys (saved as-is); only "Personality" needs a translated label.
+  const typeLabel = (type: string) => (type === "Personality" ? t("assessments.pipeline.colPersonality") : type);
   const [draft, setDraft] = useState<Record<string, { startDate: string; endDate: string }>>({});
   const [dirty, setDirty] = useState(false);
 
@@ -62,7 +65,7 @@ export function ScheduleGrid({ schedules, onSave, isSaving }: {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Calendar style={{ width: 16, height: 16, color: "var(--admin-accent-blue)" }} />
-          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Assessment Schedule</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("assessments.schedule.title")}</span>
         </div>
         <button
           onClick={handleSave}
@@ -77,24 +80,24 @@ export function ScheduleGrid({ schedules, onSave, isSaving }: {
           }}
         >
           {isSaving ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : null}
-          {dirty ? "Save Schedule" : "Saved"}
+          {dirty ? t("assessments.schedule.save") : t("assessments.schedule.saved")}
         </button>
       </div>
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
             <tr style={{ background: "var(--admin-bg-hover)" }}>
-              <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 600, color: "var(--admin-font-tertiary)", fontSize: 10, textTransform: "uppercase" }}>Grade</th>
-              {ASSESSMENT_TYPES.map(t => (
-                <th key={t} colSpan={2} style={{ padding: "8px 12px", textAlign: "center", fontWeight: 600, color: "var(--admin-font-tertiary)", fontSize: 10, textTransform: "uppercase" }}>{t}</th>
+              <th style={{ padding: "8px 12px", textAlign: "left", fontWeight: 600, color: "var(--admin-font-tertiary)", fontSize: 10, textTransform: "uppercase" }}>{t("counselor:pipeline.colGrade")}</th>
+              {ASSESSMENT_TYPES.map(type => (
+                <th key={type} colSpan={2} style={{ padding: "8px 12px", textAlign: "center", fontWeight: 600, color: "var(--admin-font-tertiary)", fontSize: 10, textTransform: "uppercase" }}>{typeLabel(type)}</th>
               ))}
             </tr>
             <tr style={{ background: "var(--admin-bg-hover)" }}>
               <th />
-              {ASSESSMENT_TYPES.map(t => (
-                <React.Fragment key={t}>
-                  <th style={{ padding: "4px 8px", textAlign: "center", fontWeight: 500, color: "var(--admin-font-tertiary)", fontSize: 9 }}>Start</th>
-                  <th style={{ padding: "4px 8px", textAlign: "center", fontWeight: 500, color: "var(--admin-font-tertiary)", fontSize: 9 }}>End</th>
+              {ASSESSMENT_TYPES.map(type => (
+                <React.Fragment key={type}>
+                  <th style={{ padding: "4px 8px", textAlign: "center", fontWeight: 500, color: "var(--admin-font-tertiary)", fontSize: 9 }}>{t("assessments.schedule.start")}</th>
+                  <th style={{ padding: "4px 8px", textAlign: "center", fontWeight: 500, color: "var(--admin-font-tertiary)", fontSize: 9 }}>{t("assessments.schedule.end")}</th>
                 </React.Fragment>
               ))}
             </tr>
@@ -103,18 +106,18 @@ export function ScheduleGrid({ schedules, onSave, isSaving }: {
             {GRADES.map(g => (
               <tr key={g} style={{ borderTop: "1px solid var(--admin-border-default)" }}>
                 <td style={{ padding: "8px 12px", fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                  {g} <span style={{ fontWeight: 400, color: "var(--admin-font-tertiary)" }}>({GRADE_LABELS[g]})</span>
+                  {g} <span style={{ fontWeight: 400, color: "var(--admin-font-tertiary)" }}>({t(`analytics.gradeLabels.${g}`)})</span>
                 </td>
-                {ASSESSMENT_TYPES.map(t => {
-                  const key = `${g}-${t}`;
+                {ASSESSMENT_TYPES.map(type => {
+                  const key = `${g}-${type}`;
                   const val = draft[key] || { startDate: "", endDate: "" };
                   return (
-                    <React.Fragment key={t}>
+                    <React.Fragment key={type}>
                       <td style={{ padding: "4px 6px" }}>
                         <input
                           type="date"
                           value={val.startDate}
-                          onChange={e => update(g, t, "startDate", e.target.value)}
+                          onChange={e => update(g, type, "startDate", e.target.value)}
                           style={{
                             width: "100%", fontSize: 11, padding: "4px 6px", borderRadius: 4,
                             border: "1px solid var(--admin-border-default)",
@@ -126,7 +129,7 @@ export function ScheduleGrid({ schedules, onSave, isSaving }: {
                         <input
                           type="date"
                           value={val.endDate}
-                          onChange={e => update(g, t, "endDate", e.target.value)}
+                          onChange={e => update(g, type, "endDate", e.target.value)}
                           style={{
                             width: "100%", fontSize: 11, padding: "4px 6px", borderRadius: 4,
                             border: "1px solid var(--admin-border-default)",

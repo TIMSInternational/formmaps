@@ -10,6 +10,8 @@ import {
 } from "@/services/recommendationService";
 import { formatDateOnly } from "@/lib/dateUtils";
 import StatusBadge from "./StatusBadge";
+import { useTranslation } from "react-i18next";
+import { relationshipLabel } from "@/components/recommendations/relationshipLabel";
 
 interface RecommendationListProps {
   requests: RecommendationRequest[];
@@ -17,14 +19,16 @@ interface RecommendationListProps {
 
 // The positive lifecycle a request walks through. "declined" is a separate
 // terminal state rendered inline rather than as a step on this track.
+// label = i18n key
 const TIMELINE_STEPS: { key: string; label: string }[] = [
-  { key: "requested", label: "Requested" },
-  { key: "accepted", label: "Accepted" },
-  { key: "in_progress", label: "In progress" },
-  { key: "submitted", label: "Submitted" },
+  { key: "requested", label: "counselor:recommendations.statusRequested" },
+  { key: "accepted", label: "counselor:recommendations.statusAccepted" },
+  { key: "in_progress", label: "recommendations.list.stepInProgress" },
+  { key: "submitted", label: "counselor:recommendations.statusSubmitted" },
 ];
 
 function StatusTimeline({ status }: { status: string }) {
+  const { t } = useTranslation("student");
   const currentIndex = TIMELINE_STEPS.findIndex((s) => s.key === status);
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 0, marginTop: 12 }}>
@@ -61,7 +65,7 @@ function StatusTimeline({ status }: { status: string }) {
                   whiteSpace: "nowrap",
                 }}
               >
-                {step.label}
+                {t(step.label)}
               </span>
             </div>
             {!isLast && (
@@ -83,6 +87,7 @@ function StatusTimeline({ status }: { status: string }) {
 }
 
 export default function RecommendationList({ requests }: RecommendationListProps) {
+  const { t } = useTranslation("student");
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   async function handleDownload(id: string) {
@@ -97,7 +102,7 @@ export default function RecommendationList({ requests }: RecommendationListProps
       a.click();
       a.remove();
     } catch {
-      toast.error("Could not download the letter. Please try again.");
+      toast.error(t("recommendations.list.downloadFailed"));
     } finally {
       setDownloadingId(null);
     }
@@ -162,12 +167,12 @@ export default function RecommendationList({ requests }: RecommendationListProps
               marginBottom: 4,
             }}
           >
-            No requests yet
+            {t("recommendations.list.emptyTitle")}
           </div>
           <div
             style={{ fontSize: 12, color: "var(--admin-font-tertiary)", maxWidth: 300, margin: "0 auto" }}
           >
-            Click &quot;Request Letter&quot; to ask a counselor or teacher for a recommendation.
+            {t("recommendations.list.emptyBody")}
           </div>
         </div>
       ) : (
@@ -219,12 +224,12 @@ export default function RecommendationList({ requests }: RecommendationListProps
                       }}
                     >
                       <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                        {req.recommender?.name ?? "Unknown"}
+                        {req.recommender?.name ?? t("recommendations.list.unknownRecommender")}
                       </span>
                       <StatusBadge status={req.status} />
                     </div>
                     <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-                      {req.relationship}
+                      {req.relationship ? relationshipLabel(req.relationship, t) : null}
                     </div>
                   </div>
                 </div>
@@ -249,7 +254,7 @@ export default function RecommendationList({ requests }: RecommendationListProps
                       }}
                     >
                       <Calendar style={{ width: 11, height: 11 }} />
-                      Due {formatDateOnly(req.dueDate)}
+                      {t("recommendations.list.due", { date: formatDateOnly(req.dueDate) })}
                     </div>
                   )}
                   {canDownload && (
@@ -273,7 +278,7 @@ export default function RecommendationList({ requests }: RecommendationListProps
                       }}
                     >
                       <Download style={{ width: 12, height: 12 }} />
-                      {downloadingId === req.id ? "Preparing…" : "Download letter"}
+                      {downloadingId === req.id ? t("recommendations.list.preparing") : t("recommendations.list.downloadLetter")}
                     </button>
                   )}
                 </div>
@@ -295,8 +300,11 @@ export default function RecommendationList({ requests }: RecommendationListProps
                 >
                   <XCircle style={{ width: 13, height: 13, flexShrink: 0, marginTop: 1 }} />
                   <span>
-                    Declined{req.declineReason ? `: ${req.declineReason}` : ""}. You can request
-                    another recommender.
+                    {/* The reason is the recommender's own sentence — drop its trailing
+                        period so the template's "." doesn't double it. */}
+                    {req.declineReason?.trim()
+                      ? t("recommendations.list.declinedWithReason", { reason: req.declineReason.trim().replace(/\.+$/, "") })
+                      : t("recommendations.list.declined")}
                   </span>
                 </div>
               ) : (

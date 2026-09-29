@@ -17,10 +17,12 @@ import { PCAReports } from "./_components/PCAReports";
 import { MILReports } from "./_components/MILReports";
 import { AcademicReports } from "./_components/AcademicReports";
 import type { ReportStudent } from "./_components/ReportShared";
+import { useTranslation } from "react-i18next";
 
 type TabKey = "pca" | "mil" | "academic";
 
 export default function CounselorReportsPage() {
+  const { t } = useTranslation("counselor");
   const [activeTab, setActiveTab] = useState<TabKey>("pca");
   const [search, setSearch] = useState("");
   const [students, setStudents] = useState<ReportStudent[]>([]);
@@ -48,9 +50,9 @@ export default function CounselorReportsPage() {
   });
 
   const tabs: { key: TabKey; label: string; icon: React.ElementType }[] = [
-    { key: "pca", label: "PCA Assessment", icon: Target },
-    { key: "mil", label: "MIL / LIA Assessment", icon: Brain },
-    { key: "academic", label: "Full Academic Summary", icon: BarChart3 },
+    { key: "pca", label: t("assessments.pcaTitle"), icon: Target },
+    { key: "mil", label: t("assessments.milTitle"), icon: Brain },
+    { key: "academic", label: t("reports.fullAcademicSummary"), icon: BarChart3 },
   ];
 
   return (
@@ -62,9 +64,9 @@ export default function CounselorReportsPage() {
             <FileText className="h-4 w-4 text-indigo-500" />
           </div>
           <div>
-            <h1 className="text-lg font-bold text-foreground">Reports</h1>
+            <h1 className="text-lg font-bold text-foreground">{t("school_admin:reports.title")}</h1>
             <p className="text-muted-foreground text-xs mt-0.5">
-              View and download assessment reports for your assigned students
+              {t("reports.subtitle")}
             </p>
           </div>
         </div>
@@ -96,7 +98,7 @@ export default function CounselorReportsPage() {
       <div className="relative max-w-md">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
         <Input
-          placeholder="Search students..."
+          placeholder={t("students.searchPlaceholder")}
           className="pl-9 h-9 rounded-lg text-sm"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
@@ -108,11 +110,11 @@ export default function CounselorReportsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Student</TableHead>
-              <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Email</TableHead>
-              <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Grade</TableHead>
-              <TableHead className="text-xs font-semibold uppercase text-muted-foreground">Status</TableHead>
-              <TableHead className="text-xs font-semibold uppercase text-muted-foreground text-right">Actions</TableHead>
+              <TableHead className="text-xs font-semibold uppercase text-muted-foreground">{t("school_admin:reports.table.student")}</TableHead>
+              <TableHead className="text-xs font-semibold uppercase text-muted-foreground">{t("school_admin:reports.table.email")}</TableHead>
+              <TableHead className="text-xs font-semibold uppercase text-muted-foreground">{t("school_admin:reports.table.grade")}</TableHead>
+              <TableHead className="text-xs font-semibold uppercase text-muted-foreground">{t("school_admin:reports.table.status")}</TableHead>
+              <TableHead className="text-xs font-semibold uppercase text-muted-foreground text-right">{t("common:common.actions")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -128,7 +130,7 @@ export default function CounselorReportsPage() {
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground py-12 text-sm">
                   <FileText className="h-6 w-6 mx-auto mb-2 opacity-30" />
-                  No students found
+                  {t("school_admin:reports.noStudents")}
                 </TableCell>
               </TableRow>
             ) : filtered.map((student) => (
@@ -148,7 +150,7 @@ export default function CounselorReportsPage() {
                 <TableCell className="py-3 px-4 text-sm text-muted-foreground">{student.gradeLevel || "\u2014"}</TableCell>
                 <TableCell className="py-3 px-4">
                   <Badge variant="secondary" className={`text-xs ${student.status === "active" ? "bg-emerald-100 text-emerald-700" : "bg-gray-100 text-gray-600"}`}>
-                    {student.status || "active"}
+                    {!student.status || student.status === "active" ? t("school_admin:reports.statusActive") : student.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="py-3 px-4 text-right">
@@ -159,7 +161,7 @@ export default function CounselorReportsPage() {
                     onClick={() => setSelectedStudent(student)}
                   >
                     <Eye className="h-3 w-3" />
-                    View Report
+                    {t("reports.viewReport")}
                   </Button>
                 </TableCell>
               </TableRow>
@@ -171,7 +173,7 @@ export default function CounselorReportsPage() {
       {/* Student Report Dialog */}
       <Dialog open={!!selectedStudent} onOpenChange={(open) => { if (!open) setSelectedStudent(null); }}>
         <DialogContent className="max-w-2xl p-0 overflow-hidden max-h-[90vh] overflow-y-auto">
-          <DialogTitle className="sr-only">{selectedStudent?.name} Reports</DialogTitle>
+          <DialogTitle className="sr-only">{t("school_admin:reports.studentReports", { name: selectedStudent?.name ?? "" })}</DialogTitle>
           {selectedStudent && (
             activeTab === "pca" ? <PCAReports student={selectedStudent} /> :
             activeTab === "mil" ? <MILReports student={selectedStudent} /> :

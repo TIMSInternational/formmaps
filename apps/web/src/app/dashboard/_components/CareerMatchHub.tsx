@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { ArrowRight, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { EmptyState } from "@/components/empty-state/EmptyState";
+import { useTranslation } from "react-i18next";
 
 function formatCluster(cluster: string): string {
   return cluster.replace(/_/g, " ").replace(/And/g, "&");
@@ -36,6 +37,7 @@ interface CareerMatchHubProps {
 }
 
 export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
+  const { t } = useTranslation();
   const { data: timsData, isLoading, hasAssessments } = useTimsCareerScoring();
   const [selectedCareer, setSelectedCareer] = useState<ScoredCareer | null>(
     null,
@@ -68,10 +70,10 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
       <Card className="p-0 rounded-2xl border-border overflow-hidden">
         <EmptyState
           type="not_started"
-          title="Your Career Matches"
-          description="Complete your assessments to discover personalized career matches"
+          title={t("dashboard.careerMatchHub.title")}
+          description={t("dashboard.careerMatchHub.emptyDescription")}
           icon={Sparkles}
-          actionLabel="Start Assessments"
+          actionLabel={t("dashboard.careerMatchHub.startAssessments")}
           actionHref="/dashboard/assessments"
         />
       </Card>
@@ -86,10 +88,10 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
         <div className="flex items-center justify-between mb-1">
           <div>
             <h2 className="text-lg font-semibold text-foreground">
-              Your Career Matches
+              {t("dashboard.careerMatchHub.title")}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Powered by your PCA + LIA assessment results
+              {t("dashboard.careerMatchHub.poweredBy")}
             </p>
           </div>
           <Link
@@ -194,7 +196,7 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
                     {Math.round(selectedCareer.totalScore)}%
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Overall Match Score
+                    {t("dashboard.careerMatchHub.overallMatchScore")}
                   </p>
                 </div>
 

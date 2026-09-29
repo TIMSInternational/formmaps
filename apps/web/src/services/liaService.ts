@@ -285,17 +285,17 @@ export const SUBTEST_CONFIG: Record<LIASubtest, {
   pattern_recognition: {
     itemCount: 60,
     timeSeconds: 3 * 60,
-    displayName: { es: "Reconocimiento de Patrones", en: "Pattern Recognition" },
+    displayName: { es: "Reconocimiento de patrones", en: "Pattern Recognition" },
   },
   verbal_reasoning: {
     itemCount: 50,
     timeSeconds: 4 * 60,
-    displayName: { es: "Razonamiento Verbal", en: "Verbal Reasoning" },
+    displayName: { es: "Razonamiento verbal", en: "Verbal Reasoning" },
   },
   numerical_speed: {
     itemCount: 60,
     timeSeconds: 4 * 60,
-    displayName: { es: "Velocidad Numérica", en: "Numerical Speed" },
+    displayName: { es: "Velocidad numérica", en: "Numerical Speed" },
   },
   working_memory: {
     // The official Working Memory instrument is 60 items (the 72-item form is
@@ -303,11 +303,11 @@ export const SUBTEST_CONFIG: Record<LIASubtest, {
     // targets a count the served bank can't reach.
     itemCount: 60,
     timeSeconds: 4 * 60,
-    displayName: { es: "Memoria de Trabajo", en: "Working Memory" },
+    displayName: { es: "Memoria de trabajo", en: "Working Memory" },
   },
   visual_rotation: {
     itemCount: 60,
     timeSeconds: 5 * 60,
-    displayName: { es: "Rotación Visual", en: "Visual Rotation" },
+    displayName: { es: "Rotación visual", en: "Visual Rotation" },
   },
 };

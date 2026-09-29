@@ -22,11 +22,11 @@ import { checkPCAStatus, getPCAResultByUserId } from "./pcaService";
  * MIL Exam type to readable name mapping
  */
 const MIL_EXAM_NAMES: Record<number, { en: string; sp: string }> = {
-  0: { en: "Pattern Recognition", sp: "Reconocimiento de Patrones" },
-  1: { en: "Verbal Reasoning", sp: "Razonamiento Verbal" },
-  2: { en: "Working Memory", sp: "Memoria de Trabajo" },
-  3: { en: "Numeric Velocity", sp: "Velocidad Numérica" },
-  4: { en: "Visual Rotation", sp: "Rotación Visual" },
+  0: { en: "Pattern Recognition", sp: "Reconocimiento de patrones" },
+  1: { en: "Verbal Reasoning", sp: "Razonamiento verbal" },
+  2: { en: "Working Memory", sp: "Memoria de trabajo" },
+  3: { en: "Numeric Velocity", sp: "Velocidad numérica" },
+  4: { en: "Visual Rotation", sp: "Rotación visual" },
 };
 
 /**
@@ -93,11 +93,11 @@ function transformMILToEvents(
         eventType: exam.isTimeExpired ? "time_expired" : "completed",
         title:
           language === "sp"
-            ? `${examName} Completado`
+            ? `Subprueba completada: ${examName}`
             : `${examName} Completed`,
         description:
           language === "sp"
-            ? `Subtest completado exitosamente`
+            ? `Subprueba completada exitosamente`
             : `Subtest completed successfully`,
         timestamp: exam.completionDate,
         status: "completed",
@@ -125,10 +125,10 @@ function transformMILToEvents(
         type: "mil",
         eventType: "started",
         title:
-          language === "sp" ? `${examName} Iniciado` : `${examName} Started`,
+          language === "sp" ? `Subprueba iniciada: ${examName}` : `${examName} Started`,
         description:
           language === "sp"
-            ? `Comenzaste el subtest de ${examName}`
+            ? `Comenzaste la subprueba de ${examName}`
             : `Started the ${examName} subtest`,
         timestamp: exam.startDate,
         status: exam.status === "completed" ? "completed" : "in_progress",
@@ -174,7 +174,7 @@ function transformEvaluationToEvents(
         id: `eval_created_${group.id}_${group.createdAt}`,
         type: "evaluation",
         eventType: "group_created",
-        title: language === "sp" ? `Evaluador Agregado` : `Evaluator Added`,
+        title: language === "sp" ? `Evaluador agregado` : `Evaluator Added`,
         description:
           language === "sp"
             ? `${group.evaluatorName} (${groupLabel}) agregado como evaluador`
@@ -205,7 +205,7 @@ function transformEvaluationToEvents(
         type: "evaluation",
         eventType: "response_received",
         title:
-          language === "sp" ? `Evaluación Recibida` : `Evaluation Received`,
+          language === "sp" ? `Evaluación recibida` : `Evaluation Received`,
         description:
           language === "sp"
             ? `${group.evaluatorName} completó la evaluación 360°`
@@ -259,7 +259,7 @@ async function transformPCAToEvents(
           language === "sp"
             ? pcaStatus.status === "completed"
               ? "PCA Completado"
-              : "PCA En Progreso"
+              : "PCA en progreso"
             : pcaStatus.status === "completed"
             ? "PCA Completed"
             : "PCA In Progress",

@@ -94,6 +94,11 @@
         "title": "Welcome!",
         "message": "Your teacher account is ready. Redirecting to your portal…"
       }
+    },
+    "inviteErrors": {
+      "expired": "This invitation has expired.",
+      "used": "This invitation has already been used.",
+      "invalid": "This invitation link is invalid."
     }
   },
   "recommendations": {

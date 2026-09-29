@@ -5,6 +5,7 @@ import { SequenceBuilder } from "@/components/course-plan/SequenceBuilder";
 import { planItemsToEnrollments } from "@/components/course-plan/planItems";
 import type { StudentCoursePlanResponse } from "@/types/coursePlan";
 import type { GraduationPlan } from "@/types/graduationPlan";
+import { useTranslation } from "react-i18next";
 
 interface DraftPlanSectionProps {
   plan: GraduationPlan;
@@ -28,6 +29,7 @@ export function DraftPlanSection({
   isRegenerating,
   isDiscarding,
 }: DraftPlanSectionProps) {
+  const { t } = useTranslation();
   const busy = isSubmitting || isRegenerating || isDiscarding;
 
   return (
@@ -69,7 +71,7 @@ export function DraftPlanSection({
               className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-bold bg-[#102B47] text-white hover:opacity-90 disabled:opacity-60"
             >
               {isSubmitting ? <LoaderCircle className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-              Submit to counselor
+              {t("coursePlan.draftPlan.submitToCounselor")}
             </button>
           </div>
         </div>
@@ -90,7 +92,7 @@ export function DraftPlanSection({
           <div className="flex items-start gap-2 text-xs text-gray-900 min-w-0">
             <AlertTriangle className="h-4 w-4 mt-0.5 shrink-0 text-red-600" />
             <span>
-              <span className="font-semibold">Your counselor asked for changes</span>
+              <span className="font-semibold">{t("coursePlan.draftPlan.changesRequested")}</span>
               {plan.reviewNote ? `: "${plan.reviewNote}"` : "."}
             </span>
           </div>

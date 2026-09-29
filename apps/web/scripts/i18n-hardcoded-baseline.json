@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-29T18:08:40.491Z",
-  "totalFindings": 478,
+  "generatedAt": "2026-09-29T21:19:01.405Z",
+  "totalFindings": 417,
   "note": "Baseline for --fail-on-new. Existing findings are tolerated; new file/text fingerprints fail CI.",
   "findings": [
     {
@@ -42,26 +42,6 @@
       "file": "src/app/counselor/activities/page.tsx",
       "line": 178,
       "text": "No students found"
-    },
-    {
-      "file": "src/app/counselor/calendar/page.tsx",
-      "line": 79,
-      "text": "Session Calendar"
-    },
-    {
-      "file": "src/app/counselor/calendar/page.tsx",
-      "line": 185,
-      "text": "Session Details"
-    },
-    {
-      "file": "src/app/counselor/calendar/page.tsx",
-      "line": 222,
-      "text": "Student Notes"
-    },
-    {
-      "file": "src/app/counselor/calendar/page.tsx",
-      "line": 228,
-      "text": "Your Notes"
     },
     {
       "file": "src/app/counselor/college-apps/_components/AddApplicationForm.tsx",
@@ -162,21 +142,6 @@
       "file": "src/app/counselor/messages/_components/BroadcastPanel.tsx",
       "line": 49,
       "text": "Broadcast to My Students"
-    },
-    {
-      "file": "src/app/counselor/messages/page.tsx",
-      "line": 218,
-      "text": "No contacts found"
-    },
-    {
-      "file": "src/app/counselor/messages/page.tsx",
-      "line": 306,
-      "text": "Start Video Call"
-    },
-    {
-      "file": "src/app/counselor/messages/page.tsx",
-      "line": 376,
-      "text": "Select a conversation"
     },
     {
       "file": "src/app/counselor/notes/page.tsx",
@@ -369,11 +334,6 @@
       "text": "Go to learning"
     },
     {
-      "file": "src/app/dashboard/_components/CareerMatchHub.tsx",
-      "line": 71,
-      "text": "Your Career Matches"
-    },
-    {
       "file": "src/app/dashboard/applications/_components/checklist-tab.tsx",
       "line": 126,
       "text": "Due date"
@@ -414,99 +374,14 @@
       "text": "Applications with Deadlines"
     },
     {
-      "file": "src/app/dashboard/assessments/_components/PCAResultsPanel.tsx",
-      "line": 60,
-      "text": "PCA Profile Graph"
-    },
-    {
-      "file": "src/app/dashboard/assessments/_components/PCAResultsPanel.tsx",
-      "line": 65,
-      "text": "PCA Profile Graph"
-    },
-    {
-      "file": "src/app/dashboard/assessments/_components/PCAResultsPanel.tsx",
-      "line": 484,
-      "text": "Competency Levels"
-    },
-    {
-      "file": "src/app/dashboard/assessments/evaluation/_components/AddEvaluatorDialog.tsx",
-      "line": 117,
-      "text": "Select a group"
-    },
-    {
-      "file": "src/app/dashboard/assessments/evaluation/_components/AddEvaluatorDialog.tsx",
-      "line": 151,
-      "text": "Enter evaluator"
-    },
-    {
-      "file": "src/app/dashboard/assessments/evaluation/_components/AddEvaluatorDialog.tsx",
-      "line": 171,
-      "text": "Enter evaluator"
-    },
-    {
-      "file": "src/app/dashboard/assessments/evaluation/_components/AddEvaluatorDialog.tsx",
-      "line": 218,
-      "text": "Select relationship"
-    },
-    {
-      "file": "src/app/dashboard/assessments/evaluation/page.tsx",
-      "line": 225,
-      "text": "Select Evaluators for Email"
-    },
-    {
-      "file": "src/app/dashboard/assessments/evaluation/page.tsx",
-      "line": 238,
-      "text": "Select Evaluators for SMS"
-    },
-    {
-      "file": "src/app/dashboard/assessments/lia/_components/MILCompletion.tsx",
-      "line": 91,
-      "text": "Next Step"
-    },
-    {
-      "file": "src/app/dashboard/assessments/page.tsx",
-      "line": 290,
-      "text": "Your personalized vocational profile and recommendations"
-    },
-    {
-      "file": "src/app/dashboard/assessments/pca/page.tsx",
-      "line": 161,
-      "text": "PCA Assessment"
-    },
-    {
       "file": "src/app/dashboard/book-counselor/page.tsx",
-      "line": 170,
-      "text": "No Counselors Available"
-    },
-    {
-      "file": "src/app/dashboard/book-counselor/page.tsx",
-      "line": 174,
-      "text": "Go Back"
-    },
-    {
-      "file": "src/app/dashboard/book-counselor/page.tsx",
-      "line": 190,
-      "text": "FREE Session"
-    },
-    {
-      "file": "src/app/dashboard/book-counselor/page.tsx",
-      "line": 246,
+      "line": 258,
       "text": "Select a counselor"
     },
     {
       "file": "src/app/dashboard/coaching/earnings/page.tsx",
       "line": 229,
       "text": "Transaction History"
-    },
-    {
-      "file": "src/app/dashboard/coaching/messages/page.tsx",
-      "line": 196,
-      "text": "No contacts found"
-    },
-    {
-      "file": "src/app/dashboard/coaching/messages/page.tsx",
-      "line": 345,
-      "text": "Select a conversation"
     },
     {
       "file": "src/app/dashboard/coaching/profile/page.tsx",
@@ -705,22 +580,12 @@
     },
     {
       "file": "src/app/dashboard/course-plan/_components/DraftPlanSection.tsx",
-      "line": 41,
+      "line": 43,
       "text": "Draft plan ready"
     },
     {
-      "file": "src/app/dashboard/course-plan/_components/DraftPlanSection.tsx",
-      "line": 93,
-      "text": "Your counselor asked for changes"
-    },
-    {
       "file": "src/app/dashboard/course-plan/_components/TargetPickerDialog.tsx",
-      "line": 67,
-      "text": "Choose your graduation goal"
-    },
-    {
-      "file": "src/app/dashboard/course-plan/_components/TargetPickerDialog.tsx",
-      "line": 198,
+      "line": 200,
       "text": "Or type a university name"
     },
     {
@@ -744,23 +609,8 @@
       "text": "Suggested Next"
     },
     {
-      "file": "src/app/dashboard/messages/_components/NewConversation.tsx",
-      "line": 74,
-      "text": "New conversation"
-    },
-    {
-      "file": "src/app/dashboard/messages/page.tsx",
-      "line": 245,
-      "text": "Start Video Call"
-    },
-    {
-      "file": "src/app/dashboard/messages/page.tsx",
-      "line": 315,
-      "text": "Select a conversation"
-    },
-    {
       "file": "src/app/dashboard/my-sessions/_components/counselor-sessions-list.tsx",
-      "line": 48,
+      "line": 50,
       "text": "Counselor Sessions"
     },
     {
@@ -1329,86 +1179,6 @@
       "text": "No resumes yet"
     },
     {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 314,
-      "text": "Your account information"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 346,
-      "text": "Choose how you want to be notified"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 350,
-      "text": "Email Notifications"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 357,
-      "text": "Push Notifications"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 364,
-      "text": "Session Reminders"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 371,
-      "text": "Weekly Digest"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 380,
-      "text": "Select your preferred appearance"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 389,
-      "text": "Choose your preferred language"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 425,
-      "text": "Control your data and visibility"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 429,
-      "text": "Profile Visibility"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 436,
-      "text": "Share Progress"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 443,
-      "text": "Usage Analytics"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 452,
-      "text": "Change your password"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 455,
-      "text": "Current password"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 467,
-      "text": "New password"
-    },
-    {
-      "file": "src/app/dashboard/settings/page.tsx",
-      "line": 479,
-      "text": "Confirm new password"
-    },
-    {
       "file": "src/app/dashboard/subscriptions/_components/SubscriptionPlans.tsx",
       "line": 98,
       "text": "Try Again"
@@ -1444,44 +1214,19 @@
       "text": "Official score"
     },
     {
-      "file": "src/app/dashboard/test-scores/_components/score-list.tsx",
-      "line": 47,
-      "text": "No test scores yet"
-    },
-    {
       "file": "src/app/dashboard/university/page.tsx",
-      "line": 177,
-      "text": "Complete Your Assessments"
-    },
-    {
-      "file": "src/app/dashboard/university/page.tsx",
-      "line": 205,
+      "line": 208,
       "text": "In Progress"
     },
     {
       "file": "src/app/dashboard/video/page.tsx",
-      "line": 94,
-      "text": "Video Calls"
-    },
-    {
-      "file": "src/app/dashboard/video/page.tsx",
-      "line": 100,
+      "line": 102,
       "text": "Video Calls Not Available"
     },
     {
       "file": "src/app/dashboard/video/page.tsx",
-      "line": 114,
-      "text": "Video Calls"
-    },
-    {
-      "file": "src/app/dashboard/video/page.tsx",
-      "line": 140,
+      "line": 142,
       "text": "No contacts found"
-    },
-    {
-      "file": "src/app/not-found.tsx",
-      "line": 10,
-      "text": "Page Not Found"
     },
     {
       "file": "src/app/print/formmaps/page.tsx",
@@ -1654,11 +1399,6 @@
       "text": "Filter department"
     },
     {
-      "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
-      "line": 282,
-      "text": "No courses found"
-    },
-    {
       "file": "src/app/school-admin/academics/_components/CurriculumPanel.tsx",
       "line": 55,
       "text": "Total Courses"
@@ -1677,11 +1417,6 @@
       "file": "src/app/school-admin/academics/_components/CurriculumPanel.tsx",
       "line": 108,
       "text": "Browse and modify catalogue"
-    },
-    {
-      "file": "src/app/school-admin/academics/_components/CurriculumPanel.tsx",
-      "line": 137,
-      "text": "No courses found"
     },
     {
       "file": "src/app/school-admin/academics/_components/EditPrerequisitesDialog.tsx",
@@ -1889,44 +1624,9 @@
       "text": "Resend invitation emails"
     },
     {
-      "file": "src/app/school-admin/assessments/_components/InsightsCard.tsx",
-      "line": 42,
-      "text": "AI School Insights"
-    },
-    {
-      "file": "src/app/school-admin/assessments/_components/InsightsCard.tsx",
-      "line": 88,
-      "text": "AI School Insights"
-    },
-    {
-      "file": "src/app/school-admin/assessments/_components/InsightsCard.tsx",
-      "line": 152,
-      "text": "PCA Distribution"
-    },
-    {
-      "file": "src/app/school-admin/assessments/_components/InsightsCard.tsx",
-      "line": 164,
-      "text": "Top Career Clusters"
-    },
-    {
       "file": "src/app/school-admin/assessments/_components/PipelineTable.tsx",
-      "line": 72,
-      "text": "Overall Completion"
-    },
-    {
-      "file": "src/app/school-admin/assessments/_components/PipelineTable.tsx",
-      "line": 114,
+      "line": 116,
       "text": "Multiple Intelligence Lens"
-    },
-    {
-      "file": "src/app/school-admin/assessments/_components/PipelineTable.tsx",
-      "line": 133,
-      "text": "Evaluator Responses"
-    },
-    {
-      "file": "src/app/school-admin/assessments/_components/PipelineTable.tsx",
-      "line": 274,
-      "text": "All Grades"
     },
     {
       "file": "src/app/school-admin/assessments/_components/ResultsPanel.tsx",
@@ -1962,11 +1662,6 @@
       "file": "src/app/school-admin/assessments/_components/ResultsPanel.tsx",
       "line": 136,
       "text": "Results will appear as students complete assessments"
-    },
-    {
-      "file": "src/app/school-admin/assessments/_components/ScheduleGrid.tsx",
-      "line": 65,
-      "text": "Assessment Schedule"
     },
     {
       "file": "src/app/school-admin/assessments/_components/Student360Dialog.tsx",

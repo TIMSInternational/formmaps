@@ -279,7 +279,7 @@ export function CoursesPanel() {
           <TableBody>
             {courses.length === 0 ? (
               <TableRow><TableCell colSpan={7} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
-                <BookOpen className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} /><p className="text-sm">No courses found</p>
+                <BookOpen className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} /><p className="text-sm">{t("courses.noCoursesFound")}</p>
               </TableCell></TableRow>
             ) : courses.map((c) => (
               <TableRow key={c.id} style={{ borderBottom: "1px solid var(--admin-border-default)", cursor: "pointer" }} className="transition-colors"

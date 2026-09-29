@@ -6,6 +6,7 @@ import { Loader2, Plus, Search } from "lucide-react";
 import { toast } from "sonner";
 import { createConversation, searchContacts, ConversationSummary } from "@/services/messageService";
 import { getInitials } from "@/lib/stringUtils";
+import { useTranslation } from "react-i18next";
 
 interface Contact {
   id: string;
@@ -20,6 +21,7 @@ interface NewConversationProps {
 
 /** "New" button + contact picker so students can actually start a conversation. */
 export default function NewConversation({ onCreated }: NewConversationProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [contacts, setContacts] = useState<Contact[]>([]);
@@ -29,18 +31,18 @@ export default function NewConversation({ onCreated }: NewConversationProps) {
 
   useEffect(() => {
     if (!open) return;
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       setLoading(true);
       try {
         setContacts(await searchContacts(search || undefined));
       } catch {
         setContacts([]);
-        toast.error("Failed to load contacts.");
+        toast.error(t("dashboard.messages.newConversation.loadFailed"));
       } finally {
         setLoading(false);
       }
     }, search ? 300 : 0);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [open, search]);
 
   useEffect(() => {
@@ -61,7 +63,7 @@ export default function NewConversation({ onCreated }: NewConversationProps) {
       setSearch("");
       onCreated(conversation);
     } catch {
-      toast.error("Could not start a conversation with this contact.");
+      toast.error(t("dashboard.messages.newConversation.startFailed"));
     } finally {
       setCreating(null);
     }
@@ -71,11 +73,11 @@ export default function NewConversation({ onCreated }: NewConversationProps) {
     <div ref={containerRef} style={{ position: "relative" }}>
       <button
         onClick={() => setOpen((o) => !o)}
-        aria-label="New conversation"
+        aria-label={t("dashboard.messages.newConversation.aria")}
         style={{ display: "flex", alignItems: "center", gap: 4, padding: "4px 10px", borderRadius: 8, border: "1px solid var(--admin-border-light)", background: "#102B47", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" }}
       >
         <Plus style={{ width: 13, height: 13 }} />
-        New
+        {t("dashboard.messages.newConversation.button")}
       </button>
 
       <AnimatePresence>
@@ -90,7 +92,7 @@ export default function NewConversation({ onCreated }: NewConversationProps) {
               <Search style={{ width: 13, height: 13, color: "var(--admin-font-light)", flexShrink: 0 }} />
               <input
                 autoFocus
-                placeholder="Search staff..."
+                placeholder={t("dashboard.messages.newConversation.searchStaff")}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit" }}
@@ -100,7 +102,7 @@ export default function NewConversation({ onCreated }: NewConversationProps) {
             <div style={{ maxHeight: 240, overflowY: "auto" }}>
               {!loading && contacts.length === 0 ? (
                 <p style={{ padding: "12px", fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-                  No staff found to message.
+                  {t("dashboard.messages.newConversation.noStaff")}
                 </p>
               ) : (
                 contacts.map((c) => (
@@ -118,7 +120,7 @@ export default function NewConversation({ onCreated }: NewConversationProps) {
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <p style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{c.name}</p>
                       <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {c.email}{c.roleName ? ` · ${c.roleName.replace("_", " ")}` : ""}
+                        {c.email}{c.roleName ? ` · ${t(`admin.users.roleNames.${c.roleName}`, { defaultValue: c.roleName.replace("_", " ") })}` : ""}
                       </p>
                     </div>
                   </button>

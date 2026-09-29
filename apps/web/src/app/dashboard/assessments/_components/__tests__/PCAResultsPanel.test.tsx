@@ -9,7 +9,8 @@ import { getCareerInformeBlob } from "@/services/careerInformeService";
 
 jest.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (_k: string, d?: string) => d ?? _k,
+    // Returns the key (or a string default); options objects are ignored.
+    t: (_k: string, d?: unknown) => (typeof d === "string" ? d : _k),
     i18n: { language: "es" },
   }),
 }));

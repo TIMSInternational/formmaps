@@ -4,10 +4,12 @@ import { Sparkles, RefreshCw } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { InsightsData } from "@/services/assessmentCommandService";
+import { useTranslation } from "react-i18next";
 
+// Exam key -> i18n key for its short chip label.
 const EXAM_SHORT: Record<string, string> = {
-  PatternRecognition: "Pattern", VerbalReasoning: "Verbal",
-  WorkingMemory: "Memory", NumericVelocity: "Numeric", VisualRotation: "Rotation",
+  PatternRecognition: "counselor:pipeline.colPattern", VerbalReasoning: "counselor:pipeline.colVerbal",
+  WorkingMemory: "counselor:pipeline.colMemory", NumericVelocity: "counselor:pipeline.colNumeric", VisualRotation: "counselor:pipeline.colRotation",
 };
 
 function MetricChip({ label, value, color }: { label: string; value: string | number; color: string }) {
@@ -27,6 +29,7 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
   onRefresh: () => void;
   isRefreshing: boolean;
 }) {
+  const { t } = useTranslation("school_admin");
   if (!insights?.hasEnoughData) {
     const completion = insights?.completion;
     const pct = completion && completion.total > 0
@@ -39,13 +42,13 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
           <Sparkles style={{ width: 16, height: 16, color: "#8b5cf6" }} />
-          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>AI School Insights</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("insights.title")}</span>
         </div>
         {completion && completion.total > 0 ? (
           <>
             <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
               <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
-                <strong style={{ color: "var(--admin-font-primary)", fontWeight: 700 }}>{`${completion.complete} / ${completion.total}`}</strong> students completed all assessments
+                <strong style={{ color: "var(--admin-font-primary)", fontWeight: 700 }}>{`${completion.complete} / ${completion.total}`}</strong> {t("insights.card.studentsCompletedAll", { count: completion.total })}
               </span>
               <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-accent-blue)" }}>{pct}%</span>
             </div>
@@ -53,7 +56,7 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
               <div style={{ height: "100%", width: `${pct}%`, background: "#102B47", borderRadius: 4, transition: "width 0.3s ease" }} />
             </div>
             <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginBottom: 10 }}>
-              Insights unlock when 100% of students finish.
+              {t("insights.card.unlockHint")}
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {[
@@ -69,7 +72,7 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
           </>
         ) : (
           <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>
-            {insights?.message || "Insights will appear once enough students complete assessments."}
+            {insights?.message || t("insights.card.emptyFallback")}
           </p>
         )}
       </div>
@@ -85,9 +88,9 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Sparkles style={{ width: 16, height: 16, color: "#8b5cf6" }} />
-          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>AI School Insights</span>
+          <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("insights.title")}</span>
           {insights.cached && (
-            <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>Cached</span>
+            <span style={{ fontSize: 10, padding: "2px 6px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>{t("insights.card.cached")}</span>
           )}
         </div>
         <button
@@ -101,7 +104,7 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
           }}
         >
           <RefreshCw style={{ width: 12, height: 12, animation: isRefreshing ? "spin 1s linear infinite" : "none" }} />
-          Refresh
+          {t("insights.card.refresh")}
         </button>
       </div>
 
@@ -136,11 +139,11 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
 
       {/* Metric chips */}
       <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-        <MetricChip label="Students" value={agg.totalStudents} color="var(--admin-accent-blue)" />
-        <MetricChip label="Profiles" value={agg.profilesComplete} color="#10b981" />
-        <MetricChip label="360 Reviews" value={agg.eval360Count} color="#f59e0b" />
+        <MetricChip label={t("insights.metrics.students")} value={agg.totalStudents} color="var(--admin-accent-blue)" />
+        <MetricChip label={t("insights.card.profiles")} value={agg.profilesComplete} color="#10b981" />
+        <MetricChip label={t("insights.card.reviews360")} value={agg.eval360Count} color="#f59e0b" />
         {Object.entries(agg.pcaAverages).map(([k, v]) => (
-          <MetricChip key={k} label={EXAM_SHORT[k] || k} value={`${v}%`} color="#8b5cf6" />
+          <MetricChip key={k} label={EXAM_SHORT[k] ? t(EXAM_SHORT[k]) : k} value={`${v}%`} color="#8b5cf6" />
         ))}
       </div>
 
@@ -149,7 +152,7 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
         <div style={{ display: "flex", flexWrap: "wrap", gap: 16, marginTop: 14 }}>
           {agg.discDistribution && (
             <div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 4 }}>PCA Distribution</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 4 }}>{t("insights.card.pcaDistribution")}</div>
               <div style={{ display: "flex", gap: 6 }}>
                 {Object.entries(agg.discDistribution).map(([k, v]) => (
                   <span key={k} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)" }}>
@@ -161,7 +164,7 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
           )}
           {agg.topCareerClusters?.length > 0 && (
             <div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 4 }}>Top Career Clusters</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 4 }}>{t("insights.card.topCareerClusters")}</div>
               <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
                 {agg.topCareerClusters.map(c => (
                   <span key={c.name} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)" }}>

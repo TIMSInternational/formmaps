@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import { BookOpen } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { apiRequest } from "@/lib/api/apiClient";
 import {
@@ -38,6 +39,7 @@ import type { SchoolCourse, PlanEnrollment } from "./_components/types";
 const OPEN_PLAN_STATUSES = ["draft", "proposed", "rejected"];
 
 export default function CoursePlanPage() {
+  const { t } = useTranslation();
   const [busyId, setBusyId] = useState<string | null>(null);
   const [pickerOpen, setPickerOpen] = useState(false);
 
@@ -175,11 +177,11 @@ export default function CoursePlanPage() {
         <div className="flex items-center gap-2">
           <BookOpen className="h-5 w-5" style={{ color: "var(--admin-accent-blue)" }} />
           <h1 className="text-xl font-bold" style={{ color: "var(--admin-font-primary)" }}>
-            Course Plan
+            {t("dashboard.coursePlan")}
           </h1>
         </div>
         <p className="text-sm mt-1" style={{ color: "var(--admin-font-secondary)" }}>
-          Plan your classes for the year{gradeLevel ? ` · Grade ${gradeLevel}` : ""} · {creditsEarned} credits earned
+          {t("coursePlan.page.subtitle")}{gradeLevel ? ` · ${t("coursePlan.page.grade", { grade: gradeLevel })}` : ""} · {t("coursePlan.page.creditsEarned", { count: creditsEarned })}
         </p>
       </div>
 

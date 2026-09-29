@@ -14,6 +14,7 @@ import { findRouteRule, resolveRedirect } from "@/lib/routePermissions";
 import { initSentry } from "@/lib/sentry";
 import { reportWebVitals } from "@/lib/webVitals";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface AuthWrapperProps {
   children: React.ReactNode;
@@ -24,6 +25,7 @@ const publicOnboardingRoutes = ["/parent/onboarding", "/counselor/onboarding", "
 const authRoutes = ["/login", "/signup"];
 
 export function AuthWrapper({ children }: AuthWrapperProps) {
+  const { t } = useTranslation();
   const { user, initializeAuth } = useGlobalStore();
   const router = useRouter();
   const pathname = usePathname();
@@ -57,11 +59,11 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   useEffect(() => {
     const handler = (e: Event) => {
       const mins = (e as CustomEvent).detail?.minutesRemaining;
-      toast.warning(`Your session expires in ${mins} minute${mins === 1 ? "" : "s"}. Save your work.`);
+      toast.warning(t("auth.sessionTimeout.expiresToast", { count: mins }));
     };
     window.addEventListener("tokenExpiryWarning", handler);
     return () => window.removeEventListener("tokenExpiryWarning", handler);
-  }, []);
+  }, [t]);
 
   // Fetch and sync permissions from backend (keeps store fresh)
   useUserPermissions({ enabled: user.isAuthenticated && !isInitializing });

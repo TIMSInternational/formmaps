@@ -198,22 +198,23 @@ export function useEvaluatorManagement() {
   const validateEvaluatorForm = async () => {
     const newErrors: Record<string, string> = {};
 
-    if (!newEvaluator.name.trim()) newErrors.name = "Name is required";
+    if (!newEvaluator.name.trim()) newErrors.name = t("evaluation.validation.nameRequired");
     if (!newEvaluator.email.trim()) {
-      newErrors.email = "Email is required";
+      newErrors.email = t("evaluation.validation.emailRequired");
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEvaluator.email)) {
-      newErrors.email = "Please enter a valid email address";
+      newErrors.email = t("evaluation.validation.emailInvalid");
     }
 
     if (newEvaluator.phone.trim()) {
       const phoneValidation = validatePhoneNumber(newEvaluator.phone);
       if (!phoneValidation.isValid) {
-        newErrors.phone =
-          phoneValidation.error || "Invalid phone number format";
+        // validatePhoneNumber's own messages are English-only; show the
+        // translated one instead.
+        newErrors.phone = t("evaluation.validation.phoneInvalid");
       }
     }
 
-    if (!selectedGroup) newErrors.group = "Please select an evaluator group";
+    if (!selectedGroup) newErrors.group = t("evaluation.validation.groupRequired");
 
     const selectedGroupType = evaluatorGroups.find(
       (g) => g.id === selectedGroup
@@ -223,7 +224,7 @@ export function useEvaluatorManagement() {
       requiresRelationship(selectedGroupType) &&
       !newEvaluator.relationship.trim()
     ) {
-      newErrors.relationship = "Relationship is required";
+      newErrors.relationship = t("evaluation.validation.relationshipRequired");
     }
 
     const allCurrentEvaluators = evaluatorGroups.flatMap((g) => g.evaluators);
@@ -231,7 +232,7 @@ export function useEvaluatorManagement() {
       (e) => e.email.toLowerCase() === newEvaluator.email.toLowerCase()
     );
     if (duplicateEmail) {
-      newErrors.email = "This email is already used by another evaluator";
+      newErrors.email = t("evaluation.validation.emailDuplicate");
     }
 
     const duplicatePhone =
@@ -243,8 +244,7 @@ export function useEvaluatorManagement() {
             newEvaluator.phone.replace(/[\s\-\(\)]/g, "")
       );
     if (duplicatePhone) {
-      newErrors.phone =
-        "This phone number is already used by another evaluator";
+      newErrors.phone = t("evaluation.validation.phoneDuplicate");
     }
 
     // NOTE: no remote duplicate check — /evaluation/check-duplicate does not
@@ -270,7 +270,10 @@ export function useEvaluatorManagement() {
 
     if (!isEditing && group.evaluators.length >= group.maxAllowed) {
       setErrors({
-        group: `Maximum ${group.maxAllowed} evaluators allowed for ${group.name}`,
+        group: t("evaluation.validation.maxReached", {
+          max: group.maxAllowed,
+          group: group.name,
+        }),
       });
       return;
     }
@@ -317,7 +320,9 @@ export function useEvaluatorManagement() {
       }
     } catch (error) {
       setErrors({
-        general: `Failed to ${isEditing ? "update" : "create"} evaluator. Please try again.`,
+        general: isEditing
+          ? t("evaluation.validation.updateFailed")
+          : t("evaluation.evaluatorManagement.failedAdd"),
       });
       setLoading(false);
       return;
@@ -431,9 +436,7 @@ export function useEvaluatorManagement() {
       toast.error(t("evaluation.toast.noPhone"));
       return;
     }
-    toast.info(
-      `SMS invitation would be sent to ${phoneNumber}. SMS functionality coming soon!`
-    );
+    toast.info(t("evaluation.toast.smsPreview", { phone: phoneNumber }));
   };
 
   const handleSendEmailInvitations = async () => {

@@ -17,8 +17,10 @@ import { useGlobalStore } from "@/store/useGlobalStore";
 import { formatMessageTime as formatTime } from "@/lib/dateUtils";
 import { getInitials } from "@/lib/stringUtils";
 import ModerationMenu from "@/components/messages/ModerationMenu";
+import { useTranslation } from "react-i18next";
 
 export default function CoachMessagesPage() {
+  const { t } = useTranslation();
   const userId = useGlobalStore((s) => s.user.id);
 
   const [conversations, setConversations] = useState<ConversationSummary[]>([]);
@@ -57,7 +59,7 @@ export default function CoachMessagesPage() {
       const res = await getConversationMessages(id) as { data?: MessageData[]; messages?: MessageData[] };
       setMessages(res?.data ?? res?.messages ?? []);
     }
-    catch { if (!silent) toast.error("Failed to load messages."); }
+    catch { if (!silent) toast.error(t("school_admin:messages.messagesFailed")); }
     finally { if (!silent) setLoadingMessages(false); }
   }, []);
 
@@ -65,7 +67,7 @@ export default function CoachMessagesPage() {
     (async () => {
       setLoadingConversations(true);
       try { setConversations(await listConversations()); }
-      catch { toast.error("Failed to load conversations."); }
+      catch { toast.error(t("school_admin:messages.loadFailed")); }
       finally { setLoadingConversations(false); }
     })();
   }, []);
@@ -100,10 +102,10 @@ export default function CoachMessagesPage() {
       setContactSearch("");
       await fetchConversations();
       setSelectedId(conv.id);
-      toast.success("Conversation started");
+      toast.success(t("school_admin:messages.conversationStarted"));
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(msg || "Failed to start conversation");
+      toast.error(msg || t("school_admin:messages.conversationFailed"));
     }
   };
 
@@ -121,7 +123,7 @@ export default function CoachMessagesPage() {
       await fetchMessages(selectedId, true);
       await fetchConversations();
     } catch {
-      toast.error("Failed to send message.");
+      toast.error(t("school_admin:messages.sendFailed"));
       setMessages((prev) => prev.filter((m) => m.id !== optimistic.id));
       setInputValue(content);
     } finally { setSending(false); inputRef.current?.focus(); }
@@ -138,13 +140,13 @@ export default function CoachMessagesPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>
-          Communication
+          {t("school_admin:messages.label")}
         </span>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>
-          Messages
+          {t("school_admin:messages.title")}
         </h1>
         <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginTop: 4, maxWidth: 480 }}>
-          Communicate with your students and school staff.
+          {t("coach:messages.pageSubtitle")}
         </p>
       </motion.div>
 
@@ -157,7 +159,7 @@ export default function CoachMessagesPage() {
         <div style={{ width: 320, flexShrink: 0, display: "flex", flexDirection: "column", borderRight: "1px solid var(--admin-border-default)" }}>
           <div style={{ padding: "14px 16px", borderBottom: "1px solid var(--admin-border-light)", display: "flex", flexDirection: "column", gap: 10 }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Conversations</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("school_admin:messages.conversations")}</span>
               <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                 {totalUnread > 0 && (
                   <span style={{ minWidth: 20, height: 20, borderRadius: 10, padding: "0 6px", background: "#102B47", color: "#fff", fontSize: 11, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -176,7 +178,7 @@ export default function CoachMessagesPage() {
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-light)" }}>
               <Search style={{ width: 14, height: 14, color: "var(--admin-font-light)", flexShrink: 0 }} />
-              <input placeholder="Search conversations..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
+              <input placeholder={t("school_admin:messages.searchConversations")} value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
                 style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
             </div>
           </div>
@@ -186,14 +188,14 @@ export default function CoachMessagesPage() {
             <div style={{ borderBottom: "1px solid var(--admin-border-default)", padding: "8px 12px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 10px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-accent-blue)", marginBottom: 8 }}>
                 <UserPlus style={{ width: 14, height: 14, color: "var(--admin-accent-blue)", flexShrink: 0 }} />
-                <input placeholder="Search by name or email..." value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} autoFocus
+                <input placeholder={t("school_admin:messages.searchContacts")} value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} autoFocus
                   style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
               </div>
               <div style={{ maxHeight: 200, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
                 {contactsLoading ? (
-                  <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>Searching...</div>
+                  <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("school_admin:messages.searching")}</div>
                 ) : contacts.length === 0 ? (
-                  <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No contacts found</div>
+                  <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("school_admin:messages.noContacts")}</div>
                 ) : contacts.map((c) => (
                   <button key={c.id} onClick={() => handleNewConversation(c.id)} style={{
                     width: "100%", display: "flex", alignItems: "center", gap: 10, padding: "8px 10px",
@@ -226,7 +228,7 @@ export default function CoachMessagesPage() {
                   <MessageCircle style={{ width: 22, height: 22, color: "var(--admin-font-light)" }} />
                 </div>
                 <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", textAlign: "center" }}>
-                  {searchTerm ? "No conversations match your search." : "No conversations yet."}
+                  {searchTerm ? t("school_admin:messages.noConversationsSearch") : t("school_admin:messages.noConversations")}
                 </p>
               </div>
             ) : (
@@ -250,7 +252,7 @@ export default function CoachMessagesPage() {
                             <span style={{ fontSize: 10, color: "var(--admin-font-light)", flexShrink: 0 }}>{formatTime(conv.lastMessageAt)}</span>
                           </div>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 4, marginTop: 2 }}>
-                            <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conv.lastMessagePreview ?? "No messages yet"}</p>
+                            <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{conv.lastMessagePreview ?? t("school_admin:messages.noMessagesYet")}</p>
                             {conv.unreadCount > 0 && (
                               <span style={{ flexShrink: 0, minWidth: 18, height: 18, borderRadius: 9, padding: "0 5px", background: "#102B47", color: "#fff", fontSize: 10, fontWeight: 700, display: "flex", alignItems: "center", justifyContent: "center" }}>
                                 {conv.unreadCount > 99 ? "99+" : conv.unreadCount}
@@ -297,7 +299,7 @@ export default function CoachMessagesPage() {
                 ) : messages.length === 0 ? (
                   <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", flex: 1, gap: 8 }}>
                     <MessageCircle style={{ width: 32, height: 32, color: "var(--admin-font-light)", opacity: 0.4 }} />
-                    <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>No messages yet. Send one to get started.</p>
+                    <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("school_admin:messages.emptyThread")}</p>
                   </div>
                 ) : (
                   <AnimatePresence initial={false}>
@@ -323,7 +325,7 @@ export default function CoachMessagesPage() {
               <div style={{ padding: "12px 16px", borderTop: "1px solid var(--admin-border-light)", flexShrink: 0 }}>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: 8, borderRadius: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", padding: "8px 12px" }}>
                   <textarea ref={inputRef} value={inputValue} onChange={(e) => setInputValue(e.target.value)} onKeyDown={handleKeyDown}
-                    placeholder="Type a message..." rows={1} disabled={sending}
+                    placeholder={t("school_admin:messages.typeMessage")} rows={1} disabled={sending}
                     style={{ flex: 1, resize: "none", border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit", lineHeight: 1.5, maxHeight: 120, overflowY: "auto", padding: "2px 0", fieldSizing: "content" } as React.CSSProperties} />
                   <button onClick={handleSend} disabled={!inputValue.trim() || sending}
                     style={{ flexShrink: 0, width: 32, height: 32, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: inputValue.trim() ? "var(--admin-accent-blue)" : "var(--admin-bg-card)", color: inputValue.trim() ? "#fff" : "var(--admin-font-light)", border: "none", cursor: inputValue.trim() ? "pointer" : "default", transition: "all 0.15s" }}>
@@ -331,7 +333,7 @@ export default function CoachMessagesPage() {
                   </button>
                 </div>
                 <p style={{ fontSize: 10, color: "var(--admin-font-light)", marginTop: 6, paddingLeft: 4 }}>
-                  Press <span style={{ fontFamily: "monospace" }}>Enter</span> to send, <span style={{ fontFamily: "monospace" }}>Shift+Enter</span> for new line
+                  {t("school_admin:messages.sendHint")}
                 </p>
               </div>
             </>
@@ -342,8 +344,8 @@ export default function CoachMessagesPage() {
                 <MessageCircle style={{ width: 28, height: 28, color: "var(--admin-font-light)" }} />
               </motion.div>
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }} style={{ textAlign: "center" }}>
-                <p style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>Select a conversation</p>
-                <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 4, maxWidth: 280 }}>Choose a conversation from the left to view and send messages.</p>
+                <p style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("school_admin:messages.selectConversation")}</p>
+                <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 4, maxWidth: 280 }}>{t("school_admin:messages.selectConversationHint")}</p>
               </motion.div>
             </div>
           )}

@@ -126,7 +126,7 @@ export function PersonalInfoStep() {
           id="summary"
           value={personalInfo.summary}
           onChange={(e) => handleInputChange("summary", e.target.value)}
-          placeholder="A brief 2-3 sentence overview highlighting your key skills, education, and career goals. For freshers: mention your degree, relevant skills, and what type of role you're seeking..."
+          placeholder="A brief 2-3 sentence overview highlighting your key skills, education, and career goals. For students with little work experience: mention your degree, relevant skills, and what type of role you're seeking..."
           rows={4}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#2E9098] focus:border-[#2E9098]"
         />

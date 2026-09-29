@@ -163,7 +163,7 @@ export function LinkBankAccountForm({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="biweekly">
-                  Bi-weekly (1st and 15th)
+                  Twice a month (1st and 15th)
                 </SelectItem>
                 <SelectItem value="monthly">
                   Monthly (1st of month)

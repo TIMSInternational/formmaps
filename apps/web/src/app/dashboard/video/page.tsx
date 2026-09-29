@@ -15,8 +15,10 @@ import {
 import { searchContacts } from "@/services/messageService";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { SessionsList } from "@/components/video/SessionsList";
+import { useTranslation } from "react-i18next";
 
 export default function VideoCallsPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const userId = useGlobalStore((s) => s.user.id);
   const userRole = useGlobalStore((s) => s.user.role);
@@ -90,8 +92,8 @@ export default function VideoCallsPage() {
     return (
       <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-          <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>Communication</span>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>Video Calls</h1>
+          <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>{t("nav.communication")}</span>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>{t("nav.videoCalls")}</h1>
         </motion.div>
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 64, gap: 16 }}>
           <div style={{ width: 64, height: 64, borderRadius: 32, background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -110,9 +112,9 @@ export default function VideoCallsPage() {
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between" }}>
         <div>
-          <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>Communication</span>
-          <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>Video Calls</h1>
-          <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginTop: 4 }}>Start a video call with your counselor or school staff.</p>
+          <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>{t("nav.communication")}</span>
+          <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>{t("nav.videoCalls")}</h1>
+          <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginTop: 4 }}>{t("dashboard.video.subtitle")}</p>
         </div>
         {isStaff && (
           <button onClick={() => setShowNewCall(!showNewCall)}

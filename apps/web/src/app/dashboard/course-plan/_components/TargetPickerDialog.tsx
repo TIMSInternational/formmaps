@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Search, GraduationCap, CheckCircle2, LoaderCircle } from "lucide-react";
 import {
   Dialog,
@@ -37,6 +38,7 @@ export function TargetPickerDialog({
   onSave,
   isSaving,
 }: TargetPickerDialogProps) {
+  const { t } = useTranslation();
   const { user } = useGlobalStore();
   const [tab, setTab] = useState<"recommended" | "search">("recommended");
   const [selected, setSelected] = useState<SelectedUniversity | null>(null);
@@ -64,7 +66,7 @@ export function TargetPickerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Choose your graduation goal</DialogTitle>
+          <DialogTitle>{t("coursePlan.targetPicker.title")}</DialogTitle>
         </DialogHeader>
 
         {/* Tabs */}

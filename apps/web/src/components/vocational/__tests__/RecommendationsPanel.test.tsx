@@ -2,6 +2,18 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { RecommendationsPanel } from "../_components/RecommendationsPanel";
 import * as svc from "@/services/vocationalReportService";
 
+// Real i18next over the shipped common.json, so assertions check rendered copy.
+let mockLang: "en" | "es" = "en";
+jest.mock("react-i18next", () => {
+  const { createTestI18n } = require("@/test-utils/realI18n");
+  const insts = { en: createTestI18n("en"), es: createTestI18n("es") };
+  return {
+    initReactI18next: { type: "3rdParty", init: () => {} },
+    useTranslation: () => ({ t: insts[mockLang].t.bind(insts[mockLang]), i18n: insts[mockLang] }),
+  };
+});
+beforeEach(() => { mockLang = "en"; });
+
 jest.mock("@/services/vocationalReportService");
 const getRecs = svc.getRecommendations as jest.Mock;
 
@@ -23,4 +35,12 @@ it("shows a locked state when assessments incomplete", async () => {
   getRecs.mockResolvedValue({ locked: true });
   render(<RecommendationsPanel evaluatedUserId="stu1" />);
   await waitFor(() => expect(screen.getByText(/complete|finish|unlock/i)).toBeInTheDocument());
+});
+
+it("shows the locked state in Spanish", async () => {
+  mockLang = "es";
+  getRecs.mockResolvedValue({ locked: true });
+  render(<RecommendationsPanel evaluatedUserId="stu1" />);
+  await waitFor(() => expect(screen.getByText("Completa las tres evaluaciones (360, PCA, MIL) para ver tus recomendaciones de carrera.")).toBeInTheDocument());
+  expect(screen.getByText("Recomendaciones")).toBeInTheDocument();
 });

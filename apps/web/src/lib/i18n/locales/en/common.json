@@ -133,12 +133,28 @@
     "male": "Male",
     "female": "Female",
     "to": "to",
-    "continue": "Continue"
+    "continue": "Continue",
+    "copied": "Copied!",
+    "copy": "Copy",
+    "generate": "Generate",
+    "regenerate": "Regenerate",
+    "selectOption": "Select an option",
+    "toggleTooltip": "Toggle tooltip",
+    "unknown": "Unknown",
+    "pickDate": "Pick a date",
+    "saving": "Saving...",
+    "saveChanges": "Save Changes",
+    "hour": "hour"
   },
   "error": {
     "somethingWentWrong": "Something went wrong",
     "unexpectedError": "We encountered an unexpected error. Please try refreshing the page or contact support if the problem persists.",
-    "tryAgain": "Try Again"
+    "tryAgain": "Try Again",
+    "notFound": {
+      "title": "Page Not Found",
+      "description": "The page you're looking for doesn't exist or has been moved.",
+      "goToDashboard": "Go to Dashboard"
+    }
   },
   "payments": {
     "orderSummary": "Order Summary",
@@ -223,7 +239,55 @@
       "progress": "{{done}} of {{total}} answered",
       "answerPlaceholder": "Write your answer…",
       "moveUp": "move {{label}} up",
-      "moveDown": "move {{label}} down"
+      "moveDown": "move {{label}} down",
+      "report": {
+        "title": "Vocational 360 Report",
+        "titleMine": "My Vocational 360 Report",
+        "cardSubtitle": "Your personalized vocational profile and recommendations",
+        "viewMine": "View my Vocational 360 report →",
+        "loadError": "Couldn't load this report.",
+        "notReady360": "The 360 evaluation isn't ready yet — it needs the student plus at least one other evaluator.",
+        "dimensions": "Dimensions",
+        "noResponses": "No responses yet",
+        "bands": {
+          "strong": "Strong",
+          "moderateHigh": "Moderately high",
+          "medium": "Medium",
+          "low": "Low"
+        },
+        "groups": {
+          "self": "Self",
+          "parent": "Parent",
+          "teacher": "Teacher",
+          "sibling_friend": "Sibling/Friend"
+        },
+        "integratedTitle": "Integrated vocational score",
+        "integratedLocked": "Complete all three assessments (360, PCA, MIL) to unlock your integrated score.",
+        "interestsTitle": "Interests & preferences",
+        "topInterests": "Top interest areas",
+        "topIndustries": "Top industries",
+        "noData": "No data yet",
+        "workType": "Preferred work type:",
+        "inTheirWords": "In their words",
+        "readinessTitle": "Assessment readiness",
+        "row360": "360 Evaluation",
+        "row360Hint": "Needs the student plus at least one other evaluator (parent, teacher, or peer).",
+        "rowPca": "PCA (Professional Competencies)",
+        "rowPcaHint": "Complete the PCA assessment.",
+        "rowMilHint": "Complete the MIL cognitive exams.",
+        "rowReady": "{{label}} ready",
+        "rowPending": "{{label}} pending",
+        "recommendations": "Recommendations",
+        "recommendationsLoadError": "Couldn't load recommendations.",
+        "recommendationsLocked": "Complete all three assessments (360, PCA, MIL) to see your career recommendations.",
+        "suggestedDirections": "Suggested directions",
+        "strengths": "Strengths",
+        "growthAreas": "Growth areas",
+        "topCareerMatches": "Top career matches",
+        "industriesToExplore": "Industries to explore:",
+        "nextSteps": "Next steps",
+        "exploreUniversities": "Explore matching universities →"
+      }
     },
     "noReportData": "Report data not available",
     "reportTitle": "360° Evaluation Report",
@@ -297,7 +361,8 @@
       "editUnavailable": "Changes to an evaluator can't be saved yet. To correct a name or email, remove the evaluator and add them again.",
       "noPhone": "This evaluator has no phone number.",
       "emailsSent": "Email invitations sent.",
-      "smsFailed": "Error sending SMS invitations. Please try again."
+      "smsFailed": "Error sending SMS invitations. Please try again.",
+      "smsPreview": "The SMS invitation would be sent to {{phone}}. SMS functionality coming soon!"
     },
     "page": {
       "startSelf": "Start self-evaluation",
@@ -305,7 +370,21 @@
       "startSelfFailed": "We couldn't start your self-evaluation. Please try again.",
       "startFailed": "We couldn't start the evaluation. Please try again.",
       "noEvaluatorsYet": "No evaluators yet",
-      "sendEmailInvitations": "Send email invitations"
+      "sendEmailInvitations": "Send email invitations",
+      "gateTitle": "Complete Your Self-Evaluation First",
+      "gateBody": "Before inviting others to evaluate you, start by evaluating yourself. This helps establish a baseline for comparison.",
+      "starting": "Starting...",
+      "intro": "Now invite evaluators from different groups to get comprehensive feedback.",
+      "emailSelectorTitle": "Select Evaluators for Email",
+      "emailSelectorDescription": "Choose which evaluators to send email invitations to:",
+      "sendEmails": "Send Emails",
+      "smsSelectorTitle": "Select Evaluators for SMS",
+      "smsSelectorDescription": "Choose which evaluators to send SMS invitations to:",
+      "sendSms": "Send SMS",
+      "evaluatorsAcrossGroups_one": "{{count}} evaluator across {{groupCount}} groups",
+      "evaluatorsAcrossGroups_other": "{{count}} evaluators across {{groupCount}} groups",
+      "sendToAll": "Send to All",
+      "sendToSpecific": "Send to Specific Evaluators"
     },
     "evaluatorManagement": {
       "title": "Evaluator Management",
@@ -353,6 +432,65 @@
         "descriptionPlaceholder": "Optional description",
         "addOptionButton": "Add Option"
       }
+    },
+    "addDialog": {
+      "addTitle": "Add New Evaluator",
+      "editTitle": "Edit Evaluator",
+      "groupLabel": "Evaluator Group *",
+      "groupPlaceholder": "Select a group",
+      "namePlaceholder": "Enter evaluator's full name",
+      "emailPlaceholder": "Enter evaluator's email",
+      "phoneLabel": "Phone Number with Country Code",
+      "phonePlaceholder": "e.g., +1234567890 (optional)",
+      "phoneHint": "Optional: Include country code (e.g., +1 for US, +44 for UK)",
+      "relationshipPlaceholder": "Select relationship",
+      "adding": "Adding...",
+      "updating": "Updating...",
+      "update": "Update Evaluator"
+    },
+    "relationshipOptions": {
+      "mother": "Mother",
+      "father": "Father",
+      "guardian": "Guardian",
+      "stepParent": "Stepparent",
+      "grandparent": "Grandparent",
+      "otherFamily": "Other Family Member",
+      "olderBrother": "Older Brother",
+      "youngerBrother": "Younger Brother",
+      "olderSister": "Older Sister",
+      "youngerSister": "Younger Sister",
+      "bestFriend": "Best Friend",
+      "closeFriend": "Close Friend",
+      "classmate": "Classmate",
+      "neighbor": "Neighbor",
+      "colleague": "Colleague",
+      "mentor": "Mentor",
+      "supervisor": "Supervisor",
+      "other": "Other"
+    },
+    "validation": {
+      "nameRequired": "Name is required",
+      "emailRequired": "Email is required",
+      "emailInvalid": "Please enter a valid email address",
+      "phoneInvalid": "Enter a valid phone number, including the country code (e.g., +1234567890)",
+      "groupRequired": "Please select an evaluator group",
+      "relationshipRequired": "Relationship is required",
+      "emailDuplicate": "This email is already used by another evaluator",
+      "phoneDuplicate": "This phone number is already used by another evaluator",
+      "maxReached": "A maximum of {{max}} evaluators is allowed for {{group}}",
+      "updateFailed": "Failed to update evaluator. Please try again."
+    },
+    "card": {
+      "addedCount": "{{count}}/{{max}} added",
+      "minRequired": "min {{min}}",
+      "complete": "Complete",
+      "incomplete": "Incomplete",
+      "addToGroup": "Add {{group}}",
+      "pendingResponse": "Pending Response",
+      "noEmail": "No email provided",
+      "phoneNotProvided": "Not provided",
+      "resendEmail": "Resend via Email",
+      "resendPhone": "Resend via Phone"
     }
   },
   "admin": {
@@ -540,7 +678,11 @@
         "reject": "Reject",
         "approve": "Approve"
       },
-      "noPending": "No pending payouts found."
+      "noPending": "No pending payouts found.",
+      "toast": {
+        "approved": "Payout approved",
+        "rejected": "Payout rejected"
+      }
     },
     "transactions": {
       "title": "Transactions",
@@ -659,7 +801,11 @@
       "contractStatus": {
         "expired": "Expired",
         "daysLeft": "{{days}}d left"
-      }
+      },
+      "editTitle": "Edit Coach",
+      "editDescription": "Update coach details.",
+      "updateSuccess": "Coach updated successfully",
+      "updateError": "Failed to update coach"
     },
     "users": {
       "title": "Users",
@@ -869,7 +1015,9 @@
       "editTitle": "Edit School",
       "editDescription": "Update school details.",
       "updateSuccess": "School updated successfully",
-      "updateError": "Failed to update school"
+      "updateError": "Failed to update school",
+      "resendSuccess": "Invitation resent to {{name}}",
+      "resendError": "Failed to resend invitation"
     },
     "invite": {
       "fillRequired": "Please fill in all required fields",
@@ -899,7 +1047,10 @@
         "success": "{{count}} Successful",
         "failed": "{{count}} Failed"
       },
-      "errorsTitle": "Errors:"
+      "errorsTitle": "Errors:",
+      "bulkTitle": "Bulk Invite Coaches",
+      "bulkDescription": "Upload a CSV file to invite multiple coaches at once.",
+      "platformCommission": "Platform Commission (%)"
     },
     "careers": {
       "title": "Careers",
@@ -984,7 +1135,10 @@
         "save": "Save Changes",
         "cancel": "Cancel"
       },
-      "confirmDelete": "Are you sure you want to delete this course?"
+      "confirmDelete": "Are you sure you want to delete this course?",
+      "header": {
+        "addCourse": "Add Course"
+      }
     }
   },
   "notifications": {
@@ -1060,7 +1214,7 @@
     },
     "assessmentJourney": "Assessment Journey",
     "assessmentSubtitle": "Track your progress across all evaluations",
-    "professionalCertified": "Professional Certified",
+    "professionalCertified": "Certified Professional",
     "courseCatalog": "Course Catalog",
     "coach": {
       "greeting": {
@@ -1189,7 +1343,7 @@
     "liveData": "Live Data",
     "allCategories": "All Categories",
     "today": "Today",
-    "top3CareerMatch": "Top 3 Career Match",
+    "top3CareerMatch": "Top 3 Career Matches",
     "showMore": "Show more",
     "liveStatus": "Live Status",
     "nextAction": "Next Action",
@@ -1314,7 +1468,7 @@
     "liaDescription": "The LIA measures cognitive skills — pattern recognition, reasoning and processing speed — through short timed tasks.",
     "assessmentProgressOverview": "Assessment Progress Overview",
     "liaProgress": "LIA Progress",
-    "totalSubAssessments": "Total Sub Assessments",
+    "totalSubAssessments": "Total Sub-Assessments",
     "bestScore": "Best Score",
     "averageScore": "Average Score",
     "360Evaluations": "360° Evaluations",
@@ -1473,7 +1627,128 @@
     "personalityTitle": "Personality Assessment",
     "personalityDescription": "A binary A/B instrument that resolves your 4-letter personality type and a tailored development profile.",
     "startPersonality": "Start Personality Assessment",
-    "continuePersonality": "Continue Personality Assessment"
+    "continuePersonality": "Continue Personality Assessment",
+    "continue360": "Continue Evaluation",
+    "continuePCA": "Continue PCA Assessment",
+    "quickActions": "Quick Actions",
+    "selfEvaluationCompleted": "Self-Evaluation Done",
+    "careerMatchHub": {
+      "title": "Your Career Matches",
+      "emptyDescription": "Complete your assessments to discover personalized career matches",
+      "startAssessments": "Start Assessments",
+      "poweredBy": "Powered by your PCA + LIA assessment results",
+      "overallMatchScore": "Overall Match Score"
+    },
+    "settings": {
+      "subtitle": "Manage your preferences and account settings.",
+      "profile": {
+        "subtitle": "Your account information",
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "notSet": "Not set"
+      },
+      "notifications": {
+        "subtitle": "Choose how you want to be notified",
+        "email": {
+          "label": "Email Notifications",
+          "description": "Receive updates and alerts via email"
+        },
+        "push": {
+          "label": "Push Notifications",
+          "description": "Get real-time notifications in your browser"
+        },
+        "sessionReminders": {
+          "label": "Session Reminders",
+          "description": "Reminders before upcoming counseling sessions"
+        },
+        "weeklyDigest": {
+          "label": "Weekly Digest",
+          "description": "A weekly summary of your activity and progress"
+        }
+      },
+      "theme": {
+        "subtitle": "Select your preferred appearance"
+      },
+      "language": {
+        "title": "Language",
+        "subtitle": "Choose your preferred language"
+      },
+      "privacy": {
+        "title": "Privacy",
+        "subtitle": "Control your data and visibility",
+        "profileVisibility": {
+          "label": "Profile Visibility",
+          "description": "Allow counselors and coaches to view your profile"
+        },
+        "shareProgress": {
+          "label": "Share Progress",
+          "description": "Share your learning progress with your school"
+        },
+        "usageAnalytics": {
+          "label": "Usage Analytics",
+          "description": "Help us improve by sharing anonymous usage data"
+        }
+      },
+      "security": {
+        "title": "Security",
+        "subtitle": "Change your password",
+        "currentPassword": "Current password",
+        "newPassword": "New password",
+        "confirmNewPassword": "Confirm new password",
+        "changing": "Changing...",
+        "changePassword": "Change password",
+        "passwordChanged": "Password changed successfully",
+        "passwordChangeFailed": "Failed to change password"
+      },
+      "saved": "Settings saved successfully",
+      "saveFailed": "Failed to save settings",
+      "saving": "Saving...",
+      "save": "Save Settings"
+    },
+    "messages": {
+      "subtitle": "Communicate with your counselors, coaches, and school staff.",
+      "emptyStudent": "No conversations yet. Click \"New\" to message a counselor or school admin.",
+      "newConversation": {
+        "button": "New",
+        "aria": "New conversation",
+        "loadFailed": "Failed to load contacts.",
+        "startFailed": "Could not start a conversation with this contact.",
+        "searchStaff": "Search staff...",
+        "noStaff": "No staff found to message."
+      }
+    },
+    "video": {
+      "subtitle": "Start a video call with your counselor or school staff."
+    },
+    "completeToSeeMatches": "Complete assessments to see matches",
+    "noMatches": "No specific matches found.",
+    "continue": "Continue",
+    "locked": "Locked",
+    "completeAssessments": "Complete assessments",
+    "explore": "Explore",
+    "addItem": "Add item",
+    "resume": "Resume",
+    "resumePCA": "Resume Assessment",
+    "universityMatches": {
+      "exploreAll": "Explore All"
+    },
+    "portfolioSnapshot": {
+      "types": {
+        "extracurricular": "Activities",
+        "award": "Awards",
+        "project": "Projects",
+        "volunteer": "Volunteer",
+        "work_experience": "Work",
+        "certification": "Certs"
+      },
+      "empty": "Start building your portfolio",
+      "addFirst": "Add your first item",
+      "volunteerHours_one": "{{count}} volunteer hour",
+      "volunteerHours_other": "{{count}} volunteer hours",
+      "addToPortfolio": "Add to Portfolio"
+    },
+    "pcaViewResultsDesc": "See your PCA personality profile and competency breakdown"
   },
   "coaching": {
     "featuredCoaches": "Featured Coaches",
@@ -1491,7 +1766,9 @@
       "noCoachesFound": "No coaches found",
       "tryAdjusting": "Try adjusting your search terms",
       "remote": "Remote",
-      "new": "New"
+      "new": "New",
+      "fetchError": "Failed to load coaches. Please try again.",
+      "retry": "Retry"
     },
     "earnings": {
       "title": "Earnings & Payouts",
@@ -1567,9 +1844,9 @@
         "compensation": {
           "avgAnnualSalary": "Avg. Annual Salary",
           "sinceLastYear": "since last year",
-          "purchasePowerIndex": "Purchase Power Index",
+          "purchasePowerIndex": "Purchasing Power Index",
           "relativeToNYC": "Relative to New York City (100)",
-          "estimatedTakeHome": "Est. Take Home",
+          "estimatedTakeHome": "Est. Take-Home",
           "afterEstimatedTaxes": "After estimated taxes (~28%)",
           "detailedSalaryTitle": "Detailed Salary Breakdown",
           "cardDescription": "Compensation ranges for {{career}} roles in {{country}} across experience levels.",
@@ -1589,7 +1866,7 @@
         },
         "market": {
           "title": "Market Dynamics",
-          "subtitle": "Macro-economic trends and employment stability analysis.",
+          "subtitle": "Macroeconomic trends and employment stability analysis.",
           "employabilityScore": "Employability Score",
           "employabilityDesc": "Historical trend of role placement success over the last 5 years.",
           "analysisLabel": "Analysis:",
@@ -1814,6 +2091,17 @@
       "accountLocked_other": "Too many failed attempts. For your security this account is locked for {{count}} minutes.",
       "rateLimited": "Too many sign-in attempts right now. Please wait a few minutes and try again.",
       "accountDisabled": "This account has been deactivated. Contact your school administrator if you think this is a mistake."
+    },
+    "sessionTimeout": {
+      "title": "Session Expiring",
+      "message_one": "Your session will expire in {{count}} minute. Would you like to stay signed in?",
+      "message_other": "Your session will expire in {{count}} minutes. Would you like to stay signed in?",
+      "signOut": "Sign Out",
+      "refreshing": "Refreshing...",
+      "staySignedIn": "Stay Signed In",
+      "refreshFailed": "Could not refresh your session. Please log in again.",
+      "expiresToast_one": "Your session expires in {{count}} minute. Save your work.",
+      "expiresToast_other": "Your session expires in {{count}} minutes. Save your work."
     }
   },
   "transactions": {
@@ -1925,6 +2213,50 @@
         "salary": "Salary",
         "skills": "Skills"
       }
+    },
+    "general": "General",
+    "explore": "Explore",
+    "remote": "Remote",
+    "highDemand": "High Demand",
+    "bridgingAvailable": "Bridging Available",
+    "viewDetails": "View details for {{title}}",
+    "gate": {
+      "pca": "PCA Assessment",
+      "pcaDesc": "Discover your DISC personality profile",
+      "lia": "LIA Assessment",
+      "liaDesc": "Measure your cognitive abilities across 5 dimensions",
+      "eval": "360° Evaluation",
+      "evalDesc": "Gather feedback from peers, parents, and teachers",
+      "personality": "Personality Assessment",
+      "personalityDesc": "Resolve your 4-letter personality type",
+      "title": "Complete Your Assessments",
+      "subtitle": "Finish all 4 assessments to unlock personalized career matches tailored to your unique profile.",
+      "completed": "completed",
+      "inProgress": "In Progress",
+      "continue": "Continue Assessment",
+      "startNext": "Start Next Assessment"
+    },
+    "explorer": {
+      "title": "Career Explorer",
+      "subtitle": "Your top 10 career matches based on cognitive abilities, personality, and interests.",
+      "disclaimer": "These match estimates are based on your assessment data and are for informational guidance only — not a guarantee of employment and not a substitute for professional career counseling.",
+      "noResults": "No careers found",
+      "noResultsFilterDesc": "Try adjusting your search or filter criteria to see more results.",
+      "noResultsDesc": "Complete your PCA and MIL assessments to receive personalized career recommendations."
+    },
+    "search_placeholder": "Search for careers, skills, or keywords...",
+    "all_industries": "All Industries",
+    "all_education": "Any Education",
+    "sort_default": "Default Sort",
+    "sort_recommended": "Recommended",
+    "sort_match": "Match Score",
+    "sort_title": "Name (A-Z)",
+    "sort_demand": "High Demand",
+    "matchLevel": {
+      "low": "Low Match",
+      "high": "Excellent Match",
+      "good": "Strong Match",
+      "moderate": "Good Match"
     }
   },
   "careers": {
@@ -2025,7 +2357,9 @@
       "phone": "Phone Number",
       "schoolName": "School",
       "timezone": "Timezone",
-      "unassigned": "Unassigned"
+      "unassigned": "Unassigned",
+      "phonePlaceholder": "+1 (555) 123-4567",
+      "timezonePlaceholder": "e.g. America/New_York"
     },
     "coach": {
       "personalTitle": "Personal Information",
@@ -2047,7 +2381,23 @@
       "adminDesc": "Tell us about yourself as the school administrator.",
       "settingsTitle": "School Settings",
       "settingsDesc": "Configure notification preferences for your school.",
-      "alreadyCompleted": "You have already completed onboarding."
+      "alreadyCompleted": "You have already completed onboarding.",
+      "schoolName": "School",
+      "adminEmail": "Admin Email",
+      "adminName": "Your Full Name",
+      "namePlaceholder": "John Smith",
+      "position": "Position / Title",
+      "positionPlaceholder": "Principal, Administrator",
+      "phone": "Phone Number",
+      "phonePlaceholder": "+1 (555) 123-4567",
+      "settings": {
+        "notifySignup": "Notify on Student Signup",
+        "notifySignupDesc": "Receive an email when a student accepts their invitation.",
+        "notifyAssessment": "Notify on Assessment Complete",
+        "notifyAssessmentDesc": "Receive an email when a student completes an assessment.",
+        "selfRegistration": "Allow Student Self-Registration",
+        "selfRegistrationDesc": "Allow students to register themselves using a school code."
+      }
     },
     "invite": {
       "context": "You've been invited to {{school}} as {{role}}.",
@@ -2076,6 +2426,103 @@
         "unknownBody": "This is usually a connection problem. Please try again in a moment.",
         "tryAgain": "Try again"
       }
+    },
+    "availability": {
+      "invalidTimeRange": "Invalid time range on {{day}}: Start time must be before end time",
+      "timezone": "Timezone",
+      "timezoneDesc": "Set your local timezone for accurate scheduling.",
+      "selectTimezone": "Select timezone",
+      "weeklySchedule": "Weekly Schedule",
+      "scheduleDesc": "Set your recurring availability",
+      "unavailableLabel": "Unavailable on this day",
+      "unavailable": "Unavailable",
+      "startTimeLabel": "Start time for period {{index}} on {{day}}",
+      "endTimeLabel": "End time for period {{index}} on {{day}}",
+      "removeSlotLabel": "Remove time slot {{index}} for {{day}}",
+      "addPeriod": "Add another period",
+      "copyToAll": "Copy to all days"
+    },
+    "calendar": {
+      "notConfigured": "Calendar sync isn't enabled on this server yet — you can connect later from Settings.",
+      "connectFailed": "Failed to start the calendar connection. You can connect later from Settings.",
+      "whyConnect": "Why connect your calendar?",
+      "whyConnectDesc": "We'll automatically check for conflicts so you never get double-booked. We only access your free/busy status, not your event details.",
+      "google": "Google Calendar",
+      "googleDesc": "Connect your Gmail or G Suite calendar",
+      "googleConnected": "Google Calendar Connected",
+      "connectGoogle": "Connect Google Calendar",
+      "connected": "Connected",
+      "connect": "Connect",
+      "outlook": "Outlook Calendar",
+      "outlookDesc": "Connect Office 365 or Exchange",
+      "outlookConnected": "Outlook Calendar Connected",
+      "connectOutlook": "Connect Outlook Calendar",
+      "completeSetup": "Complete Setup"
+    },
+    "welcomeTitle": "Join our community of world-class coaches.",
+    "welcomeSubtitle": "Share your expertise, mentor the next generation, and grow your impact.",
+    "stepLabel": "Step {{step}}",
+    "stepProgress": "Step {{current}} of {{total}}",
+    "password": {
+      "minLength": "Password must be at least 8 characters long",
+      "noMatch": "Passwords do not match",
+      "label": "Password",
+      "placeholder": "Enter your password",
+      "hide": "Hide password",
+      "show": "Show password",
+      "hint": "Must be at least 8 characters long",
+      "confirmLabel": "Confirm Password",
+      "confirmPlaceholder": "Confirm your password",
+      "complete": "Complete Setup",
+      "req": {
+        "length": "At least 8 characters",
+        "uppercase": "One uppercase letter",
+        "lowercase": "One lowercase letter",
+        "number": "One number"
+      },
+      "requirements": "Please meet all password requirements",
+      "requirementsTitle": "Password Requirements"
+    },
+    "validation": {
+      "titleRequired": "Job title is required",
+      "bioMin": "Bio must be at least 10 characters",
+      "specializationRequired": "Specialization is required",
+      "locationRequired": "Location is required",
+      "languageRequired": "At least one language is required",
+      "tagRequired": "At least one tag is required"
+    },
+    "personalInfo": {
+      "uploadPhoto": "Upload profile photo",
+      "profilePhoto": "Profile Photo",
+      "uploadHint": "Upload a professional photo. JPG, GIF or PNG. Max size of 800K.",
+      "fullName": "Full Name",
+      "namePlaceholder": "e.g. Sarah Wilson",
+      "jobTitle": "Job Title",
+      "titlePlaceholder": "e.g. Senior Career Coach",
+      "bio": "Bio",
+      "bioPlaceholder": "Tell us about your experience and coaching style...",
+      "specialization": "Primary Specialization",
+      "specializationPlaceholder": "e.g. Tech Leadership",
+      "location": "Location",
+      "locationPlaceholder": "e.g. San Francisco, CA",
+      "languages": "Languages",
+      "languagesPlaceholder": "e.g. English, Spanish",
+      "skills": "Skills / Tags",
+      "skillsPlaceholder": "e.g. Leadership, Management, Public Speaking",
+      "continue": "Continue to Availability"
+    },
+    "pricing": {
+      "minRate": "Hourly rate must be at least $10",
+      "maxRate": "Hourly rate cannot exceed $500",
+      "hourlyRate": "Hourly Rate ({{symbol}})",
+      "hint": "Set your hourly coaching rate (minimum {{symbol}}{{min}}, maximum {{symbol}}{{max}})",
+      "earningsBreakdown": "Earnings Breakdown",
+      "platformFeeDesc": "Our platform charges a {{fee}}% service fee to cover payment processing, platform maintenance, and support.",
+      "clientPays": "Client pays:",
+      "platformFee": "Platform fee ({{fee}}%):",
+      "youEarn": "You earn:",
+      "example_one": "When coaching {{count}} hour/month, you'll earn approx. {{amount}}/month",
+      "example_other": "When coaching {{count}} hours/month, you'll earn approx. {{amount}}/month"
     }
   },
   "compare": {
@@ -2140,7 +2587,11 @@
     "showingResults": "Showing {{count}} of {{total}} courses",
     "totalCourses": "Total Courses",
     "avgRating": "Average Rating",
-    "enrollments": "Enrollments"
+    "enrollments": "Enrollments",
+    "myCourses": "My Courses & Progress",
+    "trackProgress": "Track your enrolled courses, completed certifications, and recommended next steps.",
+    "exploreCourses": "Explore Courses",
+    "coursesAvailable": "courses"
   },
   "courses_import": {
     "button": "Import Course",
@@ -2152,7 +2603,8 @@
     "invalidUrl": "Please enter a valid URL",
     "success": "Import job started. Check status in a moment.",
     "started": "Import job started ({{jobId}}). Check status in a moment.",
-    "failure": "Failed to start import. Please try again."
+    "failure": "Failed to start import. Please try again.",
+    "completed": "Import completed successfully. Refresh to see new courses."
   },
   "profile": {
     "personalInfoTitle": "Personal Information",
@@ -2166,7 +2618,27 @@
     "addSkillAria": "Add a new skill",
     "skillNamePlaceholder": "Skill Name",
     "noSkillsYet": "No skills added yet.",
-    "skillsDescription": "Press Enter to add a skill."
+    "skillsDescription": "Press Enter to add a skill.",
+    "inviteParent": {
+      "dialogTitle": "Invite Parent / Guardian",
+      "dialogDescription": "Send a portal access invite to link a parent or guardian to your account.",
+      "inviteSent": "Invite sent successfully"
+    },
+    "overview": {
+      "aboutMe": "About Me",
+      "noBio": "No bio added yet.",
+      "addBio": "Add Bio",
+      "noSkills": "No skills added yet.",
+      "addSkills": "Add skills",
+      "coursesCompleted": "Courses Completed",
+      "viewAllActivity": "View All Activity",
+      "activityTypes": {
+        "course_completed": "Course completed",
+        "application_sent": "Application sent",
+        "session_completed": "Session completed",
+        "certificate_earned": "Certificate earned"
+      }
+    }
   },
   "booking": {
     "enterDetailsTitle": "Enter Session Details",
@@ -2355,6 +2827,9 @@
       "arts": "Arts & Humanities",
       "sciences": "Sciences",
       "socialSciences": "Social Sciences"
+    },
+    "goal": {
+      "setAsGoal": "Set as my graduation goal"
     }
   },
   "sessions": {
@@ -2466,7 +2941,8 @@
       "joinCall": "Join Call",
       "viewNotes": "View Notes",
       "confirmReschedule": "Confirm Reschedule"
-    }
+    },
+    "portal": "Coach Portal"
   },
   "language": {
     "english": "English",
@@ -2497,6 +2973,13 @@
     "locked": {
       "title": "Assessment Locked",
       "body": "Your assessment is locked after too many exits. Ask your school administrator to unlock it."
+    },
+    "completion": {
+      "title": "LIA Assessment Complete!",
+      "body": "Thank you for completing all 5 subtests. Your responses have been saved and will be reviewed by your counselor.",
+      "nextStep": "Next Step",
+      "nextStepBody": "Complete the <strong>360° Evaluation</strong> — start by evaluating yourself, then invite peers, parents, and teachers to evaluate you.",
+      "start360": "Start 360° Self-Evaluation"
     }
   },
   "mil": {
@@ -2522,7 +3005,37 @@
     "influence": "Influence",
     "steadiness": "Solidity",
     "conscientiousness": "Control",
-    "resultsTitle": "PCA Results"
+    "resultsTitle": "PCA Results",
+    "panel": {
+      "profileGraph": "PCA Profile Graph",
+      "loadResultsFailed": "Failed to load results",
+      "loadCompetencesFailed": "Failed to load competencies",
+      "loadAnalysisFailed": "Failed to load analysis",
+      "errorHint": "Please try again or contact support if the issue persists.",
+      "retry": "Retry",
+      "personalInfo": "Personal Information",
+      "name": "Name:",
+      "id": "ID:",
+      "gender": "Gender:",
+      "male": "Male",
+      "female": "Female",
+      "email": "Email:",
+      "profileScores": "PCA Profile Scores",
+      "scoresUnavailable": "Results not available — PCA scores are incomplete or still processing.",
+      "primaryDimensions": "Primary Dimensions",
+      "secondaryDimensions": "Secondary Dimensions",
+      "selfImage": "Self-Image",
+      "initializing": "Initializing results data...",
+      "competencyLevels": "Competency Levels",
+      "levelLow": "Low",
+      "levelMedium": "Medium",
+      "levelHigh": "High",
+      "noCompetenceData": "No competency data available.",
+      "comparedAgainst": "Compared against Job Competency Analysis (JCA):",
+      "matchWith": "Competency match with {{job}}",
+      "matchHint": "How closely your assessed competencies align with this job profile.",
+      "analyzing": "Analyzing data against JCA..."
+    }
   },
   "counselorBooking": {
     "title": "Book a Counselor Session",
@@ -2544,7 +3057,26 @@
     "duration": "30 min",
     "booked": "Session Booked!",
     "confirmationMessage": "Your counselor session has been confirmed.",
-    "backToDashboard": "Back to Dashboard"
+    "backToDashboard": "Back to Dashboard",
+    "topics": {
+      "academicPlanning": "Academic Planning",
+      "courseSelection": "Course Selection",
+      "collegeApplications": "College Applications",
+      "careerGuidance": "Career Guidance",
+      "personalDevelopment": "Personal Development",
+      "graduationRequirements": "Graduation Requirements",
+      "scholarshipInformation": "Scholarship Information",
+      "other": "Other"
+    },
+    "bookedToast": "Session booked successfully!",
+    "bookFailed": "Failed to book session",
+    "noCounselors": {
+      "title": "No Counselors Available",
+      "description": "There are no counselors available at your school right now. Please contact your school administrator."
+    },
+    "freeSession": "FREE Session",
+    "viewMySessions": "View My Sessions",
+    "bookAnother": "Book Another"
   },
   "schoolAdmin": {
     "title": "School Administration Portal",
@@ -2589,7 +3121,9 @@
       "studentsInSchool": "Students in your school",
       "awaitingAcceptance": "Awaiting acceptance",
       "currentlyActive": "Currently active",
-      "averageAssessmentScore": "Average assessment score"
+      "averageAssessmentScore": "Average assessment score",
+      "pending": "Pending Invites",
+      "active": "Active Students"
     },
     "quickActions": {
       "inviteStudents": {
@@ -2660,7 +3194,14 @@
       "resendError": "Failed to resend invitation",
       "removeSuccess": "Student removed successfully",
       "removeError": "Failed to remove student",
-      "neverActive": "Never"
+      "neverActive": "Never",
+      "notePlaceholder": "Document interaction details here...",
+      "error": {
+        "title": "Student Profile Not Found",
+        "description": "The student record you are trying to access does not exist or may have been removed."
+      },
+      "backToList": "Back to Student Roster",
+      "joined": "Joined"
     },
     "analytics": {
       "title": "Analytics",
@@ -2797,6 +3338,27 @@
       "cancel": "Cancel",
       "go": "Go",
       "viewAll": "View all"
+    },
+    "alerts": {
+      "dismissed": "Alert dismissed successfully.",
+      "dismissError": "Failed to dismiss alert.",
+      "markedRead": "Alert marked as acknowledged.",
+      "bulkDismissed": "Selected alerts dismissed successfully.",
+      "bulkError": "Bulk dismissal failed. Please try again.",
+      "title": "System Alerts",
+      "subtitle": "Monitor and resolve critical institution-wide events, academic drops, and system notifications."
+    },
+    "gradeImport": {
+      "emptyFile": "CSV is empty",
+      "noFile": "No file selected",
+      "noSchool": "School context missing",
+      "uploadSuccess": "Import started",
+      "uploadError": "Import failed",
+      "helpText": "Upload a CSV with columns: student_id, student_email, course_code, semester, grade, credits, status",
+      "parse": "Preview",
+      "preview": "Preview",
+      "errors": "Validation errors:",
+      "confirmImport": "Start Import"
     }
   },
   "shell": {
@@ -2881,5 +3443,586 @@
   },
   "validation": {
     "required": "This field is required"
+  },
+  "coursePlan": {
+    "graduationTarget": {
+      "unlockTitle": "Unlock your personalized graduation plan",
+      "generatePlan": "Generate my plan",
+      "status": {
+        "draft": "Draft plan",
+        "proposed": "Awaiting counselor",
+        "approved": "Plan approved",
+        "rejected": "Needs revision"
+      },
+      "personality": "Personality",
+      "noEvaluators": "360° (no evaluators invited yet)",
+      "unlockBody": "Complete your assessments and we'll draft a semester-by-semester path to your dream school.",
+      "stillNeeded": "Still needed: {{items}}.",
+      "yourGoal": "Your goal: {{goal}}",
+      "anyUniversity": "Any university",
+      "goToAssessments": "Go to assessments",
+      "chooseTitle": "Where do you want to go after you graduate?",
+      "suggestedBody": "Based on your matches: {{match}}. Confirm it or pick your own.",
+      "chooseBody": "Pick a university and major and we'll draft a plan to get you there.",
+      "chooseGoal": "Choose your goal",
+      "rigorProfile": "Rigor profile: {{label}}",
+      "changeGoal": "Change goal"
+    },
+    "targetPicker": {
+      "title": "Choose your graduation goal"
+    },
+    "draftPlan": {
+      "submitToCounselor": "Submit to counselor",
+      "changesRequested": "Your counselor asked for changes"
+    },
+    "toasts": {
+      "planSubmitted": "Plan sent to your counselor for review",
+      "changeRequestSubmitted": "Change request submitted — awaiting counselor approval"
+    },
+    "page": {
+      "subtitle": "Plan your classes for the year",
+      "grade": "Grade {{grade}}",
+      "creditsEarned_one": "{{count}} credit earned",
+      "creditsEarned_other": "{{count}} credits earned"
+    },
+    "catalog": {
+      "title": "Add Classes",
+      "searchPlaceholder": "Search classes...",
+      "term": "Term",
+      "terms": {
+        "Fall": "Fall",
+        "Spring": "Spring"
+      },
+      "suggested": "Suggested for you:",
+      "suggestionTitle": "{{score}}% match — search the catalog for this",
+      "emptyCatalog": "Your school has no course catalog yet.",
+      "noMatches": "No matching classes.",
+      "needs": "Needs {{courses}}",
+      "credits": "{{credits}} credits",
+      "addAria": "Add {{name}}",
+      "add": "Add"
+    }
+  },
+  "aiChat": {
+    "welcome": {
+      "greeting": "Hi {{name}}!",
+      "greetingNoName": "Hi there!",
+      "help": "How can I help you today?",
+      "tryAsking": "Try asking"
+    }
+  },
+  "recommendations": {
+    "inbox": {
+      "title": "Recommendation Requests",
+      "subtitle": "Accept, decline, and upload letters of recommendation requested of you.",
+      "declinedReason": "Declined: {{reason}}"
+    },
+    "uploadLetter": {
+      "title": "Upload recommendation letter"
+    }
+  },
+  "ai": {
+    "ats": {
+      "add": "Add '{{keyword}}'",
+      "addKeyword": "Add '{{keyword}}' to context",
+      "compatibilityScore": "ATS Compatibility Score",
+      "detectedKeywords": "Detected Keywords",
+      "excellent": "Excellent",
+      "good": "Good",
+      "keywords": "Keywords",
+      "keywordsDetected": "Industry keywords detected",
+      "missingKeywords": "Missing Keywords",
+      "missingKeywordsDesc": "Keywords present in the job description but not in the generated content.",
+      "moreKeywords_one": "+{{count}} more",
+      "moreKeywords_other": "+{{count}} more",
+      "needsImprovement": "Needs Improvement",
+      "perfectLength": "Perfect length",
+      "proTipDesc": "Use simple formatting and avoid images in your resume. Most ATS systems work best with plain text.",
+      "proTipTitle": "💡 Pro tip:",
+      "scoreAria": "Score: {{score}} percent - {{label}}",
+      "scoreDesc": "How well this content will be parsed by applicant tracking systems",
+      "tooLong": "Consider shortening",
+      "tooShort": "Could be longer",
+      "wordCount": "Word Count"
+    },
+    "fields": {
+      "awardDesc": "Award Description",
+      "bullets": "Job Bullet Points",
+      "courseDesc": "Course Description",
+      "customBullets": "Custom Section Bullet Points",
+      "customDesc": "Custom Section Description",
+      "declaration": "Declaration Text",
+      "educationDesc": "Education Description",
+      "experienceBullets": "Experience Bullet Points",
+      "experienceDesc": "Experience Description",
+      "languageDesc": "Language Description",
+      "objective": "Career Objective",
+      "organizationDesc": "Organization Description",
+      "project": "Project Description",
+      "projectBullets": "Project Bullet Points",
+      "projectDesc": "Project Description",
+      "publicationDesc": "Publication Description",
+      "referenceDesc": "Reference Description",
+      "skill": "Skill Description",
+      "summary": "Professional Summary",
+      "volunteerDesc": "Volunteer Work Description"
+    },
+    "form": {
+      "award": {
+        "awardName": {
+          "label": "Award Name",
+          "placeholder": "e.g., Employee of the Year",
+          "tooltip": "Name of the award or achievement"
+        },
+        "impact": {
+          "label": "Impact/Significance",
+          "placeholder": "e.g., Recognized among 500+ employees",
+          "tooltip": "The significance or impact of this award"
+        },
+        "organization": {
+          "label": "Issuing Organization",
+          "placeholder": "e.g., TechCorp Inc.",
+          "tooltip": "Organization that issued the award"
+        },
+        "reason": {
+          "label": "Reason for Award",
+          "placeholder": "e.g., Outstanding performance in Q4 2023",
+          "tooltip": "Why you received this award"
+        }
+      },
+      "bullets": {
+        "jobTitle": {
+          "label": "Job Title",
+          "placeholder": "e.g., Backend Developer",
+          "tooltip": "Your role/title at this position"
+        },
+        "metrics": {
+          "label": "Metrics/Results (Optional)",
+          "placeholder": "e.g., 40% performance improvement, 99.9% uptime",
+          "tooltip": "Quantifiable results from your work"
+        },
+        "responsibilities": {
+          "label": "Main Responsibilities",
+          "placeholder": "What did you do? e.g., Developed REST APIs, managed database migrations",
+          "tooltip": "Key tasks and responsibilities in this role"
+        },
+        "technologies": {
+          "label": "Technologies Used",
+          "placeholder": "e.g., React, Python, PostgreSQL, Docker",
+          "tooltip": "Tools and technologies you used"
+        }
+      },
+      "common": {
+        "tone": {
+          "label": "Tone",
+          "tooltip": "Choose how formal or casual the content should be"
+        }
+      },
+      "course": {
+        "courseName": {
+          "label": "Course Name",
+          "placeholder": "e.g., AWS Certified Solutions Architect",
+          "tooltip": "Name of the course or certification"
+        },
+        "projects": {
+          "label": "Projects/Assignments",
+          "placeholder": "e.g., Built scalable web application on AWS",
+          "tooltip": "Notable projects or assignments completed"
+        },
+        "provider": {
+          "label": "Provider/Institution",
+          "placeholder": "e.g., Amazon Web Services, Coursera",
+          "tooltip": "Who provided the course or certification"
+        },
+        "skillsLearned": {
+          "label": "Skills Learned",
+          "placeholder": "e.g., Cloud architecture, EC2, S3, Lambda",
+          "tooltip": "Key skills or knowledge gained"
+        }
+      },
+      "custom": {
+        "context": {
+          "label": "Context/Purpose",
+          "placeholder": "e.g., Personal interests, additional skills",
+          "tooltip": "What this section is about"
+        },
+        "keyPoints": {
+          "label": "Key Points",
+          "placeholder": "e.g., Photography, hiking, open source contributions",
+          "tooltip": "Main points to include"
+        },
+        "sectionTitle": {
+          "label": "Section Title",
+          "placeholder": "e.g., Hobbies, Additional Information",
+          "tooltip": "Title of your custom section"
+        }
+      },
+      "declaration": {
+        "location": {
+          "label": "Location",
+          "placeholder": "e.g., New York, USA",
+          "tooltip": "Your current location"
+        },
+        "name": {
+          "label": "Your Full Name",
+          "placeholder": "e.g., John Doe",
+          "tooltip": "Your full legal name"
+        }
+      },
+      "education": {
+        "achievements": {
+          "label": "Achievements/Honors",
+          "placeholder": "e.g., Dean's List, GPA 3.8/4.0, Summa Cum Laude",
+          "tooltip": "Academic achievements, honors, or awards"
+        },
+        "coursework": {
+          "label": "Relevant Coursework",
+          "placeholder": "e.g., Data Structures, Algorithms, Machine Learning, Database Systems",
+          "tooltip": "Relevant courses you took"
+        },
+        "degree": {
+          "label": "Degree",
+          "placeholder": "e.g., Bachelor of Science in Computer Science",
+          "tooltip": "Your degree or qualification"
+        },
+        "fieldOfStudy": {
+          "label": "Field of Study",
+          "placeholder": "e.g., Computer Science",
+          "tooltip": "Your major or field of study"
+        },
+        "institution": {
+          "label": "Institution",
+          "placeholder": "e.g., Stanford University",
+          "tooltip": "Name of the educational institution"
+        }
+      },
+      "experience": {
+        "achievements": {
+          "label": "Key Achievements",
+          "placeholder": "e.g., 40% performance improvement, 99.9% uptime",
+          "tooltip": "Quantifiable results from your work"
+        },
+        "company": {
+          "label": "Company",
+          "placeholder": "e.g., Google",
+          "tooltip": "Company name"
+        },
+        "jobTitle": {
+          "label": "Job Title",
+          "placeholder": "e.g., Senior Software Engineer",
+          "tooltip": "Your role/title at this position"
+        },
+        "metrics": {
+          "label": "Metrics/Results",
+          "placeholder": "e.g., 40% performance improvement, 99.9% uptime",
+          "tooltip": "Quantifiable results from your work"
+        },
+        "responsibilities": {
+          "label": "Main Responsibilities",
+          "placeholder": "What did you do? e.g., Developed REST APIs, managed database migrations",
+          "tooltip": "Key tasks and responsibilities in this role"
+        },
+        "technologies": {
+          "label": "Technologies/Skills Used",
+          "placeholder": "e.g., React, Node.js, AWS, PostgreSQL",
+          "tooltip": "Technologies and skills you used in this role"
+        }
+      },
+      "language": {
+        "context": {
+          "label": "Context/Usage",
+          "placeholder": "e.g., Used in business meetings, customer support",
+          "tooltip": "How you use this language"
+        },
+        "language": {
+          "label": "Language",
+          "placeholder": "e.g., Spanish",
+          "tooltip": "The language"
+        },
+        "proficiency": {
+          "label": "Proficiency Level",
+          "placeholder": "e.g., Native, Fluent, Intermediate",
+          "tooltip": "Your proficiency level"
+        }
+      },
+      "objective": {
+        "industry": {
+          "label": "Industry",
+          "placeholder": "e.g., FinTech, SaaS, Healthcare",
+          "tooltip": "Industry or sector for the target role"
+        },
+        "keyStrengths": {
+          "label": "Key Strengths",
+          "placeholder": "e.g., Strategic thinking, team leadership, data analysis",
+          "tooltip": "Your main strengths for this role"
+        },
+        "targetRole": {
+          "label": "Target Role",
+          "placeholder": "e.g., Product Manager",
+          "tooltip": "The position you're applying for"
+        }
+      },
+      "organization": {
+        "achievements": {
+          "label": "Achievements",
+          "placeholder": "e.g., Increased membership by 30%",
+          "tooltip": "Notable achievements in this role"
+        },
+        "activities": {
+          "label": "Activities/Responsibilities",
+          "placeholder": "e.g., Organized tech talks, mentored students",
+          "tooltip": "What you did in this organization"
+        },
+        "organizationName": {
+          "label": "Organization Name",
+          "placeholder": "e.g., IEEE Computer Society",
+          "tooltip": "Name of the organization"
+        },
+        "role": {
+          "label": "Your Role",
+          "placeholder": "e.g., Member, Vice President",
+          "tooltip": "Your role in the organization"
+        }
+      },
+      "project": {
+        "description": {
+          "label": "Project Description",
+          "placeholder": "What was the project about?",
+          "tooltip": "Brief description of the project"
+        },
+        "impact": {
+          "label": "Impact/Results",
+          "placeholder": "e.g., Used by 10,000+ users, 50% faster than competitors",
+          "tooltip": "Measurable impact or results"
+        },
+        "projectDescription": {
+          "label": "Project Description",
+          "placeholder": "Brief overview of what the project does",
+          "tooltip": "What was the project about?"
+        },
+        "projectName": {
+          "label": "Project Name",
+          "placeholder": "e.g., E-commerce Platform",
+          "tooltip": "Name of the project"
+        },
+        "role": {
+          "label": "Your Role",
+          "placeholder": "e.g., Full Stack Developer, Team Lead",
+          "tooltip": "Your role in the project"
+        },
+        "technologies": {
+          "label": "Technologies Used",
+          "placeholder": "e.g., React, Node.js, MongoDB, AWS",
+          "tooltip": "Technologies and tools used in the project"
+        },
+        "yourRole": {
+          "label": "Your Role",
+          "placeholder": "e.g., Lead Developer, Frontend Engineer",
+          "tooltip": "What was your role in the project?"
+        }
+      },
+      "publication": {
+        "impact": {
+          "label": "Impact/Citations",
+          "placeholder": "e.g., 50+ citations, Featured in top journal",
+          "tooltip": "Impact or recognition of the publication"
+        },
+        "publisher": {
+          "label": "Publisher/Journal",
+          "placeholder": "e.g., IEEE Transactions, Medium",
+          "tooltip": "Where it was published"
+        },
+        "title": {
+          "label": "Publication Title",
+          "placeholder": "e.g., Machine Learning in Healthcare",
+          "tooltip": "Title of the publication"
+        },
+        "topic": {
+          "label": "Topic/Subject",
+          "placeholder": "e.g., Application of ML algorithms in diagnosis",
+          "tooltip": "What the publication is about"
+        }
+      },
+      "reference": {
+        "context": {
+          "label": "Context",
+          "placeholder": "e.g., Worked together at TechCorp for 3 years",
+          "tooltip": "Context of your relationship"
+        },
+        "name": {
+          "label": "Reference Name",
+          "placeholder": "e.g., John Smith",
+          "tooltip": "Name of the reference"
+        },
+        "relationship": {
+          "label": "Relationship",
+          "placeholder": "e.g., Former Manager, Professor",
+          "tooltip": "Your relationship with this person"
+        }
+      },
+      "skill": {
+        "experienceExamples": {
+          "label": "Experience Examples",
+          "placeholder": "e.g., Built 5+ production apps, managed 50+ projects",
+          "tooltip": "Examples of how you've used this skill"
+        },
+        "proficiencyLevel": {
+          "label": "Proficiency Level",
+          "tooltip": "Your level of expertise in this skill"
+        },
+        "skillName": {
+          "label": "Skill Name",
+          "placeholder": "e.g., React, Project Management, Data Analysis",
+          "tooltip": "The skill you want to describe"
+        }
+      },
+      "summary": {
+        "achievements": {
+          "label": "Key Achievements (Optional)",
+          "placeholder": "e.g., Led team of 5 engineers, increased performance by 40%",
+          "tooltip": "Major accomplishments or projects you're proud of"
+        },
+        "currentRole": {
+          "label": "Current Role",
+          "placeholder": "e.g., Senior Software Engineer",
+          "tooltip": "Your current job title or primary role"
+        },
+        "keySkills": {
+          "label": "Key Skills",
+          "placeholder": "e.g., React, Node.js, TypeScript, AWS",
+          "tooltip": "Comma-separated list of your main skills"
+        },
+        "yearsExperience": {
+          "label": "Years of Experience",
+          "placeholder": "e.g., 8",
+          "tooltip": "Total years in your field"
+        }
+      },
+      "tipLabel": "Tip",
+      "tipMessage": "The more details you provide, the better the generated content will be.",
+      "volunteer": {
+        "activities": {
+          "label": "Activities",
+          "placeholder": "e.g., Organized food drives, coordinated volunteers",
+          "tooltip": "What you did as a volunteer"
+        },
+        "impact": {
+          "label": "Impact",
+          "placeholder": "e.g., Served 500+ families, raised $10K",
+          "tooltip": "The impact of your volunteer work"
+        },
+        "organization": {
+          "label": "Organization",
+          "placeholder": "e.g., Red Cross, Local Food Bank",
+          "tooltip": "Organization where you volunteered"
+        },
+        "role": {
+          "label": "Your Role",
+          "placeholder": "e.g., Volunteer Coordinator",
+          "tooltip": "Your role in the volunteer work"
+        }
+      }
+    },
+    "modal": {
+      "alternatives": "Alternatives ({{current}} of {{total}})",
+      "appliedError": "Failed to apply generated content",
+      "appliedSuccess": "Applied generated content",
+      "generatedContent": "Generated Content",
+      "generatingContent": "Generating content...",
+      "generatingTime": "This usually takes 2-5 seconds",
+      "generationFailed": "Generation Failed",
+      "keywordAdded": "Keyword added to context.",
+      "keywordAddedCopied": "Keyword added to context and copied to clipboard.",
+      "noContentError": "No content to apply. Please generate valid content first.",
+      "statusComplete": "AI generation complete",
+      "statusConfig": "Configure generation settings",
+      "statusGenerating": "Generating content",
+      "subtitle": "Optimized for ATS",
+      "title": "AI Content Generator",
+      "useThis": "Use this generated content",
+      "useThisBtn": "Use This"
+    },
+    "proficiency": {
+      "advanced": "Advanced",
+      "beginner": "Beginner",
+      "expert": "Expert",
+      "intermediate": "Intermediate"
+    },
+    "tone": {
+      "analytical": "Analytical",
+      "confident": "Confident",
+      "creative": "Creative",
+      "enthusiastic": "Enthusiastic",
+      "professional": "Professional"
+    },
+    "buttonFields": {
+      "summary": "Summary",
+      "objective": "Objective",
+      "bullets": "Bullet Points",
+      "project": "Project",
+      "skill": "Skill",
+      "experience_description": "Experience Description",
+      "experience_bullets": "Experience Bullet Points",
+      "education_description": "Education Description",
+      "project_description": "Project Description",
+      "project_bullets": "Project Bullet Points",
+      "course_description": "Course Description",
+      "award_description": "Award Description",
+      "organization_description": "Organization Description",
+      "publication_description": "Publication Description",
+      "language_description": "Language Description",
+      "volunteer_description": "Volunteer Description",
+      "reference_description": "Reference Description",
+      "declaration_text": "Declaration Text",
+      "custom_description": "Custom Description",
+      "custom_bullets": "Custom Bullet Points"
+    },
+    "generateButton": {
+      "tooltip": "Generate {{field}} using AI"
+    }
+  },
+  "days": {
+    "sun": "Sun",
+    "mon": "Mon",
+    "tue": "Tue",
+    "wed": "Wed",
+    "thu": "Thu",
+    "fri": "Fri",
+    "sat": "Sat"
+  },
+  "learning": {
+    "coursesDescription": "Explore recommended courses aligned with your career interests",
+    "certificationsDescription": "Track your enrolled courses, progress, and earned certifications",
+    "subtitle": "Develop skills and earn certifications to advance your career path"
+  },
+  "portfolio": {
+    "editItem": "Edit Experience",
+    "editItemDescription": "Edit the details of this portfolio experience.",
+    "addItemDescription": "Add a new experience to your portfolio.",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "create": "Create Experience",
+    "addFirst": "Add Your First Item"
+  },
+  "calendarIntegration": {
+    "title": "Calendar Integration",
+    "description": "Connect your Google or Microsoft calendar — sessions you book on FormMaps appear on your calendar automatically.",
+    "loading": "Loading calendar settings...",
+    "connectedToast": "Calendar connected",
+    "connectFailedToast": "Calendar connection failed. Please try again.",
+    "connectProviderFailed": "Failed to connect to {{provider}}",
+    "disconnectedToast": "Calendar disconnected",
+    "connectedTitle": "{{provider}} Calendar Connected",
+    "expiredTitle": "{{provider}} connection expired",
+    "reconnectHint": "Reconnect to keep your sessions syncing.",
+    "reconnectHintEmail": "Reconnect to keep your sessions syncing ({{email}}).",
+    "disconnecting": "Disconnecting...",
+    "disconnect": "Disconnect",
+    "connecting": "Connecting...",
+    "reconnect": "Reconnect",
+    "syncGoogle": "Sync with Google",
+    "syncMicrosoft": "Sync with Microsoft",
+    "connectGoogle": "Connect Google",
+    "connectOutlook": "Connect Outlook"
   }
 }

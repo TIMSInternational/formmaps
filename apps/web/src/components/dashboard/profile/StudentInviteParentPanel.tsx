@@ -196,9 +196,9 @@ export function StudentInviteParentPanel() {
 
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Invite Parent / Guardian</DialogTitle>
+              <DialogTitle>{t("profile.inviteParent.dialogTitle")}</DialogTitle>
               <DialogDescription>
-                Send a portal access invite to link a parent or guardian to your account.
+                {t("profile.inviteParent.dialogDescription")}
               </DialogDescription>
             </DialogHeader>
 

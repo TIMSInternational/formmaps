@@ -299,7 +299,7 @@ export default function CoachSchedulePage() {
                                 </Button>
                               )}
                               <Button variant="outline" size="sm" className="h-8 px-3 text-xs rounded-lg" onClick={() => handleRescheduleClick(session)}>
-                                {t("coach:schedule.reschedule")}
+                                {t("coach:schedule.rescheduleButton")}
                               </Button>
                               <Button variant="outline" size="sm" className="h-8 px-3 text-xs rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleCancelClick(session)}>
                                 {t("coach:schedule.cancel")}

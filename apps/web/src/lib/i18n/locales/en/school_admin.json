@@ -48,10 +48,22 @@
     },
     "quickNav": "Quick Navigation",
     "navCards": {
-      "students": { "label": "Students", "sub": "Roster, invites, staff" },
-      "academics": { "label": "Academics", "sub": "Courses, GPA, graduation" },
-      "assessments": { "label": "Assessments", "sub": "Pipeline, schedule, 360" },
-      "aiInsights": { "label": "AI Insights", "sub": "School-wide analysis" }
+      "students": {
+        "label": "Students",
+        "sub": "Roster, invites, staff"
+      },
+      "academics": {
+        "label": "Academics",
+        "sub": "Courses, GPA, graduation"
+      },
+      "assessments": {
+        "label": "Assessments",
+        "sub": "Pipeline, schedule, 360"
+      },
+      "aiInsights": {
+        "label": "AI Insights",
+        "sub": "School-wide analysis"
+      }
     }
   },
   "users": {
@@ -163,6 +175,7 @@
     "students": "{{count}} students",
     "pipelineSummary": "Pipeline Summary",
     "pipeline": {
+      "personalityComplete": "Personality Complete",
       "pcaComplete": "PCA Complete",
       "milComplete": "MIL/LIA Complete",
       "eval360Complete": "360° Complete",
@@ -214,8 +227,26 @@
     "setup360Skipped_one": "{{count}} already existed",
     "setup360Skipped_other": "{{count}} already existed",
     "setup360Skipped": "{{count}} already existed",
-    "setup360Error": "Failed to setup 360 evaluations",
-    "setup360Failed": "Failed to setup 360 evaluations"
+    "setup360Error": "Failed to set up 360 evaluations",
+    "setup360Failed": "Failed to set up 360 evaluations",
+    "pipeline": {
+      "overallCompletion": "Overall Completion",
+      "evaluatorResponses": "Evaluator Responses",
+      "personalityType": "4-Letter Personality Type",
+      "viewFullProfile": "View Full Profile",
+      "studentCount_one": "{{count}} student",
+      "studentCount_other": "{{count}} students",
+      "remind": "Remind ({{count}})",
+      "setup360": "Set Up 360",
+      "colPersonality": "Personality"
+    },
+    "schedule": {
+      "title": "Assessment Schedule",
+      "save": "Save Schedule",
+      "saved": "Saved",
+      "start": "Start",
+      "end": "End"
+    }
   },
   "insights": {
     "title": "AI School Insights",
@@ -263,6 +294,18 @@
       "byGrade": "Students by Grade",
       "students": "{{count}} students",
       "gradeLabel": "Grade {{grade}}"
+    },
+    "card": {
+      "studentsCompletedAll_one": "student completed all assessments",
+      "studentsCompletedAll_other": "students completed all assessments",
+      "unlockHint": "Insights unlock when 100% of students finish.",
+      "emptyFallback": "Insights will appear once enough students complete assessments.",
+      "cached": "Cached",
+      "refresh": "Refresh",
+      "profiles": "Profiles",
+      "reviews360": "360 Reviews",
+      "pcaDistribution": "PCA Distribution",
+      "topCareerClusters": "Top Career Clusters"
     }
   },
   "grades": {
@@ -285,7 +328,7 @@
     "noRules": "No rules configured — set requirements to track progress",
     "creditsRequired": "{{total}} total credits required",
     "editRules": "Edit Rules",
-    "setupRules": "Setup Rules",
+    "setupRules": "Set Up Rules",
     "table": {
       "student": "Student",
       "grade": "Grade",
@@ -327,10 +370,10 @@
     "title": "Reports",
     "subtitle": "Download assessment reports and data exports per student",
     "tabs": {
+      "360": "360° Evaluation",
       "pca": "PCA — Personal Competence Analysis",
       "mil": "MIL / LIA",
-      "eval360": "360° Evaluation",
-      "360": "360° Evaluation"
+      "eval360": "360° Evaluation"
     },
     "search": "Search students...",
     "searchPlaceholder": "Search students...",

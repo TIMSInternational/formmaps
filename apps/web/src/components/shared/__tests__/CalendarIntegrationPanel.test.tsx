@@ -1,3 +1,5 @@
+// Real i18next (English) so assertions read the rendered copy, not raw keys.
+import "@/lib/i18n";
 import { render, screen, waitFor } from "@testing-library/react";
 import { CalendarIntegrationPanel } from "@/components/shared/CalendarIntegrationPanel";
 import { getCalendarStatus } from "@/services/calendarService";

@@ -1,3 +1,5 @@
+// Real i18next (English) so assertions read the rendered copy, not raw keys.
+import "@/lib/i18n";
 import React from "react";
 import { render } from "@testing-library/react";
 import "@testing-library/jest-dom";

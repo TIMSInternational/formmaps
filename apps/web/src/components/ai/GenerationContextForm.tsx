@@ -665,18 +665,20 @@ export function GenerationContextForm({
     ],
   };
 
+  // `value` is what the generation prompt receives and stays English in every language;
+  // only the visible label is translated.
   const toneOptions = [
-    t("ai.tone.professional", "Professional"),
-    t("ai.tone.enthusiastic", "Enthusiastic"),
-    t("ai.tone.confident", "Confident"),
-    t("ai.tone.analytical", "Analytical"),
-    t("ai.tone.creative", "Creative"),
+    { value: "Professional", label: t("ai.tone.professional", "Professional") },
+    { value: "Enthusiastic", label: t("ai.tone.enthusiastic", "Enthusiastic") },
+    { value: "Confident", label: t("ai.tone.confident", "Confident") },
+    { value: "Analytical", label: t("ai.tone.analytical", "Analytical") },
+    { value: "Creative", label: t("ai.tone.creative", "Creative") },
   ];
   const proficiencyOptions = [
-    t("ai.proficiency.beginner", "Beginner"),
-    t("ai.proficiency.intermediate", "Intermediate"),
-    t("ai.proficiency.advanced", "Advanced"),
-    t("ai.proficiency.expert", "Expert")
+    { value: "Beginner", label: t("ai.proficiency.beginner", "Beginner") },
+    { value: "Intermediate", label: t("ai.proficiency.intermediate", "Intermediate") },
+    { value: "Advanced", label: t("ai.proficiency.advanced", "Advanced") },
+    { value: "Expert", label: t("ai.proficiency.expert", "Expert") },
   ];
 
   const fields = formFields[field] || [];
@@ -750,8 +752,8 @@ export function GenerationContextForm({
             >
               <option value="">{t("common.selectOption", "Select an option")}</option>
               {options.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
                 </option>
               ))}
             </select>

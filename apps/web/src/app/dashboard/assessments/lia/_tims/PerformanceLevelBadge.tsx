@@ -81,11 +81,11 @@ export function PerformanceLevelDisplay({
       en: 'Very limited adaptation capacity. Requires significant development.',
     },
     low: {
-      es: 'Capacidad de adaptación por debajo del promedio. Beneficiaría de entrenamiento cognitivo.',
+      es: 'Capacidad de adaptación por debajo del promedio. Se beneficiaría de entrenamiento cognitivo.',
       en: 'Below-average adaptation capacity. Would benefit from cognitive training.',
     },
     acceptable: {
-      es: 'Capacidad de adaptación dentro del rango normal. Adecuado para la mayoría de roles.',
+      es: 'Capacidad de adaptación dentro del rango normal. Adecuada para la mayoría de roles.',
       en: 'Adaptation capacity within normal range. Suitable for most roles.',
     },
     high: {
@@ -103,7 +103,7 @@ export function PerformanceLevelDisplay({
       <div className="flex items-center justify-between mb-4">
         <div>
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-            {language === 'es' ? 'Nivel de Desempeño' : 'Performance Level'}
+            {language === 'es' ? 'Nivel de desempeño' : 'Performance Level'}
           </p>
           <h3 className={`text-3xl font-bold ${config.color}`}>
             {config.label[language]}
@@ -111,7 +111,7 @@ export function PerformanceLevelDisplay({
         </div>
         <div className="text-right">
           <p className="text-sm text-gray-500 dark:text-gray-400 mb-1">
-            {language === 'es' ? 'Percentil Global' : 'Global Percentile'}
+            {language === 'es' ? 'Percentil global' : 'Global Percentile'}
           </p>
           <p className={`text-4xl font-bold ${config.color}`}>{Math.round(percentile)}%</p>
         </div>

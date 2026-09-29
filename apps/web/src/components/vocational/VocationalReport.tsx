@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   recompute360, recomputeIntegrated,
@@ -14,6 +15,7 @@ import { RankingsPanel } from "./_components/RankingsPanel";
 import { RecommendationsPanel } from "./_components/RecommendationsPanel";
 
 export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserId: string; selfView?: boolean }) {
+  const { t } = useTranslation();
   const [score, setScore] = useState<VocationalScoreOutcome | null>(null);
   const [integrated, setIntegrated] = useState<IntegratedOutcome | null>(null);
   const [loading, setLoading] = useState(true);
@@ -37,9 +39,9 @@ export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserI
     return (
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center" role="alert">
         <AlertCircle className="h-8 w-8 text-red-400 mx-auto mb-3" />
-        <p className="text-gray-700 font-medium mb-4">Couldn&apos;t load this report.</p>
+        <p className="text-gray-700 font-medium mb-4">{t("evaluation.vocational.report.loadError")}</p>
         <button type="button" onClick={load} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg text-white text-sm font-medium" style={{ background: "#102B47" }}>
-          <RefreshCw className="h-4 w-4" /> Try again
+          <RefreshCw className="h-4 w-4" /> {t("common.tryAgain")}
         </button>
       </div>
     );
@@ -50,16 +52,16 @@ export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserI
   return (
     <div className="space-y-5">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-bold text-gray-900">{selfView ? "My Vocational 360 Report" : "Vocational 360 Report"}</h1>
+        <h1 className="text-xl font-bold text-gray-900">{selfView ? t("evaluation.vocational.report.titleMine") : t("evaluation.vocational.report.title")}</h1>
         <button type="button" onClick={load} className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700">
-          <RefreshCw className="h-4 w-4" /> Refresh
+          <RefreshCw className="h-4 w-4" /> {t("common.refresh")}
         </button>
       </div>
       <ReadinessChecklist score={score} integrated={integrated} />
       <IntegratedHeadline integrated={integrated} />
       {ready360
         ? (<><DimensionBreakdown dimensions={ready360.dimensionScores} /><RankingsPanel rankings={ready360.rankings} /></>)
-        : (<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-sm text-gray-500">The 360 evaluation isn&apos;t ready yet — it needs the student plus at least one other evaluator.</div>)}
+        : (<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-sm text-gray-500">{t("evaluation.vocational.report.notReady360")}</div>)}
       <RecommendationsPanel evaluatedUserId={evaluatedUserId} />
     </div>
   );

@@ -19,6 +19,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { getCounselorStatusBadge } from "./session-status-badge";
 import type { CounselorSession } from "@/services/counselorSessionService";
 
@@ -41,6 +42,7 @@ export function CounselorSessionsList({
   pastCount,
   onCancelClick,
 }: CounselorSessionsListProps) {
+  const { t } = useTranslation();
   return (
     <div className="dash-card overflow-hidden">
       <div className="border-b border-border px-6 py-5">
@@ -197,7 +199,7 @@ export function CounselorSessionsList({
               <Button asChild className="bg-foreground text-background hover:bg-foreground/90 h-11 px-6 rounded-xl">
                 <Link href="/dashboard/book-counselor">
                   <User className="h-4 w-4 mr-2" />
-                  Book a Counselor Session
+                  {t("counselorBooking.title")}
                 </Link>
               </Button>
             )}

@@ -7,8 +7,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowRight, GraduationCap } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
+import { useTranslation } from "react-i18next";
 
 export function UniversityMatches() {
+  const { t } = useTranslation();
   const { user } = useGlobalStore();
   const { data, isLoading, isError } = useUniversityRecommendations(
     user?.id || null,
@@ -34,12 +36,12 @@ export function UniversityMatches() {
     return (
       <Card className="p-5 flex flex-col rounded-2xl border-border">
         <h2 className="text-sm font-semibold text-foreground mb-3">
-          Universities
+          {t("nav.universities")}
         </h2>
         <div className="flex-1 flex flex-col items-center justify-center text-center py-4">
           <GraduationCap className="w-8 h-8 text-muted-foreground/40 mb-2" />
           <p className="text-xs text-muted-foreground">
-            Complete assessments to see matches
+            {t("dashboard.completeToSeeMatches")}
           </p>
         </div>
       </Card>
@@ -49,7 +51,7 @@ export function UniversityMatches() {
   return (
     <Card className="p-5 flex flex-col rounded-2xl border-border">
       <h2 className="text-sm font-semibold text-foreground mb-3">
-        Universities
+        {t("nav.universities")}
       </h2>
 
       <div className="space-y-2 flex-1">
@@ -85,7 +87,7 @@ export function UniversityMatches() {
         href="/dashboard/university"
         className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:text-primary/80 mt-3"
       >
-        Explore All <ArrowRight className="w-3 h-3" />
+        {t("dashboard.universityMatches.exploreAll")} <ArrowRight className="w-3 h-3" />
       </Link>
     </Card>
   );

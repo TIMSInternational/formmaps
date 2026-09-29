@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import type { TestScore } from "@/services/testScoreService";
 import { TYPE_COLOR } from "./score-helpers";
 import { ScoreCard } from "./score-card";
+import { useTranslation } from "react-i18next";
 
 interface ScoreListProps {
   loading: boolean;
@@ -28,6 +29,7 @@ export function ScoreList({
   onDelete,
   onAddClick,
 }: ScoreListProps) {
+  const { t } = useTranslation("student");
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -44,16 +46,16 @@ export function ScoreList({
           <div className="w-12 h-12 bg-secondary rounded-lg flex items-center justify-center mx-auto mb-3">
             <BookOpen className="h-6 w-6 text-muted-foreground" />
           </div>
-          <p className="text-sm font-semibold text-foreground">No test scores yet</p>
+          <p className="text-sm font-semibold text-foreground">{t("testScores.list.emptyTitle")}</p>
           <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-            Add your SAT, ACT, AP, or other exam results to build your academic profile.
+            {t("testScores.list.emptyBody")}
           </p>
           <Button
             variant="outline"
             onClick={onAddClick}
             className="mt-4 border border-border text-foreground hover:bg-secondary text-xs"
           >
-            Add your first score
+            {t("testScores.list.addFirst")}
           </Button>
         </div>
       ) : (
@@ -74,10 +76,10 @@ export function ScoreList({
                 </div>
                 <div>
                   <h3 className="font-semibold text-sm text-foreground">
-                    {type === "AP" ? "AP Exams" : type}
+                    {type === "AP" ? t("testScores.list.apExams") : type}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    {group.length} {group.length === 1 ? "result" : "results"}
+                    {t("testScores.list.resultCount", { count: group.length })}
                   </p>
                 </div>
               </div>

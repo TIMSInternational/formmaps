@@ -15,7 +15,7 @@
     "profile": "Perfil",
     "settings": "Configuración"
   },
-  "portal": "Portal del Coach",
+  "portal": "Portal del coach",
   "defaultName": "Coach",
   "greeting": {
     "morning": "Buenos días",
@@ -60,7 +60,7 @@
     "availabilityUpdated": "Disponibilidad actualizada correctamente",
     "failedToUpdateAvailability": "Error al actualizar la disponibilidad",
     "failedToLoadSlots": "Error al cargar los horarios disponibles",
-    "selectDateTime": "Por favor selecciona una fecha y hora",
+    "selectDateTime": "Por favor, selecciona una fecha y hora",
     "rescheduleSuccess": "Sesión reprogramada correctamente",
     "rescheduleFailed": "Error al reprogramar la sesión",
     "sessionCancelled": "Sesión cancelada correctamente",
@@ -147,6 +147,8 @@
     "failedToLoad": "Error al cargar los detalles del estudiante"
   },
   "schedule": {
+    "cancel": "Cancelar",
+    "rescheduleButton": "Reprogramar",
     "sectionLabel": "Programación",
     "title": "Mi horario",
     "subtitle": "Gestiona tus sesiones de coaching",
@@ -201,7 +203,7 @@
   "analytics": {
     "sectionLabel": "Rendimiento",
     "title": "Analíticas",
-    "subtitle": "Sigue tu crecimiento, ingresos y engagement de estudiantes",
+    "subtitle": "Sigue tu crecimiento, ingresos y participación de los estudiantes",
     "export": "Exportar",
     "stats": {
       "totalEarnings": "Ingresos totales",
@@ -248,7 +250,7 @@
       "student": "Estudiante",
       "date": "Fecha",
       "gross": "Bruto",
-      "fee": "Comisión plataforma",
+      "fee": "Comisión de la plataforma",
       "net": "Neto",
       "status": "Estado"
     },
@@ -281,7 +283,8 @@
     "noMessages": "Aún no hay mensajes",
     "startConversation": "Inicia una conversación con un estudiante",
     "typePlaceholder": "Escribe un mensaje...",
-    "send": "Enviar"
+    "send": "Enviar",
+    "pageSubtitle": "Comunícate con tus estudiantes y el personal del colegio."
   },
   "profile": {
     "sectionLabel": "Cuenta",
@@ -319,12 +322,12 @@
       "currency": "Moneda",
       "hourlyRate": "Tarifa por hora",
       "clientPays": "Los clientes verán este precio al reservar sesiones.",
-      "perHour": "/ hr",
+      "perHour": "/ h",
       "breakdown": {
         "title": "Desglose de ingresos",
         "subtitle": "Desglose de lo que ganas por sesión después de comisiones.",
         "clientPays": "El cliente paga",
-        "platformFee": "Comisión plataforma ({{fee}}%)",
+        "platformFee": "Comisión de la plataforma ({{fee}}%)",
         "netEarnings": "Tus ingresos netos",
         "netNote": "Los ingresos netos se transfieren a tu cuenta de pago."
       },
@@ -400,7 +403,7 @@
     "title": "Encuentra un coach",
     "subtitle": "Reserva una sesión con un coach experto para impulsar tu carrera",
     "searchPlaceholder": "Buscar coaches...",
-    "fetchError": "Error al cargar los coaches. Por favor intenta de nuevo.",
+    "fetchError": "Error al cargar los coaches. Por favor, intenta de nuevo.",
     "retry": "Reintentar",
     "new": "Nuevo",
     "remote": "Remoto",
@@ -439,10 +442,10 @@
     "joinCall": "Unirse a la llamada",
     "reschedule": "Reprogramar",
     "cancelSession": "Cancelar sesión",
-    "review": "Calificar",
+    "reviewButton": "Calificar",
     "messages": {
       "failedToLoad": "Error al cargar las sesiones",
-      "cancelReasonRequired": "Por favor indica el motivo de la cancelación",
+      "cancelReasonRequired": "Por favor, indica el motivo de la cancelación",
       "cancelSuccess": "Sesión cancelada correctamente",
       "failedToCancel": "Error al cancelar la sesión",
       "reviewSubmitted": "Calificación enviada correctamente",
@@ -452,7 +455,7 @@
       "title": "Cancelar sesión",
       "description": "¿Estás seguro de que deseas cancelar esta sesión con {{name}}?",
       "reasonLabel": "Motivo de cancelación",
-      "reasonPlaceholder": "Por favor indícanos por qué estás cancelando...",
+      "reasonPlaceholder": "Por favor, indícanos por qué estás cancelando...",
       "keepSession": "Mantener sesión",
       "confirmCancel": "Cancelar sesión",
       "cancelling": "Cancelando..."
@@ -470,7 +473,7 @@
       "title": "Cancelar sesión de orientación",
       "description": "¿Estás seguro de que deseas cancelar tu sesión con {{name}}?",
       "reasonLabel": "Motivo de cancelación",
-      "reasonPlaceholder": "Por favor informa a tu orientador por qué estás cancelando...",
+      "reasonPlaceholder": "Por favor, informa a tu orientador por qué estás cancelando...",
       "keep": "Mantener sesión",
       "confirm": "Cancelar sesión"
     }

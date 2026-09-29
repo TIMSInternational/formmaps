@@ -158,7 +158,7 @@ export default function PCAAssessmentPage() {
               <iframe
                 src={assessmentUrl}
                 className="w-full h-full border-0"
-                title="PCA Assessment"
+                title={t("dashboard.pcaAssessmentTitle")}
                 allow="fullscreen"
               />
             </div>
@@ -224,7 +224,7 @@ export default function PCAAssessmentPage() {
                   {t("dashboard.viewResults", "View Results")}
                 </h3>
                 <p className="text-xs text-muted-foreground">
-                  See your PCA personality profile and competency breakdown
+                  {t("dashboard.pcaViewResultsDesc")}
                 </p>
               </div>
             </div>

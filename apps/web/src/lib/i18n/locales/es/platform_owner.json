@@ -83,7 +83,7 @@
       "totalSessionsDelivered": "sesiones realizadas en total"
     },
     "charts": {
-      "revenueVsTransactions": "Ingresos vs. Transacciones",
+      "revenueVsTransactions": "Ingresos vs. transacciones",
       "monthlyComparison": "Comparativa mensual",
       "revenueSeriesLabel": "Ingresos ($)",
       "transactionsSeriesLabel": "Transacciones",
@@ -117,11 +117,11 @@
       "pageViews": "Vistas de página",
       "pagesPerSession": "Páginas/sesión",
       "bounceRate": "Tasa de rebote",
-      "completion": "Completación",
+      "completion": "Finalización",
       "completionValue": "Alta"
     },
     "charts": {
-      "newVsReturning": "Nuevos vs. Recurrentes",
+      "newVsReturning": "Nuevos vs. recurrentes",
       "totalUsersLabel": "Total de usuarios",
       "newLabel": "Nuevos: ",
       "returningLabel": "Recurrentes: ",
@@ -132,7 +132,7 @@
       "eventBreakdownDesc": "Distribución de acciones de usuarios",
       "noEventData": "Sin datos de eventos",
       "totalEventsLabel": "Eventos",
-      "completionRates": "Tasas de completación",
+      "completionRates": "Tasas de finalización",
       "userJourneyMilestones": "Hitos del recorrido del usuario",
       "resumeBuilder": "Constructor de CV",
       "assessments": "Evaluaciones",
@@ -198,7 +198,7 @@
     },
     "aiRecommended": {
       "sectionTitle": "Recomendados por IA para estudiantes",
-      "sectionDesc": "Cursos que la IA selecciona según los perfiles de carrera de los estudiantes del catálogo completo",
+      "sectionDesc": "Cursos del catálogo completo que la IA selecciona según los perfiles de carrera de los estudiantes",
       "noRecommendations": "Las recomendaciones se generan cuando los estudiantes completan sus evaluaciones"
     },
     "categories": {
@@ -320,7 +320,7 @@
     "statusInactive": "Inactivo",
     "toast": {
       "failedToLoad": "Error al cargar los planes de suscripción",
-      "validationError": "Por favor ingresa un nombre y precio válidos",
+      "validationError": "Por favor, ingresa un nombre y un precio válidos",
       "updatedSuccess": "Plan actualizado correctamente",
       "createdSuccess": "Plan creado correctamente",
       "deletedSuccess": "Plan eliminado correctamente",

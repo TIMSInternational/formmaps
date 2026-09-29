@@ -11,17 +11,17 @@ interface LIAGeneralInstructionsProps {
 export function LIAGeneralInstructions({ onContinue, language = 'es' }: LIAGeneralInstructionsProps) {
   const content = {
     es: {
-      title: 'Instrucciones Generales',
+      title: 'Instrucciones generales',
       intro: 'La Evaluación de Inteligencia Laboral (LIA) mide tu capacidad para aprender, desaprender y adaptarte a situaciones nuevas.',
       points: [
         'Consta de 5 secciones cronometradas',
         'Cada sección tiene un tiempo límite estricto',
         'No puedes volver a preguntas anteriores',
         'Las respuestas incorrectas tienen penalización',
-        'Si no estás seguro, es mejor omitir la pregunta',
+        'Si tienes dudas, es mejor omitir la pregunta',
         'Antes de cada sección, completarás preguntas de práctica',
       ],
-      subtestsTitle: 'Las 5 Secciones',
+      subtestsTitle: 'Las 5 secciones',
       totalTime: 'Tiempo total aproximado: 20 minutos',
       continueBtn: 'Continuar',
     },
@@ -84,7 +84,7 @@ export function LIAGeneralInstructions({ onContinue, language = 'es' }: LIAGener
           <AlertTriangle className="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5" />
           <p className="text-sm text-amber-700">
             {language === 'es'
-              ? 'Las respuestas incorrectas restan puntos. Si no estás seguro de una respuesta, es mejor omitirla.'
+              ? 'Las respuestas incorrectas restan puntos. Si tienes dudas sobre una respuesta, es mejor omitirla.'
               : "Incorrect answers deduct points. If you're unsure about an answer, it's better to skip it."}
           </p>
         </div>
@@ -294,7 +294,7 @@ export function LIASubtestIntro({
           onClick={onStartPractice}
           className="w-full py-3 px-6 bg-[#102B47] hover:bg-[#0b1f33] text-white font-medium rounded-lg flex items-center justify-center gap-2 transition-colors"
         >
-          {language === 'es' ? 'Comenzar Práctica' : 'Start Practice'}
+          {language === 'es' ? 'Comenzar práctica' : 'Start Practice'}
           <ArrowRight className="w-5 h-5" />
         </button>
       </div>

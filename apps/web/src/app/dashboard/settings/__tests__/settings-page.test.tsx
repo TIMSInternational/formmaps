@@ -32,11 +32,18 @@ jest.mock("@/lib/i18n", () => ({
   default: { changeLanguage: jest.fn().mockResolvedValue(undefined), language: "en" },
 }));
 // useSetLanguage (used by the language picker onChange) also needs react-i18next.
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({
-    i18n: { changeLanguage: jest.fn().mockResolvedValue(undefined), language: "en" },
-  }),
-}));
+// The page's copy resolves through t(); use the real English locale so text queries match.
+jest.mock("react-i18next", () => {
+  const en = require("@/lib/i18n/locales/en/common.json");
+  const get = (k: string) =>
+    k.split(".").reduce((o: unknown, p: string) => (o == null ? o : (o as Record<string, unknown>)[p]), en);
+  return {
+    useTranslation: () => ({
+      t: (k: string, o?: { defaultValue?: string }) => (get(k) as string) ?? o?.defaultValue ?? k,
+      i18n: { changeLanguage: jest.fn().mockResolvedValue(undefined), language: "en" },
+    }),
+  };
+});
 
 const mockGet = getUserSettings as jest.Mock;
 const mockUpdate = updateUserSettings as jest.Mock;

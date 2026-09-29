@@ -47,6 +47,18 @@ const TOPICS = [
   "Other",
 ];
 
+// TOPICS values are what gets stored with the booking; only the label is translated.
+const TOPIC_KEYS: Record<string, string> = {
+  "Academic Planning": "counselorBooking.topics.academicPlanning",
+  "Course Selection": "counselorBooking.topics.courseSelection",
+  "College Applications": "counselorBooking.topics.collegeApplications",
+  "Career Guidance": "counselorBooking.topics.careerGuidance",
+  "Personal Development": "counselorBooking.topics.personalDevelopment",
+  "Graduation Requirements": "counselorBooking.topics.graduationRequirements",
+  "Scholarship Information": "counselorBooking.topics.scholarshipInformation",
+  "Other": "counselorBooking.topics.other",
+};
+
 export default function BookCounselorPage() {
   const router = useRouter();
   const { t } = useTranslation();
@@ -142,9 +154,9 @@ export default function BookCounselorPage() {
         meetingLink,
       });
       setBooked(true);
-      toast.success("Session booked successfully!");
+      toast.success(t("counselorBooking.bookedToast"));
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Failed to book session";
+      const message = err instanceof Error ? err.message : t("counselorBooking.bookFailed");
       toast.error(message);
     } finally {
       setIsBooking(false);
@@ -167,11 +179,11 @@ export default function BookCounselorPage() {
             <div className="w-16 h-16 bg-indigo-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
               <User className="h-8 w-8 text-indigo-500" />
             </div>
-            <h2 className="text-xl font-bold text-foreground mb-2">No Counselors Available</h2>
+            <h2 className="text-xl font-bold text-foreground mb-2">{t("counselorBooking.noCounselors.title")}</h2>
             <p className="text-gray-500 text-sm mb-6">
-              There are no counselors available at your school right now. Please contact your school administrator.
+              {t("counselorBooking.noCounselors.description")}
             </p>
-            <Button variant="outline" onClick={() => router.back()}>Go Back</Button>
+            <Button variant="outline" onClick={() => router.back()}>{t("dashboard.goBack")}</Button>
           </CardContent>
         </Card>
       </div>
@@ -187,24 +199,24 @@ export default function BookCounselorPage() {
               <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.15 }}>
                 <CheckCircle2 className="h-16 w-16 text-green-500 mx-auto mb-4" />
               </motion.div>
-              <Badge className="bg-green-100 text-green-700 border-0 mb-4">FREE Session</Badge>
-              <h2 className="text-2xl font-bold text-foreground mb-2">Session Booked!</h2>
+              <Badge className="bg-green-100 text-green-700 border-0 mb-4">{t("counselorBooking.freeSession")}</Badge>
+              <h2 className="text-2xl font-bold text-foreground mb-2">{t("counselorBooking.booked")}</h2>
               <p className="text-gray-500 text-sm mb-1 font-medium">
                 {selectedSlot && format(new Date(selectedSlot.start), "EEEE, MMMM d, yyyy")}
               </p>
               <p className="text-gray-500 text-sm mb-6">
                 {selectedSlot && `${format(new Date(selectedSlot.start), "h:mm a")} – ${format(new Date(selectedSlot.end), "h:mm a")}`}
               </p>
-              <p className="text-gray-500 text-sm mb-8">Topic: <span className="font-medium text-gray-700">{topic}</span></p>
+              <p className="text-gray-500 text-sm mb-8">{t("counselorBooking.topic")}: <span className="font-medium text-gray-700">{TOPIC_KEYS[topic] ? t(TOPIC_KEYS[topic]) : topic}</span></p>
               <div className="flex gap-3 justify-center">
                 <Button variant="outline" onClick={() => router.push("/dashboard/my-sessions")}>
-                  View My Sessions
+                  {t("counselorBooking.viewMySessions")}
                 </Button>
                 <Button
                   className="bg-foreground text-background"
                   onClick={() => { setBooked(false); setSelectedSlot(null); fetchSlots(selectedDate); }}
                 >
-                  Book Another
+                  {t("counselorBooking.bookAnother")}
                 </Button>
               </div>
             </CardContent>
@@ -378,7 +390,11 @@ export default function BookCounselorPage() {
                     onChange={e => setTopic(e.target.value)}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
                   >
-                    {TOPICS.map(t => <option key={t} value={t}>{t}</option>)}
+                    {TOPICS.map((topicValue) => (
+                      <option key={topicValue} value={topicValue}>
+                        {t(TOPIC_KEYS[topicValue])}
+                      </option>
+                    ))}
                   </select>
                 </div>
 

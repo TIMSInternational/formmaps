@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { getSelfEvaluationUrl } from "@/services/evaluationService";
 import { toast } from "sonner";
+import { Trans, useTranslation } from "react-i18next";
 
 interface MILCompletionProps {
   onViewResults: () => void;
@@ -16,6 +17,7 @@ interface MILCompletionProps {
 export default function MILCompletion({
   onReturnToDashboard,
 }: MILCompletionProps) {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user, language } = useGlobalStore();
   const [starting, setStarting] = useState(false);
@@ -37,10 +39,10 @@ export default function MILCompletion({
           router.push(selfEval.url);
         }
       } else {
-        toast.error("Failed to start evaluation. Please try again.");
+        toast.error(t("evaluation.page.startFailed"));
       }
     } catch {
-      toast.error("Failed to start evaluation. Please try again.");
+      toast.error(t("evaluation.page.startFailed"));
     } finally {
       setStarting(false);
     }
@@ -70,7 +72,7 @@ export default function MILCompletion({
             transition={{ delay: 0.3 }}
             className="text-2xl font-bold text-foreground mb-3"
           >
-            LIA Assessment Complete!
+            {t("lia.completion.title")}
           </motion.h1>
 
           <motion.p
@@ -79,7 +81,7 @@ export default function MILCompletion({
             transition={{ delay: 0.4 }}
             className="text-muted-foreground mb-8 leading-relaxed"
           >
-            Thank you for completing all 5 subtests. Your responses have been saved and will be reviewed by your counselor.
+            {t("lia.completion.body")}
           </motion.p>
 
           <motion.div
@@ -88,9 +90,12 @@ export default function MILCompletion({
             transition={{ delay: 0.5 }}
             className="bg-[#102B47]/5 border border-[var(--admin-accent-blue)]/30 rounded-lg p-5 mb-6 text-left"
           >
-            <p className="text-sm font-semibold text-[var(--admin-accent-blue)] mb-1">Next Step</p>
+            <p className="text-sm font-semibold text-[var(--admin-accent-blue)] mb-1">{t("lia.completion.nextStep")}</p>
             <p className="text-sm text-[var(--admin-accent-blue)]">
-              Complete the <strong>360° Evaluation</strong> — start by evaluating yourself, then invite peers, parents, and teachers to evaluate you.
+              <Trans
+                i18nKey="lia.completion.nextStepBody"
+                components={{ strong: <strong /> }}
+              />
             </p>
           </motion.div>
 
@@ -106,16 +111,16 @@ export default function MILCompletion({
               className="w-full bg-[#102B47] text-white py-3 px-6 rounded-lg hover:bg-[#0b1f33] transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-60"
             >
               {starting ? (
-                <><Loader2 className="w-4 h-4 animate-spin" /> Starting...</>
+                <><Loader2 className="w-4 h-4 animate-spin" /> {t("evaluation.page.starting")}</>
               ) : (
-                <>Start 360° Self-Evaluation <ArrowRight className="w-4 h-4" /></>
+                <>{t("lia.completion.start360")} <ArrowRight className="w-4 h-4" /></>
               )}
             </button>
             <button
               onClick={onReturnToDashboard}
               className="w-full bg-secondary text-foreground py-3 px-6 rounded-lg hover:bg-secondary/80 transition-colors font-medium border"
             >
-              Return to Dashboard
+              {t("dashboard.returnToDashboard")}
             </button>
           </motion.div>
         </motion.div>

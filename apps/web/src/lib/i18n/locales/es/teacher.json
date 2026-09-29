@@ -47,7 +47,7 @@
   },
   "onboarding": {
     "title": "Configura tu cuenta del portal docente",
-    "subtitle": "Has sido invitado a unirte a tu escuela en FormMaps",
+    "subtitle": "Te han invitado a unirte a tu escuela en FormMaps",
     "inviteDetails": {
       "schoolLabel": "Escuela",
       "schoolFallback": "Tu escuela"
@@ -73,10 +73,10 @@
       "signInLink": "Inicia sesión aquí"
     },
     "validation": {
-      "nameRequired": "Por favor ingresa tu nombre completo",
+      "nameRequired": "Por favor, ingresa tu nombre completo",
       "passwordTooShort": "La contraseña debe tener al menos 8 caracteres",
       "passwordMismatch": "Las contraseñas no coinciden",
-      "setupFailed": "Error al configurar la cuenta. Por favor inténtalo de nuevo."
+      "setupFailed": "Error al configurar la cuenta. Por favor, inténtalo de nuevo."
     },
     "states": {
       "noToken": {
@@ -94,6 +94,11 @@
         "title": "¡Bienvenido!",
         "message": "Tu cuenta de profesor está lista. Redirigiendo a tu portal…"
       }
+    },
+    "inviteErrors": {
+      "expired": "Esta invitación ha vencido.",
+      "used": "Esta invitación ya fue utilizada.",
+      "invalid": "Este enlace de invitación no es válido."
     }
   },
   "recommendations": {

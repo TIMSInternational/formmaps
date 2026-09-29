@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import Link from "next/link";
 import type { CareerRole } from "@/types/career";
+import { useTranslation } from "react-i18next";
 
 interface CareerDetailPanelProps {
   career: CareerRole;
@@ -31,6 +32,7 @@ export function CareerDetailPanel({
   bridgingReasons,
 }: CareerDetailPanelProps) {
   const { language } = useGlobalStore();
+  const { t } = useTranslation();
   const title = career.title[language === "spanish" ? "es" : "en"] || career.title.en || "";
   const description = career.shortDescription?.[language === "spanish" ? "es" : "en"] || career.shortDescription?.en || "";
 
@@ -84,7 +86,7 @@ export function CareerDetailPanel({
       {/* Description */}
       {description && (
         <div className="space-y-2">
-          <SectionLabel icon={BookOpen} label="About this Career" />
+          <SectionLabel icon={BookOpen} label={t("careers.details.aboutTitle")} />
           <p className="text-sm leading-relaxed" style={{ color: "var(--admin-font-tertiary)" }}>
             {description}
           </p>

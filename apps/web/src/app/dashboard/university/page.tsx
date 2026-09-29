@@ -164,7 +164,7 @@ export default function UniversityPage() {
       { name: "PCA Assessment", description: "Discover your DISC personality profile", status: pcaStatus, href: "/dashboard/assessments/pca" },
       { name: "LIA Assessment", description: "Measure your cognitive abilities across 5 dimensions", status: milStatus, href: "/dashboard/assessments/lia" },
       { name: "360° Evaluation", description: "Gather feedback from peers, parents, and teachers", status: evalStatus, href: "/dashboard/assessments/evaluation" },
-      { name: "Personality Assessment", description: "Resolve your 4-letter personality type", status: personalityStatus, href: "/dashboard/assessments/personality" },
+      { name: "Personality Assessment", description: "Discover your 4-letter personality type", status: personalityStatus, href: "/dashboard/assessments/personality" },
     ];
     const completedCount = gateAssessments.filter((a) => a.status === "completed").length;
 
@@ -174,9 +174,12 @@ export default function UniversityPage() {
           <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200/30">
             <Lock className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Complete Your Assessments</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t("Complete Your Assessments", "Completa tus evaluaciones")}</h1>
           <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-            Finish all 4 assessments to unlock personalized university recommendations based on your profile, competencies, and preferences.
+            {t(
+              "Finish all 4 assessments to unlock personalized university recommendations based on your profile, competencies, and preferences.",
+              "Completa las 4 evaluaciones para desbloquear recomendaciones personalizadas de universidades basadas en tu perfil, competencias y preferencias."
+            )}
           </p>
         </div>
         <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground">
@@ -236,12 +239,12 @@ export default function UniversityPage() {
       >
         <div className="flex flex-col gap-2">
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-            {t("University Finder", "Buscador de Universidades")}
+            {t("University Finder", "Buscador de universidades")}
           </span>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
             {t(
               "Find Your Perfect Match",
-              "Encuentra tu Universidad Ideal"
+              "Encuentra tu universidad ideal"
             )}
           </h1>
           <p className="max-w-2xl text-base text-muted-foreground">
@@ -377,9 +380,9 @@ export default function UniversityPage() {
                   "Completa las evaluaciones PCA y MIL para obtener recomendaciones personalizadas."
                 )}
                 icon={GraduationCap}
-                actionLabel="Start Assessments"
+                actionLabel={t("Start Assessments", "Comenzar evaluaciones")}
                 actionHref="/dashboard/assessments"
-                secondaryLabel="Browse All Universities"
+                secondaryLabel={t("Browse All Universities", "Ver todas las universidades")}
                 onSecondary={() => setActiveTab("all")}
               />
             )}
@@ -445,7 +448,7 @@ export default function UniversityPage() {
                     "Intenta ajustar tus filtros para ver más resultados."
                   )}
                   icon={GraduationCap}
-                  actionLabel="Clear Filters"
+                  actionLabel={t("Clear Filters", "Limpiar filtros")}
                   onAction={() => setFilters({})}
                 />
               )}

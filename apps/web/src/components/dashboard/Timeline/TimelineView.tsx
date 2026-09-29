@@ -299,10 +299,10 @@ function TimelineEventCard({ event, isLast, onClick }: TimelineEventCardProps) {
                     : "Completed"
                   : event.status === "in_progress"
                     ? language === "spanish"
-                      ? "En Progreso"
+                      ? "En progreso"
                       : "In Progress"
                     : language === "spanish"
-                      ? "No Iniciado"
+                      ? "No iniciado"
                       : "Not Started"}
               </span>
             </div>
@@ -350,7 +350,7 @@ function EventMetadata({
         {metadata.examName && (
           <div className="flex flex-col">
             <span className="text-[10px] text-gray-400 uppercase tracking-wider font-bold mb-0.5">
-              {language === "spanish" ? "Subtest" : "Subtest"}
+              {language === "spanish" ? "Subprueba" : "Subtest"}
             </span>
             <span className="font-semibold text-gray-900 text-xs">
               {metadata.examName}
@@ -616,7 +616,7 @@ function TimelineEmptyState({ language }: { language: "english" | "spanish" }) {
       </p>
       <div className="mt-6">
         <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[var(--admin-accent-blue)] text-white text-sm font-semibold hover:bg-[var(--admin-accent-blue)]/90 transition-colors shadow-sm shadow-[var(--admin-accent-blue)]/20">
-          {language === "spanish" ? "Ir a Evaluaciones" : "Go to Assessments"}
+          {language === "spanish" ? "Ir a evaluaciones" : "Go to Assessments"}
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>

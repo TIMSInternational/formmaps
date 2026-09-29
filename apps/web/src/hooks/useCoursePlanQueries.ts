@@ -28,6 +28,7 @@ import type {
   StudentCoursePlanResponse,
 } from "@/types/coursePlan";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n";
 import {
   optimisticId,
   patchBy,
@@ -388,7 +389,7 @@ export function useSubmitChangeRequest() {
           data: upsertBy(current.data, (r) => r.id === context?.pendingId, request),
         }),
       );
-      toast.success("Change request submitted — awaiting counselor approval");
+      toast.success(i18n.t("coursePlan.toasts.changeRequestSubmitted"));
     },
 
     onError: (err: Error, _payload, context) => {

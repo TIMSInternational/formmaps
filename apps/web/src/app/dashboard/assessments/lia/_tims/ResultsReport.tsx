@@ -115,14 +115,14 @@ export function ResultsReport({ results, language }: { results: LIAResultsType; 
       </div>
 
       {/* About MIL */}
-      <InsightSection title={language === "es" ? "Acerca de esta Evaluación" : "About this Assessment"}>
+      <InsightSection title={language === "es" ? "Acerca de esta evaluación" : "About this Assessment"}>
         <p className="text-gray-700 leading-relaxed">{MIL_INTRO_TEXT[language]}</p>
       </InsightSection>
 
       {/* Subtest Breakdown */}
       <div className="rounded-2xl border border-gray-200 bg-white p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">
-          {language === "es" ? "Desglose por Subprueba" : "Subtest Breakdown"}
+          {language === "es" ? "Desglose por subprueba" : "Subtest Breakdown"}
         </h2>
         <div className="space-y-6">
           {SUBTEST_ORDER.map((subtest) => {
@@ -198,7 +198,7 @@ export function ResultsReport({ results, language }: { results: LIAResultsType; 
 
       {/* Growth Areas */}
       <InsightSection
-        title={language === "es" ? "Áreas de Desarrollo" : "Growth Areas"}
+        title={language === "es" ? "Áreas de desarrollo" : "Growth Areas"}
         icon={<Target className="w-5 h-5 text-amber-500" />}
       >
         <div className="space-y-4">
@@ -258,7 +258,7 @@ export function ResultsReport({ results, language }: { results: LIAResultsType; 
             </ul>
             <h4 className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
               <Lightbulb className="w-4 h-4 text-amber-500" />
-              {language === "es" ? "Estrategias de Adaptación" : "Adaptation Strategies"}
+              {language === "es" ? "Estrategias de adaptación" : "Adaptation Strategies"}
             </h4>
             <ul className="space-y-2">
               {content.strategies[language].map((item, i) => (
@@ -276,7 +276,7 @@ export function ResultsReport({ results, language }: { results: LIAResultsType; 
       <div className="rounded-2xl border border-gray-200 bg-white overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900">
-            {language === "es" ? "Resumen de Resultados" : "Results Summary"}
+            {language === "es" ? "Resumen de resultados" : "Results Summary"}
           </h2>
         </div>
         <div className="overflow-x-auto">
@@ -346,11 +346,11 @@ export function ResultsReport({ results, language }: { results: LIAResultsType; 
       {/* Assessment Details */}
       <div className="rounded-2xl border border-gray-200 bg-white p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          {language === "es" ? "Detalles de la Evaluación" : "Assessment Details"}
+          {language === "es" ? "Detalles de la evaluación" : "Assessment Details"}
         </h2>
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div>
-            <span className="text-gray-500">{language === "es" ? "Fecha de completación" : "Completed at"}:</span>
+            <span className="text-gray-500">{language === "es" ? "Fecha de finalización" : "Completed at"}:</span>
             <p className="font-medium text-gray-900">
               {new Date(results.completed_at).toLocaleString(language === "es" ? "es-ES" : "en-US")}
             </p>
@@ -378,7 +378,7 @@ export function ResultsReport({ results, language }: { results: LIAResultsType; 
           <div className="flex items-center gap-3 mb-4">
             <AlertTriangle className="w-6 h-6 text-orange-500" />
             <h3 className="font-semibold text-orange-700">
-              {language === "es" ? "Violaciones Detectadas" : "Violations Detected"}
+              {language === "es" ? "Infracciones detectadas" : "Violations Detected"}
             </h3>
             <span className="ml-auto px-2 py-1 bg-orange-200 text-orange-700 rounded-full text-xs font-medium">
               {results.violation_count} total

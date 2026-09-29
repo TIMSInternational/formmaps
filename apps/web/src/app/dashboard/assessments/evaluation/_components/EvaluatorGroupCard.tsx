@@ -16,6 +16,7 @@ import {
   Trash2,
   UserPlus,
 } from "lucide-react";
+import { relationshipLabel } from "./AddEvaluatorDialog";
 
 interface EvaluatorGroupCardProps {
   group: EvaluatorGroup;
@@ -63,8 +64,12 @@ export function EvaluatorGroupCard({
             {group.name}
           </h3>
           <p className="text-[11px] text-muted-foreground mt-0.5">
-            {group.evaluators.length}/{group.maxAllowed} added
-            {group.minRequired > 0 && ` · min ${group.minRequired}`}
+            {t("evaluation.card.addedCount", {
+              count: group.evaluators.length,
+              max: group.maxAllowed,
+            })}
+            {group.minRequired > 0 &&
+              ` · ${t("evaluation.card.minRequired", { min: group.minRequired })}`}
           </p>
         </div>
         <span
@@ -75,8 +80,8 @@ export function EvaluatorGroupCard({
           }`}
         >
           {group.evaluators.length >= group.minRequired
-            ? "Complete"
-            : "Incomplete"}
+            ? t("evaluation.card.complete")
+            : t("evaluation.card.incomplete")}
         </span>
       </div>
 
@@ -87,7 +92,7 @@ export function EvaluatorGroupCard({
           disabled={group.evaluators.length >= group.maxAllowed}
         >
           <Plus className="w-3.5 h-3.5" />
-          <span>Add {group.name}</span>
+          <span>{t("evaluation.card.addToGroup", { group: group.name })}</span>
         </button>
       </div>
 
@@ -144,6 +149,7 @@ function EvaluatorCard({
   onResendPhone,
   userEmail,
 }: EvaluatorCardProps) {
+  const { t } = useTranslation();
   const apiEvaluator = apiEvaluators.find((e) => e.id === evaluator.id);
 
   const renderStatus = () => {
@@ -151,19 +157,19 @@ function EvaluatorCard({
       if (apiEvaluator.isEvaluationCompleted) {
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-100 text-emerald-700">
-            Completed
+            {t("evaluation.status.completed")}
           </span>
         );
       } else if (apiEvaluator.isEmailSent) {
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#102B47]/10 text-[var(--admin-accent-blue)]">
-            Sent
+            {t("evaluation.status.sent")}
           </span>
         );
       } else {
         return (
           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-secondary text-muted-foreground border border-border">
-            Not Sent
+            {t("evaluation.status.notSent")}
           </span>
         );
       }
@@ -178,14 +184,16 @@ function EvaluatorCard({
               : "bg-amber-100 text-amber-700"
           }`}
         >
-          {evaluator.responseReceived ? "Completed" : "Pending Response"}
+          {evaluator.responseReceived
+            ? t("evaluation.status.completed")
+            : t("evaluation.card.pendingResponse")}
         </span>
       );
     }
 
     return (
       <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-secondary text-muted-foreground border border-border">
-        Not Sent
+        {t("evaluation.status.notSent")}
       </span>
     );
   };
@@ -204,11 +212,13 @@ function EvaluatorCard({
                 {evaluator.email ||
                   (userEmail && evaluator.relationship === "Self"
                     ? userEmail
-                    : "No email provided")}
+                    : t("evaluation.card.noEmail"))}
               </p>
               <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                 <Phone className="w-3 h-3 flex-shrink-0" />
-                {evaluator.phone}
+                {!evaluator.phone || evaluator.phone === "Not provided"
+                  ? t("evaluation.card.phoneNotProvided")
+                  : evaluator.phone}
               </p>
             </div>
             <div className="relative dropdown-container ml-2">
@@ -230,7 +240,7 @@ function EvaluatorCard({
                       className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-secondary w-full text-left gap-2"
                     >
                       <Pencil className="w-3.5 h-3.5" />
-                      Edit
+                      {t("common.edit")}
                     </button>
                     <button
                       onClick={() => {
@@ -240,7 +250,7 @@ function EvaluatorCard({
                       className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-secondary w-full text-left gap-2"
                     >
                       <Mail className="w-3.5 h-3.5" />
-                      Resend via Email
+                      {t("evaluation.card.resendEmail")}
                     </button>
                     <button
                       onClick={() => {
@@ -262,7 +272,7 @@ function EvaluatorCard({
                             : ""
                         }
                       >
-                        Resend via Phone
+                        {t("evaluation.card.resendPhone")}
                       </span>
                     </button>
                     <div className="border-t border-border my-1"></div>
@@ -274,7 +284,7 @@ function EvaluatorCard({
                       className="flex items-center px-3 py-2 text-sm text-red-600 hover:bg-red-50 w-full text-left gap-2"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
-                      Delete
+                      {t("common.delete")}
                     </button>
                   </div>
                 </div>
@@ -287,7 +297,7 @@ function EvaluatorCard({
             <div className="flex items-center gap-2">
               {evaluator.relationship && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-[#102B47]/10 text-[var(--admin-accent-blue)]">
-                  {evaluator.relationship}
+                  {relationshipLabel(t, evaluator.relationship)}
                 </span>
               )}
             </div>

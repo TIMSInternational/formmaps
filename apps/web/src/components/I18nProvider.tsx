@@ -16,8 +16,6 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   // any DB fetch). If the user is authenticated, fetch their saved settings from
   // the DB and apply them — this ensures cross-device language sync.
   useEffect(() => {
-    const storedI18nCode = language === "spanish" ? "es" : "en";
-
     const applyLanguage = (code: "en" | "es") => {
       const storeValue = code === "es" ? "spanish" : "english";
       // Guard: only update store when value actually differs (loop-guard).
@@ -31,7 +29,15 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     };
 
     const ensureInit = async () => {
-      // 1. Apply persisted store value immediately so the UI doesn't flash raw keys.
+      // 1. Apply the initial language immediately so the UI doesn't flash raw keys.
+      //    Signed-in users: the persisted store value (the DB value below then wins).
+      //    Signed-out visitors (e.g. a 360 evaluator opening an emailed link) have no
+      //    saved preference — the store only holds its "english" default — so keep the
+      //    language i18next detected (cached i18nextLng / browser) instead of forcing English.
+      const detectedI18nCode = (i18n.resolvedLanguage || i18n.language || "en").toLowerCase().startsWith("es") ? "es" : "en";
+      const storedI18nCode = user.isAuthenticated
+        ? (language === "spanish" ? "es" : "en")
+        : detectedI18nCode;
       applyLanguage(storedI18nCode);
 
       // 2. If authenticated, fetch the DB-persisted language and override if different.

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Loader2, UploadCloud } from "lucide-react";
 import { uploadRecommendationLetter } from "@/services/recommendationService";
+import { useTranslation } from "react-i18next";
 
 export function UploadLetterDialog({
   requestId,
@@ -16,6 +17,7 @@ export function UploadLetterDialog({
   onClose: () => void;
   onUploaded: () => void;
 }) {
+  const { t } = useTranslation();
   const [file, setFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -53,7 +55,7 @@ export function UploadLetterDialog({
         onClick={(e) => e.stopPropagation()}
         style={{ width: "min(440px, 92vw)", borderRadius: 10, background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", padding: 20 }}
       >
-        <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--admin-font-primary)", marginBottom: 4 }}>Upload recommendation letter</h2>
+        <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--admin-font-primary)", marginBottom: 4 }}>{t("recommendations.uploadLetter.title")}</h2>
         <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginBottom: 14 }}>
           PDF only. Uploading marks the request as submitted and notifies the student.
         </p>

@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n";
 import {
   getGraduationTarget,
   setGraduationTarget,
@@ -188,7 +189,7 @@ export function useSubmitGraduationPlan() {
       qc.invalidateQueries({ queryKey: graduationPlanKeys.myPlan() });
     },
 
-    onSuccess: () => toast.success("Plan sent to your counselor for review"),
+    onSuccess: () => toast.success(i18n.t("coursePlan.toasts.planSubmitted")),
     onError: (err, _vars, context) => {
       optimistic.rollback(context);
       toast.error(planErrorMessage(err, "Failed to submit your plan"));

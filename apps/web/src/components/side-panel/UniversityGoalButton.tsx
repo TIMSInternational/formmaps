@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { GraduationCap, CheckCircle2, LoaderCircle } from "lucide-react";
 import {
   useGraduationTarget,
@@ -21,6 +22,7 @@ export function UniversityGoalButton({
   universityName,
   suggestedMajors = [],
 }: UniversityGoalButtonProps) {
+  const { t } = useTranslation();
   const targetQuery = useGraduationTarget();
   const setTarget = useSetGraduationTarget();
   const target = targetQuery.data;
@@ -54,7 +56,7 @@ export function UniversityGoalButton({
         className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-bold bg-[#FFD23F] text-[#102B47] hover:opacity-90 transition-opacity"
       >
         <GraduationCap className="h-4 w-4" />
-        Set as my graduation goal
+        {t("university.goal.setAsGoal")}
       </button>
     );
   }

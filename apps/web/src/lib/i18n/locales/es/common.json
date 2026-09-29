@@ -33,7 +33,7 @@
     "counselingCoaching": "Orientación y coaching",
     "mySessions": "Mis sesiones",
     "bookCounselor": "Reservar orientador",
-    "findCoach": "Buscar Coach",
+    "findCoach": "Buscar coach",
     "messages": "Mensajes",
     "videoCalls": "Videollamadas",
     "home": "Inicio",
@@ -133,12 +133,28 @@
     "notStarted": "NO INICIADO",
     "male": "Masculino",
     "female": "Femenino",
-    "continue": "Continuar"
+    "continue": "Continuar",
+    "copied": "¡Copiado!",
+    "copy": "Copiar",
+    "generate": "Generar",
+    "regenerate": "Regenerar",
+    "selectOption": "Selecciona una opción",
+    "toggleTooltip": "Mostrar u ocultar ayuda",
+    "unknown": "Desconocido",
+    "pickDate": "Elige una fecha",
+    "saving": "Guardando...",
+    "saveChanges": "Guardar cambios",
+    "hour": "hora"
   },
   "error": {
     "somethingWentWrong": "Algo salió mal",
     "unexpectedError": "Encontramos un error inesperado. Por favor, intenta actualizar la página o contacta al soporte si el problema persiste.",
-    "tryAgain": "Intentar de nuevo"
+    "tryAgain": "Intentar de nuevo",
+    "notFound": {
+      "title": "Página no encontrada",
+      "description": "La página que buscas no existe o fue movida.",
+      "goToDashboard": "Ir al panel"
+    }
   },
   "payments": {
     "orderSummary": "Resumen del pedido",
@@ -191,7 +207,7 @@
       "submitting": "Enviando...",
       "loading": "Cargando evaluación...",
       "linkNotAvailable": "Enlace no disponible",
-      "contactAdmin": "Por favor contacta a tu administrador",
+      "contactAdmin": "Por favor, contacta a tu administrador",
       "thankYou": "¡Gracias!",
       "successBody": "Tu evaluación se envió con éxito. Gracias por tu participación; ya puedes cerrar esta ventana.",
       "returnDashboard": "Volver al panel",
@@ -223,7 +239,55 @@
       "progress": "{{done}} de {{total}} respondidas",
       "answerPlaceholder": "Escribe tu respuesta…",
       "moveUp": "subir {{label}}",
-      "moveDown": "bajar {{label}}"
+      "moveDown": "bajar {{label}}",
+      "report": {
+        "title": "Informe vocacional 360",
+        "titleMine": "Mi informe vocacional 360",
+        "cardSubtitle": "Tu perfil vocacional y recomendaciones personalizadas",
+        "viewMine": "Ver mi informe vocacional 360 →",
+        "loadError": "No se pudo cargar este informe.",
+        "notReady360": "La evaluación 360 aún no está lista: requiere las respuestas del estudiante y de al menos otro evaluador.",
+        "dimensions": "Dimensiones",
+        "noResponses": "Aún no hay respuestas",
+        "bands": {
+          "strong": "Alto",
+          "moderateHigh": "Moderadamente alto",
+          "medium": "Medio",
+          "low": "Bajo"
+        },
+        "groups": {
+          "self": "Autoevaluación",
+          "parent": "Padre/madre",
+          "teacher": "Profesor",
+          "sibling_friend": "Hermano/a o amigo/a"
+        },
+        "integratedTitle": "Puntaje vocacional integrado",
+        "integratedLocked": "Completa las tres evaluaciones (360, PCA, MIL) para desbloquear tu puntaje integrado.",
+        "interestsTitle": "Intereses y preferencias",
+        "topInterests": "Principales áreas de interés",
+        "topIndustries": "Principales sectores",
+        "noData": "Aún no hay datos",
+        "workType": "Tipo de trabajo preferido:",
+        "inTheirWords": "En sus propias palabras",
+        "readinessTitle": "Estado de las evaluaciones",
+        "row360": "Evaluación 360",
+        "row360Hint": "Requiere las respuestas del estudiante y de al menos otro evaluador (padre/madre, profesor o compañero).",
+        "rowPca": "PCA (competencias profesionales)",
+        "rowPcaHint": "Completa la evaluación PCA.",
+        "rowMilHint": "Completa las pruebas cognitivas MIL.",
+        "rowReady": "{{label}}: lista",
+        "rowPending": "{{label}}: pendiente",
+        "recommendations": "Recomendaciones",
+        "recommendationsLoadError": "No se pudieron cargar las recomendaciones.",
+        "recommendationsLocked": "Completa las tres evaluaciones (360, PCA, MIL) para ver tus recomendaciones de carrera.",
+        "suggestedDirections": "Caminos sugeridos",
+        "strengths": "Fortalezas",
+        "growthAreas": "Áreas de crecimiento",
+        "topCareerMatches": "Carreras más afines",
+        "industriesToExplore": "Sectores para explorar:",
+        "nextSteps": "Próximos pasos",
+        "exploreUniversities": "Explorar universidades afines →"
+      }
     },
     "noReportData": "Datos del informe no disponibles",
     "reportTitle": "Informe de evaluación 360°",
@@ -262,7 +326,7 @@
     "closeResults": "Cerrar resultados",
     "groups": {
       "all": "Todos los grupos",
-      "self": "Auto",
+      "self": "Autoevaluación",
       "parents": "Padres",
       "teachers": "Profesores",
       "peers": "Compañeros"
@@ -291,13 +355,14 @@
       "evalRemoveFailed": "Error al eliminar al evaluador. Intenta de nuevo.",
       "resendSuccess": "¡Enlace de invitación reenviado con éxito!",
       "resendError": "Error al reenviar el enlace de invitación. Intenta de nuevo.",
-      "groupsIncomplete": "Por favor completa todos los grupos de evaluadores antes de enviar las invitaciones. Cada grupo debe tener al menos el número mínimo requerido de evaluadores.",
+      "groupsIncomplete": "Por favor, completa todos los grupos de evaluadores antes de enviar las invitaciones. Cada grupo debe tener al menos el número mínimo requerido de evaluadores.",
       "noPhoneNumbers": "Ningún evaluador tiene número de teléfono disponible para invitaciones SMS.",
       "smsComingSoon": "La funcionalidad de SMS estará disponible pronto.",
       "editUnavailable": "Todavía no se pueden guardar cambios de un evaluador. Para corregir un nombre o correo, elimínalo y vuelve a agregarlo.",
       "noPhone": "Este evaluador no tiene número de teléfono.",
       "emailsSent": "Invitaciones enviadas por correo.",
-      "smsFailed": "Error al enviar las invitaciones por SMS. Intenta de nuevo."
+      "smsFailed": "Error al enviar las invitaciones por SMS. Intenta de nuevo.",
+      "smsPreview": "La invitación por SMS se enviaría a {{phone}}. ¡La función de SMS estará disponible pronto!"
     },
     "page": {
       "startSelf": "Comenzar autoevaluación",
@@ -305,7 +370,21 @@
       "startSelfFailed": "No pudimos iniciar tu autoevaluación. Intenta de nuevo.",
       "startFailed": "No pudimos iniciar la evaluación. Intenta de nuevo.",
       "noEvaluatorsYet": "Aún no hay evaluadores",
-      "sendEmailInvitations": "Enviar invitaciones por correo"
+      "sendEmailInvitations": "Enviar invitaciones por correo",
+      "gateTitle": "Primero completa tu autoevaluación",
+      "gateBody": "Antes de invitar a otras personas a evaluarte, completa tu autoevaluación. Así tendrás una base de comparación.",
+      "starting": "Iniciando...",
+      "intro": "Ahora invita a evaluadores de distintos grupos para obtener una retroalimentación completa.",
+      "emailSelectorTitle": "Selecciona los evaluadores para invitar por correo",
+      "emailSelectorDescription": "Elige a qué evaluadores enviar invitaciones por correo:",
+      "sendEmails": "Enviar correos",
+      "smsSelectorTitle": "Selecciona los evaluadores para invitar por SMS",
+      "smsSelectorDescription": "Elige a qué evaluadores enviar invitaciones por SMS:",
+      "sendSms": "Enviar SMS",
+      "evaluatorsAcrossGroups_one": "{{count}} evaluador en {{groupCount}} grupos",
+      "evaluatorsAcrossGroups_other": "{{count}} evaluadores en {{groupCount}} grupos",
+      "sendToAll": "Enviar a todos",
+      "sendToSpecific": "Enviar a evaluadores específicos"
     },
     "evaluatorManagement": {
       "title": "Gestión de evaluadores",
@@ -315,23 +394,23 @@
       "namePlaceholder": "Ingresa nombre completo",
       "emailLabel": "Correo electrónico *",
       "emailPlaceholder": "Ingresa correo electrónico",
-      "phoneLabel": "Número de teléfono (Opcional)",
+      "phoneLabel": "Número de teléfono (opcional)",
       "phonePlaceholder": "Ingresa número de teléfono",
       "relationshipLabel": "Relación *",
       "validationHeading": "Requisitos de evaluador no cumplidos",
       "relationships": {
-        "parent": "p. ej., Madre, Padre, Tutor",
-        "teacher": "p. ej., Profesor de matemáticas, Consejero, Director",
-        "siblingFriend": "p. ej., Hermana, Mejor amigo, Compañero de clase",
+        "parent": "p. ej., madre, padre, tutor",
+        "teacher": "p. ej., profesor de matemáticas, consejero, director",
+        "siblingFriend": "p. ej., hermana, mejor amigo, compañero de clase",
         "self": "Autoevaluación",
         "default": "Relación"
       },
       "needMore": "Necesitas {{count}} evaluador(es) más",
       "overLimit": "{{count}} evaluador(es) por encima del límite",
       "countOfMax": "{{count}}/{{max}} evaluadores",
-      "fillRequired": "Por favor completa todos los campos requeridos",
-      "failedAdd": "Error al agregar evaluador. Por favor intenta de nuevo.",
-      "selectEvaluatorsMessage": "Por favor selecciona evaluadores para enviar invitaciones."
+      "fillRequired": "Por favor, completa todos los campos requeridos",
+      "failedAdd": "Error al agregar evaluador. Por favor, intenta de nuevo.",
+      "selectEvaluatorsMessage": "Por favor, selecciona evaluadores para enviar invitaciones."
     },
     "config": {
       "addCompetencyTitle": "Agregar nueva competencia",
@@ -353,6 +432,65 @@
         "descriptionPlaceholder": "Descripción opcional",
         "addOptionButton": "Agregar opción"
       }
+    },
+    "addDialog": {
+      "addTitle": "Agregar evaluador",
+      "editTitle": "Editar evaluador",
+      "groupLabel": "Grupo de evaluadores *",
+      "groupPlaceholder": "Selecciona un grupo",
+      "namePlaceholder": "Ingresa el nombre completo del evaluador",
+      "emailPlaceholder": "Ingresa el correo del evaluador",
+      "phoneLabel": "Número de teléfono con código de país",
+      "phonePlaceholder": "p. ej., +1234567890 (opcional)",
+      "phoneHint": "Opcional: incluye el código de país (p. ej., +1 para EE. UU., +44 para el Reino Unido)",
+      "relationshipPlaceholder": "Selecciona la relación",
+      "adding": "Agregando...",
+      "updating": "Actualizando...",
+      "update": "Actualizar evaluador"
+    },
+    "relationshipOptions": {
+      "mother": "Madre",
+      "father": "Padre",
+      "guardian": "Tutor legal",
+      "stepParent": "Padrastro o madrastra",
+      "grandparent": "Abuelo o abuela",
+      "otherFamily": "Otro familiar",
+      "olderBrother": "Hermano mayor",
+      "youngerBrother": "Hermano menor",
+      "olderSister": "Hermana mayor",
+      "youngerSister": "Hermana menor",
+      "bestFriend": "Mejor amigo/a",
+      "closeFriend": "Amigo/a cercano/a",
+      "classmate": "Compañero/a de clase",
+      "neighbor": "Vecino/a",
+      "colleague": "Colega",
+      "mentor": "Mentor/a",
+      "supervisor": "Supervisor/a",
+      "other": "Otro"
+    },
+    "validation": {
+      "nameRequired": "El nombre es obligatorio",
+      "emailRequired": "El correo es obligatorio",
+      "emailInvalid": "Ingresa un correo electrónico válido",
+      "phoneInvalid": "Ingresa un número de teléfono válido, con el código de país (p. ej., +1234567890)",
+      "groupRequired": "Selecciona un grupo de evaluadores",
+      "relationshipRequired": "La relación es obligatoria",
+      "emailDuplicate": "Otro evaluador ya usa este correo",
+      "phoneDuplicate": "Otro evaluador ya usa este número de teléfono",
+      "maxReached": "El grupo {{group}} admite un máximo de {{max}} evaluadores",
+      "updateFailed": "No se pudo actualizar el evaluador. Inténtalo de nuevo."
+    },
+    "card": {
+      "addedCount": "{{count}}/{{max}} agregados",
+      "minRequired": "mín. {{min}}",
+      "complete": "Completo",
+      "incomplete": "Incompleto",
+      "addToGroup": "Agregar evaluador ({{group}})",
+      "pendingResponse": "Respuesta pendiente",
+      "noEmail": "Sin correo",
+      "phoneNotProvided": "No proporcionado",
+      "resendEmail": "Reenviar por correo",
+      "resendPhone": "Reenviar por teléfono"
     }
   },
   "notifications": {
@@ -360,9 +498,9 @@
       "welcomeTitle": "Te damos la bienvenida a FORMMAPS",
       "welcomeDesc": "Completa tus evaluaciones para desbloquear recomendaciones personalizadas de carrera y universidad.",
       "careersTitle": "Explora rutas profesionales",
-      "careersDesc": "Tus 10 mejores coincidencias de carrera están listas. Revisa el Explorador de Carreras para ver tus resultados.",
+      "careersDesc": "Tus 10 mejores coincidencias de carrera están listas. Revisa el Explorador de carreras para ver tus resultados.",
       "universityTitle": "Recomendaciones de universidades",
-      "universityDesc": "Encontramos universidades que coinciden con tu perfil. Visita el Buscador de Universidades para explorar.",
+      "universityDesc": "Encontramos universidades que coinciden con tu perfil. Visita el Buscador de universidades para explorarlas.",
       "resumeTitle": "Construye tu currículum",
       "resumeDesc": "Usa nuestro generador de currículum con IA para crear un currículum profesional para tu carrera objetivo."
     }
@@ -380,14 +518,14 @@
       "portfolioDesc": "Crea tu currículum y muestra tus logros"
     },
     "title": "Panel de control",
-    "welcome": "Bienvenido a tu panel de control",
+    "welcome": "Te damos la bienvenida a tu panel de control",
     "studentPortal": "Portal estudiantil",
     "monitorProgress": "Monitorea tu progreso, acelera tus habilidades y domina tu camino profesional con precisión.",
     "recommendationsLocked": "Recomendaciones bloqueadas",
     "completeAllAssessments": "Completa las 4 evaluaciones (PCA, LIA, Evaluación 360° y Personalidad) para desbloquear tus coincidencias de carrera y recomendaciones personalizadas.",
     "goToAssessments": "Ir a evaluaciones",
     "universityMatchesLocked": "Completa todas las evaluaciones para ver las coincidencias universitarias",
-    "analysisComplete": "Análisis completo",
+    "analysisComplete": "Análisis completado",
     "match": "Coincidencia",
     "cognitiveMatrix": "Matriz MIL",
     "aiSuggested": "Sugerido por IA",
@@ -396,7 +534,7 @@
       "member": "Miembro",
       "coach": "Coach",
       "admin": "Administrador",
-      "superadmin": "Super administrador",
+      "superadmin": "Superadministrador",
       "schooladmin": "Admin escolar",
       "counselor": "Consejero",
       "parent": "Padre/madre"
@@ -419,7 +557,7 @@
     "opportunitiesForYou": "Oportunidades para ti",
     "opportunitiesTable": {
       "no": "N.º",
-      "catNo": "N.º de Cat.",
+      "catNo": "N.º de cat.",
       "driver": "Responsable",
       "status": "Estado",
       "rating": "Calificación",
@@ -427,7 +565,7 @@
       "apply": "Solicitar"
     },
     "assessmentJourney": "Viaje de evaluación",
-    "assessmentSubtitle": "Tu trayectoria de crecimiento profesional",
+    "assessmentSubtitle": "Sigue tu progreso en todas las evaluaciones",
     "professionalCertified": "Profesional certificado",
     "coach": {
       "greeting": {
@@ -460,11 +598,11 @@
         "takeABreak": "¡Hora de tomar un descanso!",
         "noPastTitle": "No hay sesiones pasadas",
         "historyPlaceholder": "Tu historial aparecerá aquí.",
-        "availableTimes": "Tiempos disponibles",
+        "availableTimes": "Horarios disponibles",
         "noAvailableSlots": "No hay horarios disponibles para esta fecha",
         "rescheduleTitle": "Reprogramar sesión",
         "rescheduleDescription": "Selecciona una nueva fecha y hora para {{name}}",
-        "confirmed": "Confirmado"
+        "confirmed": "Confirmada"
       },
       "actions": {
         "reschedule": "Reprogramar",
@@ -478,9 +616,9 @@
     "resourceLibrary": "Biblioteca de recursos",
     "assessments": "Evaluaciones",
     "courses": "Cursos",
-    "bookCoach": "Reservar Coach",
+    "bookCoach": "Reservar coach",
     "coaching": "Coaching",
-    "findCoach": "Encontrar Coach",
+    "findCoach": "Encontrar un coach",
     "mySessions": "Mis sesiones",
     "subscriptions": "Suscripciones",
     "graduation": "Graduación",
@@ -505,8 +643,8 @@
     "startCourse": "Iniciar curso",
     "liaAssessment": "Evaluación LIA",
     "timeline": "Cronograma",
-    "jobMarketPulse": "Pulso del mercado",
-    "smartGaps": "Análisis de brechas inteligentes",
+    "jobMarketPulse": "Pulso del mercado laboral",
+    "smartGaps": "Análisis inteligente de brechas",
     "certifications": "Certificaciones",
     "goToCatalog": "Ir al catálogo",
     "browseCourses": "Explorar cursos",
@@ -563,12 +701,12 @@
     "nextAction": "Siguiente acción",
     "upcomingSession": "Próxima sesión",
     "joinMeeting": "Unirse a la reunión",
-    "meetingStarting": "Reunión comenzando",
+    "meetingStarting": "La reunión está por comenzar",
     "noUpcomingSessions": "Sin sesiones próximas",
     "noSessionsDesc": "No tienes sesiones programadas. Reserva un coach para comenzar.",
-    "bookACoach": "Reservar un Coach",
+    "bookACoach": "Reservar un coach",
     "counselingCoaching": "Orientación y coaching",
-    "bookCounselorSession": "Reservar sesión de consejero",
+    "bookCounselorSession": "Reservar sesión con un consejero",
     "activeCourse": "Curso activo",
     "noCourseEnrolled": "Sin curso inscrito",
     "noCourseDesc": "Explora nuestro catálogo y comienza tu primer curso hoy.",
@@ -582,11 +720,11 @@
       "location": "Ubicación"
     },
     "professionalAssessments": "Evaluaciones profesionales",
-    "assessmentsDescription": "Complete sus evaluaciones profesionales para desbloquear conocimientos personalizados sobre sus competencias, habilidades cognitivas y camino profesional ideal. Cada evaluación proporciona datos valiosos para su desarrollo profesional.",
-    "pcaUserInfoIncomplete": "La información del usuario está incompleta. Por favor complete su perfil primero.",
+    "assessmentsDescription": "Completa tus evaluaciones profesionales para desbloquear análisis personalizados sobre tus competencias, habilidades cognitivas y camino profesional ideal. Cada evaluación proporciona datos valiosos para tu desarrollo profesional.",
+    "pcaUserInfoIncomplete": "La información del usuario está incompleta. Por favor, completa tu perfil primero.",
     "parent": "Padre/madre",
     "teacher": "Profesor",
-    "siblingFriend": "Hermano/amigo",
+    "siblingFriend": "Hermano/a o amigo/a",
     "results": "Resultados",
     "competences": "Competencias",
     "jcaAnalysis": "Análisis JCA",
@@ -600,12 +738,12 @@
     "developingSkills": "Desarrollando habilidades MIL",
     "milComplete": "¡Completo!",
     "assessmentFinished": "Evaluación terminada",
-    "welcomeBack": "¡Bienvenido de vuelta, {{name}}!",
+    "welcomeBack": "¡Hola de nuevo, {{name}}!",
     "overallProgress": "Progreso general",
     "pcaTitle": "Análisis de competencia personal (PCA)",
     "statusCompleted": "Completado",
     "statusNotStarted": "No iniciado",
-    "completeAssessmentsMessage": "Completa las evaluaciones para desbloquear tus conocimientos de progreso",
+    "completeAssessmentsMessage": "Completa las evaluaciones para desbloquear el análisis de tu progreso",
     "loadingAssessmentProgress": "Cargando progreso de evaluación...",
     "loading": "Cargando panel...",
     "assessmentSummary": "Resumen de la evaluación",
@@ -614,17 +752,17 @@
     "steadiness": "Solidez",
     "conscientiousness": "Control",
     "milStats": "{{attempts}} intentos • Mejor: {{score}}",
-    "evaluationStats": "{{completed}} de {{total}} evaluadores completados",
+    "evaluationStats": "{{completed}} de {{total}} evaluadores han completado",
     "statusInProgress": "En progreso",
     "viewResults": "Ver resultados",
     "startPCA": "Iniciar evaluación PCA",
-    "pcaDescription": "Evalúa tus competencias profesionales y obtén conocimientos personalizados sobre tu carrera.",
+    "pcaDescription": "Evalúa tus competencias profesionales y obtén análisis personalizados sobre tu carrera.",
     "pcaCompetencies": "Competencias",
     "liaTitle": "Evaluación de inteligencia laboral (LIA)",
     "continueLIA": "Continuar evaluación LIA",
     "liaCompletedMessage": "Has completado todas las subpruebas LIA. Ve tus resultados a continuación.",
     "evaluationTitle": "Evaluación 360°",
-    "evaluationDescription": "Obtén retroalimentación integral desde múltiples perspectivas incluyendo autoevaluación, pares y supervisores.",
+    "evaluationDescription": "Obtén retroalimentación integral desde múltiples perspectivas, incluidas la autoevaluación, los pares y los supervisores.",
     "start360Evaluation": "Iniciar evaluación 360",
     "assessmentGuide": "Guía de evaluaciones",
     "pcaAssessmentTitle": "Evaluación PCA",
@@ -635,10 +773,10 @@
     "liaAssessmentTitle": "Evaluación LIA",
     "liaSubtests": "5 subpruebas MIL",
     "liaSkills": "Reconocimiento de patrones y razonamiento",
-    "liaDuration": "15-20 minutos total",
+    "liaDuration": "15-20 minutos en total",
     "liaAvailable": "Disponible ahora",
     "evaluationAssessmentTitle": "Evaluación 360",
-    "evaluationFeedback": "Retroalimentación multi-perspectiva",
+    "evaluationFeedback": "Retroalimentación multiperspectiva",
     "evaluationEvaluators": "Evaluadores externos",
     "evaluationSelfAssessment": "Autoevaluación incluida",
     "evaluationComingSoon": "Próximamente",
@@ -650,7 +788,7 @@
     "avgPercentile": "Percentil medio",
     "totalQuestions": "Preguntas totales",
     "subtestPerformance": "Rendimiento de subpruebas",
-    "percentileSuffix": "º percentil",
+    "percentileSuffix": ".º percentil",
     "cognitiveProfile": "Perfil MIL",
     "logicalReasoning": "Razonamiento lógico",
     "logicalReasoningDesc": "Fuerte reconocimiento de patrones y pensamiento analítico",
@@ -679,10 +817,10 @@
     "pcaSecurePlatform": "Plataforma de evaluación externa segura",
     "assessmentCompleted": "¡Evaluación completada!",
     "liaAssessmentDescription": "La LIA evalúa tu capacidad de aprender y adaptarte a nuevas situaciones a través de varias tareas cognitivas.",
-    "liaDescription": "La LIA mide habilidades cognitivas — reconocimiento de patrones, razonamiento y velocidad de procesamiento — mediante tareas breves y cronometradas.",
+    "liaDescription": "La LIA mide habilidades cognitivas —reconocimiento de patrones, razonamiento y velocidad de procesamiento— mediante tareas breves y cronometradas.",
     "assessmentProgressOverview": "Resumen del progreso de evaluación",
     "liaProgress": "Progreso LIA",
-    "totalSubAssessments": "Total de subvaluaciones",
+    "totalSubAssessments": "Total de subevaluaciones",
     "bestScore": "Mejor puntuación",
     "averageScore": "Puntuación media",
     "360Evaluations": "Evaluaciones 360°",
@@ -692,7 +830,7 @@
     "middle": "Medio",
     "lowest": "Más bajo",
     "highest": "Más alto",
-    "statements": "Declaraciones",
+    "statements": "Afirmaciones",
     "question": "Pregunta",
     "visualRotationQuestion": "¿Cuántas de las figuras inferiores son idénticas a las que están directamente encima de ellas, después de rotarlas en cualquier dirección?",
     "instructionsAndExamples": "Instrucciones y ejemplos",
@@ -710,7 +848,7 @@
     "autoSaved": "Cada respuesta se guarda automáticamente cuando continúas",
     "completePractice": "Completa los ejemplos de práctica antes de comenzar la prueba real",
     "backToTestList": "Volver a la lista de pruebas",
-    "continueToPractice": "Continuar a práctica",
+    "continueToPractice": "Continuar a la práctica",
     "examples": "Ejemplos",
     "example": "Ejemplo",
     "correctAnswer": "Respuesta correcta:",
@@ -736,7 +874,7 @@
     "examConfirmCannotGoBack": "Una vez que comiences, no podrás regresar. No hay pausa y el cronómetro no se detendrá.",
     "examConfirmUnderstood": "He comprendido los ejemplos y las instrucciones.",
     "examConfirmConcentrate": "Concéntrate y trabaja rápido — tienes {{minutes}} minutos para {{questions}} preguntas.",
-    "examConfirmBegin": "Estoy listo — comenzar",
+    "examConfirmBegin": "Estoy listo/a — comenzar",
     "examConfirmReview": "Revisar ejemplos de nuevo",
     "benchmarks": {
       "header": {
@@ -748,13 +886,13 @@
       },
       "overview": {
         "salaryTitle": "Tendencias salariales regionales",
-        "topSkills": "Habilidades más Demandadas",
+        "topSkills": "Habilidades más demandadas",
         "workMode": "Distribución de modalidad de trabajo",
         "costOfLiving": "Comparación de costo de vida",
         "certifications": "Certificaciones recomendadas",
         "viewAll": "Ver todo",
         "marketPulse": "Pulso del mercado laboral",
-        "marketPulseDesc": "Indicadores en tiempo real de demanda y sentimiento.",
+        "marketPulseDesc": "Indicadores en tiempo real de la demanda y la percepción del mercado.",
         "liveUpdates": "Actualizaciones en vivo"
       },
       "market": {
@@ -769,8 +907,8 @@
         "marketForecast": "Pronóstico del mercado",
         "positiveOutlook": "Panorama positivo",
         "positiveOutlookDesc": "Crecimiento proyectado en sectores clave de innovación en los próximos 18 meses.",
-        "projectedHotspots": "Puntos críticos proyectados",
-        "recruiterSentiment": "Sentimiento del reclutador",
+        "projectedHotspots": "Focos de crecimiento proyectados",
+        "recruiterSentiment": "Percepción de los reclutadores",
         "hiringSpeed": "Velocidad de contratación",
         "badgeFast": "Rápida",
         "interviewTech": "Tecnología de entrevista",
@@ -791,7 +929,7 @@
       "skills": {
         "title": "Evaluación de habilidades",
         "subtitle": "Compara tu conjunto de habilidades con los requisitos del mercado global",
-        "mostInDemand": "Competencias más Demandadas",
+        "mostInDemand": "Competencias más demandadas",
         "emergingTechWatch": "Vigilancia de tecnologías emergentes",
         "emergingDesc": "Tecnologías que ganan tracción rápida en este sector",
         "topCertifications": "Principales certificaciones de la industria",
@@ -813,7 +951,7 @@
           "flexHours": "Horario flexible",
           "wellness": "Programas de bienestar"
         },
-        "enterpriseTrendTitle": "División empresa vs Startup"
+        "enterpriseTrendTitle": "División empresa vs. startup"
       },
       "compensation": {
         "compensationTitle": "Compensación",
@@ -826,7 +964,7 @@
         "detailedSalaryTitle": "Distribución salarial detallada",
         "cardDescription": "Desglose completo para {{career}} en {{country}}",
         "keyObservation": "Observación clave",
-        "keyObservationDesc": "El salario medio para {{career}} en {{country}} ha mostrado un crecimiento constante en los últimos 3 años."
+        "keyObservationDesc": "El salario mediano para {{career}} en {{country}} ha mostrado un crecimiento constante en los últimos 3 años."
       }
     },
     "nextExample": "Siguiente ejemplo",
@@ -841,7 +979,128 @@
     "personalityTitle": "Evaluación de personalidad",
     "personalityDescription": "Un instrumento binario A/B que determina tu tipo de personalidad de 4 letras y un perfil de desarrollo personalizado.",
     "startPersonality": "Iniciar evaluación de personalidad",
-    "continuePersonality": "Continuar evaluación de personalidad"
+    "continuePersonality": "Continuar evaluación de personalidad",
+    "continue360": "Continuar evaluación",
+    "continuePCA": "Continuar evaluación PCA",
+    "quickActions": "Acciones rápidas",
+    "selfEvaluationCompleted": "Autoevaluación completada",
+    "careerMatchHub": {
+      "title": "Tus carreras afines",
+      "emptyDescription": "Completa tus evaluaciones para descubrir carreras afines a tu perfil",
+      "startAssessments": "Comenzar evaluaciones",
+      "poweredBy": "Basado en los resultados de tus evaluaciones PCA y LIA",
+      "overallMatchScore": "Puntaje general de afinidad"
+    },
+    "settings": {
+      "subtitle": "Administra tus preferencias y la configuración de tu cuenta.",
+      "profile": {
+        "subtitle": "La información de tu cuenta",
+        "name": "Nombre",
+        "email": "Correo electrónico",
+        "role": "Rol",
+        "notSet": "Sin definir"
+      },
+      "notifications": {
+        "subtitle": "Elige cómo quieres recibir notificaciones",
+        "email": {
+          "label": "Notificaciones por correo electrónico",
+          "description": "Recibe novedades y alertas por correo electrónico"
+        },
+        "push": {
+          "label": "Notificaciones push",
+          "description": "Recibe notificaciones en tiempo real en tu navegador"
+        },
+        "sessionReminders": {
+          "label": "Recordatorios de sesiones",
+          "description": "Recordatorios antes de tus próximas sesiones de orientación"
+        },
+        "weeklyDigest": {
+          "label": "Resumen semanal",
+          "description": "Un resumen semanal de tu actividad y tu progreso"
+        }
+      },
+      "theme": {
+        "subtitle": "Selecciona la apariencia que prefieras"
+      },
+      "language": {
+        "title": "Idioma",
+        "subtitle": "Elige tu idioma preferido"
+      },
+      "privacy": {
+        "title": "Privacidad",
+        "subtitle": "Controla tus datos y tu visibilidad",
+        "profileVisibility": {
+          "label": "Visibilidad del perfil",
+          "description": "Permite que orientadores y coaches vean tu perfil"
+        },
+        "shareProgress": {
+          "label": "Compartir progreso",
+          "description": "Comparte tu progreso de aprendizaje con tu colegio"
+        },
+        "usageAnalytics": {
+          "label": "Análisis de uso",
+          "description": "Ayúdanos a mejorar compartiendo datos de uso anónimos"
+        }
+      },
+      "security": {
+        "title": "Seguridad",
+        "subtitle": "Cambia tu contraseña",
+        "currentPassword": "Contraseña actual",
+        "newPassword": "Nueva contraseña",
+        "confirmNewPassword": "Confirma la nueva contraseña",
+        "changing": "Cambiando...",
+        "changePassword": "Cambiar contraseña",
+        "passwordChanged": "Contraseña cambiada correctamente",
+        "passwordChangeFailed": "No se pudo cambiar la contraseña"
+      },
+      "saved": "Configuración guardada correctamente",
+      "saveFailed": "No se pudo guardar la configuración",
+      "saving": "Guardando...",
+      "save": "Guardar configuración"
+    },
+    "messages": {
+      "subtitle": "Comunícate con tus orientadores, coaches y el personal de tu colegio.",
+      "emptyStudent": "Aún no hay conversaciones. Haz clic en \"Nuevo\" para escribirle a un consejero o a un administrador escolar.",
+      "newConversation": {
+        "button": "Nuevo",
+        "aria": "Nueva conversación",
+        "loadFailed": "Error al cargar los contactos.",
+        "startFailed": "No se pudo iniciar una conversación con este contacto.",
+        "searchStaff": "Buscar personal...",
+        "noStaff": "No se encontró personal a quien escribirle."
+      }
+    },
+    "video": {
+      "subtitle": "Inicia una videollamada con tu orientador o con el personal de tu colegio."
+    },
+    "completeToSeeMatches": "Completa las evaluaciones para ver tus coincidencias",
+    "noMatches": "No se encontraron coincidencias específicas.",
+    "continue": "Continuar",
+    "locked": "Bloqueado",
+    "completeAssessments": "Completar evaluaciones",
+    "explore": "Explorar",
+    "addItem": "Agregar elemento",
+    "resume": "Retomar",
+    "resumePCA": "Retomar evaluación",
+    "universityMatches": {
+      "exploreAll": "Explorar todas"
+    },
+    "portfolioSnapshot": {
+      "types": {
+        "extracurricular": "Actividades",
+        "award": "Premios",
+        "project": "Proyectos",
+        "volunteer": "Voluntariado",
+        "work_experience": "Trabajo",
+        "certification": "Certificaciones"
+      },
+      "empty": "Empieza a construir tu portafolio",
+      "addFirst": "Agrega tu primer elemento",
+      "volunteerHours_one": "{{count}} hora de voluntariado",
+      "volunteerHours_other": "{{count}} horas de voluntariado",
+      "addToPortfolio": "Agregar al portafolio"
+    },
+    "pcaViewResultsDesc": "Consulta tu perfil de personalidad PCA y el desglose de tus competencias"
   },
   "coaching": {
     "featuredCoaches": "Coaches destacados",
@@ -859,13 +1118,15 @@
       "noCoachesFound": "No se encontraron coaches",
       "tryAdjusting": "Intenta ajustar tus términos de búsqueda",
       "remote": "Remoto",
-      "new": "Nuevo"
+      "new": "Nuevo",
+      "fetchError": "No se pudieron cargar los coaches. Inténtalo de nuevo.",
+      "retry": "Reintentar"
     },
     "earnings": {
       "title": "Ganancias y pagos",
       "subtitle": "Rastrea tus ingresos, tarifas de plataforma y pagos.",
       "unableToLoad": "No se pueden cargar los datos de ganancias",
-      "tryAgain": "Por favor intenta de nuevo más tarde",
+      "tryAgain": "Por favor, intenta de nuevo más tarde",
       "errorTitle": "Error al cargar los datos de ganancias"
     },
     "profile": {
@@ -901,7 +1162,7 @@
       "profileDescription": "Actualiza tu perfil público de coaching visible para los estudiantes.",
       "fullName": "Nombre completo",
       "professionalTitle": "Título profesional",
-      "bioPlaceholder": "Cuéntale a los estudiantes sobre tu experiencia de coaching...",
+      "bioPlaceholder": "Cuéntales a los estudiantes sobre tu experiencia de coaching...",
       "uploadImage": "Subir imagen"
     },
     "dashboard": {
@@ -910,7 +1171,7 @@
       "failedToLoad": "Error al cargar datos del panel",
       "noSlotsAvailable": "No hay turnos disponibles",
       "failedToLoadSlots": "Error al cargar los turnos disponibles",
-      "selectDateTime": "Por favor selecciona una fecha y hora",
+      "selectDateTime": "Por favor, selecciona una fecha y hora",
       "rescheduleSuccess": "Sesión reprogramada con éxito",
       "rescheduleFailed": "Error al reprogramar la sesión",
       "sessionCancelled": "Sesión cancelada",
@@ -940,7 +1201,7 @@
           "estimatedTakeHome": "Estimación de ingreso neto",
           "afterEstimatedTaxes": "Después de impuestos estimados (~28%)",
           "detailedSalaryTitle": "Desglose detallado de salario",
-          "cardDescription": "Rangos de compensación para roles de {{career}} en {{country}} a través de niveles de experiencia.",
+          "cardDescription": "Rangos de compensación para roles de {{career}} en {{country}} según el nivel de experiencia.",
           "keyObservation": "Observación clave",
           "keyObservationDesc": "Las bandas salariales para {{career}} en {{country}} se están ampliando. Los roles de nivel senior están experimentando un crecimiento más rápido debido a la escasez de talento especializado, mientras que la compensación de nivel de entrada se mantiene estable."
         },
@@ -961,7 +1222,7 @@
           "employabilityScore": "Puntuación de empleabilidad",
           "employabilityDesc": "Tendencia histórica del éxito de colocación de roles en los últimos 5 años.",
           "analysisLabel": "Análisis:",
-          "analysis": "Tendencia ascendiente consistente indica un mercado maduro para profesionales de {{career}}.",
+          "analysis": "Una tendencia ascendente constante indica un mercado en maduración para profesionales de {{career}}.",
           "youthEmploymentRate": "Tasa de empleo juvenil",
           "marketForecast": "Pronóstico del mercado",
           "positiveOutlook": "Perspectiva positiva",
@@ -1002,7 +1263,7 @@
           "inclusivityTitle": "Puntuación de inclusividad",
           "inclusivityDesc": "Calificación promedio de la industria para políticas y beneficios laborales inclusivos.",
           "enterpriseTrendTitle": "Tendencia empresarial",
-          "enterpriseTrendDesc": "Las empresas Fortune 500 están trasladando un 20% más de roles a 'Remoto-First' en 2025.",
+          "enterpriseTrendDesc": "Las empresas Fortune 500 están trasladando un 20% más de roles a modalidades con prioridad al trabajo remoto en 2025.",
           "readReport": "Leer informe",
           "badges": {
             "parentalLeave": "Licencia parental",
@@ -1039,9 +1300,9 @@
     "loadingSalaryData": "Cargando datos salariales...",
     "loadingDemographics": "Cargando demografía...",
     "noDataAvailable": "No hay datos disponibles",
-    "minSalary": "Salario mín",
+    "minSalary": "Salario mín.",
     "averageSalary": "Salario promedio",
-    "maxSalary": "Salario máx",
+    "maxSalary": "Salario máx.",
     "costOfLivingIndex": "Índice de costo de vida",
     "rentIndex": "Índice de alquiler",
     "purchasingPower": "Poder adquisitivo",
@@ -1062,7 +1323,7 @@
   },
   "auth": {
     "login": {
-      "title": "Bienvenido de vuelta",
+      "title": "Hola de nuevo",
       "subtitle": "Inicia sesión para continuar tu camino",
       "emailLabel": "Correo electrónico",
       "emailPlaceholder": "juan@ejemplo.com",
@@ -1083,7 +1344,7 @@
       "expiryTitle": "Tu sesión está por terminar",
       "expiryBody": "Por seguridad, las sesiones duran 12 horas. Guarda tu trabajo.",
       "countdown": "Cerrando sesión en {{time}}",
-      "staySignedIn": "Seguir conectado",
+      "staySignedIn": "Mantener la sesión iniciada",
       "signOut": "Cerrar sesión",
       "signInAgain": "Volver a iniciar sesión"
     },
@@ -1177,11 +1438,22 @@
       "registrationFailed": "El registro falló. Inténtalo de nuevo.",
       "genericSignup": "Ocurrió un error durante el registro. Inténtalo de nuevo.",
       "invalidCredentials": "El correo y la contraseña no coinciden. Revísalos e inténtalo de nuevo.",
-      "invitedHint": "¿Te invitaron hace poco? Termina de configurar tu cuenta desde el enlace de tu correo de invitación; no uses Registrarse.",
+      "invitedHint": "¿Te invitaron hace poco? Termina de configurar tu cuenta desde el enlace de tu correo de invitación; no uses \"Regístrate\".",
       "accountLocked_one": "Demasiados intentos fallidos. Por tu seguridad, esta cuenta está bloqueada durante {{count}} minuto.",
       "accountLocked_other": "Demasiados intentos fallidos. Por tu seguridad, esta cuenta está bloqueada durante {{count}} minutos.",
       "rateLimited": "Hay demasiados intentos de inicio de sesión en este momento. Espera unos minutos e inténtalo de nuevo.",
       "accountDisabled": "Esta cuenta está desactivada. Si crees que es un error, contacta al administrador de tu colegio."
+    },
+    "sessionTimeout": {
+      "title": "Tu sesión está por vencer",
+      "message_one": "Tu sesión vencerá en {{count}} minuto. ¿Quieres mantener la sesión iniciada?",
+      "message_other": "Tu sesión vencerá en {{count}} minutos. ¿Quieres mantener la sesión iniciada?",
+      "signOut": "Cerrar sesión",
+      "refreshing": "Renovando...",
+      "staySignedIn": "Mantener la sesión",
+      "refreshFailed": "No se pudo renovar tu sesión. Vuelve a iniciar sesión.",
+      "expiresToast_one": "Tu sesión vence en {{count}} minuto. Guarda tu trabajo.",
+      "expiresToast_other": "Tu sesión vence en {{count}} minutos. Guarda tu trabajo."
     }
   },
   "transactions": {
@@ -1362,7 +1634,7 @@
       "headerTitle": "Panel de administración",
       "userDashboard": "Panel de usuario",
       "logout": "Cerrar sesión",
-      "superAdmin": "Super administrador",
+      "superAdmin": "Superadministrador",
       "nav": {
         "dashboard": "Panel",
         "plans": "Planes de suscripción",
@@ -1381,7 +1653,7 @@
       "totalPending": "Total pendiente",
       "requestsAwaiting": "{{count}} solicitudes en espera",
       "processedThisMonth": "Procesado (este mes)",
-      "allSettlementsCleared": "Todos los asentamientos liquidados",
+      "allSettlementsCleared": "Todas las liquidaciones completadas",
       "searchPlaceholder": "Buscar coach o ID de pago...",
       "filterStatus": "Filtrar estado",
       "table": {
@@ -1396,7 +1668,11 @@
         "reject": "Rechazar",
         "approve": "Aprobar"
       },
-      "noPending": "No se encontraron pagos pendientes."
+      "noPending": "No se encontraron pagos pendientes.",
+      "toast": {
+        "approved": "Pago aprobado",
+        "rejected": "Pago rechazado"
+      }
     },
     "schools": {
       "title": "Gestión de escuelas",
@@ -1411,22 +1687,24 @@
       "inviteSuccess": "Invitación enviada a {{name}}",
       "inviteError": "Error al enviar la invitación. Inténtalo de nuevo.",
       "name": "Nombre de la escuela",
-      "namePlaceholder": "ej. Preparatoria Springfield",
+      "namePlaceholder": "p. ej., Colegio Springfield",
       "email": "Correo del administrador",
       "emailPlaceholder": "admin@escuela.com",
-      "maxStudents": "Máx estudiantes",
+      "maxStudents": "Máx. estudiantes",
       "details": "Detalles / info del contrato",
       "detailsPlaceholder": "Ingresa información del contrato u otros detalles...",
       "sendInvite": "Enviar invitación",
       "editTitle": "Editar escuela",
       "editDescription": "Actualizar detalles de la escuela.",
       "updateSuccess": "Escuela actualizada con éxito",
-      "updateError": "Error al actualizar la escuela"
+      "updateError": "Error al actualizar la escuela",
+      "resendSuccess": "Invitación reenviada a {{name}}",
+      "resendError": "Error al reenviar la invitación"
     },
     "coaches": {
       "title": "Coaches",
       "subtitle": "Gestiona tu equipo de coaches e invitaciones",
-      "inviteButton": "Invitar Coach",
+      "inviteButton": "Invitar coach",
       "inviteTitle": "Invitar nuevo coach",
       "inviteDescription": "Agrega un nuevo coach a tu plataforma. Puedes invitar individualmente o subir en lote.",
       "singleInvite": "Invitación individual",
@@ -1474,10 +1752,14 @@
       "contractStatus": {
         "expired": "Expirado",
         "daysLeft": "{{days}}d restantes"
-      }
+      },
+      "editTitle": "Editar coach",
+      "editDescription": "Actualiza los datos del coach.",
+      "updateSuccess": "Coach actualizado con éxito",
+      "updateError": "Error al actualizar el coach"
     },
     "invite": {
-      "fillRequired": "Por favor completa todos los campos requeridos",
+      "fillRequired": "Por favor, completa todos los campos requeridos",
       "success": "Se ha enviado una invitación a {{name}} ({{email}})",
       "error": "Fallo al enviar la invitación. Intenta nuevamente.",
       "singleTitle": "Invitar coach individual",
@@ -1486,8 +1768,8 @@
       "namePlaceholder": "Juan Pérez",
       "email": "Correo electrónico",
       "emailPlaceholder": "coach@ejemplo.com",
-      "contractStart": "Fecha inicio de contrato",
-      "contractEnd": "Fecha fin de contrato",
+      "contractStart": "Fecha de inicio del contrato",
+      "contractEnd": "Fecha de fin del contrato",
       "sendButton": "Enviar invitación",
       "csvTemplateTitle": "Plantilla CSV",
       "csvTemplateDescription": "Descarga la plantilla para asegurar el formato correcto.",
@@ -1504,7 +1786,10 @@
         "success": "{{count}} exitosos",
         "failed": "{{count}} fallidos"
       },
-      "errorsTitle": "Errores:"
+      "errorsTitle": "Errores:",
+      "bulkTitle": "Invitación masiva de coaches",
+      "bulkDescription": "Sube un archivo CSV para invitar a varios coaches a la vez.",
+      "platformCommission": "Comisión de plataforma (%)"
     },
     "users": {
       "title": "Usuarios",
@@ -1564,7 +1849,7 @@
       "passwordHint": "La contraseña debe tener al menos 6 caracteres con mayúscula, minúscula y número.",
       "creating": "Creando...",
       "createUser": "Crear usuario",
-      "fillRequired": "Por favor completa todos los campos obligatorios",
+      "fillRequired": "Por favor, completa todos los campos obligatorios",
       "success": "¡Usuario creado con éxito!",
       "error": "No se pudo crear el usuario",
       "openMenu": "Abrir menú",
@@ -1619,7 +1904,7 @@
           "createdTitle": "Invitación enviada",
           "resentTitle": "Invitación reenviada",
           "failedTitle": "No se envió la invitación",
-          "summary": "{{name}} fue invitado a {{school}} como {{role}}.",
+          "summary": "{{name}} recibió una invitación a {{school}} como {{role}}.",
           "emailSent": "La invitación se envió a {{email}} y caduca en 48 horas.",
           "emailFailed": "La cuenta se creó, pero no se pudo entregar el correo a {{email}}. Reenvíala cuando el correo funcione.",
           "alreadyActiveHint": "Esa dirección ya pertenece a alguien que terminó de configurar su cuenta. Una invitación no puede mover una cuenta existente: vincúlala al colegio desde la fila del usuario."
@@ -1642,7 +1927,7 @@
         "title": "Desactivar usuario",
         "body": "¿Seguro que quieres desactivar a {{name}}? Ya no podrá acceder a la plataforma.",
         "cta": "Desactivar",
-        "done": "{{name}} fue desactivado",
+        "done": "Se desactivó la cuenta de {{name}}",
         "failed": "No se pudo desactivar a este usuario. Inténtalo de nuevo."
       },
       "resend": {
@@ -1700,8 +1985,8 @@
       "createTitle": "Crear carrera",
       "editTitle": "Editar carrera",
       "form": {
-        "title": "Título (Inglés)",
-        "shortDescription": "Descripción corta (Inglés)"
+        "title": "Título (inglés)",
+        "shortDescription": "Descripción corta (inglés)"
       },
       "loading": "Cargando...",
       "accessDenied": "Acceso denegado"
@@ -1709,7 +1994,7 @@
     "subscriptionPlans": {
       "createTitle": "Crear planes de suscripción",
       "creating": "Creando...",
-      "createAll": "Crear {{count}} planes",
+      "createAll": "Crear los {{count}} planes",
       "createThisPlan": "Crear este plan",
       "creationResultsTitle": "Resultados de creación:",
       "previewTitle": "Planes a crear:",
@@ -1840,7 +2125,10 @@
         "save": "Guardar cambios",
         "cancel": "Cancelar"
       },
-      "confirmDelete": "¿Estás seguro de que deseas eliminar este curso?"
+      "confirmDelete": "¿Estás seguro de que deseas eliminar este curso?",
+      "header": {
+        "addCourse": "Agregar curso"
+      }
     }
   },
   "subscribe": {
@@ -1925,6 +2213,50 @@
         "salary": "Salario",
         "skills": "Habilidades"
       }
+    },
+    "general": "General",
+    "explore": "Explorar",
+    "remote": "Remoto",
+    "highDemand": "Alta demanda",
+    "bridgingAvailable": "Formación puente disponible",
+    "viewDetails": "Ver detalles de {{title}}",
+    "gate": {
+      "pca": "Evaluación PCA",
+      "pcaDesc": "Descubre tu perfil de personalidad DISC",
+      "lia": "Evaluación LIA",
+      "liaDesc": "Mide tus habilidades cognitivas en 5 dimensiones",
+      "eval": "Evaluación 360°",
+      "evalDesc": "Recibe retroalimentación de compañeros, padres y docentes",
+      "personality": "Evaluación de personalidad",
+      "personalityDesc": "Descubre tu tipo de personalidad de 4 letras",
+      "title": "Completa tus evaluaciones",
+      "subtitle": "Termina las 4 evaluaciones para desbloquear coincidencias de carrera personalizadas según tu perfil único.",
+      "completed": "completadas",
+      "inProgress": "En progreso",
+      "continue": "Continuar evaluación",
+      "startNext": "Iniciar siguiente evaluación"
+    },
+    "explorer": {
+      "title": "Explorador de carreras",
+      "subtitle": "Tus 10 mejores coincidencias de carrera según tus habilidades cognitivas, personalidad e intereses.",
+      "disclaimer": "Estas estimaciones de coincidencia se basan en los datos de tus evaluaciones y son solo una orientación informativa: no garantizan empleo ni reemplazan la orientación vocacional profesional.",
+      "noResults": "No se encontraron carreras",
+      "noResultsFilterDesc": "Intenta ajustar tu búsqueda o los filtros para ver más resultados.",
+      "noResultsDesc": "Completa tus evaluaciones PCA y MIL para recibir recomendaciones de carrera personalizadas."
+    },
+    "search_placeholder": "Busca carreras, habilidades o palabras clave...",
+    "all_industries": "Todas las industrias",
+    "all_education": "Cualquier nivel educativo",
+    "sort_default": "Orden predeterminado",
+    "sort_recommended": "Recomendadas",
+    "sort_match": "Puntaje de coincidencia",
+    "sort_title": "Nombre (A-Z)",
+    "sort_demand": "Alta demanda",
+    "matchLevel": {
+      "low": "Coincidencia baja",
+      "high": "Coincidencia excelente",
+      "good": "Coincidencia alta",
+      "moderate": "Buena coincidencia"
     }
   },
   "careers": {
@@ -1993,7 +2325,7 @@
       "bullet2": "Recibe recomendaciones de carrera con IA",
       "bullet3": "Haz seguimiento de solicitudes universitarias y becas",
       "bullet4": "Conéctate con consejeros y coaches",
-      "welcomeUser": "¡Bienvenido, {{name}}!",
+      "welcomeUser": "¡Te damos la bienvenida, {{name}}!",
       "createPassword": "Crea una contraseña para activar tu cuenta de estudiante",
       "passwordLabel": "Contraseña",
       "confirmLabel": "Confirmar contraseña",
@@ -2025,7 +2357,9 @@
       "phone": "Número de teléfono",
       "schoolName": "Colegio",
       "timezone": "Zona horaria",
-      "unassigned": "Sin asignar"
+      "unassigned": "Sin asignar",
+      "phonePlaceholder": "+57 300 123 4567",
+      "timezonePlaceholder": "p. ej. America/Bogota"
     },
     "coach": {
       "personalTitle": "Información personal",
@@ -2047,7 +2381,23 @@
       "adminDesc": "Cuéntanos sobre ti como administrador de la escuela.",
       "settingsTitle": "Configuración de la escuela",
       "settingsDesc": "Configura las preferencias de notificación de tu escuela.",
-      "alreadyCompleted": "Ya completaste el registro."
+      "alreadyCompleted": "Ya completaste el registro.",
+      "schoolName": "Colegio",
+      "adminEmail": "Correo del administrador",
+      "adminName": "Tu nombre completo",
+      "namePlaceholder": "Juan Pérez",
+      "position": "Cargo / título",
+      "positionPlaceholder": "Rector, administrador",
+      "phone": "Número de teléfono",
+      "phonePlaceholder": "+57 300 123 4567",
+      "settings": {
+        "notifySignup": "Notificar cuando un estudiante se registre",
+        "notifySignupDesc": "Recibe un correo cuando un estudiante acepte su invitación.",
+        "notifyAssessment": "Notificar al completar una evaluación",
+        "notifyAssessmentDesc": "Recibe un correo cuando un estudiante complete una evaluación.",
+        "selfRegistration": "Permitir el autorregistro de estudiantes",
+        "selfRegistrationDesc": "Permite que los estudiantes se registren por su cuenta con un código del colegio."
+      }
     },
     "invite": {
       "context": "Te han invitado a {{school}} como {{role}}.",
@@ -2076,6 +2426,103 @@
         "unknownBody": "Normalmente es un problema de conexión. Inténtalo de nuevo en un momento.",
         "tryAgain": "Intentar de nuevo"
       }
+    },
+    "availability": {
+      "invalidTimeRange": "Rango horario no válido el {{day}}: la hora de inicio debe ser anterior a la hora de fin",
+      "timezone": "Zona horaria",
+      "timezoneDesc": "Define tu zona horaria local para agendar con precisión.",
+      "selectTimezone": "Selecciona una zona horaria",
+      "weeklySchedule": "Horario semanal",
+      "scheduleDesc": "Define tu disponibilidad recurrente",
+      "unavailableLabel": "No disponible este día",
+      "unavailable": "No disponible",
+      "startTimeLabel": "Hora de inicio del periodo {{index}} el {{day}}",
+      "endTimeLabel": "Hora de fin del periodo {{index}} el {{day}}",
+      "removeSlotLabel": "Eliminar franja horaria {{index}} del {{day}}",
+      "addPeriod": "Agregar otro periodo",
+      "copyToAll": "Copiar a todos los días"
+    },
+    "calendar": {
+      "notConfigured": "La sincronización de calendario aún no está habilitada en este servidor. Puedes conectarlo más tarde desde Configuración.",
+      "connectFailed": "No se pudo iniciar la conexión del calendario. Puedes conectarlo más tarde desde Configuración.",
+      "whyConnect": "¿Por qué conectar tu calendario?",
+      "whyConnectDesc": "Revisaremos automáticamente si hay conflictos para que nunca tengas reservas duplicadas. Solo accedemos a tu estado de disponibilidad (libre/ocupado), no a los detalles de tus eventos.",
+      "google": "Google Calendar",
+      "googleDesc": "Conecta tu calendario de Gmail o G Suite",
+      "googleConnected": "Google Calendar conectado",
+      "connectGoogle": "Conectar Google Calendar",
+      "connected": "Conectado",
+      "connect": "Conectar",
+      "outlook": "Calendario de Outlook",
+      "outlookDesc": "Conecta Office 365 o Exchange",
+      "outlookConnected": "Calendario de Outlook conectado",
+      "connectOutlook": "Conectar calendario de Outlook",
+      "completeSetup": "Completar configuración"
+    },
+    "welcomeTitle": "Únete a nuestra comunidad de coaches de talla mundial.",
+    "welcomeSubtitle": "Comparte tu experiencia, guía a la próxima generación y aumenta tu impacto.",
+    "stepLabel": "Paso {{step}}",
+    "stepProgress": "Paso {{current}} de {{total}}",
+    "password": {
+      "minLength": "La contraseña debe tener al menos 8 caracteres",
+      "noMatch": "Las contraseñas no coinciden",
+      "label": "Contraseña",
+      "placeholder": "Ingresa tu contraseña",
+      "hide": "Ocultar contraseña",
+      "show": "Mostrar contraseña",
+      "hint": "Debe tener al menos 8 caracteres",
+      "confirmLabel": "Confirmar contraseña",
+      "confirmPlaceholder": "Confirma tu contraseña",
+      "complete": "Completar configuración",
+      "req": {
+        "length": "Al menos 8 caracteres",
+        "uppercase": "Una letra mayúscula",
+        "lowercase": "Una letra minúscula",
+        "number": "Un número"
+      },
+      "requirements": "Cumple todos los requisitos de la contraseña",
+      "requirementsTitle": "Requisitos de la contraseña"
+    },
+    "validation": {
+      "titleRequired": "El cargo es obligatorio",
+      "bioMin": "La biografía debe tener al menos 10 caracteres",
+      "specializationRequired": "La especialización es obligatoria",
+      "locationRequired": "La ubicación es obligatoria",
+      "languageRequired": "Se requiere al menos un idioma",
+      "tagRequired": "Se requiere al menos una etiqueta"
+    },
+    "personalInfo": {
+      "uploadPhoto": "Subir foto de perfil",
+      "profilePhoto": "Foto de perfil",
+      "uploadHint": "Sube una foto profesional. JPG, GIF o PNG. Tamaño máximo de 800K.",
+      "fullName": "Nombre completo",
+      "namePlaceholder": "p. ej. Sara Jiménez",
+      "jobTitle": "Cargo",
+      "titlePlaceholder": "p. ej. Coach de carrera sénior",
+      "bio": "Biografía",
+      "bioPlaceholder": "Cuéntanos sobre tu experiencia y tu estilo de coaching...",
+      "specialization": "Especialización principal",
+      "specializationPlaceholder": "p. ej. Liderazgo tecnológico",
+      "location": "Ubicación",
+      "locationPlaceholder": "p. ej. Bogotá, Colombia",
+      "languages": "Idiomas",
+      "languagesPlaceholder": "p. ej. Español, Inglés",
+      "skills": "Habilidades / etiquetas",
+      "skillsPlaceholder": "p. ej., liderazgo, gestión, hablar en público",
+      "continue": "Continuar a disponibilidad"
+    },
+    "pricing": {
+      "minRate": "La tarifa por hora debe ser de al menos $10",
+      "maxRate": "La tarifa por hora no puede superar $500",
+      "hourlyRate": "Tarifa por hora ({{symbol}})",
+      "hint": "Define tu tarifa de coaching por hora (mínimo {{symbol}}{{min}}, máximo {{symbol}}{{max}})",
+      "earningsBreakdown": "Desglose de ganancias",
+      "platformFeeDesc": "Nuestra plataforma cobra una tarifa de servicio del {{fee}}% para cubrir el procesamiento de pagos, el mantenimiento de la plataforma y el soporte.",
+      "clientPays": "El cliente paga:",
+      "platformFee": "Tarifa de la plataforma ({{fee}}%):",
+      "youEarn": "Tú ganas:",
+      "example_one": "Con {{count}} hora de coaching al mes, ganarás aprox. {{amount}} al mes",
+      "example_other": "Con {{count}} horas de coaching al mes, ganarás aprox. {{amount}} al mes"
     }
   },
   "compare": {
@@ -2121,7 +2568,7 @@
     "certificate": "Certificado",
     "inProgress": "En progreso",
     "completed": "Completado",
-    "markCompleted": "Marcar como Completado",
+    "markCompleted": "Marcar como completado",
     "reviewOnCoursera": "Revisar en Coursera",
     "week": "semana",
     "weeks": "semanas",
@@ -2140,7 +2587,11 @@
     "showingResults": "Mostrando {{count}} de {{total}} cursos",
     "totalCourses": "Cursos totales",
     "avgRating": "Calificación promedio",
-    "enrollments": "Inscripciones"
+    "enrollments": "Inscripciones",
+    "myCourses": "Mis cursos y progreso",
+    "trackProgress": "Haz seguimiento de tus cursos inscritos, certificaciones completadas y próximos pasos recomendados.",
+    "exploreCourses": "Explorar cursos",
+    "coursesAvailable": "cursos"
   },
   "courses_import": {
     "button": "Importar curso",
@@ -2149,10 +2600,11 @@
     "labelUrl": "URL del curso",
     "start": "Iniciar importación",
     "importing": "Importando...",
-    "invalidUrl": "Por favor ingresa una URL válida",
+    "invalidUrl": "Por favor, ingresa una URL válida",
     "success": "Trabajo de importación iniciado. Verifica el estado en breve.",
     "failure": "No se pudo iniciar la importación. Intenta de nuevo.",
-    "started": "Trabajo de importación iniciado ({{jobId}}). Revisa el estado en un momento."
+    "started": "Trabajo de importación iniciado ({{jobId}}). Revisa el estado en un momento.",
+    "completed": "Importación completada con éxito. Actualiza la página para ver los nuevos cursos."
   },
   "profile": {
     "personalInfoTitle": "Información personal",
@@ -2166,7 +2618,27 @@
     "addSkillAria": "Agregar una nueva habilidad",
     "skillNamePlaceholder": "Nombre de la habilidad",
     "noSkillsYet": "No hay habilidades añadidas.",
-    "skillsDescription": "Presiona Enter para agregar una habilidad."
+    "skillsDescription": "Presiona Enter para agregar una habilidad.",
+    "inviteParent": {
+      "dialogTitle": "Invitar a padre, madre o acudiente",
+      "dialogDescription": "Envía una invitación de acceso al portal para vincular a tu padre, madre o acudiente con tu cuenta.",
+      "inviteSent": "Invitación enviada correctamente"
+    },
+    "overview": {
+      "aboutMe": "Sobre mí",
+      "noBio": "Aún no has agregado una biografía.",
+      "addBio": "Agregar biografía",
+      "noSkills": "Aún no has agregado habilidades.",
+      "addSkills": "Agregar habilidades",
+      "coursesCompleted": "Cursos completados",
+      "viewAllActivity": "Ver toda la actividad",
+      "activityTypes": {
+        "course_completed": "Curso completado",
+        "application_sent": "Solicitud enviada",
+        "session_completed": "Sesión completada",
+        "certificate_earned": "Certificado obtenido"
+      }
+    }
   },
   "booking": {
     "enterDetailsTitle": "Detalles de la sesión",
@@ -2211,7 +2683,7 @@
     "benchmarks": {
       "marketDemand": "Demanda del mercado",
       "high": "Alta",
-      "topGrowth": "Top 10% tasa de crecimiento",
+      "topGrowth": "Tasa de crecimiento en el 10% superior",
       "talentSupply": "Oferta de talento",
       "moderate": "Moderada",
       "balancedCompetition": "Competencia equilibrada",
@@ -2274,9 +2746,9 @@
     "pcaCompleted": "PCA completado",
     "pcaInProgress": "PCA en progreso",
     "pcaDescription": "Análisis de competencias personales",
-    "subtestCompleted": "{{name}} Completado",
-    "subtestStarted": "{{name}} Iniciado",
-    "subtestDescription": "Subtest completado con {{score}}% de puntuación",
+    "subtestCompleted": "{{name}} completado",
+    "subtestStarted": "{{name}} iniciado",
+    "subtestDescription": "Subprueba completada con {{score}}% de puntuación",
     "evaluatorAdded": "Evaluador agregado",
     "evaluatorAddedDescription": "{{name}} ({{type}}) agregado como evaluador",
     "evaluationReceived": "Evaluación recibida",
@@ -2293,7 +2765,7 @@
     "search": "Buscar",
     "searchPlaceholder": "Buscar por nombre, ciudad, país",
     "location": "Ubicación",
-    "degreeLevel": "Nivel de grado",
+    "degreeLevel": "Nivel académico",
     "fieldOfStudy": "Área de estudio",
     "tuitionPerYear": "Matrícula anual",
     "financialAid": "Ayuda financiera",
@@ -2333,7 +2805,7 @@
       "suggestedUniversities": "Universidades sugeridas",
       "countriesRepresented": "Países representados",
       "scholarshipCoverage": "Cobertura de becas",
-      "degreeDistribution": "Por nivel de grado",
+      "degreeDistribution": "Por nivel académico",
       "fieldDistribution": "Por área de estudio",
       "costDistribution": "Distribución de costos",
       "budgetFriendly": "Económico",
@@ -2355,6 +2827,9 @@
       "arts": "Artes y humanidades",
       "sciences": "Ciencias",
       "socialSciences": "Ciencias sociales"
+    },
+    "goal": {
+      "setAsGoal": "Establecer como mi meta de graduación"
     }
   },
   "sessions": {
@@ -2374,7 +2849,7 @@
     },
     "messages": {
       "failedToLoad": "Error al cargar tus sesiones",
-      "cancelReasonRequired": "Por favor proporciona una razón para la cancelación",
+      "cancelReasonRequired": "Por favor, proporciona una razón para la cancelación",
       "cancelSuccess": "Sesión cancelada con éxito",
       "failedToCancel": "Error al cancelar la sesión",
       "reviewSubmitted": "Reseña enviada con éxito",
@@ -2391,15 +2866,15 @@
     "upcoming": "Próximas",
     "completed": "Completadas",
     "cancelled": "Canceladas",
-    "bookCounselor": "Reservar consejero",
-    "findCoach": "Buscar Coach",
+    "bookCounselor": "Reservar sesión con consejero",
+    "findCoach": "Buscar coach",
     "noSessions": "No se encontraron sesiones",
     "noSessionsDesc": "Reserva una sesión con un consejero o coach para comenzar.",
     "coaching": "Coaching",
     "counseling": "Consejería",
     "reschedule": "Reprogramar",
     "cancel": "Cancelar sesión",
-    "joinSession": "Unirse a sesión",
+    "joinSession": "Unirse a la sesión",
     "leaveReview": "Dejar reseña"
   },
   "subscriptions": {
@@ -2476,7 +2951,9 @@
       "studentsInSchool": "Estudiantes en tu escuela",
       "awaitingAcceptance": "Esperando aceptación",
       "currentlyActive": "Actualmente activos",
-      "averageAssessmentScore": "Puntuación promedio de evaluación"
+      "averageAssessmentScore": "Puntuación promedio de evaluación",
+      "pending": "Invitaciones pendientes",
+      "active": "Estudiantes activos"
     },
     "quickActions": {
       "inviteStudents": {
@@ -2509,7 +2986,7 @@
         "student": "Estudiante",
         "status": "Estado",
         "progress": "Progreso",
-        "avgScore": "Puntuación prom",
+        "avgScore": "Puntuación prom.",
         "lastActive": "Última actividad",
         "actions": "Acciones"
       },
@@ -2547,7 +3024,14 @@
       "resendError": "Error al reenviar la invitación",
       "removeSuccess": "Estudiante eliminado exitosamente",
       "removeError": "Error al eliminar el estudiante",
-      "neverActive": "Nunca"
+      "neverActive": "Nunca",
+      "notePlaceholder": "Registra aquí los detalles de la interacción...",
+      "error": {
+        "title": "No se encontró el perfil del estudiante",
+        "description": "El registro del estudiante al que intentas acceder no existe o pudo haber sido eliminado."
+      },
+      "backToList": "Volver a la lista de estudiantes",
+      "joined": "Registro"
     },
     "analytics": {
       "title": "Análisis",
@@ -2653,7 +3137,7 @@
         "phonePlaceholder": "+52 123 456 7890",
         "update": "Actualizar perfil",
         "updating": "Guardando...",
-        "fillRequired": "Por favor completa al menos un campo",
+        "fillRequired": "Por favor, completa al menos un campo",
         "success": "Perfil actualizado exitosamente",
         "error": "Error al actualizar el perfil"
       },
@@ -2668,7 +3152,7 @@
         "confirmPlaceholder": "Confirma la nueva contraseña",
         "change": "Cambiar contraseña",
         "changing": "Cambiando...",
-        "fillRequired": "Por favor completa todos los campos de contraseña",
+        "fillRequired": "Por favor, completa todos los campos de contraseña",
         "minLength": "La contraseña debe tener al menos 8 caracteres",
         "success": "Contraseña cambiada exitosamente",
         "error": "Error al cambiar la contraseña",
@@ -2684,12 +3168,40 @@
       "cancel": "Cancelar",
       "go": "Ir",
       "viewAll": "Ver todo"
+    },
+    "alerts": {
+      "dismissed": "Alerta descartada con éxito.",
+      "dismissError": "No se pudo descartar la alerta.",
+      "markedRead": "Alerta marcada como revisada.",
+      "bulkDismissed": "Alertas seleccionadas descartadas con éxito.",
+      "bulkError": "No se pudieron descartar las alertas. Inténtalo de nuevo.",
+      "title": "Alertas del sistema",
+      "subtitle": "Supervisa y resuelve eventos críticos de toda la institución, caídas en el rendimiento académico y notificaciones del sistema."
+    },
+    "gradeImport": {
+      "emptyFile": "El CSV está vacío",
+      "noFile": "No se seleccionó ningún archivo",
+      "noSchool": "Falta el contexto del colegio",
+      "uploadSuccess": "Importación iniciada",
+      "uploadError": "La importación falló",
+      "helpText": "Sube un CSV con las columnas: student_id, student_email, course_code, semester, grade, credits, status",
+      "parse": "Vista previa",
+      "preview": "Vista previa",
+      "errors": "Errores de validación:",
+      "confirmImport": "Iniciar importación"
     }
   },
   "lia": {
     "locked": {
       "title": "Evaluación bloqueada",
       "body": "Tu evaluación está bloqueada por demasiadas salidas. Pide al administrador de tu colegio que la desbloquee."
+    },
+    "completion": {
+      "title": "¡Evaluación LIA completada!",
+      "body": "Gracias por completar las 5 subpruebas. Tus respuestas se guardaron y tu consejero las revisará.",
+      "nextStep": "Siguiente paso",
+      "nextStepBody": "Completa la <strong>evaluación 360°</strong>: empieza con tu autoevaluación y luego invita a compañeros, padres y profesores a evaluarte.",
+      "start360": "Iniciar autoevaluación 360°"
     }
   },
   "mil": {
@@ -2715,7 +3227,37 @@
     "influence": "Influencia",
     "steadiness": "Solidez",
     "conscientiousness": "Control",
-    "resultsTitle": "Resultados PCA"
+    "resultsTitle": "Resultados PCA",
+    "panel": {
+      "profileGraph": "Gráfico del perfil PCA",
+      "loadResultsFailed": "No se pudieron cargar los resultados",
+      "loadCompetencesFailed": "No se pudieron cargar las competencias",
+      "loadAnalysisFailed": "No se pudo cargar el análisis",
+      "errorHint": "Inténtalo de nuevo o contacta a soporte si el problema continúa.",
+      "retry": "Reintentar",
+      "personalInfo": "Información personal",
+      "name": "Nombre:",
+      "id": "Identificación:",
+      "gender": "Género:",
+      "male": "Masculino",
+      "female": "Femenino",
+      "email": "Correo:",
+      "profileScores": "Puntajes del perfil PCA",
+      "scoresUnavailable": "Resultados no disponibles: los puntajes PCA están incompletos o aún se están procesando.",
+      "primaryDimensions": "Dimensiones primarias",
+      "secondaryDimensions": "Dimensiones secundarias",
+      "selfImage": "Autoimagen",
+      "initializing": "Cargando los resultados...",
+      "competencyLevels": "Niveles de competencia",
+      "levelLow": "Bajo",
+      "levelMedium": "Medio",
+      "levelHigh": "Alto",
+      "noCompetenceData": "No hay datos de competencias disponibles.",
+      "comparedAgainst": "Comparado con el análisis de competencias del cargo (JCA):",
+      "matchWith": "Coincidencia de competencias con {{job}}",
+      "matchHint": "Qué tanto se ajustan tus competencias evaluadas a este perfil de cargo.",
+      "analyzing": "Analizando los datos frente al JCA..."
+    }
   },
   "counselorBooking": {
     "title": "Reservar sesión con consejero",
@@ -2729,7 +3271,7 @@
     "sessionDetails": "Detalles de la sesión",
     "fillDetails": "Completa los detalles de tu sesión",
     "topic": "Tema",
-    "notesLabel": "Notas para el Consejero (opcional)",
+    "notesLabel": "Notas para el consejero (opcional)",
     "notesPlaceholder": "¿Qué te gustaría discutir?",
     "bookSession": "Reservar sesión",
     "booking": "Reservando...",
@@ -2737,7 +3279,26 @@
     "duration": "30 min",
     "booked": "¡Sesión reservada!",
     "confirmationMessage": "Tu sesión con el consejero ha sido confirmada.",
-    "backToDashboard": "Volver al panel"
+    "backToDashboard": "Volver al panel",
+    "topics": {
+      "academicPlanning": "Planeación académica",
+      "courseSelection": "Selección de cursos",
+      "collegeApplications": "Solicitudes a universidades",
+      "careerGuidance": "Orientación profesional",
+      "personalDevelopment": "Desarrollo personal",
+      "graduationRequirements": "Requisitos de graduación",
+      "scholarshipInformation": "Información sobre becas",
+      "other": "Otro"
+    },
+    "bookedToast": "¡Sesión reservada con éxito!",
+    "bookFailed": "No se pudo reservar la sesión",
+    "noCounselors": {
+      "title": "No hay consejeros disponibles",
+      "description": "En este momento no hay consejeros disponibles en tu colegio. Comunícate con el administrador de tu colegio."
+    },
+    "freeSession": "Sesión GRATIS",
+    "viewMySessions": "Ver mis sesiones",
+    "bookAnother": "Reservar otra"
   },
   "coach": {
     "nav": {
@@ -2797,7 +3358,8 @@
       "joinCall": "Unirse a la llamada",
       "viewNotes": "Ver notas",
       "confirmReschedule": "Confirmar reprogramación"
-    }
+    },
+    "portal": "Portal del coach"
   },
   "shell": {
     "collapseSidebar": "Contraer barra lateral",
@@ -2821,7 +3383,7 @@
     "themeSystem": "Sistema"
   },
   "informe": {
-    "title": "Informe completo",
+    "title": "Informe de carrera y universidad",
     "desc": "Descargar informe completo de orientación (PDF)",
     "download": "Descargar informe",
     "downloaded": "Informe descargado",
@@ -2857,7 +3419,7 @@
     "finish": "Finalizar",
     "finishing": "Calculando tus resultados...",
     "answerError": "No se pudo guardar esa respuesta. Por favor, elige de nuevo.",
-    "finishError": "Algunas respuestas no se guardaron. Marcamos las que faltan; por favor complétalas.",
+    "finishError": "Algunas respuestas no se guardaron. Marcamos las que faltan; por favor, complétalas.",
     "runnerHint": "No hay respuestas correctas ni incorrectas. Elige la opción que mejor te describa.",
     "noResultsTitle": "Sin resultados",
     "noResultsBody": "Aún no has completado la evaluación de personalidad.",
@@ -2871,7 +3433,7 @@
     "sectionWeaknesses": "Aspectos a cuidar",
     "sectionImprovementAreas": "Áreas de mejora",
     "sectionHowToDevelop": "Cómo desarrollarte",
-    "sectionMotivation": "Qué te Motiva",
+    "sectionMotivation": "Qué te motiva",
     "sectionHowToWorkWith": "Cómo trabajar contigo",
     "sectionCommunication": "Estilo de comunicación",
     "sectionPotential": "Potencial",
@@ -2881,5 +3443,586 @@
   },
   "validation": {
     "required": "Este campo es obligatorio"
+  },
+  "coursePlan": {
+    "graduationTarget": {
+      "unlockTitle": "Desbloquea tu plan de graduación personalizado",
+      "generatePlan": "Generar mi plan",
+      "status": {
+        "draft": "Plan en borrador",
+        "proposed": "Esperando al orientador",
+        "approved": "Plan aprobado",
+        "rejected": "Requiere revisión"
+      },
+      "personality": "Personalidad",
+      "noEvaluators": "360° (aún no has invitado evaluadores)",
+      "unlockBody": "Completa tus evaluaciones y prepararemos una ruta semestre a semestre hacia la universidad de tus sueños.",
+      "stillNeeded": "Pendiente: {{items}}.",
+      "yourGoal": "Tu meta: {{goal}}",
+      "anyUniversity": "Cualquier universidad",
+      "goToAssessments": "Ir a las evaluaciones",
+      "chooseTitle": "¿A dónde quieres ir después de graduarte?",
+      "suggestedBody": "Según tus coincidencias: {{match}}. Confírmala o elige la tuya.",
+      "chooseBody": "Elige una universidad y una carrera, y prepararemos un plan para que llegues allí.",
+      "chooseGoal": "Elige tu meta",
+      "rigorProfile": "Perfil de exigencia: {{label}}",
+      "changeGoal": "Cambiar meta"
+    },
+    "targetPicker": {
+      "title": "Elige tu meta de graduación"
+    },
+    "draftPlan": {
+      "submitToCounselor": "Enviar al orientador",
+      "changesRequested": "Tu orientador pidió cambios"
+    },
+    "toasts": {
+      "planSubmitted": "Plan enviado a tu orientador para revisión",
+      "changeRequestSubmitted": "Solicitud de cambio enviada: pendiente de aprobación del orientador"
+    },
+    "page": {
+      "subtitle": "Planea tus clases del año",
+      "grade": "Grado {{grade}}",
+      "creditsEarned_one": "{{count}} crédito obtenido",
+      "creditsEarned_other": "{{count}} créditos obtenidos"
+    },
+    "catalog": {
+      "title": "Agregar clases",
+      "searchPlaceholder": "Buscar clases...",
+      "term": "Periodo",
+      "terms": {
+        "Fall": "Otoño",
+        "Spring": "Primavera"
+      },
+      "suggested": "Sugeridas para ti:",
+      "suggestionTitle": "{{score}} % de coincidencia: búscala en el catálogo",
+      "emptyCatalog": "Tu colegio aún no tiene un catálogo de cursos.",
+      "noMatches": "No hay clases que coincidan.",
+      "needs": "Requiere {{courses}}",
+      "credits": "{{credits}} créditos",
+      "addAria": "Agregar {{name}}",
+      "add": "Agregar"
+    }
+  },
+  "aiChat": {
+    "welcome": {
+      "greeting": "¡Hola, {{name}}!",
+      "greetingNoName": "¡Hola!",
+      "help": "¿En qué te puedo ayudar hoy?",
+      "tryAsking": "Intenta preguntar"
+    }
+  },
+  "recommendations": {
+    "inbox": {
+      "title": "Solicitudes de recomendación",
+      "subtitle": "Acepta, rechaza y sube las cartas de recomendación que te han solicitado.",
+      "declinedReason": "Rechazada: {{reason}}"
+    },
+    "uploadLetter": {
+      "title": "Subir carta de recomendación"
+    }
+  },
+  "ai": {
+    "ats": {
+      "add": "Agregar '{{keyword}}'",
+      "addKeyword": "Agregar '{{keyword}}' al contexto",
+      "compatibilityScore": "Puntaje de compatibilidad ATS",
+      "detectedKeywords": "Palabras clave detectadas",
+      "excellent": "Excelente",
+      "good": "Bueno",
+      "keywords": "Palabras clave",
+      "keywordsDetected": "Palabras clave del sector detectadas",
+      "missingKeywords": "Palabras clave faltantes",
+      "missingKeywordsDesc": "Palabras clave que aparecen en la descripción del cargo pero no en el contenido generado.",
+      "moreKeywords_one": "+{{count}} más",
+      "moreKeywords_other": "+{{count}} más",
+      "needsImprovement": "Necesita mejorar",
+      "perfectLength": "Longitud perfecta",
+      "proTipDesc": "Usa un formato sencillo y evita imágenes en tu currículum. La mayoría de los sistemas ATS funcionan mejor con texto plano.",
+      "proTipTitle": "💡 Consejo:",
+      "scoreAria": "Puntaje: {{score}} por ciento - {{label}}",
+      "scoreDesc": "Qué tan bien interpretarán este contenido los sistemas de seguimiento de candidatos (ATS)",
+      "tooLong": "Considera acortarlo",
+      "tooShort": "Podría ser más largo",
+      "wordCount": "Número de palabras"
+    },
+    "fields": {
+      "awardDesc": "Descripción del premio",
+      "bullets": "Viñetas del empleo",
+      "courseDesc": "Descripción del curso",
+      "customBullets": "Viñetas de la sección personalizada",
+      "customDesc": "Descripción de la sección personalizada",
+      "declaration": "Texto de la declaración",
+      "educationDesc": "Descripción de la formación académica",
+      "experienceBullets": "Viñetas de la experiencia",
+      "experienceDesc": "Descripción de la experiencia",
+      "languageDesc": "Descripción del idioma",
+      "objective": "Objetivo profesional",
+      "organizationDesc": "Descripción de la organización",
+      "project": "Descripción del proyecto",
+      "projectBullets": "Viñetas del proyecto",
+      "projectDesc": "Descripción del proyecto",
+      "publicationDesc": "Descripción de la publicación",
+      "referenceDesc": "Descripción de la referencia",
+      "skill": "Descripción de la habilidad",
+      "summary": "Resumen profesional",
+      "volunteerDesc": "Descripción del voluntariado"
+    },
+    "form": {
+      "award": {
+        "awardName": {
+          "label": "Nombre del premio",
+          "placeholder": "p. ej., Empleado del año",
+          "tooltip": "Nombre del premio o reconocimiento"
+        },
+        "impact": {
+          "label": "Impacto/relevancia",
+          "placeholder": "p. ej., Reconocido entre más de 500 empleados",
+          "tooltip": "La relevancia o el impacto de este premio"
+        },
+        "organization": {
+          "label": "Organización que lo otorgó",
+          "placeholder": "p. ej., TechCorp Inc.",
+          "tooltip": "Organización que otorgó el premio"
+        },
+        "reason": {
+          "label": "Motivo del premio",
+          "placeholder": "p. ej., Desempeño sobresaliente en el cuarto trimestre de 2023",
+          "tooltip": "Por qué recibiste este premio"
+        }
+      },
+      "bullets": {
+        "jobTitle": {
+          "label": "Cargo",
+          "placeholder": "p. ej., Desarrollador backend",
+          "tooltip": "Tu rol o cargo en este puesto"
+        },
+        "metrics": {
+          "label": "Métricas/resultados (opcional)",
+          "placeholder": "p. ej., 40 % de mejora en el rendimiento, 99,9 % de disponibilidad",
+          "tooltip": "Resultados cuantificables de tu trabajo"
+        },
+        "responsibilities": {
+          "label": "Responsabilidades principales",
+          "placeholder": "¿Qué hiciste? p. ej., Desarrollé API REST, gestioné migraciones de bases de datos",
+          "tooltip": "Tareas y responsabilidades clave en este rol"
+        },
+        "technologies": {
+          "label": "Tecnologías utilizadas",
+          "placeholder": "p. ej., React, Python, PostgreSQL, Docker",
+          "tooltip": "Herramientas y tecnologías que usaste"
+        }
+      },
+      "common": {
+        "tone": {
+          "label": "Tono",
+          "tooltip": "Elige qué tan formal o informal debe ser el contenido"
+        }
+      },
+      "course": {
+        "courseName": {
+          "label": "Nombre del curso",
+          "placeholder": "p. ej., AWS Certified Solutions Architect",
+          "tooltip": "Nombre del curso o certificación"
+        },
+        "projects": {
+          "label": "Proyectos/trabajos",
+          "placeholder": "p. ej., Desarrollé una aplicación web escalable en AWS",
+          "tooltip": "Proyectos o trabajos destacados que completaste"
+        },
+        "provider": {
+          "label": "Proveedor/institución",
+          "placeholder": "p. ej., Amazon Web Services, Coursera",
+          "tooltip": "Quién ofreció el curso o la certificación"
+        },
+        "skillsLearned": {
+          "label": "Habilidades aprendidas",
+          "placeholder": "p. ej., Arquitectura en la nube, EC2, S3, Lambda",
+          "tooltip": "Habilidades o conocimientos clave adquiridos"
+        }
+      },
+      "custom": {
+        "context": {
+          "label": "Contexto/propósito",
+          "placeholder": "p. ej., Intereses personales, habilidades adicionales",
+          "tooltip": "De qué trata esta sección"
+        },
+        "keyPoints": {
+          "label": "Puntos clave",
+          "placeholder": "p. ej., Fotografía, senderismo, contribuciones de código abierto",
+          "tooltip": "Puntos principales que debes incluir"
+        },
+        "sectionTitle": {
+          "label": "Título de la sección",
+          "placeholder": "p. ej., Pasatiempos, información adicional",
+          "tooltip": "Título de tu sección personalizada"
+        }
+      },
+      "declaration": {
+        "location": {
+          "label": "Ubicación",
+          "placeholder": "p. ej., Bogotá, Colombia",
+          "tooltip": "Tu ubicación actual"
+        },
+        "name": {
+          "label": "Tu nombre completo",
+          "placeholder": "p. ej., Juan Pérez",
+          "tooltip": "Tu nombre legal completo"
+        }
+      },
+      "education": {
+        "achievements": {
+          "label": "Logros/distinciones",
+          "placeholder": "p. ej., Cuadro de honor, promedio 4,5/5,0, matrícula de honor",
+          "tooltip": "Logros académicos, distinciones o premios"
+        },
+        "coursework": {
+          "label": "Materias relevantes",
+          "placeholder": "p. ej., Estructuras de datos, algoritmos, aprendizaje automático, bases de datos",
+          "tooltip": "Materias relevantes que cursaste"
+        },
+        "degree": {
+          "label": "Título",
+          "placeholder": "p. ej., Pregrado en Ingeniería de Sistemas",
+          "tooltip": "Tu título o certificación académica"
+        },
+        "fieldOfStudy": {
+          "label": "Área de estudio",
+          "placeholder": "p. ej., Ciencias de la computación",
+          "tooltip": "Tu carrera o área de estudio"
+        },
+        "institution": {
+          "label": "Institución",
+          "placeholder": "p. ej., Universidad de los Andes",
+          "tooltip": "Nombre de la institución educativa"
+        }
+      },
+      "experience": {
+        "achievements": {
+          "label": "Logros clave",
+          "placeholder": "p. ej., 40 % de mejora en el rendimiento, 99,9 % de disponibilidad",
+          "tooltip": "Resultados cuantificables de tu trabajo"
+        },
+        "company": {
+          "label": "Empresa",
+          "placeholder": "p. ej., Google",
+          "tooltip": "Nombre de la empresa"
+        },
+        "jobTitle": {
+          "label": "Cargo",
+          "placeholder": "p. ej., Ingeniero de software sénior",
+          "tooltip": "Tu rol o cargo en este puesto"
+        },
+        "metrics": {
+          "label": "Métricas/resultados",
+          "placeholder": "p. ej., 40 % de mejora en el rendimiento, 99,9 % de disponibilidad",
+          "tooltip": "Resultados cuantificables de tu trabajo"
+        },
+        "responsibilities": {
+          "label": "Responsabilidades principales",
+          "placeholder": "¿Qué hiciste? p. ej., Desarrollé API REST, gestioné migraciones de bases de datos",
+          "tooltip": "Tareas y responsabilidades clave en este rol"
+        },
+        "technologies": {
+          "label": "Tecnologías/habilidades utilizadas",
+          "placeholder": "p. ej., React, Node.js, AWS, PostgreSQL",
+          "tooltip": "Tecnologías y habilidades que usaste en este rol"
+        }
+      },
+      "language": {
+        "context": {
+          "label": "Contexto/uso",
+          "placeholder": "p. ej., Lo uso en reuniones de negocios y atención al cliente",
+          "tooltip": "Cómo usas este idioma"
+        },
+        "language": {
+          "label": "Idioma",
+          "placeholder": "p. ej., Inglés",
+          "tooltip": "El idioma"
+        },
+        "proficiency": {
+          "label": "Nivel de dominio",
+          "placeholder": "p. ej., Nativo, fluido, intermedio",
+          "tooltip": "Tu nivel de dominio"
+        }
+      },
+      "objective": {
+        "industry": {
+          "label": "Sector",
+          "placeholder": "p. ej., FinTech, SaaS, salud",
+          "tooltip": "Industria o sector del cargo objetivo"
+        },
+        "keyStrengths": {
+          "label": "Fortalezas clave",
+          "placeholder": "p. ej., Pensamiento estratégico, liderazgo de equipos, análisis de datos",
+          "tooltip": "Tus principales fortalezas para este cargo"
+        },
+        "targetRole": {
+          "label": "Cargo objetivo",
+          "placeholder": "p. ej., Gerente de producto",
+          "tooltip": "El cargo al que te estás postulando"
+        }
+      },
+      "organization": {
+        "achievements": {
+          "label": "Logros",
+          "placeholder": "p. ej., Aumenté la membresía en un 30 %",
+          "tooltip": "Logros destacados en este rol"
+        },
+        "activities": {
+          "label": "Actividades/responsabilidades",
+          "placeholder": "p. ej., Organicé charlas de tecnología, fui mentor de estudiantes",
+          "tooltip": "Qué hiciste en esta organización"
+        },
+        "organizationName": {
+          "label": "Nombre de la organización",
+          "placeholder": "p. ej., IEEE Computer Society",
+          "tooltip": "Nombre de la organización"
+        },
+        "role": {
+          "label": "Tu rol",
+          "placeholder": "p. ej., Miembro, vicepresidente",
+          "tooltip": "Tu rol en la organización"
+        }
+      },
+      "project": {
+        "description": {
+          "label": "Descripción del proyecto",
+          "placeholder": "¿De qué se trataba el proyecto?",
+          "tooltip": "Descripción breve del proyecto"
+        },
+        "impact": {
+          "label": "Impacto/resultados",
+          "placeholder": "p. ej., Usado por más de 10.000 usuarios, 50 % más rápido que la competencia",
+          "tooltip": "Impacto o resultados medibles"
+        },
+        "projectDescription": {
+          "label": "Descripción del proyecto",
+          "placeholder": "Resumen breve de lo que hace el proyecto",
+          "tooltip": "¿De qué se trataba el proyecto?"
+        },
+        "projectName": {
+          "label": "Nombre del proyecto",
+          "placeholder": "p. ej., Plataforma de comercio electrónico",
+          "tooltip": "Nombre del proyecto"
+        },
+        "role": {
+          "label": "Tu rol",
+          "placeholder": "p. ej., Desarrollador full stack, líder de equipo",
+          "tooltip": "Tu rol en el proyecto"
+        },
+        "technologies": {
+          "label": "Tecnologías utilizadas",
+          "placeholder": "p. ej., React, Node.js, MongoDB, AWS",
+          "tooltip": "Tecnologías y herramientas utilizadas en el proyecto"
+        },
+        "yourRole": {
+          "label": "Tu rol",
+          "placeholder": "p. ej., Desarrollador líder, ingeniero frontend",
+          "tooltip": "¿Cuál fue tu rol en el proyecto?"
+        }
+      },
+      "publication": {
+        "impact": {
+          "label": "Impacto/citas",
+          "placeholder": "p. ej., Más de 50 citas, destacada en una revista líder",
+          "tooltip": "Impacto o reconocimiento de la publicación"
+        },
+        "publisher": {
+          "label": "Editorial/revista",
+          "placeholder": "p. ej., IEEE Transactions, Medium",
+          "tooltip": "Dónde se publicó"
+        },
+        "title": {
+          "label": "Título de la publicación",
+          "placeholder": "p. ej., Aprendizaje automático en la salud",
+          "tooltip": "Título de la publicación"
+        },
+        "topic": {
+          "label": "Tema",
+          "placeholder": "p. ej., Aplicación de algoritmos de ML en el diagnóstico",
+          "tooltip": "De qué trata la publicación"
+        }
+      },
+      "reference": {
+        "context": {
+          "label": "Contexto",
+          "placeholder": "p. ej., Trabajamos juntos en TechCorp durante 3 años",
+          "tooltip": "Contexto de tu relación con esta persona"
+        },
+        "name": {
+          "label": "Nombre de la referencia",
+          "placeholder": "p. ej., Juan Pérez",
+          "tooltip": "Nombre de la referencia"
+        },
+        "relationship": {
+          "label": "Relación",
+          "placeholder": "p. ej., Exjefe, profesor",
+          "tooltip": "Tu relación con esta persona"
+        }
+      },
+      "skill": {
+        "experienceExamples": {
+          "label": "Ejemplos de experiencia",
+          "placeholder": "p. ej., Desarrollé más de 5 aplicaciones en producción, gestioné más de 50 proyectos",
+          "tooltip": "Ejemplos de cómo has usado esta habilidad"
+        },
+        "proficiencyLevel": {
+          "label": "Nivel de dominio",
+          "tooltip": "Tu nivel de experticia en esta habilidad"
+        },
+        "skillName": {
+          "label": "Nombre de la habilidad",
+          "placeholder": "p. ej., React, gestión de proyectos, análisis de datos",
+          "tooltip": "La habilidad que quieres describir"
+        }
+      },
+      "summary": {
+        "achievements": {
+          "label": "Logros clave (opcional)",
+          "placeholder": "p. ej., Lideré un equipo de 5 ingenieros, aumenté el rendimiento en un 40 %",
+          "tooltip": "Logros o proyectos importantes de los que te sientes orgulloso/a"
+        },
+        "currentRole": {
+          "label": "Cargo actual",
+          "placeholder": "p. ej., Ingeniero de software sénior",
+          "tooltip": "Tu cargo actual o rol principal"
+        },
+        "keySkills": {
+          "label": "Habilidades clave",
+          "placeholder": "p. ej., React, Node.js, TypeScript, AWS",
+          "tooltip": "Lista de tus principales habilidades, separadas por comas"
+        },
+        "yearsExperience": {
+          "label": "Años de experiencia",
+          "placeholder": "p. ej., 8",
+          "tooltip": "Total de años en tu campo"
+        }
+      },
+      "tipLabel": "Consejo",
+      "tipMessage": "Entre más detalles proporciones, mejor será el contenido generado.",
+      "volunteer": {
+        "activities": {
+          "label": "Actividades",
+          "placeholder": "p. ej., Organicé colectas de alimentos, coordiné voluntarios",
+          "tooltip": "Qué hiciste como voluntario/a"
+        },
+        "impact": {
+          "label": "Impacto",
+          "placeholder": "p. ej., Atendimos a más de 500 familias, recaudamos $10K",
+          "tooltip": "El impacto de tu voluntariado"
+        },
+        "organization": {
+          "label": "Organización",
+          "placeholder": "p. ej., Cruz Roja, banco de alimentos local",
+          "tooltip": "Organización en la que hiciste voluntariado"
+        },
+        "role": {
+          "label": "Tu rol",
+          "placeholder": "p. ej., Coordinador de voluntarios",
+          "tooltip": "Tu rol en el voluntariado"
+        }
+      }
+    },
+    "modal": {
+      "alternatives": "Alternativas ({{current}} de {{total}})",
+      "appliedError": "No se pudo aplicar el contenido generado",
+      "appliedSuccess": "Contenido generado aplicado",
+      "generatedContent": "Contenido generado",
+      "generatingContent": "Generando contenido...",
+      "generatingTime": "Esto suele tardar entre 2 y 5 segundos",
+      "generationFailed": "La generación falló",
+      "keywordAdded": "Palabra clave agregada al contexto.",
+      "keywordAddedCopied": "Palabra clave agregada al contexto y copiada al portapapeles.",
+      "noContentError": "No hay contenido para aplicar. Primero genera contenido válido.",
+      "statusComplete": "Generación con IA completada",
+      "statusConfig": "Configura las opciones de generación",
+      "statusGenerating": "Generando contenido",
+      "subtitle": "Optimizado para ATS",
+      "title": "Generador de contenido con IA",
+      "useThis": "Usar este contenido generado",
+      "useThisBtn": "Usar este"
+    },
+    "proficiency": {
+      "advanced": "Avanzado",
+      "beginner": "Principiante",
+      "expert": "Experto",
+      "intermediate": "Intermedio"
+    },
+    "tone": {
+      "analytical": "Analítico",
+      "confident": "Seguro",
+      "creative": "Creativo",
+      "enthusiastic": "Entusiasta",
+      "professional": "Profesional"
+    },
+    "buttonFields": {
+      "summary": "Resumen",
+      "objective": "Objetivo",
+      "bullets": "Viñetas",
+      "project": "Proyecto",
+      "skill": "Habilidad",
+      "experience_description": "Descripción de la experiencia",
+      "experience_bullets": "Viñetas de experiencia",
+      "education_description": "Descripción de la formación",
+      "project_description": "Descripción del proyecto",
+      "project_bullets": "Viñetas del proyecto",
+      "course_description": "Descripción del curso",
+      "award_description": "Descripción del reconocimiento",
+      "organization_description": "Descripción de la organización",
+      "publication_description": "Descripción de la publicación",
+      "language_description": "Descripción del idioma",
+      "volunteer_description": "Descripción del voluntariado",
+      "reference_description": "Descripción de la referencia",
+      "declaration_text": "Texto de la declaración",
+      "custom_description": "Descripción personalizada",
+      "custom_bullets": "Viñetas personalizadas"
+    },
+    "generateButton": {
+      "tooltip": "Generar {{field}} con IA"
+    }
+  },
+  "days": {
+    "sun": "Dom",
+    "mon": "Lun",
+    "tue": "Mar",
+    "wed": "Mié",
+    "thu": "Jue",
+    "fri": "Vie",
+    "sat": "Sáb"
+  },
+  "learning": {
+    "coursesDescription": "Explora cursos recomendados alineados con tus intereses profesionales",
+    "certificationsDescription": "Haz seguimiento de tus cursos inscritos, tu progreso y las certificaciones obtenidas",
+    "subtitle": "Desarrolla habilidades y obtén certificaciones para avanzar en tu ruta profesional"
+  },
+  "portfolio": {
+    "editItem": "Editar experiencia",
+    "editItemDescription": "Edita los detalles de esta experiencia del portafolio.",
+    "addItemDescription": "Agrega una nueva experiencia a tu portafolio.",
+    "startDate": "Fecha de inicio",
+    "endDate": "Fecha de finalización",
+    "create": "Crear experiencia",
+    "addFirst": "Agrega tu primer elemento"
+  },
+  "calendarIntegration": {
+    "title": "Integración de calendario",
+    "description": "Conecta tu calendario de Google o Microsoft: las sesiones que reserves en FormMaps aparecerán automáticamente en tu calendario.",
+    "loading": "Cargando la configuración del calendario...",
+    "connectedToast": "Calendario conectado",
+    "connectFailedToast": "No se pudo conectar el calendario. Inténtalo de nuevo.",
+    "connectProviderFailed": "No se pudo conectar con {{provider}}",
+    "disconnectedToast": "Calendario desconectado",
+    "connectedTitle": "Calendario de {{provider}} conectado",
+    "expiredTitle": "La conexión con {{provider}} expiró",
+    "reconnectHint": "Vuelve a conectarlo para que tus sesiones sigan sincronizándose.",
+    "reconnectHintEmail": "Vuelve a conectarlo para que tus sesiones sigan sincronizándose ({{email}}).",
+    "disconnecting": "Desconectando...",
+    "disconnect": "Desconectar",
+    "connecting": "Conectando...",
+    "reconnect": "Volver a conectar",
+    "syncGoogle": "Sincronizar con Google",
+    "syncMicrosoft": "Sincronizar con Microsoft",
+    "connectGoogle": "Conectar Google",
+    "connectOutlook": "Conectar Outlook"
   }
 }

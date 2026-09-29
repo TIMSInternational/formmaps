@@ -71,7 +71,7 @@ export function UniversityStats({ stats, isLoading }: UniversityStatsProps) {
         accent="text-blue-400"
       />
       <StatCard
-        label={t("Top Score", "Mejor Puntaje")}
+        label={t("Top Score", "Mejor puntaje")}
         value={`${(stats.overview?.topMatchScore ?? 0).toFixed(0)}%`}
         subValue={t("Highest recommendation score", "Puntaje más alto")}
         icon={Award}
@@ -79,7 +79,7 @@ export function UniversityStats({ stats, isLoading }: UniversityStatsProps) {
         accent="text-emerald-400"
       />
       <StatCard
-        label={t("Best Field", "Mejor Área")}
+        label={t("Best Field", "Mejor área")}
         value={topField?.field || "—"}
         subValue={t("Top matching field of study", "Mejor campo de estudio")}
         icon={GraduationCap}
@@ -87,7 +87,7 @@ export function UniversityStats({ stats, isLoading }: UniversityStatsProps) {
         accent="text-purple-400"
       />
       <StatCard
-        label={t("Top Region", "Mejor Región")}
+        label={t("Top Region", "Mejor región")}
         value={topCountry || "—"}
         subValue={t("Most matches found here", "Más coincidencias aquí")}
         icon={MapPin}

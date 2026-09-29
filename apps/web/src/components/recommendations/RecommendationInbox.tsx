@@ -7,10 +7,13 @@ import { listReceivedRecommendations, RecommendationRequest } from "@/services/r
 import { QueryStateBoundary } from "@/components/QueryStateBoundary";
 import { StatusBadge } from "./StatusBadge";
 import { RecommendationActionMenu } from "./RecommendationActionMenu";
+import { useTranslation } from "react-i18next";
+import { relationshipLabel } from "./relationshipLabel";
 
 const STATUS_ORDER: Record<string, number> = { requested: 0, accepted: 1, in_progress: 2, submitted: 3, declined: 4 };
 
 export function RecommendationInbox({ roleLabel }: { roleLabel?: string }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["recommendations", "received"],
@@ -28,8 +31,8 @@ export function RecommendationInbox({ roleLabel }: { roleLabel?: string }) {
         {roleLabel && (
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{roleLabel}</span>
         )}
-        <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-none">Recommendation Requests</h1>
-        <p className="text-sm text-muted-foreground mt-1">Accept, decline, and upload letters of recommendation requested of you.</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-none">{t("recommendations.inbox.title")}</h1>
+        <p className="text-sm text-muted-foreground mt-1">{t("recommendations.inbox.subtitle")}</p>
       </motion.div>
 
       <QueryStateBoundary
@@ -56,14 +59,14 @@ export function RecommendationInbox({ roleLabel }: { roleLabel?: string }) {
             >
               <div className="min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-foreground truncate">{req.student?.name ?? "Student"}</span>
+                  <span className="text-sm font-semibold text-foreground truncate">{req.student?.name ?? t("admin.users.roleNames.student")}</span>
                   <StatusBadge status={req.status} />
                 </div>
                 <p className="text-xs text-muted-foreground truncate mt-0.5">
-                  {req.relationship ? `${req.relationship} · ` : ""}{req.requestMessage ?? ""}
+                  {req.relationship ? `${relationshipLabel(req.relationship, t)} · ` : ""}{req.requestMessage ?? ""}
                 </p>
                 {req.status === "declined" && req.declineReason && (
-                  <p className="text-xs mt-1" style={{ color: "#ef4444" }}>Declined: {req.declineReason}</p>
+                  <p className="text-xs mt-1" style={{ color: "#ef4444" }}>{t("recommendations.inbox.declinedReason", { reason: req.declineReason })}</p>
                 )}
               </div>
               <RecommendationActionMenu req={req} isMyRequest onAction={onAction} />

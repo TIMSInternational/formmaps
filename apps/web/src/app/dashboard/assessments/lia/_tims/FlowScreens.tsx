@@ -19,7 +19,7 @@ export function FullscreenOverlay({ language, onEnter }: { language: "es" | "en"
           <Maximize2 className="w-10 h-10 text-white" />
         </div>
         <h2 className="text-2xl font-bold text-white mb-3">
-          {language === "es" ? "Pantalla Completa Requerida" : "Fullscreen Required"}
+          {language === "es" ? "Se requiere pantalla completa" : "Fullscreen Required"}
         </h2>
         <p className="text-white/70 mb-8 text-lg">
           {language === "es"
@@ -31,7 +31,7 @@ export function FullscreenOverlay({ language, onEnter }: { language: "es" | "en"
           className="w-full py-4 px-6 bg-[#10B981] text-white rounded-xl font-semibold text-lg hover:bg-[#059669] transition-colors flex items-center justify-center gap-3"
         >
           <Maximize2 className="w-6 h-6" />
-          {language === "es" ? "Entrar en Pantalla Completa" : "Enter Fullscreen"}
+          {language === "es" ? "Entrar en pantalla completa" : "Enter Fullscreen"}
         </button>
       </div>
     </div>
@@ -44,7 +44,7 @@ export function LockdownBar({ language, elapsedTime }: { language: "es" | "en"; 
       <div className="flex items-center gap-2">
         <span className="bg-[#10B981] px-2 py-0.5 rounded text-xs font-medium flex items-center gap-1">
           <Lock className="w-3 h-3" />
-          {language === "es" ? "Modo Seguro" : "Secure Mode"}
+          {language === "es" ? "Modo seguro" : "Secure Mode"}
         </span>
       </div>
       <span className="text-white/70 font-mono">{elapsedTime}</span>
@@ -221,10 +221,10 @@ export function OverviewCard({
         >
           {resuming
             ? language === "es"
-              ? "Reanudar Evaluación"
+              ? "Reanudar evaluación"
               : "Resume Assessment"
             : language === "es"
-              ? "Comenzar Evaluación"
+              ? "Comenzar evaluación"
               : "Start Assessment"}
         </button>
       </div>

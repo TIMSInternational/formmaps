@@ -165,7 +165,10 @@
     "colCompletion": "Completion",
     "colAvgScore": "Avg Score",
     "colEvaluators": "Evaluators",
-    "colResponseRate": "Response Rate"
+    "colResponseRate": "Response Rate",
+    "personalityTitle": "Personality Assessment",
+    "personalityCompleted": "Student has completed the Personality Assessment.",
+    "personalityNotStarted": "Student has not completed the Personality Assessment."
   },
   "grades": {
     "gpaSummary": "GPA Summary",
@@ -419,5 +422,28 @@
     "creditsRemaining": "{{n}} credits remaining to graduate",
     "noRecommendations": "No recommendations available",
     "creditsOf": "{{earned}} / {{required}} credits"
+  },
+  "messages": {
+    "subtitle": "Communicate with your students, coaches, and school staff."
+  },
+  "calendar": {
+    "subtitle": "Monthly view of your counseling sessions",
+    "sessionFallback": "Session",
+    "more_one": "+{{count}} more",
+    "more_other": "+{{count}} more",
+    "detailsTitle": "Session Details",
+    "student": "Student",
+    "time": "Time",
+    "topic": "Topic",
+    "noTopic": "No topic",
+    "status": "Status",
+    "studentNotes": "Student Notes",
+    "yourNotes": "Your Notes",
+    "unknownStudent": "Unknown"
+  },
+  "reports": {
+    "subtitle": "View and download assessment reports for your assigned students",
+    "fullAcademicSummary": "Full Academic Summary",
+    "viewReport": "View Report"
   }
 }

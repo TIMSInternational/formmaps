@@ -70,7 +70,7 @@
   },
   "sessionsPage": {
     "sectionLabel": "Scheduling",
-    "title": "Sessions History",
+    "title": "Session History",
     "subtitle": "Manage your coaching journey and session details",
     "syncCalendar": "Sync Calendar",
     "noSessionsTitle": "No sessions found",
@@ -147,6 +147,8 @@
     "failedToLoad": "Failed to load student details"
   },
   "schedule": {
+    "cancel": "Cancel",
+    "rescheduleButton": "Reschedule",
     "sectionLabel": "Scheduling",
     "title": "My Schedule",
     "subtitle": "Manage your coaching sessions",
@@ -281,7 +283,8 @@
     "noMessages": "No messages yet",
     "startConversation": "Start a conversation with a student",
     "typePlaceholder": "Type a message...",
-    "send": "Send"
+    "send": "Send",
+    "pageSubtitle": "Communicate with your students and school staff."
   },
   "profile": {
     "sectionLabel": "Account",
@@ -439,7 +442,7 @@
     "joinCall": "Join Call",
     "reschedule": "Reschedule",
     "cancelSession": "Cancel Session",
-    "review": "Review",
+    "reviewButton": "Review",
     "messages": {
       "failedToLoad": "Failed to load sessions",
       "cancelReasonRequired": "Please provide a reason for cancellation",

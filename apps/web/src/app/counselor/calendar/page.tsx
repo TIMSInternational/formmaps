@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { ChevronLeft, ChevronRight, CalendarDays, X } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
 import { formatTimeOfDay } from "@/lib/dateUtils";
+import { useTranslation } from "react-i18next";
 
 interface Session {
   id: string;
@@ -20,8 +21,6 @@ interface Session {
 function getDaysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate(); }
 function getFirstDayOfMonth(y: number, m: number) { return new Date(y, m, 1).getDay(); }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   confirmed: { bg: "rgba(59,130,246,0.15)", text: "var(--admin-accent-blue)" },
   completed: { bg: "rgba(34,197,94,0.15)", text: "#22c55e" },
@@ -30,6 +29,7 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export default function CounselorCalendarPage() {
+  const { t, i18n } = useTranslation();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMonth, setViewMonth] = useState(new Date().getMonth());
@@ -75,10 +75,10 @@ export default function CounselorCalendarPage() {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
-        <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>Scheduling</span>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>Session Calendar</h1>
+        <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>{t("coach:calendar.sectionLabel")}</span>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em" }}>{t("coach:calendar.title")}</h1>
         <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
-          Monthly view of your counseling sessions
+          {t("counselor:calendar.subtitle")}
         </p>
       </motion.div>
 
@@ -89,7 +89,7 @@ export default function CounselorCalendarPage() {
           <button onClick={prevMonth} style={{ width: 32, height: 32, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <ChevronLeft style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
           </button>
-          <span style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>{MONTHS[viewMonth]} {viewYear}</span>
+          <span style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>{new Date(viewYear, viewMonth, 1).toLocaleDateString(i18n.language, { month: "long", year: "numeric" })}</span>
           <button onClick={nextMonth} style={{ width: 32, height: 32, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <ChevronRight style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
           </button>
@@ -97,7 +97,7 @@ export default function CounselorCalendarPage() {
 
         {/* Day headers */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", borderBottom: "1px solid var(--admin-border-default)" }}>
-          {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => (
+          {[t("common:days.sun"), t("common:days.mon"), t("common:days.tue"), t("common:days.wed"), t("common:days.thu"), t("common:days.fri"), t("common:days.sat")].map(d => (
             <div key={d} style={{ padding: "8px 0", textAlign: "center", fontSize: 11, fontWeight: 600, color: "var(--admin-font-light)" }}>{d}</div>
           ))}
         </div>
@@ -134,12 +134,12 @@ export default function CounselorCalendarPage() {
                           whiteSpace: "nowrap", cursor: "pointer",
                         }}
                       >
-                        {formatTime(s.startTime)} {s.studentName?.split(" ")[0] || "Session"}
+                        {formatTime(s.startTime)} {s.studentName?.split(" ")[0] || t("counselor:calendar.sessionFallback")}
                       </div>
                     );
                   })}
                   {daySessions.length > 3 && (
-                    <div style={{ fontSize: 9, color: "var(--admin-font-light)" }}>+{daySessions.length - 3} more</div>
+                    <div style={{ fontSize: 9, color: "var(--admin-font-light)" }}>{t("counselor:calendar.more", { count: daySessions.length - 3 })}</div>
                   )}
                 </div>
               </div>
@@ -151,10 +151,10 @@ export default function CounselorCalendarPage() {
       {/* Legend */}
       <div style={{ display: "flex", gap: 16, alignItems: "center", padding: "0 4px" }}>
         {[
-          { label: "Confirmed", color: "var(--admin-accent-blue)" },
-          { label: "Completed", color: "#22c55e" },
-          { label: "Cancelled", color: "#ef4444" },
-          { label: "Rescheduled", color: "#f59e0b" },
+          { label: t("coach:calendar.legend.confirmed"), color: "var(--admin-accent-blue)" },
+          { label: t("coach:calendar.legend.completed"), color: "#22c55e" },
+          { label: t("coach:calendar.legend.cancelled"), color: "#ef4444" },
+          { label: t("coach:calendar.legend.rescheduled"), color: "#f59e0b" },
         ].map((item) => (
           <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
             <div style={{ width: 8, height: 8, borderRadius: 2, background: item.color }} />
@@ -182,7 +182,7 @@ export default function CounselorCalendarPage() {
             <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <CalendarDays style={{ width: 16, height: 16, color: "var(--admin-accent-blue)" }} />
-                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Session Details</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("counselor:calendar.detailsTitle")}</span>
               </div>
               <button onClick={() => setSelected(null)} style={{ width: 24, height: 24, borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <X style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
@@ -190,42 +190,42 @@ export default function CounselorCalendarPage() {
             </div>
             <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 12 }}>
               <div>
-                <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 2 }}>Student</div>
-                <div style={{ fontSize: 14, fontWeight: 500, color: "var(--admin-font-primary)" }}>{selected.studentName || "Unknown"}</div>
+                <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 2 }}>{t("counselor:calendar.student")}</div>
+                <div style={{ fontSize: 14, fontWeight: 500, color: "var(--admin-font-primary)" }}>{selected.studentName || t("counselor:calendar.unknownStudent")}</div>
               </div>
               <div>
-                <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 2 }}>Time</div>
+                <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 2 }}>{t("counselor:calendar.time")}</div>
                 <div style={{ fontSize: 14, fontWeight: 500, color: "var(--admin-font-primary)" }}>
                   {formatTime(selected.startTime)} - {formatTime(selected.endTime)}
                 </div>
                 <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-                  {new Date(selected.startTime).toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
+                  {new Date(selected.startTime).toLocaleDateString(i18n.language, { weekday: "long", month: "long", day: "numeric", year: "numeric" })}
                 </div>
               </div>
               <div style={{ display: "flex", gap: 12 }}>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 2 }}>Topic</div>
-                  <div style={{ fontSize: 13, color: "var(--admin-font-primary)" }}>{selected.topic || "No topic"}</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 2 }}>{t("counselor:calendar.topic")}</div>
+                  <div style={{ fontSize: 13, color: "var(--admin-font-primary)" }}>{selected.topic || t("counselor:calendar.noTopic")}</div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 2 }}>Status</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 2 }}>{t("counselor:calendar.status")}</div>
                   <span style={{
                     fontSize: 11, padding: "2px 8px", borderRadius: 4, fontWeight: 600,
                     background: (STATUS_COLORS[selected.status] || STATUS_COLORS.confirmed).bg,
                     color: (STATUS_COLORS[selected.status] || STATUS_COLORS.confirmed).text,
                     textTransform: "capitalize",
-                  }}>{selected.status}</span>
+                  }}>{t(`common:sessions.status.${selected.status}`, { defaultValue: selected.status })}</span>
                 </div>
               </div>
               {selected.notes && (
                 <div>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 2 }}>Student Notes</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 2 }}>{t("counselor:calendar.studentNotes")}</div>
                   <div style={{ fontSize: 13, color: "var(--admin-font-secondary)", padding: "6px 8px", borderRadius: 4, background: "var(--admin-bg-hover)" }}>{selected.notes}</div>
                 </div>
               )}
               {selected.counselorNotes && (
                 <div>
-                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 2 }}>Your Notes</div>
+                  <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginBottom: 2 }}>{t("counselor:calendar.yourNotes")}</div>
                   <div style={{ fontSize: 13, color: "var(--admin-font-secondary)", padding: "6px 8px", borderRadius: 4, background: "var(--admin-bg-hover)" }}>{selected.counselorNotes}</div>
                 </div>
               )}
