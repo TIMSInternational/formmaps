@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,7 @@ export function InvitationActions({
   onSendSpecificEmails,
   groupCount,
 }: InvitationActionsProps) {
+  const { t } = useTranslation();
   const isDisabled = totalEvaluators === 0 || !allGroupsComplete;
 
   return (
@@ -50,7 +52,7 @@ export function InvitationActions({
                 className="bg-foreground text-background hover:bg-foreground/90 disabled:opacity-50 disabled:cursor-not-allowed px-4 py-2 rounded-xl text-xs font-medium transition-colors flex items-center gap-1.5"
               >
                 <Mail className="w-4 h-4" />
-                <span>Send Email Invitations</span>
+                <span>{t("evaluation.page.sendEmailInvitations")}</span>
                 <ChevronDown className="w-3.5 h-3.5" />
               </button>
             </DropdownMenuTrigger>

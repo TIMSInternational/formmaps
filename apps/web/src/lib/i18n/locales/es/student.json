@@ -1,27 +1,27 @@
 {
   "applications": {
-    "badge": "Seguimiento de Solicitudes",
-    "title": "Seguimiento de Tus Solicitudes",
-    "deadlineCalendar": "Calendario de Fechas Límite",
+    "badge": "Seguimiento de solicitudes",
+    "title": "Seguimiento de tus solicitudes",
+    "deadlineCalendar": "Calendario de fechas límite",
     "subtitle": "Organiza tus solicitudes universitarias desde la investigación hasta la aceptación. Haz clic en una tarjeta para abrir su espacio de trabajo: ensayos, lista de verificación y revisión con IA."
   },
   "transcript": {
-    "badge": "Expediente Académico",
-    "title": "Mi Expediente",
+    "badge": "Expediente académico",
+    "title": "Mi expediente",
     "subtitle": "Una vista completa de tu historial académico, promedio y progreso de créditos.",
     "failedToLoad": "Error al cargar el expediente.",
-    "noCoursesTitle": "Aún No Hay Materias",
+    "noCoursesTitle": "Aún no hay materias",
     "noCoursesBody": "Tu expediente se llenará una vez que tu escuela haya ingresado las calificaciones.",
-    "unweightedGpa": "Promedio Sin Ponderar",
-    "weightedGpa": "Promedio Ponderado",
-    "classRank": "Posición en la Clase",
-    "totalCredits": "Créditos Totales",
-    "courseRigor": "Nivel de Rigor Académico",
-    "gpaTrend": "Tendencia del Promedio",
-    "classStanding": "Posición en la Clase",
+    "unweightedGpa": "Promedio sin ponderar",
+    "weightedGpa": "Promedio ponderado",
+    "classRank": "Posición en la clase",
+    "totalCredits": "Créditos totales",
+    "courseRigor": "Nivel de rigor académico",
+    "gpaTrend": "Tendencia del promedio",
+    "classStanding": "Posición en la clase",
     "moreYearsNeeded": "Se necesitan más años para ver la tendencia",
     "table": {
-      "courseCode": "Código de Materia",
+      "courseCode": "Código de materia",
       "grade": "Calificación",
       "credits": "Créditos",
       "level": "Nivel",
@@ -32,10 +32,10 @@
     }
   },
   "testScores": {
-    "badge": "Perfil Académico",
-    "title": "Resultados de Exámenes",
+    "badge": "Perfil académico",
+    "title": "Resultados de exámenes",
     "subtitle": "Registra tus resultados del SAT, ACT, AP y otros exámenes estandarizados.",
-    "addScore": "Agregar Resultado",
+    "addScore": "Agregar resultado",
     "failedToLoad": "Error al cargar los resultados",
     "scoreUpdated": "Resultado actualizado",
     "scoreAdded": "Resultado agregado",
@@ -44,11 +44,11 @@
     "failedToDelete": "Error al eliminar el resultado"
   },
   "communityService": {
-    "badge": "Requisito de Graduación",
-    "title": "Horas de Servicio Comunitario",
+    "badge": "Requisito de graduación",
+    "title": "Horas de servicio comunitario",
     "subtitle": "Registra tus horas de voluntariado y ve tu progreso hacia la graduación.",
-    "logHours": "Registrar Horas",
-    "startLogging": "Comenzar a Registrar",
+    "logHours": "Registrar horas",
+    "startLogging": "Comenzar a registrar",
     "verified": "Verificadas",
     "pending": "Pendientes",
     "remaining": "Restantes",
@@ -59,46 +59,46 @@
     "noHoursBody": "Haz clic en \"Registrar Horas\" para comenzar a rastrear tu servicio comunitario.",
     "deleteConfirm": "¿Eliminar esta entrada? Esta acción no se puede deshacer.",
     "form": {
-      "editTitle": "Editar Entrada de Servicio",
-      "newTitle": "Registrar Nuevas Horas de Servicio",
+      "editTitle": "Editar entrada de servicio",
+      "newTitle": "Registrar nuevas horas de servicio",
       "organization": "Organización *",
       "organizationPlaceholder": "p. ej. Cruz Roja",
       "date": "Fecha *",
       "hours": "Horas *",
       "hoursPlaceholder": "p. ej. 4",
-      "supervisorName": "Nombre del Supervisor",
+      "supervisorName": "Nombre del supervisor",
       "supervisorNamePlaceholder": "p. ej. María González",
-      "supervisorEmail": "Correo del Supervisor",
+      "supervisorEmail": "Correo del supervisor",
       "supervisorEmailPlaceholder": "supervisor@org.com",
       "description": "Descripción",
       "descriptionPlaceholder": "Describe brevemente lo que hiciste...",
       "cancel": "Cancelar",
-      "saveChanges": "Guardar Cambios",
-      "submitHours": "Enviar Horas"
+      "saveChanges": "Guardar cambios",
+      "submitHours": "Enviar horas"
     },
     "serviceLog": {
-      "title": "Registro de Servicio",
+      "title": "Registro de servicio",
       "history": "Historial de tu trabajo voluntario",
       "entries": "entradas"
     }
   },
   "portfolio": {
-    "badge": "Portafolio Estudiantil",
-    "title": "Mi Portafolio de Logros",
+    "badge": "Portafolio estudiantil",
+    "title": "Mi portafolio de logros",
     "subtitle": "Organiza tus actividades extracurriculares, proyectos y experiencias en un solo lugar.",
-    "addItem": "Agregar Nueva Experiencia",
-    "totalItems": "Total de Elementos",
-    "totalHours": "Horas de Voluntariado",
-    "awards": "Premios Obtenidos",
+    "addItem": "Agregar nueva experiencia",
+    "totalItems": "Total de elementos",
+    "totalHours": "Horas de voluntariado",
+    "awards": "Premios obtenidos",
     "categories": "Categorías",
-    "noItemsTitle": "Construye Tu Portafolio",
+    "noItemsTitle": "Construye tu portafolio",
     "noItems": "Muestra tus logros, proyectos y experiencias para destacarte. Comienza a agregar elementos para construir tu perfil profesional."
   },
   "recommendations": {
     "badge": "Solicitudes",
-    "title": "Cartas de Recomendación",
+    "title": "Cartas de recomendación",
     "subtitle": "Solicita y da seguimiento a cartas de tus consejeros y maestros.",
-    "requestLetter": "Solicitar Carta",
+    "requestLetter": "Solicitar carta",
     "failedToLoad": "Error al cargar las solicitudes de recomendación"
   },
   "university": {
@@ -106,15 +106,15 @@
   },
   "career": {
     "market": {
-      "liveData": "Datos del Mercado en Vivo",
+      "liveData": "Datos del mercado en vivo",
       "title": "Pulso del",
       "titleAccent": "Mercado",
       "subtitle": "Información en tiempo real sobre salarios, tendencias de contratación y habilidades demandadas.",
       "lastUpdated": "Última actualización: Ahora mismo",
-      "backToDashboard": "Volver al Panel"
+      "backToDashboard": "Volver al panel"
     },
     "personality": {
-      "name": "Evaluación de Personalidad",
+      "name": "Evaluación de personalidad",
       "description": "Agrega tu tipo de personalidad de 4 letras para coincidencias de carrera aún más precisas",
       "recommended": "Recomendado",
       "completed": "Completado"

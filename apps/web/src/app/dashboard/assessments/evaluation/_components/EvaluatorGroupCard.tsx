@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import {
   EvaluatorGroup,
   Evaluator,
@@ -43,6 +44,7 @@ export function EvaluatorGroupCard({
   onResendPhoneLink,
   userEmail,
 }: EvaluatorGroupCardProps) {
+  const { t } = useTranslation();
   const visibleEvaluators = group.evaluators.filter(
     (evaluator) => evaluator.relationship !== "Self"
   );
@@ -110,7 +112,7 @@ export function EvaluatorGroupCard({
       ) : (
         <div className="text-center py-4">
           <UserPlus className="w-5 h-5 text-muted-foreground/40 mx-auto mb-1.5" />
-          <p className="text-xs text-muted-foreground">No evaluators yet</p>
+          <p className="text-xs text-muted-foreground">{t("evaluation.page.noEvaluatorsYet")}</p>
         </div>
       )}
     </motion.div>
