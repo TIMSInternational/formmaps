@@ -1,7 +1,8 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
-import { MoreHorizontal, UserX } from "lucide-react";
+import { toast } from "sonner";
+import { Copy, Eye, MailPlus, MoreHorizontal, UserX } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -12,9 +13,19 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { TableRowsSkeleton } from "@/components/skeletons/TableSkeleton";
+import { UserStatusBadge } from "./UserStatusBadge";
+import { displayStatus } from "./userStatus";
 
-interface UserRecord {
+export interface UserRecord {
   id: string;
   name: string;
   email: string;
@@ -22,6 +33,8 @@ interface UserRecord {
   status: string;
   joinedDate: string;
   subscriptionStatus?: string;
+  inviteStatus?: "active" | "invited" | "expired";
+  inviteExpiresAt?: string | null;
 }
 
 interface UsersTableProps {
@@ -31,9 +44,13 @@ interface UsersTableProps {
   totalPages: number;
   onPageChange: (page: number) => void;
   onViewProfile: (user: UserRecord) => void;
+  onResendInvite: (user: UserRecord) => void;
+  onDeactivate: (user: UserRecord) => void;
 }
 
-export function UsersTable({ users, loading, page, totalPages, onPageChange, onViewProfile }: UsersTableProps) {
+export function UsersTable({
+  users, loading, page, totalPages, onPageChange, onViewProfile, onResendInvite, onDeactivate,
+}: UsersTableProps) {
   const { t } = useTranslation();
   const { t: tPO } = useTranslation("platform_owner");
 
@@ -84,15 +101,7 @@ export function UsersTable({ users, loading, page, totalPages, onPageChange, onV
                   </Badge>
                 </TableCell>
                 <TableCell className="py-4">
-                  <Badge
-                    variant={user.status === "active" ? "default" : "secondary"}
-                    className={`font-medium shadow-none border-0 ${user.status === "active"
-                      ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                      : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                      }`}
-                  >
-                    {user.status}
-                  </Badge>
+                  <UserStatusBadge user={user} />
                 </TableCell>
                 <TableCell className="py-4">
                   {user.subscriptionStatus ? (
@@ -106,11 +115,45 @@ export function UsersTable({ users, loading, page, totalPages, onPageChange, onV
                 <TableCell className="text-gray-500 py-4">
                   {new Date(user.joinedDate).toLocaleDateString()}
                 </TableCell>
-                <TableCell className="text-right pr-6 py-4">
-                  <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
-                    onClick={(e) => e.stopPropagation()}>
-                    <MoreHorizontal className="h-4 w-4 text-gray-400" />
-                  </Button>
+                <TableCell className="text-right pr-6 py-4" onClick={(e) => e.stopPropagation()}>
+                  {/* This button used to do nothing but swallow the click. */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0 hover:bg-gray-100 rounded-full"
+                        aria-label={t("admin.users.openMenu")}>
+                        <MoreHorizontal className="h-4 w-4 text-gray-400" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuLabel>{t("admin.users.dropdown.actions")}</DropdownMenuLabel>
+                      <DropdownMenuItem onSelect={() => onViewProfile(user)}>
+                        <Eye className="mr-2 h-4 w-4" /> {t("admin.users.dropdown.viewProfile")}
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onSelect={() => {
+                          navigator.clipboard?.writeText(user.email).then(
+                            () => toast.success(t("admin.users.emailCopied")),
+                            () => undefined,
+                          );
+                        }}
+                      >
+                        <Copy className="mr-2 h-4 w-4" /> {t("admin.users.dropdown.copyEmail")}
+                      </DropdownMenuItem>
+                      {(displayStatus(user) === "invited" || displayStatus(user) === "expired") && (
+                        <DropdownMenuItem onSelect={() => onResendInvite(user)}>
+                          <MailPlus className="mr-2 h-4 w-4" /> {t("admin.users.dropdown.resendInvite")}
+                        </DropdownMenuItem>
+                      )}
+                      {user.status === "active" && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-red-600" onSelect={() => onDeactivate(user)}>
+                            <UserX className="mr-2 h-4 w-4" /> {t("admin.users.dropdown.deactivateUser")}
+                          </DropdownMenuItem>
+                        </>
+                      )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </TableCell>
               </TableRow>
             ))

@@ -188,9 +188,10 @@ export function StaffPanel() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <AdminStatCard label="Total Users" value={String(data?.total || 0)} icon={Users} sub="in school" trend={0} />
-        <AdminStatCard label="Counselors" value={String(roleCounts["counselor"] || 0)} icon={Shield} sub="active staff" trend={0} />
-        <AdminStatCard label="Students" value={String(roleCounts["student"] || 0)} icon={UserPlus} sub="enrolled" trend={0} />
+        {/* No `trend`: these counts have no history, and trend={0} drew a fake "+0%" and a rising bar. */}
+        <AdminStatCard label={t("admin.users.staffStats.totalUsers")} value={String(data?.total || 0)} icon={Users} sub={t("admin.users.staffStats.inSchool")} />
+        <AdminStatCard label={t("admin.users.staffStats.counselors")} value={String(roleCounts["counselor"] || 0)} icon={Shield} sub={t("admin.users.staffStats.activeStaff")} />
+        <AdminStatCard label={t("admin.users.staffStats.students")} value={String(roleCounts["student"] || 0)} icon={UserPlus} sub={t("admin.users.staffStats.enrolled")} />
       </div>
 
       {/* Table */}

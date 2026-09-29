@@ -30,17 +30,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AddUserDialog } from "./_components/AddUserDialog";
 import { InviteUserWizard } from "./_components/invite-wizard/InviteUserWizard";
 import { UserDetailDialog } from "./_components/UserDetailDialog";
-import { UsersTable } from "./_components/UsersTable";
-
-interface UserRecord {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-  status: string;
-  joinedDate: string;
-  subscriptionStatus?: string;
-}
+import { UsersTable, type UserRecord } from "./_components/UsersTable";
+import { formatSignedPercent } from "./_components/userStatus";
+import { resendUserInvite } from "@/services/adminUsersService";
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -70,17 +62,19 @@ export default function AdminUsersPage() {
   const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const statsCards = [
-    { label: "Total Users", value: statsLoading ? null : (analyticsData?.stats.totalUsers.toLocaleString() || "0"), growth: analyticsData?.stats.monthlyGrowth.users || 0, icon: Users },
-    { label: "Active Users (MAU)", value: statsLoading ? null : (telemetryData?.metrics?.mau?.toLocaleString() || "0"), growth: telemetryData?.metrics?.newUsers ? (telemetryData.metrics.newUsers / (telemetryData.metrics.mau || 1)) * 100 : 0, icon: UserCheck },
-    { label: "New Signups", value: statsLoading ? null : (telemetryData?.metrics?.newUsers?.toLocaleString() || "0"), growth: null, icon: UserPlus },
-    { label: "Growth Rate", value: statsLoading ? null : `+${analyticsData?.stats.growthRate || 0}%`, growth: analyticsData?.stats.growthRate, icon: TrendingUp },
+    { label: t("admin.users.stats.totalUsers"), value: statsLoading ? null : (analyticsData?.stats.totalUsers.toLocaleString() || "0"), growth: analyticsData?.stats.monthlyGrowth.users || 0, icon: Users },
+    { label: t("admin.users.stats.activeUsers"), value: statsLoading ? null : (telemetryData?.metrics?.mau?.toLocaleString() || "0"), growth: telemetryData?.metrics?.newUsers ? (telemetryData.metrics.newUsers / (telemetryData.metrics.mau || 1)) * 100 : 0, icon: UserCheck },
+    { label: t("admin.users.stats.newSignups"), value: statsLoading ? null : (telemetryData?.metrics?.newUsers?.toLocaleString() || "0"), growth: null, icon: UserPlus },
+    // The sign comes from the number: this used to prefix "+" onto a negative rate ("+-5%").
+    { label: t("admin.users.stats.growthRate"), value: statsLoading ? null : formatSignedPercent(analyticsData?.stats.growthRate ?? 0), growth: analyticsData?.stats.growthRate, icon: TrendingUp },
   ];
 
   const handleDeactivateUser = async (user: UserRecord) => {
     const confirmed = await confirm({
-      title: "Deactivate User",
-      description: `Are you sure you want to deactivate ${user.name}? They will no longer be able to access the platform.`,
-      confirmLabel: "Deactivate",
+      title: t("admin.users.deactivate.title"),
+      description: t("admin.users.deactivate.body", { name: user.name }),
+      confirmLabel: t("admin.users.deactivate.cta"),
+      cancelLabel: t("common.cancel"),
       variant: "destructive",
     });
     if (!confirmed) return;
@@ -88,12 +82,35 @@ export default function AdminUsersPage() {
       await apiRequest(`/api/v1/admin/users/${user.id}/status`, {
         method: "PUT",
         data: { isActive: false },
+        showErrorToast: false,
       });
-      toast.success(`${user.name} has been deactivated`);
+      toast.success(t("admin.users.deactivate.done", { name: user.name }));
       refetch();
-    } catch (error: unknown) {
-      const message = error instanceof Error ? error.message : "Failed to deactivate user";
-      toast.error(message);
+    } catch {
+      toast.error(t("admin.users.deactivate.failed"));
+    }
+  };
+
+  const handleResendInvite = async (user: UserRecord) => {
+    const confirmed = await confirm({
+      title: t("admin.users.resend.title"),
+      description: t("admin.users.resend.body", { name: user.name, email: user.email }),
+      confirmLabel: t("admin.users.resend.cta"),
+      cancelLabel: t("common.cancel"),
+    });
+    if (!confirmed) return;
+    try {
+      const res = await resendUserInvite(user.id);
+      if (res.emailSent === false) {
+        toast.warning(t("admin.users.resend.notDelivered", { email: user.email }));
+      } else {
+        toast.success(t("admin.users.resend.done", { email: user.email }));
+      }
+      refetch();
+    } catch (err) {
+      const status = (err as { status?: number }).status;
+      toast.error(status === 409 ? t("admin.users.resend.alreadyActive", { name: user.name }) : t("admin.users.resend.failed"));
+      if (status === 409) refetch();
     }
   };
 
@@ -140,6 +157,10 @@ export default function AdminUsersPage() {
               <SelectContent>
                 <SelectItem value="all">{t("admin.users.roles.all")}</SelectItem>
                 <SelectItem value="student">{t("admin.users.roles.student")}</SelectItem>
+                <SelectItem value="counselor">{t("admin.users.roles.counselor")}</SelectItem>
+                <SelectItem value="school_admin">{t("admin.users.roles.school_admin")}</SelectItem>
+                <SelectItem value="teacher">{t("admin.users.roles.teacher")}</SelectItem>
+                <SelectItem value="parent">{t("admin.users.roles.parent")}</SelectItem>
                 <SelectItem value="coach">{t("admin.users.roles.coach")}</SelectItem>
                 <SelectItem value="admin">{t("admin.users.roles.admin")}</SelectItem>
               </SelectContent>
@@ -153,6 +174,8 @@ export default function AdminUsersPage() {
                 <SelectItem value="all">{t("admin.users.status.all")}</SelectItem>
                 <SelectItem value="active">{t("admin.users.status.active")}</SelectItem>
                 <SelectItem value="inactive">{t("admin.users.status.inactive")}</SelectItem>
+                <SelectItem value="invited">{t("admin.users.status.invited")}</SelectItem>
+                <SelectItem value="expired">{t("admin.users.status.expired")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -175,7 +198,8 @@ export default function AdminUsersPage() {
               </div>
               {stat.growth !== null && stat.growth !== undefined && (
                 <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 500, color: Number(stat.growth) >= 0 ? "var(--admin-accent-green, #10b981)" : "var(--admin-accent-red, #ef4444)" }}>
-                  {Number(stat.growth) >= 0 ? "+" : ""}{Math.abs(Number(stat.growth)).toFixed(1)}%
+                  {/* Math.abs used to drop the minus: a decline read as a red "5.0%". */}
+                  {formatSignedPercent(Number(stat.growth))}
                 </div>
               )}
             </div>
@@ -184,7 +208,7 @@ export default function AdminUsersPage() {
             </div>
             <div style={{ fontSize: 12, color: "var(--admin-font-tertiary, #818181)", marginTop: 4 }}>{stat.label}</div>
             {stat.growth !== null && (
-              <div style={{ fontSize: 11, color: "var(--admin-font-light, #555)", marginTop: 4 }}>from last month</div>
+              <div style={{ fontSize: 11, color: "var(--admin-font-light, #555)", marginTop: 4 }}>{t("admin.users.stats.fromLastMonth")}</div>
             )}
           </div>
         ))}
@@ -192,10 +216,13 @@ export default function AdminUsersPage() {
 
       {/* Users Table */}
       <UsersTable users={users} loading={usersLoading} page={page} totalPages={totalPages}
-        onPageChange={setPage} onViewProfile={setSelectedUser} />
+        onPageChange={setPage} onViewProfile={setSelectedUser}
+        onResendInvite={handleResendInvite} onDeactivate={handleDeactivateUser} />
 
       {/* User Detail Dialog */}
-      <UserDetailDialog user={selectedUser} onClose={() => setSelectedUser(null)} onDeactivate={handleDeactivateUser} />
+      <UserDetailDialog user={selectedUser} onClose={() => setSelectedUser(null)} onDeactivate={handleDeactivateUser}
+        onResendInvite={handleResendInvite}
+        onChanged={() => { setSelectedUser(null); refetch(); }} />
 
       <ConfirmDialog />
     </div>

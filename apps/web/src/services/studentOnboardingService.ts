@@ -1,5 +1,6 @@
 import { apiRequest } from "@/lib/api/apiClient";
 import { LoginResponse } from "./authService";
+import { authApiErrorFrom, classifyInviteError, type InviteProblem } from "@/lib/auth/authErrors";
 
 export interface VerifyTokenResponse {
   isValid: boolean | string;
@@ -18,6 +19,11 @@ export interface VerifyTokenResponse {
   roleName?: string;
   schoolName?: string | null;
   message?: string;
+  /**
+   * Why the token is unusable, when it is — so the page can offer the right next step
+   * (a new link for an expired invite, sign-in for an accepted one) instead of one dead end.
+   */
+  problem?: InviteProblem;
 }
 
 export interface CompleteOnboardingResponse extends LoginResponse {
@@ -37,11 +43,18 @@ export async function verifyStudentToken(token: string): Promise<VerifyTokenResp
     );
 
     if (!response.ok) {
-      // Allow 404/400 to just return isValid: false instead of throwing
-      return { isValid: false, message: "Invalid or expired token" };
+      // Not thrown: the page renders the problem state. The API's `code` says which one.
+      const body = await response.json().catch(() => ({}));
+      return { isValid: false, problem: classifyInviteError({ status: response.status, code: body?.code }) };
     }
 
     const result = await response.json();
+
+    if (!(result.data?.isValid === true || result.data?.isValid === "true")) {
+      // 200 with isValid:false is the older shape; a `code` on the payload still wins when present.
+      const code = result.data?.code ?? result.code;
+      return { isValid: false, problem: code ? classifyInviteError({ status: 200, code }) : "invalid" };
+    }
 
     // API returns { data: { isValid: boolean, ... }, success: boolean, ... }
     // We need to map it to VerifyTokenResponse interface
@@ -58,8 +71,8 @@ export async function verifyStudentToken(token: string): Promise<VerifyTokenResp
     };
 
     return mappedResponse;
-  } catch (error) {
-    return { isValid: false, message: "Network error verifying token" };
+  } catch {
+    return { isValid: false, problem: "unknown" };
   }
 }
 
@@ -93,8 +106,9 @@ export async function completeStudentOnboarding(
   );
 
   if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}));
-    throw new Error(errorData.message || "Failed to complete onboarding");
+    // Coded (INVITE_EXPIRED / INVITE_USED / INVITE_INVALID) so the page can switch to the
+    // matching state if the invite lapsed while the form was open.
+    throw await authApiErrorFrom(response, "Failed to complete onboarding");
   }
 
   const result = await response.json();
@@ -138,4 +152,28 @@ export async function completeStudentOnboarding(
   }
 
   return result;
+}
+
+export interface ResendInviteResult {
+  /** Masked address the new link went to, e.g. "g***@gmail.com". */
+  sentTo: string;
+  /** ISO expiry of the new link. */
+  expiresAt: string;
+}
+
+/**
+ * Ask for a fresh invitation link using the expired one. Public — the expired token is the
+ * only credential an invitee holds. The API mails the new link to the address already on the
+ * invite (never one supplied here) and rate-limits the endpoint.
+ */
+export async function resendInvite(token: string): Promise<ResendInviteResult> {
+  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
+  const response = await fetch(`${baseUrl}/authapi/invite/resend`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ token }),
+  });
+  if (!response.ok) throw await authApiErrorFrom(response, "Could not send a new invitation link");
+  const result = await response.json().catch(() => ({}));
+  return { sentTo: result.data?.sentTo ?? "", expiresAt: result.data?.expiresAt ?? "" };
 }

@@ -14,6 +14,7 @@ import {
 import { decodeJWTToken, isAdminRole, getCurrentUser } from "./authService";
 import { apiRequest } from "@/lib/api/apiClient";
 import { toCamel } from "@/lib/toCamel";
+import { currentLanguage } from "@/lib/i18n/currentLanguage";
 
 // Helper to get current language from i18n
 export const getCurrentLanguage = (): "en" | "sp" => {
@@ -124,7 +125,8 @@ export interface InviteRowResult {
 export async function inviteStudent(data: StudentInvitePayload): Promise<InviteRowResult> {
   const result = await apiRequest(`/api/v1/school-admin/students/invite${buildQueryString()}`, {
     method: "POST",
-    data: { students: [data] },
+    // The invite email goes out in the inviter's current language.
+    data: { students: [data], language: currentLanguage() },
   });
   if (!result.success) {
     throw new Error(result.message || result.error?.message || "Failed to invite student");
@@ -160,7 +162,7 @@ export async function bulkInviteStudents(
 ): Promise<{ success: boolean; invited: number; failed: number; results: any[] }> {
   const result = await apiRequest(`/api/v1/school-admin/students/bulk-invite${buildQueryString()}`, {
     method: "POST",
-    data,
+    data: { ...data, language: currentLanguage() },
   });
 
   if (!result.success && !result.results) {

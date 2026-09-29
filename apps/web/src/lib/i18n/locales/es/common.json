@@ -132,7 +132,8 @@
     "inProgress": "EN PROGRESO",
     "notStarted": "NO INICIADO",
     "male": "Masculino",
-    "female": "Femenino"
+    "female": "Femenino",
+    "continue": "Continuar"
   },
   "error": {
     "somethingWentWrong": "Algo salió mal",
@@ -1097,7 +1098,11 @@
       "termsOfService": "Términos del Servicio",
       "and": "y la",
       "privacyPolicy": "Política de Privacidad",
-      "marketingOptIn": "Me gustaría recibir consejos de carrera y novedades del producto por correo electrónico"
+      "marketingOptIn": "Me gustaría recibir consejos de carrera y novedades del producto por correo electrónico",
+      "emailUnavailableShort": "Este correo no se puede usar para crear una cuenta nueva.",
+      "emailUnavailable": "Este correo ya tiene una cuenta o una invitación pendiente. Si te invitaron, usa el enlace de tu correo de invitación para terminar la configuración.",
+      "emailUnavailableSignIn": "Iniciar sesión",
+      "emailUnavailableReset": "¿Olvidaste tu contraseña? Restablécela"
     },
     "password": {
       "show": "Mostrar contraseña",
@@ -1158,7 +1163,13 @@
     "errors": {
       "loginFailed": "El inicio de sesión falló. Inténtalo de nuevo.",
       "registrationFailed": "El registro falló. Inténtalo de nuevo.",
-      "genericSignup": "Ocurrió un error durante el registro. Inténtalo de nuevo."
+      "genericSignup": "Ocurrió un error durante el registro. Inténtalo de nuevo.",
+      "invalidCredentials": "El correo y la contraseña no coinciden. Revísalos e inténtalo de nuevo.",
+      "invitedHint": "¿Te invitaron hace poco? Termina de configurar tu cuenta desde el enlace de tu correo de invitación; no uses Registrarse.",
+      "accountLocked_one": "Demasiados intentos fallidos. Por tu seguridad, esta cuenta está bloqueada durante {{count}} minuto.",
+      "accountLocked_other": "Demasiados intentos fallidos. Por tu seguridad, esta cuenta está bloqueada durante {{count}} minutos.",
+      "rateLimited": "Hay demasiados intentos de inicio de sesión en este momento. Espera unos minutos e inténtalo de nuevo.",
+      "accountDisabled": "Esta cuenta está desactivada. Si crees que es un error, contacta al administrador de tu colegio."
     }
   },
   "transactions": {
@@ -1494,12 +1505,21 @@
         "all": "Todos los roles",
         "student": "Estudiante",
         "coach": "Coach",
-        "admin": "Administrador"
+        "admin": "Administrador",
+        "counselor": "Consejero",
+        "school_admin": "Administrador del colegio",
+        "teacher": "Profesor",
+        "parent": "Padre o madre"
       },
       "status": {
         "all": "Todos",
         "active": "Activo",
-        "inactive": "Inactivo"
+        "inactive": "Inactivo",
+        "invited": "Invitado",
+        "invitedExpiresToday": "Invitado · vence hoy",
+        "invitedExpiresIn_one": "Invitado · vence en {{count}} día",
+        "invitedExpiresIn_other": "Invitado · vence en {{count}} días",
+        "expired": "Invitación vencida"
       },
       "addUser": "Agregar usuario",
       "table": {
@@ -1519,7 +1539,8 @@
         "copyEmail": "Copiar correo",
         "viewProfile": "Ver perfil",
         "editDetails": "Editar detalles",
-        "deactivateUser": "Desactivar usuario"
+        "deactivateUser": "Desactivar usuario",
+        "resendInvite": "Reenviar invitación"
       },
       "dialogTitle": "Agregar nuevo usuario",
       "dialogDescription": "Crea una nueva cuenta de usuario. Recibirá sus credenciales de acceso.",
@@ -1597,6 +1618,65 @@
         "sending": "Enviando…",
         "inviteAnother": "Invitar a otra persona",
         "done": "Listo"
+      },
+      "stats": {
+        "totalUsers": "Usuarios totales",
+        "activeUsers": "Usuarios activos (MAU)",
+        "newSignups": "Registros nuevos",
+        "growthRate": "Tasa de crecimiento",
+        "fromLastMonth": "respecto al mes pasado"
+      },
+      "deactivate": {
+        "title": "Desactivar usuario",
+        "body": "¿Seguro que quieres desactivar a {{name}}? Ya no podrá acceder a la plataforma.",
+        "cta": "Desactivar",
+        "done": "{{name}} fue desactivado",
+        "failed": "No se pudo desactivar a este usuario. Inténtalo de nuevo."
+      },
+      "resend": {
+        "title": "Reenviar invitación",
+        "body": "¿Enviar a {{name}} un nuevo enlace de invitación a {{email}}? Los enlaces anteriores dejarán de funcionar.",
+        "cta": "Enviar enlace nuevo",
+        "done": "Se envió una nueva invitación a {{email}}",
+        "notDelivered": "Se creó la nueva invitación, pero no se pudo enviar el correo a {{email}}.",
+        "alreadyActive": "{{name}} ya terminó de configurar su cuenta.",
+        "failed": "No se pudo reenviar la invitación. Inténtalo de nuevo."
+      },
+      "access": {
+        "heading": "Acceso",
+        "role": "Rol",
+        "roleHint": "El nuevo rol se aplica la próxima vez que inicie sesión.",
+        "loadingRoles": "Cargando roles…",
+        "roleConfirmTitle": "Cambiar rol",
+        "roleConfirmBody": "¿Cambiar a {{name}} de {{from}} a {{to}}? Lo que puede ver y hacer cambia la próxima vez que inicie sesión.",
+        "roleConfirmCta": "Cambiar rol",
+        "roleChanged": "{{name}} ahora es {{role}}",
+        "roleFailed": "No se pudo cambiar el rol. Inténtalo de nuevo.",
+        "school": "Colegio",
+        "changeSchool": "Cambiar colegio",
+        "schoolConfirmTitle": "Mover a otro colegio",
+        "schoolConfirmBody": "¿Mover a {{name}} a {{school}}? El personal de su colegio actual dejará de verlo.",
+        "schoolConfirmCta": "Mover",
+        "schoolChanged": "{{name}} ahora pertenece a {{school}}",
+        "schoolFailed": "No se pudo cambiar el colegio. Inténtalo de nuevo."
+      },
+      "roleNames": {
+        "student": "Estudiante",
+        "counselor": "Consejero",
+        "school_admin": "Administrador del colegio",
+        "teacher": "Profesor",
+        "parent": "Padre o madre",
+        "coach": "Coach",
+        "super_admin": "Superadministrador",
+        "admin": "Administrador"
+      },
+      "staffStats": {
+        "totalUsers": "Usuarios totales",
+        "inSchool": "en el colegio",
+        "counselors": "Consejeros",
+        "activeStaff": "personal activo",
+        "students": "Estudiantes",
+        "enrolled": "inscritos"
       }
     },
     "careers": {
@@ -1926,7 +2006,14 @@
     },
     "counselor": {
       "infoTitle": "Información del consejero",
-      "infoDesc": "Cuéntanos sobre ti para configurar tu perfil."
+      "infoDesc": "Cuéntanos sobre ti para configurar tu perfil.",
+      "email": "Tu correo",
+      "name": "Tu nombre completo",
+      "namePlaceholder": "p. ej. Sara Jiménez",
+      "phone": "Número de teléfono",
+      "schoolName": "Colegio",
+      "timezone": "Zona horaria",
+      "unassigned": "Sin asignar"
     },
     "coach": {
       "personalTitle": "Información personal",
@@ -1951,7 +2038,32 @@
       "alreadyCompleted": "Ya completaste el registro."
     },
     "invite": {
-      "context": "Te han invitado a {{school}} como {{role}}."
+      "context": "Te han invitado a {{school}} como {{role}}.",
+      "problem": {
+        "brandLine1": "Encuentra tu camino.",
+        "brandLine2": "Construye tu futuro.",
+        "expiredHeading": "Esta invitación ha vencido",
+        "expiredBody": "Por tu seguridad, los enlaces de invitación solo funcionan por un tiempo limitado. Podemos enviarte uno nuevo ahora mismo.",
+        "sendNewLink": "Envíame un enlace nuevo",
+        "sending": "Enviando…",
+        "sentHeading": "Revisa tu correo",
+        "sentBody": "Enviamos un nuevo enlace de invitación a {{email}}. Funciona hasta el {{date}}.",
+        "sentBodyNoDate": "Enviamos un nuevo enlace de invitación a {{email}}.",
+        "sentSpamHint": "¿No llega en unos minutos? Revisa tu carpeta de spam o correo no deseado.",
+        "rateLimited": "Ya pediste varios enlaces. Espera unos minutos e inténtalo de nuevo.",
+        "resendFailed": "No pudimos enviar un enlace nuevo. Pide al administrador de tu colegio que te invite de nuevo.",
+        "askSchool": "También puedes pedir al administrador de tu colegio que te envíe una nueva invitación.",
+        "usedHeading": "Esta invitación ya fue aceptada",
+        "usedBody": "Tu cuenta ya está configurada. Inicia sesión con tu correo y la contraseña que creaste.",
+        "signIn": "Iniciar sesión",
+        "forgotPassword": "¿Olvidaste tu contraseña?",
+        "invalidHeading": "Este enlace de invitación no es válido",
+        "invalidBody": "Puede que el enlace esté incompleto o que haya sido reemplazado por una invitación más reciente. Abre el correo de invitación más reciente o pide una nueva al administrador de tu colegio.",
+        "haveAccount": "¿Ya tienes una cuenta? Inicia sesión",
+        "unknownHeading": "No pudimos verificar tu invitación",
+        "unknownBody": "Normalmente es un problema de conexión. Inténtalo de nuevo en un momento.",
+        "tryAgain": "Intentar de nuevo"
+      }
     }
   },
   "compare": {
@@ -2754,5 +2866,8 @@
     "potentialSocial": "Interpersonal",
     "potentialLaboral": "Profesional",
     "sectionCoachingStrategy": "Estrategia de Coaching"
+  },
+  "validation": {
+    "required": "Este campo es obligatorio"
   }
 }

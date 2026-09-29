@@ -67,4 +67,21 @@ describe("Signup page", () => {
     expect(mockGetRole).not.toHaveBeenCalled();
     await waitFor(() => expect(mockLogin).toHaveBeenCalledTimes(1));
   });
+
+  // Greta: invited, so her email already had a (password-less) account, and signup answered
+  // only "Unable to create account with this email" with no way forward.
+  it.each([
+    ["the EMAIL_UNAVAILABLE code", { status: 409, code: "EMAIL_UNAVAILABLE" }],
+    ["today's legacy message", { status: 400 }],
+  ])("explains an existing account or pending invite (%s)", async (_label, opts) => {
+    const { AuthApiError } = jest.requireActual("@/lib/auth/authErrors");
+    mockSignUp.mockRejectedValue(new AuthApiError("Unable to create account with this email", opts));
+    render(<SignupPage />);
+    await fillAndSubmit();
+
+    const notice = await screen.findByTestId("signup-email-unavailable");
+    expect(notice).toHaveTextContent("use the link in your invitation email");
+    expect(screen.getByRole("link", { name: "Forgot your password? Reset it" })).toHaveAttribute("href", "/forgot-password");
+    expect(mockLogin).not.toHaveBeenCalled();
+  });
 });

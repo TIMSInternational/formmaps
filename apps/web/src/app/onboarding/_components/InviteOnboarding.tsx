@@ -21,9 +21,11 @@ import {
   verifyStudentToken,
   completeStudentOnboarding,
 } from "@/services/studentOnboardingService";
-import { Loader2, CheckCircle2, AlertCircle, Eye, EyeOff } from "lucide-react";
+import { Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Illustration } from "@/components/illustration/Illustration";
+import { classifyInviteError, type InviteProblem } from "@/lib/auth/authErrors";
+import { InviteProblemPanel } from "./InviteProblemPanel";
 
 const makePasswordSchema = (t: TFunction) =>
   z
@@ -66,7 +68,7 @@ export function InviteOnboarding({ token }: { token: string }) {
   const [userId, setUserId] = useState("");
   const [inviteRole, setInviteRole] = useState<string | null>(null);
   const [inviteSchool, setInviteSchool] = useState<string | null>(null);
-  const [errorObj, setErrorObj] = useState<string | null>(null);
+  const [problem, setProblem] = useState<InviteProblem>("invalid");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -91,11 +93,11 @@ export function InviteOnboarding({ token }: { token: string }) {
           setInviteSchool(result.schoolName ?? null);
         } else {
           setIsValid(false);
-          setErrorObj(result.message || t("onboarding.student.invalidTokenMsg"));
+          setProblem(result.problem ?? "invalid");
         }
       } catch {
         setIsValid(false);
-        setErrorObj(t("onboarding.toast.verifyFailed"));
+        setProblem("unknown");
       } finally {
         setIsLoading(false);
       }
@@ -128,7 +130,20 @@ export function InviteOnboarding({ token }: { token: string }) {
         throw new Error(result.message || t("onboarding.student.activationFailed"));
       }
     } catch (err: unknown) {
-      toast.error((err as Error).message || t("onboarding.student.activationError"));
+      // The invite can lapse (or be accepted in another tab) while this form is open: show
+      // that state and its way forward rather than a raw server message in a toast.
+      // A bare 400 here is a form problem (e.g. password rules), not a dead invite — only a
+      // coded or 404/409/410 answer switches screens.
+      const status = (err as { status?: number }).status;
+      const why = (err as { code?: string }).code || status === 404 || status === 409 || status === 410
+        ? classifyInviteError(err)
+        : "unknown";
+      if (why !== "unknown") {
+        setProblem(why);
+        setIsValid(false);
+      } else {
+        toast.error(status === 400 && (err as Error).message ? (err as Error).message : t("onboarding.student.activationError"));
+      }
       setIsSubmitting(false);
     }
   };
@@ -152,45 +167,9 @@ export function InviteOnboarding({ token }: { token: string }) {
     );
   }
 
-  // Error
+  // The link can't be used: one state per reason, each with its own way forward.
   if (!isValid) {
-    return (
-      <div className="min-h-screen flex" style={{ background: "#FFFFFF" }}>
-        <div className="hidden lg:flex lg:w-[48%] items-center justify-center" style={{ background: "#102B47" }}>
-          <div className="px-16">
-            <div className="flex items-center gap-3 mb-8">
-              <img src="/fm-icon.png" alt="FormMaps" className="h-12 w-auto" style={{ filter: "brightness(0) invert(1)" }} />
-              <div>
-                <span className="text-2xl font-bold text-white">FORM</span>
-                <span className="text-2xl font-bold" style={{ color: "#FFD23F" }}>MAPS</span>
-              </div>
-            </div>
-            <h2 className="text-3xl font-bold text-white leading-tight">
-              Find your path.<br />
-              <span style={{ color: "#FFD23F" }}>Shape your future.</span>
-            </h2>
-          </div>
-        </div>
-        <div className="flex-1 flex items-center justify-center p-6">
-          <div className="w-full max-w-sm text-center">
-            <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-5">
-              <AlertCircle className="w-7 h-7 text-red-500" />
-            </div>
-            <h2 className="text-xl font-semibold mb-2" style={{ color: "#111" }}>{t("onboarding.student.invalidHeading")}</h2>
-            <p className="text-sm mb-6" style={{ color: "#666" }}>
-              {errorObj || t("onboarding.error.invalidLink")}
-            </p>
-            <button
-              onClick={() => router.push("/login")}
-              className="w-full h-11 rounded-lg text-sm font-semibold text-white transition-colors"
-              style={{ background: "#102B47" }}
-            >
-              {t("onboarding.student.backToLogin")}
-            </button>
-          </div>
-        </div>
-      </div>
-    );
+    return <InviteProblemPanel token={token} problem={problem} />;
   }
 
   // Form
@@ -217,7 +196,8 @@ export function InviteOnboarding({ token }: { token: string }) {
 
           <h1 className="text-4xl font-bold text-white leading-tight mb-4">
             {t("onboarding.student.welcomeTo")}<br />
-            <span style={{ color: "#FFD23F" }}>Country Day School.</span>
+            {/* The school on the invite — this used to be a hardcoded "Country Day School." */}
+            <span style={{ color: "#FFD23F" }}>{inviteSchool || "FormMaps"}.</span>
           </h1>
           <p className="text-base mb-10" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 420, lineHeight: 1.7 }}>
             {t("onboarding.student.subtitle")}

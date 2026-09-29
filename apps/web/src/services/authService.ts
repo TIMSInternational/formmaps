@@ -1,6 +1,7 @@
 // Auth service — powered by FormMaps API (Node.js + Prisma backend)
 import { storeTokens, clearTokens } from "@/services/tokenRefreshService";
 import { applyLanguage } from "@/lib/i18n/useSetLanguage";
+import { authApiErrorFrom } from "@/lib/auth/authErrors";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
@@ -54,8 +55,8 @@ export async function login(email: string, password: string): Promise<LoginRespo
   });
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({ message: "Login failed" }));
-    throw new Error(err.message || "Invalid email or password");
+    // Carries the API's status + code so the login page can explain it in the user's language.
+    throw await authApiErrorFrom(response, "Invalid email or password");
   }
 
   const result = await response.json();
@@ -117,8 +118,7 @@ export async function signUp(
   });
 
   if (!response.ok) {
-    const err = await response.json().catch(() => ({ message: "Signup failed" }));
-    throw new Error(err.message || "Signup failed");
+    throw await authApiErrorFrom(response, "Signup failed");
   }
 
   const result = await response.json();
