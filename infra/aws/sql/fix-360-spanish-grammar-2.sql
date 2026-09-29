@@ -1,6 +1,6 @@
 -- =====================================================================================
 -- 360 (Vocational instrument v1) — Spanish grammar fixes, ROUND 2 (after fix-360-spanish-grammar.sql).
---   39 question texts, 89 option labels, 5 scale anchors, 8 dimension names, 1 instrument name.
+--   45 question texts, 89 option labels, 10 scale anchors, 8 dimension names, 1 instrument name.
 --
 -- What this fixes (full audit of all 200 live variants, 2026-09-29):
 --  * q36–q40: "¿Qué tan desarrollado … comprender / tener interés / buscar …?" put an infinitive where a
@@ -11,9 +11,12 @@
 --  * Option labels, scale anchors, dimension and instrument names: Spanish sentence case (RAE),
 --    first letter capitalised consistently; q47 self anchors "seguro" → "seguro/a" to match the stem.
 --
--- NOT changed (item content — for TIMS): q47 parent asks "which area" on a 1–5 potential scale; q50 parent
--- asks for one concern but is multi-select; q46 self anchors add "comprometido"; self variants of
--- q41–q44/q50 start with "Ordene/Seleccione" (usted) before first-person content.
+--  * Stems made to match how the answer is recorded (TEXT ONLY — type, scale, options and scoring are
+--    untouched; TIMS should still review the wording): q47 parent asked "which area" on a 1–5 potential
+--    scale → now asks how much potential in the area where the child stands out; q50 parent asked for one
+--    concern on a multi-select → plural; q46 self anchors rate clarity AND commitment → the stem asks both.
+--  * Self q41–q44/q50 mixed a usted imperative ("Ordene/Seleccione") with first-person content → tú,
+--    as the app addresses students.
 --
 -- GENERATED from api/scripts/data/vocational-360-instrument.json (legacy repo), which carries the same edits.
 -- SAFE BY CONSTRUCTION — same contract as round 1:
@@ -152,11 +155,31 @@ BEGIN
     FROM vocational_questions q JOIN vocational_instruments i ON i.id = q."instrumentId"
    WHERE v."questionId" = q.id AND i.version = 'v1' AND q.number = 44 AND q."group" IS NULL AND v."group" = 'teacher' AND v."textEs" = 'Seleccione el tipo de trabajo que probablemente disfrutaría el/la estudiante más:';
   GET DIAGNOSTICS c = ROW_COUNT; n_var := n_var + c;
+  UPDATE vocational_question_variants v SET "textEs" = 'Ordena las áreas académicas y profesionales según la afinidad que reconoces en ti:', "updatedAt" = now()
+    FROM vocational_questions q JOIN vocational_instruments i ON i.id = q."instrumentId"
+   WHERE v."questionId" = q.id AND i.version = 'v1' AND q.number = 41 AND q."group" IS NULL AND v."group" = 'self' AND v."textEs" = 'Ordene las áreas académicas y profesionales según la afinidad que reconozco en mí:';
+  GET DIAGNOSTICS c = ROW_COUNT; n_var := n_var + c;
+  UPDATE vocational_question_variants v SET "textEs" = 'Selecciona las industrias en las que consideras que tendrías mayor posibilidad de éxito profesional:', "updatedAt" = now()
+    FROM vocational_questions q JOIN vocational_instruments i ON i.id = q."instrumentId"
+   WHERE v."questionId" = q.id AND i.version = 'v1' AND q.number = 42 AND q."group" IS NULL AND v."group" = 'self' AND v."textEs" = 'Seleccione las industrias donde considero que tendría mayor posibilidad de éxito profesional:';
+  GET DIAGNOSTICS c = ROW_COUNT; n_var := n_var + c;
+  UPDATE vocational_question_variants v SET "textEs" = 'Selecciona las actividades que más disfrutas o crees que podrías disfrutar:', "updatedAt" = now()
+    FROM vocational_questions q JOIN vocational_instruments i ON i.id = q."instrumentId"
+   WHERE v."questionId" = q.id AND i.version = 'v1' AND q.number = 43 AND q."group" IS NULL AND v."group" = 'self' AND v."textEs" = 'Seleccione las actividades que más disfruto o creo que podría disfrutar:';
+  GET DIAGNOSTICS c = ROW_COUNT; n_var := n_var + c;
+  UPDATE vocational_question_variants v SET "textEs" = 'Selecciona el tipo de trabajo que probablemente disfrutarías más:', "updatedAt" = now()
+    FROM vocational_questions q JOIN vocational_instruments i ON i.id = q."instrumentId"
+   WHERE v."questionId" = q.id AND i.version = 'v1' AND q.number = 44 AND q."group" IS NULL AND v."group" = 'self' AND v."textEs" = 'Seleccione el tipo de trabajo que probablemente disfrutaría yo más:';
+  GET DIAGNOSTICS c = ROW_COUNT; n_var := n_var + c;
+  UPDATE vocational_question_variants v SET "textEs" = 'Ordena lo que más influye en tu realización profesional:', "updatedAt" = now()
+    FROM vocational_questions q JOIN vocational_instruments i ON i.id = q."instrumentId"
+   WHERE v."questionId" = q.id AND i.version = 'v1' AND q.number = 50 AND q."group" = 'self' AND v."group" = 'self' AND v."textEs" = 'Ordene lo que más influye en mi realización profesional:';
+  GET DIAGNOSTICS c = ROW_COUNT; n_var := n_var + c;
   UPDATE vocational_question_variants v SET "textEs" = '¿En qué área académica observa el mejor desempeño del/de la estudiante?', "updatedAt" = now()
     FROM vocational_questions q JOIN vocational_instruments i ON i.id = q."instrumentId"
    WHERE v."questionId" = q.id AND i.version = 'v1' AND q.number = 46 AND q."group" = 'teacher' AND v."group" = 'teacher' AND v."textEs" = '¿En qué área académica observa su mejor desempeño?';
   GET DIAGNOSTICS c = ROW_COUNT; n_var := n_var + c;
-  UPDATE vocational_question_variants v SET "textEs" = '¿En qué ámbito han observado los mayores talentos de su hijo/a: académico, social, creativo, técnico, deportivo, artístico, comercial u otro?', "updatedAt" = now()
+  UPDATE vocational_question_variants v SET "textEs" = '¿Qué tanto potencial han observado en su hijo/a en el ámbito en el que más se destaca (académico, social, creativo, técnico, deportivo, artístico, comercial u otro)?', "updatedAt" = now()
     FROM vocational_questions q JOIN vocational_instruments i ON i.id = q."instrumentId"
    WHERE v."questionId" = q.id AND i.version = 'v1' AND q.number = 47 AND q."group" = 'parent' AND v."group" = 'parent' AND v."textEs" = '¿Dónde han observado sus mayores talentos: académico, social, creativo, técnico, deportivo, artístico, comercial u otro?';
   GET DIAGNOSTICS c = ROW_COUNT; n_var := n_var + c;
@@ -176,13 +199,17 @@ BEGIN
     FROM vocational_questions q JOIN vocational_instruments i ON i.id = q."instrumentId"
    WHERE v."questionId" = q.id AND i.version = 'v1' AND q.number = 49 AND q."group" = 'teacher' AND v."group" = 'teacher' AND v."textEs" = '¿Qué carrera, área académica o familia profesional recomendaría explorar y por qué?';
   GET DIAGNOSTICS c = ROW_COUNT; n_var := n_var + c;
-  UPDATE vocational_question_variants v SET "textEs" = '¿Cuál es su principal preocupación respecto al futuro profesional de su hijo/a?', "updatedAt" = now()
+  UPDATE vocational_question_variants v SET "textEs" = '¿Cuáles son sus principales preocupaciones respecto al futuro profesional de su hijo/a?', "updatedAt" = now()
     FROM vocational_questions q JOIN vocational_instruments i ON i.id = q."instrumentId"
    WHERE v."questionId" = q.id AND i.version = 'v1' AND q.number = 50 AND q."group" = 'parent' AND v."group" = 'parent' AND v."textEs" = '¿Cuál es su principal preocupación respecto a su futuro profesional?';
   GET DIAGNOSTICS c = ROW_COUNT; n_var := n_var + c;
   UPDATE vocational_question_variants v SET "textEs" = '¿Qué habilidad considera más importante fortalecer para mejorar el éxito universitario y profesional del/de la estudiante?', "updatedAt" = now()
     FROM vocational_questions q JOIN vocational_instruments i ON i.id = q."instrumentId"
    WHERE v."questionId" = q.id AND i.version = 'v1' AND q.number = 50 AND q."group" = 'teacher' AND v."group" = 'teacher' AND v."textEs" = '¿Qué habilidad considera más importante fortalecer para mejorar su éxito universitario y profesional?';
+  GET DIAGNOSTICS c = ROW_COUNT; n_var := n_var + c;
+  UPDATE vocational_question_variants v SET "textEs" = '¿Qué tan claro tengo que quiero estudiar una carrera universitaria o técnica, y qué tan comprometido/a estoy con esa decisión?', "updatedAt" = now()
+    FROM vocational_questions q JOIN vocational_instruments i ON i.id = q."instrumentId"
+   WHERE v."questionId" = q.id AND i.version = 'v1' AND q.number = 46 AND q."group" = 'self' AND v."group" = 'self' AND v."textEs" = '¿Qué tan claro tengo si realmente quiero estudiar una carrera universitaria o técnica?';
   GET DIAGNOSTICS c = ROW_COUNT; n_var := n_var + c;
   UPDATE vocational_questions q SET "updatedAt" = now(), options = (
       SELECT jsonb_agg(CASE WHEN e->>'labelEs' = 'Tecnología y Sistemas' THEN jsonb_set(e, '{labelEs}', to_jsonb('Tecnología y sistemas'::text)) ELSE e END ORDER BY ord)
@@ -842,6 +869,41 @@ BEGIN
    WHERE i.id = q."instrumentId" AND i.version = 'v1' AND q.number = 47 AND q."group" = 'self'
      AND q."scaleAnchors" @> jsonb_build_array('Totalmente seguro'::text);
   GET DIAGNOSTICS c = ROW_COUNT; n_anc := n_anc + c;
+  UPDATE vocational_questions q SET "updatedAt" = now(), "scaleAnchors" = (
+      SELECT jsonb_agg(CASE WHEN e #>> '{}' = 'Nada claro / comprometido' THEN to_jsonb('Nada claro / comprometido/a'::text) ELSE e END ORDER BY ord)
+        FROM jsonb_array_elements(q."scaleAnchors") WITH ORDINALITY t(e, ord))
+    FROM vocational_instruments i
+   WHERE i.id = q."instrumentId" AND i.version = 'v1' AND q.number = 46 AND q."group" = 'self'
+     AND q."scaleAnchors" @> jsonb_build_array('Nada claro / comprometido'::text);
+  GET DIAGNOSTICS c = ROW_COUNT; n_anc := n_anc + c;
+  UPDATE vocational_questions q SET "updatedAt" = now(), "scaleAnchors" = (
+      SELECT jsonb_agg(CASE WHEN e #>> '{}' = 'Poco claro / comprometido' THEN to_jsonb('Poco claro / comprometido/a'::text) ELSE e END ORDER BY ord)
+        FROM jsonb_array_elements(q."scaleAnchors") WITH ORDINALITY t(e, ord))
+    FROM vocational_instruments i
+   WHERE i.id = q."instrumentId" AND i.version = 'v1' AND q.number = 46 AND q."group" = 'self'
+     AND q."scaleAnchors" @> jsonb_build_array('Poco claro / comprometido'::text);
+  GET DIAGNOSTICS c = ROW_COUNT; n_anc := n_anc + c;
+  UPDATE vocational_questions q SET "updatedAt" = now(), "scaleAnchors" = (
+      SELECT jsonb_agg(CASE WHEN e #>> '{}' = 'Moderadamente claro / comprometido' THEN to_jsonb('Moderadamente claro / comprometido/a'::text) ELSE e END ORDER BY ord)
+        FROM jsonb_array_elements(q."scaleAnchors") WITH ORDINALITY t(e, ord))
+    FROM vocational_instruments i
+   WHERE i.id = q."instrumentId" AND i.version = 'v1' AND q.number = 46 AND q."group" = 'self'
+     AND q."scaleAnchors" @> jsonb_build_array('Moderadamente claro / comprometido'::text);
+  GET DIAGNOSTICS c = ROW_COUNT; n_anc := n_anc + c;
+  UPDATE vocational_questions q SET "updatedAt" = now(), "scaleAnchors" = (
+      SELECT jsonb_agg(CASE WHEN e #>> '{}' = 'Bastante claro / comprometido' THEN to_jsonb('Bastante claro / comprometido/a'::text) ELSE e END ORDER BY ord)
+        FROM jsonb_array_elements(q."scaleAnchors") WITH ORDINALITY t(e, ord))
+    FROM vocational_instruments i
+   WHERE i.id = q."instrumentId" AND i.version = 'v1' AND q.number = 46 AND q."group" = 'self'
+     AND q."scaleAnchors" @> jsonb_build_array('Bastante claro / comprometido'::text);
+  GET DIAGNOSTICS c = ROW_COUNT; n_anc := n_anc + c;
+  UPDATE vocational_questions q SET "updatedAt" = now(), "scaleAnchors" = (
+      SELECT jsonb_agg(CASE WHEN e #>> '{}' = 'Muy claro / comprometido' THEN to_jsonb('Muy claro / comprometido/a'::text) ELSE e END ORDER BY ord)
+        FROM jsonb_array_elements(q."scaleAnchors") WITH ORDINALITY t(e, ord))
+    FROM vocational_instruments i
+   WHERE i.id = q."instrumentId" AND i.version = 'v1' AND q.number = 46 AND q."group" = 'self'
+     AND q."scaleAnchors" @> jsonb_build_array('Muy claro / comprometido'::text);
+  GET DIAGNOSTICS c = ROW_COUNT; n_anc := n_anc + c;
   UPDATE vocational_dimensions d SET "nameEs" = 'Intereses académicos', "updatedAt" = now()
     FROM vocational_instruments i
    WHERE i.id = d."instrumentId" AND i.version = 'v1' AND d."nameEs" = 'Intereses Académicos';
@@ -877,6 +939,6 @@ BEGIN
   UPDATE vocational_instruments SET name = 'Evaluación 360 de orientación vocacional', "updatedAt" = now()
    WHERE version = 'v1' AND name = 'Evaluación 360 de Orientación Vocacional';
   GET DIAGNOSTICS c = ROW_COUNT; n_ins := n_ins + c;
-  RAISE NOTICE '360 grammar round 2: % of 39 question texts, % of 89 option labels, % of 5 scale anchors, % of 8 dimension names, % of 1 instrument name updated (lower = already applied or edited in prod)', n_var, n_opt, n_anc, n_dim, n_ins;
+  RAISE NOTICE '360 grammar round 2: % of 45 question texts, % of 89 option labels, % of 10 scale anchors, % of 8 dimension names, % of 1 instrument name updated (lower = already applied or edited in prod)', n_var, n_opt, n_anc, n_dim, n_ins;
 END
 $$;
