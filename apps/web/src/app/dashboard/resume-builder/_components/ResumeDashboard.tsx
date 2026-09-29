@@ -16,6 +16,7 @@ import {
   FileText,
   Plus,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 /**
@@ -41,6 +42,7 @@ interface ResumeDashboardProps {
 }
 
 export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
+  const { t } = useTranslation();
   const { resumeBuilder } = useGlobalStore();
   const { data } = resumeBuilder;
 
@@ -68,48 +70,54 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
     () => [
       {
         id: "personalInfo",
-        title: "Personal Information",
+        title: t("resumeBuilder.resumeDashboard.personalInfo", "Personal Information"),
         icon: "👤",
-        description: "Your contact details and professional summary",
+        description: t(
+          "resumeBuilder.resumeDashboard.personalInfoDesc",
+          "Your contact details and professional summary"
+        ),
         data: data.personalInfo,
         isRequired: true,
         isComplete: !!data.personalInfo.fullName && !!data.personalInfo.email,
       },
       {
         id: "experience",
-        title: "Work Experience",
+        title: t("resumeBuilder.resumeDashboard.workExperience", "Work Experience"),
         icon: "💼",
-        description: `${data.experience.length} position${
-          data.experience.length !== 1 ? "s" : ""
-        }`,
+        description: t("resumeBuilder.resumeDashboard.positions", {
+          count: data.experience.length,
+          defaultValue: "{{count}} positions",
+        }),
         data: data.experience,
         isRequired: false,
         isComplete: data.experience.length > 0,
       },
       {
         id: "education",
-        title: "Education",
+        title: t("resumeBuilder.resumeDashboard.education", "Education"),
         icon: "🎓",
-        description: `${data.education.length} degree${
-          data.education.length !== 1 ? "s" : ""
-        }`,
+        description: t("resumeBuilder.resumeDashboard.degrees", {
+          count: data.education.length,
+          defaultValue: "{{count}} degrees",
+        }),
         data: data.education,
         isRequired: false,
         isComplete: data.education.length > 0,
       },
       {
         id: "skills",
-        title: "Skills",
+        title: t("resumeBuilder.resumeDashboard.skills", "Skills"),
         icon: "⭐",
-        description: `${data.skills.length} skill${
-          data.skills.length !== 1 ? "s" : ""
-        }`,
+        description: t("resumeBuilder.resumeDashboard.skillCount", {
+          count: data.skills.length,
+          defaultValue: "{{count}} skills",
+        }),
         data: data.skills,
         isRequired: true,
         isComplete: data.skills.length > 0,
       },
     ],
-    [data]
+    [data, t]
   );
 
   /**
@@ -175,10 +183,10 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Resume Builder
+                  {t("resumeBuilder.resumeDashboard.title", "Resume Builder")}
                 </h1>
                 <p className="text-sm text-gray-600">
-                  {completionPercentage}% complete
+                  {t("resumeBuilder.resumeDashboard.percentComplete", "{{percent}}% complete", { percent: completionPercentage })}
                 </p>
               </div>
             </div>
@@ -208,8 +216,12 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
               )}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              title="Toggle live preview"
-              aria-label={showPreview ? "Hide preview" : "Show preview"}
+              title={t("resumeBuilder.resumeDashboard.togglePreview", "Toggle live preview")}
+              aria-label={
+                showPreview
+                  ? t("resumeBuilder.resumeDashboard.hidePreview", "Hide preview")
+                  : t("resumeBuilder.resumeDashboard.showPreview", "Show preview")
+              }
             >
               {showPreview ? (
                 <Eye className="w-4 h-4" />
@@ -217,7 +229,9 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
                 <EyeOff className="w-4 h-4" />
               )}
               <span className="hidden sm:inline text-sm font-medium">
-                {showPreview ? "Preview On" : "Preview"}
+                {showPreview
+                  ? t("resumeBuilder.resumeDashboard.previewOn", "Preview On")
+                  : t("resumeBuilder.resumePreview.preview", "Preview")}
               </span>
             </motion.button>
 
@@ -233,12 +247,12 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
               )}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              title="Customize sections"
-              aria-label="Open settings"
+              title={t("resumeBuilder.resumeDashboard.customizeSections", "Customize sections")}
+              aria-label={t("resumeBuilder.resumeDashboard.openSettings", "Open settings")}
             >
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline text-sm font-medium">
-                Customize
+                {t("resumeBuilder.resumeDashboard.customize", "Customize")}
               </span>
             </motion.button>
 
@@ -247,12 +261,12 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
               className="flex items-center space-x-2 px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition-all duration-200"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              title="Download resume as PDF"
-              aria-label="Download resume"
+              title={t("resumeBuilder.resumeDashboard.downloadAsPdf", "Download resume as PDF")}
+              aria-label={t("resumeBuilder.resumeDashboard.downloadResume", "Download resume")}
             >
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline text-sm font-medium">
-                Download
+                {t("common.download", "Download")}
               </span>
             </motion.button>
           </div>
@@ -305,15 +319,15 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
           >
             <h3 className="font-semibold text-gray-900 mb-4 flex items-center">
               <Plus className="w-5 h-5 mr-2 text-indigo-600" />
-              Add Optional Sections
+              {t("resumeBuilder.resumeDashboard.addOptional", "Add Optional Sections")}
             </h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[
-                { label: "Projects", icon: "📁" },
-                { label: "Certifications", icon: "🏆" },
-                { label: "Volunteer Work", icon: "🤝" },
-                { label: "Publications", icon: "📚" },
-                { label: "Languages", icon: "🌐" },
+                { label: t("resumeBuilder.resumeDashboard.optional.projects", "Projects"), icon: "📁" },
+                { label: t("resumeBuilder.resumeDashboard.optional.certifications", "Certifications"), icon: "🏆" },
+                { label: t("resumeBuilder.resumeDashboard.optional.volunteer", "Volunteer Work"), icon: "🤝" },
+                { label: t("resumeBuilder.resumeDashboard.optional.publications", "Publications"), icon: "📚" },
+                { label: t("resumeBuilder.resumeDashboard.optional.languages", "Languages"), icon: "🌐" },
               ].map((item) => (
                 <motion.button
                   key={item.label}
@@ -341,7 +355,7 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
         >
           <div className="sticky top-0 bg-white border-b border-gray-200 px-4 py-3">
             <h3 className="font-semibold text-gray-900 text-sm">
-              Resume Preview
+              {t("resumeBuilder.resumePreview.title", "Resume Preview")}
             </h3>
           </div>
           <div className="p-4">
@@ -356,7 +370,7 @@ export function ResumeDashboard({ className = "" }: ResumeDashboardProps) {
     <div
       className={cn("flex flex-col h-screen bg-gray-50", className)}
       role="main"
-      aria-label="Resume builder dashboard"
+      aria-label={t("resumeBuilder.resumeDashboard.ariaLabel", "Resume builder dashboard")}
     >
       {/* Header */}
       {renderHeader()}

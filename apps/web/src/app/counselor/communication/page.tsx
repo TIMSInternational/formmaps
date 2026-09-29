@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { MessageCircle, Video, FileText, Bell } from "lucide-react";
 import { CounselorTabBar } from "../_components/CounselorTabBar";
 import dynamic from "next/dynamic";
+import { useTranslation } from "react-i18next";
 
 const MessagesPanel = dynamic(() => import("../messages/page"), { ssr: false });
 const VideoCallsPanel = dynamic(() => import("../video/page"), { ssr: false });
@@ -14,6 +15,7 @@ const AlertsPanel = dynamic(() => import("../alerts/page"), { ssr: false });
 const VALID_TABS = ["messages", "video", "notes", "alerts"];
 
 export default function CommunicationPage() {
+  const { t } = useTranslation("counselor");
   const searchParams = useSearchParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("messages");
@@ -32,17 +34,17 @@ export default function CommunicationPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)" }}>Communication</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("nav.communication")}</h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-          Messages, video calls, session notes, and student alerts
+          {t("ui.communication.subtitle")}
         </p>
       </div>
       <CounselorTabBar
         tabs={[
-          { key: "messages", label: "Messages", icon: MessageCircle },
-          { key: "video", label: "Video Calls", icon: Video },
-          { key: "notes", label: "Session Notes", icon: FileText },
-          { key: "alerts", label: "Alerts", icon: Bell },
+          { key: "messages", label: t("ui.communication.tabs.messages"), icon: MessageCircle },
+          { key: "video", label: t("ui.communication.tabs.videoCalls"), icon: Video },
+          { key: "notes", label: t("ui.communication.tabs.sessionNotes"), icon: FileText },
+          { key: "alerts", label: t("alerts.title"), icon: Bell },
         ]}
         activeTab={activeTab}
         onChange={handleTabChange}

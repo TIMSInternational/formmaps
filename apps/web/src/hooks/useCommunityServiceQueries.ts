@@ -18,6 +18,7 @@ import type {
   CommunityServiceVerifyPayload,
 } from "@/types/communityService";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n";
 import { optimisticId, patchBy, removeBy, upsertBy, useOptimisticCache } from "./useOptimisticCache";
 
 // ── formmaps#89: optimistic community-service hours ─────────────────────────────
@@ -129,7 +130,7 @@ export function useLogCommunityService() {
         entries: upsertBy(current.entries, (e) => e.id === context?.pendingId, real)
           .sort(byDateDesc),
       }));
-      toast.success("Community service hours logged");
+      toast.success(i18n.t("components.hooks.communityService.hoursLogged"));
     },
 
     onError: (err: Error, _payload, context) => {
@@ -171,7 +172,7 @@ export function useUpdateCommunityService() {
         ...current,
         entries: patchBy(current.entries, (e) => e.id === entryId, () => real).sort(byDateDesc),
       }));
-      toast.success("Entry updated");
+      toast.success(i18n.t("components.hooks.communityService.entryUpdated"));
     },
 
     onError: (err: Error, _vars, context) => {
@@ -198,7 +199,7 @@ export function useDeleteCommunityService() {
         );
       }),
 
-    onSuccess: () => toast.success("Entry deleted"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.communityService.entryDeleted")),
 
     // The server refuses to delete anything already verified or rejected (404). The UI
     // hides Delete on those rows, so this only fires on a genuine race — an admin
@@ -271,7 +272,7 @@ export function useVerifyCommunityServiceEntry() {
       // totals come from a different endpoint — cheaper to let it refetch than to
       // reproduce that endpoint's arithmetic here.
       qc.invalidateQueries({ queryKey: communityServiceKeys.mine() });
-      toast.success("Entry updated");
+      toast.success(i18n.t("components.hooks.communityService.entryUpdated"));
     },
 
     onError: (err: Error, _vars, context) => {

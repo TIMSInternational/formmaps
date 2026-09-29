@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { BookOpen, ChevronDown, ChevronRight } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export function GapSkeleton({ width, height, radius = 10 }: { width?: string | number; height: number; radius?: number }) {
   return (
@@ -43,6 +44,7 @@ export function GapCategoryCard({ gap, recommendations, index }: {
   recommendations: CourseRecommendation[];
   index: number;
 }) {
+  const { t } = useTranslation("counselor");
   const [expanded, setExpanded] = useState(false);
   const matching = recommendations.filter(
     (r) => (r.category || "").toLowerCase() === (gap.category || "").toLowerCase()
@@ -71,17 +73,17 @@ export function GapCategoryCard({ gap, recommendations, index }: {
               fontSize: 11, fontWeight: 700, color: "#ef4444",
               background: "rgba(239,68,68,0.1)", padding: "2px 8px", borderRadius: 4,
             }}>
-              -{gap.deficit} credits
+              {t("ui.academicGaps.deficitCredits", { count: gap.deficit })}
             </span>
           </div>
 
           <MiniBar earned={gap.creditsEarned} required={gap.creditsRequired} color="#ef4444" height={6} />
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 4 }}>
             <span style={{ fontSize: 11, color: "var(--admin-font-tertiary, #888)" }}>
-              Earned: {gap.creditsEarned}
+              {t("ui.academicGaps.earned", { n: gap.creditsEarned })}
             </span>
             <span style={{ fontSize: 11, color: "var(--admin-font-tertiary, #888)" }}>
-              Required: {gap.creditsRequired}
+              {t("ui.academicGaps.required", { n: gap.creditsRequired })}
             </span>
           </div>
 
@@ -96,7 +98,9 @@ export function GapCategoryCard({ gap, recommendations, index }: {
                 }}
               >
                 {expanded ? <ChevronDown style={{ width: 13, height: 13 }} /> : <ChevronRight style={{ width: 13, height: 13 }} />}
-                {expanded ? "Hide" : "View"} courses to fill this gap ({matching.length})
+                {expanded
+                  ? t("ui.academicGaps.hideCourses", { n: matching.length })
+                  : t("ui.academicGaps.viewCourses", { n: matching.length })}
               </button>
 
               <AnimatePresence>
@@ -129,7 +133,7 @@ export function GapCategoryCard({ gap, recommendations, index }: {
                             background: "rgba(99,102,241,0.1)", padding: "2px 6px", borderRadius: 4,
                             flexShrink: 0,
                           }}>
-                            {r.credits} cr
+                            {t("ui.academicGaps.creditsShort", { n: r.credits })}
                           </span>
                         </div>
                       ))}

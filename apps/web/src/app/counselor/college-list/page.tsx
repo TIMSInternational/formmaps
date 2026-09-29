@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Building2, Users, Search, Plus, Trash2, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { CollegeCard } from "./_components/CollegeCard";
 
 interface Student { id: string; name: string; email: string; }
@@ -45,10 +46,10 @@ interface CollegeListRaw {
   };
 }
 
-const CLASS_CONFIG: Record<string, { label: string; color: string; bg: string; border: string }> = {
-  reach: { label: "Reach", color: "#ef4444", bg: "rgba(239,68,68,0.06)", border: "rgba(239,68,68,0.2)" },
-  match: { label: "Match", color: "#f59e0b", bg: "rgba(245,158,11,0.06)", border: "rgba(245,158,11,0.2)" },
-  safety: { label: "Safety", color: "#10b981", bg: "rgba(16,185,129,0.06)", border: "rgba(16,185,129,0.2)" },
+const CLASS_CONFIG: Record<string, { labelKey: string; color: string; bg: string; border: string }> = {
+  reach: { labelKey: "ui.collegePrep.fit.reach", color: "#ef4444", bg: "rgba(239,68,68,0.06)", border: "rgba(239,68,68,0.2)" },
+  match: { labelKey: "ui.collegePrep.fit.match", color: "#f59e0b", bg: "rgba(245,158,11,0.06)", border: "rgba(245,158,11,0.2)" },
+  safety: { labelKey: "ui.collegePrep.fit.safety", color: "#10b981", bg: "rgba(16,185,129,0.06)", border: "rgba(16,185,129,0.2)" },
 };
 
 function classificationToFit(classification: string): "safety" | "match" | "reach" {
@@ -58,6 +59,7 @@ function classificationToFit(classification: string): "safety" | "match" | "reac
 }
 
 export default function CollegeListPage() {
+  const { t } = useTranslation("counselor");
   const queryClient = useQueryClient();
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   const [searchQuery, setSearchQuery] = useState("");
@@ -135,21 +137,21 @@ export default function CollegeListPage() {
   const addToList = useMutation({
     mutationFn: async ({ collegeId, classification }: { collegeId: string; classification: string }) =>
       apiRequest(`/api/v1/college/students/${selectedStudentId}/list`, { method: "POST", data: { collegeId, classification } }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["student-college-list", selectedStudentId] }); toast.success("College added to list"); },
-    onError: () => toast.error("Failed to add college"),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["student-college-list", selectedStudentId] }); toast.success(t("ui.collegeList.toast.added")); },
+    onError: () => toast.error(t("ui.collegeList.toast.addFailed")),
   });
 
   const removeFromList = useMutation({
     mutationFn: async (itemId: string) => apiRequest(`/api/v1/college/list/${itemId}`, { method: "DELETE" }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["student-college-list", selectedStudentId] }); toast.success("College removed from list"); },
-    onError: () => toast.error("Failed to remove college"),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["student-college-list", selectedStudentId] }); toast.success(t("ui.collegeList.toast.removed")); },
+    onError: () => toast.error(t("ui.collegeList.toast.removeFailed")),
   });
 
   const reclassify = useMutation({
     mutationFn: async ({ itemId, classification }: { itemId: string; classification: string }) =>
       apiRequest(`/api/v1/college/list/${itemId}`, { method: "PUT", data: { classification } }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["student-college-list", selectedStudentId] }); toast.success("Classification updated"); },
-    onError: () => toast.error("Failed to update classification"),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["student-college-list", selectedStudentId] }); toast.success(t("ui.collegeList.toast.reclassified")); },
+    onError: () => toast.error(t("ui.collegeList.toast.reclassifyFailed")),
   });
 
   const grouped = {
@@ -161,9 +163,9 @@ export default function CollegeListPage() {
   return (
     <div className="space-y-6">
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-tertiary)" }}>College Prep</p>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em", marginTop: 2 }}>College List Builder</h1>
-        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2, maxWidth: 600 }}>Build and organize college lists for your students. Search schools, classify fit, and manage their target list.</p>
+        <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-tertiary)" }}>{t("nav.collegePrep")}</p>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em", marginTop: 2 }}>{t("ui.collegeList.title")}</h1>
+        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2, maxWidth: 600 }}>{t("ui.collegeList.subtitle")}</p>
       </motion.div>
 
       {/* Student Selector */}
@@ -171,11 +173,11 @@ export default function CollegeListPage() {
         style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Users style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Student:</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.collegePrep.studentLabel")}</span>
         </div>
         <select value={selectedStudentId} onChange={(e) => setSelectedStudentId(e.target.value)}
           style={{ height: 36, borderRadius: 8, padding: "0 12px", fontSize: 13, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", outline: "none", minWidth: 240, fontFamily: "inherit" }}>
-          <option value="">Select a student...</option>
+          <option value="">{t("ui.collegePrep.selectStudent")}</option>
           {students.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
         {studentsLoading && <Loader2 style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)", animation: "spin 1s linear infinite" }} />}
@@ -186,16 +188,16 @@ export default function CollegeListPage() {
           {/* Search & Add */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", padding: 16 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 12 }}>Search & Add Colleges</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 12 }}>{t("ui.collegeList.searchAndAdd")}</div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", marginBottom: 12 }}>
               <Search style={{ width: 14, height: 14, color: "var(--admin-font-light)", flexShrink: 0 }} />
-              <input placeholder="Search colleges by name..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
+              <input placeholder={t("ui.collegeList.searchPlaceholder")} value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                 style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
               {searchLoading && <Loader2 style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)", animation: "spin 1s linear infinite" }} />}
             </div>
             {searchQuery.length >= 2 && colleges.length === 0 && !searchLoading && (
               <div style={{ padding: 24, textAlign: "center" }}>
-                <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>No colleges found for &quot;{searchQuery}&quot;</p>
+                <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("ui.collegeList.noResults", { query: searchQuery })}</p>
               </div>
             )}
             {colleges.length > 0 && (
@@ -208,16 +210,16 @@ export default function CollegeListPage() {
                   return (
                     <CollegeCard key={c.id} college={c} prediction={pred}
                       actions={alreadyAdded ? (
-                        <span style={{ fontSize: 11, fontWeight: 600, color: "#10b981", padding: "4px 10px", borderRadius: 6, background: "rgba(16,185,129,0.1)" }}>Added</span>
+                        <span style={{ fontSize: 11, fontWeight: 600, color: "#10b981", padding: "4px 10px", borderRadius: 6, background: "rgba(16,185,129,0.1)" }}>{t("ui.collegeList.added")}</span>
                       ) : (
                         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                           <select value={effectiveClassification} onChange={(e) => setAddClassification({ ...addClassification, [c.id]: e.target.value })}
                             style={{ height: 28, borderRadius: 5, padding: "0 6px", fontSize: 11, fontWeight: 600, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", outline: "none", cursor: "pointer", fontFamily: "inherit" }}>
-                            <option value="reach">Reach</option><option value="match">Match</option><option value="safety">Safety</option>
+                            <option value="reach">{t("ui.collegePrep.fit.reach")}</option><option value="match">{t("ui.collegePrep.fit.match")}</option><option value="safety">{t("ui.collegePrep.fit.safety")}</option>
                           </select>
                           <button onClick={() => addToList.mutate({ collegeId: c.id, classification: effectiveClassification })} disabled={addToList.isPending}
                             style={{ height: 28, borderRadius: 5, padding: "0 10px", fontSize: 11, fontWeight: 600, display: "flex", alignItems: "center", gap: 4, background: "#102B47", color: "#fff", border: "none", cursor: "pointer" }}>
-                            <Plus style={{ width: 12, height: 12 }} /> Add
+                            <Plus style={{ width: 12, height: 12 }} /> {t("ui.collegeList.add")}
                           </button>
                         </div>
                       )} />
@@ -230,7 +232,7 @@ export default function CollegeListPage() {
           {/* College List */}
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
             <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 12 }}>
-              {students.find((s) => s.id === selectedStudentId)?.name || "Student"}&apos;s College List ({collegeList.length})
+              {t("ui.collegeList.listTitle", { name: students.find((s) => s.id === selectedStudentId)?.name || t("ui.collegeList.studentFallback"), count: collegeList.length })}
             </div>
             {listLoading ? (
               <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -239,7 +241,7 @@ export default function CollegeListPage() {
             ) : collegeList.length === 0 ? (
               <div style={{ padding: 48, textAlign: "center", borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
                 <Building2 style={{ width: 32, height: 32, color: "var(--admin-font-light)", margin: "0 auto 12px" }} />
-                <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>No colleges in the list yet. Search above to add colleges.</p>
+                <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("ui.collegeList.empty")}</p>
               </div>
             ) : (
               <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -250,7 +252,7 @@ export default function CollegeListPage() {
                   return (
                     <div key={cls}>
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, padding: "6px 10px", borderRadius: 6, background: cfg.bg, border: `1px solid ${cfg.border}` }}>
-                        <span style={{ fontSize: 12, fontWeight: 700, color: cfg.color, textTransform: "uppercase", letterSpacing: "0.06em" }}>{cfg.label}</span>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: cfg.color, textTransform: "uppercase", letterSpacing: "0.06em" }}>{t(cfg.labelKey)}</span>
                         <span style={{ fontSize: 11, color: cfg.color, opacity: 0.7 }}>({items.length})</span>
                       </div>
                       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -260,9 +262,9 @@ export default function CollegeListPage() {
                               <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                                 <select value={item.classification} onChange={(e) => reclassify.mutate({ itemId: item.id, classification: e.target.value })}
                                   style={{ height: 28, borderRadius: 5, padding: "0 6px", fontSize: 11, fontWeight: 600, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", outline: "none", cursor: "pointer", fontFamily: "inherit" }}>
-                                  <option value="reach">Reach</option><option value="match">Match</option><option value="safety">Safety</option>
+                                  <option value="reach">{t("ui.collegePrep.fit.reach")}</option><option value="match">{t("ui.collegePrep.fit.match")}</option><option value="safety">{t("ui.collegePrep.fit.safety")}</option>
                                 </select>
-                                <button onClick={() => removeFromList.mutate(item.id)} disabled={removeFromList.isPending} title="Remove from list"
+                                <button onClick={() => removeFromList.mutate(item.id)} disabled={removeFromList.isPending} title={t("ui.collegeList.removeFromList")}
                                   style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                                   <Trash2 style={{ width: 12, height: 12, color: "#ef4444" }} />
                                 </button>
@@ -283,7 +285,7 @@ export default function CollegeListPage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}
           style={{ padding: 48, textAlign: "center", borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
           <Users style={{ width: 32, height: 32, color: "var(--admin-font-light)", margin: "0 auto 12px" }} />
-          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>Select a student above to build and manage their college list.</p>
+          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("ui.collegeList.selectStudentPrompt")}</p>
         </motion.div>
       )}
     </div>

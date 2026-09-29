@@ -212,7 +212,7 @@ export const DEFAULT_COMPETENCY_DIMENSIONS: CompetencyDimension[] = [
   {
     id: "interests-001",
     name: "Academic Interests",
-    nameSpanish: "Intereses Académicos",
+    nameSpanish: "Intereses académicos",
     description: "Shows curiosity and engagement in learning activities",
     descriptionSpanish:
       "Muestra curiosidad y compromiso en actividades de aprendizaje",
@@ -224,7 +224,7 @@ export const DEFAULT_COMPETENCY_DIMENSIONS: CompetencyDimension[] = [
   {
     id: "interests-002",
     name: "Career Interests",
-    nameSpanish: "Intereses Profesionales",
+    nameSpanish: "Intereses profesionales",
     description: "Demonstrates interest in specific career paths or industries",
     descriptionSpanish:
       "Demuestra interés en caminos profesionales específicos o industrias",
@@ -236,7 +236,7 @@ export const DEFAULT_COMPETENCY_DIMENSIONS: CompetencyDimension[] = [
   {
     id: "talents-001",
     name: "Analytical Thinking",
-    nameSpanish: "Pensamiento Analítico",
+    nameSpanish: "Pensamiento analítico",
     description: "Ability to break down complex problems and think logically",
     descriptionSpanish:
       "Capacidad para desglosar problemas complejos y pensar lógicamente",
@@ -248,7 +248,7 @@ export const DEFAULT_COMPETENCY_DIMENSIONS: CompetencyDimension[] = [
   {
     id: "talents-002",
     name: "Creative Expression",
-    nameSpanish: "Expresión Creativa",
+    nameSpanish: "Expresión creativa",
     description: "Shows creativity and original thinking in various contexts",
     descriptionSpanish:
       "Muestra creatividad y pensamiento original en diversos contextos",
@@ -295,7 +295,7 @@ export const DEFAULT_COMPETENCY_DIMENSIONS: CompetencyDimension[] = [
     id: "emotional_intelligence-002",
     name: "Empathy",
     nameSpanish: "Empatía",
-    description: "Shows understanding and consideration for others feelings",
+    description: "Shows understanding and consideration for others' feelings",
     descriptionSpanish:
       "Muestra comprensión y consideración por los sentimientos de los demás",
     category: "emotional_intelligence",
@@ -331,7 +331,7 @@ export const DEFAULT_COMPETENCY_DIMENSIONS: CompetencyDimension[] = [
     name: "Accountability",
     nameSpanish: "Responsabilidad",
     description: "Takes ownership of actions and commitments",
-    descriptionSpanish: "Asume la propiedad de sus acciones y compromisos",
+    descriptionSpanish: "Asume la responsabilidad de sus acciones y compromisos",
     category: "responsibility",
     isActive: true,
     order: 11,
@@ -340,7 +340,7 @@ export const DEFAULT_COMPETENCY_DIMENSIONS: CompetencyDimension[] = [
   {
     id: "responsibility-002",
     name: "Time Management",
-    nameSpanish: "Gestión del Tiempo",
+    nameSpanish: "Gestión del tiempo",
     description: "Manages time effectively and meets deadlines",
     descriptionSpanish:
       "Gestiona el tiempo efectivamente y cumple con los plazos",
@@ -352,7 +352,7 @@ export const DEFAULT_COMPETENCY_DIMENSIONS: CompetencyDimension[] = [
   {
     id: "communication-001",
     name: "Verbal Communication",
-    nameSpanish: "Comunicación Verbal",
+    nameSpanish: "Comunicación verbal",
     description: "Expresses ideas clearly and effectively in speech",
     descriptionSpanish: "Expresa ideas de manera clara y efectiva en el habla",
     category: "communication",
@@ -363,7 +363,7 @@ export const DEFAULT_COMPETENCY_DIMENSIONS: CompetencyDimension[] = [
   {
     id: "communication-002",
     name: "Written Communication",
-    nameSpanish: "Comunicación Escrita",
+    nameSpanish: "Comunicación escrita",
     description: "Communicates effectively through writing",
     descriptionSpanish: "Se comunica efectivamente a través de la escritura",
     category: "communication",
@@ -377,7 +377,7 @@ export const DEFAULT_COMPETENCY_DIMENSIONS: CompetencyDimension[] = [
 export const DEFAULT_RATING_SCALE: RatingScale = {
   id: "likert-5-point",
   name: "5-Point Likert Scale",
-  nameSpanish: "Escala Likert de 5 Puntos",
+  nameSpanish: "Escala Likert de 5 puntos",
   description: "Standard 5-point rating scale for evaluations",
   descriptionSpanish:
     "Escala de calificación estándar de 5 puntos para evaluaciones",
@@ -388,14 +388,14 @@ export const DEFAULT_RATING_SCALE: RatingScale = {
     {
       value: 1,
       label: "Strongly Disagree",
-      labelSpanish: "Totalmente en Desacuerdo",
+      labelSpanish: "Totalmente en desacuerdo",
       description: "This does not describe the person at all",
       descriptionSpanish: "Esto no describe a la persona en absoluto",
     },
     {
       value: 2,
       label: "Disagree",
-      labelSpanish: "En Desacuerdo",
+      labelSpanish: "En desacuerdo",
       description: "This rarely describes the person",
       descriptionSpanish: "Esto rara vez describe a la persona",
     },
@@ -409,14 +409,14 @@ export const DEFAULT_RATING_SCALE: RatingScale = {
     {
       value: 4,
       label: "Agree",
-      labelSpanish: "De Acuerdo",
+      labelSpanish: "De acuerdo",
       description: "This often describes the person",
       descriptionSpanish: "Esto a menudo describe a la persona",
     },
     {
       value: 5,
       label: "Strongly Agree",
-      labelSpanish: "Totalmente de Acuerdo",
+      labelSpanish: "Totalmente de acuerdo",
       description: "This always describes the person",
       descriptionSpanish: "Esto siempre describe a la persona",
     },
@@ -425,14 +425,14 @@ export const DEFAULT_RATING_SCALE: RatingScale = {
     {
       value: 1,
       label: "Strongly Disagree",
-      labelSpanish: "Totalmente en Desacuerdo",
+      labelSpanish: "Totalmente en desacuerdo",
       description: "This does not describe the person at all",
       descriptionSpanish: "Esto no describe a la persona en absoluto",
     },
     {
       value: 2,
       label: "Disagree",
-      labelSpanish: "En Desacuerdo",
+      labelSpanish: "En desacuerdo",
       description: "This rarely describes the person",
       descriptionSpanish: "Esto rara vez describe a la persona",
     },
@@ -446,14 +446,14 @@ export const DEFAULT_RATING_SCALE: RatingScale = {
     {
       value: 4,
       label: "Agree",
-      labelSpanish: "De Acuerdo",
+      labelSpanish: "De acuerdo",
       description: "This often describes the person",
       descriptionSpanish: "Esto a menudo describe a la persona",
     },
     {
       value: 5,
       label: "Strongly Agree",
-      labelSpanish: "Totalmente de Acuerdo",
+      labelSpanish: "Totalmente de acuerdo",
       description: "This always describes the person",
       descriptionSpanish: "Esto siempre describe a la persona",
     },

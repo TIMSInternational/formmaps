@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react";
 import { motion } from "motion/react";
 import { Check, X, Sparkles, TrendingUp } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { ExtractedJobData, TailoredResume } from "@/types/resume";
 
 export interface AcceptedChanges {
@@ -23,6 +24,7 @@ interface AITailorPanelProps {
 }
 
 function ScoreBadge({ score }: { score: number }) {
+  const { t } = useTranslation();
   const color =
     score >= 80
       ? "text-emerald-600 bg-emerald-500/10"
@@ -35,7 +37,7 @@ function ScoreBadge({ score }: { score: number }) {
       className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-1 text-sm font-semibold ${color}`}
     >
       <TrendingUp className="h-3.5 w-3.5" />
-      ATS Score: {score}
+      {t("resumeBuilder.aiTailorPanel.atsScore", "ATS Score: {{score}}", { score })}
     </span>
   );
 }
@@ -75,6 +77,7 @@ export function AITailorPanel({
   onAccept,
   onDownloadPDF,
 }: AITailorPanelProps) {
+  const { t } = useTranslation();
   const [acceptSummary, setAcceptSummary] = useState(true);
   const [acceptExperience, setAcceptExperience] = useState(true);
   const [acceptSkills, setAcceptSkills] = useState(true);
@@ -111,11 +114,13 @@ export function AITailorPanel({
             </div>
             <div>
               <p className="text-sm font-semibold text-foreground">
-                AI Tailoring Complete
+                {t("resumeBuilder.aiTailorPanel.complete", "AI Tailoring Complete")}
               </p>
               <p className="text-xs text-muted-foreground">
-                {totalChanges} change{totalChanges !== 1 ? "s" : ""} suggested
-                to match this role
+                {t("resumeBuilder.aiTailorPanel.changesSuggested", {
+                  count: totalChanges,
+                  defaultValue: "{{count}} changes suggested to match this role",
+                })}
               </p>
             </div>
           </div>
@@ -133,10 +138,10 @@ export function AITailorPanel({
         >
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Professional Summary
+              {t("resumeBuilder.wizardAlign.sections.summary", "Professional Summary")}
             </h3>
             <SectionToggle
-              label="Use AI"
+              label={t("resumeBuilder.aiTailorPanel.useAi", "Use AI")}
               enabled={acceptSummary}
               onToggle={() => setAcceptSummary((v) => !v)}
             />
@@ -152,7 +157,7 @@ export function AITailorPanel({
 
           {tailoredResume.changes.length > 0 && (
             <p className="mt-3 text-xs text-muted-foreground">
-              Changes: {tailoredResume.changes[0]}
+              {t("resumeBuilder.aiTailorPanel.changes", "Changes: {{change}}", { change: tailoredResume.changes[0] })}
             </p>
           )}
         </motion.div>
@@ -168,10 +173,10 @@ export function AITailorPanel({
         >
           <div className="flex items-center justify-between px-1">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Experience
+              {t("resumeBuilder.wizardAlign.sections.experience", "Experience")}
             </h3>
             <SectionToggle
-              label="Use AI"
+              label={t("resumeBuilder.aiTailorPanel.useAi", "Use AI")}
               enabled={acceptExperience}
               onToggle={() => setAcceptExperience((v) => !v)}
             />
@@ -187,7 +192,7 @@ export function AITailorPanel({
               <p className="text-sm font-semibold text-foreground">
                 {exp.title}{" "}
                 <span className="font-normal text-muted-foreground">
-                  at {exp.company}
+                  {t("resumeBuilder.aiTailorPanel.atCompany", "at {{company}}", { company: exp.company })}
                 </span>
               </p>
 
@@ -217,10 +222,10 @@ export function AITailorPanel({
         >
           <div className="flex items-center justify-between mb-3">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Skills
+              {t("resumeBuilder.wizardAlign.sections.skills", "Skills")}
             </h3>
             <SectionToggle
-              label="Use AI"
+              label={t("resumeBuilder.aiTailorPanel.useAi", "Use AI")}
               enabled={acceptSkills}
               onToggle={() => setAcceptSkills((v) => !v)}
             />
@@ -244,15 +249,14 @@ export function AITailorPanel({
           {/* Show how many skills were added from job requirements */}
           {extractedJob.requiredSkills.length > 0 && (
             <p className="mt-3 text-xs text-muted-foreground">
-              +{" "}
-              {
-                tailoredResume.tailoredSkills.filter((s) =>
+              {t("resumeBuilder.aiTailorPanel.skillsAligned", {
+                count: tailoredResume.tailoredSkills.filter((s) =>
                   extractedJob.requiredSkills
                     .map((r) => r.toLowerCase())
                     .includes(s.toLowerCase())
-                ).length
-              }{" "}
-              skills aligned with job requirements
+                ).length,
+                defaultValue: "+ {{count}} skills aligned with job requirements",
+              })}
             </p>
           )}
         </motion.div>
@@ -277,7 +281,7 @@ export function AITailorPanel({
             }}
             className="flex-1 bg-secondary text-foreground hover:bg-border rounded-xl px-6 py-3 text-sm font-semibold transition-colors border border-border"
           >
-            Download PDF
+            {t("resumeBuilder.resumePreview.downloadPdf", "Download PDF")}
           </button>
         )}
         <button
@@ -285,7 +289,7 @@ export function AITailorPanel({
           onClick={handleAccept}
           className="flex-1 bg-foreground text-background hover:bg-foreground/90 rounded-xl px-6 py-3 text-sm font-semibold transition-colors"
         >
-          Create Resume with Changes
+          {t("resumeBuilder.aiTailorPanel.createWithChanges", "Create Resume with Changes")}
         </button>
       </motion.div>
     </div>

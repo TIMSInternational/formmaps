@@ -12,6 +12,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 /**
  * SettingsSidebar Component
@@ -38,6 +39,7 @@ interface SettingsSidebarProps {
 
 export const SettingsSidebar = React.memo(
   ({ onClose, className = "" }: SettingsSidebarProps) => {
+    const { t } = useTranslation();
     // State for expandable sections
     const [expandedSection, setExpandedSection] = useState<string | null>(
       "sections"
@@ -138,7 +140,7 @@ export const SettingsSidebar = React.memo(
                 {/* Drag Handle */}
                 <div
                   className="cursor-grab active:cursor-grabbing p-1"
-                  title="Drag to reorder"
+                  title={t("resumeBuilder.settingsSidebar.dragToReorder", "Drag to reorder")}
                 >
                   <GripVertical className="w-4 h-4 text-gray-400" />
                 </div>
@@ -155,7 +157,7 @@ export const SettingsSidebar = React.memo(
                           : "text-gray-600 line-through"
                       )}
                     >
-                      {section.title}
+                      {t(`resumeBuilder.settingsSidebar.sectionNames.${section.id}`, section.title)}
                     </span>
                   </div>
                 </div>
@@ -171,10 +173,23 @@ export const SettingsSidebar = React.memo(
                   )}
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
-                  title={section.visible ? "Hide section" : "Show section"}
-                  aria-label={`${section.visible ? "Hide" : "Show"} ${
-                    section.title
-                  }`}
+                  title={
+                    section.visible
+                      ? t("resumeBuilder.settingsSidebar.hideSection", "Hide section")
+                      : t("resumeBuilder.settingsSidebar.showSection", "Show section")
+                  }
+                  aria-label={t(
+                    section.visible
+                      ? "resumeBuilder.settingsSidebar.hideSectionNamed"
+                      : "resumeBuilder.settingsSidebar.showSectionNamed",
+                    section.visible ? "Hide {{section}}" : "Show {{section}}",
+                    {
+                      section: t(
+                        `resumeBuilder.settingsSidebar.sectionNames.${section.id}`,
+                        section.title
+                      ),
+                    }
+                  )}
                 >
                   {section.visible ? (
                     <Eye className="w-4 h-4" />
@@ -209,7 +224,10 @@ export const SettingsSidebar = React.memo(
               aria-expanded={expandedSection === sectionId}
             >
               <span className="text-sm font-medium text-gray-900">
-                {sectionId.charAt(0).toUpperCase() + sectionId.slice(1)} Fields
+                {t(
+                  `resumeBuilder.settingsSidebar.fieldGroups.${sectionId}`,
+                  `${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)} Fields`
+                )}
               </span>
               <motion.div
                 animate={{ rotate: expandedSection === sectionId ? 180 : 0 }}
@@ -242,8 +260,11 @@ export const SettingsSidebar = React.memo(
                           }
                           className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer"
                         />
-                        <span className="text-sm text-gray-700 group-hover:text-gray-900 capitalize">
-                          {fieldName.replace(/([A-Z])/g, " $1")}
+                        <span className="text-sm text-gray-700 group-hover:text-gray-900">
+                          {t(
+                            `resumeBuilder.settingsSidebar.fieldNames.${fieldName}`,
+                            fieldName.replace(/([A-Z])/g, " $1")
+                          )}
                         </span>
                       </label>
                     ))}
@@ -265,7 +286,7 @@ export const SettingsSidebar = React.memo(
           <div className="flex items-center space-x-3">
             <Download className="w-4 h-4 text-indigo-600" />
             <span className="text-sm font-medium text-gray-900">
-              Download as PDF
+              {t("resumeBuilder.settingsSidebar.downloadPdf", "Download as PDF")}
             </span>
           </div>
           <ChevronDown className="w-4 h-4 text-gray-400" />
@@ -275,7 +296,7 @@ export const SettingsSidebar = React.memo(
           <div className="flex items-center space-x-3">
             <Download className="w-4 h-4 text-indigo-600" />
             <span className="text-sm font-medium text-gray-900">
-              Download as DOCX
+              {t("resumeBuilder.settingsSidebar.downloadDocx", "Download as DOCX")}
             </span>
           </div>
           <ChevronDown className="w-4 h-4 text-gray-400" />
@@ -285,7 +306,7 @@ export const SettingsSidebar = React.memo(
           <div className="flex items-center space-x-3">
             <Download className="w-4 h-4 text-indigo-600" />
             <span className="text-sm font-medium text-gray-900">
-              Copy as Text
+              {t("resumeBuilder.settingsSidebar.copyAsText", "Copy as Text")}
             </span>
           </div>
           <ChevronDown className="w-4 h-4 text-gray-400" />
@@ -304,15 +325,15 @@ export const SettingsSidebar = React.memo(
         <div className="sticky top-0 flex items-center justify-between p-4 border-b border-gray-200 bg-white">
           <div className="flex items-center space-x-2">
             <SettingsIcon className="w-5 h-5 text-indigo-600" />
-            <h2 className="font-semibold text-gray-900">Settings</h2>
+            <h2 className="font-semibold text-gray-900">{t("resumeBuilder.settingsSidebar.settings", "Settings")}</h2>
           </div>
           <motion.button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-lg transition-colors duration-150"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
-            title="Close settings"
-            aria-label="Close settings"
+            title={t("resumeBuilder.settingsSidebar.closeSettings", "Close settings")}
+            aria-label={t("resumeBuilder.settingsSidebar.closeSettings", "Close settings")}
           >
             <X className="w-5 h-5 text-gray-500" />
           </motion.button>
@@ -329,7 +350,7 @@ export const SettingsSidebar = React.memo(
             >
               <h3 className="font-semibold text-gray-900 text-sm mb-3 flex items-center">
                 <span className="w-1 h-4 bg-indigo-600 rounded-full mr-2"></span>
-                Sections
+                {t("resumeBuilder.settingsSidebar.sections", "Sections")}
               </h3>
               {renderSectionsManagement()}
             </motion.div>
@@ -342,7 +363,7 @@ export const SettingsSidebar = React.memo(
             >
               <h3 className="font-semibold text-gray-900 text-sm mb-3 flex items-center">
                 <span className="w-1 h-4 bg-indigo-600 rounded-full mr-2"></span>
-                Field Visibility
+                {t("resumeBuilder.settingsSidebar.fieldVisibility", "Field Visibility")}
               </h3>
               {renderFieldCustomization()}
             </motion.div>
@@ -355,7 +376,7 @@ export const SettingsSidebar = React.memo(
             >
               <h3 className="font-semibold text-gray-900 text-sm mb-3 flex items-center">
                 <span className="w-1 h-4 bg-indigo-600 rounded-full mr-2"></span>
-                Export
+                {t("resumeBuilder.settingsSidebar.export", "Export")}
               </h3>
               {renderExportOptions()}
             </motion.div>
@@ -368,13 +389,13 @@ export const SettingsSidebar = React.memo(
             onClick={onClose}
             className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 font-medium text-sm"
           >
-            Apply Settings
+            {t("resumeBuilder.settingsSidebar.applySettings", "Apply Settings")}
           </button>
           <button
             onClick={onClose}
             className="w-full px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg hover:border-gray-300 transition-colors duration-200 font-medium text-sm"
           >
-            Close
+            {t("resumeBuilder.settingsSidebar.close", "Close")}
           </button>
         </div>
       </motion.div>

@@ -17,10 +17,10 @@ export default function AssessmentTimelinePage() {
               className="mb-8"
             >
               <h1 className="text-3xl font-bold text-gray-900">
-                Assessment Timeline
+                {t("nav.assessmentTimeline")}
               </h1>
               <p className="text-gray-600 mt-2">
-                View your assessment history and upcoming schedule.
+                {t("studentUi.assessments.timeline.subtitle")}
               </p>
             </motion.div>
 
@@ -34,10 +34,10 @@ export default function AssessmentTimelinePage() {
                 <History className="w-8 h-8 text-purple-600" />
               </div>
               <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                Assessment History
+                {t("studentUi.assessments.timeline.historyTitle")}
               </h2>
               <p className="text-gray-500 max-w-md mx-auto">
-                Your assessment timeline and history will appear here once you complete your first assessment.
+                {t("studentUi.assessments.timeline.emptyBody")}
               </p>
             </motion.div>
           </div>

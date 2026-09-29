@@ -1,13 +1,22 @@
-const STATUS_META: Record<string, { label: string; color: string }> = {
-  requested: { label: "Requested", color: "var(--admin-accent-blue)" },
-  accepted: { label: "Accepted", color: "#f59e0b" },
-  in_progress: { label: "In Progress", color: "#f97316" },
-  submitted: { label: "Submitted", color: "#10b981" },
-  declined: { label: "Declined", color: "#ef4444" },
+"use client";
+
+import { useTranslation } from "react-i18next";
+
+// labelKey is an i18n key (common namespace); the status value itself is API data.
+const STATUS_META: Record<string, { labelKey: string; color: string }> = {
+  requested: { labelKey: "components.recommendationStatus.requested", color: "var(--admin-accent-blue)" },
+  accepted: { labelKey: "components.recommendationStatus.accepted", color: "#f59e0b" },
+  in_progress: { labelKey: "components.recommendationStatus.inProgress", color: "#f97316" },
+  submitted: { labelKey: "components.recommendationStatus.submitted", color: "#10b981" },
+  declined: { labelKey: "components.recommendationStatus.declined", color: "#ef4444" },
 };
 
 export function StatusBadge({ status }: { status: string }) {
-  const meta = STATUS_META[status] ?? { label: status, color: "#6b7280" };
+  const { t } = useTranslation();
+  const known = STATUS_META[status];
+  const meta = known
+    ? { label: t(known.labelKey), color: known.color }
+    : { label: status, color: "#6b7280" };
   return (
     <span
       style={{

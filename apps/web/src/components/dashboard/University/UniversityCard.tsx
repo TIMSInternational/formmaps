@@ -139,7 +139,7 @@ function UniversityCardInner({
           <span className="text-xs font-bold text-[var(--admin-font-primary)]">
             {formatAcceptanceRate(acceptRate)}
           </span>
-          <span className="text-[9px] text-[var(--admin-font-tertiary)]">{t("Accept", "Acepta")}</span>
+          <span className="text-[9px] text-[var(--admin-font-tertiary)]">{t("Acceptance", "Aceptación")}</span>
         </div>
         <div className="flex flex-col items-center py-2.5 bg-[var(--admin-bg-hover)]">
           <GraduationCap className="h-3 w-3 text-[var(--admin-font-tertiary)] mb-1" />
@@ -177,7 +177,7 @@ function UniversityCardInner({
                 ? "text-[var(--admin-accent-blue)] bg-[var(--admin-accent-blue)]/10 hover:bg-[var(--admin-accent-blue)]/20"
                 : "text-[var(--admin-font-tertiary)] hover:text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/10 disabled:opacity-30"
             )}
-            aria-label={compared ? "Remove from compare" : "Add to compare"}
+            aria-label={compared ? t("Remove from compare", "Quitar de la comparación") : t("Add to compare", "Agregar a la comparación")}
           >
             <GitCompareArrows className="h-3.5 w-3.5" />
           </button>
@@ -189,7 +189,7 @@ function UniversityCardInner({
                 ? "text-rose-400 bg-rose-500/10 hover:bg-rose-500/20"
                 : "text-[var(--admin-font-tertiary)] hover:text-rose-400 hover:bg-rose-500/10"
             )}
-            aria-label={isFavorite ? "Remove favorite" : "Add favorite"}
+            aria-label={isFavorite ? t("Remove favorite", "Quitar de favoritos") : t("Add favorite", "Agregar a favoritos")}
           >
             <Heart className={cn("h-3.5 w-3.5", isFavorite && "fill-current")} />
           </button>

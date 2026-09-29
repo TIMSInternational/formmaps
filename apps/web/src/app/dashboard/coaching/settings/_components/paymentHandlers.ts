@@ -5,6 +5,7 @@ import {
 } from "@/services/coachService";
 import { BankAccount } from "@/types/coach";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n";
 
 interface StripeAccountInfo {
   connected: boolean;
@@ -35,7 +36,7 @@ export async function saveBankAccount(
     !bankAccountForm.accountHolderName ||
     !bankAccountForm.bankName
   ) {
-    toast.error("Please fill in all bank account fields");
+    toast.error(i18n.t("studentUi.coaching.bank.fillAllAccountFields"));
     return false;
   }
 
@@ -60,7 +61,7 @@ export async function saveBankAccount(
       routingNumber: bankAccountForm.routingNumber,
     });
 
-    toast.success(response.message || "Bank account linked successfully");
+    toast.success(response.message || i18n.t("studentUi.coaching.bank.linkedSuccess"));
     setBankAccountForm((prev) => ({
       ...prev,
       accountNumber: "****" + prev.accountNumber.slice(-4),
@@ -71,7 +72,7 @@ export async function saveBankAccount(
     setStripeAccount({ connected: false });
     const errMsg =
       (error as Record<string, string>)?.message ||
-      "Failed to save bank account";
+      i18n.t("studentUi.coaching.bank.saveFailed");
     toast.error(errMsg);
     return false;
   }
@@ -98,7 +99,7 @@ export async function connectStripe(
     return;
   }
 
-  toast.success(response.message || "Bank account linked successfully");
+  toast.success(response.message || i18n.t("studentUi.coaching.bank.linkedSuccess"));
   fetchStripeAccount();
 }
 
@@ -106,7 +107,7 @@ export async function disconnectAccount(
   setStripeAccount: (a: StripeAccountInfo) => void,
   onBankAccountUpdated?: (bank: BankAccount | null) => void
 ): Promise<void> {
-  if (!confirm("Are you sure you want to disconnect your Stripe account?"))
+  if (!confirm(i18n.t("studentUi.coaching.bank.confirmDisconnectStripe")))
     return;
 
   const { updateCoachProfile } = await import("@/services/coachService");
@@ -115,7 +116,7 @@ export async function disconnectAccount(
   );
   setStripeAccount({ connected: false });
   if (onBankAccountUpdated) onBankAccountUpdated(null);
-  toast.success("Stripe account disconnected");
+  toast.success(i18n.t("studentUi.coaching.bank.stripeDisconnected"));
 }
 
 export async function saveFrequency(
@@ -126,7 +127,11 @@ export async function saveFrequency(
     frequency: value as PayoutSettings["frequency"],
   });
   setPayoutFrequency(updated?.frequency || value);
-  toast.success(`Payout frequency updated to ${value}`);
+  toast.success(
+    i18n.t("studentUi.coaching.payouts.frequencyUpdated", {
+      frequency: i18n.t(`studentUi.coaching.payouts.frequency.${value}`, { defaultValue: value }),
+    })
+  );
 }
 
 export async function savePayoutMethod(
@@ -144,7 +149,7 @@ export async function savePayoutMethod(
   }
 ): Promise<void> {
   if (!bankName || !accountHolderName || !bankAccountNumber || !bankRoutingNumber) {
-    toast.error("Please fill in all bank details");
+    toast.error(i18n.t("studentUi.coaching.bank.fillAllDetails"));
     return;
   }
 
@@ -161,5 +166,5 @@ export async function savePayoutMethod(
   setters.setAccountHolderName(updated?.accountHolderName || accountHolderName);
   setters.setBankAccountNumber(updated?.bankAccountNumber || bankAccountNumber);
   setters.setBankRoutingNumber(updated?.bankRoutingNumber || bankRoutingNumber);
-  toast.success("Payout method updated");
+  toast.success(i18n.t("studentUi.coaching.payouts.methodUpdated"));
 }

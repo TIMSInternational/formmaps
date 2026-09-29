@@ -51,7 +51,7 @@ export default function TimelinePage() {
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {language === "spanish"
-              ? "Visualiza tus logros y camino de aprendizaje"
+              ? "Visualiza tus logros y tu camino de aprendizaje"
               : "Visualize your achievements and learning path"}
           </p>
         </div>

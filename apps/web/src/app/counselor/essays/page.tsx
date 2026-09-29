@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 // --- Types ---
 interface Student {
@@ -40,11 +41,11 @@ interface Comment {
   createdDate: string;
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  draft: { label: "Draft", color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
-  in_review: { label: "In Review", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-  revision: { label: "Revision", color: "var(--admin-accent-blue)", bg: "rgba(59,130,246,0.1)" },
-  final: { label: "Final", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+const STATUS_CONFIG: Record<string, { labelKey: string; color: string; bg: string }> = {
+  draft: { labelKey: "ui.essays.status.draft", color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
+  in_review: { labelKey: "ui.essays.status.inReview", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+  revision: { labelKey: "ui.essays.status.revision", color: "var(--admin-accent-blue)", bg: "rgba(59,130,246,0.1)" },
+  final: { labelKey: "ui.essays.status.final", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
 };
 
 const TYPE_CONFIG: Record<string, { color: string; bg: string }> = {
@@ -56,11 +57,21 @@ const TYPE_CONFIG: Record<string, { color: string; bg: string }> = {
   other: { color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
 };
 
+const TYPE_KEYS: Record<string, string> = {
+  personal_statement: "ui.essays.types.personalStatement",
+  supplemental: "ui.essays.types.supplemental",
+  common_app: "ui.essays.types.commonApp",
+  coalition: "ui.essays.types.coalition",
+  scholarship: "ui.essays.types.scholarship",
+  other: "ui.essays.types.other",
+};
+
 function formatType(type: string): string {
   return type.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 export default function EssaysPage() {
+  const { t, i18n } = useTranslation("counselor");
   const queryClient = useQueryClient();
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   const [expandedEssayId, setExpandedEssayId] = useState<string | null>(null);
@@ -108,10 +119,10 @@ export default function EssaysPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["essay-comments", expandedEssayId] });
-      toast.success("Comment added");
+      toast.success(t("ui.essays.toast.commentAdded"));
       setNewComment("");
     },
-    onError: () => toast.error("Failed to add comment"),
+    onError: () => toast.error(t("ui.essays.toast.commentFailed")),
   });
 
   // Stats
@@ -124,12 +135,12 @@ export default function EssaysPage() {
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-tertiary)" }}>College Prep</p>
+        <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-tertiary)" }}>{t("nav.collegePrep")}</p>
         <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em", marginTop: 2 }}>
-          Essay Hub
+          {t("ui.essays.title")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2, maxWidth: 600 }}>
-          Review student essays, track progress, and provide feedback through comments.
+          {t("ui.essays.subtitle")}
         </p>
       </motion.div>
 
@@ -138,12 +149,12 @@ export default function EssaysPage() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
           style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
           {[
-            { label: "TOTAL ESSAYS", value: totalEssays, icon: PenLine, color: "var(--admin-font-primary)" },
-            { label: "DRAFTS", value: draftsCount, icon: FileText, color: "#6b7280" },
-            { label: "IN REVIEW", value: inReviewCount, icon: Clock, color: "#f59e0b" },
-            { label: "FINAL", value: finalCount, icon: CheckCircle2, color: "#10b981" },
+            { id: "total", label: t("ui.essays.stats.total"), value: totalEssays, icon: PenLine, color: "var(--admin-font-primary)" },
+            { id: "drafts", label: t("ui.essays.stats.drafts"), value: draftsCount, icon: FileText, color: "#6b7280" },
+            { id: "inReview", label: t("ui.essays.stats.inReview"), value: inReviewCount, icon: Clock, color: "#f59e0b" },
+            { id: "final", label: t("ui.essays.stats.final"), value: finalCount, icon: CheckCircle2, color: "#10b981" },
           ].map((stat) => (
-            <div key={stat.label} style={{ padding: 16, borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
+            <div key={stat.id} style={{ padding: 16, borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
               <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                 <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)" }}>{stat.label}</span>
                 <stat.icon style={{ width: 16, height: 16, color: stat.color }} />
@@ -159,7 +170,7 @@ export default function EssaysPage() {
         style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Users style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Student:</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.collegePrep.studentLabel")}</span>
         </div>
         <select
           value={selectedStudentId}
@@ -170,7 +181,7 @@ export default function EssaysPage() {
             color: "var(--admin-font-primary)", outline: "none", minWidth: 240, fontFamily: "inherit",
           }}
         >
-          <option value="">Select a student...</option>
+          <option value="">{t("ui.collegePrep.selectStudent")}</option>
           {students.map((s) => (
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
@@ -194,7 +205,7 @@ export default function EssaysPage() {
             }}>
               <PenLine style={{ width: 32, height: 32, color: "var(--admin-font-light)", margin: "0 auto 12px" }} />
               <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>
-                No essays yet. Essays will appear here once the student creates them.
+                {t("ui.essays.empty")}
               </p>
             </div>
           ) : (
@@ -225,18 +236,18 @@ export default function EssaysPage() {
                             fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
                             background: typeCfg.bg, color: typeCfg.color, textTransform: "uppercase",
                           }}>
-                            {formatType(essay.type)}
+                            {TYPE_KEYS[essay.type] ? t(TYPE_KEYS[essay.type]) : formatType(essay.type)}
                           </span>
                           <span style={{
                             fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
                             background: statusCfg.bg, color: statusCfg.color,
                           }}>
-                            {statusCfg.label}
+                            {t(statusCfg.labelKey)}
                           </span>
                         </div>
                         <div style={{ display: "flex", gap: 12, marginTop: 6, flexWrap: "wrap" }}>
                           <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-                            {essay.wordCount} words
+                            {t("ui.essays.wordCount", { count: essay.wordCount })}
                           </span>
                           {essay.collegeName && (
                             <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
@@ -244,7 +255,7 @@ export default function EssaysPage() {
                             </span>
                           )}
                           <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-                            {new Date(essay.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                            {new Date(essay.updatedAt).toLocaleDateString(i18n.language, { month: "short", day: "numeric", year: "numeric" })}
                           </span>
                         </div>
                       </div>
@@ -272,7 +283,7 @@ export default function EssaysPage() {
                           {/* Essay Content */}
                           <div style={{ marginBottom: 16 }}>
                             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-                              Essay Content
+                              {t("ui.essays.content")}
                             </div>
                             <div style={{
                               padding: 14, borderRadius: 8, background: "var(--admin-bg-hover)",
@@ -280,17 +291,17 @@ export default function EssaysPage() {
                               fontSize: 13, lineHeight: 1.7, color: "var(--admin-font-secondary)",
                               maxHeight: 300, overflowY: "auto", whiteSpace: "pre-wrap",
                             }}>
-                              {essay.content || "No content available."}
+                              {essay.content || t("ui.essays.noContent")}
                             </div>
                             <div style={{ display: "flex", gap: 12, marginTop: 8 }}>
                               <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-                                {essay.wordCount} words
+                                {t("ui.essays.wordCount", { count: essay.wordCount })}
                               </span>
                               <span style={{
                                 fontSize: 10, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
                                 background: statusCfg.bg, color: statusCfg.color,
                               }}>
-                                {statusCfg.label}
+                                {t(statusCfg.labelKey)}
                               </span>
                             </div>
                           </div>
@@ -303,7 +314,7 @@ export default function EssaysPage() {
                               textTransform: "uppercase", letterSpacing: "0.05em",
                             }}>
                               <MessageSquare style={{ width: 12, height: 12 }} />
-                              Comments ({comments.length})
+                              {t("ui.essays.commentsCount", { count: comments.length })}
                             </div>
 
                             {commentsLoading ? (
@@ -320,7 +331,7 @@ export default function EssaysPage() {
                                         border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)",
                                       }}>
                                         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
-                                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{comment.author?.name ?? "Unknown"}</span>
+                                          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{comment.author?.name ?? t("ui.essays.unknownAuthor")}</span>
                                           <span style={{
                                             fontSize: 9, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
                                             background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
@@ -329,7 +340,7 @@ export default function EssaysPage() {
                                             {comment.author?.roleName ?? "—"}
                                           </span>
                                           <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginLeft: "auto" }}>
-                                            {comment.createdDate && new Date(comment.createdDate).toLocaleDateString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                                            {comment.createdDate && new Date(comment.createdDate).toLocaleDateString(i18n.language, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                                           </span>
                                         </div>
                                         <p style={{ fontSize: 12, color: "var(--admin-font-secondary)", lineHeight: 1.5, margin: 0 }}>{comment.content}</p>
@@ -340,14 +351,14 @@ export default function EssaysPage() {
 
                                 {comments.length === 0 && (
                                   <div style={{ padding: 16, textAlign: "center", marginBottom: 12 }}>
-                                    <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>No comments yet. Be the first to provide feedback.</p>
+                                    <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("ui.essays.noComments")}</p>
                                   </div>
                                 )}
 
                                 {/* Add Comment */}
                                 <div style={{ display: "flex", gap: 8 }}>
                                   <textarea
-                                    placeholder="Add a comment or feedback..."
+                                    placeholder={t("ui.essays.commentPlaceholder")}
                                     value={newComment}
                                     onChange={(e) => setNewComment(e.target.value)}
                                     rows={2}
@@ -373,7 +384,7 @@ export default function EssaysPage() {
                                     ) : (
                                       <Send style={{ width: 12, height: 12 }} />
                                     )}
-                                    Send
+                                    {t("ui.essays.send")}
                                   </button>
                                 </div>
                               </>
@@ -396,7 +407,7 @@ export default function EssaysPage() {
           style={{ padding: 48, textAlign: "center", borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
           <Users style={{ width: 32, height: 32, color: "var(--admin-font-light)", margin: "0 auto 12px" }} />
           <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>
-            Select a student above to review their essays and provide feedback.
+            {t("ui.essays.selectStudentPrompt")}
           </p>
         </motion.div>
       )}

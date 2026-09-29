@@ -139,5 +139,10 @@
       "recommended": "Recommended",
       "completed": "Completed"
     }
+  },
+  "ui": {
+    "recommendations": {
+      "myRequests": "My Requests"
+    }
   }
 }

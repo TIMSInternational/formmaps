@@ -152,10 +152,7 @@ export function ProposedPlanReviewCard({ studentId, coursePlan, studentGradeLeve
             </DialogTitle>
           </DialogHeader>
           <p className="text-sm text-gray-600">
-            Approving adds {currentGradeCount} planned{" "}
-            {currentGradeCount === 1 ? "course" : "courses"} to the student&apos;s
-            current-year plan now. Future years stay in the approved plan and are
-            applied at year rollover.
+            {t("ui.students.approvePlanDesc", { count: currentGradeCount })}
           </p>
           <div className="flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => setApproveOpen(false)}>

@@ -113,7 +113,7 @@ export function CatalogSection({
                   {c.name}
                   {c.isHonors && (
                     <span className="ml-2 text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: "#FFD23F", color: "#111" }}>
-                      HONORS
+                      {t("studentUi.coursePlan.catalog.honors")}
                     </span>
                   )}
                   {(() => {

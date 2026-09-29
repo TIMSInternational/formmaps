@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 import { type FormState, type TestType, TEST_TYPES } from "./score-helpers";
 
 // ── Sub-components ──────────────────────────────────────────────────────────
@@ -39,6 +40,7 @@ export function DynamicFields({
   form: FormState;
   onChange: (patch: Partial<FormState>) => void;
 }) {
+  const { t } = useTranslation();
   const satTotal =
     form.satMath && form.satReading
       ? Number(form.satMath) + Number(form.satReading)
@@ -60,7 +62,7 @@ export function DynamicFields({
       return (
         <>
           <FieldRow>
-            <Field label="SAT Math (200–800)">
+            <Field label={t("studentUi.testScores.form.satMath")}>
               <Input
                 type="number"
                 min={200}
@@ -72,7 +74,7 @@ export function DynamicFields({
                 onChange={(e) => onChange({ satMath: e.target.value })}
               />
             </Field>
-            <Field label="SAT Reading & Writing (200–800)">
+            <Field label={t("studentUi.testScores.form.satReading")}>
               <Input
                 type="number"
                 min={200}
@@ -87,7 +89,7 @@ export function DynamicFields({
           </FieldRow>
           {satTotal !== null && (
             <p className="text-xs font-semibold text-muted-foreground">
-              Computed total: <span className="text-foreground">{satTotal}</span>
+              {t("studentUi.testScores.form.computedTotal")} <span className="text-foreground">{satTotal}</span>
             </p>
           )}
         </>
@@ -97,22 +99,22 @@ export function DynamicFields({
       return (
         <>
           <FieldRow>
-            <Field label="English (1–36)">
+            <Field label={t("studentUi.testScores.form.actEnglish")}>
               <Input type="number" min={1} max={36} placeholder="34" className="h-10 bg-secondary border-border" value={form.actEnglish} onChange={(e) => onChange({ actEnglish: e.target.value })} />
             </Field>
-            <Field label="Math (1–36)">
+            <Field label={t("studentUi.testScores.form.actMath")}>
               <Input type="number" min={1} max={36} placeholder="32" className="h-10 bg-secondary border-border" value={form.actMath} onChange={(e) => onChange({ actMath: e.target.value })} />
             </Field>
-            <Field label="Reading (1–36)">
+            <Field label={t("studentUi.testScores.form.actReading")}>
               <Input type="number" min={1} max={36} placeholder="35" className="h-10 bg-secondary border-border" value={form.actReading} onChange={(e) => onChange({ actReading: e.target.value })} />
             </Field>
-            <Field label="Science (1–36)">
+            <Field label={t("studentUi.testScores.form.actScience")}>
               <Input type="number" min={1} max={36} placeholder="33" className="h-10 bg-secondary border-border" value={form.actScience} onChange={(e) => onChange({ actScience: e.target.value })} />
             </Field>
           </FieldRow>
           {actComposite !== null && (
             <p className="text-xs font-semibold text-muted-foreground">
-              Computed composite: <span className="text-foreground">{actComposite}</span>
+              {t("studentUi.testScores.form.computedComposite")} <span className="text-foreground">{actComposite}</span>
             </p>
           )}
         </>
@@ -121,13 +123,13 @@ export function DynamicFields({
     case "AP":
       return (
         <FieldRow>
-          <Field label="Subject">
-            <Input placeholder="e.g. Calculus BC" className="h-10 bg-secondary border-border" value={form.apSubject} onChange={(e) => onChange({ apSubject: e.target.value })} />
+          <Field label={t("studentUi.testScores.form.subject")}>
+            <Input placeholder={t("studentUi.testScores.form.subjectPlaceholder")} className="h-10 bg-secondary border-border" value={form.apSubject} onChange={(e) => onChange({ apSubject: e.target.value })} />
           </Field>
-          <Field label="Score (1–5)">
+          <Field label={t("studentUi.testScores.form.apScore")}>
             <Select value={form.apScore} onValueChange={(v) => onChange({ apScore: v })}>
               <SelectTrigger className="h-10 bg-secondary border-border">
-                <SelectValue placeholder="Select score" />
+                <SelectValue placeholder={t("studentUi.testScores.form.selectScore")} />
               </SelectTrigger>
               <SelectContent>
                 {[5, 4, 3, 2, 1].map((n) => (
@@ -141,8 +143,8 @@ export function DynamicFields({
 
     default:
       return (
-        <Field label="Total Score">
-          <Input type="number" placeholder="Score" className="h-10 bg-secondary border-border" value={form.totalScore} onChange={(e) => onChange({ totalScore: e.target.value })} />
+        <Field label={t("studentUi.testScores.form.totalScore")}>
+          <Input type="number" placeholder={t("studentUi.testScores.form.scorePlaceholder")} className="h-10 bg-secondary border-border" value={form.totalScore} onChange={(e) => onChange({ totalScore: e.target.value })} />
         </Field>
       );
   }
@@ -169,6 +171,7 @@ export function ScoreEntryForm({
   onClose,
   onSave,
 }: ScoreEntryFormProps) {
+  const { t } = useTranslation();
   return (
     <AnimatePresence>
       {show && (
@@ -186,7 +189,7 @@ export function ScoreEntryForm({
                   <Star className="h-4 w-4 text-foreground" />
                 </div>
                 <h3 className="font-semibold text-sm text-foreground">
-                  {editingId ? "Edit Score" : "Add New Score"}
+                  {editingId ? t("studentUi.testScores.form.editTitle") : t("studentUi.testScores.form.addTitle")}
                 </h3>
               </div>
               <button
@@ -198,20 +201,20 @@ export function ScoreEntryForm({
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <Field label="Test Type">
+              <Field label={t("studentUi.testScores.form.testType")}>
                 <Select value={form.testType} onValueChange={(v) => onPatchForm({ testType: v as TestType })}>
                   <SelectTrigger className="h-10 bg-secondary border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {TEST_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    {TEST_TYPES.map((tt) => (
+                      <SelectItem key={tt.value} value={tt.value}>{t(tt.label)}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </Field>
 
-              <Field label="Test Date">
+              <Field label={t("studentUi.testScores.form.testDate")}>
                 <Input
                   type="date"
                   className="h-10 bg-secondary border-border"
@@ -220,7 +223,7 @@ export function ScoreEntryForm({
                 />
               </Field>
 
-              <Field label="Status">
+              <Field label={t("studentUi.testScores.form.status")}>
                 <div className="flex items-center gap-3 h-10">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
@@ -229,7 +232,7 @@ export function ScoreEntryForm({
                       onChange={(e) => onPatchForm({ isOfficial: e.target.checked })}
                       className="w-4 h-4 rounded border-border accent-foreground"
                     />
-                    <span className="text-sm text-foreground font-medium">Official score</span>
+                    <span className="text-sm text-foreground font-medium">{t("studentUi.testScores.form.officialScore")}</span>
                   </label>
                 </div>
               </Field>
@@ -238,14 +241,14 @@ export function ScoreEntryForm({
             <DynamicFields form={form} onChange={onPatchForm} />
 
             <div className="flex justify-end gap-3 pt-1">
-              <Button variant="ghost" onClick={onClose}>Cancel</Button>
+              <Button variant="ghost" onClick={onClose}>{t("common.cancel")}</Button>
               <Button
                 onClick={onSave}
                 disabled={saving}
                 className="bg-foreground text-background hover:bg-foreground/90 px-6"
               >
                 {saving && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                {editingId ? "Save Changes" : "Add Score"}
+                {editingId ? t("common.saveChanges") : t("student:testScores.addScore")}
               </Button>
             </div>
           </div>

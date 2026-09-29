@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
+import i18n from "@/lib/i18n";
 
 export interface ChatMessage {
   id: string;
@@ -15,6 +16,17 @@ export interface ChatThread {
   messages: ChatMessage[];
   createdAt: number;
   updatedAt: number;
+}
+
+// A thread keeps its placeholder title until the first user message renames it. The
+// placeholder is stored in the language that was active when the thread was created,
+// so any language's placeholder (and the legacy literal) counts as "not renamed yet".
+function isPlaceholderTitle(title: string): boolean {
+  return (
+    title === "New chat" ||
+    title === i18n.t("shell.newChat", { lng: "en" }) ||
+    title === i18n.t("shell.newChat", { lng: "es" })
+  );
 }
 
 // Storage keys are per-user to isolate chats between accounts
@@ -61,7 +73,7 @@ export function useChatThreads(userId: string | null) {
   const createThread = useCallback((): ChatThread => {
     const thread: ChatThread = {
       id: `thread-${Date.now()}`,
-      title: "New chat",
+      title: i18n.t("shell.newChat"),
       messages: [],
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -87,7 +99,7 @@ export function useChatThreads(userId: string | null) {
         if (t.id !== threadId) return t;
         const messages = [...t.messages, message];
         const title =
-          t.title === "New chat" && message.role === "user"
+          isPlaceholderTitle(t.title) && message.role === "user"
             ? message.content.slice(0, 50) + (message.content.length > 50 ? "..." : "")
             : t.title;
         return { ...t, messages, title, updatedAt: Date.now() };

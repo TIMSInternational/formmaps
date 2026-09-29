@@ -6,6 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface SkillForm {
   name: string;
@@ -19,20 +20,21 @@ const initialSkillForm: SkillForm = {
   level: 'intermediate'
 };
 
-const skillCategories = [
-  { value: 'technical', label: 'Technical Skills' },
-  { value: 'soft', label: 'Soft Skills' },
-  { value: 'language', label: 'Languages' }
-];
-
-const skillLevels = [
-  { value: 'beginner', label: 'Beginner' },
-  { value: 'intermediate', label: 'Intermediate' },
-  { value: 'advanced', label: 'Advanced' },
-  { value: 'expert', label: 'Expert' }
-];
-
 export function SkillsStep() {
+  const { t } = useTranslation();
+  // Values are stored on the skill; only the labels are translated.
+  const skillCategories = [
+    { value: 'technical', label: t("resumeBuilder.skillsStep.categories.technical", "Technical Skills") },
+    { value: 'soft', label: t("resumeBuilder.skillsStep.categories.soft", "Soft Skills") },
+    { value: 'language', label: t("resumeBuilder.skillsStep.categories.language", "Languages") }
+  ];
+
+  const skillLevels = [
+    { value: 'beginner', label: t("resumeBuilder.skillsStep.levels.beginner", "Beginner") },
+    { value: 'intermediate', label: t("resumeBuilder.skillsStep.levels.intermediate", "Intermediate") },
+    { value: 'advanced', label: t("resumeBuilder.skillsStep.levels.advanced", "Advanced") },
+    { value: 'expert', label: t("resumeBuilder.skillsStep.levels.expert", "Expert") }
+  ];
   const { resumeBuilder, addSkill, removeSkill } = useGlobalStore();
   const { skills } = resumeBuilder.data;
   
@@ -81,16 +83,16 @@ export function SkillsStep() {
       className="space-y-6"
     >
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Skills</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">{t("resumeBuilder.skillsStep.title", "Skills")}</h2>
         <p className="text-sm text-gray-600">
-          Add your technical skills, soft skills, and languages. Be specific and honest about your skill levels.
+          {t("resumeBuilder.skillsStep.subtitle", "Add your technical skills, soft skills, and languages. Be specific and honest about your skill levels.")}
         </p>
       </div>
 
       {/* Existing Skills by Category */}
       {Object.entries(groupedSkills).map(([category, categorySkills]) => (
         <div key={category} className="space-y-3">
-          <h3 className="font-medium text-gray-900 capitalize">
+          <h3 className="font-medium text-gray-900">
             {skillCategories.find(cat => cat.value === category)?.label || category}
           </h3>
           <div className="flex flex-wrap gap-2">
@@ -101,16 +103,17 @@ export function SkillsStep() {
               >
                 <span className="text-sm font-medium text-gray-900">{skill.name}</span>
                 <span className={cn(
-                  "text-xs px-2 py-1 rounded-full capitalize",
+                  "text-xs px-2 py-1 rounded-full",
                   getLevelColor(skill.level)
                 )}>
-                  {skill.level}
+                  {skillLevels.find((l) => l.value === skill.level)?.label || skill.level}
                 </span>
                 <button
                   onClick={() => {
                     // Add a small delay to prevent rapid state changes that might cause PDF rendering issues
                     setTimeout(() => removeSkill(skill.id), 10);
                   }}
+                  aria-label={t("resumeBuilder.skillsStep.removeSkill", "Remove {{name}}", { name: skill.name })}
                   className="text-red-500 hover:text-red-700 text-sm"
                 >
                   ✕
@@ -124,22 +127,22 @@ export function SkillsStep() {
       {/* Add Skill Form */}
       {isAdding ? (
         <div className="border border-gray-200 rounded-lg p-4 space-y-4">
-          <h3 className="font-semibold text-gray-900">Add New Skill</h3>
+          <h3 className="font-semibold text-gray-900">{t("resumeBuilder.skillsStep.addNewSkill", "Add New Skill")}</h3>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="skillName">Skill Name *</Label>
+              <Label htmlFor="skillName">{t("resumeBuilder.skillsStep.skillName", "Skill Name *")}</Label>
               <Input
                 id="skillName"
                 value={formData.name}
                 onChange={(e) => handleInputChange('name', e.target.value)}
-                placeholder="JavaScript, Leadership, Spanish..."
+                placeholder={t("resumeBuilder.skillsStep.skillNamePlaceholder", "JavaScript, Leadership, Spanish...")}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">{t("resumeBuilder.comparisonTable.category", "Category")}</Label>
               <select
                 id="category"
                 value={formData.category}
@@ -155,7 +158,7 @@ export function SkillsStep() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="level">Skill Level</Label>
+              <Label htmlFor="level">{t("resumeBuilder.skillsStep.skillLevel", "Skill Level")}</Label>
               <select
                 id="level"
                 value={formData.level}
@@ -172,13 +175,13 @@ export function SkillsStep() {
           </div>
 
           <div className="flex space-x-2">
-            <Button onClick={handleSubmit}>Add Skill</Button>
-            <Button variant="outline" onClick={handleCancel}>Cancel</Button>
+            <Button onClick={handleSubmit}>{t("resumeBuilder.skillsStep.addSkill", "Add Skill")}</Button>
+            <Button variant="outline" onClick={handleCancel}>{t("common.cancel", "Cancel")}</Button>
           </div>
         </div>
       ) : (
         <Button onClick={() => setIsAdding(true)} className="w-full">
-          + Add Skill
+          {t("resumeBuilder.skillsStep.addSkillPlus", "+ Add Skill")}
         </Button>
       )}
 

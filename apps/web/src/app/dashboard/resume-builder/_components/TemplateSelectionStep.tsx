@@ -2,8 +2,10 @@
 import { motion } from 'motion/react';
 import { useGlobalStore } from '@/store/useGlobalStore';
 import { SmartTemplateSelector } from './SmartTemplateSelector';
+import { useTranslation } from 'react-i18next';
 
 export function TemplateSelectionStep() {
+  const { t } = useTranslation();
   const { resumeBuilder } = useGlobalStore();
   const { careerField } = resumeBuilder.data;
 
@@ -14,10 +16,10 @@ export function TemplateSelectionStep() {
       className="space-y-6"
     >
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Choose Your Template</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">{t("resumeBuilder.templateSelectionStep.title", "Choose Your Template")}</h2>
         <p className="text-sm text-gray-600">
-          Select a professional template that best represents your style and career field.
-          {careerField && " We've filtered templates that work well for your selected career field."}
+          {t("resumeBuilder.templateSelectionStep.subtitle", "Select a professional template that best represents your style and career field.")}
+          {careerField && ` ${t("resumeBuilder.templateSelectionStep.filtered", "We've filtered templates that work well for your selected career field.")}`}
         </p>
       </div>
 

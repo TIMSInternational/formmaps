@@ -5,6 +5,7 @@ import { Clock, CheckCircle2, XCircle, Calendar, User, Pencil, Trash2 } from "lu
 import { Button } from "@/components/ui/button";
 import type { CommunityServiceEntry, CommunityServiceStatus } from "@/types/communityService";
 import { formatDateOnly } from "@/lib/dateUtils";
+import { useTranslation } from "react-i18next";
 
 const statusConfig: Record<
   CommunityServiceStatus,
@@ -12,19 +13,19 @@ const statusConfig: Record<
 > = {
   verified: {
     icon: CheckCircle2,
-    label: "Verified",
+    label: "studentUi.communityService.status.verified",
     color: "text-emerald-600 bg-emerald-50",
     border: "border-emerald-200",
   },
   pending: {
     icon: Clock,
-    label: "Pending",
+    label: "studentUi.communityService.status.pending",
     color: "text-amber-600 bg-amber-50",
     border: "border-amber-200",
   },
   rejected: {
     icon: XCircle,
-    label: "Rejected",
+    label: "studentUi.communityService.status.rejected",
     color: "text-red-600 bg-red-50",
     border: "border-red-200",
   },
@@ -39,6 +40,7 @@ export interface ServiceEntryCardProps {
 }
 
 export function ServiceEntryCard({ entry, index, onEdit, onDelete, deletingId }: ServiceEntryCardProps) {
+  const { t } = useTranslation();
   const sc = statusConfig[entry.status];
   const Icon = sc.icon;
   return (
@@ -55,7 +57,7 @@ export function ServiceEntryCard({ entry, index, onEdit, onDelete, deletingId }:
         <div className="flex items-center justify-between mb-1">
           <h4 className="font-semibold text-foreground text-sm truncate pr-4">{entry.organization}</h4>
           <div className={`shrink-0 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold border ${sc.color} ${sc.border}`}>
-            {sc.label}
+            {t(sc.label)}
           </div>
         </div>
 
@@ -67,7 +69,7 @@ export function ServiceEntryCard({ entry, index, onEdit, onDelete, deletingId }:
 
         {entry.status === "rejected" && entry.note && (
           <p className="text-xs text-red-600 mb-2">
-            Reason: {entry.note}
+            {t("studentUi.communityService.reason", { note: entry.note })}
           </p>
         )}
 
@@ -78,7 +80,7 @@ export function ServiceEntryCard({ entry, index, onEdit, onDelete, deletingId }:
           </span>
           <span className="flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md">
             <Clock className="h-3 w-3" />
-            {entry.hours} hours
+            {t("studentUi.communityService.hours", { count: entry.hours })}
           </span>
           {entry.supervisorName && (
             <span className="flex items-center gap-1">
@@ -97,7 +99,7 @@ export function ServiceEntryCard({ entry, index, onEdit, onDelete, deletingId }:
               className="h-7 px-3 text-xs border-border"
             >
               <Pencil className="h-3 w-3 mr-1" />
-              Edit
+              {t("common.edit")}
             </Button>
             <Button
               size="sm"
@@ -107,7 +109,7 @@ export function ServiceEntryCard({ entry, index, onEdit, onDelete, deletingId }:
               className="h-7 px-3 text-xs border-red-200 text-red-600 hover:bg-red-50"
             >
               <Trash2 className="h-3 w-3 mr-1" />
-              Delete
+              {t("common.delete")}
             </Button>
           </div>
         )}

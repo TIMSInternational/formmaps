@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent } from "@/components/ui/card";
+import { useTranslation } from "react-i18next";
 import type {
   CoachEarningsStats,
   EarningsHistoryItem,
@@ -17,13 +18,14 @@ export function EarningsSection({
   earningsHistory,
   formatCurrency,
 }: EarningsSectionProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-bold text-gray-900">Earnings</h3>
+      <h3 className="text-lg font-bold text-gray-900">{t("coach.nav.earnings")}</h3>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="border-gray-100 shadow-sm">
           <CardContent className="pt-4">
-            <p className="text-sm text-gray-500">Total earnings</p>
+            <p className="text-sm text-gray-500">{t("studentUi.coaching.earningsSection.totalEarnings")}</p>
             <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(earningsSummary?.totalEarnings)}
             </p>
@@ -31,7 +33,7 @@ export function EarningsSection({
         </Card>
         <Card className="border-gray-100 shadow-sm">
           <CardContent className="pt-4">
-            <p className="text-sm text-gray-500">Pending payout</p>
+            <p className="text-sm text-gray-500">{t("studentUi.coaching.earningsSection.pendingPayout")}</p>
             <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(earningsSummary?.pendingPayout)}
             </p>
@@ -39,19 +41,19 @@ export function EarningsSection({
         </Card>
         <Card className="border-gray-100 shadow-sm">
           <CardContent className="pt-4">
-            <p className="text-sm text-gray-500">Last payout</p>
+            <p className="text-sm text-gray-500">{t("studentUi.coaching.earningsSection.lastPayout")}</p>
             <p className="text-2xl font-bold text-gray-900">
               {formatCurrency(earningsSummary?.lastPayoutAmount)}
             </p>
             <p className="text-xs text-gray-500">
-              {earningsSummary?.lastPayoutDate || "N/A"}
+              {earningsSummary?.lastPayoutDate || t("studentUi.coaching.earningsSection.notAvailable")}
             </p>
           </CardContent>
         </Card>
       </div>
 
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-gray-700">Recent earnings</p>
+        <p className="text-sm font-semibold text-gray-700">{t("studentUi.coaching.earningsSection.recentEarnings")}</p>
         {earningsHistory && earningsHistory.length > 0 ? (
           earningsHistory.slice(0, 5).map((item, idx) => (
             <div
@@ -60,7 +62,7 @@ export function EarningsSection({
             >
               <div>
                 <p className="font-semibold text-gray-900">
-                  {item.description || "Session"}
+                  {item.description || t("studentUi.coaching.earningsSection.session")}
                 </p>
                 <p className="text-sm text-gray-500">{item.date || ""}</p>
               </div>
@@ -70,7 +72,7 @@ export function EarningsSection({
                 </p>
                 {typeof item.platformFee === "number" && (
                   <p className="text-xs text-gray-500">
-                    Platform fee: {formatCurrency(item.platformFee)}
+                    {t("studentUi.coaching.earningsSection.platformFee", { amount: formatCurrency(item.platformFee) })}
                   </p>
                 )}
               </div>
@@ -78,7 +80,7 @@ export function EarningsSection({
           ))
         ) : (
           <div className="bg-gray-50 rounded-2xl p-6 text-center border border-gray-100 border-dashed text-sm text-gray-500">
-            No earnings history yet.
+            {t("studentUi.coaching.earningsSection.noHistory")}
           </div>
         )}
       </div>

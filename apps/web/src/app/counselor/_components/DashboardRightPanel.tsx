@@ -57,7 +57,7 @@ function ChangeRequestCard({ req }: { req: ChangeRequestItem }) {
           <p className="text-xs font-semibold text-gray-800 truncate">{req.studentName}</p>
           <p className="text-xs text-gray-700 font-medium truncate">
             {req.courseName}
-            <span className="text-gray-400 font-normal ml-1">· Gr.{req.gradeLevel} {req.semester}</span>
+            <span className="text-gray-400 font-normal ml-1">{t("ui.dashboard.gradeSemester", { grade: req.gradeLevel, semester: req.semester })}</span>
           </p>
           {req.studentNote && (
             <p className="text-[10px] text-gray-500 italic line-clamp-1 mt-0.5">

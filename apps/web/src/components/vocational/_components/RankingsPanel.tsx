@@ -3,8 +3,10 @@ import type { Rankings } from "@/services/vocationalReportService";
 
 const CARD = "bg-white rounded-xl shadow-sm border border-gray-100 p-5";
 
-export function RankingsPanel({ rankings }: { rankings: Rankings }) {
+export function RankingsPanel({ rankings, labels = {} }: { rankings: Rankings; labels?: Record<string, string> }) {
   const { t } = useTranslation();
+  // Rankings hold option values (slugs); show the evaluator-facing label when we have it.
+  const label = (value: string) => labels[value] ?? value;
   return (
     <div className={CARD}>
       <p className="text-sm font-semibold text-gray-900 mb-4">{t("evaluation.vocational.report.interestsTitle")}</p>
@@ -13,7 +15,7 @@ export function RankingsPanel({ rankings }: { rankings: Rankings }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{t("evaluation.vocational.report.topInterests")}</p>
           <ol className="space-y-1 list-decimal list-inside">
             {rankings.interests.slice(0, 10).map((i) => (
-              <li key={i.value} className="text-sm text-gray-700">{i.value}</li>
+              <li key={i.value} className="text-sm text-gray-700">{label(i.value)}</li>
             ))}
             {rankings.interests.length === 0 && <li className="text-sm text-gray-400 list-none">{t("evaluation.vocational.report.noData")}</li>}
           </ol>
@@ -22,12 +24,12 @@ export function RankingsPanel({ rankings }: { rankings: Rankings }) {
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{t("evaluation.vocational.report.topIndustries")}</p>
           <ul className="space-y-1">
             {rankings.industries.slice(0, 10).map((i) => (
-              <li key={i.value} className="text-sm text-gray-700">{i.value}</li>
+              <li key={i.value} className="text-sm text-gray-700">{label(i.value)}</li>
             ))}
             {rankings.industries.length === 0 && <li className="text-sm text-gray-400">{t("evaluation.vocational.report.noData")}</li>}
           </ul>
           {rankings.workType && (
-            <p className="text-sm text-gray-700 mt-3"><span className="font-medium">{t("evaluation.vocational.report.workType")}</span> {rankings.workType.value}</p>
+            <p className="text-sm text-gray-700 mt-3"><span className="font-medium">{t("evaluation.vocational.report.workType")}</span> {label(rankings.workType.value)}</p>
           )}
         </div>
       </div>

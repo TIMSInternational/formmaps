@@ -68,63 +68,47 @@ export default function SubscribePage() {
     }
   }, [searchParams, router, refetchSub]);
 
+  const featureList = (planId: string): PlanFeature[] => {
+    const texts = t(`subscribe.plans.${planId}.features`, { returnObjects: true });
+    return Array.isArray(texts) ? texts.map((text) => ({ text: String(text) })) : [];
+  };
+  const highlight = (features: PlanFeature[], indexes: number[]): PlanFeature[] =>
+    features.map((f, idx) => (indexes.includes(idx) ? { ...f, highlighted: true } : f));
+
   const plans: Plan[] = [
     {
       id: "starter",
-      name: "Starter",
-      description: "Begin your career journey",
+      name: t("subscribe.plans.starter.name"),
+      description: t("subscribe.plans.starter.description"),
       price: 9.99,
-      period: "month",
+      period: t("subscribe.perMonth"),
       icon: Zap,
-      ctaText: "Get Started",
-      features: [
-        { text: "PCA & MIL Assessments" },
-        { text: "Career matching (top 10)" },
-        { text: "Basic resume builder" },
-        { text: "Course catalog access" },
-        { text: "Email support" },
-      ],
+      ctaText: t("subscribe.plans.starter.ctaText"),
+      features: featureList("starter"),
     },
     {
       id: "pro",
-      name: "Pro",
-      description: "Full platform access",
+      name: t("subscribe.plans.pro.name"),
+      description: t("subscribe.plans.pro.description"),
       price: 29.99,
-      period: "month",
+      period: t("subscribe.perMonth"),
       icon: Sparkles,
       popular: true,
-      badge: "Most Popular",
-      ctaText: "Start Pro",
-      features: [
-        { text: "Everything in Starter" },
-        { text: "360° Evaluation system", highlighted: true },
-        { text: "Full career matching (370+ careers)", highlighted: true },
-        { text: "AI-powered resume builder" },
-        { text: "University recommendations" },
-        { text: "Course plan builder" },
-        { text: "Portfolio builder" },
-        { text: "1 coaching session / month" },
-        { text: "Priority support" },
-      ],
+      badge: t("subscribe.plans.pro.badge"),
+      ctaText: t("subscribe.plans.pro.ctaText"),
+      // "360° Evaluation system" and "Full career matching" are highlighted
+      features: highlight(featureList("pro"), [1, 2]),
     },
     {
       id: "premium",
-      name: "Premium",
-      description: "Everything unlimited",
+      name: t("subscribe.plans.premium.name"),
+      description: t("subscribe.plans.premium.description"),
       price: 49.99,
-      period: "month",
+      period: t("subscribe.perMonth"),
       icon: Crown,
-      ctaText: "Go Premium",
-      features: [
-        { text: "Everything in Pro" },
-        { text: "Unlimited coaching sessions", highlighted: true },
-        { text: "AI career narrative reports", highlighted: true },
-        { text: "Counselor session booking" },
-        { text: "Community service tracking" },
-        { text: "Senior project support" },
-        { text: "Certification tracking" },
-        { text: "Dedicated support" },
-      ],
+      ctaText: t("subscribe.plans.premium.ctaText"),
+      // "Unlimited coaching sessions" and "AI career narrative reports" are highlighted
+      features: highlight(featureList("premium"), [1, 2]),
     },
   ];
 
@@ -142,8 +126,8 @@ export default function SubscribePage() {
             <div className="bg-white shadow-2xl rounded-2xl px-6 py-4 border border-[#059669]/20 flex items-center gap-3">
               <CheckCircle2 className="w-6 h-6" style={{ color: "#059669" }} />
               <div>
-                <p className="font-semibold" style={{ color: "#102B47" }}>Payment successful!</p>
-                <p className="text-sm text-gray-500">Redirecting to dashboard...</p>
+                <p className="font-semibold" style={{ color: "#102B47" }}>{t("subscribe.successToastTitle")}</p>
+                <p className="text-sm text-gray-500">{t("subscribe.successToastText")}</p>
               </div>
             </div>
           </motion.div>
@@ -167,16 +151,16 @@ export default function SubscribePage() {
           className="text-center mb-8"
         >
           <Badge className="mb-3 border-0 px-4 py-1.5 font-semibold" style={{ background: "rgba(46,144,152,0.1)", color: "var(--admin-accent-blue)" }}>
-            Choose Your Plan
+            {t("subscribe.chooseBadge")}
           </Badge>
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight mb-2" style={{ color: "#102B47" }}>
-            Invest in Your Future
+            {t("subscribe.heading")}
           </h1>
           <p className="text-base text-gray-500 max-w-xl mx-auto">
-            Unlock AI-powered career tools, assessments, and personalized guidance to accelerate your professional journey.
+            {t("subscribe.subheading")}
           </p>
           <p className="text-sm font-semibold mt-2" style={{ color: "var(--admin-accent-blue)" }}>
-            Start with a 7-day free trial. No charge until your trial ends.
+            {t("subscribe.trialNote")}
           </p>
         </motion.div>
 
@@ -233,7 +217,7 @@ export default function SubscribePage() {
                     onStart={() => setProcessingPlan(plan.id)}
                     onSuccess={() => window.location.reload()}
                     onError={(error: string) => {
-                      alert(`Payment failed: ${error}`);
+                      alert(t("pages.subscribe.paymentFailed", { error }));
                       setProcessingPlan(null);
                     }}
                     disabled={processingPlan !== null}
@@ -249,7 +233,7 @@ export default function SubscribePage() {
                       disabled={processingPlan !== null}
                     >
                       {processingPlan === plan.id ? (
-                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> Processing...</>
+                        <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("subscribe.processing")}</>
                       ) : (
                         plan.ctaText
                       )}
@@ -280,7 +264,7 @@ export default function SubscribePage() {
           transition={{ delay: 0.5 }}
           className="text-center text-sm text-gray-400 mt-8"
         >
-          Cancel anytime. Secure payments via Stripe.
+          {t("subscribe.bottomNote")}
         </motion.p>
       </div>
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 interface PasswordValidation {
@@ -12,6 +13,7 @@ interface PasswordValidation {
 
 interface PasswordStrength {
   strength: number;
+  /** i18n key (common namespace); empty when there is no password */
   label: string;
   color: string;
 }
@@ -34,11 +36,11 @@ export function getPasswordStrength(password: string): PasswordStrength {
 
   const levels = [
     { strength: 0, label: "", color: "" },
-    { strength: 1, label: "Very Weak", color: "bg-red-500" },
-    { strength: 2, label: "Weak", color: "bg-orange-500" },
-    { strength: 3, label: "Fair", color: "bg-yellow-500" },
-    { strength: 4, label: "Good", color: "bg-blue-500" },
-    { strength: 5, label: "Strong", color: "bg-green-500" },
+    { strength: 1, label: "auth.password.strength.veryWeak", color: "bg-red-500" },
+    { strength: 2, label: "auth.password.strength.weak", color: "bg-orange-500" },
+    { strength: 3, label: "auth.password.strength.fair", color: "bg-yellow-500" },
+    { strength: 4, label: "auth.password.strength.good", color: "bg-blue-500" },
+    { strength: 5, label: "auth.password.strength.strong", color: "bg-green-500" },
   ];
 
   let score = 0;
@@ -59,6 +61,7 @@ interface PasswordStrengthIndicatorProps {
 }
 
 export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicatorProps) {
+  const { t } = useTranslation();
   const passwordStrength = getPasswordStrength(password);
 
   if (!password) return null;
@@ -80,9 +83,9 @@ export function PasswordStrengthIndicator({ password }: PasswordStrengthIndicato
       </div>
       {passwordStrength.label && (
         <p className="text-xs text-gray-600">
-          Password strength:{" "}
+          {t("auth.password.strengthLabel")}{" "}
           <span className="font-medium">
-            {passwordStrength.label}
+            {t(passwordStrength.label)}
           </span>
         </p>
       )}

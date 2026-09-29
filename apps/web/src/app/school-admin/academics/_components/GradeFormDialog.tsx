@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useSchoolCourses } from "@/hooks/useCurriculumQueries";
 import { useCreateGrade, useUpdateGrade } from "@/hooks/useGradebookQueries";
@@ -24,6 +25,7 @@ interface Props {
 }
 
 export function GradeFormDialog({ open, onClose, studentId, existing, defaultYear }: Props) {
+  const { t } = useTranslation("school_admin");
   const isEdit = !!existing;
   const { data: coursesData } = useSchoolCourses({ limit: 500 });
   const courses = coursesData?.data ?? [];
@@ -70,18 +72,18 @@ export function GradeFormDialog({ open, onClose, studentId, existing, defaultYea
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", maxWidth: 460 }}>
         <DialogHeader>
-          <DialogTitle style={{ color: "var(--admin-font-primary)" }}>{isEdit ? "Edit grade" : "Add grade"}</DialogTitle>
+          <DialogTitle style={{ color: "var(--admin-font-primary)" }}>{isEdit ? t("ui.gradebook.editGrade") : t("ui.gradebook.addGrade")}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div>
-            <label style={labelStyle}>Course</label>
+            <label style={labelStyle}>{t("ui.gradebook.course")}</label>
             {isEdit ? (
               <div style={{ ...inputStyle, display: "flex", alignItems: "center", color: "var(--admin-font-secondary)" }}>
                 {existing?.courseCode || "—"}
               </div>
             ) : (
               <select value={courseId} onChange={(e) => setCourseId(e.target.value)} style={inputStyle}>
-                <option value="">Select a course…</option>
+                <option value="">{t("ui.gradebook.selectCourse")}</option>
                 {courses.map((c) => (
                   <option key={c.id} value={c.id}>{c.code} — {c.name}</option>
                 ))}
@@ -91,43 +93,43 @@ export function GradeFormDialog({ open, onClose, studentId, existing, defaultYea
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div>
-              <label style={labelStyle}>Grade</label>
+              <label style={labelStyle}>{t("ui.gradebook.grade")}</label>
               <select value={grade} onChange={(e) => setGrade(e.target.value)} style={inputStyle}>
                 {GRADE_ORDER.map((g) => <option key={g} value={g}>{g}</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Credits</label>
+              <label style={labelStyle}>{t("ui.courses.credits")}</label>
               <input type="number" min={0} step={0.5} value={credits} onChange={(e) => setCredits(e.target.value)} style={inputStyle} />
             </div>
           </div>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
             <div>
-              <label style={labelStyle}>Academic year</label>
+              <label style={labelStyle}>{t("ui.gradebook.academicYear")}</label>
               <input value={academicYear} onChange={(e) => setAcademicYear(e.target.value)} placeholder="2024-2025" style={inputStyle} />
             </div>
             <div>
-              <label style={labelStyle}>Semester / term</label>
-              <input value={semester} onChange={(e) => setSemester(e.target.value)} placeholder="Fall 2024" style={inputStyle} />
+              <label style={labelStyle}>{t("ui.gradebook.semesterTerm")}</label>
+              <input value={semester} onChange={(e) => setSemester(e.target.value)} placeholder={t("ui.gradebook.semesterPlaceholder")} style={inputStyle} />
             </div>
           </div>
 
           <div>
-            <label style={labelStyle}>Course level</label>
+            <label style={labelStyle}>{t("ui.gradebook.courseLevel")}</label>
             <select value={courseLevel} onChange={(e) => setCourseLevel(e.target.value)} style={inputStyle}>
-              {LEVELS.map((l) => <option key={l} value={l}>{l.charAt(0).toUpperCase() + l.slice(1)}</option>)}
+              {LEVELS.map((l) => <option key={l} value={l}>{t(`ui.gradebook.level.${l}`)}</option>)}
             </select>
           </div>
         </div>
 
         <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 8 }}>
-          <button onClick={onClose} style={{ height: 36, borderRadius: 6, padding: "0 16px", fontSize: 13, fontWeight: 500, background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)", cursor: "pointer" }}>Cancel</button>
+          <button onClick={onClose} style={{ height: 36, borderRadius: 6, padding: "0 16px", fontSize: 13, fontWeight: 500, background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)", cursor: "pointer" }}>{t("common.cancel")}</button>
           <button onClick={handleSave} disabled={saving || (!isEdit && !courseId)} style={{
             height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600,
             background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
             opacity: saving || (!isEdit && !courseId) ? 0.6 : 1,
-          }}>{saving ? "Saving…" : isEdit ? "Save changes" : "Add grade"}</button>
+          }}>{saving ? t("ui.common.saving") : isEdit ? t("ui.common.saveChanges") : t("ui.gradebook.addGrade")}</button>
         </div>
       </DialogContent>
     </Dialog>

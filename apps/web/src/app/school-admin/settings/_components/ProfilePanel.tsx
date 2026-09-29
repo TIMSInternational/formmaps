@@ -226,7 +226,7 @@ export default function ProfilePanel() {
           <SectionCard icon={Upload} title={t("settings.profilePanel.logo")} subtitle={t("settings.profilePanel.logoSub")} color="#8b5cf6">
             <div className="flex flex-col items-center gap-4">
               {(profile?.logoUrl || profile?.logo) ? (
-                <img src={profile.logoUrl || profile.logo || ""} alt="Logo" loading="lazy"
+                <img src={profile.logoUrl || profile.logo || ""} alt={t("settings.profilePanel.logo")} loading="lazy"
                   style={{ width: 80, height: 80, borderRadius: 12, objectFit: "cover", border: "1px solid var(--admin-border-default)" }} />
               ) : (
                 <div style={{

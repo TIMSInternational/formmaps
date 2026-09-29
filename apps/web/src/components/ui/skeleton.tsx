@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { motion, HTMLMotionProps } from "motion/react";
 
@@ -14,6 +15,7 @@ export function Skeleton({
   active = true,
   ...props
 }: SkeletonProps) {
+  const { t } = useTranslation();
   return (
     <motion.div
       initial={{ opacity: 0.5 }}
@@ -58,7 +60,7 @@ export function Skeleton({
           }}
         />
       )}
-      <span className="sr-only">Loading...</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </motion.div>
   );
 }

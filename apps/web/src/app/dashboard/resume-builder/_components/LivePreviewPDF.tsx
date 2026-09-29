@@ -4,6 +4,8 @@ import { useGlobalStore } from "@/store/useGlobalStore";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { Loader2, FileText, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import i18n from "@/lib/i18n";
 
 // PDF Error Boundary Component
 class PDFErrorBoundary extends React.Component<
@@ -32,16 +34,16 @@ class PDFErrorBoundary extends React.Component<
               <X size={24} className="text-red-600" />
             </div>
             <h3 className="text-sm font-medium text-gray-900 mb-2">
-              PDF Preview Error
+              {i18n.t("resumeBuilder.livePreview.errorTitle", "PDF Preview Error")}
             </h3>
             <p className="text-xs text-gray-600 mb-3">
-              There was an issue rendering the PDF preview. Your data is safe.
+              {i18n.t("resumeBuilder.livePreview.errorBody", "There was an issue rendering the PDF preview. Your data is safe.")}
             </p>
             <button
               onClick={() => this.setState({ hasError: false })}
               className="bg-[#2E9098] hover:bg-[#2E9098]/90 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
             >
-              Try Again
+              {i18n.t("resumeBuilder.livePreview.tryAgain", "Try Again")}
             </button>
           </div>
         </div>
@@ -74,6 +76,7 @@ interface LivePreviewPDFProps {
 }
 
 export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
+  const { t, i18n: i18nInstance } = useTranslation();
   const { resumeBuilder } = useGlobalStore();
   const { data } = resumeBuilder;
 
@@ -109,11 +112,11 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
           setLoadingPDF(false);
         })
         .catch((error) => {
-          setPdfError("Failed to load PDF components. Please try again.");
+          setPdfError(t("resumeBuilder.livePreview.loadFailed", "Failed to load PDF components. Please try again."));
           setLoadingPDF(false);
         });
     }
-  }, [pdfComponents, isClient]);
+  }, [pdfComponents, isClient, t]);
 
   // Lazy load template component when template changes
   useEffect(() => {
@@ -159,13 +162,13 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
         setTemplateComponent(() => TemplateComponent);
         setLoadingPDF(false);
       } catch (error) {
-        setPdfError("Failed to load template. Please try again.");
+        setPdfError(t("resumeBuilder.livePreviewPDF.templateLoadFailed", "Failed to load template. Please try again."));
         setLoadingPDF(false);
       }
     };
 
     loadTemplate();
-  }, [currentTemplate, isClient]);
+  }, [currentTemplate, isClient, t]);
 
   // Create PDF document matching the selected template
   const renderPDFTemplate = useMemo(() => {
@@ -179,7 +182,9 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
     } catch (error) {
       return null;
     }
-  }, [templateComponent, debouncedData]);
+    // Re-render when the UI language changes so document labels follow it.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [templateComponent, debouncedData, i18nInstance.language]);
 
   const dynamicSectionsSignature = useMemo(() => {
     const sections = debouncedData.dynamicSections || [];
@@ -207,12 +212,14 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
         experience.length,
         education.length,
         dynamicSectionsSignature,
+        i18nInstance.language,
       ].join("-"),
     [
       skills.length,
       experience.length,
       education.length,
       dynamicSectionsSignature,
+      i18nInstance.language,
     ]
   );
 
@@ -232,20 +239,25 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <FileText size={18} className="text-gray-600" />
-            <h3 className="text-sm font-medium text-gray-900">Live Preview</h3>
+            <h3 className="text-sm font-medium text-gray-900">{t("resumeBuilder.livePreviewPDF.title", "Live Preview")}</h3>
             {isDataChanging && (
               <div className="flex items-center space-x-1 text-xs text-[#2E9098]">
                 <Loader2 size={12} className="animate-spin" />
-                <span>Updating...</span>
+                <span>{t("resumeBuilder.livePreviewPDF.updating", "Updating...")}</span>
               </div>
             )}
             {/* Announce updates for screen readers */}
             <div aria-live="polite" className="sr-only">
-              {isDataChanging ? "Preview is updating" : "Preview updated"}
+              {isDataChanging
+                ? t("resumeBuilder.livePreviewPDF.srUpdating", "Preview is updating")
+                : t("resumeBuilder.livePreviewPDF.srUpdated", "Preview updated")}
             </div>
           </div>
           <div className="text-xs text-gray-500">
-            Template: {currentTemplate || "Modern"}
+            {t("resumeBuilder.livePreviewPDF.template", {
+              defaultValue: "Template: {{name}}",
+              name: currentTemplate || "Modern",
+            })}
           </div>
         </div>
       </div>
@@ -259,7 +271,7 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
                 size={32}
                 className="animate-spin text-[#2E9098] mx-auto mb-3"
               />
-              <p className="text-sm text-gray-600">Loading PDF preview...</p>
+              <p className="text-sm text-gray-600">{t("resumeBuilder.livePreviewPDF.loading", "Loading PDF preview...")}</p>
             </div>
           </div>
         ) : pdfError ? (
@@ -269,7 +281,7 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
                 <X size={24} className="text-red-600" />
               </div>
               <h3 className="text-sm font-medium text-gray-900 mb-2">
-                Preview Error
+                {t("resumeBuilder.livePreviewPDF.errorTitle", "Preview Error")}
               </h3>
               <p className="text-xs text-gray-600 mb-3">{pdfError}</p>
               <button
@@ -279,7 +291,7 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
                 }}
                 className="bg-[#2E9098] hover:bg-[#2E9098]/90 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
               >
-                Retry
+                {t("resumeBuilder.livePreviewPDF.retry", "Retry")}
               </button>
             </div>
           </div>
@@ -305,7 +317,7 @@ export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
             <div className="text-center">
               <FileText size={32} className="text-gray-400 mx-auto mb-3" />
               <p className="text-sm text-gray-600">
-                PDF preview will appear here
+                {t("resumeBuilder.livePreviewPDF.empty", "PDF preview will appear here")}
               </p>
             </div>
           </div>

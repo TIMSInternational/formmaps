@@ -2,6 +2,7 @@
 
 import { Loader2, ClipboardPaste } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import type { Resume } from "@/services/resumeService";
 
 interface ResumeInputSectionProps {
@@ -33,20 +34,21 @@ export function ResumeInputSection({
   hasAnalyzed,
   onAnalyze,
 }: ResumeInputSectionProps) {
+  const { t } = useTranslation();
   return (
     <>
       {/* Resume selector */}
       <div className="dash-card p-5 space-y-3">
         <div className="flex items-center justify-between">
           <div className="text-sm font-medium text-foreground">
-            Base Resume
+            {t("resumeBuilder.resumeInputSection.baseResume", "Base Resume")}
           </div>
           {!loadingResumes && userResumes.length === 0 && (
             <Link
               href="/dashboard/resumes"
               className="text-xs text-emerald-600 hover:text-emerald-700 font-medium"
             >
-              Upload one first
+              {t("resumeBuilder.resumeInputSection.uploadFirst", "Upload one first")}
             </Link>
           )}
         </div>
@@ -60,14 +62,14 @@ export function ResumeInputSection({
           >
             {userResumes.map((r) => (
               <option key={r._id} value={r._id}>
-                {r.name || "Untitled Resume"} —{" "}
-                {r.personal?.fullName || "No name"}
+                {r.name || t("resumeBuilder.resumeInputSection.untitled", "Untitled Resume")} —{" "}
+                {r.personal?.fullName || t("resumeBuilder.resumeInputSection.noName", "No name")}
               </option>
             ))}
           </select>
         ) : (
           <p className="text-xs text-muted-foreground">
-            No resumes found. Upload a resume first so we can optimize it.
+            {t("resumeBuilder.resumeInputSection.noResumes", "No resumes found. Upload a resume first so we can optimize it.")}
           </p>
         )}
         {loadingBaseResume ? (
@@ -76,17 +78,24 @@ export function ResumeInputSection({
           baseResume && (
             <div className="flex flex-wrap gap-2 text-[11px] text-muted-foreground">
               <span>
-                {baseResume.experience?.length || 0} experience entries
+                {t("resumeBuilder.resumeInputSection.experienceEntries", {
+                  count: baseResume.experience?.length || 0,
+                  defaultValue: "{{count}} experience entries",
+                })}
               </span>
               <span>·</span>
               <span>
-                {Object.values(baseResume.skills?.skills || {}).flat()
-                  .length || 0}{" "}
-                skills
+                {t("resumeBuilder.resumeInputSection.skillsCount", {
+                  count: Object.values(baseResume.skills?.skills || {}).flat().length || 0,
+                  defaultValue: "{{count}} skills",
+                })}
               </span>
               <span>·</span>
               <span>
-                {baseResume.education?.length || 0} education entries
+                {t("resumeBuilder.resumeInputSection.educationEntries", {
+                  count: baseResume.education?.length || 0,
+                  defaultValue: "{{count}} education entries",
+                })}
               </span>
             </div>
           )
@@ -97,12 +106,12 @@ export function ResumeInputSection({
       <div className="dash-card p-5 space-y-3">
         <div className="flex items-center gap-2 text-sm font-medium text-foreground">
           <ClipboardPaste className="w-4 h-4 text-muted-foreground" />
-          Job Description
+          {t("resumeBuilder.resumeInputSection.jobDescription", "Job Description")}
         </div>
         <textarea
           value={jobText}
           onChange={(e) => onJobTextChange(e.target.value)}
-          placeholder="Paste the full job description here..."
+          placeholder={t("resumeBuilder.resumeInputSection.jobPlaceholder", "Paste the full job description here...")}
           rows={5}
           className="w-full bg-secondary rounded-lg px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground resize-y outline-none border border-border focus:border-foreground/20 transition-colors"
         />
@@ -118,12 +127,12 @@ export function ResumeInputSection({
             {isAnalyzing ? (
               <>
                 <Loader2 className="w-4 h-4 animate-spin" />
-                Analyzing...
+                {t("resumeBuilder.jobPostingInput.analyzing", "Analyzing...")}
               </>
             ) : hasAnalyzed ? (
-              "Re-analyze"
+              t("resumeBuilder.resumeInputSection.reanalyze", "Re-analyze")
             ) : (
-              "Analyze"
+              t("resumeBuilder.jobPostingInput.analyze", "Analyze")
             )}
           </button>
         </div>

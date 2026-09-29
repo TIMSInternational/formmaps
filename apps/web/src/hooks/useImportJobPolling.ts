@@ -13,6 +13,7 @@ import {
   type CourseImportStatus,
 } from "@/services/curriculumService";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n";
 
 type ImportJobStatus = GradeImportStatus | CourseImportStatus;
 type ImportType = "grades" | "courses";
@@ -78,6 +79,6 @@ export async function triggerFailureDownload(type: ImportType, jobId: string) {
     a.remove();
     URL.revokeObjectURL(url);
   } catch {
-    toast.error("Failed to download failure report");
+    toast.error(i18n.t("components.hooks.importJob.downloadReportFailed"));
   }
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface Props {
   hasOriginal: boolean;
@@ -9,6 +10,7 @@ interface Props {
 }
 
 export function ResumePreviewWithToggle({ hasOriginal, loadOriginalUrl, edited }: Props) {
+  const { t } = useTranslation();
   const [tab, setTab] = useState<"original" | "edited">(hasOriginal ? "original" : "edited");
   const [url, setUrl] = useState<string | null>(null);
   const [state, setState] = useState<"idle" | "loading" | "loaded" | "error">("idle");
@@ -70,21 +72,21 @@ export function ResumePreviewWithToggle({ hasOriginal, loadOriginalUrl, edited }
     <div className="flex flex-col gap-3">
       {hasOriginal && (
         <div role="tablist" className="flex gap-2">
-          {tabBtn("original", "Original (uploaded PDF)")}
-          {tabBtn("edited", "Preview (live, AI-editable)")}
+          {tabBtn("original", t("resumeBuilder.previewToggle.original", "Original (uploaded PDF)"))}
+          {tabBtn("edited", t("resumeBuilder.previewToggle.edited", "Preview (live, AI-editable)"))}
         </div>
       )}
 
       {hasOriginal && tab === "original" ? (
         state === "loaded" && url ? (
           <iframe
-            title="Original resume document"
+            title={t("resumeBuilder.previewToggle.iframeTitle", "Original resume document")}
             src={url}
             className="h-[800px] w-full rounded-lg border border-border"
           />
         ) : state === "error" ? (
           <div className="flex flex-col items-start gap-2 p-6 text-sm text-muted-foreground">
-            <span>Couldn&apos;t load the original document.</span>
+            <span>{t("resumeBuilder.previewToggle.loadError", "Couldn't load the original document.")}</span>
             <button
               onClick={() => {
                 userPicked.current = true;
@@ -92,11 +94,11 @@ export function ResumePreviewWithToggle({ hasOriginal, loadOriginalUrl, edited }
               }}
               className="rounded-lg bg-secondary px-3 py-1.5 text-sm font-medium text-foreground"
             >
-              View edited version
+              {t("resumeBuilder.previewToggle.viewEdited", "View edited version")}
             </button>
           </div>
         ) : (
-          <div className="p-6 text-sm text-muted-foreground">Loading original…</div>
+          <div className="p-6 text-sm text-muted-foreground">{t("resumeBuilder.previewToggle.loading", "Loading original…")}</div>
         )
       ) : (
         <div>{edited}</div>

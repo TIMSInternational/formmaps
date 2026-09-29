@@ -19,9 +19,8 @@ jest.mock("sonner", () => ({
   toast: { error: jest.fn(), success: jest.fn() },
 }));
 
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (_k: string, d?: string) => d ?? _k }),
-}));
+// Real i18next (English) so assertions read the rendered copy, not raw keys.
+import "@/lib/i18n";
 
 // motion/react — render children immediately, strip motion-only props.
 jest.mock("motion/react", () => {

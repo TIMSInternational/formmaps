@@ -2,11 +2,13 @@
 
 import { use } from "react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft } from "lucide-react";
 import { PathwayEditor } from "../../../_components/PathwayEditor";
 
 export default function PathwayEditorPage({ params }: { params: Promise<{ rootCourseId: string }> }) {
   const { rootCourseId } = use(params);
+  const { t } = useTranslation("school_admin");
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100vh - 7rem)", minHeight: 420 }}>
@@ -17,7 +19,7 @@ export default function PathwayEditorPage({ params }: { params: Promise<{ rootCo
           className="inline-flex items-center gap-1.5"
           style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-secondary)" }}
         >
-          <ArrowLeft style={{ width: 15, height: 15 }} /> Back to Pathways
+          <ArrowLeft style={{ width: 15, height: 15 }} /> {t("ui.pathways.backToPathways")}
         </Link>
       </div>
 

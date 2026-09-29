@@ -125,7 +125,7 @@ export default function CoachProfilePage() {
                 <div className="flex items-center gap-1.5 text-xs">
                   <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                   <span className="font-semibold text-foreground">{coach.rating}</span>
-                  <span className="text-muted-foreground">({typeof coach.reviews === "number" ? coach.reviews : Array.isArray(coach.reviews) ? coach.reviews.length : 0} reviews)</span>
+                  <span className="text-muted-foreground">{t("studentUi.booking.reviewsCount", { count: typeof coach.reviews === "number" ? coach.reviews : Array.isArray(coach.reviews) ? coach.reviews.length : 0 })}</span>
                 </div>
               )}
               {coach.location && (
@@ -160,7 +160,7 @@ export default function CoachProfilePage() {
               {t("coaching.profile.about")}
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              {coach.bio || "No bio available."}
+              {coach.bio || t("studentUi.booking.noBio")}
             </p>
           </motion.div>
 
@@ -191,7 +191,7 @@ export default function CoachProfilePage() {
               {(coach.tags?.length ?? 0) > 0 && (
                 <div>
                   <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium mb-2">
-                    Topics & Skills
+                    {t("coaching.profile.topicsSkills")}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {coach.tags?.map((tag) => (

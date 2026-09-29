@@ -79,17 +79,17 @@ def sp(s):  # letterspaced house eyebrow
     return ' '.join(s)
 
 SUBTESTS = [
-    ('pattern_recognition', 'Reconocimiento de Patrones', 'Pattern Recognition', 60, 180,
+    ('pattern_recognition', 'Reconocimiento de patrones', 'Pattern Recognition', 60, 180,
      ('¿Cuántas columnas tienen letras iguales? (sin importar mayúsculas/minúsculas)',
       'How many columns contain the same letter? (case is ignored)')),
-    ('verbal_reasoning', 'Razonamiento Verbal', 'Verbal Reasoning', 50, 240, None),
-    ('numerical_speed', 'Velocidad Numérica', 'Numerical Speed', 60, 240,
+    ('verbal_reasoning', 'Razonamiento verbal', 'Verbal Reasoning', 50, 240, None),
+    ('numerical_speed', 'Velocidad numérica', 'Numerical Speed', 60, 240,
      ('¿Cuál número está más lejos del valor medio?',
       'Which number is farther from the middle number?')),
-    ('working_memory', 'Memoria de Trabajo', 'Working Memory', 60, 240,
+    ('working_memory', 'Memoria de trabajo', 'Working Memory', 60, 240,
      ('¿Cuál letra exterior está más lejos alfabéticamente de la letra del centro?',
       'Which outer letter is alphabetically farther from the middle letter?')),
-    ('visual_rotation', 'Rotación Visual', 'Visual Rotation', 60, 300,
+    ('visual_rotation', 'Rotación visual', 'Visual Rotation', 60, 300,
      ('¿Cuántas columnas tienen figuras iguales? (rotaciones permitidas, espejos no)',
       'How many columns contain the same figure? (rotations allowed, mirrors not)')),
 ]
@@ -104,15 +104,15 @@ def toc():
              L('La regla exacta de cada subprueba','The exact rule for each subtest')),
       ('04', L('Idiomas','Languages'),
              L('Qué está traducido y qué solo lo parece','What is translated and what only looks like it')),
-      ('05', L('Reconocimiento de Patrones','Pattern Recognition'),
+      ('05', L('Reconocimiento de patrones','Pattern Recognition'),
              L('3 de práctica + 60 calificados','3 practice + 60 scored')),
-      ('06', L('Razonamiento Verbal','Verbal Reasoning'),
+      ('06', L('Razonamiento verbal','Verbal Reasoning'),
              L('3 + 50, en español e inglés','3 + 50, in Spanish and English')),
-      ('07', L('Velocidad Numérica','Numerical Speed'),
+      ('07', L('Velocidad numérica','Numerical Speed'),
              L('3 + 60 calificados','3 + 60 scored')),
-      ('08', L('Memoria de Trabajo','Working Memory'),
+      ('08', L('Memoria de trabajo','Working Memory'),
              L('3 + 60 calificados','3 + 60 scored')),
-      ('09', L('Rotación Visual','Visual Rotation'),
+      ('09', L('Rotación visual','Visual Rotation'),
              L('3 + 60, con la orientación de cada R','3 + 60, with the orientation of every R')),
       ('10', L('Distribución de la clave','Answer key distribution'),
              L('Balance del banco','How balanced the bank is')),
@@ -259,7 +259,7 @@ def cover_page(c, doc):
     c.setFillColor(HexColor('#C8C8E4')); c.setFont('Georgia', 11.6)
     for i,l in enumerate(L(['Los 305 ítems del instrumento en español e inglés, con la respuesta',
                             'correcta de cada uno y la orientación exacta de las figuras de',
-                            'la subprueba de Rotación Visual'],
+                            'la subprueba de rotación visual'],
                            ['All 305 items of the instrument in Spanish and English, with the',
                             'correct answer to each and the exact orientation of every figure',
                             'in the Visual Rotation subtest'])):
@@ -351,7 +351,7 @@ def story(pass2):
         'de los datos del ítem en el momento de calificar. Por eso la clave de este documento tuvo que '
         'regenerarse, no leerse. Se reimplementó la lógica de producción tal como está en '
         f'<font face="{MONO}" size="8">LiaAnswerScoring.cs</font> y se contrastó con ejemplos resueltos de cada '
-        'subprueba. Solo Razonamiento Verbal guarda su clave, y se reproduce literal.',
+        'subprueba. Solo razonamiento verbal guarda su clave, y se reproduce literal.',
         'Four of the five subtests <b>store no answer at all</b>: the correct one is computed from the item\'s own '
         'data at the moment of scoring. That is why the key in this document had to be regenerated rather than '
         'read. The production logic was reimplemented exactly as it stands in '
@@ -399,31 +399,31 @@ def story(pass2):
     # ---- 03 calificación
     for f in section('03',L('Cómo se califica','How it is scored'),
                      L('La regla exacta de cada subprueba','The exact rule for each subtest')): A_(f)
-    rules=[(L('Reconocimiento de Patrones','Pattern Recognition'),
+    rules=[(L('Reconocimiento de patrones','Pattern Recognition'),
             L('Dos filas de cuatro letras. Se comparan las dos letras de cada columna '
             '<b>sin distinguir mayúsculas</b>. La respuesta es el <b>número de columnas iguales</b>, de 0 a 4.',
             'Two rows of four letters. The two letters in each column are compared <b>ignoring case</b>. '
             'The answer is the <b>number of matching columns</b>, from 0 to 4.')),
-           (L('Razonamiento Verbal','Verbal Reasoning'),
+           (L('Razonamiento verbal','Verbal Reasoning'),
             L('Dos premisas y una pregunta con tres opciones. La clave <b>viene guardada</b> con el '
             'ítem y se expresa como la letra de la opción, A, B o C, en el orden en que se presentan.',
             'Two premises and a question with three options. The key <b>is stored</b> with the item and is '
             'given as the option letter, A, B or C, in the order the options are presented.')),
-           (L('Velocidad Numérica','Numerical Speed'),
+           (L('Velocidad numérica','Numerical Speed'),
             L('Tres números. Se toma la <b>mediana</b> y se busca cuál queda más lejos de ella en '
             'distancia absoluta. La respuesta es su <b>posición original</b>: A, B o C. <b>Los empates se resuelven '
             'hacia la posición más temprana</b>, en el orden A, B, C.',
             'Three numbers. The <b>median</b> is taken, and the number lying farthest from it in absolute '
             'distance is sought. The answer is that number\'s <b>original position</b>: A, B or C. <b>Ties resolve '
             'to the earliest position</b>, in the order A, B, C.')),
-           (L('Memoria de Trabajo','Working Memory'),
+           (L('Memoria de trabajo','Working Memory'),
             L('Tres letras. Se convierte cada una a su posición en el alfabeto (A=1 … Z=26) y se '
             'compara qué tan lejos queda cada letra exterior de la del centro. La respuesta es <b>izquierda</b> o '
             '<b>derecha</b>, la que quede más lejos. <b>El empate se resuelve hacia la izquierda.</b>',
             'Three letters. Each is converted to its position in the alphabet (A=1 … Z=26) and the distance of '
             'each outer letter from the middle one is compared. The answer is <b>left</b> or <b>right</b>, '
             'whichever lies farther. <b>A tie resolves to the left.</b>')),
-           (L('Rotación Visual','Visual Rotation'),
+           (L('Rotación visual','Visual Rotation'),
             L('Dos filas de tres figuras, cada una una letra R normal o en espejo, girada. Dos figuras '
             'coinciden si comparten la <b>lateralidad</b>: ambas normales, o ambas en espejo. La respuesta es el '
             '<b>número de columnas iguales</b>, de 0 a 3.',
@@ -435,7 +435,7 @@ def story(pass2):
     t=Table(d,colWidths=[128,CW-128],repeatRows=1,hAlign='LEFT'); t.setStyle(gstyle()); A_(t)
     A_(Spacer(1,10))
     A_(box(L('El giro es un distractor, no parte de la respuesta','Rotation is a distractor, not part of the answer'),
-        L('Rotación Visual se califica <b>solo por lateralidad</b>. El ángulo de giro se lee y se descarta: '
+        L('Rotación visual se califica <b>solo por lateralidad</b>. El ángulo de giro se lee y se descarta: '
         f'<font face="{MONO}" size="8">R_90</font> y <font face="{MONO}" size="8">R_270</font> cuentan como iguales, '
         'porque ambas son R normales. Los ángulos existen para dificultar el juicio, no para cambiar la respuesta. '
         'Es la regla que más se malinterpreta, y por eso el enunciado en pantalla dice «rotaciones permitidas, '
@@ -451,10 +451,10 @@ def story(pass2):
     for f in section('04',L('Idiomas','Languages'),
                      L('Qué está traducido y qué solo lo parece',
                        'What is translated and what only looks like it')): A_(f)
-    A_(Paragraph(L('Solo <b>Razonamiento Verbal</b> tiene contenido que dependa del idioma, y está completamente '
+    A_(Paragraph(L('Solo <b>razonamiento verbal</b> tiene contenido que dependa del idioma, y está completamente '
         'traducido: los 3 ítems de práctica y los 50 calificados existen en español y en inglés, con revisión '
         'humana. Las otras cuatro subpruebas son <b>neutras por construcción</b> — sus ítems son letras, números y '
-        'figuras, así que el mismo ítem sirve para los dos idiomas. Con <b>una salvedad</b>: Memoria de Trabajo '
+        'figuras, así que el mismo ítem sirve para los dos idiomas. Con <b>una salvedad</b>: memoria de trabajo '
         'tiene ítems neutros pero mide sobre el <b>alfabeto</b>, y el alfabeto sí depende del idioma. Ver el aviso '
         'al final de esta sección.',
         'Only <b>Verbal Reasoning</b> has content that depends on language, and it is fully translated: the 3 '
@@ -523,20 +523,20 @@ def story(pass2):
         'subtest costs something different, and <b>only two of the five</b> force a re-norm. Stating it in the '
         'aggregate, in either direction, leads to the wrong decision.'), BODY))
     A_(Spacer(1,4))
-    ptrows=[(L('Reconocimiento de Patrones','Pattern Recognition'),
+    ptrows=[(L('Reconocimiento de patrones','Pattern Recognition'),
              L('Solo el enunciado. Los ítems son letras latinas, sin cambio.',
                'The instruction line only. Items are Latin letters, unchanged.'), L('No','No')),
-            (L('Velocidad Numérica','Numerical Speed'),
+            (L('Velocidad numérica','Numerical Speed'),
              L('Solo el enunciado. Los ítems son enteros, sin cambio.',
                'The instruction line only. Items are integers, unchanged.'), L('No','No')),
-            (L('Rotación Visual','Visual Rotation'),
+            (L('Rotación visual','Visual Rotation'),
              L('Solo el enunciado. Los ítems son figuras R giradas, sin cambio.',
                'The instruction line only. Items are rotated R figures, unchanged.'), L('No','No')),
-            (L('Memoria de Trabajo','Working Memory'),
+            (L('Memoria de trabajo','Working Memory'),
              L('El enunciado <b>y una revisión de los ítems</b> — ver el aviso de abajo.',
                'The instruction line <b>and an item review</b> — see the caution below.'),
              L('Sí, si cambian los ítems','Yes, if items change')),
-            (L('Razonamiento Verbal','Verbal Reasoning'),
+            (L('Razonamiento verbal','Verbal Reasoning'),
              L('<b>53 ítems escritos de nuevo</b> en portugués. El ítem es su propia dificultad.',
                '<b>53 items authored afresh</b> in Portuguese. The item is the difficulty.'), L('Sí','Yes'))]
     d=[[Paragraph(L('Subprueba','Subtest'),TH),
@@ -546,7 +546,7 @@ def story(pass2):
         d.append([Paragraph(f'<b>{a_}</b>',CELL),Paragraph(b_,CELL),Paragraph(c_,CELLC)])
     t=Table(d,colWidths=[124,CW-124-92,92],repeatRows=1,hAlign='LEFT'); t.setStyle(gstyle()); A_(t)
     A_(Spacer(1,10))
-    A_(box(L('Memoria de Trabajo no es tan neutra como parece',
+    A_(box(L('Memoria de trabajo no es tan neutra como parece',
              'Working Memory is not as language-neutral as it looks'),
         L('Su construcción mide la <b>distancia en el alfabeto</b>, y el alfabeto depende del idioma. El '
           'calificador usa A=1 … Z=26.<br/><br/>'
@@ -645,7 +645,7 @@ def story(pass2):
         t.setStyle(TableStyle([('GRID',(0,0),(-1,-1),0.4,LINE),('BACKGROUND',(0,0),(-1,0),ZEB),
             ('TOPPADDING',(0,0),(-1,-1),4),('BOTTOMPADDING',(0,0),(-1,-1),4)]))
         A_(t); A_(Spacer(1,11))
-    A_(Paragraph(L('Memoria de Trabajo se inclina levemente hacia <b>der.</b> (35 de 63) y Velocidad Numérica hacia '
+    A_(Paragraph(L('Memoria de trabajo se inclina levemente hacia <b>der.</b> (35 de 63) y velocidad numérica hacia '
         '<b>A</b> (26 de 63). Ninguna es extrema, pero conviene saberlo si alguna vez se amplía o se vuelve a '
         'muestrear el banco: un estudiante que respondiera siempre lo mismo no quedaría en el azar.',
         'Working Memory leans slightly towards <b>right</b> (35 of 63) and Numerical Speed towards <b>A</b> '
@@ -668,8 +668,8 @@ def story(pass2):
         (L('El portugués se resuelve a inglés en silencio','Portuguese silently resolves to English'), WARN, WARNBG,
          L('No hay versión en portugués, y el navegador en portugués queda resuelto a inglés sin aviso al '
          'estudiante ni a quien aplica la prueba. Si se añade, hágalo <b>por subprueba</b>: tres solo necesitan el '
-         'enunciado, <b>Memoria de Trabajo necesita revisión de ítems</b> (19 de 63 usan K, W o Y) y Razonamiento '
-         'Verbal necesita 53 ítems nuevos. Ver la sección 04.',
+         'enunciado, <b>memoria de trabajo necesita revisión de ítems</b> (19 de 63 usan K, W o Y) y razonamiento '
+         'verbal necesita 53 ítems nuevos. Ver la sección 04.',
          'There is no Portuguese version, and a browser set to Portuguese resolves to English with no warning to '
          'the student or to whoever is administering the test. If it is added, do it <b>per subtest</b>: three need '
          'only the instruction line, <b>Working Memory needs an item review</b> (19 of 63 use K, W or Y) and '
@@ -679,7 +679,7 @@ def story(pass2):
          'después de cualquier cambio en el banco.',
          'Four of the five subtests compute the key from the item\'s data. Regenerate this document after any '
          'change to the bank.')),
-        (L('La Ñ mueve un ítem de Memoria de Trabajo, hoy, en español',
+        (L('La Ñ mueve un ítem de memoria de trabajo, hoy, en español',
            'Ñ moves one Working Memory item, today, in Spanish'), WARN, WARNBG,
          L('El calificador ordena el alfabeto A=1 … Z=26, sin Ñ. Un estudiante que recita el alfabeto español '
          '(27 letras) mide distinto a partir de la O. En <b>1 de los 63 ítems calificados</b> eso cambia la '
@@ -689,7 +689,7 @@ def story(pass2):
          'perceived answer. It is small, but it is real and it is already in the field.')),
         (L('Lo que decide una coincidencia es la lateralidad, no el giro',
            'What decides a match is handedness, not rotation'), NAVY, COOLBG,
-         L('Conviene repetirlo a quien revise Rotación Visual a ojo: dos R normales en ángulos distintos SÍ '
+         L('Conviene repetirlo a quien revise rotación visual a ojo: dos R normales en ángulos distintos SÍ '
          'coinciden. Es el error más frecuente al revisar.',
          'Worth repeating to anyone checking Visual Rotation by eye: two normal Rs at different angles DO '
          'match. It is the most common mistake made when reviewing.'))]:

@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import "@/lib/i18n";
 import { SequenceBuilder } from "../SequenceBuilder";
 import type { StudentCoursePlanResponse, StudentCourseEnrollment } from "@/types/coursePlan";
 

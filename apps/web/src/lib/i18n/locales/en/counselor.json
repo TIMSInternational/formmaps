@@ -445,5 +445,557 @@
     "subtitle": "View and download assessment reports for your assigned students",
     "fullAcademicSummary": "Full Academic Summary",
     "viewReport": "View Report"
+  },
+  "ui": {
+    "academicGaps": {
+      "deficitCredits_one": "-{{count}} credit",
+      "deficitCredits_other": "-{{count}} credits",
+      "earned": "Earned: {{n}}",
+      "required": "Required: {{n}}",
+      "hideCourses": "Hide courses to fill this gap ({{n}})",
+      "viewCourses": "View courses to fill this gap ({{n}})",
+      "creditsShort": "{{n}} cr",
+      "loadError": "Unable to load gap data.",
+      "studentFallback": "Student"
+    },
+    "dashboard": {
+      "gradeSemester": "· Gr. {{grade}} {{semester}}"
+    },
+    "academics": {
+      "subtitle": "Academic gap analysis, caseload insights, and student reports",
+      "tabInsights": "Caseload Insights",
+      "tabReports": "Reports"
+    },
+    "activities": {
+      "categories": {
+        "academic": "Academic",
+        "athletic": "Athletic",
+        "arts": "Arts",
+        "communityService": "Community Service",
+        "work": "Work",
+        "leadership": "Leadership",
+        "all": "All"
+      },
+      "dateRangeOngoing": "{{start}} - Present",
+      "hoursPerWeekValue": "{{n}} hrs/week",
+      "weeksPerYearValue": "{{n}} weeks/year",
+      "collapse": "Collapse",
+      "expand": "Expand",
+      "edit": "Edit",
+      "delete": "Delete",
+      "awardsLabel": "Awards:",
+      "editActivity": "Edit Activity",
+      "addActivity": "Add Activity",
+      "form": {
+        "name": "Activity name",
+        "organization": "Organization",
+        "role": "Role / Position",
+        "startDate": "Start Date",
+        "endDate": "End Date (optional)",
+        "hoursPerWeek": "Hours/week",
+        "weeksPerYear": "Weeks/year",
+        "description": "Description",
+        "awards": "Awards / Honors (optional)",
+        "update": "Update",
+        "submit": "Submit",
+        "cancel": "Cancel"
+      },
+      "toast": {
+        "added": "Activity added",
+        "addFailed": "Failed to add activity",
+        "updated": "Activity updated",
+        "updateFailed": "Failed to update activity",
+        "removed": "Activity removed",
+        "deleteFailed": "Failed to delete activity",
+        "nameRequired": "Activity name is required",
+        "startDateRequired": "Start date is required"
+      },
+      "title": "Activities & Resume",
+      "subtitle": "Track extracurriculars, work experience, and achievements for college applications.",
+      "searchStudent": "Search and select a student...",
+      "emptyFiltered": "No activities match this filter.",
+      "empty": "No activities tracked yet. Click \"Add Activity\" to get started."
+    },
+    "alerts": {
+      "dismissed": "Alert dismissed",
+      "dismissedCount_one": "Dismissed {{count}} alert",
+      "dismissedCount_other": "Dismissed {{count}} alerts",
+      "status": {
+        "active": "active",
+        "acknowledged": "acknowledged",
+        "dismissed": "dismissed"
+      },
+      "dismiss": "Dismiss"
+    },
+    "assessments": {
+      "subtitle": "360-degree evaluations and course recommendations for your students"
+    },
+    "collegeApps": {
+      "addApplication": "Add Application",
+      "form": {
+        "college": "College",
+        "searchColleges": "Search colleges...",
+        "deadlineType": "Deadline Type",
+        "rolling": "Rolling",
+        "deadline": "Deadline",
+        "fit": "Fit",
+        "add": "Add"
+      },
+      "status": {
+        "researching": "Researching",
+        "applying": "Applying",
+        "submitted": "Submitted",
+        "accepted": "Accepted",
+        "rejected": "Rejected",
+        "waitlisted": "Waitlisted",
+        "enrolled": "Enrolled"
+      },
+      "confidence": {
+        "high": "high confidence",
+        "medium": "medium confidence",
+        "low": "low confidence"
+      },
+      "estimated": "Est.",
+      "removeApplication": "Remove application",
+      "toast": {
+        "removed": "Application removed",
+        "deleteFailed": "Failed to delete application",
+        "added": "Application added",
+        "addFailed": "Failed to add application"
+      },
+      "title": "College Applications",
+      "subtitle": "Track and manage college applications for your students. Monitor deadlines, statuses, and outcomes.",
+      "stats": {
+        "total": "Total Applications",
+        "submitted": "Submitted",
+        "accepted": "Accepted",
+        "pending": "Pending"
+      },
+      "columns": {
+        "college": "College",
+        "chances": "Chances",
+        "fit": "Fit",
+        "deadlineType": "Deadline Type",
+        "deadlineDate": "Deadline Date",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "empty": "No applications yet. Click \"Add Application\" to get started.",
+      "selectStudentHint": "Select a student above to view and manage their college applications."
+    },
+    "collegePrep": {
+      "fit": {
+        "reach": "Reach",
+        "match": "Match",
+        "safety": "Safety",
+        "highReach": "High Reach"
+      },
+      "studentLabel": "Student:",
+      "selectStudent": "Select a student...",
+      "statusUpdated": "Status updated",
+      "statusUpdateFailed": "Failed to update status",
+      "subtitle": "Manage college applications, essays, documents, scholarships, and activities",
+      "tabs": {
+        "applications": "Applications",
+        "collegeList": "College List",
+        "essays": "Essays",
+        "documents": "Documents",
+        "scholarships": "Scholarships",
+        "activities": "Activities"
+      }
+    },
+    "communication": {
+      "subtitle": "Messages, video calls, session notes, and student alerts",
+      "tabs": {
+        "messages": "Messages",
+        "videoCalls": "Video Calls",
+        "sessionNotes": "Session Notes"
+      }
+    },
+    "collegeList": {
+      "classification": {
+        "likely": "Likely",
+        "competitive": "Competitive"
+      },
+      "strengths": "Strengths",
+      "weaknesses": "Weaknesses",
+      "acceptanceRate": "{{rate}}% acceptance",
+      "tuitionPerYear": "${{amount}}/yr",
+      "toast": {
+        "added": "College added to list",
+        "addFailed": "Failed to add college",
+        "removed": "College removed from list",
+        "removeFailed": "Failed to remove college",
+        "reclassified": "Classification updated",
+        "reclassifyFailed": "Failed to update classification"
+      },
+      "title": "College List Builder",
+      "subtitle": "Build and organize college lists for your students. Search schools, classify fit, and manage their target list.",
+      "searchAndAdd": "Search & Add Colleges",
+      "searchPlaceholder": "Search colleges by name...",
+      "noResults": "No colleges found for \"{{query}}\"",
+      "added": "Added",
+      "add": "Add",
+      "listTitle": "{{name}}'s College List ({{count}})",
+      "studentFallback": "Student",
+      "empty": "No colleges in the list yet. Search above to add colleges.",
+      "removeFromList": "Remove from list",
+      "selectStudentPrompt": "Select a student above to build and manage their college list."
+    },
+    "documents": {
+      "types": {
+        "transcript": "Transcript",
+        "recommendationLetter": "Letter of Recommendation",
+        "schoolReport": "School Report",
+        "midYearReport": "Mid-Year Report",
+        "finalReport": "Final Report",
+        "other": "Other"
+      },
+      "status": {
+        "requested": "Requested",
+        "inProgress": "In Progress",
+        "sent": "Sent",
+        "confirmed": "Confirmed"
+      },
+      "toast": {
+        "created": "Document request created",
+        "createFailed": "Failed to create document request",
+        "deleted": "Document request deleted",
+        "deleteFailed": "Failed to delete document request",
+        "recipientRequired": "Recipient is required"
+      },
+      "title": "Document Manager",
+      "subtitle": "Track transcript requests, letters of recommendation, and school reports.",
+      "stats": {
+        "total": "Total Requests",
+        "sent": "Sent",
+        "pending": "Pending",
+        "confirmed": "Confirmed"
+      },
+      "newRequest": "New Request",
+      "newDocumentRequest": "New Document Request",
+      "form": {
+        "recipient": "Recipient (college name)",
+        "notes": "Notes (optional)",
+        "submit": "Submit",
+        "cancel": "Cancel"
+      },
+      "table": {
+        "type": "Type",
+        "recipient": "Recipient",
+        "status": "Status",
+        "requested": "Requested",
+        "sent": "Sent",
+        "actions": "Actions"
+      },
+      "empty": "No document requests yet. Click \"New Request\" to get started.",
+      "deleteRequest": "Delete request"
+    },
+    "essays": {
+      "status": {
+        "draft": "Draft",
+        "inReview": "In Review",
+        "revision": "Revision",
+        "final": "Final"
+      },
+      "types": {
+        "personalStatement": "Personal Statement",
+        "supplemental": "Supplemental",
+        "commonApp": "Common App",
+        "coalition": "Coalition",
+        "scholarship": "Scholarship",
+        "other": "Other"
+      },
+      "toast": {
+        "commentAdded": "Comment added",
+        "commentFailed": "Failed to add comment"
+      },
+      "title": "Essay Hub",
+      "subtitle": "Review student essays, track progress, and provide feedback through comments.",
+      "stats": {
+        "total": "Total Essays",
+        "drafts": "Drafts",
+        "inReview": "In Review",
+        "final": "Final"
+      },
+      "empty": "No essays yet. Essays will appear here once the student creates them.",
+      "wordCount_one": "{{count}} word",
+      "wordCount_other": "{{count}} words",
+      "content": "Essay Content",
+      "noContent": "No content available.",
+      "commentsCount": "Comments ({{count}})",
+      "noComments": "No comments yet. Be the first to provide feedback.",
+      "commentPlaceholder": "Add a comment or feedback...",
+      "send": "Send",
+      "selectStudentPrompt": "Select a student above to review their essays and provide feedback.",
+      "unknownAuthor": "Unknown"
+    },
+    "evaluations": {
+      "extendFailed": "Failed to extend deadline",
+      "resendFailed": "Failed to resend",
+      "nameEmailRequired": "Name and email required",
+      "addedNoEmail": "{{name}} added — couldn't email the invitation, use Resend",
+      "invitationSentTo": "Invitation sent to {{name}}",
+      "addFailed": "Failed to add evaluator",
+      "allInvitationsSent": "All invitations sent",
+      "sendInvitationsFailed": "Failed to send invitations",
+      "evaluatorsCompleted": "{{completed}}/{{total}} evaluators completed",
+      "instrument": "Instrument",
+      "expires": "Expires {{date}}",
+      "extendDeadline": "Extend deadline",
+      "resendInvitation": "Resend invitation",
+      "loadFailed": "Failed to load evaluation data",
+      "resendInvitationEmails": "Resend invitation emails",
+      "invitationsResentFor": "Invitations resent for {{name}}",
+      "viewVocationalReport": "View vocational report"
+    },
+    "insights": {
+      "below25": "Below 2.5",
+      "eyebrow": "Analytics",
+      "title": "Caseload Insights",
+      "subtitle": "A comprehensive view of your caseload metrics, assessment progress, and student analytics.",
+      "totalStudents": "TOTAL STUDENTS",
+      "averageGpa": "AVERAGE GPA",
+      "atRiskStudents": "AT-RISK STUDENTS",
+      "assessmentCompletion": "ASSESSMENT COMPLETION",
+      "aiBriefing": "AI Briefing",
+      "generating": "Generating...",
+      "noBriefing": "No briefing available yet. Click Regenerate to create one.",
+      "urgentActions": "Urgent Actions",
+      "generatedAt": "Generated {{date}}",
+      "gpaDistribution": "GPA Distribution",
+      "pcaComplete": "PCA Complete",
+      "milComplete": "MIL Complete",
+      "eval360Complete": "360° Complete",
+      "topCareerClusters": "Top Career Clusters"
+    },
+    "broadcast": {
+      "enterMessage": "Please enter a message",
+      "sentToast_one": "Message sent to {{count}} student",
+      "sentToast_other": "Message sent to {{count}} students",
+      "failed": "Failed to send broadcast",
+      "title": "Broadcast to My Students",
+      "description": "Send a message to all students assigned to you. Each student will receive the message as a direct conversation.",
+      "placeholder": "Type your message to all students...",
+      "sending": "Sending...",
+      "send": "Message All My Students",
+      "sentTo_one": "Sent to {{count}} student",
+      "sentTo_other": "Sent to {{count}} students"
+    },
+    "notes": {
+      "typeFollowUp": "Follow-up",
+      "title": "Session Notes",
+      "subtitle": "All your session notes across students",
+      "searchPlaceholder": "Search by student name or note content...",
+      "groupTimeline": "Timeline",
+      "groupByStudent": "By Student",
+      "groupByType": "By Type",
+      "noNotes": "No notes found",
+      "adjustFilter": "Try adjusting your search or filter",
+      "noNotesYet": "You haven't created any session notes yet",
+      "dateAtTime": "{{date}} at {{time}}",
+      "completedSuffix": "(completed)",
+      "previous": "Previous",
+      "pageOf": "Page {{page}} of {{total}}",
+      "next": "Next"
+    },
+    "onboarding": {
+      "calendar": {
+        "notEnabled": "Calendar sync isn't enabled on this server yet. You can connect later in Settings.",
+        "startFailed": "Failed to start calendar connection. You can connect later in Settings.",
+        "accountCreated": "Account Created!",
+        "intro": "Connect your calendar to sync events and stay organized — or skip and do it later in Settings.",
+        "title": "Connect Your Calendar",
+        "optional": "Optional — you can always connect it later from Settings.",
+        "connected": "{{provider}} Calendar Connected!",
+        "willSync": "Your calendar will sync with your counselor dashboard.",
+        "syncWith": "Sync with {{provider}}",
+        "goToDashboard": "Go to Dashboard",
+        "skipForNow": "Skip for Now"
+      },
+      "nameRequired": "Full name is required",
+      "passwordMin": "Password must be at least 8 characters",
+      "passwordsMismatch": "Passwords do not match",
+      "failed": "Onboarding failed. Please try again.",
+      "invalidLinkTitle": "Invalid Invitation Link",
+      "invalidLinkDesc": "This invitation link is missing a token. Please check the email you received and try again, or contact your school administrator.",
+      "verifying": "Verifying your invitation…",
+      "expiredTitle": "Invitation Expired or Invalid",
+      "expiredDesc": "This invitation link has expired or is no longer valid. Please contact your school administrator for a new invitation.",
+      "goToLogin": "Go to Login",
+      "welcomeTitle": "Welcome aboard!",
+      "welcomeDesc": "Your counselor account is ready. Redirecting to your dashboard…",
+      "title": "Set Up Your Counselor Account",
+      "subtitle": "You've been invited to join as a counselor on FormMaps",
+      "school": "School",
+      "yourSchool": "Your School",
+      "invitedBy": "Invited by",
+      "students": "Students",
+      "allStudents": "All students",
+      "assignedCount_one": "{{count}} assigned",
+      "assignedCount_other": "{{count}} assigned",
+      "createAccount": "Create your account",
+      "createAccountDesc": "Set a secure password to get started",
+      "fullName": "Full Name",
+      "fullNamePlaceholder": "Your full name",
+      "password": "Password",
+      "passwordPlaceholder": "At least 8 characters",
+      "confirmPassword": "Confirm Password",
+      "confirmPlaceholder": "Repeat your password",
+      "optionalDetails": "Optional Profile Details",
+      "phone": "Phone",
+      "timezone": "Timezone",
+      "timezonePlaceholder": "Select timezone",
+      "completeSetup": "Complete Setup"
+    },
+    "reports": {
+      "gradeN": "Grade {{n}}",
+      "academicSummaryDownloaded": "Academic summary downloaded",
+      "careerProfileDownloaded": "Career profile downloaded",
+      "downloadFailed": "Download failed",
+      "academicSubtitle": "Full Academic Summary & Career Reports",
+      "noAcademicData": "No Academic Data",
+      "noAcademicDataDesc": "No academic report is available for this student yet.",
+      "weighted": "Weighted:",
+      "credits": "Credits",
+      "recentGrades": "Recent Grades",
+      "courseN": "Course {{n}}",
+      "creditsShort": "{{n}} cr",
+      "assessmentStats": "PCA: {{pca}} evaluations · MIL avg: {{mil}} · 360: {{eval360}}",
+      "downloadFullReport": "Download Full Report",
+      "downloadCareerProfile": "Download Career Profile",
+      "mil": {
+        "reasoning": "Reasoning",
+        "detection": "Detection",
+        "numeric": "Numeric",
+        "memory": "Memory",
+        "orientation": "Orientation",
+        "profileDownloaded": "MIL profile downloaded",
+        "historyDownloaded": "Exam history downloaded",
+        "subtitle": "MIL / LIA Assessment",
+        "noResults": "No MIL/LIA Results",
+        "noResultsDesc": "This student hasn't completed the cognitive assessments yet.",
+        "examsCompleted": "Exams Completed",
+        "overallScore": "Overall Score",
+        "profile": "MIL Profile",
+        "downloadProfile": "Download Profile",
+        "downloadHistory": "Download Exam History"
+      },
+      "hideFullReport": "Hide Full Report",
+      "viewFullReport": "View Full Report",
+      "pca": {
+        "dominance": "Dominance (D)",
+        "influence": "Influence (I)",
+        "solidity": "Solidity (S)",
+        "control": "Control (C)",
+        "chartDownloaded": "PCA chart downloaded",
+        "chartFailed": "Failed to download chart",
+        "fullDownloaded": "Full PCA report downloaded",
+        "fullFailed": "Failed to generate report",
+        "subtitle": "PCA Assessment Report",
+        "noResults": "No PCA Results",
+        "noResultsDesc": "This student hasn't completed the PCA assessment yet.",
+        "workAdaptation": "PCA Profile — Work Adaptation",
+        "underPressure": "Under Pressure",
+        "selfImage": "Self Image",
+        "topCareerMatches": "Top Career Matches",
+        "careerN": "Career {{n}}",
+        "completedOn": "Completed: {{date}}",
+        "downloadChart": "Download Chart"
+      }
+    },
+    "scheduling": {
+      "subtitle": "Manage counseling sessions and view your calendar",
+      "tabSessions": "Sessions",
+      "tabCalendar": "Calendar"
+    },
+    "scholarships": {
+      "status": {
+        "researching": "Researching",
+        "applying": "Applying",
+        "submitted": "Submitted",
+        "awarded": "Awarded",
+        "rejected": "Rejected"
+      },
+      "deadline": "Deadline: {{date}}",
+      "link": "Link",
+      "deleteTitle": "Delete scholarship",
+      "form": {
+        "nameRequired": "Name is required",
+        "name": "Scholarship name",
+        "provider": "Provider",
+        "amount": "Amount ($)",
+        "deadline": "Deadline",
+        "url": "URL (optional)",
+        "notes": "Notes (optional)",
+        "submit": "Submit"
+      },
+      "add": "Add Scholarship",
+      "filter": {
+        "all": "All",
+        "researching": "Researching",
+        "applied": "Applied",
+        "awarded": "Awarded"
+      },
+      "toast": {
+        "added": "Scholarship added",
+        "addFailed": "Failed to add scholarship",
+        "statusUpdated": "Status updated",
+        "updateFailed": "Failed to update",
+        "removed": "Scholarship removed",
+        "deleteFailed": "Failed to delete"
+      },
+      "title": "Scholarship Tracker",
+      "subtitle": "Track scholarship opportunities, applications, and awards for your students.",
+      "studentSearch": "Search and select a student...",
+      "stats": {
+        "total": "Total scholarships",
+        "potential": "Total potential",
+        "awarded": "Awarded amount",
+        "pending": "Pending"
+      },
+      "emptyFiltered": "No scholarships match this filter.",
+      "empty": "No scholarships tracked yet. Click \"Add Scholarship\" to get started."
+    },
+    "students": {
+      "coursePlanRequestMeta": "{{code}} · {{credits}} cr · Gr. {{grade}} · {{semester}}",
+      "approvePlanDesc_one": "Approving adds {{count}} planned course to the student's current-year plan now. Future years stay in the approved plan and are applied at year rollover.",
+      "approvePlanDesc_other": "Approving adds {{count}} planned courses to the student's current-year plan now. Future years stay in the approved plan and are applied at year rollover."
+    },
+    "video": {
+      "callNow": "Call Now",
+      "schedule": "Schedule",
+      "searchCall": "Search by name or email to start a call...",
+      "searchSchedule": "Search for a student to schedule with...",
+      "searching": "Searching...",
+      "noContacts": "No contacts found",
+      "call": "Call",
+      "select": "Select",
+      "schedulingCall": "Scheduling video call",
+      "dateTime": "Date & Time",
+      "duration": "Duration",
+      "minutes_one": "{{count}} minute",
+      "minutes_other": "{{count}} minutes",
+      "hours_one": "{{count}} hour",
+      "hours_other": "{{count}} hours",
+      "hoursDecimal": "{{n}} hours",
+      "notes": "Notes (optional)",
+      "notesPlaceholder": "Agenda or topics to discuss...",
+      "scheduling": "Scheduling...",
+      "scheduleCall": "Schedule Call",
+      "toast": {
+        "startCallFailed": "Failed to start video call",
+        "scheduled": "Call scheduled with {{name}}",
+        "scheduleFailed": "Failed to schedule call",
+        "startSessionFailed": "Failed to start session",
+        "cancelled": "Scheduled call cancelled",
+        "cancelFailed": "Failed to cancel"
+      },
+      "title": "Video Calls",
+      "notAvailable": "Video Calls Not Available",
+      "notAvailableDesc": "Video calling is not enabled for your school. Contact your administrator to enable this feature.",
+      "subtitle": "Start or schedule 1:1 video calls with students.",
+      "newCall": "New Call"
+    }
   }
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion } from "motion/react";
 import { Briefcase, GraduationCap, FileText } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 type Purpose = "job_application" | "college_application" | "general";
 
@@ -57,6 +58,7 @@ const itemVariants = {
 };
 
 export function PurposeSelector({ onSelect }: PurposeSelectorProps) {
+  const { t } = useTranslation();
   const [selected, setSelected] = useState<Purpose | null>(null);
 
   function handleSelect(purpose: Purpose) {
@@ -74,10 +76,10 @@ export function PurposeSelector({ onSelect }: PurposeSelectorProps) {
         transition={{ duration: 0.3 }}
       >
         <h2 className="text-xl font-semibold text-foreground">
-          What are you building for?
+          {t("resumeBuilder.purposeSelector.title", "What are you building for?")}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          Choose the purpose of your resume so we can tailor the experience
+          {t("resumeBuilder.purposeSelector.subtitle", "Choose the purpose of your resume so we can tailor the experience")}
         </p>
       </motion.div>
 
@@ -108,10 +110,10 @@ export function PurposeSelector({ onSelect }: PurposeSelectorProps) {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-foreground">
-                    {purpose.title}
+                    {t(`resumeBuilder.purposeSelector.options.${purpose.id}.title`, purpose.title)}
                   </h3>
                   <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                    {purpose.description}
+                    {t(`resumeBuilder.purposeSelector.options.${purpose.id}.description`, purpose.description)}
                   </p>
                 </div>
               </div>

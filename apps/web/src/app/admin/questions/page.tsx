@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
@@ -41,13 +41,14 @@ interface CreateQuestionData {
   isActive?: boolean;
 }
 
-const RELATION_TYPE_OPTIONS = getRelationTypeOptions();
 const CATEGORY_OPTIONS = getCommonCategories();
 
 export default function AdminQuestionsPage() {
   const router = useRouter();
   const { t } = useTranslation("platform_owner");
-  const { t: tCommon } = useTranslation();
+  const { t: tCommon, i18n } = useTranslation();
+  // Labels are translated, so build them per language rather than once at module load.
+  const RELATION_TYPE_OPTIONS = useMemo(() => getRelationTypeOptions(), [i18n.language]);
   const { isAdmin, loading: authLoading } = useAdminAccess();
   const { confirm, ConfirmDialog } = useConfirmDialog();
 

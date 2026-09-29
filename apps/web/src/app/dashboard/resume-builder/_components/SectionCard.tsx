@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown, Check, AlertCircle, Edit2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 /**
  * SectionCard Component
@@ -46,6 +47,7 @@ export const SectionCard = React.memo(
     onEdit,
     className = "",
   }: SectionCardProps) => {
+    const { t } = useTranslation();
     const [isHovering, setIsHovering] = useState(false);
 
     /**
@@ -58,12 +60,12 @@ export const SectionCard = React.memo(
             <div className="text-sm text-gray-600">
               <div>
                 {section.data.fullName || (
-                  <span className="text-gray-400 italic">No name added</span>
+                  <span className="text-gray-400 italic">{t("resumeBuilder.sectionCard.noName", "No name added")}</span>
                 )}
               </div>
               <div className="text-xs text-gray-500">
                 {section.data.email || (
-                  <span className="text-gray-400 italic">No email added</span>
+                  <span className="text-gray-400 italic">{t("resumeBuilder.sectionCard.noEmail", "No email added")}</span>
                 )}
               </div>
             </div>
@@ -74,18 +76,24 @@ export const SectionCard = React.memo(
             <div className="text-sm text-gray-600">
               {section.data.length === 0 ? (
                 <span className="text-gray-400 italic">
-                  No work experience added
+                  {t("resumeBuilder.sectionCard.noExperience", "No work experience added")}
                 </span>
               ) : (
                 <div className="space-y-1">
                   {section.data.slice(0, 2).map((exp: any, idx: number) => (
                     <div key={idx} className="truncate">
-                      {exp.jobTitle} at {exp.company}
+                      {t("resumeBuilder.sectionCard.jobAtCompany", "{{jobTitle}} at {{company}}", {
+                        jobTitle: exp.jobTitle,
+                        company: exp.company,
+                      })}
                     </div>
                   ))}
                   {section.data.length > 2 && (
                     <div className="text-xs text-gray-500">
-                      +{section.data.length - 2} more
+                      {t("resumeBuilder.sectionCard.moreCount", {
+                        count: section.data.length - 2,
+                        defaultValue: "+{{count}} more",
+                      })}
                     </div>
                   )}
                 </div>
@@ -97,17 +105,23 @@ export const SectionCard = React.memo(
           return (
             <div className="text-sm text-gray-600">
               {section.data.length === 0 ? (
-                <span className="text-gray-400 italic">No education added</span>
+                <span className="text-gray-400 italic">{t("resumeBuilder.sectionCard.noEducation", "No education added")}</span>
               ) : (
                 <div className="space-y-1">
                   {section.data.slice(0, 2).map((edu: any, idx: number) => (
                     <div key={idx} className="truncate">
-                      {edu.degree} from {edu.institution}
+                      {t("resumeBuilder.sectionCard.degreeFromInstitution", "{{degree}} from {{institution}}", {
+                        degree: edu.degree,
+                        institution: edu.institution,
+                      })}
                     </div>
                   ))}
                   {section.data.length > 2 && (
                     <div className="text-xs text-gray-500">
-                      +{section.data.length - 2} more
+                      {t("resumeBuilder.sectionCard.moreCount", {
+                        count: section.data.length - 2,
+                        defaultValue: "+{{count}} more",
+                      })}
                     </div>
                   )}
                 </div>
@@ -119,7 +133,7 @@ export const SectionCard = React.memo(
           return (
             <div className="text-sm text-gray-600">
               {section.data.length === 0 ? (
-                <span className="text-gray-400 italic">No skills added</span>
+                <span className="text-gray-400 italic">{t("resumeBuilder.sectionCard.noSkills", "No skills added")}</span>
               ) : (
                 <div className="flex flex-wrap gap-1">
                   {section.data.slice(0, 5).map((skill: any, idx: number) => (
@@ -132,7 +146,10 @@ export const SectionCard = React.memo(
                   ))}
                   {section.data.length > 5 && (
                     <span className="text-xs text-gray-500">
-                      +{section.data.length - 5} more
+                      {t("resumeBuilder.sectionCard.moreCount", {
+                        count: section.data.length - 5,
+                        defaultValue: "+{{count}} more",
+                      })}
                     </span>
                   )}
                 </div>
@@ -177,8 +194,8 @@ export const SectionCard = React.memo(
                   {section.isRequired && (
                     <span
                       className="text-red-500 text-sm"
-                      title="Required field"
-                      aria-label="required"
+                      title={t("resumeBuilder.sectionCard.requiredField", "Required field")}
+                      aria-label={t("resumeBuilder.sectionCard.required", "required")}
                     >
                       *
                     </span>
@@ -200,7 +217,7 @@ export const SectionCard = React.memo(
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 200 }}
-                title="Section complete"
+                title={t("resumeBuilder.sectionCard.sectionComplete", "Section complete")}
               >
                 <Check className="w-4 h-4 text-green-600" />
               </motion.div>
@@ -210,7 +227,7 @@ export const SectionCard = React.memo(
                 initial={{ scale: 0 }}
                 animate={{ scale: 1 }}
                 transition={{ type: "spring", stiffness: 200 }}
-                title="Required field incomplete"
+                title={t("resumeBuilder.sectionCard.requiredIncomplete", "Required field incomplete")}
               >
                 <AlertCircle className="w-4 h-4 text-yellow-600" />
               </motion.div>
@@ -251,7 +268,9 @@ export const SectionCard = React.memo(
                 {/* This will be replaced with actual form components */}
                 <div className="rounded-lg bg-white p-4 border border-gray-200">
                   <p className="text-gray-600 text-sm mb-4">
-                    Inline editor for {section.title}
+                    {t("resumeBuilder.sectionCard.inlineEditorFor", "Inline editor for {{section}}", {
+                      section: section.title,
+                    })}
                   </p>
 
                   {/* Example: Personal Info Editor */}
@@ -270,7 +289,7 @@ export const SectionCard = React.memo(
                       className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 text-sm font-medium"
                       onClick={onEdit}
                     >
-                      Full Editor
+                      {t("resumeBuilder.sectionCard.fullEditor", "Full Editor")}
                     </button>
                   )}
 
@@ -280,7 +299,7 @@ export const SectionCard = React.memo(
                       className="ml-2 px-4 py-2 bg-[#2E9098] text-white rounded-lg hover:bg-[#2E9098]/90 transition-colors duration-200 text-sm font-medium"
                       onClick={onEdit}
                     >
-                      Open Full Editor
+                      {t("resumeBuilder.sectionCard.openFullEditor", "Open Full Editor")}
                     </button>
                   )}
                 </div>
@@ -300,22 +319,23 @@ SectionCard.displayName = "SectionCard";
  */
 
 function SectionEditorContent({ section }: { section: any }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Full Name
+          {t("resumeBuilder.sectionCard.fullName", "Full Name")}
         </label>
         <input
           type="text"
           defaultValue={section.data.fullName}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-          placeholder="John Doe"
+          placeholder={t("resumeBuilder.sectionCard.fullNamePlaceholder", "John Doe")}
         />
       </div>
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
-          Email
+          {t("resumeBuilder.sectionCard.email", "Email")}
         </label>
         <input
           type="email"
@@ -325,20 +345,23 @@ function SectionEditorContent({ section }: { section: any }) {
         />
       </div>
       <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 text-sm font-medium">
-        Save Changes
+        {t("resumeBuilder.sectionCard.saveChanges", "Save Changes")}
       </button>
     </div>
   );
 }
 
 function ExperienceEditorContent({ section }: { section: any }) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
       {section.data.length === 0 ? (
         <div className="text-center py-8">
-          <p className="text-gray-600 mb-4">No work experience added yet</p>
+          <p className="text-gray-600 mb-4">
+            {t("resumeBuilder.sectionCard.noExperienceYet", "No work experience added yet")}
+          </p>
           <button className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors duration-200 text-sm font-medium">
-            + Add Experience
+            {t("resumeBuilder.sectionCard.addExperience", "+ Add Experience")}
           </button>
         </div>
       ) : (
@@ -349,16 +372,16 @@ function ExperienceEditorContent({ section }: { section: any }) {
               <p className="text-sm text-gray-600">{exp.company}</p>
               <div className="flex justify-end gap-2 mt-3">
                 <button className="text-sm text-indigo-600 hover:text-indigo-700 font-medium">
-                  Edit
+                  {t("resumeBuilder.sectionCard.edit", "Edit")}
                 </button>
                 <button className="text-sm text-red-600 hover:text-red-700 font-medium">
-                  Remove
+                  {t("resumeBuilder.sectionCard.remove", "Remove")}
                 </button>
               </div>
             </div>
           ))}
           <button className="w-full px-4 py-2 border-2 border-dashed border-gray-300 rounded-lg hover:border-indigo-300 text-gray-600 hover:text-indigo-600 transition-colors duration-200 text-sm font-medium">
-            + Add Another Experience
+            {t("resumeBuilder.sectionCard.addAnotherExperience", "+ Add Another Experience")}
           </button>
         </>
       )}

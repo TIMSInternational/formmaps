@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { Trash2, Pencil, ChevronDown, ChevronUp } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 interface Activity {
   id: string;
@@ -26,18 +28,18 @@ const CATEGORY_COLORS: Record<string, { color: string; bg: string }> = {
   leadership: { color: "var(--admin-accent-blue)", bg: "rgba(99,102,241,0.1)" },
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  academic: "Academic",
-  athletic: "Athletic",
-  arts: "Arts",
-  community_service: "Community Service",
-  work: "Work",
-  leadership: "Leadership",
+const CATEGORY_LABEL_KEYS: Record<string, string> = {
+  academic: "ui.activities.categories.academic",
+  athletic: "ui.activities.categories.athletic",
+  arts: "ui.activities.categories.arts",
+  community_service: "ui.activities.categories.communityService",
+  work: "ui.activities.categories.work",
+  leadership: "ui.activities.categories.leadership",
 };
 
-function formatDateRange(start: string, end?: string): string {
+function formatDateRange(t: TFunction, start: string, end?: string): string {
   const s = new Date(start).toLocaleDateString();
-  if (!end) return `${s} - Present`;
+  if (!end) return t("ui.activities.dateRangeOngoing", { start: s });
   return `${s} - ${new Date(end).toLocaleDateString()}`;
 }
 
@@ -48,9 +50,10 @@ interface ActivityCardProps {
 }
 
 export function ActivityCard({ activity: a, onEdit, onDelete }: ActivityCardProps) {
+  const { t } = useTranslation("counselor");
   const [isExpanded, setIsExpanded] = useState(false);
   const catColor = CATEGORY_COLORS[a.category] || CATEGORY_COLORS.academic;
-  const catLabel = CATEGORY_LABELS[a.category] || a.category;
+  const catLabel = CATEGORY_LABEL_KEYS[a.category] ? t(CATEGORY_LABEL_KEYS[a.category]) : a.category;
 
   return (
     <div style={{
@@ -71,13 +74,13 @@ export function ActivityCard({ activity: a, onEdit, onDelete }: ActivityCardProp
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", fontSize: 12, color: "var(--admin-font-tertiary)" }}>
             {a.organization && <span>{a.organization}</span>}
             {a.role && <span>{a.role}</span>}
-            <span>{formatDateRange(a.startDate, a.endDate)}</span>
+            <span>{formatDateRange(t, a.startDate, a.endDate)}</span>
           </div>
           {(a.hoursPerWeek || a.weeksPerYear) && (
             <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
-              {a.hoursPerWeek ? `${a.hoursPerWeek} hrs/week` : ""}
+              {a.hoursPerWeek ? t("ui.activities.hoursPerWeekValue", { n: a.hoursPerWeek }) : ""}
               {a.hoursPerWeek && a.weeksPerYear ? ", " : ""}
-              {a.weeksPerYear ? `${a.weeksPerYear} weeks/year` : ""}
+              {a.weeksPerYear ? t("ui.activities.weeksPerYearValue", { n: a.weeksPerYear }) : ""}
             </div>
           )}
         </div>
@@ -85,7 +88,7 @@ export function ActivityCard({ activity: a, onEdit, onDelete }: ActivityCardProp
         <div style={{ display: "flex", alignItems: "center", gap: 4, flexShrink: 0 }}>
           {a.description && (
             <button onClick={() => setIsExpanded(!isExpanded)}
-              title={isExpanded ? "Collapse" : "Expand"}
+              title={isExpanded ? t("ui.activities.collapse") : t("ui.activities.expand")}
               style={{
                 width: 28, height: 28, borderRadius: 4,
                 border: "1px solid var(--admin-border-default)", background: "transparent",
@@ -96,7 +99,7 @@ export function ActivityCard({ activity: a, onEdit, onDelete }: ActivityCardProp
                 : <ChevronDown style={{ width: 12, height: 12, color: "var(--admin-font-tertiary)" }} />}
             </button>
           )}
-          <button onClick={() => onEdit(a)} title="Edit"
+          <button onClick={() => onEdit(a)} title={t("ui.activities.edit")}
             style={{
               width: 28, height: 28, borderRadius: 4,
               border: "1px solid var(--admin-border-default)", background: "transparent",
@@ -104,7 +107,7 @@ export function ActivityCard({ activity: a, onEdit, onDelete }: ActivityCardProp
             }}>
             <Pencil style={{ width: 12, height: 12, color: "var(--admin-accent-blue)" }} />
           </button>
-          <button onClick={() => onDelete(a.id)} title="Delete"
+          <button onClick={() => onDelete(a.id)} title={t("ui.activities.delete")}
             style={{
               width: 28, height: 28, borderRadius: 4,
               border: "1px solid var(--admin-border-default)", background: "transparent",
@@ -127,7 +130,7 @@ export function ActivityCard({ activity: a, onEdit, onDelete }: ActivityCardProp
               fontSize: 12, color: "#f59e0b", padding: "6px 10px", borderRadius: 6,
               background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.15)",
             }}>
-              <span style={{ fontWeight: 600 }}>Awards:</span> {a.awards}
+              <span style={{ fontWeight: 600 }}>{t("ui.activities.awardsLabel")}</span> {a.awards}
             </div>
           )}
         </div>

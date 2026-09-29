@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslation } from "react-i18next";
 import {
   BookOpen,
   Calendar,
@@ -57,6 +58,7 @@ export function EssaysTab({
   onSetNewEssay,
   onAddEssay,
 }: EssaysTabProps) {
+  const { t } = useTranslation();
   return (
     <motion.div
       key="essays"
@@ -76,7 +78,7 @@ export function EssaysTab({
           style={{ background: "var(--admin-accent-blue)" }}
         >
           <Plus className="h-3.5 w-3.5" />
-          Add Essay
+          {t("studentUi.applications.essays.addEssay")}
         </button>
       </div>
 
@@ -95,7 +97,7 @@ export function EssaysTab({
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold" style={{ color: "var(--admin-font-primary)" }}>
-                  New Essay
+                  {t("studentUi.applications.essays.newEssay")}
                 </span>
                 <button onClick={() => onSetShowAddEssay(false)}>
                   <X className="h-4 w-4" style={{ color: "var(--admin-font-tertiary)" }} />
@@ -103,23 +105,23 @@ export function EssaysTab({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <FormInput
-                  placeholder="Essay title *"
+                  placeholder={t("studentUi.applications.essays.titlePlaceholder")}
                   value={newEssay.title}
                   onChange={(v) => onSetNewEssay((p) => ({ ...p, title: v }))}
                 />
                 <FormInput
-                  placeholder="Prompt (optional)"
+                  placeholder={t("studentUi.applications.essays.promptPlaceholder")}
                   value={newEssay.prompt}
                   onChange={(v) => onSetNewEssay((p) => ({ ...p, prompt: v }))}
                 />
                 <FormInput
-                  placeholder="Word limit"
+                  placeholder={t("studentUi.applications.essays.wordLimitPlaceholder")}
                   type="number"
                   value={newEssay.wordLimit}
                   onChange={(v) => onSetNewEssay((p) => ({ ...p, wordLimit: v }))}
                 />
                 <FormInput
-                  placeholder="Due date"
+                  placeholder={t("studentUi.applications.dueDatePlaceholder")}
                   type="date"
                   value={newEssay.dueDate}
                   onChange={(v) => onSetNewEssay((p) => ({ ...p, dueDate: v }))}
@@ -132,14 +134,14 @@ export function EssaysTab({
                   className="px-4 py-1.5 rounded-lg text-xs font-medium text-white disabled:opacity-40"
                   style={{ background: "var(--admin-accent-blue)" }}
                 >
-                  Add
+                  {t("studentUi.applications.add")}
                 </button>
                 <button
                   onClick={() => onSetShowAddEssay(false)}
                   className="px-4 py-1.5 rounded-lg text-xs"
                   style={{ color: "var(--admin-font-tertiary)", border: "1px solid var(--admin-border-default)" }}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
               </div>
             </div>
@@ -154,7 +156,7 @@ export function EssaysTab({
         isEmpty={!loadingEssays && !essaysError && essays.length === 0}
         onRetry={onRetryEssays}
         loadingFallback={<LoadingRow />}
-        emptyFallback={<EmptyState icon={<BookOpen className="h-8 w-8" />} message="No essays yet. Add your first essay to get started." />}
+        emptyFallback={<EmptyState icon={<BookOpen className="h-8 w-8" />} message={t("studentUi.applications.essays.empty")} />}
       >
         <div className="space-y-2">
           {essays.map((essay) => {
@@ -185,7 +187,7 @@ export function EssaysTab({
                       {essay.dueDate && (
                         <div className="flex items-center gap-1 text-[11px] mt-0.5" style={{ color: "var(--admin-font-tertiary)" }}>
                           <Calendar className="h-3 w-3" />
-                          Due {essay.dueDate}
+                          {t("studentUi.applications.essays.due", { date: essay.dueDate })}
                         </div>
                       )}
                     </div>
@@ -195,7 +197,7 @@ export function EssaysTab({
                       className="text-[10px] font-semibold px-2 py-0.5 rounded-full"
                       style={{ background: statusCfg.bg, color: statusCfg.color }}
                     >
-                      {statusCfg.label}
+                      {t(statusCfg.label)}
                     </span>
                     {essay.wordLimit && (
                       <span className="text-[10px]" style={{ color: "var(--admin-font-tertiary)" }}>
@@ -226,7 +228,7 @@ export function EssaysTab({
                         {essay.prompt && (
                           <div className="pt-3">
                             <p className="text-[11px] font-semibold mb-1" style={{ color: "var(--admin-font-tertiary)" }}>
-                              PROMPT
+                              {t("studentUi.applications.essays.promptHeading")}
                             </p>
                             <p className="text-xs" style={{ color: "var(--admin-font-secondary)" }}>
                               {essay.prompt}
@@ -238,18 +240,18 @@ export function EssaysTab({
                         <div className="pt-1">
                           <div className="flex items-center justify-between mb-1.5">
                             <p className="text-[11px] font-semibold" style={{ color: "var(--admin-font-tertiary)" }}>
-                              DRAFT
+                              {t("studentUi.applications.essays.draftHeading")}
                             </p>
                             <div className="flex items-center gap-1.5 text-[10px]" style={{ color: "var(--admin-font-tertiary)" }}>
-                              <span>{wc} words{essay.wordLimit ? ` / ${essay.wordLimit} limit` : ""}</span>
+                              <span>{t("studentUi.applications.essays.wordCount", { count: wc })}{essay.wordLimit ? t("studentUi.applications.essays.wordLimitSuffix", { limit: essay.wordLimit }) : ""}</span>
                               {essay.wordLimit && wc > essay.wordLimit && (
-                                <span style={{ color: "var(--admin-accent-red)" }}>Over limit</span>
+                                <span style={{ color: "var(--admin-accent-red)" }}>{t("studentUi.applications.essays.overLimit")}</span>
                               )}
                             </div>
                           </div>
                           <textarea
                             rows={8}
-                            placeholder="Start writing your essay..."
+                            placeholder={t("studentUi.applications.essays.draftPlaceholder")}
                             value={draft}
                             onChange={(e) => onSetEssayDraft(essay.id, e.target.value)}
                             className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-none"
@@ -275,7 +277,7 @@ export function EssaysTab({
                             ) : (
                               <Save className="h-3 w-3" />
                             )}
-                            Save Draft
+                            {t("studentUi.applications.essays.saveDraft")}
                           </button>
                           <button
                             onClick={() => onRequestAiReview(essay.id)}
@@ -292,7 +294,7 @@ export function EssaysTab({
                             ) : (
                               <Sparkles className="h-3 w-3" />
                             )}
-                            AI Review
+                            {t("studentUi.applications.essays.aiReview")}
                           </button>
                         </div>
 
@@ -312,7 +314,7 @@ export function EssaysTab({
                               <div className="flex items-center gap-2 mb-2">
                                 <Sparkles className="h-3.5 w-3.5" style={{ color: "var(--admin-accent-purple)" }} />
                                 <span className="text-[11px] font-semibold" style={{ color: "var(--admin-accent-purple)" }}>
-                                  AI Feedback
+                                  {t("studentUi.applications.essays.aiFeedback")}
                                 </span>
                               </div>
                               <p className="text-xs leading-relaxed" style={{ color: "var(--admin-font-secondary)" }}>

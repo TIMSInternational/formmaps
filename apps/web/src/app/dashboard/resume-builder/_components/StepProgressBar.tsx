@@ -1,14 +1,16 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const STEPS = [
-  { label: "See Your Difference" },
-  { label: "Align Your Resume" },
-  { label: "Review Your New Resume" },
+  { id: "difference", label: "See Your Difference" },
+  { id: "align", label: "Align Your Resume" },
+  { id: "review", label: "Review Your New Resume" },
 ] as const;
 
 export function StepProgressBar({ current }: { current: number }) {
+  const { t } = useTranslation();
   return (
     <div className="flex items-center justify-center gap-0">
       {STEPS.map((s, i) => {
@@ -17,7 +19,7 @@ export function StepProgressBar({ current }: { current: number }) {
         const isActive = stepNum === current;
 
         return (
-          <div key={s.label} className="flex items-center">
+          <div key={s.id} className="flex items-center">
             <div className="flex flex-col items-center gap-1.5">
               <div
                 className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-medium transition-colors ${
@@ -37,7 +39,7 @@ export function StepProgressBar({ current }: { current: number }) {
                     : "text-muted-foreground"
                 }`}
               >
-                {s.label}
+                {t(`resumeBuilder.stepProgressBar.${s.id}`, s.label)}
               </span>
             </div>
             {i < STEPS.length - 1 && (

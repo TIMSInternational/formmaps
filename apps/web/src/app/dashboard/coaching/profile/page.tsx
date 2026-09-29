@@ -140,20 +140,20 @@ export default function CoachProfilePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Coach</p>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mt-1">Profile</h1>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("coach.defaultName")}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight mt-1">{t("coach.nav.profile")}</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Manage your public presence. A complete profile helps students connect with you.
+            {t("studentUi.coaching.profilePage.subtitle")}
           </p>
         </div>
         <div className="flex gap-2">
           {!isEditing ? (
-            <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+            <Button onClick={() => setIsEditing(true)}>{t("studentUi.coaching.profilePage.editProfile")}</Button>
           ) : (
             <>
-              <Button variant="outline" onClick={() => setIsEditing(false)}>Cancel</Button>
+              <Button variant="outline" onClick={() => setIsEditing(false)}>{t("common.cancel")}</Button>
               <Button onClick={handleSave} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save Changes"}
+                {isSaving ? t("common.saving") : t("common.saveChanges")}
               </Button>
             </>
           )}
@@ -182,8 +182,8 @@ export default function CoachProfilePage() {
                 )}
               </div>
 
-              <h2 className="text-lg font-bold text-foreground mt-4">{profileData.name || "Your Name"}</h2>
-              <p className="text-sm text-muted-foreground">{profileData.title || "Coach"}</p>
+              <h2 className="text-lg font-bold text-foreground mt-4">{profileData.name || t("studentUi.coaching.profilePage.yourName")}</h2>
+              <p className="text-sm text-muted-foreground">{profileData.title || t("coach.defaultName")}</p>
 
               <div className="w-full mt-6 space-y-2">
                 <div className="flex items-center gap-3 text-sm text-muted-foreground p-2.5 rounded-lg bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))]">
@@ -201,7 +201,7 @@ export default function CoachProfilePage() {
               {/* Completion */}
               <div className="w-full mt-6 pt-4 border-t border-[var(--border)]">
                 <div className="flex justify-between text-xs mb-2">
-                  <span className="text-muted-foreground font-medium">Profile Strength</span>
+                  <span className="text-muted-foreground font-medium">{t("studentUi.coaching.profilePage.profileStrength")}</span>
                   <span className={completionPercentage === 100 ? "text-emerald-500 font-bold" : "text-[var(--admin-accent-blue)] font-bold"}>
                     {completionPercentage}%
                   </span>
@@ -226,43 +226,43 @@ export default function CoachProfilePage() {
                 <User className="h-4 w-4 text-[var(--admin-accent-blue)]" />
               </div>
               <div>
-                <span className="text-sm font-semibold text-foreground">Personal Details</span>
-                <p className="text-xs text-muted-foreground">Basic identity information</p>
+                <span className="text-sm font-semibold text-foreground">{t("studentUi.coaching.profilePage.personalDetails")}</span>
+                <p className="text-xs text-muted-foreground">{t("studentUi.coaching.profilePage.personalDetailsHint")}</p>
               </div>
             </div>
             <div className="p-5 grid grid-cols-1 md:grid-cols-2 gap-5">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Full Name</Label>
+                <Label className="text-xs text-muted-foreground">{t("coaching.settings.fullName")}</Label>
                 <Input value={profileData.name} onChange={(e) => update("name", e.target.value)} disabled={!isEditing} />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Professional Title</Label>
-                <Input value={profileData.title} onChange={(e) => update("title", e.target.value)} disabled={!isEditing} placeholder="e.g. Career Coach" />
+                <Label className="text-xs text-muted-foreground">{t("coaching.settings.professionalTitle")}</Label>
+                <Input value={profileData.title} onChange={(e) => update("title", e.target.value)} disabled={!isEditing} placeholder={t("studentUi.coaching.profilePage.titlePlaceholder")} />
               </div>
               <div className="col-span-1 md:col-span-2 space-y-1.5">
-                <Label className="text-xs text-muted-foreground">About You</Label>
-                <Textarea value={profileData.bio} onChange={(e) => update("bio", e.target.value)} disabled={!isEditing} rows={4} placeholder="Tell students about your experience..." className="resize-none" />
+                <Label className="text-xs text-muted-foreground">{t("studentUi.coaching.profilePage.aboutYou")}</Label>
+                <Textarea value={profileData.bio} onChange={(e) => update("bio", e.target.value)} disabled={!isEditing} rows={4} placeholder={t("studentUi.coaching.profilePage.bioPlaceholder")} className="resize-none" />
                 <p className="text-right text-[11px] text-muted-foreground">{profileData.bio?.length || 0} / 500</p>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Email (Private)</Label>
+                <Label className="text-xs text-muted-foreground">{t("studentUi.coaching.profilePage.emailPrivate")}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input value={profileData.email} disabled className="pl-9 cursor-not-allowed" />
                 </div>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Phone (Private)</Label>
+                <Label className="text-xs text-muted-foreground">{t("studentUi.coaching.profilePage.phonePrivate")}</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input type="tel" value={profileData.phone} onChange={(e) => update("phone", e.target.value)} disabled={!isEditing} placeholder="+1 (555) 000-0000" className="pl-9" />
                 </div>
               </div>
               <div className="col-span-1 md:col-span-2 space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Location</Label>
+                <Label className="text-xs text-muted-foreground">{t("coaching.profile.location")}</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input value={profileData.location} onChange={(e) => update("location", e.target.value)} disabled={!isEditing} placeholder="City, Country" className="pl-9" />
+                  <Input value={profileData.location} onChange={(e) => update("location", e.target.value)} disabled={!isEditing} placeholder={t("studentUi.coaching.profilePage.locationPlaceholder")} className="pl-9" />
                 </div>
               </div>
             </div>
@@ -275,16 +275,16 @@ export default function CoachProfilePage() {
                 <Globe className="h-4 w-4 text-purple-500" />
               </div>
               <div>
-                <span className="text-sm font-semibold text-foreground">Social Presence</span>
-                <p className="text-xs text-muted-foreground">Where can students find more about you?</p>
+                <span className="text-sm font-semibold text-foreground">{t("studentUi.coaching.profilePage.socialPresence")}</span>
+                <p className="text-xs text-muted-foreground">{t("studentUi.coaching.profilePage.socialPresenceHint")}</p>
               </div>
             </div>
             <div className="p-5 space-y-5">
               <div className="space-y-1.5">
-                <Label className="text-xs text-muted-foreground">Personal Website</Label>
+                <Label className="text-xs text-muted-foreground">{t("studentUi.coaching.profilePage.personalWebsite")}</Label>
                 <div className="relative">
                   <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input type="url" value={profileData.website} onChange={(e) => update("website", e.target.value)} disabled={!isEditing} placeholder="https://yourwebsite.com" className="pl-9" />
+                  <Input type="url" value={profileData.website} onChange={(e) => update("website", e.target.value)} disabled={!isEditing} placeholder={t("studentUi.coaching.profilePage.websitePlaceholder")} className="pl-9" />
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -292,14 +292,14 @@ export default function CoachProfilePage() {
                   <Label className="text-xs text-muted-foreground">LinkedIn</Label>
                   <div className="relative">
                     <Linkedin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#0A66C2]" />
-                    <Input type="url" value={profileData.linkedin} onChange={(e) => update("linkedin", e.target.value)} disabled={!isEditing} placeholder="linkedin.com/in/username" className="pl-9" />
+                    <Input type="url" value={profileData.linkedin} onChange={(e) => update("linkedin", e.target.value)} disabled={!isEditing} placeholder={t("studentUi.coaching.profilePage.linkedinPlaceholder")} className="pl-9" />
                   </div>
                 </div>
                 <div className="space-y-1.5">
                   <Label className="text-xs text-muted-foreground">Twitter / X</Label>
                   <div className="relative">
                     <Twitter className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-foreground" />
-                    <Input type="url" value={profileData.twitter} onChange={(e) => update("twitter", e.target.value)} disabled={!isEditing} placeholder="twitter.com/username" className="pl-9" />
+                    <Input type="url" value={profileData.twitter} onChange={(e) => update("twitter", e.target.value)} disabled={!isEditing} placeholder={t("studentUi.coaching.profilePage.twitterPlaceholder")} className="pl-9" />
                   </div>
                 </div>
               </div>

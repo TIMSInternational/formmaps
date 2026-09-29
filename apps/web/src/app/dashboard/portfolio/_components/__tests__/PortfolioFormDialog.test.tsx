@@ -6,9 +6,8 @@ import type { PortfolioItemPayload } from "@/types/portfolio";
 
 // ── mocks ─────────────────────────────────────────────────────────────────────
 
-jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (_k: string, d?: string) => d ?? _k }),
-}));
+// Real i18next (English) so assertions read the rendered copy, not raw keys.
+import "@/lib/i18n";
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 

@@ -9,6 +9,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { StepIndicator } from "../../users/bulk-onboard/_components/step-indicator";
 import { UploadStep } from "../../users/bulk-onboard/_components/upload-step";
 import { PreviewStep } from "../../users/bulk-onboard/_components/preview-step";
@@ -21,6 +22,7 @@ import {
 import type { StudentRow, PreviewResult, OnboardResult } from "../../users/bulk-onboard/_components/types";
 
 export default function BulkOnboardPage() {
+  const { t } = useTranslation("school_admin");
   const [step, setStep] = useState(0);
   const [manualRows, setManualRows] = useState<StudentRow[]>([
     { id: genId(), name: "", email: "", classLevel: "" },
@@ -54,7 +56,7 @@ export default function BulkOnboardPage() {
   const handlePreview = async () => {
     const students = buildStudentList();
     if (students.length === 0) {
-      toast.error("Add at least one student before previewing");
+      toast.error(t("ui.bulkOnboard.addOneFirst"));
       return;
     }
     setIsPreviewing(true);
@@ -70,7 +72,7 @@ export default function BulkOnboardPage() {
       setStep(1);
     } catch (err: unknown) {
       const errObj = err as { response?: { data?: { message?: string } }; message?: string };
-      toast.error(errObj?.response?.data?.message || errObj?.message || "Preview failed");
+      toast.error(errObj?.response?.data?.message || errObj?.message || t("ui.bulkOnboard.previewFailed"));
     } finally {
       setIsPreviewing(false);
     }
@@ -83,7 +85,7 @@ export default function BulkOnboardPage() {
       .map(({ name, email, classLevel }) => ({ name, email, classLevel }));
 
     if (studentsToSend.length === 0) {
-      toast.error("No valid students to onboard");
+      toast.error(t("ui.bulkOnboard.noValid"));
       return;
     }
     setIsOnboarding(true);
@@ -98,7 +100,7 @@ export default function BulkOnboardPage() {
       setStep(2);
     } catch (err: unknown) {
       const errObj = err as { response?: { data?: { message?: string } }; message?: string };
-      toast.error(errObj?.response?.data?.message || errObj?.message || "Onboarding failed");
+      toast.error(errObj?.response?.data?.message || errObj?.message || t("ui.bulkOnboard.onboardFailed"));
     } finally {
       setIsOnboarding(false);
     }
@@ -125,13 +127,13 @@ export default function BulkOnboardPage() {
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <p style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "var(--admin-font-tertiary)", marginBottom: 4 }}>
-          Student Management
+          {t("ui.bulkOnboard.eyebrow")}
         </p>
         <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
-          Bulk Student Onboarding
+          {t("ui.bulkOnboard.title")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
-          Upload a CSV roster or enter students manually, preview, then onboard in one click.
+          {t("ui.bulkOnboard.subtitle")}
         </p>
       </motion.div>
 

@@ -71,7 +71,7 @@ export function PortfolioFormDialog({
               ) : (
                 <>
                   <Plus className="w-4 h-4 text-muted-foreground" />
-                  {t("portfolio.addItem", "Add New Experience")}
+                  {t("student:portfolio.addItem", "Add New Experience")}
                 </>
               )}
             </DialogTitle>
@@ -85,7 +85,7 @@ export function PortfolioFormDialog({
 
         <div className="p-5 space-y-4">
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Type of Experience</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("studentUi.portfolio.form.type")}</label>
             <Select
               value={formData.type}
               onValueChange={(v) =>
@@ -100,7 +100,7 @@ export function PortfolioFormDialog({
                   (type) => (
                     <SelectItem key={type} value={type} className="cursor-pointer">
                       <div className="flex items-center gap-2">
-                        {typeConfig[type].label}
+                        {t(typeConfig[type].label)}
                       </div>
                     </SelectItem>
                   )
@@ -110,9 +110,9 @@ export function PortfolioFormDialog({
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Title *</label>
+            <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("studentUi.portfolio.form.title")}</label>
             <Input
-              placeholder="E.g., Varsity Team Captain, Software Engineer Intern..."
+              placeholder={t("studentUi.portfolio.form.titlePlaceholder")}
               className="h-10 bg-secondary border-border"
               value={formData.title}
               onChange={(e) =>
@@ -123,9 +123,9 @@ export function PortfolioFormDialog({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Organization / School</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("studentUi.portfolio.form.organization")}</label>
               <Input
-                placeholder="Where did this happen?"
+                placeholder={t("studentUi.portfolio.form.organizationPlaceholder")}
                 className="h-10 bg-secondary border-border"
                 value={formData.organization}
                 onChange={(e) =>
@@ -135,9 +135,9 @@ export function PortfolioFormDialog({
             </div>
 
             <div className="space-y-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Role / Position</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("studentUi.portfolio.form.role")}</label>
               <Input
-                placeholder="What was your title?"
+                placeholder={t("studentUi.portfolio.form.rolePlaceholder")}
                 className="h-10 bg-secondary border-border"
                 value={formData.role}
                 onChange={(e) =>
@@ -149,7 +149,7 @@ export function PortfolioFormDialog({
 
           <div className="space-y-1">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Description</label>
+              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("studentUi.portfolio.form.description")}</label>
               <div className="flex items-center gap-2">
                 <Button
                   type="button"
@@ -164,7 +164,7 @@ export function PortfolioFormDialog({
                   ) : (
                     <Sparkles className="w-3 h-3" />
                   )}
-                  Polish with AI
+                  {t("studentUi.portfolio.form.polishWithAi")}
                 </Button>
                 <span className={`text-xs tabular-nums ${(formData.description ?? "").length > 150 ? "text-rose-500" : "text-muted-foreground"}`}>
                   {(formData.description ?? "").length}/150
@@ -172,7 +172,7 @@ export function PortfolioFormDialog({
               </div>
             </div>
             <Textarea
-              placeholder="Describe your responsibilities and what you learned..."
+              placeholder={t("studentUi.portfolio.form.descriptionPlaceholder")}
               className="resize-none bg-secondary border-border min-h-[80px]"
               value={formData.description}
               maxLength={150}
@@ -215,7 +215,7 @@ export function PortfolioFormDialog({
             </div>
             <div className="space-y-1 col-span-2 md:col-span-1">
               <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                {t("portfolio.totalHours", "Total Hours")}
+                {t("studentUi.portfolio.form.totalHours")}
               </label>
               <Input
                 type="number"
@@ -238,7 +238,7 @@ export function PortfolioFormDialog({
                 htmlFor="portfolio-activity-category"
                 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
               >
-                Activity Category
+                {t("studentUi.portfolio.form.activityCategory")}
               </label>
               <Select
                 value={formData.activityCategory ?? "other"}
@@ -255,7 +255,7 @@ export function PortfolioFormDialog({
                 <SelectContent>
                   {activityCategories.map(({ value, label }) => (
                     <SelectItem key={value} value={value} className="cursor-pointer">
-                      {label}
+                      {t(label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -266,7 +266,7 @@ export function PortfolioFormDialog({
                 htmlFor="portfolio-hours-per-week"
                 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
               >
-                Hours/Week
+                {t("studentUi.portfolio.form.hoursPerWeek")}
               </label>
               <Input
                 id="portfolio-hours-per-week"
@@ -287,7 +287,7 @@ export function PortfolioFormDialog({
                 htmlFor="portfolio-weeks-per-year"
                 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
               >
-                Weeks/Year
+                {t("studentUi.portfolio.form.weeksPerYear")}
               </label>
               <Input
                 id="portfolio-weeks-per-year"
@@ -316,7 +316,7 @@ export function PortfolioFormDialog({
             disabled={!formData.title.trim() || isPending}
           >
             {editingItem
-              ? t("common.save", "Save Changes")
+              ? t("common.saveChanges", "Save Changes")
               : t("portfolio.create", "Create Experience")}
           </Button>
         </div>

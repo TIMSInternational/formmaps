@@ -72,7 +72,7 @@ export default function AIInsightsPage() {
           </p>
         </div>
         <button onClick={handleHeaderAction} disabled={isLoading || isFetching}
-          title={!eligible ? "AI regeneration unlocks at 90% assessment completion — refreshes progress for now" : undefined}
+          title={!eligible ? t("ui.insights.regenLocked") : undefined}
           style={{
             height: 36, borderRadius: 8, padding: "0 18px", fontSize: 13, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 6,

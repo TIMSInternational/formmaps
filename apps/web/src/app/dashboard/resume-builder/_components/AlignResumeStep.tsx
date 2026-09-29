@@ -14,6 +14,7 @@ import {
   ArrowLeft,
   ArrowRight,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { ExtractedJobData } from "@/types/resume";
 
 export interface AlignConfig {
@@ -63,6 +64,7 @@ export function AlignResumeStep({
   onGenerate,
   onBack,
 }: AlignResumeStepProps) {
+  const { t } = useTranslation();
   const [config, setConfig] = useState<AlignConfig>({
     enhanceSummary: false,
     enhanceSkills: true,
@@ -169,10 +171,10 @@ export function AlignResumeStep({
           transition={{ duration: 0.3 }}
         >
           <h3 className="text-sm font-semibold text-foreground mb-1">
-            1. Choose sections to enhance
+            {t("resumeBuilder.alignStep.chooseSections", "1. Choose sections to enhance")}
           </h3>
           <p className="text-xs text-muted-foreground mb-4">
-            Select which parts of your resume to tailor for this role.
+            {t("resumeBuilder.alignStep.chooseSectionsHint", "Select which parts of your resume to tailor for this role.")}
           </p>
 
           <div className="space-y-2.5">
@@ -202,7 +204,7 @@ export function AlignResumeStep({
                     </div>
                     <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
                     <span className="text-sm font-medium text-foreground flex-1">
-                      {section.label}
+                      {t(`resumeBuilder.alignStep.sections.${section.key}.label`, section.label)}
                     </span>
                     <div
                       className="relative"
@@ -212,7 +214,7 @@ export function AlignResumeStep({
                       <Info className="h-3.5 w-3.5 text-muted-foreground" />
                       {hoveredTooltip === section.key && (
                         <div className="absolute right-0 bottom-full mb-2 w-52 rounded-lg border border-border bg-background p-2.5 text-xs text-muted-foreground z-10">
-                          {section.tooltip}
+                          {t(`resumeBuilder.alignStep.sections.${section.key}.tooltip`, section.tooltip)}
                         </div>
                       )}
                     </div>
@@ -248,9 +250,9 @@ export function AlignResumeStep({
                           }
                           className="text-xs text-foreground text-left"
                         >
-                          Quick Edit{" "}
+                          {t("resumeBuilder.alignStep.quickEdit", "Quick Edit")}{" "}
                           <span className="text-muted-foreground">
-                            (First 2 key experiences)
+                            {t("resumeBuilder.alignStep.quickEditHint", "(First 2 key experiences)")}
                           </span>
                         </button>
                       </label>
@@ -276,9 +278,9 @@ export function AlignResumeStep({
                           }
                           className="text-xs text-foreground text-left"
                         >
-                          Full Edit{" "}
+                          {t("resumeBuilder.alignStep.fullEdit", "Full Edit")}{" "}
                           <span className="text-muted-foreground">
-                            (All experiences, longer processing)
+                            {t("resumeBuilder.alignStep.fullEditHint", "(All experiences, longer processing)")}
                           </span>
                         </button>
                       </label>
@@ -299,7 +301,7 @@ export function AlignResumeStep({
         >
           <div className="flex items-center justify-between mb-1">
             <h3 className="text-sm font-semibold text-foreground">
-              2. Add missing keywords
+              {t("resumeBuilder.alignStep.addKeywords", "2. Add missing keywords")}
             </h3>
             <span className="text-xs text-muted-foreground">
               {selectedKeywords.size}/{allKeywords.length}
@@ -307,7 +309,7 @@ export function AlignResumeStep({
           </div>
           <div className="flex items-center justify-between mb-4">
             <p className="text-xs text-muted-foreground">
-              Keywords from the job posting not found in your resume.
+              {t("resumeBuilder.alignStep.addKeywordsHint", "Keywords from the job posting not found in your resume.")}
             </p>
             <button
               type="button"
@@ -315,8 +317,8 @@ export function AlignResumeStep({
               className="text-xs font-medium text-emerald-600 hover:text-emerald-700 transition-colors"
             >
               {selectedKeywords.size === allKeywords.length
-                ? "Deselect all"
-                : "Select all"}
+                ? t("resumeBuilder.alignStep.deselectAll", "Deselect all")
+                : t("resumeBuilder.alignStep.selectAll", "Select all")}
             </button>
           </div>
 
@@ -357,6 +359,7 @@ export function AlignResumeStep({
                     <button
                       type="button"
                       onClick={() => removeCustomKeyword(keyword)}
+                      aria-label={t("resumeBuilder.a11y.removeKeyword", { keyword })}
                       className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-red-500 transition-all"
                     >
                       <X className="h-3 w-3" />
@@ -368,7 +371,7 @@ export function AlignResumeStep({
 
             {allKeywords.length === 0 && (
               <p className="text-xs text-muted-foreground py-4 text-center">
-                No keywords extracted from the job posting.
+                {t("resumeBuilder.alignStep.noKeywords", "No keywords extracted from the job posting.")}
               </p>
             )}
           </div>
@@ -385,7 +388,7 @@ export function AlignResumeStep({
                   addCustomKeyword();
                 }
               }}
-              placeholder="Add keyword..."
+              placeholder={t("resumeBuilder.alignStep.addKeywordPlaceholder", "Add keyword...")}
               className="flex-1 rounded-lg border border-border bg-background px-3 py-2 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500"
             />
             <button
@@ -395,7 +398,7 @@ export function AlignResumeStep({
               className="flex items-center gap-1 rounded-lg border border-border bg-secondary px-3 py-2 text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Plus className="h-3 w-3" />
-              Add
+              {t("resumeBuilder.alignStep.add", "Add")}
             </button>
           </div>
         </motion.div>
@@ -414,7 +417,7 @@ export function AlignResumeStep({
           className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t("common.back", "Back")}
         </button>
         <button
           type="button"
@@ -422,7 +425,7 @@ export function AlignResumeStep({
           disabled={!hasAnySectionSelected}
           className="flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          Generate My New Resume
+          {t("resumeBuilder.alignStep.generate", "Generate My New Resume")}
           <ArrowRight className="h-4 w-4" />
         </button>
       </motion.div>

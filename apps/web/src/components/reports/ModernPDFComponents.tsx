@@ -17,6 +17,7 @@ import {
   Page,
   Line,
 } from '@react-pdf/renderer';
+import { usePdfT } from './pdfI18n';
 
 // Standard fonts
 const primaryFont = 'Helvetica';
@@ -168,7 +169,9 @@ export const GenericPageLayout = ({
   sidebarContent: React.ReactNode; 
   pageNum: number; 
   totalPages: number; 
-}) => (
+}) => {
+  const t = usePdfT();
+  return (
   <Page size="A4" style={modernStyles.page}>
      {/* Sidebar */}
      <View style={modernStyles.sidebar}>
@@ -177,15 +180,15 @@ export const GenericPageLayout = ({
            {/* Logo Placeholder */}
            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ width: 24, height: 24, borderRadius: 6, backgroundColor: modernColors.primary }} />
-              <Text style={{ fontSize: 14, fontFamily: primaryFontBold, color: modernColors.textOnDark }}>TimCare</Text>
+              <Text style={{ fontSize: 14, fontFamily: primaryFontBold, color: modernColors.textOnDark }}>FormMaps</Text>
            </View>
         </View>
         
         {sidebarContent}
 
         <View style={modernStyles.sidebarFooter}>
-           <Text style={{ fontSize: 8, color: modernColors.textMutedOnDark, marginBottom: 4 }}>Report ID: TC-GEN-001</Text>
-           <Text style={{ fontSize: 8, color: modernColors.textMutedOnDark }}>Page {pageNum} of {totalPages}</Text>
+           <Text style={{ fontSize: 8, color: modernColors.textMutedOnDark, marginBottom: 4 }}>{t('components.modernPdf.reportId', { id: 'TC-GEN-001' })}</Text>
+           <Text style={{ fontSize: 8, color: modernColors.textMutedOnDark }}>{t('components.modernPdf.pageOf', { page: pageNum, total: totalPages })}</Text>
         </View>
      </View>
 
@@ -213,7 +216,8 @@ export const GenericPageLayout = ({
         {children}
      </View>
   </Page>
-);
+  );
+};
 
 export const HolographicGauge = ({ score, label, color = modernColors.primary }: { score: number; label: string; color?: string }) => {
   const size = 120;
@@ -271,13 +275,15 @@ export const CleanEditorialLayout = ({
   subtitle?: string;
   pageNum: number; 
   totalPages: number; 
-}) => (
+}) => {
+  const t = usePdfT();
+  return (
   <Page size="A4" style={{ backgroundColor: '#ffffff', padding: 32, fontFamily: primaryFont, color: modernColors.textPrimary }}>
      {/* Minimalist Header */}
      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, borderBottomWidth: 1, borderBottomColor: modernColors.gridLines, paddingBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: modernColors.primary }} />
-            <Text style={{ fontSize: 10, fontFamily: primaryFontBold, color: modernColors.dark, letterSpacing: 1 }}>TIMCARE INTELLIGENCE</Text>
+            <Text style={{ fontSize: 10, fontFamily: primaryFontBold, color: modernColors.dark, letterSpacing: 1 }}>FORMMAPS INTELLIGENCE</Text>
         </View>
         <View>
             <Text style={{ fontSize: 9, color: modernColors.primary, letterSpacing: 2, fontFamily: primaryFontBold, textTransform: 'uppercase', textAlign: 'right' }}>{title}</Text>
@@ -292,11 +298,12 @@ export const CleanEditorialLayout = ({
 
      {/* Footer */}
      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: modernColors.gridLines }}>
-         <Text style={{ fontSize: 8, color: modernColors.textSecondary }}>CONFIDENTIAL ASSESSMENT REPORT</Text>
-         <Text style={{ fontSize: 8, color: modernColors.textSecondary }}>Page {pageNum} of {totalPages}</Text>
+         <Text style={{ fontSize: 8, color: modernColors.textSecondary }}>{t('components.modernPdf.confidentialReport')}</Text>
+         <Text style={{ fontSize: 8, color: modernColors.textSecondary }}>{t('components.modernPdf.pageOf', { page: pageNum, total: totalPages })}</Text>
      </View>
   </Page>
-);
+  );
+};
 
 export const DarkEditorialLayout = ({ 
   children, 
@@ -308,7 +315,9 @@ export const DarkEditorialLayout = ({
   title: string;
   pageNum: number; 
   totalPages: number; 
-}) => (
+}) => {
+  const t = usePdfT();
+  return (
   <Page size="A4" style={{ backgroundColor: '#020410', padding: 32, fontFamily: primaryFont, color: '#f1f5f9' }}>
      {/* Ambient Background Glows */}
      <Svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
@@ -325,7 +334,7 @@ export const DarkEditorialLayout = ({
      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 32, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.1)', paddingBottom: 16 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ width: 16, height: 16, borderRadius: 4, backgroundColor: modernColors.primary }} />
-            <Text style={{ fontSize: 10, fontFamily: primaryFontBold, color: '#f8fafc', letterSpacing: 1 }}>TIMCARE INTELLIGENCE</Text>
+            <Text style={{ fontSize: 10, fontFamily: primaryFontBold, color: '#f8fafc', letterSpacing: 1 }}>FORMMAPS INTELLIGENCE</Text>
         </View>
         <Text style={{ fontSize: 9, color: modernColors.primary, letterSpacing: 2, fontFamily: primaryFontBold, textTransform: 'uppercase' }}>{title}</Text>
      </View>
@@ -337,11 +346,12 @@ export const DarkEditorialLayout = ({
 
      {/* Footer */}
      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)' }}>
-         <Text style={{ fontSize: 8, color: '#64748b' }}>CONFIDENTIAL ASSESSMENT REPORT</Text>
-         <Text style={{ fontSize: 8, color: '#64748b' }}>Page {pageNum} of {totalPages}</Text>
+         <Text style={{ fontSize: 8, color: '#64748b' }}>{t('components.modernPdf.confidentialReport')}</Text>
+         <Text style={{ fontSize: 8, color: '#64748b' }}>{t('components.modernPdf.pageOf', { page: pageNum, total: totalPages })}</Text>
      </View>
   </Page>
-);
+  );
+};
 
 // --- Premium "Ethereal" Components (Dark Mode Optimized) ---
 
@@ -393,7 +403,9 @@ export const InfoCard = ({ title, value, icon, subtext }: { title: string; value
 // --- "Ethereal Clarity" Creative Elements ---
 // (Graphics removed for pure minimalist aesthetic, refined with structural grid)
 
-export const ModernCoverPage = ({ title, subtitle, userName, date }: { title: string; subtitle: string; userName: string; date: string }) => (
+export const ModernCoverPage = ({ title, subtitle, userName, date }: { title: string; subtitle: string; userName: string; date: string }) => {
+  const t = usePdfT();
+  return (
   <View style={{ flex: 1, backgroundColor: '#020410', position: 'relative', overflow: 'hidden' }}>
     <Svg style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}>
        <Defs>
@@ -434,13 +446,13 @@ export const ModernCoverPage = ({ title, subtitle, userName, date }: { title: st
            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                <View style={{ width: 22, height: 22, backgroundColor: '#2dd4bf', borderRadius: 6, opacity: 0.9 }} /> {/* Teal Brand Color */}
                <View>
-                   <Text style={{ fontSize: 12, color: '#f1f5f9', letterSpacing: 2, fontFamily: 'Helvetica-Bold' }}>TIMCARE</Text>
-                   <Text style={{ fontSize: 9, color: '#94a3b8', letterSpacing: 1 }}>ANALYTICS DIVISION</Text>
+                   <Text style={{ fontSize: 12, color: '#f1f5f9', letterSpacing: 2, fontFamily: 'Helvetica-Bold' }}>FORMMAPS</Text>
+                   <Text style={{ fontSize: 9, color: '#94a3b8', letterSpacing: 1 }}>{t('components.modernPdf.analyticsDivision')}</Text>
                </View>
            </View>
            <View>
-                <Text style={{ fontSize: 10, color: '#64748b', textAlign: 'right', letterSpacing: 1 }}>CONFIDENTIAL</Text>
-                <Text style={{ fontSize: 10, color: '#475569', textAlign: 'right' }}>SERIES IV / {new Date().getFullYear()}</Text>
+                <Text style={{ fontSize: 10, color: '#64748b', textAlign: 'right', letterSpacing: 1 }}>{t('components.modernPdf.confidential')}</Text>
+                <Text style={{ fontSize: 10, color: '#475569', textAlign: 'right' }}>{t('components.modernPdf.series', { year: new Date().getFullYear() })}</Text>
            </View>
        </View>
 
@@ -456,44 +468,44 @@ export const ModernCoverPage = ({ title, subtitle, userName, date }: { title: st
                     fontFamily: 'Helvetica-Bold',
                     textTransform: 'uppercase'
                 }}>
-                    Quantitative Profile
+                    {t('components.modernPdf.quantitativeProfile')}
                 </Text>
            </View>
            
            {/* Massive Typography - Mixed Opacities for Depth */}
            <View>
                <Text style={{ fontSize: 64, color: '#f8fafc', fontFamily: 'Helvetica-Bold', lineHeight: 0.9, letterSpacing: -2 }}>
-                   LABOR
+                   {t('components.modernPdf.coverLine1')}
                </Text>
                <Text style={{ fontSize: 64, color: '#f8fafc', fontFamily: 'Helvetica-Bold', lineHeight: 0.9, letterSpacing: -2 }}>
-                   INTELLIGENCE
+                   {t('components.modernPdf.coverLine2')}
                </Text>
                <Text style={{ fontSize: 64, color: '#475569', fontFamily: 'Helvetica-Bold', lineHeight: 0.9, letterSpacing: -2 }}>
-                   ANALYSIS
+                   {t('components.modernPdf.coverLine3')}
                </Text>
            </View>
 
            {/* New Content: Report Highlights / "Table of Contents" Teaser */}
            {/* Placed in the negative space to the right or below */}
            <View style={{ marginTop: 40, marginLeft: 4, paddingLeft: 16, borderLeftWidth: 1, borderLeftColor: 'rgba(255,255,255,0.1)' }}>
-               <Text style={{ fontSize: 10, color: '#64748b', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'Helvetica-Bold' }}>Report Contents</Text>
+               <Text style={{ fontSize: 10, color: '#64748b', marginBottom: 16, textTransform: 'uppercase', letterSpacing: 1, fontFamily: 'Helvetica-Bold' }}>{t('components.modernPdf.reportContents')}</Text>
                
                <View style={{ gap: 10 }}>
                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                        <Text style={{ fontSize: 11, color: '#2dd4bf', fontFamily: 'Helvetica-Bold', width: 24 }}>01</Text>
-                       <Text style={{ fontSize: 11, color: '#cbd5e1' }}>Executive Summary & Strategy</Text>
+                       <Text style={{ fontSize: 11, color: '#cbd5e1' }}>{t('components.modernPdf.toc1')}</Text>
                    </View>
                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                        <Text style={{ fontSize: 11, color: '#2dd4bf', fontFamily: 'Helvetica-Bold', width: 24 }}>02</Text>
-                       <Text style={{ fontSize: 11, color: '#cbd5e1' }}>MIL Dimensions</Text>
+                       <Text style={{ fontSize: 11, color: '#cbd5e1' }}>{t('components.modernPdf.toc2')}</Text>
                    </View>
                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                        <Text style={{ fontSize: 11, color: '#2dd4bf', fontFamily: 'Helvetica-Bold', width: 24 }}>03</Text>
-                       <Text style={{ fontSize: 11, color: '#cbd5e1' }}>Behavioral Patterns</Text>
+                       <Text style={{ fontSize: 11, color: '#cbd5e1' }}>{t('components.modernPdf.toc3')}</Text>
                    </View>
                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                        <Text style={{ fontSize: 11, color: '#2dd4bf', fontFamily: 'Helvetica-Bold', width: 24 }}>04</Text>
-                       <Text style={{ fontSize: 11, color: '#cbd5e1' }}>Career Alignment</Text>
+                       <Text style={{ fontSize: 11, color: '#cbd5e1' }}>{t('components.modernPdf.toc4')}</Text>
                    </View>
                </View>
            </View>
@@ -507,14 +519,14 @@ export const ModernCoverPage = ({ title, subtitle, userName, date }: { title: st
            justifyContent: 'space-between'
        }}>
             <View>
-                <Text style={{ fontSize: 9, color: '#64748b', letterSpacing: 1, marginBottom: 4, textTransform: 'uppercase' }}>Candidate</Text>
+                <Text style={{ fontSize: 9, color: '#64748b', letterSpacing: 1, marginBottom: 4, textTransform: 'uppercase' }}>{t('components.modernPdf.candidate')}</Text>
                 <Text style={{ fontSize: 32, color: '#f8fafc', fontFamily: 'Helvetica-Bold', letterSpacing: -0.5 }}>{userName}</Text>
-                <Text style={{ fontSize: 10, color: '#94a3b8', marginTop: 4 }}>Assessment ID: TC-{Math.floor(Math.random() * 1000000)}</Text>
+                <Text style={{ fontSize: 10, color: '#94a3b8', marginTop: 4 }}>{t('components.modernPdf.assessmentId', { id: `TC-${Math.floor(Math.random() * 1000000)}` })}</Text>
             </View>
 
             <View style={{ alignItems: 'flex-end' }}>
                  <View style={{ backgroundColor: 'rgba(45, 212, 191, 0.1)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 4 }}>
-                     <Text style={{ fontSize: 9, color: '#2dd4bf', fontFamily: 'Helvetica-Bold' }}>98% COMPLETE</Text>
+                     <Text style={{ fontSize: 9, color: '#2dd4bf', fontFamily: 'Helvetica-Bold' }}>{t('components.modernPdf.complete', { percent: 98 })}</Text>
                  </View>
                  <Text style={{ fontSize: 9, color: '#64748b', marginTop: 8 }}>{date}</Text>
             </View>
@@ -522,11 +534,14 @@ export const ModernCoverPage = ({ title, subtitle, userName, date }: { title: st
 
     </View>
   </View>
-);
+  );
+};
 
 // --- Behavioral Visuals ---
 
-export const SpeedAccuracyVisual = ({ color }: { color: string }) => (
+export const SpeedAccuracyVisual = ({ color }: { color: string }) => {
+  const t = usePdfT();
+  return (
   <Svg width="100%" height="40" viewBox="0 0 200 40">
       {/* Track */}
       <Rect x="0" y="18" width="200" height="4" rx="2" fill="#f1f5f9" />
@@ -536,10 +551,11 @@ export const SpeedAccuracyVisual = ({ color }: { color: string }) => (
       <Circle cx="150" cy="20" r="6" fill={color} />
       <Circle cx="150" cy="20" r="3" fill="#fff" />
       {/* Labels */}
-      <Text x="0" y="35" style={{ fontSize: 9, fill: "#94a3b8", letterSpacing: 2 }}>SPEED</Text>
-      <Text x="150" y="35" style={{ fontSize: 9, fill: "#94a3b8", letterSpacing: 2 }}>PRECISION</Text>
+      <Text x="0" y="35" style={{ fontSize: 9, fill: "#94a3b8", letterSpacing: 2 }}>{t('components.modernPdf.speed')}</Text>
+      <Text x="150" y="35" style={{ fontSize: 9, fill: "#94a3b8", letterSpacing: 2 }}>{t('components.modernPdf.precision')}</Text>
   </Svg>
-);
+  );
+};
 
 export const StressPulseVisual = ({ color }: { color: string }) => (
     <Svg width="100%" height="40" viewBox="0 0 200 40">

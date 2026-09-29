@@ -5,12 +5,14 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { TrendingDown, BarChart3, FileText } from "lucide-react";
 import { CounselorTabBar } from "../_components/CounselorTabBar";
 import dynamic from "next/dynamic";
+import { useTranslation } from "react-i18next";
 
 const AcademicGapsPanel = dynamic(() => import("../academic-gaps/page"), { ssr: false });
 const InsightsPanel = dynamic(() => import("../insights/page"), { ssr: false });
 const ReportsPanel = dynamic(() => import("../reports/page"), { ssr: false });
 
 export default function CounselorAcademicsPage() {
+  const { t } = useTranslation("counselor");
   const searchParams = useSearchParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("gaps");
@@ -30,18 +32,18 @@ export default function CounselorAcademicsPage() {
     <div className="space-y-6">
       <div>
         <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
-          Academics
+          {t("nav.academics")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-          Academic gap analysis, caseload insights, and student reports
+          {t("ui.academics.subtitle")}
         </p>
       </div>
 
       <CounselorTabBar
         tabs={[
-          { key: "gaps", label: "Academic Gaps", icon: TrendingDown },
-          { key: "insights", label: "Caseload Insights", icon: BarChart3 },
-          { key: "reports", label: "Reports", icon: FileText },
+          { key: "gaps", label: t("dashboard.academicGaps"), icon: TrendingDown },
+          { key: "insights", label: t("ui.academics.tabInsights"), icon: BarChart3 },
+          { key: "reports", label: t("ui.academics.tabReports"), icon: FileText },
         ]}
         activeTab={activeTab}
         onChange={handleTabChange}

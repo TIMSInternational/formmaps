@@ -88,7 +88,7 @@ export default function LIAResultsPage() {
           </h1>
           <p className="text-gray-600 mb-6">
             {language === "es"
-              ? "Aún no has completado la evaluación MIL."
+              ? "Aún no has completado la evaluación LIA."
               : "You have not completed the LIA assessment yet."}
           </p>
           <button
@@ -105,12 +105,13 @@ export default function LIAResultsPage() {
   // Feed the existing PDF with REAL percentiles from the parity engine.
   const liaReportData = buildLIAReportData({
     user: { id: user.id, name: user.name, email: user.email },
+    language,
     overallScore: Math.round(results.global_percentile),
     subtests: SUBTEST_ORDER.map((subtest) => {
       const counts = results.response_counts?.[subtest];
       const answered = (counts?.correct || 0) + (counts?.incorrect || 0);
       return {
-        name: SUBTEST_DESCRIPTIONS[subtest].name.en,
+        name: SUBTEST_DESCRIPTIONS[subtest].name[language],
         score: Math.round(results.percentiles?.[subtest] ?? 0),
         accuracy: answered > 0 ? Math.round(((counts?.correct || 0) / answered) * 100) : 0,
       };

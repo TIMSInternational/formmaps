@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import { format, addDays, isSameDay, startOfDay } from "date-fns";
+import { es, enUS } from "date-fns/locale";
 import {
   Calendar,
   Clock,
@@ -61,8 +62,11 @@ const TOPIC_KEYS: Record<string, string> = {
 
 export default function BookCounselorPage() {
   const router = useRouter();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useGlobalStore();
+  const isEs = i18n.language?.startsWith("es") ?? false;
+  const dfLocale = isEs ? es : enUS;
+  const fmtFullDate = isEs ? "EEEE, d 'de' MMMM 'de' yyyy" : "EEEE, MMMM d, yyyy";
 
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [calendarWeekStart, setCalendarWeekStart] = useState<Date>(startOfDay(new Date()));
@@ -202,7 +206,7 @@ export default function BookCounselorPage() {
               <Badge className="bg-green-100 text-green-700 border-0 mb-4">{t("counselorBooking.freeSession")}</Badge>
               <h2 className="text-2xl font-bold text-foreground mb-2">{t("counselorBooking.booked")}</h2>
               <p className="text-gray-500 text-sm mb-1 font-medium">
-                {selectedSlot && format(new Date(selectedSlot.start), "EEEE, MMMM d, yyyy")}
+                {selectedSlot && format(new Date(selectedSlot.start), fmtFullDate, { locale: dfLocale })}
               </p>
               <p className="text-gray-500 text-sm mb-6">
                 {selectedSlot && `${format(new Date(selectedSlot.start), "h:mm a")} – ${format(new Date(selectedSlot.end), "h:mm a")}`}
@@ -255,7 +259,7 @@ export default function BookCounselorPage() {
                 <CardContent>
                   <Select value={selectedCounselorId} onValueChange={setSelectedCounselorId}>
                     <SelectTrigger className="w-full h-11">
-                      <SelectValue placeholder="Select a counselor" />
+                      <SelectValue placeholder={t("counselorBooking.selectCounselor")} />
                     </SelectTrigger>
                     <SelectContent>
                       {counselors.map((c) => (
@@ -283,7 +287,7 @@ export default function BookCounselorPage() {
                       <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <span className="text-sm font-medium text-gray-600 min-w-[120px] text-center">
-                      {format(calendarWeekStart, "MMM d")} – {format(addDays(calendarWeekStart, 6), "MMM d, yyyy")}
+                      {format(calendarWeekStart, isEs ? "d MMM" : "MMM d", { locale: dfLocale })} – {format(addDays(calendarWeekStart, 6), isEs ? "d MMM yyyy" : "MMM d, yyyy", { locale: dfLocale })}
                     </span>
                     <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg"
                       onClick={() => setCalendarWeekStart(d => addDays(d, 7))}>
@@ -308,7 +312,7 @@ export default function BookCounselorPage() {
                           ${isPast ? "text-gray-300 cursor-not-allowed" : "cursor-pointer"}`}
                       >
                         <span className="text-[10px] uppercase tracking-wide mb-1">
-                          {format(day, "EEE")}
+                          {format(day, "EEE", { locale: dfLocale })}
                         </span>
                         <span className="text-base font-bold">{format(day, "d")}</span>
                       </button>
@@ -323,7 +327,7 @@ export default function BookCounselorPage() {
               <CardHeader className="pb-3">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Clock className="h-4 w-4 text-indigo-500" />
-                  {t("counselorBooking.availableTimes")} — {format(selectedDate, "EEEE, MMMM d")}
+                  {t("counselorBooking.availableTimes")} — {format(selectedDate, isEs ? "EEEE, d 'de' MMMM" : "EEEE, MMMM d", { locale: dfLocale })}
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -375,7 +379,7 @@ export default function BookCounselorPage() {
               <CardContent className="space-y-4">
                 {selectedSlot && (
                   <div className="p-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-                    <p className="text-sm font-semibold text-indigo-700">{format(new Date(selectedSlot.start), "EEEE, MMMM d, yyyy")}</p>
+                    <p className="text-sm font-semibold text-indigo-700">{format(new Date(selectedSlot.start), fmtFullDate, { locale: dfLocale })}</p>
                     <p className="text-sm text-indigo-600">
                       {format(new Date(selectedSlot.start), "h:mm a")} – {format(new Date(selectedSlot.end), "h:mm a")} (30 min)
                     </p>

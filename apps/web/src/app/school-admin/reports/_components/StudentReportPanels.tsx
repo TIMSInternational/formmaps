@@ -34,6 +34,7 @@ interface ReportRowProps {
 }
 
 function ReportRow({ icon: Icon, label, desc, format, loading, onDownload, onPrint }: ReportRowProps) {
+  const { t } = useTranslation();
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: 12, padding: "12px 14px",
@@ -55,7 +56,7 @@ function ReportRow({ icon: Icon, label, desc, format, loading, onDownload, onPri
             background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)",
             border: "1px solid var(--admin-border-default)", cursor: "pointer",
           }}>
-            <FileText style={{ width: 12, height: 12 }} /> Print
+            <FileText style={{ width: 12, height: 12 }} /> {t("school_admin:ui.reports.print")}
           </button>
         )}
         <button onClick={onDownload} disabled={loading} style={{
@@ -66,7 +67,7 @@ function ReportRow({ icon: Icon, label, desc, format, loading, onDownload, onPri
           opacity: loading ? 0.7 : 1,
         }}>
           {loading ? <Loader2 style={{ width: 13, height: 13, animation: "spin 1s linear infinite" }} /> : <Download style={{ width: 13, height: 13 }} />}
-          Download
+          {t("school_admin:ui.reports.download")}
         </button>
       </div>
     </div>
@@ -123,8 +124,8 @@ function PCAReports({ student }: { student: StudentRecord }) {
       const a = document.createElement("a"); a.href = url;
       a.download = `PCA-Chart-${student.name.replace(/\s+/g, "-")}.png`; a.click();
       URL.revokeObjectURL(url);
-      toast.success("PCA chart downloaded");
-    } catch { toast.error("Failed to download chart"); }
+      toast.success(t("school_admin:ui.reports.pcaChartDownloaded"));
+    } catch { toast.error(t("school_admin:ui.reports.chartDownloadFailed")); }
     setLoading(null);
   };
 
@@ -176,8 +177,8 @@ function PCAReports({ student }: { student: StudentRecord }) {
       const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
       a.download = `PCA-Full-Report-${student.name.replace(/\s+/g, "-")}.json`; a.click();
-      toast.success("Full PCA report downloaded");
-    } catch { toast.error("Failed to generate report"); }
+      toast.success(t("school_admin:ui.reports.fullPcaDownloaded"));
+    } catch { toast.error(t("school_admin:ui.reports.generateFailed")); }
     setLoading(null);
   };
 
@@ -188,7 +189,7 @@ function PCAReports({ student }: { student: StudentRecord }) {
           <Target style={{ width: 20, height: 20, color: "#8b5cf6" }} />
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary)" }}>{student.name}</div>
-            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>PCA Assessment Reports</div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.reports.pcaTitle")}</div>
           </div>
         </div>
       </div>
@@ -201,27 +202,27 @@ function PCAReports({ student }: { student: StudentRecord }) {
         ) : !pcaCompleted ? (
           <div style={{ padding: 24, textAlign: "center", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
             <XCircle style={{ width: 24, height: 24, color: "var(--admin-font-tertiary)", margin: "0 auto 8px", opacity: 0.4 }} />
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>PCA Not Completed</div>
-            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>Downloads unlock once this student completes the PCA assessment.</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("school_admin:ui.reports.pcaNotCompleted")}</div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>{t("school_admin:ui.reports.pcaLocked")}</div>
           </div>
         ) : (
           <>
-            <ReportRow icon={Image} label="PCA Chart Image" desc="Visual chart of D/I/S/C profile across 3 graphs" format="PNG" loading={loading === "chart"} onDownload={downloadChart} />
+            <ReportRow icon={Image} label={t("school_admin:ui.reports.pcaChartImage")} desc={t("school_admin:ui.reports.pcaChartImageDesc")} format="PNG" loading={loading === "chart"} onDownload={downloadChart} />
             <ReportRow icon={FileText} label={t("pca.reports.informePca")} desc={t("pca.reports.informePcaDesc")} format="PDF" loading={loading === "pca"} onDownload={() => downloadTimsReport("pca", "Informe-PCA")} />
             <ReportRow icon={FileText} label={t("pca.reports.guiaDesarrollo")} desc={t("pca.reports.guiaDesarrolloDesc")} format="PDF" loading={loading === "gd"} onDownload={() => downloadTimsReport("gd", "Guia-Desarrollo")} />
             <ReportRow icon={FileText} label={t("pca.reports.coaching")} desc={t("pca.reports.coachingDesc")} format="PDF" loading={loading === "coaching"} onDownload={() => downloadTimsReport("coaching", "PCA-Coaching")} />
             <ReportRow icon={FileText} label={t("informe.download")} desc={t("informe.desc")} format="PDF" loading={loading === "informe"} onDownload={downloadInforme} />
-            <ReportRow icon={FileText} label="Full PCA Report" desc="PCA scores, competences, and completion data" format="JSON" loading={loading === "full"} onDownload={downloadFullReport}
+            <ReportRow icon={FileText} label={t("school_admin:ui.reports.fullPcaReport")} desc={t("school_admin:ui.reports.fullPcaReportDesc")} format="JSON" loading={loading === "full"} onDownload={downloadFullReport}
               onPrint={() => {
                 if (!d) return;
                 const cmps = ((competences as Record<string, unknown>)?.pcaCmps || []) as Array<Record<string, unknown>>;
-                openPrintableReport("PCA Profile Report", student.name, [
-                  { heading: "PCA Scores", content: `<table><tr><th></th><th>D</th><th>I</th><th>S</th><th>C</th></tr>
-                    <tr><td>Work Adaptation</td><td>${escapeHtml(d.pcaD1)}</td><td>${escapeHtml(d.pcaI1)}</td><td>${escapeHtml(d.pcaS1)}</td><td>${escapeHtml(d.pcaC1)}</td></tr>
-                    <tr><td>Under Pressure</td><td>${escapeHtml(d.pcaD2)}</td><td>${escapeHtml(d.pcaI2)}</td><td>${escapeHtml(d.pcaS2)}</td><td>${escapeHtml(d.pcaC2)}</td></tr>
-                    <tr><td>Self-Image</td><td>${escapeHtml(d.pcaD3)}</td><td>${escapeHtml(d.pcaI3)}</td><td>${escapeHtml(d.pcaS3)}</td><td>${escapeHtml(d.pcaC3)}</td></tr></table>
-                    <p style="font-size:12px;color:#888;">Completed: ${escapeHtml(d.pcaFec || "\u2014")}</p>` },
-                  ...(cmps.length ? [{ heading: `Competences (${cmps.length})`, content: `<table><tr><th>Competency</th><th>Level</th></tr>${cmps.map((c) =>
+                openPrintableReport(t("school_admin:ui.reports.pcaProfileReport"), student.name, [
+                  { heading: t("school_admin:ui.reports.pcaScores"), content: `<table><tr><th></th><th>D</th><th>I</th><th>S</th><th>C</th></tr>
+                    <tr><td>${t("school_admin:ui.reports.workAdaptation")}</td><td>${escapeHtml(d.pcaD1)}</td><td>${escapeHtml(d.pcaI1)}</td><td>${escapeHtml(d.pcaS1)}</td><td>${escapeHtml(d.pcaC1)}</td></tr>
+                    <tr><td>${t("school_admin:ui.reports.underPressure")}</td><td>${escapeHtml(d.pcaD2)}</td><td>${escapeHtml(d.pcaI2)}</td><td>${escapeHtml(d.pcaS2)}</td><td>${escapeHtml(d.pcaC2)}</td></tr>
+                    <tr><td>${t("school_admin:ui.reports.selfImage")}</td><td>${escapeHtml(d.pcaD3)}</td><td>${escapeHtml(d.pcaI3)}</td><td>${escapeHtml(d.pcaS3)}</td><td>${escapeHtml(d.pcaC3)}</td></tr></table>
+                    <p style="font-size:12px;color:#888;">${t("school_admin:ui.reports.completedLabel")} ${escapeHtml(d.pcaFec || "\u2014")}</p>` },
+                  ...(cmps.length ? [{ heading: t("school_admin:ui.reports.competences", { count: cmps.length }), content: `<table><tr><th>${t("school_admin:ui.reports.competency")}</th><th>${t("school_admin:ui.reports.level")}</th></tr>${cmps.map((c) =>
                     `<tr><td>${escapeHtml(c.cmpNom || c.CmpNom)}</td><td><span class="badge" style="background:${(Number(c.level || c.Level)) >= 3 ? "#dcfce7;color:#16a34a" : (Number(c.level || c.Level)) >= 2 ? "#fef9c3;color:#ca8a04" : "#fee2e2;color:#dc2626"}">${escapeHtml(c.level || c.Level)}/3</span></td></tr>`).join("")}</table>` }] : []),
                 ]);
               }}
@@ -229,7 +230,7 @@ function PCAReports({ student }: { student: StudentRecord }) {
             {d?.pcaFec && (
               <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 8 }}>
                 <CheckCircle2 style={{ width: 12, height: 12, display: "inline", verticalAlign: "middle", marginRight: 4, color: "#10b981" }} />
-                Completed: {String(d.pcaFec)}
+                {t("school_admin:ui.reports.completedLabel")} {String(d.pcaFec)}
               </div>
             )}
           </>
@@ -241,6 +242,7 @@ function PCAReports({ student }: { student: StudentRecord }) {
 
 // ── MIL Reports ──
 function MILReports({ student }: { student: StudentRecord }) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState<string | null>(null);
   const [milData, setMilData] = useState<Record<string, unknown> | null>(null);
   const [fetched, setFetched] = useState(false);
@@ -268,8 +270,8 @@ function MILReports({ student }: { student: StudentRecord }) {
       }, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
       a.download = `MIL-Profile-${student.name.replace(/\s+/g, "-")}.json`; a.click();
-      toast.success("MIL profile downloaded");
-    } catch { toast.error("Failed"); }
+      toast.success(t("school_admin:ui.reports.milProfileDownloaded"));
+    } catch { toast.error(t("school_admin:ui.reports.downloadFailed")); }
     setLoading(null);
   };
 
@@ -286,8 +288,8 @@ function MILReports({ student }: { student: StudentRecord }) {
       }, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
       a.download = `MIL-Exams-${student.name.replace(/\s+/g, "-")}.json`; a.click();
-      toast.success("Exam history downloaded");
-    } catch { toast.error("Failed"); }
+      toast.success(t("school_admin:ui.reports.examHistoryDownloaded"));
+    } catch { toast.error(t("school_admin:ui.reports.downloadFailed")); }
     setLoading(null);
   };
 
@@ -298,7 +300,7 @@ function MILReports({ student }: { student: StudentRecord }) {
           <Brain style={{ width: 20, height: 20, color: "var(--admin-accent-blue)" }} />
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary)" }}>{student.name}</div>
-            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>MIL / LIA Assessment Reports</div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.reports.milTitle")}</div>
           </div>
         </div>
       </div>
@@ -308,32 +310,32 @@ function MILReports({ student }: { student: StudentRecord }) {
         ) : !hasMIL ? (
           <div style={{ padding: 24, textAlign: "center", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
             <XCircle style={{ width: 24, height: 24, color: "var(--admin-font-tertiary)", margin: "0 auto 8px", opacity: 0.4 }} />
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>No MIL/LIA Results</div>
-            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>This student hasn&apos;t completed the cognitive assessments yet.</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("school_admin:ui.reports.noMil")}</div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>{t("school_admin:ui.reports.noMilDesc")}</div>
           </div>
         ) : (
           <>
-            <ReportRow icon={Brain} label="MIL Profile" desc="5 domains: Reasoning, Detection, Numeric, Memory, Orientation" format="JSON" loading={loading === "cognitive"} onDownload={downloadCognitive}
+            <ReportRow icon={Brain} label={t("school_admin:ui.reports.milProfile")} desc={t("school_admin:ui.reports.milProfileDesc")} format="JSON" loading={loading === "cognitive"} onDownload={downloadCognitive}
               onPrint={() => {
                 const cp = (milData?.cognitiveProfile || {}) as Record<string, unknown>;
-                const labels: Record<string, string> = { PatternRecognition: "Pattern Recognition", VerbalReasoning: "Verbal Reasoning", WorkingMemory: "Working Memory", NumericVelocity: "Numeric Velocity", VisualRotation: "Visual Rotation" };
-                openPrintableReport("MIL / LIA Profile", student.name, [
-                  { heading: "Overall Score", content: `<p style="font-size:28px;font-weight:700;">${escapeHtml(milData?.overallScore || 0)}%</p><p style="color:#888;">Completed ${escapeHtml(milData?.completedExams || 0)} of ${escapeHtml(milData?.totalExams || 5)} exams</p>` },
-                  { heading: "MIL Domains", content: `<table><tr><th>Domain</th><th>Score</th><th>Visual</th></tr>${Object.entries(cp).map(([k, v]) => {
+                const labels: Record<string, string> = { PatternRecognition: t("school_admin:ui.reports.domains.PatternRecognition"), VerbalReasoning: t("school_admin:ui.reports.domains.VerbalReasoning"), WorkingMemory: t("school_admin:ui.reports.domains.WorkingMemory"), NumericVelocity: t("school_admin:ui.reports.domains.NumericVelocity"), VisualRotation: t("school_admin:ui.reports.domains.VisualRotation") };
+                openPrintableReport(t("school_admin:ui.reports.milLiaProfile"), student.name, [
+                  { heading: t("school_admin:ui.reports.overallScore"), content: `<p style="font-size:28px;font-weight:700;">${escapeHtml(milData?.overallScore || 0)}%</p><p style="color:#888;">${t("school_admin:ui.reports.completedExamsOf", { completed: escapeHtml(milData?.completedExams || 0), total: escapeHtml(milData?.totalExams || 5) })}</p>` },
+                  { heading: t("school_admin:ui.reports.milDomains"), content: `<table><tr><th>${t("school_admin:ui.reports.domain")}</th><th>${t("school_admin:ui.reports.score")}</th><th>${t("school_admin:ui.reports.visual")}</th></tr>${Object.entries(cp).map(([k, v]) => {
                     const pct = Number(v) || 0;
                     const color = pct >= 70 ? "#16a34a" : pct >= 40 ? "#ca8a04" : "#dc2626";
                     return `<tr><td>${escapeHtml(labels[k] || k)}</td><td style="font-weight:600;">${pct}%</td><td><div class="bar-container"><div class="bar" style="width:${pct}%;background:${color};"></div></div></td></tr>`;
                   }).join("")}</table>` },
-                  ...((milData?.strengths as string[])?.length ? [{ heading: "Strengths", content: `<ul>${(milData.strengths as string[]).map((s: string) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>` }] : []),
-                  ...((milData?.areasForGrowth as string[])?.length ? [{ heading: "Areas for Growth", content: `<ul>${(milData.areasForGrowth as string[]).map((s: string) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>` }] : []),
+                  ...((milData?.strengths as string[])?.length ? [{ heading: t("school_admin:ui.reports.strengths"), content: `<ul>${(milData.strengths as string[]).map((s: string) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>` }] : []),
+                  ...((milData?.areasForGrowth as string[])?.length ? [{ heading: t("school_admin:ui.reports.areasForGrowth"), content: `<ul>${(milData.areasForGrowth as string[]).map((s: string) => `<li>${escapeHtml(s)}</li>`).join("")}</ul>` }] : []),
                 ]);
               }}
             />
-            <ReportRow icon={BarChart3} label="Exam Results History" desc="All exam attempts with scores, timing, and per-question data" format="JSON" loading={loading === "history"} onDownload={downloadExamHistory} />
+            <ReportRow icon={BarChart3} label={t("school_admin:ui.reports.examHistory")} desc={t("school_admin:ui.reports.examHistoryDesc")} format="JSON" loading={loading === "history"} onDownload={downloadExamHistory} />
             {milData?.overallScore != null && (
               <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 8 }}>
-                Overall Score: <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{String(milData.overallScore)}%</span>
-                {milData.completedExams != null && <span> · {String(milData.completedExams)}/{String(milData.totalExams)} exams completed</span>}
+                {t("school_admin:ui.reports.overallScoreLabel")} <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{String(milData.overallScore)}%</span>
+                {milData.completedExams != null && <span> · {t("school_admin:ui.reports.examsCompleted", { completed: String(milData.completedExams), total: String(milData.totalExams) })}</span>}
               </div>
             )}
           </>
@@ -345,6 +347,7 @@ function MILReports({ student }: { student: StudentRecord }) {
 
 // ── 360 Reports ──
 function EvalReports({ student }: { student: StudentRecord }) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState<string | null>(null);
   const [reportData, setReportData] = useState<Record<string, unknown> | null>(null);
   const [fetched, setFetched] = useState(false);
@@ -370,8 +373,8 @@ function EvalReports({ student }: { student: StudentRecord }) {
       }, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
       a.download = `360-Report-${student.name.replace(/\s+/g, "-")}.json`; a.click();
-      toast.success("360 report downloaded");
-    } catch { toast.error("Failed"); }
+      toast.success(t("school_admin:ui.reports.report360Downloaded"));
+    } catch { toast.error(t("school_admin:ui.reports.downloadFailed")); }
     setLoading(null);
   };
 
@@ -388,8 +391,8 @@ function EvalReports({ student }: { student: StudentRecord }) {
       }, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
       a.download = `Career-Profile-${student.name.replace(/\s+/g, "-")}.json`; a.click();
-      toast.success("Career profile downloaded");
-    } catch { toast.error("Failed"); }
+      toast.success(t("school_admin:ui.reports.careerProfileDownloaded"));
+    } catch { toast.error(t("school_admin:ui.reports.downloadFailed")); }
     setLoading(null);
   };
 
@@ -402,7 +405,7 @@ function EvalReports({ student }: { student: StudentRecord }) {
           <Users style={{ width: 20, height: 20, color: "#10b981" }} />
           <div>
             <div style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary)" }}>{student.name}</div>
-            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>360 Evaluation & Comprehensive Reports</div>
+            <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.reports.evalTitle")}</div>
           </div>
         </div>
       </div>
@@ -411,25 +414,25 @@ function EvalReports({ student }: { student: StudentRecord }) {
           <Skeleton className="h-14 w-full" style={{ background: "var(--admin-bg-hover)" }} />
         ) : (
           <>
-            <ReportRow icon={FileText} label="Comprehensive Student Report" desc="Academic, assessments, courses, and career data combined" format="JSON" loading={loading === "comprehensive"} onDownload={downloadComprehensive}
+            <ReportRow icon={FileText} label={t("school_admin:ui.reports.comprehensive")} desc={t("school_admin:ui.reports.comprehensiveDesc")} format="JSON" loading={loading === "comprehensive"} onDownload={downloadComprehensive}
               onPrint={() => {
                 const rd = reportData || {};
                 const s = (rd.student || {}) as Record<string, unknown>;
                 const ac = (rd.academic || {}) as Record<string, unknown>;
                 const ass = (rd.assessments || {}) as Record<string, unknown>;
                 const courses = rd.courses as unknown[] | undefined;
-                openPrintableReport("Comprehensive Student Report", student.name, [
-                  { heading: "Student Information", content: `<table><tr><td><strong>Name:</strong> ${escapeHtml(s.name || student.name)}</td><td><strong>Email:</strong> ${escapeHtml(s.email || student.email)}</td></tr><tr><td><strong>Grade:</strong> ${escapeHtml(s.gradeLevel || "\u2014")}</td><td><strong>Status:</strong> ${escapeHtml(s.status || "active")}</td></tr></table>` },
-                  { heading: "Academic Summary", content: `<table><tr><td><strong>GPA:</strong> ${escapeHtml(ac.gpa ?? "\u2014")}</td><td><strong>Credits Earned:</strong> ${escapeHtml(ac.creditsEarned ?? "\u2014")}</td><td><strong>Courses:</strong> ${courses?.length ?? 0}</td></tr></table>` },
-                  { heading: "Assessment Status", content: `<table><tr><th>Assessment</th><th>Status</th></tr><tr><td>PCA</td><td>${escapeHtml(ass.pcaCount || 0)} evaluations</td></tr><tr><td>MIL Average</td><td>${escapeHtml(ass.milAverage || "\u2014")}</td></tr><tr><td>360</td><td>${escapeHtml(ass.evalStatus || "\u2014")}</td></tr></table>` },
+                openPrintableReport(t("school_admin:ui.reports.comprehensive"), student.name, [
+                  { heading: t("school_admin:ui.reports.studentInfo"), content: `<table><tr><td><strong>${t("school_admin:ui.reports.nameLabel")}</strong> ${escapeHtml(s.name || student.name)}</td><td><strong>${t("school_admin:ui.reports.emailLabel")}</strong> ${escapeHtml(s.email || student.email)}</td></tr><tr><td><strong>${t("school_admin:ui.reports.gradeLabel")}</strong> ${escapeHtml(s.gradeLevel || "\u2014")}</td><td><strong>${t("school_admin:ui.reports.statusLabel")}</strong> ${escapeHtml(s.status || "active")}</td></tr></table>` },
+                  { heading: t("school_admin:ui.reports.academicSummary"), content: `<table><tr><td><strong>GPA:</strong> ${escapeHtml(ac.gpa ?? "\u2014")}</td><td><strong>${t("school_admin:ui.reports.creditsEarnedLabel")}</strong> ${escapeHtml(ac.creditsEarned ?? "\u2014")}</td><td><strong>${t("school_admin:ui.reports.coursesLabel")}</strong> ${courses?.length ?? 0}</td></tr></table>` },
+                  { heading: t("school_admin:ui.reports.assessmentStatus"), content: `<table><tr><th>${t("school_admin:ui.reports.assessment")}</th><th>${t("school_admin:ui.reports.status")}</th></tr><tr><td>PCA</td><td>${t("school_admin:ui.reports.evaluationsN", { count: Number(ass.pcaCount || 0) })}</td></tr><tr><td>${t("school_admin:ui.reports.milAverage")}</td><td>${escapeHtml(ass.milAverage || "\u2014")}</td></tr><tr><td>360</td><td>${escapeHtml(ass.evalStatus || "\u2014")}</td></tr></table>` },
                 ]);
               }}
             />
-            <ReportRow icon={Briefcase} label="Career Profile Report" desc="PCA evaluations, career matches, and AI insights" format="JSON" loading={loading === "pca"} onDownload={downloadPCAReport} />
+            <ReportRow icon={Briefcase} label={t("school_admin:ui.reports.careerProfile")} desc={t("school_admin:ui.reports.careerProfileDesc")} format="JSON" loading={loading === "pca"} onDownload={downloadPCAReport} />
             {assessments && (
               <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 8 }}>
-                PCA: {String(assessments.pcaCount || 0)} evaluations ·
-                MIL avg: {String(assessments.milAverage || "\u2014")} ·
+                PCA: {t("school_admin:ui.reports.evaluationsN", { count: Number(assessments.pcaCount || 0) })} ·
+                {t("school_admin:ui.reports.milAvgLabel")} {String(assessments.milAverage || "\u2014")} ·
                 360: {String(assessments.evalStatus || "\u2014")}
               </div>
             )}

@@ -64,7 +64,7 @@ export default function VideoCallsPage() {
       const session = await createVideoSession(participantId);
       router.push(`/dashboard/video/${session.id}`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to start video call";
+      const msg = err instanceof Error ? err.message : t("studentUi.video.startFailed");
       toast.error(msg);
     } finally { setStartingCall(false); }
   };
@@ -74,7 +74,7 @@ export default function VideoCallsPage() {
       await startScheduledSession(sessionId);
       router.push(`/dashboard/video/${sessionId}`);
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to join session";
+      const msg = err instanceof Error ? err.message : t("studentUi.video.joinFailed");
       toast.error(msg);
     }
   };
@@ -99,9 +99,9 @@ export default function VideoCallsPage() {
           <div style={{ width: 64, height: 64, borderRadius: 32, background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <VideoOff style={{ width: 28, height: 28, color: "var(--admin-font-light)" }} />
           </div>
-          <p style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>Video Calls Not Available</p>
+          <p style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("studentUi.video.notAvailableTitle")}</p>
           <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", maxWidth: 360, textAlign: "center" }}>
-            Video calling is not enabled for your school. Contact your administrator to enable this feature.
+            {t("studentUi.video.notAvailableBody")}
           </p>
         </div>
       </div>
@@ -120,7 +120,7 @@ export default function VideoCallsPage() {
           <button onClick={() => setShowNewCall(!showNewCall)}
             style={{ display: "flex", alignItems: "center", gap: 8, padding: "10px 18px", borderRadius: 10, background: showNewCall ? "var(--admin-bg-hover)" : "var(--admin-accent-blue)", color: showNewCall ? "var(--admin-font-primary)" : "#fff", border: "1px solid var(--admin-border-default)", cursor: "pointer", fontSize: 13, fontWeight: 600, transition: "all 0.15s" }}>
             {showNewCall ? <X style={{ width: 16, height: 16 }} /> : <Plus style={{ width: 16, height: 16 }} />}
-            {showNewCall ? "Cancel" : "New Call"}
+            {showNewCall ? t("common.cancel") : t("studentUi.video.newCall")}
           </button>
         )}
       </motion.div>
@@ -132,14 +132,14 @@ export default function VideoCallsPage() {
             <div style={{ padding: 16 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-accent-blue)", marginBottom: 12 }}>
                 <UserPlus style={{ width: 16, height: 16, color: "var(--admin-accent-blue)", flexShrink: 0 }} />
-                <input placeholder="Search by name or email..." value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} autoFocus
+                <input placeholder={t("studentUi.video.searchPlaceholder")} value={contactSearch} onChange={(e) => setContactSearch(e.target.value)} autoFocus
                   style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 14, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
               </div>
               <div style={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
                 {contactsLoading ? (
-                  <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>Searching...</div>
+                  <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("studentUi.video.searching")}</div>
                 ) : contacts.length === 0 ? (
-                  <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>No contacts found</div>
+                  <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("studentUi.video.noContacts")}</div>
                 ) : contacts.map((c) => (
                   <button key={c.id} onClick={() => handleStartCall(c.id)} disabled={startingCall}
                     style={{ width: "100%", display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", borderRadius: 8, border: "none", background: "transparent", cursor: startingCall ? "default" : "pointer", fontFamily: "inherit", textAlign: "left", color: "var(--admin-font-primary)", transition: "background 0.1s" }}
@@ -154,7 +154,7 @@ export default function VideoCallsPage() {
                     </div>
                     <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 6, background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
                       <Video style={{ width: 14, height: 14 }} />
-                      Call
+                      {t("studentUi.video.call")}
                     </div>
                   </button>
                 ))}

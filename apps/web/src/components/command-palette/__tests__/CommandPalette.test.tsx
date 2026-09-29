@@ -1,4 +1,5 @@
 import { render, screen, fireEvent, waitForElementToBeRemoved } from "@testing-library/react";
+import "@/lib/i18n";
 import { CommandPalette, OPEN_COMMAND_PALETTE_EVENT } from "@/components/command-palette/CommandPalette";
 
 jest.mock("next/navigation", () => ({

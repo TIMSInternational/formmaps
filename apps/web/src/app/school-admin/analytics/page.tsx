@@ -153,9 +153,9 @@ export default function AnalyticsPage() {
               }}>
                 <stat.icon style={{ width: 16, height: 16, color: stat.color }} />
               </div>
-              {stat.label === "At-Risk Students" && atRisk > 0 && (
+              {stat.label === t("analytics.metrics.atRisk") && atRisk > 0 && (
                 <Link href="/school-admin/users" style={{ fontSize: 10, color: "#ef4444", fontWeight: 600, textDecoration: "none", display: "flex", alignItems: "center", gap: 2 }}>
-                  View <ChevronRight style={{ width: 10, height: 10 }} />
+                  {t("analytics.metrics.view")} <ChevronRight style={{ width: 10, height: 10 }} />
                 </Link>
               )}
             </div>
@@ -193,7 +193,7 @@ export default function AnalyticsPage() {
                           { label: "PCA", done: data.pcaDone, color: "#8b5cf6" },
                           { label: "MIL/LIA", done: data.milDone, color: "var(--admin-accent-blue)" },
                           { label: "360°", done: data.evalDone, color: "#14b8a6" },
-                          { label: "Personality", done: data.personalityDone, color: "#6366f1" },
+                          { label: t("assessments.pipeline.colPersonality"), done: data.personalityDone, color: "#6366f1" },
                         ].map((a) => {
                           const pct = data.total > 0 ? Math.round((a.done / data.total) * 100) : 0;
                           return (

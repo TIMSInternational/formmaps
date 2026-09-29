@@ -13,8 +13,10 @@ import { useGlobalStore } from "@/store/useGlobalStore";
 import { UserProfile } from "@/types/user";
 import { getInitials } from "@/lib/stringUtils";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 export function ProfileHeader() {
+  const { t } = useTranslation();
   const { user, setUser } = useGlobalStore();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -46,7 +48,7 @@ export function ProfileHeader() {
   }, []);
 
   // Use profile data or fallback to global store
-  const displayName = profile?.fullName || user.name || "User";
+  const displayName = profile?.fullName || user.name || t("components.ProfileHeader.userFallback");
   const displayEmail = profile?.email || user.email || "";
   const displayHeadline = profile?.headline || "";
   const displayLocation = profile?.location || "";
@@ -62,13 +64,13 @@ export function ProfileHeader() {
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+      toast.error(t("components.ProfileHeader.selectImage"));
       return;
     }
 
     // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error("Image must be less than 5MB");
+      toast.error(t("components.ProfileHeader.avatarTooLarge"));
       return;
     }
 
@@ -79,9 +81,9 @@ export function ProfileHeader() {
       setAvatarUrl(newAvatarUrl);
       // Update global store with new avatar
       setUser({ avatar: newAvatarUrl });
-      toast.success("Profile picture updated!");
+      toast.success(t("components.ProfileHeader.avatarUpdated"));
     } catch (error: any) {
-      toast.error(error.message || "Failed to upload profile picture");
+      toast.error(error.message || t("components.ProfileHeader.avatarUploadError"));
     } finally {
       setIsUploadingAvatar(false);
     }
@@ -93,13 +95,13 @@ export function ProfileHeader() {
 
     // Validate file type
     if (!file.type.startsWith("image/")) {
-      toast.error("Please select an image file");
+      toast.error(t("components.ProfileHeader.selectImage"));
       return;
     }
 
     // Validate file size (10MB max)
     if (file.size > 10 * 1024 * 1024) {
-      toast.error("Image must be less than 10MB");
+      toast.error(t("components.ProfileHeader.coverTooLarge"));
       return;
     }
 
@@ -107,9 +109,9 @@ export function ProfileHeader() {
     try {
       const result = await uploadProfileCover(file);
       setCoverUrl(result.coverUrl || URL.createObjectURL(file));
-      toast.success("Cover image updated!");
+      toast.success(t("components.ProfileHeader.coverUpdated"));
     } catch (error: any) {
-      toast.error(error.message || "Failed to upload cover image");
+      toast.error(error.message || t("components.ProfileHeader.coverUploadError"));
     } finally {
       setIsUploadingCover(false);
     }
@@ -136,7 +138,7 @@ export function ProfileHeader() {
       {/* Cover Image with Mesh Gradient */}
       <div className="h-48 md:h-80 w-full relative group overflow-hidden rounded-b-[3rem] shadow-xl">
         {coverUrl ? (
-          <img src={coverUrl} alt="Cover" loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
+          <img src={coverUrl} alt={t("components.ProfileHeader.coverAlt")} loading="lazy" className="absolute inset-0 w-full h-full object-cover" />
         ) : (
           <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-800 to-[#102B47]" />
         )}
@@ -161,7 +163,7 @@ export function ProfileHeader() {
           ) : (
             <FiCamera className="mr-2" aria-hidden="true" />
           )}
-          {isUploadingCover ? "Uploading..." : "Edit Cover"}
+          {isUploadingCover ? t("components.ProfileHeader.uploading") : t("components.ProfileHeader.editCover")}
         </Button>
       </div>
 
@@ -185,7 +187,7 @@ export function ProfileHeader() {
             </div>
             <button
               className="absolute bottom-4 right-4 p-3 bg-[var(--admin-accent-blue)] text-white rounded-full shadow-lg hover:bg-[var(--admin-accent-blue)]/90 transition-all border-2 border-white dark:border-gray-900 disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Change profile picture"
+              aria-label={t("components.ProfileHeader.changePictureAria")}
               onClick={() => avatarInputRef.current?.click()}
               disabled={isUploadingAvatar}
             >
@@ -243,18 +245,18 @@ export function ProfileHeader() {
               {/* Actions */}
               <div className="flex gap-3 mt-4 lg:mt-0 w-full lg:w-auto">
                 <Button asChild className="flex-1 lg:flex-none bg-gray-900 dark:bg-white text-white dark:text-gray-900 hover:bg-gray-800 dark:hover:bg-gray-200 rounded-xl px-6 h-11 font-semibold shadow-lg shadow-gray-200 dark:shadow-none">
-                  <Link href="/dashboard/profile?tab=edit">Edit Profile</Link>
+                  <Link href="/dashboard/profile?tab=edit">{t("components.ProfileHeader.editProfile")}</Link>
                 </Button>
                 {displayLinkedin && (
                   <Button variant="outline" asChild className="flex-1 lg:flex-none border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl h-11 w-11 p-0 flex items-center justify-center">
-                    <a href={displayLinkedin.startsWith("http") ? displayLinkedin : `https://${displayLinkedin}`} target="_blank" rel="noopener noreferrer" aria-label="LinkedIn Profile">
+                    <a href={displayLinkedin.startsWith("http") ? displayLinkedin : `https://${displayLinkedin}`} target="_blank" rel="noopener noreferrer" aria-label={t("components.ProfileHeader.linkedinAria")}>
                       <FiLinkedin size={20} className="text-blue-700" aria-hidden="true" />
                     </a>
                   </Button>
                 )}
                 {displayTwitter && (
                   <Button variant="outline" asChild className="flex-1 lg:flex-none border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-800 rounded-xl h-11 w-11 p-0 flex items-center justify-center">
-                    <a href={displayTwitter.startsWith("http") ? displayTwitter : `https://${displayTwitter}`} target="_blank" rel="noopener noreferrer" aria-label="Twitter Profile">
+                    <a href={displayTwitter.startsWith("http") ? displayTwitter : `https://${displayTwitter}`} target="_blank" rel="noopener noreferrer" aria-label={t("components.ProfileHeader.twitterAria")}>
                       <FiTwitter size={20} className="text-blue-400" aria-hidden="true" />
                     </a>
                   </Button>

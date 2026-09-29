@@ -28,7 +28,7 @@ import {
 } from "@/services/coachService";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 interface ExtendedEarningsStats extends CoachEarningsStats {
@@ -94,7 +94,7 @@ export default function EarningsPage() {
       setError(null);
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to load earnings data";
+        error instanceof Error ? error.message : t("studentUi.coaching.earnings.failedToLoad");
       setError(errorMessage);
       toast.error(errorMessage);
     } finally {
@@ -113,28 +113,28 @@ export default function EarningsPage() {
   // Modern Stats Cards Data
   const statsCards = [
     {
-      label: "Total Earnings",
+      label: t("studentUi.coaching.earnings.totalEarnings"),
       value: `$${earningsStats?.totalEarnings?.toLocaleString() || "0"}`,
       icon: TrendingUp,
       iconBg: "bg-emerald-500/10",
       iconColor: "text-emerald-500",
-      subtext: `${earningsStats?.totalSessions || 0} completed sessions`,
+      subtext: t("studentUi.coaching.earnings.completedSessions", { count: earningsStats?.totalSessions || 0 }),
     },
     {
-      label: "This Month",
+      label: t("timeline.thisMonth"),
       value: `$${earningsStats?.monthlyEarnings?.toLocaleString() || "0"}`,
       icon: Clock,
       iconBg: "bg-amber-500/10",
       iconColor: "text-amber-500",
-      subtext: `Commission: ${commissionRate}%`,
+      subtext: t("studentUi.coaching.earnings.commission", { rate: commissionRate }),
     },
     {
-      label: "Sessions Completed",
+      label: t("studentUi.coaching.earnings.sessionsCompleted"),
       value: earningsStats?.totalSessions?.toLocaleString() || "0",
       icon: DollarSign,
       iconBg: "bg-[var(--admin-accent-blue)]/10",
       iconColor: "text-[var(--admin-accent-blue)]",
-      subtext: `Currency: ${earningsStats?.currency || "USD"}`,
+      subtext: t("studentUi.coaching.earnings.currencyValue", { currency: earningsStats?.currency || "USD" }),
     },
   ];
 
@@ -147,11 +147,11 @@ export default function EarningsPage() {
       <div className="flex items-center justify-center py-20">
         <div className="text-center">
           <h1 className="text-2xl font-bold text-foreground">
-            Error loading earnings data
+            {t("coaching.earnings.errorTitle")}
           </h1>
-          <p className="text-muted-foreground mt-2">{error || "Please try again later"}</p>
+          <p className="text-muted-foreground mt-2">{error || t("coaching.earnings.tryAgain")}</p>
           <Button onClick={() => window.location.reload()} className="mt-4">
-            Try Again
+            {t("common.tryAgain")}
           </Button>
         </div>
       </div>
@@ -169,9 +169,9 @@ export default function EarningsPage() {
       setIsExporting(true);
       const { exportCoachEarnings } = await import("@/services/coachService");
       await exportCoachEarnings("csv");
-      toast.success("Earnings report exported successfully");
+      toast.success(t("studentUi.coaching.earnings.exportSuccess"));
     } catch (error) {
-      toast.error("Failed to export earnings report");
+      toast.error(t("studentUi.coaching.earnings.exportFailed"));
     } finally {
       setIsExporting(false);
     }
@@ -183,7 +183,7 @@ export default function EarningsPage() {
         {/* Header */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
           <div className="space-y-1">
-            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Financials</p>
+            <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("studentUi.coaching.earnings.financials")}</p>
             <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight">
               {t("coaching.earnings.title")}
             </h1>
@@ -192,7 +192,7 @@ export default function EarningsPage() {
             </p>
             <div className="flex items-center gap-2 mt-2">
               <Badge variant="secondary" className="bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/20 border-[var(--admin-accent-blue)]/30">
-                Platform Commission: {commissionRate}%
+                {t("studentUi.coaching.earnings.platformCommission", { rate: commissionRate })}
               </Badge>
             </div>
           </div>
@@ -203,7 +203,7 @@ export default function EarningsPage() {
             disabled={isExporting}
           >
             <Download className="w-4 h-4" />
-            {isExporting ? "Exporting..." : "Export Report"}
+            {isExporting ? t("timeline.exporting") : t("admin.transactions.exportReport")}
           </Button>
         </div>
 
@@ -226,10 +226,10 @@ export default function EarningsPage() {
         {/* Transaction History */}
         <div className="dash-card overflow-hidden">
           <div className="px-5 py-4 border-b border-[var(--border)] flex justify-between items-center">
-            <span className="text-sm font-semibold text-foreground">Transaction History</span>
+            <span className="text-sm font-semibold text-foreground">{t("studentUi.coaching.earnings.transactionHistory")}</span>
             <Button variant="outline" size="sm" className="h-8 gap-2 rounded-lg">
               <Download className="w-3.5 h-3.5" />
-              Export
+              {t("timeline.export")}
             </Button>
           </div>
 
@@ -237,19 +237,19 @@ export default function EarningsPage() {
               <Table>
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
-                    <TableHead className="pl-6">Date</TableHead>
-                    <TableHead>Student</TableHead>
-                    <TableHead className="text-right">Gross</TableHead>
-                    <TableHead className="text-right">Fee ({commissionRate}%)</TableHead>
-                    <TableHead className="text-right">Net</TableHead>
-                    <TableHead className="pr-6">Currency</TableHead>
+                    <TableHead className="pl-6">{t("studentUi.coaching.earnings.table.date")}</TableHead>
+                    <TableHead>{t("studentUi.coaching.earnings.table.student")}</TableHead>
+                    <TableHead className="text-right">{t("studentUi.coaching.earnings.table.gross")}</TableHead>
+                    <TableHead className="text-right">{t("studentUi.coaching.earnings.table.fee", { rate: commissionRate })}</TableHead>
+                    <TableHead className="text-right">{t("studentUi.coaching.earnings.table.net")}</TableHead>
+                    <TableHead className="pr-6">{t("studentUi.coaching.earnings.table.currency")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedHistory.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
-                        No transactions found.
+                        {t("studentUi.coaching.earnings.noTransactions")}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -275,7 +275,11 @@ export default function EarningsPage() {
             {totalPages > 1 && (
               <div className="flex items-center justify-between border-t border-[var(--border)] p-4">
                 <p className="text-sm text-muted-foreground">
-                  Showing page <span className="font-semibold text-foreground">{page}</span> of <span className="font-semibold text-foreground">{totalPages || 1}</span>
+                  <Trans
+                    i18nKey="studentUi.coaching.earnings.showingPage"
+                    values={{ page, total: totalPages || 1 }}
+                    components={{ b: <span className="font-semibold text-foreground" /> }}
+                  />
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
@@ -285,7 +289,7 @@ export default function EarningsPage() {
                     disabled={page === 1}
                     className="rounded-lg h-8"
                   >
-                    Previous
+                    {t("common.previous")}
                   </Button>
                   <Button
                     variant="outline"
@@ -294,7 +298,7 @@ export default function EarningsPage() {
                     disabled={page === totalPages}
                     className="rounded-lg h-8"
                   >
-                    Next
+                    {t("common.next")}
                   </Button>
                 </div>
               </div>

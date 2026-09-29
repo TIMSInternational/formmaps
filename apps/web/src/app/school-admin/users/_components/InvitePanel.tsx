@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -26,15 +27,17 @@ interface InviteRow {
   classLevel?: string;
 }
 
-const roleConfig: Record<InviteRole, { label: string; color: string; icon: any; description: string }> = {
-  student: { label: "Students", color: "var(--admin-accent-blue)", icon: GraduationCap, description: "Invite students individually or use CSV bulk onboard for larger groups." },
-  counselor: { label: "Counselors", color: "#10b981", icon: UserCheck, description: "Invite counselors who will be assigned student caseloads." },
-  teacher: { label: "Teachers", color: "var(--admin-accent-blue)", icon: BookOpen, description: "Invite teachers to complete 360° evaluations and respond to recommendation requests." },
-  coach: { label: "Coaches", color: "#8b5cf6", icon: Users, description: "Invite career coaches to guide students through their career journey." },
-  staff: { label: "Staff", color: "#f59e0b", icon: Shield, description: "Invite administrative staff members to help manage your school." },
+// Labels live in school_admin:ui.invite.roles.<role>.{label,invite,description}.
+const roleConfig: Record<InviteRole, { color: string; icon: any }> = {
+  student: { color: "var(--admin-accent-blue)", icon: GraduationCap },
+  counselor: { color: "#10b981", icon: UserCheck },
+  teacher: { color: "var(--admin-accent-blue)", icon: BookOpen },
+  coach: { color: "#8b5cf6", icon: Users },
+  staff: { color: "#f59e0b", icon: Shield },
 };
 
 export function InvitePanel() {
+  const { t } = useTranslation("school_admin");
   const router = useRouter();
   const [selectedRole, setSelectedRole] = useState<InviteRole>("student");
   const [pendingLinks, setPendingLinks] = useState<string[]>([]);
@@ -64,7 +67,7 @@ export function InvitePanel() {
   const handleInvite = async () => {
     const validRows = rows.filter(r => r.name.trim() && r.email.trim());
     if (validRows.length === 0) {
-      toast.error("Please fill in at least one name and email.");
+      toast.error(t("ui.invite.fillOne"));
       return;
     }
 
@@ -72,7 +75,7 @@ export function InvitePanel() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     for (const row of validRows) {
       if (!emailRegex.test(row.email)) {
-        toast.error(`Invalid email: ${row.email}`);
+        toast.error(t("ui.invite.invalidEmail", { email: row.email }));
         return;
       }
     }
@@ -104,29 +107,29 @@ export function InvitePanel() {
         }
       } catch (err: unknown) {
         failCount++;
-        problems.push(`${row.email}: ${err instanceof Error ? err.message : "failed"}`);
+        problems.push(`${row.email}: ${err instanceof Error ? err.message : t("ui.invite.failedShort")}`);
       }
     }
 
     if (successCount > 0) {
-      toast.success(`${successCount} invitation${successCount > 1 ? "s" : ""} sent.`);
+      toast.success(t("ui.invite.sent", { count: successCount }));
       setRows([{ name: "", email: "", classLevel: "Freshman" }]);
     }
     for (const p of problems.slice(0, 4)) toast.error(p);
     if (linkable.length > 0) setPendingLinks(linkable);
     if (failCount > 0 && problems.length === 0 && linkable.length === 0) {
-      toast.error(`${failCount} invitation${failCount > 1 ? "s" : ""} could not be sent.`);
+      toast.error(t("ui.invite.notSent", { count: failCount }));
     }
   };
 
   const handleLink = async (email: string) => {
     try {
       const res = await linkExistingStudent(email);
-      toast.success(`${res.name || email} was added to ${res.schoolName}.`);
+      toast.success(t("ui.invite.linked", { name: res.name || email, school: res.schoolName }));
       setPendingLinks((prev) => prev.filter((e) => e !== email));
     } catch (err: unknown) {
       const body = (err as { data?: { message?: string } })?.data;
-      toast.error(body?.message || (err instanceof Error ? err.message : "Could not link this account."));
+      toast.error(body?.message || (err instanceof Error ? err.message : t("ui.invite.linkFailed")));
     }
   };
 
@@ -135,10 +138,10 @@ export function InvitePanel() {
       {/* Header */}
       <div>
         <h2 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
-          Invite & Onboard
+          {t("users.tabs.onboard")}
         </h2>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-          Invite students, counselors, coaches, or staff members to your school.
+          {t("ui.invite.subtitle")}
         </p>
       </div>
 
@@ -148,10 +151,10 @@ export function InvitePanel() {
       {pendingLinks.length > 0 && (
         <div style={{ border: "1px solid var(--admin-border-default)", borderRadius: 8, padding: 14, background: "var(--admin-bg-card)" }}>
           <p style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-            {pendingLinks.length === 1 ? "This person already has a FormMaps account" : `${pendingLinks.length} of these already have FormMaps accounts`}
+            {pendingLinks.length === 1 ? t("ui.invite.existingOne") : t("ui.invite.existingMany", { count: pendingLinks.length })}
           </p>
           <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-            They signed up on their own, so an invitation does nothing. Add them to your school instead — they keep the password they already chose.
+            {t("ui.invite.existingHelp")}
           </p>
           <div style={{ display: "flex", flexDirection: "column", gap: 8, marginTop: 12 }}>
             {pendingLinks.map((email) => (
@@ -162,7 +165,7 @@ export function InvitePanel() {
                   onClick={() => handleLink(email)}
                   style={{ fontSize: 12, fontWeight: 600, padding: "6px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", cursor: "pointer" }}
                 >
-                  Add to my school
+                  {t("ui.invite.addToSchool")}
                 </button>
               </div>
             ))}
@@ -197,7 +200,7 @@ export function InvitePanel() {
                   <cfg.icon style={{ width: 14, height: 14, color: cfg.color }} />
                 </div>
                 <span style={{ fontSize: 13, fontWeight: 600, color: isActive ? cfg.color : "var(--admin-font-primary)" }}>
-                  {cfg.label}
+                  {t(`ui.invite.roles.${role}.label`)}
                 </span>
               </div>
             </button>
@@ -219,10 +222,10 @@ export function InvitePanel() {
             <config.icon style={{ width: 14, height: 14, color: config.color }} />
             <div>
               <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                Invite {config.label}
+                {t(`ui.invite.roles.${selectedRole}.invite`)}
               </span>
               <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-                {config.description}
+                {t(`ui.invite.roles.${selectedRole}.description`)}
               </div>
             </div>
           </div>
@@ -240,7 +243,7 @@ export function InvitePanel() {
                   cursor: "pointer",
                 }}
               >
-                <Upload style={{ width: 12, height: 12 }} /> CSV Bulk Onboard
+                <Upload style={{ width: 12, height: 12 }} /> {t("ui.invite.csvBulk")}
               </button>
             )}
             <button
@@ -255,7 +258,7 @@ export function InvitePanel() {
                 cursor: "pointer",
               }}
             >
-              <Plus style={{ width: 12, height: 12 }} /> Add Row
+              <Plus style={{ width: 12, height: 12 }} /> {t("ui.bulkOnboard.upload.addRow")}
             </button>
           </div>
         </div>
@@ -263,10 +266,10 @@ export function InvitePanel() {
         <div style={{ padding: 16 }} className="space-y-3">
           {/* Column Headers */}
           <div style={{ display: "flex", gap: 8, alignItems: "center", paddingBottom: 4 }}>
-            <div style={{ flex: 1, fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Full Name</div>
-            <div style={{ flex: 1, fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Email Address</div>
+            <div style={{ flex: 1, fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("ui.student360.fullName")}</div>
+            <div style={{ flex: 1, fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("ui.student360.emailAddress")}</div>
             {selectedRole === "student" && (
-              <div style={{ width: 140, fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Grade</div>
+              <div style={{ width: 140, fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("users.table.grade")}</div>
             )}
             <div style={{ width: 32 }} />
           </div>
@@ -276,7 +279,7 @@ export function InvitePanel() {
             <div key={i} style={{ display: "flex", gap: 8, alignItems: "center" }}>
               <div style={{ flex: 1 }}>
                 <Input
-                  placeholder="John Smith"
+                  placeholder={t("ui.invite.namePlaceholder")}
                   value={row.name}
                   onChange={(e) => updateRow(i, "name", e.target.value)}
                   className="h-9 text-xs"
@@ -300,10 +303,10 @@ export function InvitePanel() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="Freshman">Freshman (9)</SelectItem>
-                      <SelectItem value="Sophomore">Sophomore (10)</SelectItem>
-                      <SelectItem value="Junior">Junior (11)</SelectItem>
-                      <SelectItem value="Senior">Senior (12)</SelectItem>
+                      <SelectItem value="Freshman">{t("ui.bulkOnboard.levels.Freshman")}</SelectItem>
+                      <SelectItem value="Sophomore">{t("ui.bulkOnboard.levels.Sophomore")}</SelectItem>
+                      <SelectItem value="Junior">{t("ui.bulkOnboard.levels.Junior")}</SelectItem>
+                      <SelectItem value="Senior">{t("ui.bulkOnboard.levels.Senior")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -326,7 +329,7 @@ export function InvitePanel() {
           {/* Actions */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", paddingTop: 8, borderTop: "1px solid var(--admin-border-default)" }}>
             <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-              {rows.filter(r => r.name.trim() && r.email.trim()).length} of {rows.length} rows filled
+              {t("ui.invite.rowsFilled", { filled: rows.filter(r => r.name.trim() && r.email.trim()).length, total: rows.length })}
             </span>
             <button
               onClick={handleInvite}
@@ -341,7 +344,7 @@ export function InvitePanel() {
               }}
             >
               {isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 14, height: 14 }} />}
-              Send {rows.filter(r => r.name.trim() && r.email.trim()).length > 1 ? `${rows.filter(r => r.name.trim() && r.email.trim()).length} Invitations` : "Invitation"}
+              {t("ui.invite.sendN", { count: Math.max(1, rows.filter(r => r.name.trim() && r.email.trim()).length) })}
             </button>
           </div>
         </div>

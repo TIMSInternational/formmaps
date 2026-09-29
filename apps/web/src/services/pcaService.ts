@@ -1,6 +1,9 @@
 // PCA Assessment Service — All calls go through backend proxy (no external API keys in frontend)
 
 import { apiRequest } from "@/lib/api/apiClient";
+// The bare i18next singleton (initialised by lib/i18n at the app root). Importing lib/i18n here
+// would pull react-i18next initialisation into every importer (e.g. the global store).
+import i18n from "i18next";
 import type { LockdownViolation } from "@/components/proctoring/types";
 import { getOwnAssessmentCompletion, isViewingSelf } from "./assessmentCompletionService";
 
@@ -189,14 +192,14 @@ export async function addPCAEvaluation(
     } else {
       return {
         success: false,
-        message: result.message || "Failed to add PCA evaluation",
+        message: result.message || i18n.t("components.pcaService.addFailed"),
       };
     }
   } catch (error) {
     return {
       success: false,
       message:
-        error instanceof Error ? error.message : "Failed to add PCA evaluation",
+        error instanceof Error ? error.message : i18n.t("components.pcaService.addFailed"),
     };
   }
 }

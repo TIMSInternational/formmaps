@@ -3,16 +3,18 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Keyboard } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
 
 const SHORTCUTS = [
-  { keys: ["Cmd", "K"], description: "Open command palette" },
-  { keys: ["?"], description: "Show keyboard shortcuts" },
-  { keys: ["Esc"], description: "Close panel / modal / palette" },
-  { keys: ["1-9"], description: "Quick navigate (sidebar sections)" },
+  { keys: ["Cmd", "K"], descriptionKey: "components.keyboardShortcuts.openCommandPalette" },
+  { keys: ["?"], descriptionKey: "components.keyboardShortcuts.showShortcuts" },
+  { keys: ["Esc"], descriptionKey: "components.keyboardShortcuts.closePanel" },
+  { keys: ["1-9"], descriptionKey: "components.keyboardShortcuts.quickNavigate" },
 ];
 
 export function KeyboardShortcuts() {
   const [open, setOpen] = useState(false);
+  const { t } = useTranslation();
 
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
@@ -64,10 +66,10 @@ export function KeyboardShortcuts() {
               <div className="flex items-center gap-2">
                 <Keyboard className="h-4 w-4" style={{ color: "var(--admin-font-tertiary)" }} />
                 <span className="text-sm font-semibold" style={{ color: "var(--admin-font-primary)" }}>
-                  Keyboard Shortcuts
+                  {t("components.keyboardShortcuts.title")}
                 </span>
               </div>
-              <button onClick={() => setOpen(false)} style={{ color: "var(--admin-font-tertiary)" }}>
+              <button onClick={() => setOpen(false)} aria-label={t("components.keyboardShortcuts.close")} style={{ color: "var(--admin-font-tertiary)" }}>
                 <X className="h-4 w-4" />
               </button>
             </div>
@@ -76,11 +78,11 @@ export function KeyboardShortcuts() {
             <div className="px-5 py-3 space-y-1">
               {SHORTCUTS.map((s) => (
                 <div
-                  key={s.description}
+                  key={s.descriptionKey}
                   className="flex items-center justify-between py-2"
                 >
                   <span className="text-sm" style={{ color: "var(--admin-font-secondary)" }}>
-                    {s.description}
+                    {t(s.descriptionKey)}
                   </span>
                   <div className="flex items-center gap-1">
                     {s.keys.map((k) => (
@@ -107,7 +109,12 @@ export function KeyboardShortcuts() {
               style={{ borderTop: "1px solid var(--admin-border-default)" }}
             >
               <span className="text-[11px]" style={{ color: "var(--admin-font-light)" }}>
-                Press <kbd className="px-1 py-0.5 rounded text-[10px]" style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>?</kbd> to toggle
+                <Trans
+                  i18nKey="components.keyboardShortcuts.footer"
+                  components={{
+                    kbd: <kbd className="px-1 py-0.5 rounded text-[10px]" style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }} />,
+                  }}
+                />
               </span>
             </div>
           </motion.div>

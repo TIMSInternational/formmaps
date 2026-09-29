@@ -118,7 +118,7 @@ export const FeaturedCoaches = React.memo(function FeaturedCoaches() {
                       repeat: Infinity,
                       ease: "easeInOut",
                     }}
-                    aria-label="Available"
+                    aria-label={t("studentUi.dashboard.featuredCoaches.available")}
                   />
                 </div>
 

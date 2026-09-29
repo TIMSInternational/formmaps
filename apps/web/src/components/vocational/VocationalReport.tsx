@@ -5,7 +5,7 @@ import { AlertCircle, RefreshCw } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  recompute360, recomputeIntegrated,
+  recompute360, recomputeIntegrated, getDimensionNamesEn, getOptionLabels,
   type VocationalScoreOutcome, type IntegratedOutcome,
 } from "@/services/vocationalReportService";
 import { ReadinessChecklist } from "./_components/ReadinessChecklist";
@@ -15,8 +15,11 @@ import { RankingsPanel } from "./_components/RankingsPanel";
 import { RecommendationsPanel } from "./_components/RecommendationsPanel";
 
 export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserId: string; selfView?: boolean }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEnglish = !(i18n?.language ?? "").toLowerCase().startsWith("es");
   const [score, setScore] = useState<VocationalScoreOutcome | null>(null);
+  const [namesEn, setNamesEn] = useState<Record<string, string>>({});
+  const [optionLabels, setOptionLabels] = useState<Record<string, string>>({});
   const [integrated, setIntegrated] = useState<IntegratedOutcome | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -31,6 +34,28 @@ export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserI
   }, [evaluatedUserId]);
 
   useEffect(() => { load(); }, [load]);
+
+  // English dimension names come from the instrument catalog (stored scores carry only nameEs). Best-effort:
+  // on failure the report simply keeps the Spanish names.
+  useEffect(() => {
+    if (!isEnglish) return;
+    let cancelled = false;
+    Promise.resolve()
+      .then(() => getDimensionNamesEn())
+      .then((names) => { if (!cancelled && names) setNamesEn(names); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isEnglish]);
+
+  // Option labels for the rankings (best-effort: on failure the panel shows the raw values).
+  useEffect(() => {
+    let cancelled = false;
+    Promise.resolve()
+      .then(() => getOptionLabels(isEnglish ? "en" : "es"))
+      .then((labels) => { if (!cancelled && labels) setOptionLabels(labels); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [isEnglish]);
 
   if (loading) {
     return <div className="space-y-4" role="status"><Skeleton className="h-28 rounded-xl" /><Skeleton className="h-40 rounded-xl" /><Skeleton className="h-40 rounded-xl" /></div>;
@@ -48,6 +73,7 @@ export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserI
   }
 
   const ready360 = score.status === "ready" ? score : null;
+  const dimensions = (ready360?.dimensionScores ?? []).map((d) => ({ ...d, nameEn: d.nameEn ?? namesEn[d.key] ?? null }));
 
   return (
     <div className="space-y-5">
@@ -60,7 +86,7 @@ export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserI
       <ReadinessChecklist score={score} integrated={integrated} />
       <IntegratedHeadline integrated={integrated} />
       {ready360
-        ? (<><DimensionBreakdown dimensions={ready360.dimensionScores} /><RankingsPanel rankings={ready360.rankings} /></>)
+        ? (<><DimensionBreakdown dimensions={dimensions} /><RankingsPanel rankings={ready360.rankings} labels={optionLabels} /></>)
         : (<div className="bg-white rounded-xl shadow-sm border border-gray-100 p-5 text-sm text-gray-500">{t("evaluation.vocational.report.notReady360")}</div>)}
       <RecommendationsPanel evaluatedUserId={evaluatedUserId} />
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { X, GitCompareArrows } from "lucide-react";
 import { useCompare } from "./CompareContext";
 import { useSidePanel } from "@/components/side-panel/SidePanel";
@@ -15,6 +16,7 @@ interface CompareBarProps {
 export function CompareBar({ getUniversity, getRecommendation }: CompareBarProps) {
   const { compareIds, removeFromCompare, clearCompare } = useCompare();
   const { openPanel } = useSidePanel();
+  const { t } = useTranslation();
 
   if (compareIds.length === 0) return null;
 
@@ -28,7 +30,7 @@ export function CompareBar({ getUniversity, getRecommendation }: CompareBarProps
       .filter(Boolean) as { university: University; matchScore?: number; matchBreakdown?: any }[];
 
     openPanel({
-      title: `Comparing ${universities.length} Universities`,
+      title: t("components.compareBar.panelTitle", { count: universities.length }),
       content: <ComparePanel items={universities} />,
     });
   };
@@ -85,7 +87,7 @@ export function CompareBar({ getUniversity, getRecommendation }: CompareBarProps
           }}
         >
           <GitCompareArrows className="h-3.5 w-3.5" />
-          Compare ({compareIds.length})
+          {t("components.compareBar.compareButton", { count: compareIds.length })}
         </button>
 
         {/* Clear */}
@@ -94,7 +96,7 @@ export function CompareBar({ getUniversity, getRecommendation }: CompareBarProps
           className="text-[11px] px-1.5 py-1 rounded transition-colors"
           style={{ color: "var(--admin-font-tertiary)" }}
         >
-          Clear
+          {t("common.clear")}
         </button>
       </motion.div>
     </AnimatePresence>

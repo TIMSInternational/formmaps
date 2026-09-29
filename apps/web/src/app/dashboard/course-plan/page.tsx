@@ -106,7 +106,7 @@ export default function CoursePlanPage() {
             id: e.id,
             courseId: e.courseId,
             courseCode: c?.code ?? "",
-            courseName: c?.name ?? "Unknown course",
+            courseName: c?.name ?? t("studentUi.coursePlan.myClasses.unknownCourse"),
             category: c?.department ?? "",
             credits: Number(c?.credits ?? 0),
             gradeLevel: gradeLevel ?? 9,
@@ -117,7 +117,7 @@ export default function CoursePlanPage() {
       },
       recommendations: [],
     }),
-    [enrollments, courseById, gradeLevel],
+    [enrollments, courseById, gradeLevel, t],
   );
 
   // ── Handlers ───────────────────────────────────────────────────────────────
@@ -157,7 +157,7 @@ export default function CoursePlanPage() {
     return (
       <div className="text-center py-16">
         <p className="text-sm mb-3" style={{ color: "var(--admin-font-secondary)" }}>
-          Failed to load your course plan.
+          {t("studentUi.coursePlan.page.loadError")}
         </p>
         <button
           type="button"
@@ -165,7 +165,7 @@ export default function CoursePlanPage() {
           className="px-4 py-2 rounded-md text-sm font-semibold"
           style={{ background: "var(--admin-accent-blue)", color: "#fff" }}
         >
-          Retry
+          {t("studentUi.coursePlan.page.retry")}
         </button>
       </div>
     );

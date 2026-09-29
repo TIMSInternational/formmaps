@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api/apiClient";
+import i18n from "@/lib/i18n";
 import type { TailoredResume, ExtractedJobData } from "@/types/resume";
 import type { Resume } from "@/services/resumeService";
 
@@ -188,7 +189,7 @@ export async function createTailoredResume(
     );
   };
 
-  const resumeName = `${extractedJob?.jobTitle || "Tailored"}${extractedJob?.company ? ` - ${extractedJob.company}` : ""}`.slice(
+  const resumeName = `${extractedJob?.jobTitle || i18n.t("resumeBuilder.resumeActions.tailoredName", "Tailored")}${extractedJob?.company ? ` - ${extractedJob.company}` : ""}`.slice(
     0,
     200
   );
@@ -202,9 +203,10 @@ export async function createTailoredResume(
       accepted && tailored ? tailored.descriptions : orig.descriptions;
     return {
       id: crypto.randomUUID(),
-      company: orig.company || "Company",
+      company: orig.company || i18n.t("resumeBuilder.resumeActions.fallbackCompany", "Company"),
       position:
-        (accepted && tailored ? tailored.title : orig.title) || "Position",
+        (accepted && tailored ? tailored.title : orig.title) ||
+        i18n.t("resumeBuilder.resumeActions.fallbackPosition", "Position"),
       location: orig.location || "",
       startDate: orig.startDate || "",
       endDate: orig.endDate || "",
@@ -218,7 +220,7 @@ export async function createTailoredResume(
     name: resumeName,
     template: "classic",
     personalInfo: {
-      fullName: baseResume.personal?.fullName || user?.name || "Name",
+      fullName: baseResume.personal?.fullName || user?.name || i18n.t("resumeBuilder.resumeActions.fallbackName", "Name"),
       email:
         baseResume.personal?.email || user?.email || "email@example.com",
       phone: baseResume.personal?.phone || "",
@@ -233,8 +235,8 @@ export async function createTailoredResume(
     experience: mergedExperience,
     education: (baseResume.education || []).map((edu) => ({
       id: crypto.randomUUID(),
-      degree: edu.degree || "Degree",
-      school: edu.institution || "School",
+      degree: edu.degree || i18n.t("resumeBuilder.resumeActions.fallbackDegree", "Degree"),
+      school: edu.institution || i18n.t("resumeBuilder.resumeActions.fallbackSchool", "School"),
       location: edu.location || "",
       startDate: edu.startDate || "",
       endDate: edu.endDate || "",
@@ -245,7 +247,7 @@ export async function createTailoredResume(
         : Object.values(baseResume.skills?.skills || {}).flat()
     ).map((name) => ({
       id: crypto.randomUUID(),
-      name: name || "Skill",
+      name: name || i18n.t("resumeBuilder.resumeActions.fallbackSkill", "Skill"),
       level: "intermediate",
     })),
     sections: [],

@@ -3,6 +3,8 @@
 import { type Dispatch, type SetStateAction } from "react";
 import { motion } from "motion/react";
 import { Check, Plus, Pencil, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { cn } from "@/lib/utils";
 import { GenerateButton } from "@/components/ai";
 import type { AIFieldType } from "@/components/ai/GenerateButton";
@@ -61,6 +63,23 @@ interface DynamicSectionContentProps {
 const getSectionFieldConfig = (section: Section): SectionFieldConfig[] =>
   SECTION_FIELD_CONFIGS[section.type] || [];
 
+// Stored proficiency values stay in English; only the displayed label is translated.
+const PROFICIENCY_DEFAULTS: Record<string, string> = {
+  Native: "Native",
+  Fluent: "Fluent",
+  Advanced: "Advanced",
+  Intermediate: "Intermediate",
+  Basic: "Basic",
+};
+
+const translateOption = (
+  t: TFunction,
+  option: string
+): string =>
+  option in PROFICIENCY_DEFAULTS
+    ? t(`resumeBuilder.proficiency.${option.toLowerCase()}`, PROFICIENCY_DEFAULTS[option])
+    : option;
+
 // ---------------------------------------------------------------------------
 // Sub-components
 // ---------------------------------------------------------------------------
@@ -77,6 +96,7 @@ function DynamicFieldControl({
   dynamicEntryForm: Record<string, string>;
   setDynamicEntryForm: Dispatch<SetStateAction<Record<string, string>>>;
 }) {
+  const { t } = useTranslation();
   const value = dynamicEntryForm[field.name] ?? "";
 
   if (field.type === "textarea") {
@@ -84,7 +104,10 @@ function DynamicFieldControl({
       section?.type === "custom" && field.name === "content";
     const rows = isCustomContent ? 5 : 3;
     const placeholder = isCustomContent
-      ? "Enter description or bullet points (one per line)...\n\nExample:\n\u2022 First achievement\n\u2022 Second achievement\n\u2022 Third achievement"
+      ? t(
+          "resumeBuilder.dynamicSectionForm.customContentPlaceholder",
+          "Enter a description or bullet points (one per line)...\n\nExample:\n\u2022 First achievement\n\u2022 Second achievement\n\u2022 Third achievement"
+        )
       : field.placeholder;
 
     return (
@@ -115,10 +138,14 @@ function DynamicFieldControl({
         }
         className="w-full px-3 py-1.5 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring"
       >
-        <option value="">Select {field.label}</option>
+        <option value="">
+          {t("resumeBuilder.dynamicSectionForm.selectField", "Select {{field}}", {
+            field: field.label,
+          })}
+        </option>
         {field.options?.map((option) => (
           <option key={option} value={option}>
-            {option}
+            {translateOption(t, option)}
           </option>
         ))}
       </select>
@@ -169,12 +196,16 @@ function DynamicEntryForm({
     data: Record<string, string>
   ) => void;
 }) {
+  const { t } = useTranslation();
   const fieldConfig = getSectionFieldConfig(section);
 
   if (!fieldConfig.length) {
     return (
       <p className="text-xs text-muted-foreground">
-        This section does not have configurable fields.
+        {t(
+          "resumeBuilder.dynamicSectionForm.noConfigurableFields",
+          "This section does not have configurable fields."
+        )}
       </p>
     );
   }
@@ -184,8 +215,11 @@ function DynamicEntryForm({
       {section.type === "custom" && (
         <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg">
           <p className="text-xs text-blue-700 dark:text-blue-300">
-            <strong>Tip:</strong> For bullet points, enter each point on a new
-            line. The template will automatically format them.
+            <strong>{t("resumeBuilder.dynamicSectionForm.tipLabel", "Tip:")}</strong>{" "}
+            {t(
+              "resumeBuilder.dynamicSectionForm.customTip",
+              "For bullet points, enter each point on a new line. The template will format them automatically."
+            )}
           </p>
         </div>
       )}
@@ -257,14 +291,16 @@ function DynamicEntryForm({
           onClick={onCancelEdit}
           className="px-3 py-1.5 text-xs border border-input rounded-lg hover:bg-accent transition-colors"
         >
-          Cancel
+          {t("resumeBuilder.dynamicSectionForm.cancel", "Cancel")}
         </button>
         <button
           onClick={() => onSaveEntry(section.id)}
           className="flex items-center gap-1 px-3 py-1.5 text-xs bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
         >
           <Check className="w-3 h-3" />
-          {actionLabel}
+          {actionLabel === "Add"
+            ? t("resumeBuilder.dynamicSectionForm.add", "Add")
+            : t("resumeBuilder.dynamicSectionForm.save", "Save")}
         </button>
       </div>
     </>
@@ -290,6 +326,7 @@ function CustomSectionContent({
     data: { description?: string; bullets?: string }
   ) => void;
 }) {
+  const { t } = useTranslation();
   const form = customSectionForms[section.id] || {
     description: "",
     bullets: "",
@@ -308,7 +345,7 @@ function CustomSectionContent({
       <div>
         <div className="flex items-center justify-between gap-2 mb-1">
           <label className="block text-xs font-medium text-foreground">
-            Description
+            {t("resumeBuilder.dynamicSectionForm.description", "Description")}
           </label>
           <GenerateButton
             field="custom_description"
@@ -339,7 +376,10 @@ function CustomSectionContent({
             }))
           }
           onBlur={handleSave}
-          placeholder="Enter a brief description or paragraph..."
+          placeholder={t(
+            "resumeBuilder.dynamicSectionForm.descriptionPlaceholder",
+            "Enter a brief description or paragraph..."
+          )}
           className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring resize-y"
           rows={3}
         />
@@ -347,7 +387,7 @@ function CustomSectionContent({
       <div>
         <div className="flex items-center justify-between gap-2 mb-1">
           <label className="block text-xs font-medium text-foreground">
-            Bullets
+            {t("resumeBuilder.dynamicSectionForm.bullets", "Bullet Points")}
           </label>
           <GenerateButton
             field="custom_bullets"
@@ -378,13 +418,18 @@ function CustomSectionContent({
             }))
           }
           onBlur={handleSave}
-          placeholder={"Enter bullet points (one per line)...\n\nExample:\n\u2022 First point\n\u2022 Second point\n\u2022 Third point"}
+          placeholder={t(
+            "resumeBuilder.dynamicSectionForm.bulletsPlaceholder",
+            "Enter bullet points (one per line)...\n\nExample:\n\u2022 First point\n\u2022 Second point\n\u2022 Third point"
+          )}
           className="w-full px-3 py-2 text-sm bg-background border border-input rounded-lg focus:outline-none focus:ring-2 focus:ring-ring resize-y"
           rows={5}
         />
         <p className="text-xs text-muted-foreground mt-1">
-          Tip: Enter each bullet point on a new line. The template will
-          automatically format them.
+          {t(
+            "resumeBuilder.dynamicSectionForm.bulletsTip",
+            "Tip: Enter each bullet point on a new line. The template will format them automatically."
+          )}
         </p>
       </div>
     </div>
@@ -417,6 +462,7 @@ export function DynamicSectionContent({
   updateDynamicSectionEntry,
   updateDynamicSection,
 }: DynamicSectionContentProps) {
+  const { t } = useTranslation();
   // Custom sections have a different rendering
   if (section.type === "custom") {
     return (
@@ -503,13 +549,16 @@ export function DynamicSectionContent({
                           className="text-xs text-foreground truncate"
                         >
                           <span className="font-medium">{field.label}:</span>{" "}
-                          {value}
+                          {translateOption(t, value)}
                         </p>
                       );
                     })
                   ) : (
                     <p className="text-xs text-muted-foreground">
-                      No preview available for this entry.
+                      {t(
+                        "resumeBuilder.dynamicSectionForm.noPreview",
+                        "No preview available for this entry."
+                      )}
                     </p>
                   )}
                 </div>
@@ -519,7 +568,7 @@ export function DynamicSectionContent({
                       onEditEntry(section.id, entry.id, entry as Record<string, string>)
                     }
                     className="p-1 hover:bg-accent rounded transition-colors"
-                    title="Edit entry"
+                    title={t("resumeBuilder.dynamicSectionForm.editEntry", "Edit entry")}
                   >
                     <Pencil className="w-3 h-3 text-muted-foreground" />
                   </button>
@@ -528,7 +577,7 @@ export function DynamicSectionContent({
                       onDeleteEntry(section.id, entry.id)
                     }
                     className="p-1 hover:bg-destructive/10 rounded transition-colors"
-                    title="Delete entry"
+                    title={t("resumeBuilder.dynamicSectionForm.deleteEntry", "Delete entry")}
                   >
                     <Trash2 className="w-3 h-3 text-destructive" />
                   </button>
@@ -563,7 +612,7 @@ export function DynamicSectionContent({
           className="w-full flex items-center justify-center gap-2 px-3 py-2.5 border-2 border-dashed border-border rounded-lg text-sm text-muted-foreground hover:border-primary hover:text-primary hover:bg-accent/50 transition-all"
         >
           <Plus className="w-4 h-4" />
-          Add New Entry
+          {t("resumeBuilder.dynamicSectionForm.addNewEntry", "Add New Entry")}
         </button>
       )}
     </>

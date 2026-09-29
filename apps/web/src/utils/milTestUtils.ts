@@ -19,7 +19,7 @@ export function generateMockMILExam(
     1: {
       name:
         language === "spanish"
-          ? "Reconocimiento de Patrones"
+          ? "Reconocimiento de patrones"
           : "Pattern Recognition",
       description:
         language === "spanish"
@@ -29,7 +29,7 @@ export function generateMockMILExam(
     2: {
       name:
         language === "spanish"
-          ? "Razonamiento Verbal - Comparaciones"
+          ? "Razonamiento verbal: comparaciones"
           : "Verbal Reasoning",
       description:
         language === "spanish"
@@ -37,21 +37,21 @@ export function generateMockMILExam(
           : "Language comprehension tasks",
     },
     3: {
-      name: language === "spanish" ? "Memoria de Trabajo" : "Working Memory",
+      name: language === "spanish" ? "Memoria de trabajo" : "Working Memory",
       description:
         language === "spanish"
           ? "Tareas de memoria y procesamiento"
           : "Memory and processing tasks",
     },
     4: {
-      name: language === "spanish" ? "Velocidad Numérica" : "Numeric Velocity",
+      name: language === "spanish" ? "Velocidad numérica" : "Numeric Velocity",
       description:
         language === "spanish"
           ? "Tareas de aritmética rápida"
           : "Speed arithmetic tasks",
     },
     5: {
-      name: language === "spanish" ? "Rotación Visual" : "Visual Rotation",
+      name: language === "spanish" ? "Rotación visual" : "Visual Rotation",
       description:
         language === "spanish"
           ? "Tareas de razonamiento espacial"
@@ -224,7 +224,7 @@ export function generateMockMILExamMetadata(
       id: "pattern-recognition-001",
       name:
         language === "spanish"
-          ? "Reconocimiento de Patrones"
+          ? "Reconocimiento de patrones"
           : "Pattern Recognition",
       description:
         language === "spanish"
@@ -238,7 +238,7 @@ export function generateMockMILExamMetadata(
       id: "verbal-reasoning-001",
       name:
         language === "spanish"
-          ? "Razonamiento Verbal - Comparaciones"
+          ? "Razonamiento verbal: comparaciones"
           : "Verbal Reasoning",
       description:
         language === "spanish"
@@ -250,7 +250,7 @@ export function generateMockMILExamMetadata(
     },
     {
       id: "working-memory-001",
-      name: language === "spanish" ? "Memoria de Trabajo" : "Working Memory",
+      name: language === "spanish" ? "Memoria de trabajo" : "Working Memory",
       description:
         language === "spanish"
           ? "Tareas de memoria y procesamiento cognitivo"
@@ -261,7 +261,7 @@ export function generateMockMILExamMetadata(
     },
     {
       id: "numeric-velocity-001",
-      name: language === "spanish" ? "Velocidad Numérica" : "Numeric Velocity",
+      name: language === "spanish" ? "Velocidad numérica" : "Numeric Velocity",
       description:
         language === "spanish"
           ? "Aritmética rápida y secuencias numéricas"
@@ -272,8 +272,11 @@ export function generateMockMILExamMetadata(
     },
     {
       id: "visual-rotation-001",
-      name: "Visual Rotation",
-      description: "Spatial reasoning and mental rotation",
+      name: language === "spanish" ? "Rotación visual" : "Visual Rotation",
+      description:
+        language === "spanish"
+          ? "Razonamiento espacial y rotación mental"
+          : "Spatial reasoning and mental rotation",
       type: 5,
       timeLimitMinutes: 4,
       totalQuestions: 35,
@@ -449,7 +452,7 @@ export function generateSpanishVerbalReasoningExam(): MILExam {
 
   return {
     id: "verbal-reasoning-001",
-    name: "Razonamiento Verbal - Comparaciones",
+    name: "Razonamiento verbal: comparaciones",
     description:
       "Esta prueba evalúa la capacidad de comparar y ordenar características de diferentes individuos",
     type: 2,

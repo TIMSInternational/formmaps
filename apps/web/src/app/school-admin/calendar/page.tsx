@@ -386,14 +386,14 @@ export default function AcademicCalendarPage() {
             {showAssessmentForm && (
               <div style={{ padding: "8px 10px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", flexDirection: "column", gap: 6 }}>
                 <select value={assessmentType} onChange={e => setAssessmentType(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }}>
-                  {["PCA","MIL","360","Personality"].map(t => <option key={t} value={t}>{t}</option>)}
+                  {["PCA","MIL","360","Personality"].map(a => <option key={a} value={a}>{a === "Personality" ? t("assessments.pipeline.colPersonality") : a}</option>)}
                 </select>
                 <select value={assessmentGrade} onChange={e => setAssessmentGrade(e.target.value)} style={{ fontSize: 12, padding: "5px 8px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none" }}>
                   {["9","10","11","12"].map(g => <option key={g} value={g}>{t("calendar.assessmentsSection.gradeOption", { grade: g })}</option>)}
                 </select>
                 <div style={{ display: "flex", gap: 4 }}>
-                  <input type="date" value={assessmentStart} onChange={e => setAssessmentStart(e.target.value)} placeholder="Start" style={{ fontSize: 11, padding: "5px 6px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none", flex: 1 }} />
-                  <input type="date" value={assessmentEnd} onChange={e => setAssessmentEnd(e.target.value)} placeholder="End" style={{ fontSize: 11, padding: "5px 6px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none", flex: 1 }} />
+                  <input type="date" value={assessmentStart} onChange={e => setAssessmentStart(e.target.value)} placeholder={t("assessments.schedule.start")} style={{ fontSize: 11, padding: "5px 6px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none", flex: 1 }} />
+                  <input type="date" value={assessmentEnd} onChange={e => setAssessmentEnd(e.target.value)} placeholder={t("assessments.schedule.end")} style={{ fontSize: 11, padding: "5px 6px", borderRadius: 5, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", outline: "none", flex: 1 }} />
                 </div>
                 <button onClick={handleAddAssessment} disabled={!assessmentStart || !assessmentEnd || savingAssessment} style={{ fontSize: 12, fontWeight: 600, padding: "5px 0", borderRadius: 5, border: "none", background: "#8b5cf6", color: "#fff", cursor: "pointer", opacity: (!assessmentStart || !assessmentEnd || savingAssessment) ? 0.5 : 1 }}>
                   {savingAssessment ? t("calendar.assessmentsSection.adding") : t("calendar.assessmentsSection.addWindow")}

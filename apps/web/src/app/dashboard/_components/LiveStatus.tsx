@@ -10,7 +10,8 @@ import { useTranslation } from "react-i18next";
 import Link from "next/link";
 
 export function LiveStatus() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language?.startsWith("es") ? "es-CO" : "en-US";
   const [showNotification, setShowNotification] = useState(false);
   const [nextSession, setNextSession] = useState<Booking | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -37,7 +38,7 @@ export function LiveStatus() {
 
   const formatTime = (isoString?: string) => {
     if (!isoString) return "--";
-    return new Date(isoString).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return new Date(isoString).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   };
 
   const formatDate = (isoString?: string) => {
@@ -45,7 +46,7 @@ export function LiveStatus() {
     const d = new Date(isoString);
     const today = new Date();
     const isToday = d.toDateString() === today.toDateString();
-    return isToday ? t("common.today") : d.toLocaleDateString([], { month: "short", day: "numeric" });
+    return isToday ? t("common.today") : d.toLocaleDateString(locale, { month: "short", day: "numeric" });
   };
 
   return (
@@ -99,7 +100,7 @@ export function LiveStatus() {
                     {nextSession.studentName || t("dashboard.upcomingSession")}
                   </p>
                   <p className="text-[10px] text-primary uppercase tracking-widest mt-0.5 font-bold">
-                    {nextSession.status === "confirmed" ? "Confirmed" : nextSession.status}
+                    {t(`sessions.status.${nextSession.status}`, { defaultValue: nextSession.status })}
                   </p>
                 </div>
               </div>
@@ -119,10 +120,10 @@ export function LiveStatus() {
                 <div className="flex flex-col gap-1.5 rounded-xl p-4 border border-border bg-secondary">
                   <div className="flex items-center gap-1.5 text-muted-foreground mb-1">
                     <span className="w-2 h-2 rounded-full bg-emerald-500 ml-0.5" />
-                    <span className="text-[10px] font-bold uppercase tracking-widest">Status</span>
+                    <span className="text-[10px] font-bold uppercase tracking-widest">{t("studentUi.dashboard.liveStatus.status")}</span>
                   </div>
                   <span className="text-sm font-bold text-emerald-600 tracking-tight capitalize">
-                    {nextSession.status}
+                    {t(`sessions.status.${nextSession.status}`, { defaultValue: nextSession.status })}
                   </span>
                 </div>
               </div>

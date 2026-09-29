@@ -119,7 +119,7 @@ export default function PCAAssessmentPage() {
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
           <Loader2 className="w-6 h-6 animate-spin text-muted-foreground mx-auto mb-3" />
-          <p className="text-sm text-muted-foreground">Loading PCA data...</p>
+          <p className="text-sm text-muted-foreground">{t("studentUi.assessments.pca.loading")}</p>
         </div>
       </div>
     );

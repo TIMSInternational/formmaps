@@ -344,19 +344,18 @@ export default function StudentsPage() {
           borderTop: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)",
         }}>
           <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>
-            Page <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{page}</span> of{" "}
-            <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{totalPages}</span>
+            {t("ui.results.pageOf", { page, total: totalPages })}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1} className="h-7 rounded-md text-xs"
               style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>
-              Previous
+              {t("users.pagination.previous")}
             </Button>
             <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages} className="h-7 rounded-md text-xs"
               style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>
-              Next
+              {t("users.pagination.next")}
             </Button>
           </div>
         </div>

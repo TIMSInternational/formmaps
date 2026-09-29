@@ -67,15 +67,15 @@ function MessagesContent() {
   const fetchMessages = useCallback(async (id: string, silent = false) => {
     if (!silent) setLoadingMessages(true);
     try { const res = await getConversationMessages(id); setMessages(res?.messages ?? []); }
-    catch { if (!silent) toast.error("Failed to load messages."); }
+    catch { if (!silent) toast.error(t("messages.messagesFailed")); }
     finally { if (!silent) setLoadingMessages(false); }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     (async () => {
       setLoadingConversations(true);
       try { setConversations(await listConversations()); }
-      catch { toast.error("Failed to load conversations."); }
+      catch { toast.error(t("messages.loadFailed")); }
       finally { setLoadingConversations(false); }
     })();
   }, []);
@@ -306,7 +306,7 @@ function MessagesContent() {
                 </div>
                 {videoEnabled && (
                   <button onClick={handleStartCall} disabled={startingCall}
-                    title="Start Video Call"
+                    title={t("messages.startVideo")}
                     style={{ width: 34, height: 34, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--admin-bg-hover)", color: "var(--admin-accent-blue)", border: "1px solid var(--admin-border-light)", cursor: startingCall ? "default" : "pointer", transition: "all 0.15s", opacity: startingCall ? 0.5 : 1 }}
                     onMouseEnter={(e) => { if (!startingCall) { e.currentTarget.style.background = "var(--admin-accent-blue)"; e.currentTarget.style.color = "#fff"; } }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; e.currentTarget.style.color = "var(--admin-accent-blue)"; }}>

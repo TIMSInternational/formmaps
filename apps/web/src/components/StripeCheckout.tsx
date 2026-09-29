@@ -1,5 +1,6 @@
 "use client";
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { createCheckoutSession } from "@/services/subscriptionService";
 
 interface StripeCheckoutProps {
@@ -27,6 +28,7 @@ export default function StripeCheckout({
   className = "",
   disabled = false,
 }: StripeCheckoutProps) {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
 
   const handleCheckout = async () => {
@@ -57,7 +59,7 @@ export default function StripeCheckout({
       }
     } catch (error) {
       const errorMessage =
-        error instanceof Error ? error.message : "Failed to initialize payment";
+        error instanceof Error ? error.message : t("components.stripeCheckout.initFailed");
       onError?.(errorMessage);
       setLoading(false);
     }
@@ -75,10 +77,10 @@ export default function StripeCheckout({
       {loading ? (
         <div className="flex items-center justify-center space-x-2 py-3" role="status">
           <div className="w-4 h-4 border-2 border-[var(--admin-accent-blue)] border-t-transparent rounded-full animate-spin" aria-hidden="true" />
-          <span className="text-sm text-gray-600">Redirecting to Stripe...</span>
+          <span className="text-sm text-gray-600">{t("components.stripeCheckout.redirecting")}</span>
         </div>
       ) : (
-        children || "Pay with Stripe"
+        children || t("components.stripeCheckout.payWithStripe")
       )}
     </div>
   );

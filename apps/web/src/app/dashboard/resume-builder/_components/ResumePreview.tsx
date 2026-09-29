@@ -84,7 +84,8 @@ export function ResumePreview() {
       const link = document.createElement("a");
       link.href = url;
       link.download = `${
-        resumeBuilder.data.personalInfo.fullName || "resume"
+        resumeBuilder.data.personalInfo.fullName ||
+        t("resumeBuilder.resumePreview.fileName", "resume")
       }.pdf`;
       document.body.appendChild(link);
       link.click();
@@ -109,7 +110,7 @@ export function ResumePreview() {
           className="bg-[#2E9098] hover:bg-[#2E9098]/90 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
         >
           <Eye size={16} />
-          Preview
+          {t("resumeBuilder.resumePreview.preview", "Preview")}
         </button>
 
         <button
@@ -117,7 +118,7 @@ export function ResumePreview() {
           className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
         >
           <Download size={16} />
-          Download PDF
+          {t("resumeBuilder.resumePreview.downloadPdf", "Download PDF")}
         </button>
       </div>
 
@@ -144,13 +145,13 @@ export function ResumePreview() {
               <FocusTrap>
                 <div
                   role="dialog"
-                  aria-label="Resume preview"
+                  aria-label={t("resumeBuilder.resumePreview.dialogLabel", "Resume preview")}
                   className="w-full h-full"
                 >
                   {/* Header */}
                   <div className="flex items-center justify-between p-4 border-b bg-white shadow-sm print:hidden">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Resume Preview
+                      {t("resumeBuilder.resumePreview.title", "Resume Preview")}
                     </h3>
                     <div className="flex items-center space-x-3">
                       <button
@@ -158,16 +159,17 @@ export function ResumePreview() {
                         className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                       >
                         <Download size={16} />
-                        Print/Save as PDF
+                        {t("resumeBuilder.resumePreview.printSave", "Print/Save as PDF")}
                       </button>
                       <button
                         onClick={() => setShowATS(true)}
                         className="bg-[#FFD23F] hover:bg-[#FFD23F]/90 text-[#102B47] px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
                       >
-                        ATS Check
+                        {t("resumeBuilder.resumePreview.atsCheck", "ATS Check")}
                       </button>
                       <button
                         onClick={() => setShowPreview(false)}
+                        aria-label={t("common.close", "Close")}
                         className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-2 rounded-full transition-colors"
                       >
                         <X size={20} />
@@ -175,11 +177,11 @@ export function ResumePreview() {
                     </div>
                     {lastSavedTick && (
                       <div className="absolute left-6 top-6 text-sm text-green-600">
-                        Saved
+                        {t("resumeBuilder.resumePreview.saved", "Saved")}
                       </div>
                     )}
                     <div aria-live="polite" className="sr-only">
-                      {lastSavedTick ? "Resume saved" : ""}
+                      {lastSavedTick ? t("resumeBuilder.resumePreview.resumeSaved", "Resume saved") : ""}
                     </div>
                   </div>
 

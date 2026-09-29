@@ -1,6 +1,7 @@
 "use client";
 
 import { Check } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface StepIndicatorProps {
   /** Zero-based index of the step currently being shown. */
@@ -14,8 +15,9 @@ interface StepIndicatorProps {
  * bulk-onboard one, which is on a different surface with a dark palette.
  */
 export function StepIndicator({ current, labels }: StepIndicatorProps) {
+  const { t } = useTranslation();
   return (
-    <ol className="flex items-center justify-center gap-0" aria-label="Progress">
+    <ol className="flex items-center justify-center gap-0" aria-label={t("common.progress")}>
       {labels.map((label, i) => {
         const done = i < current;
         const active = i === current;

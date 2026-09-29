@@ -224,7 +224,7 @@ export function UniversityDetailPanel({
         <SectionLabel icon={Award} label={t("Key Facts", "Datos clave")} />
         <div className="grid grid-cols-2 gap-2">
           <StatBox icon={Award} label={t("Rank", "Ranking")} value={globalRank ? `#${globalRank}` : "--"} accent="text-amber-400" />
-          <StatBox icon={Users} label={t("Accept", "Aceptación")} value={formatAcceptanceRate(acceptRate)} accent="text-blue-400" />
+          <StatBox icon={Users} label={t("Acceptance", "Aceptación")} value={formatAcceptanceRate(acceptRate)} accent="text-blue-400" />
           <StatBox icon={DollarSign} label={t("Tuition", "Matrícula")} value={tuition > 0 ? `$${(tuition / 1000).toFixed(0)}k` : "--"} accent="text-emerald-400" />
           <StatBox icon={GraduationCap} label={t("Programs", "Programas")} value={String(recommendedPrograms?.length || university.programs?.length || "--")} accent="text-purple-400" />
         </div>
@@ -308,7 +308,7 @@ export function UniversityDetailPanel({
                       "bg-emerald-500/10 text-emerald-400",
                     )}
                   >
-                    {p.academicRigorLevel >= 8 ? "High" : p.academicRigorLevel >= 5 ? "Medium" : "Standard"}
+                    {p.academicRigorLevel >= 8 ? t("High", "Alta") : p.academicRigorLevel >= 5 ? t("Medium", "Media") : t("Standard", "Estándar")}
                   </span>
                 )}
               </div>

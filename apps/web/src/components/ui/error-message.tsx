@@ -1,4 +1,7 @@
+"use client";
+
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { AlertTriangle, XCircle, Info } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -62,10 +65,11 @@ export function ErrorMessage({
 
 // Convenience components for specific use cases
 export function AuthErrorMessage({ message, className }: { message: string; className?: string }) {
+  const { t } = useTranslation();
   return (
     <ErrorMessage
       message={message}
-      title="Authentication Failed"
+      title={t("components.errorMessage.authFailed")}
       variant="error"
       className={className}
     />

@@ -8,7 +8,7 @@
   "dashboard": {
     "badge": "Profesor",
     "welcome": "Bienvenido de nuevo",
-    "subtitle": "Completa las evaluaciones 360° que la escuela te ha solicitado llenar.",
+    "subtitle": "Completa las evaluaciones 360° que el colegio te ha solicitado llenar.",
     "pendingEvaluations": "Evaluaciones pendientes",
     "overdue": "Vencidas",
     "upcoming": "Próximas",
@@ -23,7 +23,7 @@
   "evaluations": {
     "badge": "Profesor",
     "title": "Evaluaciones 360°",
-    "subtitle": "Completa las evaluaciones que la escuela ha solicitado para apoyar el desarrollo del estudiante.",
+    "subtitle": "Completa las evaluaciones que el colegio ha solicitado para apoyar el desarrollo del estudiante.",
     "stats": {
       "pending": "Pendientes",
       "overdue": "Vencidas",
@@ -47,10 +47,10 @@
   },
   "onboarding": {
     "title": "Configura tu cuenta del portal docente",
-    "subtitle": "Te han invitado a unirte a tu escuela en FormMaps",
+    "subtitle": "Te han invitado a unirte a tu colegio en FormMaps",
     "inviteDetails": {
-      "schoolLabel": "Escuela",
-      "schoolFallback": "Tu escuela"
+      "schoolLabel": "Colegio",
+      "schoolFallback": "Tu colegio"
     },
     "form": {
       "cardTitle": "Crea tu cuenta",
@@ -81,13 +81,13 @@
     "states": {
       "noToken": {
         "title": "Enlace de invitación inválido",
-        "message": "Este enlace de invitación no tiene un token. Revisa el correo que recibiste o comunícate con tu escuela.",
+        "message": "Este enlace de invitación no tiene un token. Revisa el correo que recibiste o comunícate con tu colegio.",
         "goToLogin": "Ir al inicio de sesión"
       },
       "verifying": "Verificando tu invitación…",
       "expired": {
         "title": "Invitación expirada o inválida",
-        "fallbackMessage": "Este enlace de invitación ha expirado o ya no es válido. Comunícate con la escuela para obtener una nueva invitación.",
+        "fallbackMessage": "Este enlace de invitación ha expirado o ya no es válido. Comunícate con el colegio para obtener una nueva invitación.",
         "goToLogin": "Ir al inicio de sesión"
       },
       "success": {

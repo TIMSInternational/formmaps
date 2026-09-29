@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import {
   BookOpen, GraduationCap, Beaker, Calculator, Globe, Music, Palette,
@@ -34,6 +35,7 @@ export interface PathwayNodeData {
 }
 
 function PathwayCourseNodeComponent({ data, selected }: NodeProps) {
+  const { t } = useTranslation("school_admin");
   const d = data as PathwayNodeData;
   const [isHovered, setIsHovered] = useState(false);
   const Icon = getDeptIcon(d.department);
@@ -94,17 +96,17 @@ function PathwayCourseNodeComponent({ data, selected }: NodeProps) {
           fontSize: 13, fontWeight: 600, lineHeight: 1.3, color: "var(--admin-font-primary)", marginBottom: 6,
           display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical" as "vertical", overflow: "hidden",
         }}>
-          {d.label || "Untitled"}
+          {d.label || t("ui.pathways.untitled")}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
           {grade > 0 && (
             <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: `${accent}15`, color: accent }}>
-              Gr {grade}
+              {t("ui.common.gradeShort", { grade })}
             </span>
           )}
           {credits != null && (
             <span style={{ fontSize: 10, fontWeight: 500, padding: "1px 6px", borderRadius: 3, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>
-              {credits} cr
+              {t("ui.courses.creditsAbbr", { count: Number(credits) })}
             </span>
           )}
         </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { MoreVertical, Flag, Ban, X } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { reportTarget, blockUser, unblockUser } from "@/services/moderationService";
 
 interface ModerationMenuProps {
@@ -16,6 +17,7 @@ interface ModerationMenuProps {
  * participant for review or block them so neither side can message again.
  */
 export default function ModerationMenu({ targetUserId, targetName }: ModerationMenuProps) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [reporting, setReporting] = useState(false);
   const [reason, setReason] = useState("");
@@ -30,10 +32,10 @@ export default function ModerationMenu({ targetUserId, targetName }: ModerationM
     setSubmitting(true);
     try {
       await reportTarget("user", targetUserId, trimmed.slice(0, 1000));
-      toast.success("Report submitted. Our team will review it.");
+      toast.success(t("components.moderationMenu.reportSubmitted"));
       close();
     } catch {
-      toast.error("Could not submit report.");
+      toast.error(t("components.moderationMenu.reportFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -46,15 +48,15 @@ export default function ModerationMenu({ targetUserId, targetName }: ModerationM
       if (blocked) {
         await unblockUser(targetUserId);
         setBlocked(false);
-        toast.success(`Unblocked ${targetName}.`);
+        toast.success(t("components.moderationMenu.unblockedToast", { name: targetName }));
       } else {
         await blockUser(targetUserId);
         setBlocked(true);
-        toast.success(`Blocked ${targetName}. They can no longer message you.`);
+        toast.success(t("components.moderationMenu.blockedToast", { name: targetName }));
       }
       close();
     } catch {
-      toast.error("Action failed. Please try again.");
+      toast.error(t("components.moderationMenu.actionFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -64,8 +66,8 @@ export default function ModerationMenu({ targetUserId, targetName }: ModerationM
     <div style={{ position: "relative" }}>
       <button
         onClick={() => setOpen((v) => !v)}
-        title="More options"
-        aria-label="Report or block this user"
+        title={t("components.moderationMenu.moreOptions")}
+        aria-label={t("components.moderationMenu.menuAria")}
         style={{ width: 34, height: 34, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", border: "1px solid var(--admin-border-light)", cursor: "pointer", transition: "all 0.15s" }}
       >
         <MoreVertical style={{ width: 16, height: 16 }} />
@@ -86,15 +88,15 @@ export default function ModerationMenu({ targetUserId, targetName }: ModerationM
               {reporting ? (
                 <div style={{ padding: 12, display: "flex", flexDirection: "column", gap: 8 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                    <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Report {targetName}</span>
-                    <button onClick={() => setReporting(false)} aria-label="Cancel" style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--admin-font-light)", display: "flex" }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("components.moderationMenu.reportName", { name: targetName })}</span>
+                    <button onClick={() => setReporting(false)} aria-label={t("common.cancel")} style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--admin-font-light)", display: "flex" }}>
                       <X style={{ width: 14, height: 14 }} />
                     </button>
                   </div>
                   <textarea
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    placeholder="What's wrong? (e.g. harassment, inappropriate contact)"
+                    placeholder={t("components.moderationMenu.reasonPlaceholder")}
                     rows={3}
                     maxLength={1000}
                     autoFocus
@@ -105,7 +107,7 @@ export default function ModerationMenu({ targetUserId, targetName }: ModerationM
                     disabled={!reason.trim() || submitting}
                     style={{ borderRadius: 8, border: "none", padding: "8px 10px", fontSize: 12, fontWeight: 600, color: "#fff", background: reason.trim() && !submitting ? "#dc2626" : "var(--admin-font-light)", cursor: reason.trim() && !submitting ? "pointer" : "default", fontFamily: "inherit" }}
                   >
-                    {submitting ? "Submitting…" : "Submit report"}
+                    {submitting ? t("components.moderationMenu.submitting") : t("components.moderationMenu.submitReport")}
                   </button>
                 </div>
               ) : (
@@ -117,7 +119,7 @@ export default function ModerationMenu({ targetUserId, targetName }: ModerationM
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
                     <Flag style={{ width: 15, height: 15, color: "var(--admin-font-tertiary)" }} />
-                    <span>Report {targetName}</span>
+                    <span>{t("components.moderationMenu.reportName", { name: targetName })}</span>
                   </button>
                   <button
                     onClick={handleBlockToggle}
@@ -127,7 +129,7 @@ export default function ModerationMenu({ targetUserId, targetName }: ModerationM
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
                     <Ban style={{ width: 15, height: 15 }} />
-                    <span>{blocked ? `Unblock ${targetName}` : `Block ${targetName}`}</span>
+                    <span>{blocked ? t("components.moderationMenu.unblockName", { name: targetName }) : t("components.moderationMenu.blockName", { name: targetName })}</span>
                   </button>
                 </div>
               )}

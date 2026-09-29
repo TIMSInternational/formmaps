@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api/apiClient";
+import i18n from "@/lib/i18n";
 
 // Question360 Interfaces
 export interface Question360 {
@@ -190,10 +191,10 @@ export const questions360Service = {
 
 // Helper functions
 export const getRelationTypeOptions = () => [
-  { value: "Parent", label: "Parent" },
-  { value: "Teacher", label: "Teacher" },
-  { value: "Other", label: "Other" },
-  { value: "Self", label: "Self" },
+  { value: "Parent", label: i18n.t("admin.users.roleNames.parent") },
+  { value: "Teacher", label: i18n.t("admin.users.roleNames.teacher") },
+  { value: "Other", label: i18n.t("evaluation.relationshipOptions.other") },
+  { value: "Self", label: i18n.t("evaluation.groups.self") },
 ];
 
 export const getCommonCategories = () => [

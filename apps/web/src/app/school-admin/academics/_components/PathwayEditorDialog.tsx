@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { PathwayEditor } from "./PathwayEditor";
 
@@ -11,6 +12,7 @@ interface PathwayEditorDialogProps {
 /** All-pathways visual editor, shown as a full-screen modal. The editor body and
  *  logic live in PathwayEditor (also used by the per-pathway editor route). */
 export function PathwayEditorDialog({ open, onClose }: PathwayEditorDialogProps) {
+  const { t } = useTranslation("school_admin");
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
       <DialogContent
@@ -18,7 +20,7 @@ export function PathwayEditorDialog({ open, onClose }: PathwayEditorDialogProps)
         className="p-0 gap-0 flex flex-col"
         style={{ width: "95vw", maxWidth: "95vw", height: "92vh", background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)" }}
       >
-        <DialogTitle className="sr-only">Pathway editor</DialogTitle>
+        <DialogTitle className="sr-only">{t("ui.pathways.editor")}</DialogTitle>
         <PathwayEditor variant="dialog" onClose={onClose} />
       </DialogContent>
     </Dialog>

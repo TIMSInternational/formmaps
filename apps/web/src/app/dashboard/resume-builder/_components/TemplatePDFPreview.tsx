@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { Loader2, FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // React-PDF dynamic import types — ComponentType<Record<string,unknown>> for JSX usage
 type ReactPDFModule = Awaited<typeof import('@react-pdf/renderer')>;
@@ -20,6 +21,7 @@ interface TemplatePDFPreviewProps {
 }
 
 export function TemplatePDFPreview({ data, templateId, className = "" }: TemplatePDFPreviewProps) {
+  const { t } = useTranslation();
   const [pdfComponents, setPdfComponents] = useState<ReactPDFModule | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [loadingPDF, setLoadingPDF] = useState(false);
@@ -219,13 +221,13 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
 
             {/* Summary */}
             <View>
-              <Text style={styles.sectionTitle}>Summary</Text>
+              <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.summary", "Summary")}</Text>
               <Text style={styles.text}>{sampleData.personalInfo.summary}</Text>
             </View>
 
             {/* Experience */}
             <View>
-              <Text style={styles.sectionTitle}>Experience</Text>
+              <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.experience", "Experience")}</Text>
               {sampleData.experience.map((exp: { jobTitle: string; company: string; startDate: string; endDate: string; location: string; description?: string[] }, index: number) => (
                 <View key={index} style={{ marginBottom: 6 }}>
                   <View style={styles.experienceHeader}>
@@ -251,7 +253,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
 
             {/* Education */}
             <View>
-              <Text style={styles.sectionTitle}>Education</Text>
+              <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.education", "Education")}</Text>
               {sampleData.education.map((edu: { degree: string; institution: string; graduationDate: string; location: string; gpa?: string }, index: number) => (
                 <View key={index} style={{ marginBottom: 4 }}>
                   <View style={styles.experienceHeader}>
@@ -273,7 +275,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
     } catch (error) {
       return null;
     }
-  }, [pdfComponents, data, templateId]);
+  }, [pdfComponents, data, templateId, t]);
 
   if (!isClient) {
     return null;
@@ -285,7 +287,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
         <div className="flex items-center justify-center h-full bg-gray-50">
           <div className="text-center">
             <Loader2 size={24} className="animate-spin text-[#2E9098] mx-auto mb-2" />
-            <p className="text-xs text-gray-600">Loading PDF preview...</p>
+            <p className="text-xs text-gray-600">{t("resumeBuilder.livePreviewPDF.loading", "Loading PDF preview...")}</p>
           </div>
         </div>
       ) : pdfComponents && renderPDFTemplate ? (
@@ -306,7 +308,7 @@ export function TemplatePDFPreview({ data, templateId, className = "" }: Templat
         <div className="flex items-center justify-center h-full bg-gray-50">
           <div className="text-center">
             <FileText size={24} className="text-gray-400 mx-auto mb-2" />
-            <p className="text-xs text-gray-600">PDF preview unavailable</p>
+            <p className="text-xs text-gray-600">{t("resumeBuilder.templatePDFPreview.unavailable", "PDF preview unavailable")}</p>
           </div>
         </div>
       )}

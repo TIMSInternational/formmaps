@@ -11,7 +11,7 @@
     "subtitle": "Una vista completa de tu historial académico, promedio y progreso de créditos.",
     "failedToLoad": "Error al cargar el expediente.",
     "noCoursesTitle": "Aún no hay materias",
-    "noCoursesBody": "Tu expediente se llenará una vez que tu escuela haya ingresado las calificaciones.",
+    "noCoursesBody": "Tu expediente se llenará una vez que tu colegio haya ingresado las calificaciones.",
     "unweightedGpa": "Promedio sin ponderar",
     "weightedGpa": "Promedio ponderado",
     "classRank": "Posición en la clase",
@@ -105,14 +105,14 @@
   "recommendations": {
     "badge": "Solicitudes",
     "title": "Cartas de recomendación",
-    "subtitle": "Solicita y da seguimiento a cartas de tus consejeros y maestros.",
+    "subtitle": "Solicita y da seguimiento a cartas de tus orientadores y profesores.",
     "requestLetter": "Solicitar carta",
     "failedToLoad": "Error al cargar las solicitudes de recomendación",
     "list": {
       "stepInProgress": "En progreso",
       "downloadFailed": "No se pudo descargar la carta. Inténtalo de nuevo.",
       "emptyTitle": "Aún no hay solicitudes",
-      "emptyBody": "Haz clic en \"Solicitar carta\" para pedirle una recomendación a un consejero o profesor.",
+      "emptyBody": "Haz clic en \"Solicitar carta\" para pedirle una recomendación a un orientador o profesor.",
       "unknownRecommender": "Desconocido",
       "due": "Vence el {{date}}",
       "preparing": "Preparando…",
@@ -138,6 +138,11 @@
       "description": "Agrega tu tipo de personalidad de 4 letras para coincidencias de carrera aún más precisas",
       "recommended": "Recomendado",
       "completed": "Completado"
+    }
+  },
+  "ui": {
+    "recommendations": {
+      "myRequests": "Mis solicitudes"
     }
   }
 }

@@ -117,6 +117,14 @@ export function TimelinePDFDocument({
     language === "sp" ? "Reporte de línea de tiempo" : "Timeline Report";
   const generatedOn =
     language === "sp" ? "Generado el" : "Generated on";
+  const statusLabels: Record<TimelineEvent["status"], string> =
+    language === "sp"
+      ? { completed: "Completado", in_progress: "En progreso", not_started: "No iniciado" }
+      : { completed: "Completed", in_progress: "In progress", not_started: "Not started" };
+  const typeLabels: Record<TimelineEvent["type"], string> =
+    language === "sp"
+      ? { pca: "PCA", mil: "MIL", evaluation: "360°", course: "CURSO" }
+      : { pca: "PCA", mil: "MIL", evaluation: "360°", course: "COURSE" };
 
   return (
     <Document>
@@ -160,14 +168,14 @@ export function TimelinePDFDocument({
                 </Text>
               </View>
               <View style={styles.tableCol}>
-                <Text style={styles.tableCell}>{event.type.toUpperCase()}</Text>
+                <Text style={styles.tableCell}>{typeLabels[event.type] ?? event.type.toUpperCase()}</Text>
               </View>
               <View style={styles.tableColWide}>
                 <Text style={styles.tableCell}>{event.title}</Text>
               </View>
               <View style={styles.tableCol}>
                 <Text style={styles.tableCell}>
-                  {event.status.replace("_", " ")}
+                  {statusLabels[event.status] ?? event.status.replace("_", " ")}
                 </Text>
               </View>
             </View>

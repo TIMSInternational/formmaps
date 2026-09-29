@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { ArrowLeft, Check, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { ExtractedJobData } from "@/types/resume";
 
 interface EnhanceSections {
@@ -22,12 +23,6 @@ interface WizardStep2AlignProps {
   isTailoring: boolean;
 }
 
-const SECTION_LABELS: Record<string, string> = {
-  summary: "Professional Summary",
-  skills: "Skills",
-  experience: "Experience",
-  projects: "Projects",
-};
 
 export function WizardStep2Align({
   extractedJob,
@@ -39,6 +34,13 @@ export function WizardStep2Align({
   onTailor,
   isTailoring,
 }: WizardStep2AlignProps) {
+  const { t } = useTranslation();
+  const SECTION_LABELS: Record<string, string> = {
+    summary: t("resumeBuilder.wizardAlign.sections.summary", "Professional Summary"),
+    skills: t("resumeBuilder.wizardAlign.sections.skills", "Skills"),
+    experience: t("resumeBuilder.wizardAlign.sections.experience", "Experience"),
+    projects: t("resumeBuilder.wizardAlign.sections.projects", "Projects"),
+  };
   const allKeywords = Array.from(
     new Set([
       ...(extractedJob.requiredSkills || []),
@@ -59,10 +61,10 @@ export function WizardStep2Align({
       {/* Sections to enhance */}
       <div className="dash-card p-6 space-y-4">
         <h2 className="text-lg font-semibold text-foreground">
-          Sections to Enhance
+          {t("resumeBuilder.wizardAlign.sectionsTitle", "Sections to Enhance")}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Choose which sections of your resume to tailor for this role.
+          {t("resumeBuilder.wizardAlign.sectionsHint", "Choose which sections of your resume to tailor for this role.")}
         </p>
         <div className="grid grid-cols-2 gap-3">
           {(Object.keys(enhanceSections) as Array<keyof EnhanceSections>).map(
@@ -105,10 +107,10 @@ export function WizardStep2Align({
       {/* Keywords to include */}
       <div className="dash-card p-6 space-y-4">
         <h2 className="text-lg font-semibold text-foreground">
-          Keywords to Include
+          {t("resumeBuilder.wizardAlign.keywordsTitle", "Keywords to Include")}
         </h2>
         <p className="text-sm text-muted-foreground">
-          Select which keywords from the job posting to weave into your resume.
+          {t("resumeBuilder.wizardAlign.keywordsHint", "Select which keywords from the job posting to weave into your resume.")}
         </p>
         <div className="flex flex-wrap gap-2">
           {allKeywords.map((kw) => {
@@ -144,7 +146,7 @@ export function WizardStep2Align({
           className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          {t("common.back", "Back")}
         </button>
         <button
           onClick={onTailor}
@@ -154,10 +156,10 @@ export function WizardStep2Align({
           {isTailoring ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              Generating...
+              {t("common.generating", "Generating...")}
             </>
           ) : (
-            "Generate Tailored Resume"
+            t("resumeBuilder.wizardAlign.generate", "Generate Tailored Resume")
           )}
         </button>
       </div>

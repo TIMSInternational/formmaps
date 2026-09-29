@@ -1,6 +1,9 @@
 // The ONE loading screen for auth/portal transitions. Login → portal used to
 // flash 2-3 unrelated designs (indigo gradient → dark "Verifying access..." →
 // student-shaped skeleton); every full-screen wait now shows this brand frame.
+"use client";
+import { useTranslation } from "react-i18next";
+
 export function LoadingSpinner({
   overlay = false,
   label,
@@ -8,12 +11,13 @@ export function LoadingSpinner({
   overlay?: boolean;
   label?: string;
 } = {}) {
+  const { t } = useTranslation();
   return (
     <div
       className={`${overlay ? "fixed inset-0 z-[9999]" : "min-h-screen"} flex items-center justify-center bg-white`}
       role="status"
       aria-busy="true"
-      aria-label={label || "Loading"}
+      aria-label={label || t("components.loadingSpinner.loading")}
     >
       <div className="flex flex-col items-center gap-5">
         {/* Small FormMaps icon mark for the loading/splash frame. */}
@@ -29,7 +33,7 @@ export function LoadingSpinner({
             {label}
           </p>
         )}
-        <span className="sr-only">Loading content, please wait...</span>
+        <span className="sr-only">{t("components.loadingSpinner.pleaseWait")}</span>
       </div>
     </div>
   );

@@ -1,11 +1,14 @@
 import { User, Briefcase, GraduationCap, Zap, ClipboardCheck, Target, Code, Palette, TrendingUp, Heart, Gavel, Wrench, Users } from 'lucide-react';
+// The bare i18next singleton (initialised by lib/i18n at the app root). Importing lib/i18n here
+// would pull react-i18next initialisation into every importer (e.g. the global store).
+import i18n from 'i18next';
 
 // Career field definitions with associated templates and content
 export const careerFields = [
   {
     id: 'technology',
-    name: 'Technology & Software',
-    description: 'Software development, IT, cybersecurity, data science',
+    get name() { return i18n.t("resumeBuilder.careerFields.technology.name", "Technology & Software"); },
+    get description() { return i18n.t("resumeBuilder.careerFields.technology.description", "Software development, IT, cybersecurity, data science"); },
     icon: Code,
     color: '#2E9098',
     templates: ['modern', 'minimal'],
@@ -16,8 +19,8 @@ export const careerFields = [
   },
   {
     id: 'design',
-    name: 'Design & Creative',
-    description: 'UI/UX design, graphic design, creative direction',
+    get name() { return i18n.t("resumeBuilder.careerFields.design.name", "Design & Creative"); },
+    get description() { return i18n.t("resumeBuilder.careerFields.design.description", "UI/UX design, graphic design, creative direction"); },
     icon: Palette,
     color: '#8b5cf6',
     templates: ['creative', 'modern'],
@@ -28,8 +31,8 @@ export const careerFields = [
   },
   {
     id: 'business',
-    name: 'Business & Management',
-    description: 'Project management, business analysis, consulting',
+    get name() { return i18n.t("resumeBuilder.careerFields.business.name", "Business & Management"); },
+    get description() { return i18n.t("resumeBuilder.careerFields.business.description", "Project management, business analysis, consulting"); },
     icon: TrendingUp,
     color: '#10b981',
     templates: ['classic', 'modern'],
@@ -40,8 +43,8 @@ export const careerFields = [
   },
   {
     id: 'healthcare',
-    name: 'Healthcare & Medical',
-    description: 'Medical professionals, healthcare administration',
+    get name() { return i18n.t("resumeBuilder.careerFields.healthcare.name", "Healthcare & Medical"); },
+    get description() { return i18n.t("resumeBuilder.careerFields.healthcare.description", "Medical professionals, healthcare administration"); },
     icon: Heart,
     color: '#ef4444',
     templates: ['classic', 'minimal'],
@@ -52,8 +55,8 @@ export const careerFields = [
   },
   {
     id: 'legal',
-    name: 'Legal & Law',
-    description: 'Attorneys, paralegals, legal assistants',
+    get name() { return i18n.t("resumeBuilder.careerFields.legal.name", "Legal & Law"); },
+    get description() { return i18n.t("resumeBuilder.careerFields.legal.description", "Attorneys, paralegals, legal assistants"); },
     icon: Gavel,
     color: '#374151',
     templates: ['classic', 'modern'],
@@ -64,8 +67,8 @@ export const careerFields = [
   },
   {
     id: 'engineering',
-    name: 'Engineering & Technical',
-    description: 'Mechanical, electrical, civil engineering',
+    get name() { return i18n.t("resumeBuilder.careerFields.engineering.name", "Engineering & Technical"); },
+    get description() { return i18n.t("resumeBuilder.careerFields.engineering.description", "Mechanical, electrical, civil engineering"); },
     icon: Wrench,
     color: '#f59e0b',
     templates: ['modern', 'classic'],
@@ -76,8 +79,8 @@ export const careerFields = [
   },
   {
     id: 'marketing',
-    name: 'Marketing & Sales',
-    description: 'Digital marketing, sales, brand management',
+    get name() { return i18n.t("resumeBuilder.careerFields.marketing.name", "Marketing & Sales"); },
+    get description() { return i18n.t("resumeBuilder.careerFields.marketing.description", "Digital marketing, sales, brand management"); },
     icon: Users,
     color: '#ec4899',
     templates: ['creative', 'modern'],
@@ -88,8 +91,8 @@ export const careerFields = [
   },
   {
     id: 'general',
-    name: 'General / Other',
-    description: 'Other fields or multiple career paths',
+    get name() { return i18n.t("resumeBuilder.careerFields.general.name", "General / Other"); },
+    get description() { return i18n.t("resumeBuilder.careerFields.general.description", "Other fields or multiple career paths"); },
     icon: Target,
     color: '#6b7280',
     templates: ['modern', 'classic', 'minimal', 'creative'],
@@ -104,50 +107,64 @@ export const careerFields = [
 export const resumeSteps = [
   {
     id: 1,
-    title: "Career Field",
-    description: "Select your career field for personalized templates and content",
+    // Stable English name for analytics — the title above is translated.
+    telemetryName: "Career Field",
+    get title() { return i18n.t("resumeBuilder.steps.careerField.title", "Career Field"); },
+    get description() { return i18n.t("resumeBuilder.steps.careerField.description", "Select your career field for personalized templates and content"); },
     icon: Target,
     fields: ["careerField"]
   },
   {
     id: 2,
-    title: "Choose Template",
-    description: "Select a professional template that matches your style",
+    // Stable English name for analytics — the title above is translated.
+    telemetryName: "Choose Template",
+    get title() { return i18n.t("resumeBuilder.steps.chooseTemplate.title", "Choose Template"); },
+    get description() { return i18n.t("resumeBuilder.steps.chooseTemplate.description", "Select a professional template that matches your style"); },
     icon: Palette,
     fields: ["template"]
   },
   {
     id: 3,
-    title: "Personal Information",
-    description: "Add your contact details and professional summary",
+    // Stable English name for analytics — the title above is translated.
+    telemetryName: "Personal Information",
+    get title() { return i18n.t("resumeBuilder.steps.personalInfo.title", "Personal Information"); },
+    get description() { return i18n.t("resumeBuilder.steps.personalInfo.description", "Add your contact details and professional summary"); },
     icon: User,
     fields: ["fullName", "email", "phone", "location", "linkedin", "website", "summary"]
   },
   {
     id: 4,
-    title: "Work Experience",
-    description: "Add your professional experience and achievements (optional for freshers)",
+    // Stable English name for analytics — the title above is translated.
+    telemetryName: "Work Experience",
+    get title() { return i18n.t("resumeBuilder.steps.workExperience.title", "Work Experience"); },
+    get description() { return i18n.t("resumeBuilder.steps.workExperience.description", "Add your professional experience and achievements (optional if you don't have work experience yet)"); },
     icon: Briefcase,
     fields: ["experience"]
   },
   {
     id: 5,
-    title: "Education",
-    description: "Add your educational background",
+    // Stable English name for analytics — the title above is translated.
+    telemetryName: "Education",
+    get title() { return i18n.t("resumeBuilder.steps.education.title", "Education"); },
+    get description() { return i18n.t("resumeBuilder.steps.education.description", "Add your educational background"); },
     icon: GraduationCap,
     fields: ["education"]
   },
   {
     id: 6,
-    title: "Skills",
-    description: "Highlight your technical and soft skills",
+    // Stable English name for analytics — the title above is translated.
+    telemetryName: "Skills",
+    get title() { return i18n.t("resumeBuilder.steps.skills.title", "Skills"); },
+    get description() { return i18n.t("resumeBuilder.steps.skills.description", "Highlight your technical and soft skills"); },
     icon: Zap,
     fields: ["skills"]
   },
   {
     id: 7,
-    title: "Summary",
-    description: "Review your completed resume",
+    // Stable English name for analytics — the title above is translated.
+    telemetryName: "Summary",
+    get title() { return i18n.t("resumeBuilder.steps.summary.title", "Summary"); },
+    get description() { return i18n.t("resumeBuilder.steps.summary.description", "Review your completed resume"); },
     icon: ClipboardCheck,
     fields: ["summary"]
   }
@@ -157,8 +174,8 @@ export const resumeSteps = [
 export const resumeTemplates = [
   {
     id: "modern",
-    name: "Modern Professional",
-    description: "Clean, professional design with modern typography and subtle colors",
+    get name() { return i18n.t("resumeBuilder.templateInfo.modern.name", "Modern Professional"); },
+    get description() { return i18n.t("resumeBuilder.templateInfo.modern.description", "Clean, professional design with modern typography and subtle colors"); },
     preview: "/templates/modern-preview.jpg",
     color: "#2E9098",
     category: "professional",
@@ -166,8 +183,8 @@ export const resumeTemplates = [
   },
   {
     id: "classic",
-    name: "Classic Traditional",
-    description: "Traditional format preferred by recruiters and conservative industries",
+    get name() { return i18n.t("resumeBuilder.templateInfo.classic.name", "Classic Traditional"); },
+    get description() { return i18n.t("resumeBuilder.templateInfo.classic.description", "Traditional format preferred by recruiters and conservative industries"); },
     preview: "/templates/classic-preview.jpg",
     color: "#374151",
     category: "traditional",
@@ -175,8 +192,8 @@ export const resumeTemplates = [
   },
   {
     id: "creative",
-    name: "Creative Bold",
-    description: "Stand out with a unique, creative layout perfect for design roles",
+    get name() { return i18n.t("resumeBuilder.templateInfo.creative.name", "Creative Bold"); },
+    get description() { return i18n.t("resumeBuilder.templateInfo.creative.description", "Stand out with a unique, creative layout perfect for design roles"); },
     preview: "/templates/creative-preview.jpg",
     color: "#8b5cf6",
     category: "creative",
@@ -184,8 +201,8 @@ export const resumeTemplates = [
   },
   {
     id: "minimal",
-    name: "Minimal Clean",
-    description: "Simple, clean design that focuses on content with maximum readability",
+    get name() { return i18n.t("resumeBuilder.templateInfo.minimal.name", "Minimal Clean"); },
+    get description() { return i18n.t("resumeBuilder.templateInfo.minimal.description", "Simple, clean design that focuses on content with maximum readability"); },
     preview: "/templates/minimal-preview.jpg",
     color: "#10b981",
     category: "minimal",
@@ -193,8 +210,8 @@ export const resumeTemplates = [
   },
   {
     id: "executive",
-    name: "Executive Elite",
-    description: "Sophisticated design for senior-level positions and executives",
+    get name() { return i18n.t("resumeBuilder.templateInfo.executive.name", "Executive Elite"); },
+    get description() { return i18n.t("resumeBuilder.templateInfo.executive.description", "Sophisticated design for senior-level positions and executives"); },
     preview: "/templates/executive-preview.jpg",
     color: "#1f2937",
     category: "executive",
@@ -202,8 +219,8 @@ export const resumeTemplates = [
   },
   {
     id: "tech",
-    name: "Tech Focused",
-    description: "Modern layout optimized for technical roles with skill emphasis",
+    get name() { return i18n.t("resumeBuilder.templateInfo.tech.name", "Tech Focused"); },
+    get description() { return i18n.t("resumeBuilder.templateInfo.tech.description", "Modern layout optimized for technical roles with skill emphasis"); },
     preview: "/templates/tech-preview.jpg",
     color: "#0ea5e9",
     category: "technical",

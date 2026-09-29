@@ -1,11 +1,13 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 
 // Shared left-hand brand panel for the auth pages (login + signup) so both
 // screens are visually identical. Solid FormMaps blue (var(--admin-accent-blue)) with the
 // FORMMAPS wordmark, tagline, feature bullets, and decorative circles.
 export function AuthBrandingPanel() {
+  const { t } = useTranslation();
   return (
     <div
       className="hidden lg:flex lg:w-[48%] relative overflow-hidden"
@@ -24,20 +26,20 @@ export function AuthBrandingPanel() {
         </div>
 
         <h1 className="text-4xl font-bold text-white leading-tight mb-4">
-          Find your path.
+          {t("components.authBrandingPanel.headline")}
           <br />
-          <span style={{ color: "#FFD23F" }}>Shape your future.</span>
+          <span style={{ color: "#FFD23F" }}>{t("components.authBrandingPanel.headlineAccent")}</span>
         </h1>
         <p className="text-base mb-10" style={{ color: "rgba(255,255,255,0.75)", maxWidth: 420, lineHeight: 1.7 }}>
-          AI-powered college counseling and career guidance platform for students, counselors, and schools.
+          {t("components.authBrandingPanel.tagline")}
         </p>
 
         <div className="flex flex-col gap-4">
           {[
-            { icon: "graduation", text: "College admission predictions" },
-            { icon: "compass", text: "Career pathway discovery" },
-            { icon: "chart", text: "AI-powered student insights" },
-            { icon: "shield", text: "Secure school administration" },
+            { icon: "graduation", text: t("components.authBrandingPanel.features.admissions") },
+            { icon: "compass", text: t("components.authBrandingPanel.features.careers") },
+            { icon: "chart", text: t("components.authBrandingPanel.features.insights") },
+            { icon: "shield", text: t("components.authBrandingPanel.features.administration") },
           ].map((item, i) => (
             <motion.div
               key={i}

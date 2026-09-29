@@ -26,6 +26,18 @@ it("renders each dimension with its score and band", () => {
   expect(screen.getByText(/no responses/i)).toBeInTheDocument(); // null-score dim
 });
 
+it("shows the English name for an English UI and the Spanish name for a Spanish UI", () => {
+  const withEn = [{ ...dims[0], nameEn: "Academic interests" }, dims[1]];
+  const { unmount } = render(<DimensionBreakdown dimensions={withEn} />);
+  expect(screen.getByText("Academic interests")).toBeInTheDocument();
+  expect(screen.getByText("Habilidades")).toBeInTheDocument();   // no English → Spanish
+  unmount();
+  mockLang = "es";
+  render(<DimensionBreakdown dimensions={withEn} />);
+  expect(screen.getByText("Intereses Académicos")).toBeInTheDocument();
+  expect(screen.queryByText("Academic interests")).not.toBeInTheDocument();
+});
+
 it("expands a dimension to show per-group breakdown", () => {
   render(<DimensionBreakdown dimensions={dims} />);
   fireEvent.click(screen.getByRole("button", { name: /Intereses Académicos/i }));

@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { bakeEditedPdf } from "../_lib/bakeEditedPdf";
 import type { DocumentEdit } from "@/store/useGlobalStore";
 
@@ -74,6 +75,7 @@ export function OriginalPdfEditor({
   onDocumentEditsChange,
   fileName,
 }: OriginalPdfEditorProps) {
+  const { t } = useTranslation();
   const hostRef = useRef<HTMLDivElement | null>(null);
   const [state, setState] = useState<EditorState>("loading");
   const [downloading, setDownloading] = useState(false);
@@ -407,7 +409,10 @@ export function OriginalPdfEditor({
       {state === "ready" && (
         <div className="flex items-center justify-between gap-3 px-1">
           <p className="text-xs text-muted-foreground">
-            Editing your uploaded document — your contact and experience details stay in sync with the panel on the right.
+            {t(
+              "resumeBuilder.originalPdfEditor.editingHint",
+              "Editing your uploaded document — your contact and experience details stay in sync with the panel on the right."
+            )}
           </p>
           <button
             type="button"
@@ -420,18 +425,26 @@ export function OriginalPdfEditor({
             ) : (
               <Download className="h-3.5 w-3.5" />
             )}
-            {downloading ? "Preparing…" : "Download (with edits)"}
+            {downloading
+              ? t("resumeBuilder.originalPdfEditor.preparing", "Preparing…")
+              : t("resumeBuilder.originalPdfEditor.downloadWithEdits", "Download (with edits)")}
           </button>
         </div>
       )}
       {downloadError && (
-        <p className="px-1 text-xs text-[#dc2626]">Couldn&apos;t generate the PDF. Please try again.</p>
+        <p className="px-1 text-xs text-[#dc2626]">
+          {t("resumeBuilder.originalPdfEditor.generateFailed", "Couldn't generate the PDF. Please try again.")}
+        </p>
       )}
       {state === "loading" && (
-        <div className="p-6 text-sm text-muted-foreground">Loading your document for editing…</div>
+        <div className="p-6 text-sm text-muted-foreground">
+          {t("resumeBuilder.originalPdfEditor.loading", "Loading your document for editing…")}
+        </div>
       )}
       {state === "error" && (
-        <div className="p-6 text-sm text-muted-foreground">Couldn&apos;t load your document for editing.</div>
+        <div className="p-6 text-sm text-muted-foreground">
+          {t("resumeBuilder.originalPdfEditor.loadFailed", "Couldn't load your document for editing.")}
+        </div>
       )}
       <div ref={hostRef} onInput={handleInput} onFocus={handleFocus} onBlur={handleBlur} className="w-full" />
     </div>

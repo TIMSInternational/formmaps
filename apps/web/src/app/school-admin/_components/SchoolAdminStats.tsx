@@ -32,8 +32,8 @@ export function SchoolAdminStats() {
     return (
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="col-span-full bg-red-50 border border-red-100 rounded-2xl p-6 text-center">
-          <p className="text-red-600 font-medium">Failed to load stats</p>
-          <p className="text-red-400 text-sm mt-1">Please try refreshing the page</p>
+          <p className="text-red-600 font-medium">{t("school_admin:ui.stats.loadFailed")}</p>
+          <p className="text-red-400 text-sm mt-1">{t("school_admin:ui.stats.tryRefreshing")}</p>
         </div>
       </div>
     );

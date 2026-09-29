@@ -2,38 +2,40 @@
 import { motion, AnimatePresence } from "motion/react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
+// question/answer = i18n keys (common namespace)
 const faqData = [
   {
     id: 1,
-    question: "Can I change my plan anytime?",
+    question: "studentUi.subscriptions.faq.q1.question",
     answer:
-      "Yes, you can upgrade or downgrade your plan at any time. Changes will be reflected in your next billing cycle.",
+      "studentUi.subscriptions.faq.q1.answer",
   },
   {
     id: 2,
-    question: "What payment methods do you accept?",
+    question: "studentUi.subscriptions.faq.q2.question",
     answer:
-      "We accept all major credit cards (Visa, MasterCard, American Express), PayPal, and bank transfers for enterprise customers.",
+      "studentUi.subscriptions.faq.q2.answer",
   },
   {
     id: 3,
-    question: "Is there a free trial available?",
+    question: "studentUi.subscriptions.faq.q3.question",
     answer:
-      "Yes, Premium plans come with a 7-day free trial. No credit card required to start your trial.",
+      "studentUi.subscriptions.faq.q3.answer",
   },
   {
     id: 4,
-    question: "Can I cancel my subscription anytime?",
+    question: "studentUi.subscriptions.faq.q4.question",
     answer:
-      "Absolutely! You can cancel your subscription at any time from your account settings. You'll continue to have access until the end of your billing period.",
+      "studentUi.subscriptions.faq.q4.answer",
   },
 
   {
     id: 5,
-    question: "What happens to my data if I cancel?",
+    question: "studentUi.subscriptions.faq.q5.question",
     answer:
-      "Your data will be retained for 30 days after cancellation, giving you time to export or reactivate your account if needed.",
+      "studentUi.subscriptions.faq.q5.answer",
   },
 ];
 
@@ -42,6 +44,7 @@ interface FAQProps {
 }
 
 export function FAQ({ className }: FAQProps) {
+  const { t } = useTranslation();
   const [openItems, setOpenItems] = useState<number[]>([]);
 
   const toggleItem = (id: number) => {
@@ -54,10 +57,10 @@ export function FAQ({ className }: FAQProps) {
     <div className={cn("max-w-4xl mx-auto", className)}>
       <div className="text-center mb-8 md:mb-12">
         <h2 className="text-2xl md:text-3xl font-bold text-gray-900 mb-4">
-          Frequently Asked Questions
+          {t("studentUi.subscriptions.faq.title")}
         </h2>
         <p className="text-gray-600 text-lg">
-          Everything you need to know about our subscription plans
+          {t("studentUi.subscriptions.faq.subtitle")}
         </p>
       </div>
 
@@ -75,7 +78,7 @@ export function FAQ({ className }: FAQProps) {
               className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
             >
               <span className="font-semibold text-gray-900 pr-4">
-                {item.question}
+                {t(item.question)}
               </span>
               <motion.div
                 animate={{ rotate: openItems.includes(item.id) ? 180 : 0 }}
@@ -108,7 +111,7 @@ export function FAQ({ className }: FAQProps) {
                   className="overflow-hidden"
                 >
                   <div className="px-6 pb-4 text-gray-600 leading-relaxed">
-                    {item.answer}
+                    {t(item.answer)}
                   </div>
                 </motion.div>
               )}
@@ -125,13 +128,13 @@ export function FAQ({ className }: FAQProps) {
         className="text-center mt-12 p-8 bg-gradient-to-r from-[var(--admin-accent-blue)]/10 to-purple-50 rounded-2xl border border-[var(--admin-accent-blue)]/20"
       >
         <h3 className="text-xl font-semibold text-gray-900 mb-2">
-          Still have questions?
+          {t("studentUi.subscriptions.faq.stillQuestions")}
         </h3>
         <p className="text-gray-600 mb-4">
-          Our support team is here to help you choose the right plan
+          {t("studentUi.subscriptions.faq.supportBody")}
         </p>
         <button className="bg-[var(--admin-accent-blue)] text-white px-6 py-3 rounded-lg font-medium hover:bg-[var(--admin-accent-blue)]/90 transition-colors">
-          Contact Support
+          {t("studentUi.subscriptions.faq.contactSupport")}
         </button>
       </motion.div>
     </div>

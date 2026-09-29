@@ -4,6 +4,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface TimeSlot {
   start: string;
@@ -31,6 +32,7 @@ export function WeeklyScheduleGrid({
   onRemoveTimeSlot,
   onTimeChange,
 }: WeeklyScheduleGridProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4 border rounded-2xl border-gray-200 bg-white overflow-hidden shadow-sm">
       {schedule.map((day, dayIndex) => (
@@ -43,7 +45,7 @@ export function WeeklyScheduleGrid({
             <div
               className={`font-semibold text-sm ${day.enabled ? "text-gray-900" : "text-gray-400"}`}
             >
-              {day.day}
+              {t(`studentUi.coaching.weekdays.${day.day.toLowerCase()}`, { defaultValue: day.day })}
             </div>
             <Switch
               checked={day.enabled}
@@ -110,7 +112,7 @@ export function WeeklyScheduleGrid({
                 className="text-[var(--admin-accent-blue)] hover:text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/10 font-medium text-xs h-8 px-2"
               >
                 <Plus className="h-3 w-3 mr-1.5" />
-                Add Interval
+                {t("studentUi.coaching.availability.addInterval")}
               </Button>
             </div>
           ) : (
@@ -119,7 +121,7 @@ export function WeeklyScheduleGrid({
                 variant="outline"
                 className="text-gray-400 border-gray-100 font-normal bg-transparent"
               >
-                Unavailable
+                {t("onboarding.availability.unavailable")}
               </Badge>
             </div>
           )}

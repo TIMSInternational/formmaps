@@ -163,7 +163,7 @@ export function useInviteParent() {
 
     onError: (err: Error, _payload, context) => {
       optimistic.rollback(context);
-      toast.error(err.message || "Failed to send invite");
+      toast.error(err.message || i18n.t("components.hooks.parentPortal.inviteFailed"));
     },
 
     // Reconciles the placeholder id with the real one. Left as the only refetch in
@@ -188,7 +188,7 @@ export function useRevokeParentAccess() {
 
     // No invalidate: the row being gone is the whole of what the DELETE does, and the
     // "N linked · M pending" counts the panel shows are derived from this same list.
-    onSuccess: () => toast.success("Access revoked"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.parentPortal.accessRevoked")),
 
     // The rollback that matters most here. A guardian who vanishes from the list and
     // stays vanished after a rejected revoke reads as data loss, and this endpoint
@@ -196,7 +196,7 @@ export function useRevokeParentAccess() {
     // current admin did not create.
     onError: (err: Error, _vars, context) => {
       optimistic.rollback(context);
-      toast.error(err.message || "Failed to revoke access");
+      toast.error(err.message || i18n.t("components.hooks.parentPortal.revokeFailed"));
     },
   });
 }
@@ -213,10 +213,10 @@ export function useResendParentInvite() {
     // result would mean guessing the server's expiry window.
     onSuccess: (_result, { studentId }) => {
       qc.invalidateQueries({ queryKey: parentKeys.studentParents(studentId) });
-      toast.success("Invite resent");
+      toast.success(i18n.t("components.hooks.parentPortal.inviteResent"));
     },
 
-    onError: (err: Error) => toast.error(err.message || "Failed to resend invite"),
+    onError: (err: Error) => toast.error(err.message || i18n.t("components.hooks.parentPortal.resendFailed")),
   });
 }
 
@@ -249,7 +249,7 @@ export function useInviteMyParent() {
 
     onError: (err: Error, _payload, context) => {
       optimistic.rollback(context);
-      toast.error(err.message || "Failed to send invite");
+      toast.error(err.message || i18n.t("components.hooks.parentPortal.inviteFailed"));
     },
 
     // As with the school-admin invite: the response carries an id and an invitation
@@ -271,11 +271,11 @@ export function useRevokeMyParentAccess() {
         removeBy(current, (p) => p.id === parentLinkId),
       ),
 
-    onSuccess: () => toast.success("Access revoked"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.parentPortal.accessRevoked")),
 
     onError: (err: Error, _parentLinkId, context) => {
       optimistic.rollback(context);
-      toast.error(err.message || "Failed to revoke access");
+      toast.error(err.message || i18n.t("components.hooks.parentPortal.revokeFailed"));
     },
   });
 }
@@ -289,10 +289,10 @@ export function useResendMyParentInvite() {
     // Not optimistic, for the same reason as the school-admin resend.
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: parentKeys.myParents() });
-      toast.success("Invite resent");
+      toast.success(i18n.t("components.hooks.parentPortal.inviteResent"));
     },
 
-    onError: (err: Error) => toast.error(err.message || "Failed to resend invite"),
+    onError: (err: Error) => toast.error(err.message || i18n.t("components.hooks.parentPortal.resendFailed")),
   });
 }
 
@@ -326,7 +326,7 @@ export function useMarkNotificationRead() {
     // hence the toast — the page shows no other error surface for this action.
     onError: (err: Error, _id, context) => {
       optimistic.rollback(context);
-      toast.error(err.message || "Failed to mark notification as read");
+      toast.error(err.message || i18n.t("components.hooks.parentPortal.markReadFailed"));
     },
   });
 }
@@ -344,11 +344,11 @@ export function useMarkAllNotificationsRead() {
         patchBy(current, (n) => !n.isRead, (n) => ({ ...n, isRead: true })),
       ),
 
-    onSuccess: () => toast.success("All notifications marked as read"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.parentPortal.allMarkedRead")),
 
     onError: (err: Error, _vars, context) => {
       optimistic.rollback(context);
-      toast.error(err.message || "Failed to mark notifications as read");
+      toast.error(err.message || i18n.t("components.hooks.parentPortal.markAllReadFailed"));
     },
   });
 }

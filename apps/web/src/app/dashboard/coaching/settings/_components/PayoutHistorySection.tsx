@@ -11,6 +11,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Payout } from "@/types/coach";
+import { useTranslation } from "react-i18next";
 
 interface PayoutHistorySectionProps {
   payouts: Payout[];
@@ -35,9 +36,10 @@ export function PayoutHistorySection({
   onRefresh,
   formatCurrency,
 }: PayoutHistorySectionProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-4">
-      <h3 className="text-lg font-bold text-gray-900">Payout History</h3>
+      <h3 className="text-lg font-bold text-gray-900">{t("studentUi.coaching.payouts.history")}</h3>
       <div className="flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
           <Select
@@ -48,14 +50,14 @@ export function PayoutHistorySection({
             }}
           >
             <SelectTrigger className="w-[200px]">
-              <SelectValue placeholder="Filter by status" />
+              <SelectValue placeholder={t("studentUi.coaching.payouts.filterByStatus")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All</SelectItem>
-              <SelectItem value="pending">Pending</SelectItem>
-              <SelectItem value="processing">Processing</SelectItem>
-              <SelectItem value="completed">Completed</SelectItem>
-              <SelectItem value="failed">Failed</SelectItem>
+              <SelectItem value="all">{t("studentUi.coaching.payouts.status.all")}</SelectItem>
+              <SelectItem value="pending">{t("studentUi.coaching.payouts.status.pending")}</SelectItem>
+              <SelectItem value="processing">{t("studentUi.coaching.payouts.status.processing")}</SelectItem>
+              <SelectItem value="completed">{t("studentUi.coaching.payouts.status.completed")}</SelectItem>
+              <SelectItem value="failed">{t("studentUi.coaching.payouts.status.failed")}</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -69,12 +71,13 @@ export function PayoutHistorySection({
             {isLoading ? (
               <Loader2 className="h-4 w-4 animate-spin" />
             ) : (
-              "Refresh"
+              t("studentUi.coaching.payouts.refresh")
             )}
           </Button>
           <div className="text-sm text-gray-600">
-            Page {payoutPage}{" "}
-            {payoutTotalPages ? `of ${payoutTotalPages}` : ""}
+            {payoutTotalPages
+              ? t("studentUi.coaching.payouts.pageOf", { page: payoutPage, total: payoutTotalPages })
+              : t("studentUi.coaching.payouts.page", { page: payoutPage })}
           </div>
           <div className="flex gap-1">
             <Button
@@ -83,7 +86,7 @@ export function PayoutHistorySection({
               disabled={payoutPage <= 1}
               onClick={() => onPayoutPageChange(Math.max(1, payoutPage - 1))}
             >
-              Prev
+              {t("studentUi.coaching.payouts.prev")}
             </Button>
             <Button
               variant="ghost"
@@ -93,7 +96,7 @@ export function PayoutHistorySection({
               }
               onClick={() => onPayoutPageChange(payoutPage + 1)}
             >
-              Next
+              {t("common.next")}
             </Button>
           </div>
         </div>
@@ -102,7 +105,7 @@ export function PayoutHistorySection({
       {!payouts || payouts.length === 0 ? (
         <div className="bg-gray-50 rounded-2xl p-8 text-center border border-gray-100 border-dashed">
           <p className="text-gray-500 font-medium">
-            No payouts yet. Complete sessions to start earning!
+            {t("studentUi.coaching.payouts.empty")}
           </p>
         </div>
       ) : (
@@ -128,7 +131,7 @@ export function PayoutHistorySection({
                 variant="outline"
                 className="border-gray-200 text-gray-700 bg-gray-50"
               >
-                {payout.status}
+                {t(`studentUi.coaching.payouts.status.${payout.status}`, { defaultValue: payout.status })}
               </Badge>
             </div>
           ))}

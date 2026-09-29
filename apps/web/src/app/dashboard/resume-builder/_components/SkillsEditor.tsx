@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown, Award, X, Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface Skill {
   id: string;
@@ -31,6 +32,7 @@ export function SkillsEditor({
   removeSkill,
   setSaveSuccess,
 }: SkillsEditorProps) {
+  const { t } = useTranslation();
   const handleAddSkill = () => {
     if (newSkillName.trim()) {
       addSkill({
@@ -63,10 +65,10 @@ export function SkillsEditor({
       >
         <Award className="w-5 h-5 text-[#2E9098] flex-shrink-0" />
         <span className="font-semibold text-foreground flex-1 text-left">
-          Skills
+          {t("resumeBuilder.skillsStep.title", "Skills")}
         </span>
         <span className="px-2 py-0.5 text-xs font-semibold bg-[#FFD23F] text-[#102B47] rounded-full">
-          {skills.length} skills
+          {t("resumeBuilder.resumeInputSection.skillsCount", { count: skills.length, defaultValue: "{{count}} skills" })}
         </span>
         <motion.div
           animate={{
@@ -109,6 +111,7 @@ export function SkillsEditor({
                           setSaveSuccess(true);
                           setTimeout(() => setSaveSuccess(false), 2000);
                         }}
+                        aria-label={t("resumeBuilder.skillsStep.removeSkill", "Remove {{name}}", { name: skill.name })}
                         className="absolute -top-1 -right-1 w-5 h-5 bg-red-600 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
                       >
                         <X className="w-3 h-3" />
@@ -130,19 +133,22 @@ export function SkillsEditor({
                         handleAddSkill();
                       }
                     }}
-                    placeholder="Type a skill and press Enter"
+                    placeholder={t("resumeBuilder.skillsEditor.placeholder", "Type a skill and press Enter")}
                     className="flex-1 px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                   />
                   <button
                     onClick={handleAddSkill}
+                    aria-label={t("resumeBuilder.skillsStep.addSkill", "Add Skill")}
                     className="px-4 py-2 bg-[#102B47] text-white rounded-lg hover:bg-[#0b1f33] transition-colors"
                   >
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  Add skills one at a time. Click the X on any skill to
-                  remove it.
+                  {t(
+                    "resumeBuilder.skillsEditor.hint",
+                    "Add skills one at a time. Click the X on any skill to remove it."
+                  )}
                 </p>
               </div>
             </div>

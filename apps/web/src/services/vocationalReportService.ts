@@ -3,6 +3,8 @@ import { apiRequest } from "@/lib/api/apiClient";
 export interface DimensionScore {
   key: string;
   nameEs: string;
+  /** English dimension name (from the instrument catalog); absent/null → show nameEs. */
+  nameEn?: string | null;
   score: number | null;
   band: string | null;
   byGroup: Record<string, number>;
@@ -62,6 +64,35 @@ export async function getScore(evaluatedUserId: string): Promise<VocationalScore
   const res = await apiRequest(`/api/v1/vocational360/score/${enc(evaluatedUserId)}`);
   return unwrap<VocationalScoreOutcome>(res);
 }
+/** Dimension key → English name, from the active instrument catalog (GET /api/v1/vocational360/instrument). */
+export async function getDimensionNamesEn(): Promise<Record<string, string>> {
+  const res = await apiRequest(`/api/v1/vocational360/instrument`);
+  const instrument = unwrap<{ dimensions?: { key: string; nameEn?: string | null }[] } | null>(res);
+  const names: Record<string, string> = {};
+  for (const d of instrument?.dimensions ?? []) {
+    if (d?.key && d.nameEn) names[d.key] = d.nameEn;
+  }
+  return names;
+}
+
+/**
+ * Option value → display label in the given language, from the active questionnaire
+ * (GET /api/v1/vocational360/questionnaire?lang=). Rankings store option VALUES (slugs such as
+ * "ingenieria"); this turns them back into the labels the evaluators saw.
+ */
+export async function getOptionLabels(lang: "es" | "en"): Promise<Record<string, string>> {
+  const res = await apiRequest(`/api/v1/vocational360/questionnaire?lang=${lang}`);
+  const data = unwrap<{ questions?: { options?: { value: string; label?: string; labelEs?: string; labelEn?: string | null }[] | null }[] } | null>(res);
+  const labels: Record<string, string> = {};
+  for (const q of data?.questions ?? []) {
+    for (const o of q.options ?? []) {
+      const label = o.label ?? (lang === "en" ? o.labelEn : null) ?? o.labelEs;
+      if (label && !(o.value in labels)) labels[o.value] = label;
+    }
+  }
+  return labels;
+}
+
 export async function getIntegrated(evaluatedUserId: string): Promise<IntegratedOutcome> {
   const res = await apiRequest(`/api/v1/vocational360/integrated/${enc(evaluatedUserId)}`);
   return unwrap<IntegratedOutcome>(res);

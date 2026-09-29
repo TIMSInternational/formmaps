@@ -22,6 +22,7 @@ import {
   toggleUniversityFavorite,
 } from "@/services/universityService";
 import { toast } from "@/hooks/useToast";
+import i18n from "@/lib/i18n";
 
 
 export const universityKeys = {
@@ -126,13 +127,13 @@ export function useUniversityFavoriteMutation() {
       action: "save" | "unsave";
     }) => toggleUniversityFavorite(universityId, action),
     onSuccess: (_, { action }) => {
-      toast.success(action === "save" ? "University saved" : "University removed");
+      toast.success(action === "save" ? i18n.t("components.hooks.university.saved") : i18n.t("components.hooks.university.removed"));
       queryClient.invalidateQueries({
         queryKey: universityKeys.all,
       });
     },
     onError: () => {
-      toast.error("Failed to update favorite");
+      toast.error(i18n.t("components.hooks.university.favoriteUpdateFailed"));
     },
   });
 }

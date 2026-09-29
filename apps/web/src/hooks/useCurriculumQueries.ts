@@ -8,6 +8,7 @@ import {
   type QueryKey,
 } from "@tanstack/react-query";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n";
 import {
   getFrameworks,
   updateFrameworks,
@@ -565,7 +566,7 @@ export function useCoursePathways() {
 export function useAnalyzePrerequisites() {
   return useMutation({
     mutationFn: analyzePrerequisites,
-    onError: () => toast.error("Prerequisite analysis failed — try again"),
+    onError: () => toast.error(i18n.t("components.hooks.curriculum.prereqAnalysisFailed")),
   });
 }
 
@@ -588,9 +589,9 @@ export function useApplyPrereqSuggestions() {
       // invalidate the whole curriculum namespace to keep them coherent.
       queryClient.invalidateQueries({ queryKey: curriculumKeys.all });
       queryClient.invalidateQueries({ queryKey: ["course-eligibility"] });
-      toast.success(`${res.updated} ${res.updated === 1 ? "course" : "courses"} updated`);
+      toast.success(i18n.t("components.hooks.curriculum.coursesUpdated", { count: res.updated }));
     },
-    onError: () => toast.error("Failed to apply prerequisites"),
+    onError: () => toast.error(i18n.t("components.hooks.curriculum.prereqApplyFailed")),
   });
 }
 

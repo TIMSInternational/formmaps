@@ -9,6 +9,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/api/apiClient";
 import { TrackedApplication } from "@/services/applicationService";
@@ -16,11 +17,13 @@ import { DeadlineDetailPanel } from "./_components/DeadlineDetailPanel";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const MONTH_NAMES = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
-];
-const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// Keys into the common `days.*` namespace; month names come from Intl in the active language.
+const DAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"];
+
+function monthLabel(year: number, month: number, lang: string) {
+  const name = new Date(year, month, 1).toLocaleDateString(lang, { month: "long" });
+  return name.charAt(0).toUpperCase() + name.slice(1);
+}
 
 const DOT_COLORS = [
   { dot: "var(--admin-accent-blue)", bg: "rgba(59,130,246,0.12)", text: "var(--admin-accent-blue)" },
@@ -63,6 +66,7 @@ function dayKey(d: Date) {
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export default function ApplicationsCalendarPage() {
+  const { t, i18n } = useTranslation();
   const today = new Date();
   const [year, setYear] = useState(today.getFullYear());
   const [month, setMonth] = useState(today.getMonth());
@@ -79,13 +83,13 @@ export default function ApplicationsCalendarPage() {
         const list: TrackedApplication[] = res?.data ?? [];
         setApplications(list);
       } catch {
-        toast.error("Failed to load applications");
+        toast.error(t("studentUi.applications.toast.loadApplicationsFailed"));
       } finally {
         setIsLoading(false);
       }
     }
     load();
-  }, []);
+  }, [t]);
 
   const deadlineMap = useMemo(() => {
     const map = new Map<string, TrackedApplication[]>();
@@ -139,9 +143,9 @@ export default function ApplicationsCalendarPage() {
   return (
     <div className="space-y-5 max-w-5xl">
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-2">
-        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Application Tracker</span>
-        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">Deadline Calendar</h1>
-        <p className="max-w-2xl text-base text-muted-foreground">All your application deadlines at a glance.</p>
+        <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("student:applications.badge")}</span>
+        <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">{t("student:applications.deadlineCalendar")}</h1>
+        <p className="max-w-2xl text-base text-muted-foreground">{t("studentUi.applications.calendar.subtitle")}</p>
       </motion.div>
 
       {isLoading ? (
@@ -155,15 +159,15 @@ export default function ApplicationsCalendarPage() {
             {/* Month nav */}
             <div className="flex items-center justify-between px-5 py-4" style={{ borderBottom: "1px solid var(--admin-border-light)" }}>
               <div className="flex items-center gap-3">
-                <h2 className="text-lg font-bold" style={{ color: "var(--admin-font-primary)" }}>{MONTH_NAMES[month]} {year}</h2>
+                <h2 className="text-lg font-bold" style={{ color: "var(--admin-font-primary)" }}>{monthLabel(year, month, i18n.language)} {year}</h2>
                 {monthDeadlineCount > 0 && (
                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "rgba(59,130,246,0.1)", color: "var(--admin-accent-blue)" }}>
-                    {monthDeadlineCount} deadline{monthDeadlineCount !== 1 ? "s" : ""}
+                    {t("studentUi.applications.calendar.deadlineCount", { count: monthDeadlineCount })}
                   </span>
                 )}
               </div>
               <div className="flex items-center gap-1.5">
-                <button onClick={goToday} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors" style={{ color: "var(--admin-font-secondary)", border: "1px solid var(--admin-border-default)" }}>Today</button>
+                <button onClick={goToday} className="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors" style={{ color: "var(--admin-font-secondary)", border: "1px solid var(--admin-border-default)" }}>{t("common.today")}</button>
                 <button onClick={prevMonth} className="p-1.5 rounded-lg transition-colors" style={{ color: "var(--admin-font-tertiary)", border: "1px solid var(--admin-border-default)" }}><ChevronLeft className="h-4 w-4" /></button>
                 <button onClick={nextMonth} className="p-1.5 rounded-lg transition-colors" style={{ color: "var(--admin-font-tertiary)", border: "1px solid var(--admin-border-default)" }}><ChevronRight className="h-4 w-4" /></button>
               </div>
@@ -171,8 +175,8 @@ export default function ApplicationsCalendarPage() {
 
             {/* Day names row */}
             <div className="grid grid-cols-7 px-3 pt-3 pb-1">
-              {DAY_NAMES.map((d) => (
-                <div key={d} className="text-center text-[10px] font-bold uppercase tracking-wider pb-2" style={{ color: "var(--admin-font-tertiary)" }}>{d}</div>
+              {DAY_KEYS.map((d) => (
+                <div key={d} className="text-center text-[10px] font-bold uppercase tracking-wider pb-2" style={{ color: "var(--admin-font-tertiary)" }}>{t(`days.${d}`)}</div>
               ))}
             </div>
 
@@ -230,7 +234,7 @@ export default function ApplicationsCalendarPage() {
           {/* Legend */}
           {applications.filter((a) => a.deadline).length > 0 && (
             <div className="rounded-xl p-4" style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)" }}>
-              <p className="text-[10px] uppercase tracking-wider font-bold mb-3" style={{ color: "var(--admin-font-tertiary)" }}>Applications with Deadlines</p>
+              <p className="text-[10px] uppercase tracking-wider font-bold mb-3" style={{ color: "var(--admin-font-tertiary)" }}>{t("studentUi.applications.calendar.withDeadlines")}</p>
               <div className="flex flex-wrap gap-2">
                 {applications.filter((a) => a.deadline).map((app) => {
                   const ci = appColorIndex.get(app.id) ?? 0;
@@ -251,7 +255,7 @@ export default function ApplicationsCalendarPage() {
             <div className="flex flex-col items-center justify-center py-12 gap-3 rounded-xl" style={{ border: "1px dashed var(--admin-border-default)" }}>
               <Calendar className="h-10 w-10" style={{ color: "var(--admin-font-light)" }} />
               <p className="text-xs text-center max-w-xs" style={{ color: "var(--admin-font-tertiary)" }}>
-                No deadlines found. Add deadlines to your applications in the tracker to see them here.
+                {t("studentUi.applications.calendar.empty")}
               </p>
             </div>
           )}

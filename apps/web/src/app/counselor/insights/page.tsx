@@ -4,12 +4,14 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api/apiClient";
 import { motion } from "motion/react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "react-i18next";
 import {
   Users, GraduationCap, AlertTriangle, ClipboardCheck,
   Sparkles, RefreshCw, Loader2, Zap, BarChart3,
 } from "lucide-react";
 
 export default function CounselorInsightsPage() {
+  const { t } = useTranslation("counselor");
   const { data: insightsData, isLoading: insightsLoading } = useQuery({
     queryKey: ["counselor-insights"],
     queryFn: async () => {
@@ -53,7 +55,7 @@ export default function CounselorInsightsPage() {
     { key: "3.5-3.9", label: "3.5 - 3.9", color: "var(--admin-accent-blue)" },
     { key: "3.0-3.4", label: "3.0 - 3.4", color: "#f59e0b" },
     { key: "2.5-2.9", label: "2.5 - 2.9", color: "#f97316" },
-    { key: "below2.5", label: "Below 2.5", color: "#ef4444" },
+    { key: "below2.5", label: t("ui.insights.below25"), color: "#ef4444" },
   ];
 
   const maxGpaCount = Math.max(1, ...gpaRanges.map((r) => gpaDistribution[r.key] || 0));
@@ -63,13 +65,13 @@ export default function CounselorInsightsPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-tertiary)" }}>
-          Analytics
+          {t("ui.insights.eyebrow")}
         </p>
         <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em", marginTop: 2 }}>
-          Caseload Insights
+          {t("ui.insights.title")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2, maxWidth: 600 }}>
-          A comprehensive view of your caseload metrics, assessment progress, and student analytics.
+          {t("ui.insights.subtitle")}
         </p>
       </motion.div>
 
@@ -89,12 +91,12 @@ export default function CounselorInsightsPage() {
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}
           >
             {[
-              { label: "TOTAL STUDENTS", value: total, icon: Users, color: "var(--admin-accent-blue)" },
-              { label: "AVERAGE GPA", value: metrics.avgGPA != null ? Number(metrics.avgGPA).toFixed(2) : "--", icon: GraduationCap, color: "#10b981" },
-              { label: "AT-RISK STUDENTS", value: metrics.atRiskCount || 0, icon: AlertTriangle, color: "#ef4444" },
-              { label: "ASSESSMENT COMPLETION", value: `${assessmentRate}%`, icon: ClipboardCheck, color: "var(--admin-accent-blue)" },
+              { id: "total", label: t("ui.insights.totalStudents"), value: total, icon: Users, color: "var(--admin-accent-blue)" },
+              { id: "gpa", label: t("ui.insights.averageGpa"), value: metrics.avgGPA != null ? Number(metrics.avgGPA).toFixed(2) : "--", icon: GraduationCap, color: "#10b981" },
+              { id: "atRisk", label: t("ui.insights.atRiskStudents"), value: metrics.atRiskCount || 0, icon: AlertTriangle, color: "#ef4444" },
+              { id: "completion", label: t("ui.insights.assessmentCompletion"), value: `${assessmentRate}%`, icon: ClipboardCheck, color: "var(--admin-accent-blue)" },
             ].map((stat) => (
-              <div key={stat.label} style={{ padding: 16, borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
+              <div key={stat.id} style={{ padding: 16, borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
                   <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)" }}>{stat.label}</span>
                   <stat.icon style={{ width: 16, height: 16, color: stat.color }} />
@@ -114,7 +116,7 @@ export default function CounselorInsightsPage() {
               <div style={{ padding: "16px 20px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                   <Sparkles style={{ width: 16, height: 16, color: "var(--admin-accent-blue)" }} />
-                  <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-accent-blue)" }}>AI Briefing</span>
+                  <span style={{ fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-accent-blue)" }}>{t("ui.insights.aiBriefing")}</span>
                 </div>
                 <button onClick={() => refetchBriefing()} disabled={briefingFetching} style={{
                   height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600,
@@ -127,7 +129,7 @@ export default function CounselorInsightsPage() {
                   {briefingFetching
                     ? <Loader2 style={{ width: 13, height: 13, animation: "spin 1s linear infinite" }} />
                     : <RefreshCw style={{ width: 13, height: 13 }} />}
-                  {briefingFetching ? "Generating..." : "Regenerate"}
+                  {briefingFetching ? t("ui.insights.generating") : t("ai.regenerate")}
                 </button>
               </div>
 
@@ -137,7 +139,7 @@ export default function CounselorInsightsPage() {
                 </div>
               ) : (
                 <div style={{ padding: "0 20px 16px 20px", fontSize: 13, color: "var(--admin-font-tertiary)" }}>
-                  No briefing available yet. Click Regenerate to create one.
+                  {t("ui.insights.noBriefing")}
                 </div>
               )}
 
@@ -145,7 +147,7 @@ export default function CounselorInsightsPage() {
                 <div style={{ padding: "0 20px 16px 20px" }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
                     <Zap style={{ width: 13, height: 13, color: "#ef4444" }} />
-                    <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#ef4444" }}>Urgent Actions</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em", color: "#ef4444" }}>{t("ui.insights.urgentActions")}</span>
                   </div>
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
                     {urgentActions.map((a: any, i: number) => {
@@ -154,7 +156,7 @@ export default function CounselorInsightsPage() {
                         <div key={i} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid var(--admin-border-default)" }}>
                           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                             <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{a.title}</span>
-                            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", padding: "2px 6px", borderRadius: 3, background: `${impactColor}15`, color: impactColor }}>{a.impact}</span>
+                            <span style={{ fontSize: 9, fontWeight: 700, textTransform: "uppercase", padding: "2px 6px", borderRadius: 3, background: `${impactColor}15`, color: impactColor }}>{a.impact === "high" || a.impact === "medium" || a.impact === "low" ? t(`alerts.${a.impact}`) : a.impact}</span>
                           </div>
                           <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.5 }}>{a.description}</div>
                         </div>
@@ -166,7 +168,7 @@ export default function CounselorInsightsPage() {
 
               {briefingData?.generatedAt && (
                 <div style={{ padding: "0 20px 12px 20px", fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-                  Generated {new Date(briefingData.generatedAt).toLocaleString()}
+                  {t("ui.insights.generatedAt", { date: new Date(briefingData.generatedAt).toLocaleString() })}
                 </div>
               )}
             </div>
@@ -178,7 +180,7 @@ export default function CounselorInsightsPage() {
           >
             <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", gap: 10 }}>
               <BarChart3 style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>GPA Distribution</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.insights.gpaDistribution")}</span>
             </div>
             <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 10 }}>
               {gpaRanges.map((range) => {
@@ -207,13 +209,13 @@ export default function CounselorInsightsPage() {
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 12 }}
           >
             {[
-              { label: "PCA Complete", complete: pcaComplete, color: "#8b5cf6" },
-              { label: "MIL Complete", complete: milComplete, color: "var(--admin-accent-blue)" },
-              { label: "360° Complete", complete: eval360Complete, color: "#14b8a6" },
+              { id: "pca", label: t("ui.insights.pcaComplete"), complete: pcaComplete, color: "#8b5cf6" },
+              { id: "mil", label: t("ui.insights.milComplete"), complete: milComplete, color: "var(--admin-accent-blue)" },
+              { id: "eval360", label: t("ui.insights.eval360Complete"), complete: eval360Complete, color: "#14b8a6" },
             ].map((item) => {
               const pct = total > 0 ? Math.round((item.complete / total) * 100) : 0;
               return (
-                <div key={item.label} style={{ padding: 20, borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
+                <div key={item.id} style={{ padding: 20, borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
                   <div style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)", marginBottom: 12 }}>
                     {item.label}
                   </div>
@@ -240,7 +242,7 @@ export default function CounselorInsightsPage() {
             >
               <div style={{ padding: "14px 20px", borderBottom: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", gap: 10 }}>
                 <Sparkles style={{ width: 16, height: 16, color: "#8b5cf6" }} />
-                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Top Career Clusters</span>
+                <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.insights.topCareerClusters")}</span>
               </div>
               <div style={{ padding: 16, display: "flex", flexWrap: "wrap", gap: 8 }}>
                 {topClusters.slice(0, 5).map((cluster: any, i: number) => (

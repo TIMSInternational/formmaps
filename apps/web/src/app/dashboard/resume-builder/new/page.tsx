@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import {
   extractJobPosting,
@@ -35,6 +36,7 @@ import type { ExtractedJobData, TailoredResume } from "@/types/resume";
 /* ------------------------------------------------------------------ */
 
 export default function NewResumePage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user } = useGlobalStore();
 
@@ -115,7 +117,9 @@ export default function NewResumePage() {
       );
     } catch (err) {
       setAnalyzeError(
-        err instanceof Error ? err.message : "Failed to analyze job posting"
+        err instanceof Error
+          ? err.message
+          : t("resumeBuilder.jobPostingInput.analyzeFailed", "Failed to analyze job posting")
       );
     } finally {
       setIsAnalyzing(false);
@@ -139,7 +143,7 @@ export default function NewResumePage() {
         initDecisions(result, baseResume?.experience?.length || 0)
       );
     } catch {
-      setAnalyzeError("Tailoring failed. Please try again.");
+      setAnalyzeError(t("resumeBuilder.newResumePage.tailorFailed", "Tailoring failed. Please try again."));
       setStep(2);
     } finally {
       setIsTailoring(false);
@@ -215,11 +219,13 @@ export default function NewResumePage() {
       const msg =
         errData?.errorMessage ||
         errData?.message ||
-        (err instanceof Error ? err.message : "Failed to create resume");
+        (err instanceof Error
+          ? err.message
+          : t("resumeBuilder.newResumePage.createFailed", "Failed to create resume"));
       setAnalyzeError(msg);
       setCreating(false);
     }
-  }, [tailoredResume, baseResume, decisions, extractedJob, creating, router]);
+  }, [tailoredResume, baseResume, decisions, extractedJob, creating, router, t]);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] px-4 py-8 sm:px-6 lg:px-8">
@@ -235,13 +241,13 @@ export default function NewResumePage() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
-          My Resumes
+          {t("dashboard.resumes.title", "My Resumes")}
         </Link>
         <h1 className="text-2xl font-semibold text-foreground">
-          AI Resume Builder
+          {t("resumeBuilder.newResumePage.title", "AI Resume Builder")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Paste a job posting to generate a tailored resume
+          {t("resumeBuilder.newResumePage.subtitle", "Paste a job posting to generate a tailored resume")}
         </p>
       </motion.div>
 
@@ -343,7 +349,7 @@ export default function NewResumePage() {
           >
             <Loader2 className="h-7 w-7 animate-spin text-foreground mx-auto" />
             <p className="text-sm font-semibold text-foreground">
-              Creating your resume...
+              {t("resumeBuilder.newResumePage.creating", "Creating your resume...")}
             </p>
           </motion.div>
         </div>

@@ -14,6 +14,7 @@ import type {
   CounselorNotesResponse,
 } from "@/types/counselorNotes";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n";
 import {
   keyParams,
   optimisticId,
@@ -112,7 +113,7 @@ export function useCreateNote() {
           data: upsertBy(current.data, (n) => n.id === context?.pendingId, note),
         }),
       );
-      toast.success("Note added");
+      toast.success(i18n.t("components.hooks.counselorNotes.noteAdded"));
     },
 
     onError: (err: Error, _payload, context) => {
@@ -149,7 +150,7 @@ export function useUpdateNote() {
         // `authorName` join the list endpoint adds, and substituting would drop it.
         data: patchBy(current.data, (n) => n.id === noteId, (n) => ({ ...n, ...note })),
       }));
-      toast.success("Note updated");
+      toast.success(i18n.t("components.hooks.counselorNotes.noteUpdated"));
     },
 
     onError: (err: Error, _vars, context) => {
@@ -173,7 +174,7 @@ export function useDeleteNote() {
         patchEnvelope(current, (rows) => removeBy(rows, (n) => n.id === noteId)),
       ),
 
-    onSuccess: () => toast.success("Note deleted"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.counselorNotes.noteDeleted")),
 
     // The rollback that matters most in this file. A note that vanishes and stays
     // vanished after a failed delete reads as data loss — and this endpoint really
@@ -206,7 +207,7 @@ export function useCompleteFollowUp() {
         ...current,
         data: patchBy(current.data, (n) => n.id === noteId, (n) => ({ ...n, ...result })),
       }));
-      toast.success("Follow-up completed");
+      toast.success(i18n.t("components.hooks.counselorNotes.followUpCompleted"));
     },
 
     onError: (err: Error, _vars, context) => {

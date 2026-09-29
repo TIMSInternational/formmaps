@@ -4,6 +4,7 @@ import React, { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Save, ChevronLeft, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 /**
  * SectionEditor Component
@@ -60,6 +61,7 @@ const PersonalInfoEditor = React.memo(
     onChange: (data: Record<string, any>) => void;
     errors: ValidationError[];
   }) => {
+    const { t } = useTranslation();
     const getFieldError = (fieldName: string) =>
       errors.find((e) => e.field === fieldName)?.message;
 
@@ -69,7 +71,7 @@ const PersonalInfoEditor = React.memo(
           {/* First Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              First Name <span className="text-red-500">*</span>
+              {t("resumeBuilder.sectionEditor.firstName", "First Name")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -81,7 +83,7 @@ const PersonalInfoEditor = React.memo(
                   ? "border-red-500 bg-red-50"
                   : "border-gray-300"
               )}
-              placeholder="John"
+              placeholder={t("resumeBuilder.sectionEditor.firstNamePlaceholder", "John")}
             />
             {getFieldError("firstName") && (
               <p className="text-red-500 text-xs mt-1">
@@ -93,7 +95,7 @@ const PersonalInfoEditor = React.memo(
           {/* Last Name */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Last Name <span className="text-red-500">*</span>
+              {t("resumeBuilder.sectionEditor.lastName", "Last Name")} <span className="text-red-500">*</span>
             </label>
             <input
               type="text"
@@ -105,7 +107,7 @@ const PersonalInfoEditor = React.memo(
                   ? "border-red-500 bg-red-50"
                   : "border-gray-300"
               )}
-              placeholder="Doe"
+              placeholder={t("resumeBuilder.sectionEditor.lastNamePlaceholder", "Doe")}
             />
             {getFieldError("lastName") && (
               <p className="text-red-500 text-xs mt-1">
@@ -119,7 +121,7 @@ const PersonalInfoEditor = React.memo(
           {/* Email */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email <span className="text-red-500">*</span>
+              {t("resumeBuilder.sectionEditor.email", "Email")} <span className="text-red-500">*</span>
             </label>
             <input
               type="email"
@@ -143,7 +145,7 @@ const PersonalInfoEditor = React.memo(
           {/* Phone */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone
+              {t("resumeBuilder.sectionEditor.phone", "Phone")}
             </label>
             <input
               type="tel"
@@ -158,35 +160,35 @@ const PersonalInfoEditor = React.memo(
         {/* Location */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Location
+            {t("resumeBuilder.sectionEditor.location", "Location")}
           </label>
           <input
             type="text"
             value={data.location || ""}
             onChange={(e) => onChange({ ...data, location: e.target.value })}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-            placeholder="San Francisco, CA"
+            placeholder={t("resumeBuilder.sectionEditor.locationPlaceholder", "San Francisco, CA")}
           />
         </div>
 
         {/* Professional Summary */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">
-            Professional Summary
+            {t("resumeBuilder.sectionEditor.professionalSummary", "Professional Summary")}
           </label>
           <textarea
             value={data.summary || ""}
             onChange={(e) => onChange({ ...data, summary: e.target.value })}
             rows={4}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors resize-none"
-            placeholder="Brief overview of your professional background..."
+            placeholder={t("resumeBuilder.sectionEditor.summaryPlaceholder", "Brief overview of your professional background...")}
           />
         </div>
 
         {/* Social Links */}
         <div className="space-y-2">
           <label className="block text-sm font-medium text-gray-700 mb-2">
-            Social Links
+            {t("resumeBuilder.sectionEditor.socialLinks", "Social Links")}
           </label>
           {["linkedin", "github", "portfolio"].map((platform) => (
             <input
@@ -203,7 +205,14 @@ const PersonalInfoEditor = React.memo(
                 })
               }
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-colors"
-              placeholder={`${platform} URL`}
+              placeholder={t("resumeBuilder.sectionEditor.socialUrlPlaceholder", "{{platform}} URL", {
+                platform:
+                  platform === "linkedin"
+                    ? "LinkedIn"
+                    : platform === "github"
+                      ? "GitHub"
+                      : t("resumeBuilder.sectionEditor.portfolio", "Portfolio"),
+              })}
             />
           ))}
         </div>
@@ -227,6 +236,7 @@ const ExperienceEditor = React.memo(
     onChange: (data: Record<string, any>) => void;
     errors: ValidationError[];
   }) => {
+    const { t } = useTranslation();
     const getFieldError = (fieldName: string) =>
       errors.find((e) => e.field === fieldName)?.message;
 
@@ -277,11 +287,15 @@ const ExperienceEditor = React.memo(
             className="p-4 border border-gray-300 rounded-lg bg-gray-50 space-y-3"
           >
             <div className="flex items-center justify-between mb-3">
-              <h4 className="font-medium text-gray-900">Entry {index + 1}</h4>
+              <h4 className="font-medium text-gray-900">
+                {t("resumeBuilder.sectionEditor.entryNumber", "Entry {{number}}", {
+                  number: index + 1,
+                })}
+              </h4>
               <button
                 onClick={() => removeEntry(index)}
                 className="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded transition-colors"
-                title="Remove entry"
+                title={t("resumeBuilder.sectionEditor.removeEntry", "Remove entry")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -292,14 +306,14 @@ const ExperienceEditor = React.memo(
                 type="text"
                 value={entry.company}
                 onChange={(e) => updateEntry(index, "company", e.target.value)}
-                placeholder="Company Name *"
+                placeholder={t("resumeBuilder.sectionEditor.companyPlaceholder", "Company Name *")}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <input
                 type="text"
                 value={entry.title}
                 onChange={(e) => updateEntry(index, "title", e.target.value)}
-                placeholder="Job Title *"
+                placeholder={t("resumeBuilder.sectionEditor.jobTitlePlaceholder", "Job Title *")}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -309,7 +323,7 @@ const ExperienceEditor = React.memo(
                 type="text"
                 value={entry.location}
                 onChange={(e) => updateEntry(index, "location", e.target.value)}
-                placeholder="Location"
+                placeholder={t("resumeBuilder.sectionEditor.location", "Location")}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
               <input
@@ -318,7 +332,7 @@ const ExperienceEditor = React.memo(
                 onChange={(e) =>
                   updateEntry(index, "startDate", e.target.value)
                 }
-                placeholder="Start Date (MM/YYYY)"
+                placeholder={t("resumeBuilder.sectionEditor.startDatePlaceholder", "Start Date (MM/YYYY)")}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
               />
             </div>
@@ -328,7 +342,7 @@ const ExperienceEditor = React.memo(
                 type="text"
                 value={entry.endDate}
                 onChange={(e) => updateEntry(index, "endDate", e.target.value)}
-                placeholder="End Date (MM/YYYY)"
+                placeholder={t("resumeBuilder.sectionEditor.endDatePlaceholder", "End Date (MM/YYYY)")}
                 disabled={entry.currentlyWorking}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:text-gray-500"
               />
@@ -342,7 +356,7 @@ const ExperienceEditor = React.memo(
                   className="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                 />
                 <span className="text-sm text-gray-700">
-                  Currently working here
+                  {t("resumeBuilder.sectionEditor.currentlyWorking", "Currently working here")}
                 </span>
               </label>
             </div>
@@ -352,7 +366,7 @@ const ExperienceEditor = React.memo(
               onChange={(e) =>
                 updateEntry(index, "description", e.target.value)
               }
-              placeholder="Job description and achievements"
+              placeholder={t("resumeBuilder.sectionEditor.descriptionPlaceholder", "Job description and achievements")}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 resize-none"
             />
@@ -363,7 +377,7 @@ const ExperienceEditor = React.memo(
           onClick={addEntry}
           className="w-full px-4 py-2 border-2 border-dashed border-indigo-300 text-indigo-600 rounded-lg hover:bg-indigo-50 transition-colors font-medium"
         >
-          + Add Experience
+          {t("resumeBuilder.sectionEditor.addExperience", "+ Add Experience")}
         </button>
       </div>
     );
@@ -385,6 +399,7 @@ export const SectionEditor = React.memo(
     onSave,
     children,
   }: SectionEditorProps) => {
+    const { t } = useTranslation();
     const [formData, setFormData] = useState(data);
     const [errors, setErrors] = useState<ValidationError[]>([]);
     const [isSaving, setIsSaving] = useState(false);
@@ -400,24 +415,24 @@ export const SectionEditor = React.memo(
         if (!formData.firstName?.trim()) {
           newErrors.push({
             field: "firstName",
-            message: "First name is required",
+            message: t("resumeBuilder.sectionEditor.firstNameRequired", "First name is required"),
           });
         }
         if (!formData.lastName?.trim()) {
           newErrors.push({
             field: "lastName",
-            message: "Last name is required",
+            message: t("resumeBuilder.sectionEditor.lastNameRequired", "Last name is required"),
           });
         }
         if (!formData.email?.trim()) {
           newErrors.push({
             field: "email",
-            message: "Email is required",
+            message: t("resumeBuilder.sectionEditor.emailRequired", "Email is required"),
           });
         } else if (!formData.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
           newErrors.push({
             field: "email",
-            message: "Invalid email format",
+            message: t("resumeBuilder.sectionEditor.emailInvalid", "Invalid email format"),
           });
         }
       }
@@ -427,13 +442,13 @@ export const SectionEditor = React.memo(
           if (!entry.company?.trim()) {
             newErrors.push({
               field: `experience_${index}_company`,
-              message: "Company is required",
+              message: t("resumeBuilder.sectionEditor.companyRequired", "Company is required"),
             });
           }
           if (!entry.title?.trim()) {
             newErrors.push({
               field: `experience_${index}_title`,
-              message: "Job title is required",
+              message: t("resumeBuilder.sectionEditor.jobTitleRequired", "Job title is required"),
             });
           }
         });
@@ -441,7 +456,7 @@ export const SectionEditor = React.memo(
 
       setErrors(newErrors);
       return newErrors.length === 0;
-    }, [formData, sectionId]);
+    }, [formData, sectionId, t]);
 
     /**
      * Handle save with validation and auto-save
@@ -460,13 +475,13 @@ export const SectionEditor = React.memo(
         setErrors([
           {
             field: "general",
-            message: "Failed to save changes. Please try again.",
+            message: t("resumeBuilder.sectionEditor.saveFailed", "Failed to save changes. Please try again."),
           },
         ]);
       } finally {
         setIsSaving(false);
       }
-    }, [formData, onSave, validateForm]);
+    }, [formData, onSave, validateForm, t]);
 
     /**
      * Handle keyboard shortcuts
@@ -531,7 +546,7 @@ export const SectionEditor = React.memo(
                       whileHover={{ scale: 1.1 }}
                       whileTap={{ scale: 0.95 }}
                       className="p-2 hover:bg-white rounded-lg transition-colors"
-                      title="Back to dashboard"
+                      title={t("resumeBuilder.sectionEditor.backToDashboard", "Back to dashboard")}
                     >
                       <ChevronLeft className="w-5 h-5 text-gray-600" />
                     </motion.button>
@@ -541,11 +556,13 @@ export const SectionEditor = React.memo(
                       </h2>
                       <p className="text-xs text-gray-500 mt-1">
                         {sectionId === "personalInfo" &&
-                          "Edit your personal information"}
+                          t("resumeBuilder.sectionEditor.subtitlePersonalInfo", "Edit your personal information")}
                         {sectionId === "experience" &&
-                          "Manage your work experience"}
-                        {sectionId === "education" && "Manage your education"}
-                        {sectionId === "skills" && "Update your skills"}
+                          t("resumeBuilder.sectionEditor.subtitleExperience", "Manage your work experience")}
+                        {sectionId === "education" &&
+                          t("resumeBuilder.sectionEditor.subtitleEducation", "Manage your education")}
+                        {sectionId === "skills" &&
+                          t("resumeBuilder.sectionEditor.subtitleSkills", "Update your skills")}
                       </p>
                     </div>
                   </div>
@@ -554,7 +571,7 @@ export const SectionEditor = React.memo(
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.95 }}
                     className="p-2 hover:bg-white rounded-lg transition-colors"
-                    title="Close editor (ESC)"
+                    title={t("resumeBuilder.sectionEditor.closeEditor", "Close editor (Esc)")}
                   >
                     <X className="w-5 h-5 text-gray-600" />
                   </motion.button>
@@ -584,7 +601,7 @@ export const SectionEditor = React.memo(
                     className="mx-6 mt-4 p-4 bg-green-50 border border-green-200 rounded-lg"
                   >
                     <p className="text-sm font-medium text-green-900">
-                      ✓ Changes saved successfully
+                      ✓ {t("resumeBuilder.sectionEditor.savedSuccessfully", "Changes saved successfully")}
                     </p>
                   </motion.div>
                 )}
@@ -618,7 +635,7 @@ export const SectionEditor = React.memo(
                     whileTap={{ scale: 0.98 }}
                     className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors font-medium"
                   >
-                    Cancel
+                    {t("resumeBuilder.sectionEditor.cancel", "Cancel")}
                   </motion.button>
                   <motion.button
                     onClick={handleSave}
@@ -633,7 +650,11 @@ export const SectionEditor = React.memo(
                     )}
                   >
                     <Save className="w-4 h-4" />
-                    <span>{isSaving ? "Saving..." : "Save Changes"}</span>
+                    <span>
+                      {isSaving
+                        ? t("resumeBuilder.sectionEditor.saving", "Saving...")
+                        : t("resumeBuilder.sectionEditor.saveChanges", "Save Changes")}
+                    </span>
                   </motion.button>
                 </div>
               </div>

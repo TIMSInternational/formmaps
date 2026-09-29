@@ -6,10 +6,12 @@ import { Button } from '@/components/ui/button';
 import * as resumeService from '@/services/resumeService';
 import { useState } from 'react';
 import { useGlobalStore } from '@/store/useGlobalStore';
+import { useTranslation } from 'react-i18next';
 
 import { careerFields } from './resumeData';
 
 export function TemplatePreviewStep() {
+  const { t } = useTranslation();
   const { resumeBuilder } = useGlobalStore();
   const { data } = resumeBuilder;
 
@@ -54,17 +56,17 @@ export function TemplatePreviewStep() {
       className="space-y-6"
     >
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Resume Summary</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">{t("resumeBuilder.templatePreviewStep.title", "Resume Summary")}</h2>
         <p className="text-sm text-gray-600">
-          Review your completed resume. All sections have been filled out and your resume is ready.
+          {t("resumeBuilder.templatePreviewStep.subtitle", "Review your completed resume. All sections have been filled out and your resume is ready.")}
         </p>
       </div>
 
       {/* Completion Progress */}
       <div className="bg-gradient-to-r from-[#2E9098]/10 to-[#102B47]/10 rounded-lg p-6">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="font-medium text-gray-900">Resume Completion</h3>
-          <span className="text-sm font-medium text-[#2E9098]">{Math.round(completionPercentage)}% Complete</span>
+          <h3 className="font-medium text-gray-900">{t("resumeBuilder.templatePreviewStep.completion", "Resume Completion")}</h3>
+          <span className="text-sm font-medium text-[#2E9098]">{t("resumeBuilder.templatePreviewStep.percentComplete", { defaultValue: "{{percent}}% Complete", percent: Math.round(completionPercentage) })}</span>
         </div>
         <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
           <div 
@@ -73,24 +75,24 @@ export function TemplatePreviewStep() {
           />
         </div>
         <p className="text-xs text-gray-600">
-          {completedSections} of {totalSections} sections completed
+          {t("resumeBuilder.templatePreviewStep.sectionsCompleted", { defaultValue: "{{completed}} of {{total}} sections completed", completed: completedSections, total: totalSections })}
         </p>
       </div>
 
       {/* Section Details */}
       <div className="space-y-4">
-        <h3 className="font-medium text-gray-900">Section Details</h3>
+        <h3 className="font-medium text-gray-900">{t("resumeBuilder.templatePreviewStep.sectionDetails", "Section Details")}</h3>
 
         {/* Career Field */}
         <div className="flex items-center justify-between p-4 bg-white rounded-lg border">
           <div className="flex items-center space-x-3">
             <Target className="w-5 h-5 text-[#2E9098]" />
             <div>
-              <h4 className="font-medium text-gray-900">Career Field</h4>
+              <h4 className="font-medium text-gray-900">{t("resumeBuilder.templatePreviewStep.careerField", "Career Field")}</h4>
               <p className="text-sm text-gray-600">
                 {data.careerField ?
-                  careerFields.find(f => f.id === data.careerField)?.name || 'Unknown field' :
-                  'No career field selected'
+                  careerFields.find(f => f.id === data.careerField)?.name || t("resumeBuilder.templatePreviewStep.unknownField", "Unknown field") :
+                  t("resumeBuilder.templatePreviewStep.noCareerField", "No career field selected")
                 }
               </p>
             </div>
@@ -109,9 +111,9 @@ export function TemplatePreviewStep() {
           <div className="flex items-center space-x-3">
             <User className="w-5 h-5 text-[#2E9098]" />
             <div>
-              <h4 className="font-medium text-gray-900">Personal Information</h4>
+              <h4 className="font-medium text-gray-900">{t("resumeBuilder.templatePreviewStep.personalInfo", "Personal Information")}</h4>
               <p className="text-sm text-gray-600">
-                {data.personalInfo.fullName || 'No name provided'}
+                {data.personalInfo.fullName || t("resumeBuilder.templatePreviewStep.noName", "No name provided")}
               </p>
             </div>
           </div>
@@ -129,9 +131,9 @@ export function TemplatePreviewStep() {
           <div className="flex items-center space-x-3">
             <Briefcase className="w-5 h-5 text-[#2E9098]" />
             <div>
-              <h4 className="font-medium text-gray-900">Work Experience</h4>
+              <h4 className="font-medium text-gray-900">{t("resumeBuilder.templatePreviewStep.workExperience", "Work Experience")}</h4>
               <p className="text-sm text-gray-600">
-                {sectionStatus.experience.count} position{sectionStatus.experience.count !== 1 ? 's' : ''} added
+                {t("resumeBuilder.templatePreviewStep.positionsAdded", { count: sectionStatus.experience.count, defaultValue: "{{count}} positions added" })}
               </p>
             </div>
           </div>
@@ -149,9 +151,9 @@ export function TemplatePreviewStep() {
           <div className="flex items-center space-x-3">
             <GraduationCap className="w-5 h-5 text-[#2E9098]" />
             <div>
-              <h4 className="font-medium text-gray-900">Education</h4>
+              <h4 className="font-medium text-gray-900">{t("resumeBuilder.templatePreviewStep.education", "Education")}</h4>
               <p className="text-sm text-gray-600">
-                {sectionStatus.education.count} education entr{sectionStatus.education.count !== 1 ? 'ies' : 'y'} added
+                {t("resumeBuilder.templatePreviewStep.educationAdded", { count: sectionStatus.education.count, defaultValue: "{{count}} education entries added" })}
               </p>
             </div>
           </div>
@@ -169,9 +171,9 @@ export function TemplatePreviewStep() {
           <div className="flex items-center space-x-3">
             <Zap className="w-5 h-5 text-[#2E9098]" />
             <div>
-              <h4 className="font-medium text-gray-900">Skills</h4>
+              <h4 className="font-medium text-gray-900">{t("resumeBuilder.templatePreviewStep.skills", "Skills")}</h4>
               <p className="text-sm text-gray-600">
-                {sectionStatus.skills.count} skill{sectionStatus.skills.count !== 1 ? 's' : ''} added
+                {t("resumeBuilder.templatePreviewStep.skillsAdded", { count: sectionStatus.skills.count, defaultValue: "{{count}} skills added" })}
               </p>
             </div>
           </div>
@@ -195,9 +197,9 @@ export function TemplatePreviewStep() {
             </svg>
           </div>
           <div>
-            <h4 className="font-medium text-green-900">Resume Summary Complete!</h4>
+            <h4 className="font-medium text-green-900">{t("resumeBuilder.templatePreviewStep.completeTitle", "Resume Summary Complete!")}</h4>
             <p className="text-sm text-green-700 mt-1">
-              Your resume is {Math.round(completionPercentage)}% complete and ready for use. You can go back to edit any section if needed.
+              {t("resumeBuilder.templatePreviewStep.completeBody", { defaultValue: "Your resume is {{percent}}% complete and ready for use. You can go back to edit any section if needed.", percent: Math.round(completionPercentage) })}
             </p>
           </div>
         </div>

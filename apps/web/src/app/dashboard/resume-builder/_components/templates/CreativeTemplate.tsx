@@ -1,5 +1,7 @@
 "use client";
 import React from "react";
+import i18n from "@/lib/i18n";
+import { translateProficiency } from "../../_lib/resume-constants";
 import {
   Document,
   Page,
@@ -9,6 +11,9 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import { Linkedin, Globe, Github, Twitter, FolderOpen } from "lucide-react";
+
+// Labels printed in the résumé document itself, resolved in the UI language at render time.
+const t = i18n.t.bind(i18n);
 
 // Register fonts for better typography
 Font.register({
@@ -277,13 +282,11 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
             <Text style={styles.sidebarTitle}>
               {data.personalInfo.professionalTitle}
             </Text>
-          ) : (
-            <Text style={styles.sidebarTitle}>Creative Professional</Text>
-          )}
+          ) : null}
 
           {/* Contact Info */}
           <View style={styles.sidebarSection}>
-            <Text style={styles.sidebarSectionTitle}>Contact</Text>
+            <Text style={styles.sidebarSectionTitle}>{t("resumeBuilder.doc.contact", "Contact")}</Text>
             <Text style={styles.sidebarText}>{data.personalInfo.email}</Text>
             <Text style={styles.sidebarText}>{data.personalInfo.phone}</Text>
             <Text style={styles.sidebarText}>{data.personalInfo.location}</Text>
@@ -317,15 +320,15 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
           {/* Additional Personal Info */}
           {(data.personalInfo.nationality || data.personalInfo.dateOfBirth) && (
             <View style={styles.sidebarSection}>
-              <Text style={styles.sidebarSectionTitle}>Personal Info</Text>
+              <Text style={styles.sidebarSectionTitle}>{t("resumeBuilder.doc.personalInfo", "Personal Info")}</Text>
               {data.personalInfo.nationality && (
                 <Text style={styles.sidebarText}>
-                  Nationality: {data.personalInfo.nationality}
+                  {t("resumeBuilder.doc.nationality", { defaultValue: "Nationality: {{value}}", value: data.personalInfo.nationality })}
                 </Text>
               )}
               {data.personalInfo.dateOfBirth && (
                 <Text style={styles.sidebarText}>
-                  DOB: {data.personalInfo.dateOfBirth}
+                  {t("resumeBuilder.doc.dob", { defaultValue: "DOB: {{value}}", value: data.personalInfo.dateOfBirth })}
                 </Text>
               )}
             </View>
@@ -334,7 +337,7 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
           {/* Skills */}
           {Object.keys(skillsByCategory).length > 0 && (
             <View style={styles.sidebarSection}>
-              <Text style={styles.sidebarSectionTitle}>Skills</Text>
+              <Text style={styles.sidebarSectionTitle}>{t("resumeBuilder.doc.skills", "Skills")}</Text>
               {Object.entries(skillsByCategory).map(([category, skills]) => (
                 <View key={category}>
                   {skills.map((skill) => (
@@ -350,7 +353,7 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
           {/* Languages */}
           {(data.personalInfo as any).languages && (
             <View style={styles.sidebarSection}>
-              <Text style={styles.sidebarSectionTitle}>Languages</Text>
+              <Text style={styles.sidebarSectionTitle}>{t("resumeBuilder.doc.languages", "Languages")}</Text>
               <Text style={styles.sidebarText}>
                 {(data.personalInfo as any).languages}
               </Text>
@@ -360,7 +363,7 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
           {/* Education */}
           {data.education.length > 0 && (
             <View style={styles.sidebarSection}>
-              <Text style={styles.sidebarSectionTitle}>Education</Text>
+              <Text style={styles.sidebarSectionTitle}>{t("resumeBuilder.doc.education", "Education")}</Text>
               {data.education.map((edu) => (
                 <View key={edu.id}>
                   <Text style={styles.sidebarText}>{edu.degree}</Text>
@@ -369,7 +372,7 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
                   </Text>
                   <Text style={styles.sidebarText}>{edu.graduationDate}</Text>
                   {edu.gpa && (
-                    <Text style={styles.sidebarText}>GPA: {edu.gpa}</Text>
+                    <Text style={styles.sidebarText}>{t("resumeBuilder.doc.gpa", { defaultValue: "GPA: {{value}}", value: edu.gpa })}</Text>
                   )}
                 </View>
               ))}
@@ -381,7 +384,7 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
             data.customFields.filter((f) => f.enabled && f.value).length >
               0 && (
               <View style={styles.sidebarSection}>
-                <Text style={styles.sidebarSectionTitle}>Additional Info</Text>
+                <Text style={styles.sidebarSectionTitle}>{t("resumeBuilder.doc.additionalInfo", "Additional Info")}</Text>
                 {data.customFields
                   .filter((f) => f.enabled && f.value)
                   .map((field) => (
@@ -418,14 +421,14 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
           {/* Professional Experience */}
           {data.experience.length > 0 && (
             <View style={styles.mainSection}>
-              <Text style={styles.mainSectionTitle}>Experience</Text>
+              <Text style={styles.mainSectionTitle}>{t("resumeBuilder.doc.experience", "Experience")}</Text>
               {data.experience.map((exp) => (
                 <View key={exp.id} style={styles.experienceItem}>
                   <View style={styles.experienceMarker} />
                   <Text style={styles.jobTitle}>{exp.jobTitle}</Text>
                   <Text style={styles.company}>{exp.company}</Text>
                   <Text style={styles.jobDetails}>
-                    {exp.startDate} - {exp.current ? "Present" : exp.endDate} •{" "}
+                    {exp.startDate} - {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate} •{" "}
                     {exp.location}
                   </Text>
                   {exp.description.map((desc, index) => (
@@ -453,7 +456,7 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
                         </Text>
                         {entry.technologies && (
                           <Text style={styles.company}>
-                            Technologies: {entry.technologies}
+                            {t("resumeBuilder.doc.technologies", { defaultValue: "Technologies: {{value}}", value: entry.technologies })}
                           </Text>
                         )}
                         {entry.description && (
@@ -463,7 +466,7 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
                         )}
                         {entry.link && (
                           <Text style={styles.jobDetails}>
-                            Link: {entry.link}
+                            {t("resumeBuilder.doc.link", { defaultValue: "Link: {{value}}", value: entry.link })}
                           </Text>
                         )}
                       </>
@@ -475,7 +478,7 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
                         </Text>
                         {entry.issuer && (
                           <Text style={styles.company}>
-                            Issued by: {entry.issuer}
+                            {t("resumeBuilder.doc.issuedBy", { defaultValue: "Issued by: {{value}}", value: entry.issuer })}
                           </Text>
                         )}
                         {entry.date && (
@@ -495,7 +498,7 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
                         </Text>
                         {entry.proficiency && (
                           <Text style={styles.description}>
-                            {entry.proficiency}
+                            {translateProficiency(entry.proficiency)}
                           </Text>
                         )}
                       </View>
@@ -507,12 +510,12 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
                         </Text>
                         {entry.authors && (
                           <Text style={styles.company}>
-                            Authors: {entry.authors}
+                            {t("resumeBuilder.doc.authors", { defaultValue: "Authors: {{value}}", value: entry.authors })}
                           </Text>
                         )}
                         {entry.publisher && (
                           <Text style={styles.company}>
-                            Publisher: {entry.publisher}
+                            {t("resumeBuilder.doc.publisher", { defaultValue: "Publisher: {{value}}", value: entry.publisher })}
                           </Text>
                         )}
                         {entry.description && (
@@ -522,7 +525,7 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
                         )}
                         {entry.link && (
                           <Text style={styles.jobDetails}>
-                            Link: {entry.link}
+                            {t("resumeBuilder.doc.link", { defaultValue: "Link: {{value}}", value: entry.link })}
                           </Text>
                         )}
                         {entry.date && (
@@ -568,12 +571,12 @@ export function CreativeTemplatePreview({ data }: CreativeTemplatePDFProps) {
           {data.personalInfo.fullName}
         </h1>
         <p className="text-purple-200 text-center text-sm font-bold mb-4">
-          {data.personalInfo.professionalTitle || "Creative Professional"}
+          {data.personalInfo.professionalTitle}
         </p>
 
         <div className="mb-4">
           <h2 className="text-xs font-bold uppercase tracking-wide mb-2">
-            Contact
+            {t("resumeBuilder.doc.contact", "Contact")}
           </h2>
           <p className="text-purple-200 text-xs mb-1">
             {data.personalInfo.email}
@@ -619,16 +622,16 @@ export function CreativeTemplatePreview({ data }: CreativeTemplatePDFProps) {
         {(data.personalInfo.nationality || data.personalInfo.dateOfBirth) && (
           <div className="mb-4">
             <h2 className="text-xs font-bold uppercase tracking-wide mb-2">
-              Personal Info
+              {t("resumeBuilder.doc.personalInfo", "Personal Info")}
             </h2>
             {data.personalInfo.nationality && (
               <p className="text-purple-200 text-xs mb-1">
-                Nationality: {data.personalInfo.nationality}
+                {t("resumeBuilder.doc.nationality", { defaultValue: "Nationality: {{value}}", value: data.personalInfo.nationality })}
               </p>
             )}
             {data.personalInfo.dateOfBirth && (
               <p className="text-purple-200 text-xs mb-1">
-                DOB: {data.personalInfo.dateOfBirth}
+                {t("resumeBuilder.doc.dob", { defaultValue: "DOB: {{value}}", value: data.personalInfo.dateOfBirth })}
               </p>
             )}
           </div>
@@ -636,7 +639,7 @@ export function CreativeTemplatePreview({ data }: CreativeTemplatePDFProps) {
 
         <div className="mb-4">
           <h2 className="text-xs font-bold uppercase tracking-wide mb-2">
-            Skills
+            {t("resumeBuilder.doc.skills", "Skills")}
           </h2>
           <div className="space-y-1">
             {data.skills.slice(0, 6).map((skill) => (
@@ -652,7 +655,7 @@ export function CreativeTemplatePreview({ data }: CreativeTemplatePDFProps) {
 
         <div className="mb-4">
           <h2 className="text-xs font-bold uppercase tracking-wide mb-2">
-            Education
+            {t("resumeBuilder.doc.education", "Education")}
           </h2>
           {data.education.slice(0, 1).map((edu) => (
             <div key={edu.id}>
@@ -662,7 +665,7 @@ export function CreativeTemplatePreview({ data }: CreativeTemplatePDFProps) {
               </p>
               <p className="text-purple-200 text-xs">{edu.graduationDate}</p>
               {edu.gpa && (
-                <p className="text-purple-200 text-xs">GPA: {edu.gpa}</p>
+                <p className="text-purple-200 text-xs">{t("resumeBuilder.doc.gpa", { defaultValue: "GPA: {{value}}", value: edu.gpa })}</p>
               )}
             </div>
           ))}
@@ -672,7 +675,7 @@ export function CreativeTemplatePreview({ data }: CreativeTemplatePDFProps) {
           data.customFields.filter((f) => f.enabled && f.value).length > 0 && (
             <div>
               <h2 className="text-xs font-bold uppercase tracking-wide mb-2">
-                Additional Info
+                {t("resumeBuilder.doc.additionalInfo", "Additional Info")}
               </h2>
               {data.customFields
                 .filter((f) => f.enabled && f.value)
@@ -693,7 +696,7 @@ export function CreativeTemplatePreview({ data }: CreativeTemplatePDFProps) {
           <div className="bg-purple-50 border-2 border-purple-600 rounded-lg p-3 mb-4">
             <div className="w-6 h-1 bg-purple-600 rounded mb-2"></div>
             <h3 className="font-bold text-purple-600 text-sm mb-1">
-              Career Objective
+              {t("resumeBuilder.doc.careerObjective", "Career Objective")}
             </h3>
             <p className="text-gray-700 text-xs leading-relaxed">
               {data.personalInfo.careerObjective.substring(0, 150)}...
@@ -714,7 +717,7 @@ export function CreativeTemplatePreview({ data }: CreativeTemplatePDFProps) {
         {/* Experience */}
         <div className="mb-4">
           <h2 className="text-lg font-bold text-purple-600 mb-3 border-b-2 border-purple-600 pb-1">
-            Experience
+            {t("resumeBuilder.doc.experience", "Experience")}
           </h2>
           {data.experience.slice(0, 2).map((exp) => (
             <div key={exp.id} className="mb-4 relative pl-4">
@@ -724,7 +727,7 @@ export function CreativeTemplatePreview({ data }: CreativeTemplatePDFProps) {
               </h3>
               <p className="text-purple-600 text-sm font-bold">{exp.company}</p>
               <p className="text-gray-500 text-xs italic mb-2">
-                {exp.startDate} - {exp.current ? "Present" : exp.endDate} •{" "}
+                {exp.startDate} - {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate} •{" "}
                 {exp.location}
               </p>
               <div className="text-xs text-gray-700">
@@ -779,7 +782,7 @@ export function CreativeTemplatePreview({ data }: CreativeTemplatePDFProps) {
                       </span>
                       {entry.proficiency && (
                         <span className="text-gray-600 text-xs">
-                          {entry.proficiency}
+                          {translateProficiency(entry.proficiency)}
                         </span>
                       )}
                     </div>
@@ -791,12 +794,12 @@ export function CreativeTemplatePreview({ data }: CreativeTemplatePDFProps) {
                       </h3>
                       {entry.authors && (
                         <p className="text-purple-600 text-xs">
-                          Authors: {entry.authors}
+                          {t("resumeBuilder.doc.authors", { defaultValue: "Authors: {{value}}", value: entry.authors })}
                         </p>
                       )}
                       {entry.publisher && (
                         <p className="text-purple-600 text-xs">
-                          Publisher: {entry.publisher}
+                          {t("resumeBuilder.doc.publisher", { defaultValue: "Publisher: {{value}}", value: entry.publisher })}
                         </p>
                       )}
                       {entry.description && (

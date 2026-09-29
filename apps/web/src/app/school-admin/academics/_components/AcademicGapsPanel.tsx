@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const statusMeta = (s: string) => s === "on_track"
 
 export function AcademicGapsPanel() {
   const router = useRouter();
+  const { t } = useTranslation("school_admin");
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
@@ -65,11 +67,11 @@ export function AcademicGapsPanel() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {[
-          { label: "Total Students", value: summary?.totalStudents ?? all.length, icon: BarChart3, color: "var(--admin-font-primary)" },
-          { label: "On Track", value: summary?.onTrack ?? 0, icon: CheckCircle2, color: "#10b981" },
-          { label: "At Risk", value: summary?.atRisk ?? 0, icon: AlertTriangle, color: "#f59e0b" },
-          { label: "Off Track", value: summary?.offTrack ?? 0, icon: XCircle, color: "#ef4444" },
-          { label: "Avg Progress", value: `${avgProgress}%`, icon: Target, color: "var(--admin-accent-blue)" },
+          { label: t("academicGaps.stats.totalStudents"), value: summary?.totalStudents ?? all.length, icon: BarChart3, color: "var(--admin-font-primary)" },
+          { label: t("academicGaps.stats.onTrack"), value: summary?.onTrack ?? 0, icon: CheckCircle2, color: "#10b981" },
+          { label: t("academicGaps.stats.atRisk"), value: summary?.atRisk ?? 0, icon: AlertTriangle, color: "#f59e0b" },
+          { label: t("academicGaps.stats.offTrack"), value: summary?.offTrack ?? 0, icon: XCircle, color: "#ef4444" },
+          { label: t("academicGaps.stats.avgProgress"), value: `${avgProgress}%`, icon: Target, color: "var(--admin-accent-blue)" },
         ].map((stat) => (
           <div key={stat.label} style={{ padding: 16, borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
             <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", justifyContent: "center", marginBottom: 8 }}>
@@ -92,14 +94,14 @@ export function AcademicGapsPanel() {
               <TrendingDown style={{ width: 16, height: 16, color: "#ef4444" }} />
             </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Academic Gap Analysis</div>
-              <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Credit deficit + missing required courses per student. Click a student for the full breakdown + AI course plan.</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.academicGaps.title")}</div>
+              <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.academicGaps.subtitle")}</div>
             </div>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: "var(--admin-font-light)" }} />
-              <Input placeholder="Search students..." className="pl-9 h-8 rounded-md text-xs w-48"
+              <Input placeholder={t("academicGaps.search")} className="pl-9 h-8 rounded-md text-xs w-48"
                 style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}
                 value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
             </div>
@@ -109,10 +111,10 @@ export function AcademicGapsPanel() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="on_track">On Track</SelectItem>
-                <SelectItem value="at_risk">At Risk</SelectItem>
-                <SelectItem value="off_track">Off Track</SelectItem>
+                <SelectItem value="all">{t("users.allStatus")}</SelectItem>
+                <SelectItem value="on_track">{t("academicGaps.stats.onTrack")}</SelectItem>
+                <SelectItem value="at_risk">{t("academicGaps.stats.atRisk")}</SelectItem>
+                <SelectItem value="off_track">{t("academicGaps.stats.offTrack")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -121,7 +123,7 @@ export function AcademicGapsPanel() {
         <Table>
           <TableHeader>
             <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
-              {["Student", "Grade", "Credits", "Credit Gap", "Missing Courses", "Status"].map((h) => (
+              {[t("academicGaps.table.student"), t("academicGaps.table.grade"), t("academicGaps.table.credits"), t("academicGaps.table.creditGap"), t("academicGaps.table.missingCourses"), t("academicGaps.table.status")].map((h) => (
                 <TableHead key={h} className="py-3 px-4" style={{
                   fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
                   color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)",
@@ -134,7 +136,7 @@ export function AcademicGapsPanel() {
               <TableRow>
                 <TableCell colSpan={6} style={{ textAlign: "center", color: "var(--admin-font-tertiary)", padding: "48px 0", fontSize: 12 }}>
                   <GraduationCap style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.3 }} />
-                  {all.length === 0 ? "Set up graduation rules to track academic gaps" : "No students match your filters"}
+                  {all.length === 0 ? t("academicGaps.noRules") : t("academicGaps.noStudents")}
                 </TableCell>
               </TableRow>
             ) : pageRows.map((s) => {
@@ -156,22 +158,22 @@ export function AcademicGapsPanel() {
                       <span style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{s.studentName}</span>
                     </div>
                   </TableCell>
-                  <TableCell className="py-3 px-4" style={{ fontSize: 13, color: "var(--admin-font-light)" }}>{s.gradeLevel ? `Gr. ${s.gradeLevel}` : "—"}</TableCell>
+                  <TableCell className="py-3 px-4" style={{ fontSize: 13, color: "var(--admin-font-light)" }}>{s.gradeLevel ? t("ui.common.gradeShort", { grade: s.gradeLevel }) : "—"}</TableCell>
                   <TableCell className="py-3 px-4">
                     <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{s.creditsEarned ?? 0}</span>
                     <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}> / {s.creditsRequired ?? 0}</span>
                   </TableCell>
                   <TableCell className="py-3 px-4">
                     {(s.creditDeficit || 0) > 0 ? (
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>-{s.creditDeficit} credits</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "rgba(239,68,68,0.1)", color: "#ef4444" }}>{t("ui.academicGaps.creditDeficit", { count: s.creditDeficit })}</span>
                     ) : (
-                      <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "rgba(16,185,129,0.1)", color: "#10b981" }}>Complete</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{t("ui.academicGaps.complete")}</span>
                     )}
                   </TableCell>
                   <TableCell className="py-3 px-4">
                     {(s.missingRequiredCourses || 0) > 0 ? (
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>
-                        <BookX style={{ width: 12, height: 12 }} />{s.missingRequiredCourses} {s.missingRequiredCourses === 1 ? "category" : "categories"}
+                        <BookX style={{ width: 12, height: 12 }} />{t("ui.academicGaps.categories", { count: s.missingRequiredCourses })}
                       </span>
                     ) : (
                       <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>—</span>
@@ -179,7 +181,7 @@ export function AcademicGapsPanel() {
                   </TableCell>
                   <TableCell className="py-3 px-4">
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: `${color}15`, color }}>
-                      <Icon style={{ width: 12, height: 12 }} />{s.overallStatus?.replace("_", " ")}
+                      <Icon style={{ width: 12, height: 12 }} />{s.overallStatus === "on_track" ? t("academicGaps.stats.onTrack") : s.overallStatus === "at_risk" ? t("academicGaps.stats.atRisk") : s.overallStatus === "off_track" ? t("academicGaps.stats.offTrack") : String(s.overallStatus ?? "").replace("_", " ")}
                     </span>
                   </TableCell>
                 </TableRow>
@@ -190,7 +192,7 @@ export function AcademicGapsPanel() {
 
         {totalPages > 1 && (
           <div className="flex items-center justify-between p-3" style={{ borderTop: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)" }}>
-            <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>{((safePage - 1) * PAGE_SIZE) + 1}–{Math.min(safePage * PAGE_SIZE, filtered.length)} of {filtered.length}</p>
+            <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>{t("ui.common.rangeOf", { from: ((safePage - 1) * PAGE_SIZE) + 1, to: Math.min(safePage * PAGE_SIZE, filtered.length), total: filtered.length })}</p>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md" disabled={safePage <= 1} onClick={() => setPage(p => p - 1)} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}><ChevronLeft className="h-4 w-4" /></Button>
               <span className="flex items-center px-2 text-xs" style={{ color: "var(--admin-font-tertiary)" }}>{safePage}/{totalPages}</span>

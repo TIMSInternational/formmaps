@@ -61,7 +61,7 @@
     "earnings": "Ganancias",
     "users": "Usuarios",
     "coaches": "Coaches",
-    "schools": "Escuelas",
+    "schools": "Colegios",
     "courses": "Cursos",
     "careers": "Carreras",
     "questions": "Preguntas",
@@ -272,7 +272,7 @@
         "readinessTitle": "Estado de las evaluaciones",
         "row360": "Evaluación 360",
         "row360Hint": "Requiere las respuestas del estudiante y de al menos otro evaluador (padre/madre, profesor o compañero).",
-        "rowPca": "PCA (competencias profesionales)",
+        "rowPca": "PCA (Análisis de Competencias Personales)",
         "rowPcaHint": "Completa la evaluación PCA.",
         "rowMilHint": "Completa las pruebas cognitivas MIL.",
         "rowReady": "{{label}}: lista",
@@ -400,7 +400,7 @@
       "validationHeading": "Requisitos de evaluador no cumplidos",
       "relationships": {
         "parent": "p. ej., madre, padre, tutor",
-        "teacher": "p. ej., profesor de matemáticas, consejero, director",
+        "teacher": "p. ej., profesor de matemáticas, orientador, director",
         "siblingFriend": "p. ej., hermana, mejor amigo, compañero de clase",
         "self": "Autoevaluación",
         "default": "Relación"
@@ -536,7 +536,7 @@
       "admin": "Administrador",
       "superadmin": "Superadministrador",
       "schooladmin": "Admin escolar",
-      "counselor": "Consejero",
+      "counselor": "Orientador",
       "parent": "Padre/madre"
     },
     "assessmentProgress": "Progreso de evaluación",
@@ -706,7 +706,7 @@
     "noSessionsDesc": "No tienes sesiones programadas. Reserva un coach para comenzar.",
     "bookACoach": "Reservar un coach",
     "counselingCoaching": "Orientación y coaching",
-    "bookCounselorSession": "Reservar sesión con un consejero",
+    "bookCounselorSession": "Reservar sesión con un orientador",
     "activeCourse": "Curso activo",
     "noCourseEnrolled": "Sin curso inscrito",
     "noCourseDesc": "Explora nuestro catálogo y comienza tu primer curso hoy.",
@@ -1060,7 +1060,7 @@
     },
     "messages": {
       "subtitle": "Comunícate con tus orientadores, coaches y el personal de tu colegio.",
-      "emptyStudent": "Aún no hay conversaciones. Haz clic en \"Nuevo\" para escribirle a un consejero o a un administrador escolar.",
+      "emptyStudent": "Aún no hay conversaciones. Haz clic en \"Nuevo\" para escribirle a un orientador o a un administrador escolar.",
       "newConversation": {
         "button": "Nuevo",
         "aria": "Nueva conversación",
@@ -1675,29 +1675,29 @@
       }
     },
     "schools": {
-      "title": "Gestión de escuelas",
+      "title": "Gestión de colegios",
       "subtitle": "Gestiona asociaciones escolares y acceso de estudiantes.",
-      "totalSchools": "Escuelas totales",
-      "active": "Escuelas activas",
+      "totalSchools": "Colegios totales",
+      "active": "Colegios activos",
       "pending": "Invitaciones pendientes",
       "totalStudents": "Estudiantes totales",
-      "inviteButton": "Invitar escuela",
-      "inviteTitle": "Invitar escuela",
+      "inviteButton": "Invitar colegio",
+      "inviteTitle": "Invitar colegio",
       "inviteDescription": "Enviar una invitación a un administrador escolar.",
       "inviteSuccess": "Invitación enviada a {{name}}",
       "inviteError": "Error al enviar la invitación. Inténtalo de nuevo.",
-      "name": "Nombre de la escuela",
+      "name": "Nombre del colegio",
       "namePlaceholder": "p. ej., Colegio Springfield",
       "email": "Correo del administrador",
-      "emailPlaceholder": "admin@escuela.com",
+      "emailPlaceholder": "admin@colegio.edu.co",
       "maxStudents": "Máx. estudiantes",
       "details": "Detalles / info del contrato",
       "detailsPlaceholder": "Ingresa información del contrato u otros detalles...",
       "sendInvite": "Enviar invitación",
-      "editTitle": "Editar escuela",
-      "editDescription": "Actualizar detalles de la escuela.",
-      "updateSuccess": "Escuela actualizada con éxito",
-      "updateError": "Error al actualizar la escuela",
+      "editTitle": "Editar colegio",
+      "editDescription": "Actualizar detalles del colegio.",
+      "updateSuccess": "Colegio actualizado con éxito",
+      "updateError": "Error al actualizar el colegio",
       "resendSuccess": "Invitación reenviada a {{name}}",
       "resendError": "Error al reenviar la invitación"
     },
@@ -1803,7 +1803,7 @@
         "student": "Estudiante",
         "coach": "Coach",
         "admin": "Administrador",
-        "counselor": "Consejero",
+        "counselor": "Orientador",
         "school_admin": "Administrador del colegio",
         "teacher": "Profesor",
         "parent": "Padre o madre"
@@ -1877,7 +1877,7 @@
             "description": "Realiza las evaluaciones. Ocupa un cupo del colegio."
           },
           "counselor": {
-            "label": "Consejero",
+            "label": "Orientador",
             "description": "Acompaña a los estudiantes y consulta sus expedientes. No ocupa cupo."
           },
           "school_admin": {
@@ -1959,7 +1959,7 @@
       },
       "roleNames": {
         "student": "Estudiante",
-        "counselor": "Consejero",
+        "counselor": "Orientador",
         "school_admin": "Administrador del colegio",
         "teacher": "Profesor",
         "parent": "Padre o madre",
@@ -1970,7 +1970,7 @@
       "staffStats": {
         "totalUsers": "Usuarios totales",
         "inSchool": "en el colegio",
-        "counselors": "Consejeros",
+        "counselors": "Orientadores",
         "activeStaff": "personal activo",
         "students": "Estudiantes",
         "enrolled": "inscritos"
@@ -2183,7 +2183,7 @@
           "Todo lo de Pro",
           "Sesiones de coaching ilimitadas",
           "Informes narrativos de carrera con IA",
-          "Reserva de sesiones con consejero",
+          "Reserva de sesiones con orientador",
           "Seguimiento de servicio comunitario",
           "Apoyo para proyecto final",
           "Seguimiento de certificaciones",
@@ -2324,7 +2324,7 @@
       "bullet1": "Descubre tus fortalezas con evaluaciones",
       "bullet2": "Recibe recomendaciones de carrera con IA",
       "bullet3": "Haz seguimiento de solicitudes universitarias y becas",
-      "bullet4": "Conéctate con consejeros y coaches",
+      "bullet4": "Conéctate con orientadores y coaches",
       "welcomeUser": "¡Te damos la bienvenida, {{name}}!",
       "createPassword": "Crea una contraseña para activar tu cuenta de estudiante",
       "passwordLabel": "Contraseña",
@@ -2349,7 +2349,7 @@
       }
     },
     "counselor": {
-      "infoTitle": "Información del consejero",
+      "infoTitle": "Información del orientador",
       "infoDesc": "Cuéntanos sobre ti para configurar tu perfil.",
       "email": "Tu correo",
       "name": "Tu nombre completo",
@@ -2378,9 +2378,9 @@
     },
     "school": {
       "adminTitle": "Información del administrador",
-      "adminDesc": "Cuéntanos sobre ti como administrador de la escuela.",
-      "settingsTitle": "Configuración de la escuela",
-      "settingsDesc": "Configura las preferencias de notificación de tu escuela.",
+      "adminDesc": "Cuéntanos sobre ti como administrador del colegio.",
+      "settingsTitle": "Configuración del colegio",
+      "settingsDesc": "Configura las preferencias de notificación de tu colegio.",
       "alreadyCompleted": "Ya completaste el registro.",
       "schoolName": "Colegio",
       "adminEmail": "Correo del administrador",
@@ -2866,12 +2866,12 @@
     "upcoming": "Próximas",
     "completed": "Completadas",
     "cancelled": "Canceladas",
-    "bookCounselor": "Reservar sesión con consejero",
+    "bookCounselor": "Reservar sesión con orientador",
     "findCoach": "Buscar coach",
     "noSessions": "No se encontraron sesiones",
-    "noSessionsDesc": "Reserva una sesión con un consejero o coach para comenzar.",
+    "noSessionsDesc": "Reserva una sesión con un orientador o coach para comenzar.",
     "coaching": "Coaching",
-    "counseling": "Consejería",
+    "counseling": "Orientación",
     "reschedule": "Reprogramar",
     "cancel": "Cancelar sesión",
     "joinSession": "Unirse a la sesión",
@@ -2935,7 +2935,7 @@
     },
     "dashboard": {
       "title": "Panel escolar",
-      "subtitle": "¡Bienvenido de vuelta! Aquí está el resumen de tu escuela.",
+      "subtitle": "¡Hola de nuevo! Aquí está el resumen de tu colegio.",
       "inviteStudent": "Invitar estudiante",
       "quickActions": "Acciones rápidas",
       "recentStudents": "Estudiantes recientes",
@@ -2948,7 +2948,7 @@
       "pendingInvites": "Invitaciones pendientes",
       "activeStudents": "Estudiantes activos",
       "avgScore": "Puntuación prom.",
-      "studentsInSchool": "Estudiantes en tu escuela",
+      "studentsInSchool": "Estudiantes en tu colegio",
       "awaitingAcceptance": "Esperando aceptación",
       "currentlyActive": "Actualmente activos",
       "averageAssessmentScore": "Puntuación promedio de evaluación",
@@ -2958,7 +2958,7 @@
     "quickActions": {
       "inviteStudents": {
         "title": "Invitar estudiantes",
-        "desc": "Agregar nuevos estudiantes a tu escuela"
+        "desc": "Agregar nuevos estudiantes a tu colegio"
       },
       "viewAnalytics": {
         "title": "Ver análisis",
@@ -2975,7 +2975,7 @@
     },
     "students": {
       "title": "Gestión de estudiantes",
-      "subtitle": "Invitar y gestionar estudiantes en tu escuela",
+      "subtitle": "Invitar y gestionar estudiantes en tu colegio",
       "inviteStudent": "Invitar estudiante",
       "searchPlaceholder": "Buscar estudiantes...",
       "allStatuses": "Todos los estados",
@@ -3035,7 +3035,7 @@
     },
     "analytics": {
       "title": "Análisis",
-      "subtitle": "Seguir el rendimiento y la participación en toda tu escuela",
+      "subtitle": "Seguir el rendimiento y la participación en todo tu colegio",
       "period": {
         "week": "Esta semana",
         "month": "Este mes",
@@ -3116,17 +3116,17 @@
     },
     "settings": {
       "title": "Configuración",
-      "subtitle": "Gestionar tu cuenta y configuración de la escuela",
+      "subtitle": "Gestionar tu cuenta y configuración del colegio",
       "schoolInfo": {
-        "title": "Información de la escuela",
-        "subtitle": "Detalles de tu escuela e información del contrato",
-        "name": "Nombre de la escuela",
+        "title": "Información del colegio",
+        "subtitle": "Detalles de tu colegio e información del contrato",
+        "name": "Nombre del colegio",
         "adminEmail": "Correo del administrador",
         "maxStudents": "Capacidad de estudiantes",
         "contractStart": "Inicio del contrato",
         "contractEnd": "Fin del contrato",
         "contractPeriod": "Período de contrato",
-        "loadError": "No se pudo cargar la información de la escuela"
+        "loadError": "No se pudo cargar la información del colegio"
       },
       "profile": {
         "title": "Configuración del perfil",
@@ -3198,7 +3198,7 @@
     },
     "completion": {
       "title": "¡Evaluación LIA completada!",
-      "body": "Gracias por completar las 5 subpruebas. Tus respuestas se guardaron y tu consejero las revisará.",
+      "body": "Gracias por completar las 5 subpruebas. Tus respuestas se guardaron y tu orientador las revisará.",
       "nextStep": "Siguiente paso",
       "nextStepBody": "Completa la <strong>evaluación 360°</strong>: empieza con tu autoevaluación y luego invita a compañeros, padres y profesores a evaluarte.",
       "start360": "Iniciar autoevaluación 360°"
@@ -3260,10 +3260,10 @@
     }
   },
   "counselorBooking": {
-    "title": "Reservar sesión con consejero",
-    "subtitle": "Sesiones gratuitas con consejeros escolares",
+    "title": "Reservar sesión con orientador",
+    "subtitle": "Sesiones gratuitas con orientadores escolares",
     "free": "GRATIS",
-    "selectCounselor": "Seleccionar un consejero",
+    "selectCounselor": "Seleccionar un orientador",
     "selectDate": "Seleccionar una fecha",
     "availableTimes": "Horarios disponibles",
     "noSlots": "No hay horarios disponibles este día.",
@@ -3271,14 +3271,14 @@
     "sessionDetails": "Detalles de la sesión",
     "fillDetails": "Completa los detalles de tu sesión",
     "topic": "Tema",
-    "notesLabel": "Notas para el consejero (opcional)",
+    "notesLabel": "Notas para el orientador (opcional)",
     "notesPlaceholder": "¿Qué te gustaría discutir?",
     "bookSession": "Reservar sesión",
     "booking": "Reservando...",
     "selectSlotFirst": "Selecciona un horario para reservar",
     "duration": "30 min",
     "booked": "¡Sesión reservada!",
-    "confirmationMessage": "Tu sesión con el consejero ha sido confirmada.",
+    "confirmationMessage": "Tu sesión con el orientador ha sido confirmada.",
     "backToDashboard": "Volver al panel",
     "topics": {
       "academicPlanning": "Planeación académica",
@@ -3293,8 +3293,8 @@
     "bookedToast": "¡Sesión reservada con éxito!",
     "bookFailed": "No se pudo reservar la sesión",
     "noCounselors": {
-      "title": "No hay consejeros disponibles",
-      "description": "En este momento no hay consejeros disponibles en tu colegio. Comunícate con el administrador de tu colegio."
+      "title": "No hay orientadores disponibles",
+      "description": "En este momento no hay orientadores disponibles en tu colegio. Comunícate con el administrador de tu colegio."
     },
     "freeSession": "Sesión GRATIS",
     "viewMySessions": "Ver mis sesiones",
@@ -4024,5 +4024,3084 @@
     "syncMicrosoft": "Sincronizar con Microsoft",
     "connectGoogle": "Conectar Google",
     "connectOutlook": "Conectar Outlook"
+  },
+  "resumeBuilder": {
+    "careerFields": {
+      "business": {
+        "description": "Gestión de proyectos, análisis de negocios, consultoría",
+        "name": "Negocios y administración"
+      },
+      "design": {
+        "description": "Diseño UI/UX, diseño gráfico, dirección creativa",
+        "name": "Diseño y creatividad"
+      },
+      "engineering": {
+        "description": "Ingeniería mecánica, eléctrica y civil",
+        "name": "Ingeniería y áreas técnicas"
+      },
+      "general": {
+        "description": "Otros campos o varias trayectorias profesionales",
+        "name": "General / otro"
+      },
+      "healthcare": {
+        "description": "Profesionales de la salud, administración de servicios de salud",
+        "name": "Salud y medicina"
+      },
+      "legal": {
+        "description": "Abogados, paralegales, asistentes jurídicos",
+        "name": "Derecho y área legal"
+      },
+      "marketing": {
+        "description": "Mercadeo digital, ventas, gestión de marca",
+        "name": "Mercadeo y ventas"
+      },
+      "technology": {
+        "description": "Desarrollo de software, TI, ciberseguridad, ciencia de datos",
+        "name": "Tecnología y software"
+      }
+    },
+    "dynamicSectionForm": {
+      "add": "Agregar",
+      "addNewEntry": "Agregar nueva entrada",
+      "bullets": "Viñetas",
+      "bulletsPlaceholder": "Escribe las viñetas (una por línea)...\n\nEjemplo:\n• Primer punto\n• Segundo punto\n• Tercer punto",
+      "bulletsTip": "Consejo: escribe cada viñeta en una línea nueva. La plantilla les dará formato automáticamente.",
+      "cancel": "Cancelar",
+      "customContentPlaceholder": "Escribe una descripción o viñetas (una por línea)...\n\nEjemplo:\n• Primer logro\n• Segundo logro\n• Tercer logro",
+      "customTip": "Para las viñetas, escribe cada punto en una línea nueva. La plantilla les dará formato automáticamente.",
+      "deleteEntry": "Eliminar entrada",
+      "description": "Descripción",
+      "descriptionPlaceholder": "Escribe una descripción breve o un párrafo...",
+      "editEntry": "Editar entrada",
+      "noConfigurableFields": "Esta sección no tiene campos configurables.",
+      "noPreview": "No hay vista previa disponible para esta entrada.",
+      "save": "Guardar",
+      "selectField": "Selecciona: {{field}}",
+      "tipLabel": "Consejo:"
+    },
+    "fields": {
+      "awards": {
+        "date": {
+          "label": "Fecha de obtención",
+          "placeholder": "p. ej., dic. 2023"
+        },
+        "description": {
+          "label": "Descripción",
+          "placeholder": "Detalles sobre el premio..."
+        },
+        "issuer": {
+          "label": "Otorgado por",
+          "placeholder": "p. ej., nombre de la empresa"
+        },
+        "title": {
+          "label": "Nombre del premio",
+          "placeholder": "p. ej., empleado del año"
+        }
+      },
+      "certificates": {
+        "date": {
+          "label": "Fecha de emisión",
+          "placeholder": "p. ej., ene. 2024"
+        },
+        "description": {
+          "label": "Descripción",
+          "placeholder": "Breve descripción del certificado..."
+        },
+        "issuer": {
+          "label": "Organización emisora",
+          "placeholder": "p. ej., Amazon Web Services"
+        },
+        "name": {
+          "label": "Nombre del certificado",
+          "placeholder": "p. ej., AWS Certified Solutions Architect"
+        }
+      },
+      "courses": {
+        "date": {
+          "label": "Fecha de finalización",
+          "placeholder": "p. ej., mar. 2024"
+        },
+        "description": {
+          "label": "Descripción",
+          "placeholder": "Lo que aprendiste..."
+        },
+        "institution": {
+          "label": "Institución/plataforma",
+          "placeholder": "p. ej., Coursera, Udemy"
+        },
+        "name": {
+          "label": "Nombre del curso",
+          "placeholder": "p. ej., especialización en aprendizaje automático"
+        }
+      },
+      "custom": {
+        "content": {
+          "label": "Contenido",
+          "placeholder": "Escribe el contenido..."
+        },
+        "title": {
+          "label": "Título",
+          "placeholder": "Título de la entrada"
+        }
+      },
+      "declaration": {
+        "date": {
+          "label": "Fecha",
+          "placeholder": "p. ej., 15 de enero de 2024"
+        },
+        "place": {
+          "label": "Lugar",
+          "placeholder": "p. ej., Bogotá"
+        },
+        "text": {
+          "label": "Texto de la declaración",
+          "placeholder": "Declaro que la información suministrada es verdadera y correcta según mi leal saber y entender."
+        }
+      },
+      "interests": {
+        "description": {
+          "label": "Descripción (opcional)",
+          "placeholder": "Breve descripción..."
+        },
+        "interest": {
+          "label": "Interés",
+          "placeholder": "p. ej., fotografía, senderismo, código abierto"
+        }
+      },
+      "languages": {
+        "language": {
+          "label": "Idioma",
+          "placeholder": "p. ej., inglés, español, francés"
+        },
+        "proficiency": {
+          "label": "Nivel de dominio"
+        }
+      },
+      "organisations": {
+        "description": {
+          "label": "Descripción",
+          "placeholder": "Describe tu participación y tus aportes..."
+        },
+        "endDate": {
+          "label": "Fecha de finalización",
+          "placeholder": "p. ej., actualidad"
+        },
+        "name": {
+          "label": "Nombre de la organización",
+          "placeholder": "p. ej., Cruz Roja"
+        },
+        "role": {
+          "label": "Tu rol",
+          "placeholder": "p. ej., coordinador de voluntarios"
+        },
+        "startDate": {
+          "label": "Fecha de inicio",
+          "placeholder": "p. ej., ene. 2022"
+        }
+      },
+      "projects": {
+        "date": {
+          "label": "Fecha",
+          "placeholder": "p. ej., ene. 2024 - mar. 2024"
+        },
+        "description": {
+          "label": "Descripción",
+          "placeholder": "Describe el proyecto, tu rol y tus logros..."
+        },
+        "link": {
+          "label": "Enlace del proyecto (opcional)"
+        },
+        "technologies": {
+          "label": "Tecnologías utilizadas",
+          "placeholder": "p. ej., React, Node.js, MongoDB"
+        },
+        "title": {
+          "label": "Título del proyecto",
+          "placeholder": "p. ej., plataforma de comercio electrónico"
+        }
+      },
+      "publications": {
+        "authors": {
+          "label": "Autores",
+          "placeholder": "p. ej., John Doe, Jane Smith"
+        },
+        "date": {
+          "label": "Fecha de publicación",
+          "placeholder": "p. ej., mar. 2024"
+        },
+        "link": {
+          "label": "Enlace (opcional)"
+        },
+        "publisher": {
+          "label": "Editorial/revista",
+          "placeholder": "p. ej., IEEE, Nature"
+        },
+        "title": {
+          "label": "Título de la publicación",
+          "placeholder": "p. ej., título del artículo de investigación"
+        }
+      },
+      "references": {
+        "company": {
+          "label": "Empresa",
+          "placeholder": "p. ej., Tech Corp"
+        },
+        "email": {
+          "label": "Correo electrónico"
+        },
+        "name": {
+          "label": "Nombre de la referencia",
+          "placeholder": "p. ej., John Doe"
+        },
+        "phone": {
+          "label": "Teléfono"
+        },
+        "position": {
+          "label": "Cargo/título",
+          "placeholder": "p. ej., gerente sénior"
+        }
+      }
+    },
+    "proficiency": {
+      "advanced": "Avanzado",
+      "basic": "Básico",
+      "fluent": "Fluido",
+      "intermediate": "Intermedio",
+      "native": "Nativo"
+    },
+    "resumeActions": {
+      "fallbackCompany": "Empresa",
+      "fallbackDegree": "Título",
+      "fallbackName": "Nombre",
+      "fallbackPosition": "Cargo",
+      "fallbackSchool": "Institución",
+      "fallbackSkill": "Habilidad",
+      "tailoredName": "Adaptado"
+    },
+    "sectionCard": {
+      "addAnotherExperience": "+ Agregar otra experiencia",
+      "addExperience": "+ Agregar experiencia",
+      "degreeFromInstitution": "{{degree}} de {{institution}}",
+      "edit": "Editar",
+      "email": "Correo electrónico",
+      "fullEditor": "Editor completo",
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "Juan Pérez",
+      "inlineEditorFor": "Editor en línea de {{section}}",
+      "jobAtCompany": "{{jobTitle}} en {{company}}",
+      "moreCount_one": "+{{count}} más",
+      "moreCount_other": "+{{count}} más",
+      "noEducation": "No has agregado educación",
+      "noEmail": "No has agregado un correo electrónico",
+      "noExperience": "No has agregado experiencia laboral",
+      "noExperienceYet": "Aún no has agregado experiencia laboral",
+      "noName": "No has agregado un nombre",
+      "noSkills": "No has agregado habilidades",
+      "openFullEditor": "Abrir editor completo",
+      "remove": "Quitar",
+      "required": "obligatorio",
+      "requiredField": "Campo obligatorio",
+      "requiredIncomplete": "Campo obligatorio incompleto",
+      "saveChanges": "Guardar cambios",
+      "sectionComplete": "Sección completa"
+    },
+    "sectionEditor": {
+      "addExperience": "+ Agregar experiencia",
+      "backToDashboard": "Volver al panel",
+      "cancel": "Cancelar",
+      "closeEditor": "Cerrar editor (Esc)",
+      "companyPlaceholder": "Nombre de la empresa *",
+      "companyRequired": "La empresa es obligatoria",
+      "currentlyWorking": "Trabajo aquí actualmente",
+      "descriptionPlaceholder": "Descripción del cargo y logros",
+      "email": "Correo electrónico",
+      "emailInvalid": "El formato del correo electrónico no es válido",
+      "emailRequired": "El correo electrónico es obligatorio",
+      "endDatePlaceholder": "Fecha de finalización (MM/AAAA)",
+      "entryNumber": "Entrada {{number}}",
+      "firstName": "Nombre",
+      "firstNamePlaceholder": "Juan",
+      "firstNameRequired": "El nombre es obligatorio",
+      "jobTitlePlaceholder": "Cargo *",
+      "jobTitleRequired": "El cargo es obligatorio",
+      "lastName": "Apellido",
+      "lastNamePlaceholder": "Pérez",
+      "lastNameRequired": "El apellido es obligatorio",
+      "location": "Ubicación",
+      "locationPlaceholder": "Bogotá, Colombia",
+      "phone": "Teléfono",
+      "portfolio": "Portafolio",
+      "professionalSummary": "Resumen profesional",
+      "removeEntry": "Quitar entrada",
+      "saveChanges": "Guardar cambios",
+      "saveFailed": "No se pudieron guardar los cambios. Inténtalo de nuevo.",
+      "savedSuccessfully": "Cambios guardados correctamente",
+      "saving": "Guardando...",
+      "socialLinks": "Redes sociales",
+      "socialUrlPlaceholder": "URL de {{platform}}",
+      "startDatePlaceholder": "Fecha de inicio (MM/AAAA)",
+      "subtitleEducation": "Gestiona tu educación",
+      "subtitleExperience": "Gestiona tu experiencia laboral",
+      "subtitlePersonalInfo": "Edita tu información personal",
+      "subtitleSkills": "Actualiza tus habilidades",
+      "summaryPlaceholder": "Breve descripción de tu trayectoria profesional..."
+    },
+    "sections": {
+      "awards": {
+        "description": "Aquí van premios como los de competencias estudiantiles o reconocimientos del sector.",
+        "title": "Premios"
+      },
+      "certificates": {
+        "description": "Aquí van tus licencias de conducción y los certificados propios de tu sector.",
+        "title": "Certificados"
+      },
+      "courses": {
+        "description": "¿Completaste cursos en línea (MOOC) o un curso nocturno? Muéstralos en esta sección.",
+        "title": "Cursos"
+      },
+      "custom": {
+        "description": "¿No encontraste lo que buscabas? ¿O quieres combinar dos secciones para ahorrar espacio?",
+        "title": "Personalizada"
+      },
+      "declaration": {
+        "description": "¿Necesitas una declaración firmada?",
+        "title": "Declaración"
+      },
+      "education": {
+        "description": "Muestra tu educación básica, tus títulos universitarios y tus semestres de intercambio.",
+        "title": "Educación"
+      },
+      "experience": {
+        "description": "Un espacio para destacar tu experiencia profesional, incluidas las prácticas.",
+        "title": "Experiencia profesional"
+      },
+      "interests": {
+        "description": "¿Tienes intereses que se relacionen con tu aspiración profesional?",
+        "title": "Intereses"
+      },
+      "languages": {
+        "description": "¿Hablas más de un idioma? Asegúrate de incluirlos aquí.",
+        "title": "Idiomas"
+      },
+      "organisations": {
+        "description": "Si haces voluntariado o participas en una buena causa, ¿por qué no mencionarlo?",
+        "title": "Organizaciones"
+      },
+      "projects": {
+        "description": "¿Trabajaste en un proyecto especialmente desafiante? Menciónalo aquí.",
+        "title": "Proyectos"
+      },
+      "publications": {
+        "description": "Las publicaciones académicas o los libros publicados tienen su propio espacio aquí.",
+        "title": "Publicaciones"
+      },
+      "references": {
+        "description": "Si tienes antiguos colegas o jefes que den fe de tu trabajo, inclúyelos.",
+        "title": "Referencias"
+      },
+      "skills": {
+        "description": "Enumera en esta sección tus habilidades técnicas, de gestión o blandas.",
+        "title": "Habilidades"
+      }
+    },
+    "settingsSidebar": {
+      "applySettings": "Aplicar configuración",
+      "close": "Cerrar",
+      "closeSettings": "Cerrar configuración",
+      "copyAsText": "Copiar como texto",
+      "downloadDocx": "Descargar como DOCX",
+      "downloadPdf": "Descargar como PDF",
+      "dragToReorder": "Arrastra para reordenar",
+      "export": "Exportar",
+      "fieldGroups": {
+        "education": "Campos de educación",
+        "experience": "Campos de experiencia"
+      },
+      "fieldNames": {
+        "company": "Empresa",
+        "dates": "Fechas",
+        "degree": "Título",
+        "description": "Descripción",
+        "gpa": "Promedio",
+        "graduationDate": "Fecha de grado",
+        "institution": "Institución",
+        "location": "Ubicación",
+        "title": "Cargo"
+      },
+      "fieldVisibility": "Visibilidad de campos",
+      "hideSection": "Ocultar sección",
+      "hideSectionNamed": "Ocultar {{section}}",
+      "sectionNames": {
+        "certifications": "Certificaciones",
+        "education": "Educación",
+        "experience": "Experiencia laboral",
+        "personalInfo": "Información personal",
+        "projects": "Proyectos",
+        "skills": "Habilidades"
+      },
+      "sections": "Secciones",
+      "settings": "Configuración",
+      "showSection": "Mostrar sección",
+      "showSectionNamed": "Mostrar {{section}}"
+    },
+    "sortableSection": {
+      "cancel": "Cancelar",
+      "dragToReorder": "Arrastra para reordenar",
+      "editSectionTitle": "Editar título de la sección",
+      "saveTitle": "Guardar título"
+    },
+    "steps": {
+      "careerField": {
+        "description": "Selecciona tu campo profesional para recibir plantillas y contenido personalizados",
+        "title": "Campo profesional"
+      },
+      "chooseTemplate": {
+        "description": "Selecciona una plantilla profesional que se ajuste a tu estilo",
+        "title": "Elegir plantilla"
+      },
+      "education": {
+        "description": "Agrega tu formación académica",
+        "title": "Educación"
+      },
+      "personalInfo": {
+        "description": "Agrega tus datos de contacto y tu resumen profesional",
+        "title": "Información personal"
+      },
+      "skills": {
+        "description": "Destaca tus habilidades técnicas y blandas",
+        "title": "Habilidades"
+      },
+      "summary": {
+        "description": "Revisa tu currículum terminado",
+        "title": "Resumen"
+      },
+      "workExperience": {
+        "description": "Agrega tu experiencia profesional y tus logros (opcional si aún no tienes experiencia laboral)",
+        "title": "Experiencia laboral"
+      }
+    },
+    "templateInfo": {
+      "classic": {
+        "description": "Formato tradicional preferido por reclutadores y sectores conservadores",
+        "name": "Clásica tradicional",
+        "shortDescription": "Diseño de currículum tradicional con un estilo atemporal",
+        "shortName": "Clásica"
+      },
+      "creative": {
+        "description": "Destácate con un diseño único y creativo, ideal para cargos de diseño",
+        "name": "Creativa audaz"
+      },
+      "executive": {
+        "description": "Diseño sofisticado para cargos directivos y ejecutivos",
+        "name": "Ejecutiva élite"
+      },
+      "minimal": {
+        "description": "Diseño simple y limpio que se centra en el contenido para una lectura óptima",
+        "name": "Minimalista"
+      },
+      "modern": {
+        "description": "Diseño limpio y profesional con tipografía moderna y colores sutiles",
+        "name": "Profesional moderna"
+      },
+      "tech": {
+        "description": "Diseño moderno optimizado para cargos técnicos, con énfasis en las habilidades",
+        "name": "Enfoque tecnológico"
+      }
+    },
+    "validation": {
+      "atLeastOneEducation": "al menos una entrada de educación",
+      "careerField": "campo profesional",
+      "educationDegree": "título de la educación {{number}}",
+      "educationGraduationDate": "fecha de grado de la educación {{number}}",
+      "educationInstitution": "institución de la educación {{number}}",
+      "experienceCompany": "empresa de la experiencia {{number}}",
+      "experienceDescription": "descripción de la experiencia {{number}}",
+      "experienceJobTitle": "cargo de la experiencia {{number}}",
+      "experienceStartDate": "fecha de inicio de la experiencia {{number}}",
+      "minSkills_one": "al menos {{count}} habilidad",
+      "minSkills_other": "al menos {{count}} habilidades",
+      "personalFields": {
+        "email": "correo electrónico",
+        "fullName": "nombre completo",
+        "phone": "teléfono"
+      },
+      "templateSelection": "selección de plantilla",
+      "validEmail": "correo electrónico válido"
+    },
+    "doc": {
+      "careerObjective": "Objetivo profesional",
+      "summary": "Resumen",
+      "professionalSummary": "Resumen profesional",
+      "executiveSummary": "Resumen ejecutivo",
+      "education": "Educación",
+      "experience": "Experiencia",
+      "relevantExperience": "Experiencia relevante",
+      "professionalExperience": "Experiencia profesional",
+      "skills": "Habilidades",
+      "technicalSkills": "Habilidades técnicas",
+      "technical": "Técnicas",
+      "languages": "Idiomas",
+      "contact": "Contacto",
+      "personalInfo": "Información personal",
+      "additionalInfo": "Información adicional",
+      "additionalInformation": "Información adicional",
+      "coreCompetencies": "Competencias clave",
+      "certifications": "Certificaciones",
+      "keyAchievements": "Logros clave",
+      "codeSample": "Muestra de código",
+      "present": "Actualidad",
+      "gpa": "Promedio: {{value}}",
+      "overallGpa": "Promedio general: {{value}}",
+      "nationality": "Nacionalidad: {{value}}",
+      "dob": "Fecha de nac.: {{value}}",
+      "technologies": "Tecnologías: {{value}}",
+      "link": "Enlace: {{value}}",
+      "issuedBy": "Emitido por: {{value}}",
+      "authors": "Autores: {{value}}",
+      "publisher": "Editorial: {{value}}",
+      "proficiency": "Nivel: {{value}}",
+      "email": "Correo: {{value}}",
+      "phone": "Teléfono: {{value}}",
+      "place": "Lugar: {{value}}",
+      "date": "Fecha: {{value}}",
+      "skillCategory": {
+        "technical": "Técnicas",
+        "soft": "Blandas",
+        "language": "Idiomas"
+      }
+    },
+    "livePreview": {
+      "errorTitle": "Error en la vista previa del PDF",
+      "errorBody": "Hubo un problema al generar la vista previa del PDF. Tus datos están a salvo.",
+      "tryAgain": "Intentar de nuevo",
+      "loadFailed": "No se pudieron cargar los componentes del PDF. Inténtalo de nuevo.",
+      "yourName": "Tu nombre",
+      "loading": "Cargando vista previa...",
+      "updating": "Actualizando vista previa..."
+    },
+    "livePreviewPDF": {
+      "templateLoadFailed": "No se pudo cargar la plantilla. Inténtalo de nuevo.",
+      "title": "Vista previa en vivo",
+      "updating": "Actualizando...",
+      "srUpdating": "La vista previa se está actualizando",
+      "srUpdated": "Vista previa actualizada",
+      "template": "Plantilla: {{name}}",
+      "loading": "Cargando vista previa del PDF...",
+      "errorTitle": "Error en la vista previa",
+      "retry": "Reintentar",
+      "empty": "La vista previa del PDF aparecerá aquí"
+    },
+    "templatePDFPreview": {
+      "unavailable": "Vista previa del PDF no disponible"
+    },
+    "templatePreviewCard": {
+      "initializing": "Iniciando...",
+      "unavailable": "Vista previa no disponible"
+    },
+    "templatePreviewStep": {
+      "title": "Resumen del currículum",
+      "subtitle": "Revisa tu currículum completo. Todas las secciones están diligenciadas y tu currículum está listo.",
+      "completion": "Avance del currículum",
+      "percentComplete": "{{percent}} % completado",
+      "sectionsCompleted": "{{completed}} de {{total}} secciones completadas",
+      "sectionDetails": "Detalle de las secciones",
+      "careerField": "Campo profesional",
+      "unknownField": "Campo desconocido",
+      "noCareerField": "No has seleccionado un campo profesional",
+      "personalInfo": "Información personal",
+      "noName": "No has ingresado un nombre",
+      "workExperience": "Experiencia laboral",
+      "positionsAdded_one": "{{count}} cargo agregado",
+      "positionsAdded_other": "{{count}} cargos agregados",
+      "education": "Educación",
+      "educationAdded_one": "{{count}} entrada de educación agregada",
+      "educationAdded_other": "{{count}} entradas de educación agregadas",
+      "skills": "Habilidades",
+      "skillsAdded_one": "{{count}} habilidad agregada",
+      "skillsAdded_other": "{{count}} habilidades agregadas",
+      "completeTitle": "¡Resumen del currículum completo!",
+      "completeBody": "Tu currículum está completo en un {{percent}} % y listo para usar. Puedes volver a editar cualquier sección si lo necesitas."
+    },
+    "templateSelectionStep": {
+      "title": "Elige tu plantilla",
+      "subtitle": "Selecciona una plantilla profesional que represente mejor tu estilo y tu campo profesional.",
+      "filtered": "Filtramos las plantillas que funcionan bien para el campo profesional que seleccionaste."
+    },
+    "smartTemplateSelector": {
+      "empty": "No hay plantillas disponibles",
+      "templatesFor": "Plantillas para {{field}}",
+      "showing_one": "Mostrando {{count}} plantilla optimizada para tu campo profesional",
+      "showing_other": "Mostrando {{count}} plantillas optimizadas para tu campo profesional",
+      "previous": "Plantilla anterior",
+      "next": "Plantilla siguiente",
+      "currentlySelected": "Seleccionada actualmente",
+      "selected": "Seleccionada",
+      "select": "Seleccionar",
+      "category": "Categoría:",
+      "categories": {
+        "professional": "Profesional",
+        "traditional": "Tradicional",
+        "creative": "Creativa",
+        "minimal": "Minimalista",
+        "executive": "Ejecutiva",
+        "technical": "Técnica"
+      },
+      "viewTemplate": "Ver la plantilla {{name}}",
+      "counter": "Plantilla {{current}} de {{total}}"
+    },
+    "resumeModals": {
+      "editPersonalInfo": "Editar información personal",
+      "fullNameRequired": "Nombre completo *",
+      "professionalTitle": "Título profesional",
+      "email": "Correo electrónico",
+      "phone": "Teléfono",
+      "location": "Ubicación",
+      "linkedinUrl": "URL de LinkedIn",
+      "website": "Sitio web/portafolio",
+      "professionalSummary": "Resumen profesional",
+      "summaryHint": "2 o 3 oraciones que destaquen tu experiencia y conocimientos",
+      "saveChanges": "Guardar cambios",
+      "manageSkills": "Gestionar habilidades",
+      "addNewSkill": "Agregar nueva habilidad",
+      "pressEnterHint": "Presiona Enter o haz clic en + para agregar",
+      "noSkills": "Aún no has agregado habilidades. Agrega tu primera habilidad arriba.",
+      "done": "Listo",
+      "addContent": "Agregar contenido",
+      "allSectionsAdded": "Ya agregaste a tu currículum todas las secciones disponibles.",
+      "nameCustomSection": "Ponle nombre a tu sección personalizada",
+      "createSection": "Crear sección",
+      "manageFields": "Gestionar campos de información personal",
+      "basicInfo": "Información básica",
+      "fullName": "Nombre completo",
+      "requiredAlwaysVisible": "Campo obligatorio: siempre visible",
+      "required": "Obligatorio",
+      "contactInfo": "Información de contacto",
+      "socialLinks": "Redes sociales",
+      "github": "GitHub",
+      "twitter": "Twitter",
+      "personalDetails": "Datos personales",
+      "dateOfBirth": "Fecha de nacimiento",
+      "nationality": "Nacionalidad",
+      "languages": "Idiomas",
+      "maritalStatus": "Estado civil",
+      "driversLicense": "Licencia de conducción",
+      "militaryService": "Servicio militar",
+      "visaStatus": "Estado de la visa",
+      "preferredPronouns": "Pronombres preferidos",
+      "careerObjective": "Objetivo profesional",
+      "customFields": "Campos personalizados",
+      "customFieldsHint": "Agrega campos personalizados a tu sección de información personal.",
+      "fieldName": "Nombre del campo",
+      "fieldType": "Tipo de campo",
+      "addCustomField": "Agregar campo personalizado",
+      "visible": "Visible",
+      "hidden": "Oculto",
+      "fullNamePlaceholder": "Juan Pérez",
+      "titlePlaceholder": "Ingeniero de software sénior",
+      "locationPlaceholder": "Bogotá, Colombia",
+      "summaryPlaceholder": "Un breve resumen de tu trayectoria profesional y tus principales logros...",
+      "skillPlaceholder": "p. ej., JavaScript, gestión de proyectos, etc.",
+      "sectionTitlePlaceholder": "p. ej., pasatiempos, voluntariado, información adicional",
+      "fieldNamePlaceholder": "p. ej., portafolio",
+      "currentSkills": "Habilidades actuales ({{count}})",
+      "sectionTitle": "Título de la sección",
+      "sectionTitleHint": "Dale a tu sección personalizada un nombre descriptivo que aparecerá en tu currículum.",
+      "manageFieldsHint": "Elige qué campos aparecen en tu sección de información personal. Solo los campos activados se mostrarán en el formulario.",
+      "textInput": "Campo de texto",
+      "textArea": "Área de texto"
+    },
+    "resumeDashboard": {
+      "personalInfo": "Información personal",
+      "personalInfoDesc": "Tus datos de contacto y tu resumen profesional",
+      "workExperience": "Experiencia laboral",
+      "positions_one": "{{count}} cargo",
+      "positions_other": "{{count}} cargos",
+      "education": "Educación",
+      "degrees_one": "{{count}} título",
+      "degrees_other": "{{count}} títulos",
+      "skills": "Habilidades",
+      "skillCount_one": "{{count}} habilidad",
+      "skillCount_other": "{{count}} habilidades",
+      "title": "Constructor de currículum",
+      "percentComplete": "{{percent}} % completado",
+      "togglePreview": "Mostrar u ocultar la vista previa en vivo",
+      "hidePreview": "Ocultar vista previa",
+      "showPreview": "Mostrar vista previa",
+      "previewOn": "Vista previa activada",
+      "customizeSections": "Personalizar secciones",
+      "openSettings": "Abrir configuración",
+      "customize": "Personalizar",
+      "downloadAsPdf": "Descargar currículum en PDF",
+      "downloadResume": "Descargar currículum",
+      "addOptional": "Agregar secciones opcionales",
+      "optional": {
+        "projects": "Proyectos",
+        "certifications": "Certificaciones",
+        "volunteer": "Voluntariado",
+        "publications": "Publicaciones",
+        "languages": "Idiomas"
+      },
+      "ariaLabel": "Panel del constructor de currículum"
+    },
+    "originalPdfEditor": {
+      "editingHint": "Estás editando el documento que subiste: tus datos de contacto y de experiencia se mantienen sincronizados con el panel de la derecha.",
+      "preparing": "Preparando…",
+      "downloadWithEdits": "Descargar (con cambios)",
+      "generateFailed": "No se pudo generar el PDF. Inténtalo de nuevo.",
+      "loading": "Cargando tu documento para editarlo…",
+      "loadFailed": "No se pudo cargar tu documento para editarlo."
+    },
+    "resumeTabSwitcher": {
+      "aiEditor": "Editor con IA",
+      "style": "Estilo"
+    },
+    "editorPage": {
+      "downloadFailed": "No se pudo descargar el PDF. Inténtalo de nuevo.",
+      "template": "Plantilla"
+    },
+    "newResumePage": {
+      "tailorFailed": "No se pudo adaptar el currículum. Inténtalo de nuevo.",
+      "createFailed": "No se pudo crear el currículum",
+      "title": "Constructor de currículum con IA",
+      "subtitle": "Pega una oferta laboral para generar un currículum adaptado",
+      "creating": "Creando tu currículum..."
+    },
+    "newDraftPage": {
+      "collegeApplication": "Solicitud universitaria",
+      "generalResume": "Currículum general",
+      "tailorFailed": "No se pudo adaptar el currículum",
+      "untitled": "Sin título",
+      "validationErrors": "Errores de validación: {{errors}}",
+      "somethingWrong": "Algo salió mal",
+      "tryAgain": "Intentar de nuevo",
+      "title": "Adaptación del currículum con IA",
+      "subtitle": "Revisa las sugerencias de la IA a continuación y elige qué incluir"
+    },
+    "resumesPage": {
+      "loadFailedDetail": "No se pudieron cargar los currículums. Inténtalo de nuevo más tarde.",
+      "parseFailed": "No se pudo procesar el currículum. Inténtalo de nuevo.",
+      "uploadFailed": "No se pudo subir el currículum",
+      "newResume": "Nuevo currículum",
+      "yourName": "Tu nombre",
+      "confirmDelete": "¿Seguro que quieres eliminar este currículum?",
+      "deleteFailed": "No se pudo eliminar el currículum. Inténtalo de nuevo.",
+      "copyName": "{{name}} (copia)",
+      "duplicateFailed": "No se pudo duplicar el currículum. Inténtalo de nuevo.",
+      "documents": "Documentos",
+      "fromScratch": "Desde cero",
+      "fromScratchDesc": "Crea tu currículum base",
+      "uploadPdf": "Subir currículum (PDF)",
+      "uploadPdfDesc": "Importa un currículum existente",
+      "aiTailor": "Adaptar con IA a un cargo",
+      "aiTailorDesc": "Optimízalo para una oferta laboral",
+      "loadFailed": "No se pudieron cargar los currículums",
+      "empty": "Aún no tienes currículums",
+      "emptyHint": "Sube tu currículum actual para empezar y luego usa la IA para adaptarlo a ofertas laborales específicas",
+      "createFromScratch": "Crear desde cero",
+      "parsing": "Procesando tu currículum...",
+      "parsingHint": "Extrayendo la información de tu PDF. Esto puede tardar un momento."
+    },
+    "resumeCard": {
+      "summary": "Resumen",
+      "experience": "Experiencia",
+      "skills": "Habilidades",
+      "editResume": "Editar currículum",
+      "original": "Original",
+      "updated": "Actualizado el {{date}}",
+      "editResumeTitle": "Editar currículum",
+      "moreOptions": "Más opciones",
+      "duplicate": "Duplicar"
+    },
+    "stepProgressBar": {
+      "difference": "Mira la diferencia",
+      "align": "Alinea tu currículum",
+      "review": "Revisa tu nuevo currículum"
+    },
+    "navigationButtons": {
+      "missingInfo": "Información faltante:",
+      "continueLater": "Puedes continuar y volver más tarde para completarlo.",
+      "stepOf": "Paso {{current}} de {{total}}",
+      "complete": "Finalizar"
+    },
+    "purposeSelector": {
+      "title": "¿Para qué estás creando tu currículum?",
+      "subtitle": "Elige el propósito de tu currículum para que podamos adaptar la experiencia",
+      "options": {
+        "job_application": {
+          "title": "Postulación a un empleo",
+          "description": "Adapta tu currículum a una oferta laboral específica"
+        },
+        "college_application": {
+          "title": "Solicitud de admisión universitaria",
+          "description": "Crea un currículum para admisiones universitarias"
+        },
+        "general": {
+          "title": "Uso general",
+          "description": "Crea un currículum versátil para cualquier oportunidad"
+        }
+      }
+    },
+    "careerFieldStep": {
+      "title": "Elige tu campo profesional",
+      "subtitle": "Selecciona tu campo profesional para obtener plantillas de currículum personalizadas y sugerencias de contenido adaptadas a tu sector.",
+      "help": "¿No ves tu campo? Elige \"{{general}}\" para obtener plantillas versátiles que funcionan en todos los sectores."
+    },
+    "stepIndicator": {
+      "missing": "Información faltante: {{fields}}"
+    },
+    "experienceStep": {
+      "tips": {
+        "internships": "<0>Pasantías</0>: experiencia laboral remunerada o no remunerada",
+        "partTime": "<0>Trabajos de medio tiempo</0>: comercio, servicio de alimentos, tutorías, etc.",
+        "freelance": "<0>Trabajo independiente</0>: cualquier trabajo por proyectos",
+        "volunteer": "<0>Voluntariado</0>: servicio comunitario o trabajo en ONG",
+        "personalProjects": "<0>Proyectos personales</0>: sitios web, aplicaciones u otras creaciones",
+        "leadership": "<0>Roles de liderazgo</0>: presidente de un club, capitán de un equipo, etc."
+      },
+      "title": "Experiencia laboral",
+      "subtitle": "Agrega tu experiencia profesional, empezando por tu cargo más reciente.",
+      "fresherTitle": "¿Apenas empiezas tu vida laboral? ¡No hay problema!",
+      "fresherIntro": "La experiencia laboral es opcional. En su lugar, puedes incluir cualquiera de estas:",
+      "fresherFocus": "¡Enfócate en habilidades transferibles y logros!",
+      "hideTips": "Entendido, ocultar",
+      "present": "Actualidad",
+      "remove": "Eliminar",
+      "editExperience": "Editar experiencia",
+      "addNewExperience": "Agregar nueva experiencia",
+      "position": "Cargo/rol *",
+      "positionPlaceholder": "p. ej., practicante de software, asesor de ventas, coordinador de voluntarios",
+      "organization": "Organización *",
+      "organizationPlaceholder": "p. ej., Tech Corp, ONG local, cliente independiente",
+      "location": "Ubicación",
+      "locationPlaceholder": "Bogotá, Colombia",
+      "startDate": "Fecha de inicio",
+      "currentPosition": "Cargo actual",
+      "currentlyWorkHere": "Trabajo aquí actualmente",
+      "endDate": "Fecha de finalización",
+      "descriptionLabel": "Descripción del cargo y logros",
+      "descriptionPlaceholder": "• Describe tus responsabilidades y logros...",
+      "removeBullet": "Eliminar viñeta",
+      "addAchievement": "+ Agregar logro",
+      "updateExperience": "Actualizar experiencia",
+      "addExperience": "Agregar experiencia",
+      "addWorkExperience": "+ Agregar experiencia laboral"
+    },
+    "experienceEditor": {
+      "jobTitle": "Cargo *",
+      "jobTitlePlaceholder": "Ingeniero de software",
+      "company": "Empresa *",
+      "companyPlaceholder": "Nombre de la empresa",
+      "locationPlaceholder": "Ciudad, departamento",
+      "startDatePlaceholder": "ene. 2023",
+      "description": "Descripción",
+      "descriptionPlaceholder": "• Logro o responsabilidad\n• Otro logro\n• Un punto más",
+      "sectionTitle": "Experiencia profesional",
+      "entries_one": "{{count}} entrada",
+      "entries_other": "{{count}} entradas"
+    },
+    "educationStep": {
+      "title": "Educación",
+      "subtitle": "Agrega tu formación académica, empezando por tu título más alto.",
+      "gpaValue": "Promedio: {{gpa}}",
+      "editEducation": "Editar educación",
+      "addNewEducation": "Agregar nueva educación",
+      "degree": "Título *",
+      "degreePlaceholder": "Ingeniería de Sistemas",
+      "institution": "Institución *",
+      "institutionPlaceholder": "Universidad Nacional de Colombia",
+      "locationPlaceholder": "Bogotá, Colombia",
+      "graduationDate": "Fecha de graduación",
+      "gpaOptional": "Promedio (opcional)",
+      "updateEducation": "Actualizar educación",
+      "addEducation": "Agregar educación",
+      "addEducationPlus": "+ Agregar educación"
+    },
+    "educationEditor": {
+      "degreePlaceholder": "Pregrado en Ciencias",
+      "institutionPlaceholder": "Nombre de la universidad",
+      "graduationPlaceholder": "may. 2024",
+      "gpa": "Promedio"
+    },
+    "skillsStep": {
+      "categories": {
+        "technical": "Habilidades técnicas",
+        "soft": "Habilidades blandas",
+        "language": "Idiomas"
+      },
+      "levels": {
+        "beginner": "Principiante",
+        "intermediate": "Intermedio",
+        "advanced": "Avanzado",
+        "expert": "Experto"
+      },
+      "title": "Habilidades",
+      "subtitle": "Agrega tus habilidades técnicas, habilidades blandas e idiomas. Incluye detalles concretos y describe con honestidad tu nivel en cada una.",
+      "removeSkill": "Eliminar {{name}}",
+      "addNewSkill": "Agregar nueva habilidad",
+      "skillName": "Nombre de la habilidad *",
+      "skillNamePlaceholder": "JavaScript, liderazgo, inglés...",
+      "skillLevel": "Nivel de la habilidad",
+      "addSkill": "Agregar habilidad",
+      "addSkillPlus": "+ Agregar habilidad"
+    },
+    "skillsEditor": {
+      "placeholder": "Escribe una habilidad y presiona Enter",
+      "hint": "Agrega las habilidades una por una. Haz clic en la X de cualquier habilidad para eliminarla."
+    },
+    "personalInfoStep": {
+      "title": "Información personal",
+      "subtitle": "Empieza con tu información de contacto básica y un resumen profesional.",
+      "fillSample": "Llenar con datos de ejemplo",
+      "fullName": "Nombre completo *",
+      "email": "Correo electrónico *",
+      "phone": "Número de teléfono",
+      "linkedin": "Perfil de LinkedIn",
+      "website": "Sitio web/portafolio",
+      "summary": "Resumen profesional (opcional)",
+      "summaryPlaceholder": "Un resumen breve de 2 o 3 frases que destaque tus habilidades clave, tu formación y tus metas profesionales. Si tienes poca experiencia laboral, menciona tu título, tus habilidades relevantes y el tipo de cargo que buscas...",
+      "tip": "<0>Consejo:</0> escribe de forma concisa y destaca tus habilidades más relevantes.",
+      "freshers": "<0>¿Aún no tienes experiencia laboral?</0> Enfócate en tu formación, tus habilidades, tus proyectos y tus aspiraciones profesionales en lugar de la experiencia laboral."
+    },
+    "personalInfoEditor": {
+      "labels": {
+        "fullName": "Nombre completo *",
+        "professionalTitle": "Título profesional",
+        "email": "Correo electrónico",
+        "phone": "Teléfono",
+        "location": "Ubicación",
+        "linkedin": "URL de LinkedIn",
+        "website": "Sitio web/portafolio",
+        "github": "GitHub",
+        "twitter": "Twitter",
+        "dateOfBirth": "Fecha de nacimiento",
+        "nationality": "Nacionalidad",
+        "languages": "Idiomas",
+        "maritalStatus": "Estado civil",
+        "driversLicense": "Licencia de conducción",
+        "militaryService": "Servicio militar",
+        "visaStatus": "Estado de la visa",
+        "preferredPronouns": "Pronombres preferidos",
+        "summary": "Resumen profesional",
+        "careerObjective": "Objetivo profesional"
+      },
+      "placeholders": {
+        "professionalTitle": "Ingeniero de software",
+        "location": "Bogotá, Colombia",
+        "dateOfBirth": "1 de enero de 1990",
+        "nationality": "Colombiana",
+        "languages": "Español, inglés",
+        "maritalStatus": "Soltero/a, casado/a, etc.",
+        "driversLicense": "Categoría A2, B1, C1, etc.",
+        "militaryService": "Fuerza, rango, años",
+        "visaStatus": "Permiso de trabajo, H1B, etc.",
+        "preferredPronouns": "él, ella, elle",
+        "summary": "Resumen profesional breve...",
+        "careerObjective": "Tu objetivo profesional..."
+      },
+      "manageFields": "Administrar campos",
+      "enterField": "Ingresa {{field}}..."
+    },
+    "reviewStep": {
+      "great": "Excelente",
+      "needsWork": "Necesita mejoras",
+      "yourName": "Tu nombre",
+      "contactPlaceholder": "correo@ejemplo.com | (000) 000-0000 | Ciudad, departamento",
+      "educationCarried": "La sección de educación se conservará de tu currículum actual.",
+      "scoreImprovement": "Mejora del puntaje",
+      "scoreJumped": "Tu puntaje subió de <0>{{from}}</0> a <1>{{to}}</1>",
+      "pointsDelta_one": "+{{count}} punto",
+      "pointsDelta_other": "+{{count}} puntos",
+      "aiSuggestions": "Sugerencias de IA",
+      "suggestions": {
+        "actionVerbs": "Usa verbos de acción más contundentes en la experiencia",
+        "shortenSummary": "Acorta mi resumen para que sea más conciso",
+        "removeUnrelated": "Elimina las habilidades no relacionadas con este empleo"
+      }
+    },
+    "aiChat": {
+      "suggestions": {
+        "impactfulSummary": "Haz que mi resumen tenga más impacto",
+        "measurableMetrics": "Agrega métricas medibles a mis viñetas",
+        "tightenGrammar": "Hazlo más conciso y corrige la gramática",
+        "tailorSoftware": "Adáptalo a un cargo de ingeniería de software",
+        "actionVerbs": "Usa verbos de acción más contundentes",
+        "shortenSummary": "Acorta mi resumen",
+        "moreMetrics": "Agrega más métricas a las viñetas"
+      },
+      "updated": "Listo: tu currículum se actualizó.",
+      "couldNotApply": "No pude aplicar ese cambio. Intenta decirlo de otra forma.",
+      "editFailed": "Algo salió mal al aplicar ese cambio. Inténtalo de nuevo.",
+      "greeting": "Dime cómo mejorar tu currículum y lo editaré en tiempo real.",
+      "editing": "Editando tu currículum…",
+      "inputPlaceholder": "Dime cómo ajustar tu currículum...",
+      "send": "Enviar"
+    },
+    "scoreGauge": {
+      "good": "Bueno",
+      "fair": "Regular",
+      "poor": "Bajo"
+    },
+    "resumePreviewPanel": {
+      "resume": "Currículum",
+      "sampleData": "Datos de ejemplo"
+    },
+    "jobContextCard": {
+      "tailoredFor": "Adaptado para",
+      "jobAtCompany": "{{jobTitle}} en {{company}}",
+      "moreSkills": "+{{count}} más"
+    },
+    "atsCheck": {
+      "title": "Optimización para ATS",
+      "intro": "Pega la descripción de un cargo para comparar sus palabras clave con tu currículum. Obtendrás un puntaje sencillo de coincidencia de palabras clave que te ayudará a optimizarlo para los sistemas ATS.",
+      "placeholder": "Pega aquí la descripción del cargo...",
+      "analyze": "Analizar",
+      "tip": "Consejo: incluye las responsabilidades y habilidades para obtener un mejor análisis.",
+      "score": "Puntaje ATS",
+      "matched": "Coincidencias: {{matched}}/{{total}}",
+      "matchedKeywords": "Palabras clave encontradas",
+      "missingKeywords": "Palabras clave faltantes"
+    },
+    "previewToggle": {
+      "original": "Original (PDF subido)",
+      "edited": "Vista previa (en vivo, editable con IA)",
+      "iframeTitle": "Documento original del currículum",
+      "loadError": "No se pudo cargar el documento original.",
+      "viewEdited": "Ver versión editada",
+      "loading": "Cargando original…"
+    },
+    "jobPostingInput": {
+      "analyzeFailed": "No se pudo analizar la oferta laboral",
+      "title": "Pega la oferta laboral",
+      "subtitle": "Extraeremos los requisitos clave para adaptar tu currículum",
+      "placeholder": "Pega aquí la descripción del cargo...",
+      "analyzing": "Analizando...",
+      "analyze": "Analizar",
+      "requiredSkills": "Habilidades requeridas",
+      "keyQualifications": "Requisitos clave",
+      "looksGood": "Se ve bien: continuar"
+    },
+    "comparisonTable": {
+      "jobTitle": "Cargo",
+      "notSpecified": "No especificado",
+      "experienceLevel": "Nivel de experiencia",
+      "yearsPlus_one": "{{count}}+ año",
+      "yearsPlus_other": "{{count}}+ años",
+      "keywords": "Palabras clave",
+      "keywordCount_one": "{{count}} palabra clave",
+      "keywordCount_other": "{{count}} palabras clave",
+      "matchedCount": "{{matched}}/{{total}} coinciden",
+      "summary": "Resumen",
+      "alignedToRole": "Alineado con el cargo",
+      "needsAlignment": "Necesita alineación",
+      "missing": "Falta",
+      "matchGood": "buena",
+      "matchMedium": "media",
+      "matchLow": "baja",
+      "heading": "Tu currículum tiene una coincidencia <1>{{label}}</1>",
+      "needsImprovement": "A tu currículum le vendrían bien algunas mejoras para ajustarse mejor a este cargo. Déjanos ayudarte a alinearlo.",
+      "category": "Categoría",
+      "jobRequires": "El cargo requiere",
+      "yourResume": "Tu currículum",
+      "noneMatched": "Ninguna coincide",
+      "improveCta": "Mejorar mi currículum para este cargo"
+    },
+    "resumeInputSection": {
+      "baseResume": "Currículum base",
+      "uploadFirst": "Sube uno primero",
+      "untitled": "Currículum sin título",
+      "noName": "Sin nombre",
+      "noResumes": "No se encontraron currículums. Sube un currículum primero para que podamos optimizarlo.",
+      "experienceEntries_one": "{{count}} entrada de experiencia",
+      "experienceEntries_other": "{{count}} entradas de experiencia",
+      "skillsCount_one": "{{count}} habilidad",
+      "skillsCount_other": "{{count}} habilidades",
+      "educationEntries_one": "{{count}} entrada de educación",
+      "educationEntries_other": "{{count}} entradas de educación",
+      "jobDescription": "Descripción del cargo",
+      "jobPlaceholder": "Pega aquí la descripción completa del cargo...",
+      "reanalyze": "Volver a analizar"
+    },
+    "resumePreview": {
+      "preview": "Vista previa",
+      "downloadPdf": "Descargar PDF",
+      "dialogLabel": "Vista previa del currículum",
+      "title": "Vista previa del currículum",
+      "printSave": "Imprimir/guardar como PDF",
+      "atsCheck": "Revisión ATS",
+      "saved": "Guardado",
+      "resumeSaved": "Currículum guardado",
+      "fileName": "curriculum"
+    },
+    "previewHighlights": {
+      "clickToReject": "Haz clic para rechazar",
+      "clickToAccept": "Haz clic para aceptar",
+      "other": "Otras",
+      "yourName": "TU NOMBRE",
+      "summary": "Resumen",
+      "education": "Educación",
+      "relevantExperience": "Experiencia relevante",
+      "technicalSkills": "Habilidades técnicas"
+    },
+    "wizardAlign": {
+      "sections": {
+        "summary": "Resumen profesional",
+        "skills": "Habilidades",
+        "experience": "Experiencia",
+        "projects": "Proyectos"
+      },
+      "sectionsTitle": "Secciones para mejorar",
+      "sectionsHint": "Elige qué secciones de tu currículum quieres adaptar a este cargo.",
+      "keywordsTitle": "Palabras clave para incluir",
+      "keywordsHint": "Selecciona qué palabras clave de la oferta laboral quieres incorporar a tu currículum.",
+      "generate": "Generar currículum adaptado"
+    },
+    "wizardReview": {
+      "tailoring": "Adaptando tu currículum...",
+      "tailoringHint": "Analizando la oferta laboral y optimizando tu contenido",
+      "clickHint": "Haz clic en el texto resaltado para aceptar o rechazar los cambios",
+      "score": "Puntaje: {{from}} → {{to}}",
+      "improvedBy": "Tu puntaje mejoró {{points}} puntos",
+      "optimized": "Tu currículum se optimizó para este cargo",
+      "whatChanged": "Qué cambió",
+      "download": "Descargar currículum",
+      "creating": "Creando...",
+      "createEdit": "Crear y editar",
+      "summary": "Resumen",
+      "skills": "Habilidades",
+      "yourDecisions": "Tus decisiones",
+      "accepted": "Aceptado",
+      "rejected": "Rechazado"
+    },
+    "aiTailorPanel": {
+      "atsScore": "Puntaje ATS: {{score}}",
+      "complete": "Adaptación con IA completada",
+      "changesSuggested_one": "{{count}} cambio sugerido para ajustarse a este cargo",
+      "changesSuggested_other": "{{count}} cambios sugeridos para ajustarse a este cargo",
+      "useAi": "Usar IA",
+      "changes": "Cambios: {{change}}",
+      "atCompany": "en {{company}}",
+      "skillsAligned_one": "+ {{count}} habilidad alineada con los requisitos del cargo",
+      "skillsAligned_other": "+ {{count}} habilidades alineadas con los requisitos del cargo",
+      "createWithChanges": "Crear currículum con los cambios"
+    },
+    "alignStep": {
+      "sections": {
+        "enhanceSummary": {
+          "label": "Resumen",
+          "tooltip": "Reescribe tu resumen profesional para que se ajuste a este cargo"
+        },
+        "enhanceSkills": {
+          "label": "Habilidades",
+          "tooltip": "Agrega las habilidades que faltan y reordénalas según los requisitos del cargo"
+        },
+        "enhanceExperience": {
+          "label": "Experiencia laboral",
+          "tooltip": "Reformula las viñetas con palabras clave relevantes"
+        },
+        "enhanceProjects": {
+          "label": "Proyectos",
+          "tooltip": "Destaca los proyectos relevantes para este cargo"
+        }
+      },
+      "chooseSections": "1. Elige las secciones que quieres mejorar",
+      "chooseSectionsHint": "Selecciona qué partes de tu currículum quieres adaptar a este cargo.",
+      "quickEdit": "Edición rápida",
+      "quickEditHint": "(las 2 primeras experiencias clave)",
+      "fullEdit": "Edición completa",
+      "fullEditHint": "(todas las experiencias, procesamiento más largo)",
+      "addKeywords": "2. Agrega las palabras clave que faltan",
+      "addKeywordsHint": "Palabras clave de la oferta laboral que no aparecen en tu currículum.",
+      "deselectAll": "Deseleccionar todo",
+      "selectAll": "Seleccionar todo",
+      "noKeywords": "No se extrajeron palabras clave de la oferta laboral.",
+      "addKeywordPlaceholder": "Agregar palabra clave...",
+      "add": "Agregar",
+      "generate": "Generar mi nuevo currículum"
+    },
+    "a11y": {
+      "removeSkill": "Quitar {{name}}",
+      "removeField": "Quitar campo",
+      "removeKeyword": "Quitar {{keyword}}"
+    }
+  },
+  "studentUi": {
+    "dashboard": {
+      "goToLearning": "Ir a aprendizaje",
+      "careerMatchHub": {
+        "viewAll": "Ver todo",
+        "needsBridging": "Requiere nivelación",
+        "ready": "Listo",
+        "more": "más",
+        "scoreBreakdown": "Desglose del puntaje",
+        "pcaPersonality": "Personalidad PCA",
+        "skillGaps": "Brechas de habilidades",
+        "recommendedSkills": "Habilidades/cursos recomendados",
+        "viewInExplorer": "Ver en el explorador de carreras"
+      },
+      "featuredCoaches": {
+        "available": "Disponible"
+      },
+      "liveStatus": {
+        "status": "Estado"
+      },
+      "mil": {
+        "readyToDiscover": "¿Todo listo para descubrir tus fortalezas cognitivas?",
+        "assessment": "Evaluación MIL",
+        "status": "Estado",
+        "complete": "Completo",
+        "duration": "Duración",
+        "completedCount": "{{completed}}/{{total}} completados"
+      },
+      "pca": {
+        "discoverDna": "Descubre tu ADN profesional",
+        "resultsPending": "Resultados pendientes",
+        "awaitingTims": "En espera de TIMS"
+      },
+      "skillBridging": {
+        "title": "Habilidades por desarrollar",
+        "onTrack": "¡Vas por buen camino!",
+        "noGaps": "No se detectaron brechas de habilidades en tus principales coincidencias.",
+        "seeAll": "Ver todo"
+      },
+      "sidebar": {
+        "chatUnavailable": "El chat con IA no está disponible durante una evaluación"
+      }
+    },
+    "applications": {
+      "toast": {
+        "loadApplicationFailed": "No se pudo cargar la solicitud",
+        "loadEssaysFailed": "No se pudieron cargar los ensayos",
+        "loadChecklistFailed": "No se pudo cargar la lista de verificación",
+        "notesSaved": "Notas guardadas",
+        "essayAdded": "Ensayo agregado",
+        "draftSaved": "Borrador guardado",
+        "aiReviewComplete": "Revisión con IA completada",
+        "checklistGenerated": "Lista de verificación generada",
+        "updateItemFailed": "No se pudo actualizar el elemento",
+        "itemAdded": "Elemento agregado",
+        "loadApplicationsFailed": "No se pudieron cargar las solicitudes"
+      },
+      "essays": {
+        "noFeedback": "No se recibieron comentarios.",
+        "addEssay": "Agregar ensayo",
+        "newEssay": "Nuevo ensayo",
+        "titlePlaceholder": "Título del ensayo *",
+        "promptPlaceholder": "Enunciado (opcional)",
+        "wordLimitPlaceholder": "Límite de palabras",
+        "empty": "Aún no hay ensayos. Agrega tu primer ensayo para empezar.",
+        "due": "Fecha de entrega: {{date}}",
+        "promptHeading": "ENUNCIADO",
+        "draftHeading": "BORRADOR",
+        "wordCount_one": "{{count}} palabra",
+        "wordCount_other": "{{count}} palabras",
+        "wordLimitSuffix": " / límite de {{limit}}",
+        "overLimit": "Excede el límite",
+        "draftPlaceholder": "Empieza a escribir tu ensayo...",
+        "saveDraft": "Guardar borrador",
+        "aiReview": "Revisión con IA",
+        "aiFeedback": "Comentarios de la IA"
+      },
+      "tabs": {
+        "essays": "Ensayos",
+        "checklist": "Lista de verificación"
+      },
+      "notFound": "No se encontró la solicitud.",
+      "backToTracker": "Volver al seguimiento",
+      "category": {
+        "testScores": "Puntajes de exámenes",
+        "transcripts": "Certificados de notas",
+        "recommendations": "Recomendaciones",
+        "financialAid": "Ayuda financiera",
+        "other": "Otro"
+      },
+      "essayStatus": {
+        "notStarted": "Sin empezar",
+        "drafting": "En redacción",
+        "review": "En revisión",
+        "final": "Final"
+      },
+      "column": {
+        "researching": "Investigando",
+        "shortlisted": "Preseleccionada",
+        "applying": "Postulando",
+        "applied": "Postulada",
+        "accepted": "Aceptada"
+      },
+      "fit": {
+        "safety": "Segura",
+        "match": "Adecuada",
+        "reach": "Ambiciosa"
+      },
+      "overview": {
+        "name": "Nombre",
+        "type": "Tipo",
+        "location": "Ubicación",
+        "status": "Estado",
+        "deadline": "Fecha límite",
+        "matchScore": "Puntaje de compatibilidad",
+        "fit": "Afinidad",
+        "notes": "Notas",
+        "notesPlaceholder": "Agrega notas sobre esta solicitud..."
+      },
+      "checklist": {
+        "completedCount": "{{done}}/{{total}} completados",
+        "generate": "Generar lista de verificación",
+        "addItem": "Agregar elemento",
+        "newItem": "Nuevo elemento",
+        "itemNamePlaceholder": "Nombre del elemento *",
+        "notesPlaceholder": "Notas (opcional)",
+        "empty": "Aún no hay elementos en la lista de verificación. Genera una lista con IA o agrega elementos manualmente."
+      },
+      "dueDatePlaceholder": "Fecha de entrega",
+      "add": "Agregar",
+      "detailBadge": "Detalle de la solicitud",
+      "matchPercent": "{{score}} % de compatibilidad",
+      "calendar": {
+        "subtitle": "Todas las fechas límite de tus solicitudes de un vistazo.",
+        "deadlineCount_one": "{{count}} fecha límite",
+        "deadlineCount_other": "{{count}} fechas límite",
+        "withDeadlines": "Solicitudes con fecha límite",
+        "empty": "No se encontraron fechas límite. Agrega fechas límite a tus solicitudes en el seguimiento para verlas aquí."
+      }
+    },
+    "video": {
+      "startFailed": "No se pudo iniciar la videollamada",
+      "joinFailed": "No fue posible unirse a la sesión",
+      "notAvailableTitle": "Videollamadas no disponibles",
+      "notAvailableBody": "Las videollamadas no están habilitadas para tu colegio. Contacta a tu administrador para habilitar esta función.",
+      "newCall": "Nueva llamada",
+      "searchPlaceholder": "Busca por nombre o correo electrónico...",
+      "searching": "Buscando...",
+      "noContacts": "No se encontraron contactos",
+      "call": "Llamar"
+    },
+    "assessments": {
+      "pca": {
+        "loading": "Cargando datos de PCA..."
+      },
+      "timeline": {
+        "subtitle": "Consulta tu historial de evaluaciones y las próximas fechas programadas.",
+        "historyTitle": "Historial de evaluaciones",
+        "emptyBody": "Tu cronograma e historial de evaluaciones aparecerán aquí cuando completes tu primera evaluación."
+      }
+    },
+    "booking": {
+      "reviewsCount_one": "({{count}} reseña)",
+      "reviewsCount_other": "({{count}} reseñas)",
+      "noBio": "No hay biografía disponible."
+    },
+    "coaching": {
+      "schedule": {
+        "join": "Unirse"
+      },
+      "earnings": {
+        "failedToLoad": "Error al cargar los datos de ganancias",
+        "totalEarnings": "Ganancias totales",
+        "completedSessions_one": "{{count}} sesión completada",
+        "completedSessions_other": "{{count}} sesiones completadas",
+        "commission": "Comisión: {{rate}}%",
+        "sessionsCompleted": "Sesiones completadas",
+        "currencyValue": "Moneda: {{currency}}",
+        "exportSuccess": "Informe de ganancias exportado con éxito",
+        "exportFailed": "Error al exportar el informe de ganancias",
+        "financials": "Finanzas",
+        "platformCommission": "Comisión de la plataforma: {{rate}}%",
+        "transactionHistory": "Historial de transacciones",
+        "table": {
+          "date": "Fecha",
+          "student": "Estudiante",
+          "gross": "Bruto",
+          "fee": "Comisión ({{rate}}%)",
+          "net": "Neto",
+          "currency": "Moneda"
+        },
+        "noTransactions": "No se encontraron transacciones.",
+        "showingPage": "Mostrando página <b>{{page}}</b> de <b>{{total}}</b>"
+      },
+      "profilePage": {
+        "subtitle": "Gestiona tu presencia pública. Un perfil completo ayuda a que los estudiantes se conecten contigo.",
+        "editProfile": "Editar perfil",
+        "yourName": "Tu nombre",
+        "profileStrength": "Perfil completado",
+        "personalDetails": "Datos personales",
+        "personalDetailsHint": "Información básica de identidad",
+        "titlePlaceholder": "p. ej., coach de carrera",
+        "aboutYou": "Sobre ti",
+        "bioPlaceholder": "Cuéntales a los estudiantes sobre tu experiencia...",
+        "emailPrivate": "Email (privado)",
+        "phonePrivate": "Teléfono (privado)",
+        "locationPlaceholder": "Ciudad, país",
+        "socialPresence": "Presencia en redes",
+        "socialPresenceHint": "¿Dónde pueden los estudiantes saber más sobre ti?",
+        "personalWebsite": "Sitio web personal",
+        "websitePlaceholder": "https://tusitioweb.com",
+        "linkedinPlaceholder": "linkedin.com/in/usuario",
+        "twitterPlaceholder": "twitter.com/usuario"
+      },
+      "timezones": {
+        "utc": "UTC (tiempo universal)",
+        "eastern": "Hora del Este (ET)",
+        "central": "Hora del Centro (CT)",
+        "mountain": "Hora de la Montaña (MT)",
+        "pacific": "Hora del Pacífico (PT)",
+        "london": "Londres (GMT)",
+        "paris": "París (CET)",
+        "berlin": "Berlín (CET)",
+        "dubai": "Dubái (GST)",
+        "india": "India (IST)",
+        "singapore": "Singapur (SGT)",
+        "tokyo": "Tokio (JST)",
+        "sydney": "Sídney (AEDT)"
+      },
+      "weekdays": {
+        "monday": "Lunes",
+        "tuesday": "Martes",
+        "wednesday": "Miércoles",
+        "thursday": "Jueves",
+        "friday": "Viernes",
+        "saturday": "Sábado",
+        "sunday": "Domingo"
+      },
+      "availability": {
+        "addInterval": "Agregar intervalo"
+      },
+      "calendar": {
+        "description": "Sincroniza tu disponibilidad con tu calendario externo para evitar reservas duplicadas.",
+        "connectedTo": "Conectado a {{provider}}",
+        "googleDesc": "Conecta tu calendario de Gmail",
+        "outlookDesc": "Conecta tu calendario de Microsoft"
+      },
+      "bank": {
+        "connectedTitle": "Cuenta bancaria conectada",
+        "connectedDescription": "Tu cuenta está lista para recibir pagos.",
+        "bankName": "Nombre del banco",
+        "accountHolder": "Titular de la cuenta",
+        "accountEmail": "Email de la cuenta",
+        "bankAccount": "Cuenta bancaria",
+        "viewDashboard": "Ver panel",
+        "disconnect": "Desconectar",
+        "payoutPreferences": "Preferencias de pago",
+        "payoutFrequency": "Frecuencia de pago",
+        "payoutFrequencyHint": "Elige con qué frecuencia quieres recibir tus ganancias.",
+        "selectFrequency": "Selecciona la frecuencia",
+        "frequencyBiweekly": "Quincenal (cada 2 semanas)",
+        "frequencyMonthly": "Mensual (el 1.º de cada mes)",
+        "bankDetails": "Datos bancarios",
+        "bankTransfer": "Transferencia bancaria",
+        "bankTransferHint": "Tus ganancias se transferirán a esta cuenta bancaria.",
+        "bankNamePlaceholder": "Nombre del banco",
+        "accountHolderPlaceholder": "Nombre del titular de la cuenta",
+        "accountNumber": "Número de cuenta",
+        "accountNumberPlaceholder": "Número de cuenta",
+        "routingNumber": "Número de ruta bancaria",
+        "routingNumberPlaceholder": "Número de ruta bancaria",
+        "saveBankDetails": "Guardar datos bancarios",
+        "linkTitle": "Vincular cuenta bancaria",
+        "linkDescription": "Ingresa los datos de tu cuenta bancaria para recibir los pagos de coaching.",
+        "bankNameExample": "p. ej., Bancolombia",
+        "accountHolderName": "Nombre del titular de la cuenta",
+        "fullNameOnAccount": "Nombre completo del titular",
+        "accountEndingIn": "Cuenta terminada en {{last4}}",
+        "routingNumberNineDigit": "Número de ruta bancaria de 9 dígitos",
+        "routingEndingIn": "Número de ruta terminado en {{last4}}",
+        "accountType": "Tipo de cuenta",
+        "checking": "Corriente",
+        "savings": "Ahorros",
+        "frequencyTwiceMonthly": "Dos veces al mes (el 1.º y el 15)",
+        "payoutFrequencyShortHint": "Con qué frecuencia quieres recibir tus pagos",
+        "accountSaved": "Cuenta bancaria guardada",
+        "saveAccount": "Guardar cuenta bancaria",
+        "fillAllAccountFields": "Completa todos los campos de la cuenta bancaria",
+        "saveFailed": "Error al guardar la cuenta bancaria",
+        "linkedSuccess": "Cuenta bancaria vinculada con éxito",
+        "confirmDisconnectStripe": "¿Seguro que quieres desconectar tu cuenta de Stripe?",
+        "stripeDisconnected": "Cuenta de Stripe desconectada",
+        "fillAllDetails": "Completa todos los datos bancarios",
+        "connectStripeFailed": "Error al conectar la cuenta de Stripe",
+        "disconnectStripeFailed": "Error al desconectar la cuenta de Stripe"
+      },
+      "earningsSection": {
+        "totalEarnings": "Ganancias totales",
+        "pendingPayout": "Pago pendiente",
+        "lastPayout": "Último pago",
+        "notAvailable": "N/D",
+        "recentEarnings": "Ganancias recientes",
+        "session": "Sesión",
+        "platformFee": "Comisión de la plataforma: {{amount}}",
+        "noHistory": "Aún no tienes historial de ganancias."
+      },
+      "payouts": {
+        "history": "Historial de pagos",
+        "filterByStatus": "Filtrar por estado",
+        "status": {
+          "all": "Todos",
+          "pending": "Pendiente",
+          "processing": "En proceso",
+          "completed": "Completado",
+          "failed": "Fallido"
+        },
+        "refresh": "Actualizar",
+        "page": "Página {{page}}",
+        "pageOf": "Página {{page}} de {{total}}",
+        "prev": "Anterior",
+        "empty": "Aún no tienes pagos. ¡Completa sesiones para empezar a ganar!",
+        "frequencyUpdated": "Frecuencia de pago actualizada a {{frequency}}",
+        "frequency": {
+          "biweekly": "quincenal",
+          "monthly": "mensual"
+        },
+        "methodUpdated": "Método de pago actualizado",
+        "loadSettingsFailed": "Error al cargar la configuración de pagos",
+        "frequencyUpdateFailed": "Error al actualizar la frecuencia de pago",
+        "methodUpdateFailed": "Error al actualizar el método de pago",
+        "title": "Pagos y desembolsos",
+        "subtitle": "Gestiona tu conexión con Stripe y consulta tu historial de pagos."
+      },
+      "pricing": {
+        "selectCurrency": "Selecciona la moneda"
+      },
+      "profileSettings": {
+        "profileImage": "Imagen de perfil",
+        "titlePlaceholder": "Coach de carrera sénior",
+        "specializationPlaceholder": "Liderazgo tecnológico",
+        "locationPlaceholder": "Bogotá, Colombia",
+        "addLanguage": "Agrega un idioma",
+        "add": "Agregar",
+        "expertiseTags": "Etiquetas de especialidad",
+        "addTag": "Agrega una etiqueta",
+        "bioCount": "{{count}} / {{max}} caracteres"
+      },
+      "students": {
+        "loadFailed": "Error al cargar los estudiantes",
+        "noSessionsYet": "Aún no hay sesiones",
+        "title": "Mis estudiantes",
+        "subtitle": "Consulta y gestiona a tus estudiantes de coaching.",
+        "searchPlaceholder": "Buscar estudiantes...",
+        "emptyTitle": "No se encontraron estudiantes",
+        "emptySearch": "Prueba con otro término de búsqueda.",
+        "emptyHint": "Los estudiantes aparecerán aquí cuando reserven sesiones contigo.",
+        "lastSession": "Última sesión",
+        "message": "Enviar mensaje"
+      }
+    },
+    "communityService": {
+      "status": {
+        "verified": "Verificada",
+        "pending": "Pendiente",
+        "rejected": "Rechazada"
+      },
+      "reason": "Motivo: {{note}}",
+      "hours_one": "{{count}} hora",
+      "hours_other": "{{count}} horas"
+    },
+    "coursePlan": {
+      "changeRequests": {
+        "title": "Mis solicitudes de cambio",
+        "course": "Curso",
+        "action": {
+          "add": "Agregar",
+          "remove": "Quitar"
+        },
+        "status": {
+          "pending": "Pendiente",
+          "approved": "Aprobada",
+          "rejected": "Rechazada",
+          "cancelled": "Cancelada"
+        }
+      },
+      "draft": {
+        "readyTitle": "Borrador del plan listo",
+        "readyBody_one": "{{count}} curso propuesto ({{credits}} créditos). Revísalo abajo y luego envíalo a tu orientador.",
+        "readyBody_other": "{{count}} cursos propuestos ({{credits}} créditos). Revísalos abajo y luego envía el plan a tu orientador.",
+        "discard": "Descartar",
+        "submittedTitle": "Enviado",
+        "submittedBody": "Tu orientador está revisando este plan. Te avisaremos cuando lo apruebe.",
+        "reviseRegenerate": "Revisar y regenerar",
+        "legend": "Los cursos “Propuestos” en amarillo son sugerencias adicionales para tu meta; este plan nunca modifica tus clases actuales."
+      },
+      "myClasses": {
+        "title": "Mis clases ({{count}})",
+        "empty": "Aún no tienes clases planeadas. Agrega algunas desde el catálogo de abajo.",
+        "unknownCourse": "Curso desconocido",
+        "removeAria": "Quitar {{name}}"
+      },
+      "enrollmentStatus": {
+        "completed": "Completado",
+        "in_progress": "En curso",
+        "planned": "Planeado",
+        "dropped": "Retirado",
+        "pending_add": "Adición pendiente",
+        "pending_remove": "Retiro pendiente",
+        "draft_proposed": "Propuesto"
+      },
+      "supplemental": {
+        "title": "Ve más allá de tu colegio",
+        "browseHub": "Explorar el centro de aprendizaje →",
+        "onlineCourse": "Curso en línea",
+        "fillsGap": "Cubre: brecha de {{gap}}"
+      },
+      "targetPicker": {
+        "tabRecommended": "Recomendadas para ti",
+        "tabSearch": "Buscar cualquier universidad",
+        "loadingMatches": "Cargando tus coincidencias…",
+        "noMatches": "Aún no hay universidades que coincidan contigo. Completa tus evaluaciones o busca cualquier universidad.",
+        "matchScore": "{{score}} % de coincidencia",
+        "searchPlaceholder": "Buscar universidades…",
+        "noResults": "No se encontraron universidades. Aún puedes escribir la tuya abajo.",
+        "typeToSearch": "Escribe para buscar universidades.",
+        "orTypeName": "O escribe el nombre de una universidad",
+        "universityPlaceholder": "p. ej., Universidad Nacional de Colombia",
+        "intendedMajor": "Carrera de interés *",
+        "majorPlaceholder": "p. ej., Ingeniería de Sistemas",
+        "goal": "Meta: {{name}}",
+        "setGoal": "Establecer como mi meta"
+      },
+      "page": {
+        "loadError": "No se pudo cargar tu plan de cursos.",
+        "retry": "Reintentar"
+      },
+      "catalog": {
+        "honors": "HONORS"
+      }
+    },
+    "learning": {
+      "certifications": {
+        "enrolled": "Inscritos",
+        "emptyTitle": "Aún no tienes cursos",
+        "emptyBody": "Explora el catálogo de cursos para encontrar cursos alineados con tus metas profesionales.",
+        "browseCourses": "Explorar cursos",
+        "suggestedNext": "Siguientes sugeridos",
+        "viewAll": "Ver todos →",
+        "durationWeeks": "{{count}} sem.",
+        "modulesProgress": "{{completed}}/{{total}} módulos"
+      }
+    },
+    "sessions": {
+      "counselor": {
+        "title": "Sesiones con el orientador",
+        "upcomingTab": "Próximas ({{count}})",
+        "pastTab": "Pasadas ({{count}})",
+        "tbd": "Por definir",
+        "counselorFallback": "Orientador",
+        "free": "GRATIS",
+        "join": "Unirse",
+        "yourNotes": "Tus notas:",
+        "counselorNotes": "Notas del orientador:",
+        "emptyUpcoming": "No tienes próximas sesiones con el orientador",
+        "emptyPast": "No tienes sesiones pasadas con el orientador",
+        "emptyBody": "Reserva una sesión GRATIS con el orientador asignado de tu colegio para recibir orientación y apoyo."
+      },
+      "badge": {
+        "upcoming": "Próxima"
+      },
+      "coachLoadError": "No se pudo cargar la información del coach",
+      "oneHour": "1 hora"
+    },
+    "portfolio": {
+      "type": {
+        "extracurricular": "Extracurricular",
+        "award": "Premio",
+        "project": "Proyecto",
+        "volunteer": "Voluntariado",
+        "workExperience": "Experiencia laboral",
+        "certification": "Certificación"
+      },
+      "category": {
+        "academic": "Académica",
+        "athletic": "Deportiva",
+        "arts": "Artes",
+        "communityService": "Servicio comunitario",
+        "work": "Trabajo",
+        "leadership": "Liderazgo",
+        "other": "Otra"
+      },
+      "form": {
+        "type": "Tipo de experiencia",
+        "title": "Título *",
+        "titlePlaceholder": "P. ej., capitán del equipo del colegio, practicante de ingeniería de software...",
+        "organization": "Organización / colegio",
+        "organizationPlaceholder": "¿Dónde ocurrió?",
+        "role": "Rol / cargo",
+        "rolePlaceholder": "¿Cuál era tu cargo?",
+        "description": "Descripción",
+        "polishWithAi": "Mejorar con IA",
+        "descriptionPlaceholder": "Describe tus responsabilidades y lo que aprendiste...",
+        "totalHours": "Horas totales",
+        "activityCategory": "Categoría de la actividad",
+        "hoursPerWeek": "Horas/semana",
+        "weeksPerYear": "Semanas/año"
+      },
+      "card": {
+        "editAria": "Editar {{title}}",
+        "deleteAria": "Eliminar {{title}}",
+        "deleteConfirm": "¿Eliminar \"{{title}}\"? Esta acción no se puede deshacer.",
+        "present": "Actualidad",
+        "hours": "{{count}} h",
+        "more": "+{{count}} más"
+      },
+      "filterAll": "Todos",
+      "hoursSuffix": "h"
+    },
+    "recommendations": {
+      "form": {
+        "title": "Nueva solicitud de recomendación",
+        "selectStaff": "Selecciona a un miembro del personal",
+        "relationshipRequired": "Describe tu relación con esta persona",
+        "messageRequired": "Incluye un mensaje de solicitud",
+        "sent": "Solicitud de recomendación enviada",
+        "sendFailed": "No se pudo enviar la solicitud",
+        "staffMember": "Miembro del personal *",
+        "relationship": "Relación *",
+        "relationshipPlaceholder": "p. ej., profesor de matemáticas, orientador",
+        "dueDate": "Fecha límite",
+        "message": "Mensaje de solicitud *",
+        "messagePlaceholder": "Describe por qué solicitas esta carta y cualquier contexto relevante...",
+        "send": "Enviar solicitud"
+      },
+      "staffSearch": {
+        "placeholder": "Buscar orientadores y personal...",
+        "failed": "La búsqueda falló. Inténtalo de nuevo.",
+        "noResults": "No se encontraron orientadores ni personal en tu colegio."
+      }
+    },
+    "subscriptions": {
+      "faq": {
+        "q1": {
+          "question": "¿Puedo cambiar mi plan en cualquier momento?",
+          "answer": "Sí, puedes subir o bajar de plan en cualquier momento. Los cambios se reflejarán en tu próximo ciclo de facturación."
+        },
+        "q2": {
+          "question": "¿Qué métodos de pago aceptan?",
+          "answer": "Aceptamos las principales tarjetas de crédito (Visa, MasterCard, American Express), PayPal y transferencias bancarias para clientes empresariales."
+        },
+        "q3": {
+          "question": "¿Hay una prueba gratuita disponible?",
+          "answer": "Sí, los planes Premium incluyen una prueba gratuita de 7 días. No necesitas tarjeta de crédito para comenzar la prueba."
+        },
+        "q4": {
+          "question": "¿Puedo cancelar mi suscripción en cualquier momento?",
+          "answer": "¡Claro! Puedes cancelar tu suscripción en cualquier momento desde la configuración de tu cuenta. Seguirás teniendo acceso hasta el final de tu periodo de facturación."
+        },
+        "q5": {
+          "question": "¿Qué pasa con mis datos si cancelo?",
+          "answer": "Tus datos se conservarán durante 30 días después de la cancelación, lo que te da tiempo para exportarlos o reactivar tu cuenta si lo necesitas."
+        },
+        "title": "Preguntas frecuentes",
+        "subtitle": "Todo lo que necesitas saber sobre nuestros planes de suscripción",
+        "stillQuestions": "¿Aún tienes preguntas?",
+        "supportBody": "Nuestro equipo de soporte está aquí para ayudarte a elegir el plan adecuado",
+        "contactSupport": "Contactar a soporte"
+      },
+      "loadPlansFailed": "No se pudieron cargar los planes de suscripción",
+      "loadDataFailed": "No se pudieron cargar los datos de la suscripción",
+      "somethingWrong": "Algo salió mal",
+      "active": {
+        "title": "Suscripción activa",
+        "onPlanPrefix": "Actualmente tienes el plan",
+        "onPlanSuffix": ".",
+        "renewsOn": "Se renueva el {{date}}",
+        "badge": "Activa"
+      },
+      "upgradeBadge": "Mejora tu experiencia",
+      "mostPopular": "Más popular",
+      "save": "Ahorra {{discount}} %",
+      "currentPlan": "Plan actual",
+      "paymentFailed": "El pago falló: {{error}}",
+      "processing": "Procesando...",
+      "portalFailed": "No se pudo abrir el portal de facturación. Inténtalo de nuevo."
+    },
+    "testScores": {
+      "form": {
+        "satMath": "SAT Matemáticas (200–800)",
+        "satReading": "SAT Lectura y escritura (200–800)",
+        "computedTotal": "Total calculado:",
+        "actEnglish": "Inglés (1–36)",
+        "actMath": "Matemáticas (1–36)",
+        "actReading": "Lectura (1–36)",
+        "actScience": "Ciencias (1–36)",
+        "computedComposite": "Puntaje compuesto calculado:",
+        "subject": "Materia",
+        "subjectPlaceholder": "p. ej., Calculus BC",
+        "apScore": "Puntaje (1–5)",
+        "selectScore": "Selecciona el puntaje",
+        "totalScore": "Puntaje total",
+        "scorePlaceholder": "Puntaje",
+        "editTitle": "Editar resultado",
+        "addTitle": "Agregar nuevo resultado",
+        "testType": "Tipo de examen",
+        "testDate": "Fecha del examen",
+        "status": "Estado",
+        "officialScore": "Puntaje oficial"
+      },
+      "testType": {
+        "SAT": "SAT",
+        "ACT": "ACT",
+        "AP": "Examen AP",
+        "PSAT": "PSAT",
+        "TOEFL": "TOEFL",
+        "IB": "Examen IB"
+      },
+      "sub": {
+        "sat": "Matemáticas {{math}} · Lectura {{reading}}",
+        "act": "Ing. {{english}} · Mat. {{math}} · Lect. {{reading}} · Cien. {{science}}"
+      },
+      "card": {
+        "official": "Oficial",
+        "deleteConfirm": "¿Eliminar?",
+        "yes": "Sí",
+        "no": "No"
+      },
+      "superScore": {
+        "title": "SuperScore",
+        "subtitle": "Mejores puntajes por sección combinados entre todos los intentos",
+        "sat": "SuperScore del SAT",
+        "act": "SuperScore del ACT"
+      },
+      "collegeFit": {
+        "reach": "Ambiciosa",
+        "match": "Acorde",
+        "safety": "Segura",
+        "title": "Compatibilidad con universidades",
+        "basedOn": "Según tu SuperScore del SAT de",
+        "admitRate": "{{rate}} % de admisión",
+        "admitRateNA": "Tasa de admisión no disponible"
+      }
+    }
+  },
+  "pages": {
+    "terms": {
+      "title": "Términos del servicio",
+      "lastUpdated": "Última actualización: 26 de mayo de 2026",
+      "s1": {
+        "title": "1. Aceptación de los términos",
+        "body": "Al acceder a la plataforma FormMaps (el \"Servicio\") o usarla, aceptas regirte por estos Términos del servicio. Si usas el Servicio en nombre de un colegio u organización, declaras que tienes autoridad para obligar a dicha entidad conforme a estos términos."
+      },
+      "s2": {
+        "title": "2. Descripción del Servicio",
+        "body": "FormMaps ofrece una plataforma de desarrollo de carrera y evaluación para estudiantes, colegios, orientadores, coaches y padres de familia. Sus funciones incluyen evaluaciones de personalidad y cognitivas, emparejamiento con carreras, recomendaciones de universidades, planificación de cursos, creación de currículum y análisis impulsados por IA."
+      },
+      "s3": {
+        "title": "3. Cuentas de usuario",
+        "item1": "Debes proporcionar información precisa y completa al crear una cuenta",
+        "item2": "Eres responsable de mantener la seguridad de las credenciales de tu cuenta",
+        "item3": "Debes notificarnos de inmediato cualquier acceso no autorizado a tu cuenta",
+        "item4": "Una persona no puede tener más de una cuenta del mismo tipo de rol"
+      },
+      "s4": {
+        "title": "4. Suscripciones y pagos",
+        "item1": "Los estudiantes individuales pueden acceder a funciones premium mediante suscripciones de pago",
+        "item2": "Los estudiantes afiliados a un colegio obtienen acceso a través de la suscripción de su colegio",
+        "item3": "Los pagos se procesan de forma segura a través de Stripe",
+        "item4": "Las suscripciones se renuevan automáticamente, a menos que se cancelen antes de la fecha de facturación",
+        "item5": "Los reembolsos se gestionan caso por caso dentro de los 14 días siguientes a la compra"
+      },
+      "s5": {
+        "title": "5. Uso aceptable",
+        "intro": "Aceptas no:",
+        "item1": "Usar el Servicio para ningún fin ilícito",
+        "item2": "Intentar obtener acceso no autorizado a las cuentas o los datos de otros usuarios",
+        "item3": "Enviar respuestas falsas o engañosas en las evaluaciones",
+        "item4": "Usar herramientas automatizadas para extraer o recopilar datos de la plataforma",
+        "item5": "Interferir con la infraestructura del Servicio o interrumpirla",
+        "item6": "Compartir las credenciales de tu cuenta con otras personas"
+      },
+      "s6": {
+        "title": "6. Propiedad intelectual",
+        "body": "El Servicio, incluidos todos sus contenidos, funciones y funcionalidades, es propiedad de FormMaps y está protegido por las leyes de derechos de autor, de marcas y demás leyes de propiedad intelectual. El contenido de las evaluaciones, los algoritmos de puntuación y los análisis generados por IA son propiedad exclusiva de FormMaps."
+      },
+      "s7": {
+        "title": "7. Exenciones de responsabilidad",
+        "item1": "Las recomendaciones de carreras y las coincidencias con universidades son sugerencias basadas en los datos de las evaluaciones, no garantías de admisión ni de empleo",
+        "item2": "Los análisis generados por IA tienen fines informativos y no deben reemplazar la orientación profesional",
+        "item3": "El Servicio se ofrece \"tal cual\", sin garantías de ningún tipo"
+      },
+      "s8": {
+        "title": "8. Limitación de responsabilidad",
+        "body": "FormMaps no será responsable de ningún daño indirecto, incidental, especial, consecuente o punitivo que se derive de tu uso del Servicio, incluidos, entre otros, la pérdida de datos o de oportunidades profesionales, o las decisiones académicas tomadas con base en nuestras recomendaciones."
+      },
+      "s9": {
+        "title": "9. Terminación",
+        "body": "Podemos terminar o suspender tu cuenta en cualquier momento por incumplimiento de estos Términos. Puedes eliminar tu cuenta en cualquier momento desde la configuración de tu perfil. Tras la terminación, tu derecho a usar el Servicio cesa de inmediato."
+      },
+      "s10": {
+        "title": "10. Cambios en los términos",
+        "body": "Podemos actualizar estos Términos ocasionalmente. Te notificaremos los cambios sustanciales por correo electrónico o mediante una notificación en la plataforma. El uso continuado después de los cambios constituye su aceptación."
+      },
+      "s11": {
+        "title": "11. Contacto",
+        "body": "¿Tienes preguntas sobre estos Términos? Contáctanos en <link>legal@formmaps.ai</link>."
+      }
+    },
+    "privacy": {
+      "title": "Política de privacidad",
+      "lastUpdated": "Última actualización: 26 de mayo de 2026",
+      "s1": {
+        "title": "1. Información que recopilamos",
+        "intro": "Recopilamos la información que nos proporcionas directamente al crear una cuenta, completar evaluaciones o usar nuestra plataforma:",
+        "item1Label": "Información de la cuenta:",
+        "item1": "nombre, dirección de correo electrónico, colegio afiliado, grado, rol",
+        "item2Label": "Datos de evaluación:",
+        "item2": "respuestas a las evaluaciones de personalidad (PCA), de inteligencia laboral (MIL/LIA) y de 360 grados",
+        "item3Label": "Datos académicos:",
+        "item3": "certificados de notas, puntajes de exámenes, GPA, planes de cursos",
+        "item4Label": "Exploración de carreras:",
+        "item4": "intereses profesionales, preferencias de universidades, contenido del currículum",
+        "item5Label": "Datos de uso:",
+        "item5": "páginas visitadas, funciones utilizadas, duración de la sesión"
+      },
+      "s2": {
+        "title": "2. Cómo usamos tu información",
+        "item1": "Ofrecer orientación vocacional personalizada, recomendaciones de universidades y sugerencias de cursos",
+        "item2": "Generar análisis impulsados por IA a partir de los resultados de tus evaluaciones",
+        "item3": "Permitir que los administradores y orientadores del colegio apoyen tu desarrollo",
+        "item4": "Procesar los pagos de los servicios de suscripción",
+        "item5": "Enviar correos electrónicos transaccionales (invitaciones, recordatorios, restablecimientos de contraseña)",
+        "item6": "Mejorar nuestra plataforma mediante analíticas anonimizadas"
+      },
+      "s3": {
+        "title": "3. Intercambio de datos",
+        "intro": "No vendemos tu información personal. Solo compartimos datos con:",
+        "item1Label": "Tu colegio:",
+        "item1": "los administradores y orientadores de tu colegio afiliado pueden ver los resultados de tus evaluaciones y tu progreso académico",
+        "item2Label": "Proveedores de servicios:",
+        "item2": "AWS (alojamiento, IA), Stripe (pagos), Amazon SES (correo electrónico)",
+        "item3Label": "Evaluadores 360:",
+        "item3": "padres, profesores y compañeros a quienes invitas a dar retroalimentación"
+      },
+      "s4": {
+        "title": "4. Seguridad de los datos",
+        "intro": "Protegemos tus datos mediante:",
+        "item1": "Conexiones cifradas (HTTPS/TLS) para todos los datos en tránsito",
+        "item2": "Hash de contraseñas con bcrypt (12 rondas)",
+        "item3": "Cookies seguras HttpOnly para los tokens de autenticación",
+        "item4": "Controles de acceso basados en roles con validación de permisos",
+        "item5": "Limitación de la frecuencia de solicitudes para prevenir abusos",
+        "item6": "Copias de seguridad automáticas de la base de datos con retención de 14 días"
+      },
+      "s5": {
+        "title": "5. Tus derechos",
+        "intro": "Tienes derecho a:",
+        "item1": "Acceder a tus datos personales a través de tu perfil y tu panel",
+        "item2": "Corregir información inexacta en la configuración de tu perfil",
+        "item3": "Solicitar la eliminación de tu cuenta y de los datos asociados",
+        "item4": "Exportar los resultados de tus evaluaciones y tus informes",
+        "item5": "Darte de baja de las comunicaciones no esenciales"
+      },
+      "s6": {
+        "title": "6. Cookies",
+        "body": "Usamos cookies esenciales para la autenticación (cookies seguras httpOnly) y una cookie de estado de inicio de sesión que no es httpOnly. No usamos cookies publicitarias ni de seguimiento."
+      },
+      "s7": {
+        "title": "7. Privacidad de los menores",
+        "body": "Nuestra plataforma está diseñada para estudiantes de los grados 9.º a 12.º. Los estudiantes menores de 13 años solo pueden usar la plataforma a través de su colegio y con el consentimiento de sus padres. Cumplimos la normativa aplicable sobre privacidad de menores, incluida la COPPA."
+      },
+      "s8": {
+        "title": "8. Contacto",
+        "body": "Para consultas relacionadas con la privacidad, contáctanos en <link>privacy@formmaps.ai</link>."
+      }
+    },
+    "print": {
+      "sample": {
+        "assessmentDate": "23 de septiembre de 2025",
+        "summaryText": "Valentina muestra dos marcadores cognitivos excepcionales: Detección de características = 96 % (Excepcional) y Orientación espacial / Visualización = Excepcional (78 %). Su PCA muestra alta Influencia, orientación al servicio, una fuerte preocupación por la calidad y baja Dominancia. En términos simples: tiene buen ojo para el detalle, visualiza en 2D/3D con facilidad y se relaciona muy bien con los demás, lo que la convierte en una candidata ideal para Arquitectura, Diseño Industrial y programas que combinen el diseño con la precisión técnica.",
+        "summaryTitle": "Influencia / Precisión técnica",
+        "step1": "Traducir los resultados de LIA y PCA en recomendaciones de estudio claras.",
+        "step2": "Priorizar carreras (top 10) con una justificación cognitivo-conductual.",
+        "step3": "Ofrecer un plan de exploración y decisión (0–12 meses) para el estudiante.",
+        "step4": "Entregar un plan operativo inmediato (8 semanas) y KPI de seguimiento.",
+        "step5": "Mapear las universidades recomendadas y facilitar acciones inmediatas de postulación.",
+        "subtests": {
+          "detection": {
+            "title": "Detección de características",
+            "description": "Identifica errores, patrones y detalles; aprendizaje ágil y ejecución precisa, clave para el control de calidad y la revisión de proyectos."
+          },
+          "reasoning": {
+            "title": "Razonamiento",
+            "description": "Fluidez verbal y análisis lógico: útil para argumentar, resolver problemas y presentar propuestas."
+          },
+          "numerical": {
+            "title": "Rapidez y precisión numérica",
+            "description": "Agilidad para cálculos prácticos; suficiente para tareas técnicas básicas."
+          },
+          "memory": {
+            "title": "Memoria de trabajo",
+            "description": "Retención y manipulación de información; en Valentina es adecuada y conviene apoyarla con herramientas."
+          },
+          "orientation": {
+            "title": "Orientación / Visualización general",
+            "description": "Rotación mental, interpretación de planos y prototipado 3D: una habilidad diferenciadora para carreras con orientación espacial."
+          }
+        },
+        "legend": {
+          "strengths": {
+            "title": "Fortalezas:",
+            "description": "Detecta detalles con rapidez y se comunica muy bien con los demás."
+          },
+          "opportunities": {
+            "title": "Oportunidades:",
+            "description": "Su razonamiento y sus habilidades verbales son buenos y pueden crecer aún más."
+          },
+          "stable": {
+            "title": "Áreas estables:",
+            "description": "Su memoria funciona bien cuando la información es clara y está organizada."
+          },
+          "risks": {
+            "title": "Riesgos:",
+            "description": "Puede tener dificultades para tomar decisiones firmes en situaciones difíciles."
+          },
+          "needs": {
+            "title": "Necesidades:",
+            "description": "Le sirven las listas de verificación y las tareas paso a paso para no perder el rumbo."
+          }
+        },
+        "majors": {
+          "architecture": {
+            "title": "Arquitectura",
+            "description": "Visualización espacial + portafolio desde el inicio; interacción con clientes."
+          },
+          "industrialDesign": {
+            "title": "Diseño industrial / Diseño de producto",
+            "description": "Prototipado 3D, pruebas y mejora de producto."
+          },
+          "civilEngineering": {
+            "title": "Ingeniería civil",
+            "description": "Lectura de planos, control de obra y gestión técnica.",
+            "extra": "(diseño y supervisión de proyectos)"
+          },
+          "interiorDesign": {
+            "title": "Arquitectura de interiores / Diseño de interiores"
+          },
+          "mechanicalEngineering": {
+            "title": "Ingeniería mecánica",
+            "extra": "(diseño y prototipado)"
+          },
+          "materialsEngineering": {
+            "title": "Ingeniería de materiales / Ciencia de materiales"
+          },
+          "complementary1": "Ingeniería naval / Arquitectura naval",
+          "complementary2": "UX/UI con prototipado físico / enfoque en producto 3D",
+          "complementary3": "Control técnico de calidad / Ingeniería de calidad"
+        },
+        "notRecommended": {
+          "routine": {
+            "category": "Programas que dependen exclusivamente de rutinas repetitivas con poca visualización",
+            "reason": "(p. ej., algunas ramas puras de la contabilidad sin componente técnico)."
+          },
+          "sales": {
+            "category": "Programas que exigen alta dominancia o ventas agresivas sin acompañamiento",
+            "reason": "(debido a su baja dominancia)."
+          }
+        },
+        "kpiLabel": "KPI:",
+        "exploration": {
+          "phase1": {
+            "phase": "Meses 0–1",
+            "title": "Confirmación rápida",
+            "activities": "Curso intensivo de SketchUp y AutoCAD (20–40 h); taller de dibujo (10–20 h); un día de observación laboral en un estudio o taller.",
+            "kpi": "disfruta al menos 2 de las 3 actividades."
+          },
+          "phase2": {
+            "phase": "Meses 1–3",
+            "title": "Portafolio mínimo",
+            "activities": "Crear 2 proyectos: (A) planta + alzado + vista 3D de un espacio; (B) objeto/prototipo documentado.",
+            "kpiLabel": "Solicitar retroalimentación:",
+            "kpi": "de 2 profesionales."
+          },
+          "phase3": {
+            "phase": "Meses 3–6",
+            "title": "Validación técnica",
+            "activities": "Cursos intermedios (BIM / SolidWorks); micropasantía de 2–4 semanas.",
+            "kpi": "portafolio mejorado y retroalimentación positiva de 1 profesional."
+          },
+          "phase4": {
+            "phase": "Meses 6–12",
+            "title": "Decisión y admisión",
+            "activities": "Seleccionar 2–4 programas (1–2 de alta exigencia, 1–2 opciones seguras). Preparar el portafolio final, las cartas y las pruebas de admisión.",
+            "kpi": "postulaciones enviadas a al menos 2 programas."
+          }
+        },
+        "operational": {
+          "week1": {
+            "phase": "Semanas 1–2",
+            "text": "Inscribirse en un curso básico de CAD; definir el proyecto de portafolio."
+          },
+          "week3": {
+            "phase": "Semanas 3–4",
+            "text": "Ejecutar el primer borrador; sesión de retroalimentación con un mentor."
+          },
+          "week5": {
+            "phase": "Semanas 5–6",
+            "text": "Modelado 3D; segunda ronda de retroalimentación y ajustes."
+          },
+          "week7": {
+            "phase": "Semanas 7–8",
+            "text": "Presentar la versión 1 del portafolio; listar las universidades objetivo; preparar los pasos de admisión."
+          }
+        }
+      },
+      "intro": "Este informe integra de forma práctica los resultados de la Evaluación de Inteligencia Laboral (LIA) y del Análisis de Competencias Personales (PCA) de {{name}} para orientar su decisión vocacional. La estructura ofrece una presentación clara y un nivel de detalle adecuado, con un enfoque práctico pensado para apoyar a los estudiantes que deciden si ingresar a programas universitarios o a rutas de formación técnica.",
+      "profileIllustrationAlt": "Ilustración de perfil",
+      "executiveSummary": "Resumen ejecutivo",
+      "section1": {
+        "title": "1. Significado operativo de las subpruebas LIA",
+        "subtitle": "Resumen aplicado al estudiante"
+      },
+      "section2": {
+        "title": "2. Diagnóstico integrado (LIA + PCA)",
+        "subtitle": "Fortalezas y riesgos"
+      },
+      "section3": {
+        "title": "3. Carreras principales priorizadas",
+        "subtitle": "Ajuste LIA (detección + orientación) y PCA (influencia, servicio, calidad)",
+        "perfectFit": "Ajuste perfecto",
+        "highlyRecommended": "Muy recomendadas",
+        "complementary": "Complementarias"
+      },
+      "section4": {
+        "title": "4. Carreras NO recomendadas para {{name}}"
+      },
+      "section5": {
+        "title": "5. Plan de exploración y decisión (0–12 meses)",
+        "subtitle": "Paso a paso para el estudiante"
+      },
+      "section6": {
+        "title": "6. Plan operativo inmediato: 8 semanas",
+        "subtitle": "Lista de acciones"
+      }
+    },
+    "subscribe": {
+      "paymentFailed": "El pago falló: {{error}}"
+    },
+    "admin": {
+      "courses": {
+        "placeholders": {
+          "title": "p. ej., Python para ciencia de datos",
+          "provider": "p. ej., Coursera",
+          "instructor": "p. ej., Dr. Juan Pérez",
+          "category": "p. ej., tecnología",
+          "shortDescription": "Descripción breve para las tarjetas del curso",
+          "fullDescription": "Descripción detallada del curso",
+          "language": "p. ej., inglés",
+          "country": "p. ej., Estados Unidos",
+          "region": "p. ej., Norteamérica"
+        },
+        "deleteTitle": "Eliminar curso",
+        "deleteLabel": "Eliminar",
+        "allCount": "Todos los cursos ({{count}})"
+      },
+      "payouts": {
+        "approveFailed": "No se pudo aprobar el pago",
+        "rejectFailed": "No se pudo rechazar el pago"
+      },
+      "schools": {
+        "videoCallsEnabled": "Videollamadas activadas para {{name}}",
+        "videoCallsDisabled": "Videollamadas desactivadas para {{name}}",
+        "videoCallsFailed": "No se pudo actualizar la configuración de videollamadas"
+      },
+      "transactions": {
+        "userIdShort": "ID: {{id}}..."
+      }
+    }
+  },
+  "components": {
+    "modernPdf": {
+      "reportId": "ID del informe: {{id}}",
+      "pageOf": "Página {{page}} de {{total}}",
+      "confidentialReport": "INFORME DE EVALUACIÓN CONFIDENCIAL",
+      "analyticsDivision": "DIVISIÓN DE ANALÍTICA",
+      "confidential": "CONFIDENCIAL",
+      "series": "SERIE IV / {{year}}",
+      "quantitativeProfile": "Perfil cuantitativo",
+      "coverLine1": "ANÁLISIS DE",
+      "coverLine2": "INTELIGENCIA",
+      "coverLine3": "LABORAL",
+      "reportContents": "Contenido del informe",
+      "toc1": "Resumen ejecutivo y estrategia",
+      "toc2": "Dimensiones MIL",
+      "toc3": "Patrones de comportamiento",
+      "toc4": "Alineación profesional",
+      "candidate": "Candidato/a",
+      "assessmentId": "ID de evaluación: {{id}}",
+      "complete": "{{percent}}% COMPLETADO",
+      "speed": "VELOCIDAD",
+      "precision": "PRECISIÓN"
+    },
+    "liaReportPdf": {
+      "quickInsight": "DATO CLAVE",
+      "quickInsightQuote": "«La constancia es el sello de la excelencia profesional».",
+      "coverTitle": "Análisis de inteligencia laboral",
+      "performanceClassification": "Clasificación de desempeño",
+      "topCohort": "{{percent}}% superior de la cohorte tecnológica global",
+      "overallScore": "Puntuación general",
+      "composite": "Compuesta",
+      "percentile": "Percentil",
+      "ordinal": "{{value}}.º",
+      "globalCohort": "Cohorte global",
+      "executiveHighlights": "Aspectos destacados",
+      "strategicAnalysis": "Análisis estratégico",
+      "growthAreas": "Áreas de crecimiento",
+      "milProfile": "Perfil MIL",
+      "profileShape": "FORMA DEL PERFIL",
+      "milSynergy": "Sinergia MIL",
+      "dimensions": "Dimensiones",
+      "peakPercentile": "% máximo",
+      "detailedDimensions": "Dimensiones detalladas",
+      "topPercent": "{{percent}}% superior",
+      "accuracyPercent": "{{percent}}% de precisión",
+      "behavioralInsights": "Análisis del comportamiento",
+      "behavioralPatterns": "Patrones de comportamiento",
+      "behavioralIntro": "Los comportamientos observados durante la evaluación ofrecen una ventana a los hábitos de trabajo reales.",
+      "speedVsAccuracy": "Velocidad frente a precisión",
+      "stressResponse": "Respuesta al estrés",
+      "attentionSpan": "Capacidad de atención",
+      "problemSolving": "Resolución de problemas",
+      "strategicImplication": "IMPLICACIÓN ESTRATÉGICA",
+      "strategicImplicationBody": "Estos patrones sugieren una persona que priorizará la calidad sobre la cantidad. Es poco probable que tome atajos incluso bajo presión, lo que es una ventaja importante en roles de cumplimiento normativo o críticos para la seguridad, aunque podría requerir la intervención de su supervisor en periodos de alta exigencia en los que la velocidad es primordial.",
+      "professionalOs": "Sistema operativo profesional",
+      "operatingProtocols": "Protocolos de operación",
+      "environment": "Entorno",
+      "collaborativeSpaces": "Espacios colaborativos",
+      "remoteReady": "Apto/a para trabajo remoto",
+      "decisionLogic": "Lógica de decisión",
+      "intuitive": "Intuitivo",
+      "analytical": "Analítico",
+      "interactionNetwork": "Red de interacción",
+      "teamRole": "Rol en el equipo",
+      "signalStrength": "Intensidad de la señal",
+      "commandCapabilities": "Capacidades de liderazgo",
+      "leadershipPotential": "Potencial de liderazgo",
+      "optimalEnvironmentFit": "Entorno óptimo",
+      "careerAlignment": "Alineación profesional",
+      "careerAlignmentSubtitle": "Posicionamiento estratégico de roles según la arquitectura cognitiva.",
+      "primaryMatch": "COINCIDENCIA PRINCIPAL",
+      "compatibilityVector": "VECTOR DE COMPATIBILIDAD",
+      "matchIndex": "ÍNDICE DE COINCIDENCIA",
+      "alternativePathways": "Rutas alternativas",
+      "searchParameters": "Parámetros de búsqueda",
+      "growthVector": "Vector de crecimiento",
+      "learningRoadmap": "Hoja de ruta de aprendizaje",
+      "learningRoadmapSubtitle": "Protocolos de plasticidad neuronal y adquisición de habilidades.",
+      "agilityIndex": "ÍNDICE DE AGILIDAD",
+      "absorptionStyle": "Estilo de asimilación",
+      "upgradeSequence": "Secuencia de mejora",
+      "phase": "FASE {{number}}",
+      "dataIngestion": "INGESTA DE DATOS",
+      "source": "[FUENTE_{{number}}]",
+      "assessmentVerdict": "Veredicto de la evaluación",
+      "assessmentVerdictSubtitle": "Síntesis final y proyecciones a futuro.",
+      "executiveSynthesis": "Síntesis ejecutiva",
+      "predictiveAnalysis": "Análisis predictivo",
+      "successMultipliers": "MULTIPLICADORES DE ÉXITO",
+      "riskFactors": "FACTORES DE RIESGO",
+      "recalibrationSchedule": "Calendario de recalibración",
+      "nextEvaluationDate": "PRÓXIMA FECHA DE EVALUACIÓN",
+      "scheduledRecalibration": "Programada para la recalibración del desempeño.",
+      "active": "ACTIVO",
+      "copyright": "© 2026 FormMaps. Todos los derechos reservados."
+    },
+    "pcaReportPdf": {
+      "title": "Informe de perfil de personalidad PCA",
+      "subtitle": "Evaluación de características personales • Análisis basado en PCA",
+      "preparedFor": "PREPARADO PARA",
+      "assessmentDate": "FECHA DE LA EVALUACIÓN",
+      "id": "ID: {{id}}",
+      "discD": "D - Dominancia",
+      "discI": "I - Influencia",
+      "discS": "S - Solidez",
+      "discC": "C - Control",
+      "primaryStyle": "Estilo principal: ",
+      "secondary": "Secundario: ",
+      "naturalVsAdapted": "Perfil natural frente a adaptado",
+      "profileSummary": "Resumen del perfil",
+      "competenciesTitle": "Competencias y alineación profesional",
+      "competenciesSubtitle": "Tus fortalezas y las trayectorias profesionales recomendadas según tu perfil de personalidad",
+      "coreCompetencies": "Competencias clave",
+      "careerRecommendations": "Recomendaciones de carrera",
+      "match": "{{percent}}% de coincidencia",
+      "communicationStrengths": "Fortalezas de comunicación",
+      "areasToDevelop": "Áreas por desarrollar",
+      "idealWorkEnvironment": "Entorno de trabajo ideal",
+      "aboutTitle": "Acerca de esta evaluación",
+      "aboutBody": "La PCA (Evaluación de características personales) se basa en el modelo de comportamiento PCA y mide las tendencias de comportamiento naturales y adaptadas. Este informe ofrece información sobre las preferencias de personalidad y está pensado para el desarrollo personal y profesional."
+    },
+    "pdfReport": {
+      "platform": "Plataforma de desarrollo profesional",
+      "reportDate": "FECHA DEL INFORME",
+      "footerConfidential": "Informe de evaluación FormMaps • Confidencial",
+      "generatedOn": "Generado el {{date}}"
+    },
+    "exportReportButton": {
+      "reports": {
+        "lia": "informe de evaluación LIA",
+        "pca": "informe de perfil de personalidad",
+        "evaluation": "informe de evaluación 360°",
+        "timeline": "informe de línea de tiempo profesional",
+        "coaching": "informe de sesiones de coaching",
+        "benchmark": "informe de comparación de referencias"
+      },
+      "generating": "Generando PDF...",
+      "downloaded": "¡Descargado!",
+      "download": "Descargar {{report}}"
+    },
+    "hooks": {
+      "communityService": {
+        "hoursLogged": "Horas de servicio comunitario registradas",
+        "entryUpdated": "Registro actualizado",
+        "entryDeleted": "Registro eliminado"
+      },
+      "counselorNotes": {
+        "noteAdded": "Nota agregada",
+        "noteUpdated": "Nota actualizada",
+        "noteDeleted": "Nota eliminada",
+        "followUpCompleted": "Seguimiento completado"
+      },
+      "coursePlan": {
+        "courseAdded": "Curso agregado al plan",
+        "courseRemoved": "Curso eliminado del plan",
+        "courseAddedToStudent": "Curso agregado al plan del estudiante",
+        "courseRemovedFromStudent": "Curso eliminado del plan del estudiante",
+        "changeRequestCancelled": "Solicitud de cambio cancelada",
+        "requestApproved": "Solicitud aprobada",
+        "requestRejected": "Solicitud rechazada"
+      },
+      "curriculum": {
+        "prereqAnalysisFailed": "El análisis de prerrequisitos falló; inténtalo de nuevo",
+        "prereqApplyFailed": "No se pudieron aplicar los prerrequisitos",
+        "coursesUpdated_one": "{{count}} curso actualizado",
+        "coursesUpdated_other": "{{count}} cursos actualizados"
+      },
+      "favorites": {
+        "removeFailed": "No se pudo eliminar el favorito",
+        "removed": "Eliminado de favoritos",
+        "saveFailed": "No se pudo guardar el favorito",
+        "added": "Agregado a favoritos"
+      },
+      "gradebook": {
+        "addFailed": "No se pudo agregar la calificación",
+        "added": "Calificación agregada",
+        "updateFailed": "No se pudo actualizar la calificación",
+        "updated": "Calificación actualizada",
+        "deleteFailed": "No se pudo eliminar la calificación",
+        "deleted": "Calificación eliminada"
+      },
+      "graduationPlan": {
+        "goalSaved": "Meta de graduación guardada",
+        "goalSaveFailed": "No se pudo guardar tu meta",
+        "completeAssessments": "Completa tus evaluaciones para desbloquear la generación del plan",
+        "draftGenerated": "Borrador del plan generado",
+        "generateFailed": "No se pudo generar un plan",
+        "submitFailed": "No se pudo enviar tu plan",
+        "draftDiscarded": "Borrador descartado",
+        "discardFailed": "No se pudo descartar el borrador",
+        "draftGeneratedForStudent": "Borrador del plan generado para el estudiante",
+        "planApproved": "Plan aprobado",
+        "planRejected": "Plan rechazado",
+        "reviewFailed": "No se pudo revisar el plan",
+        "errors": {
+          "noTarget": "Primero elige una meta de graduación.",
+          "noSchool": "Los planes de graduación requieren una cuenta de colegio.",
+          "noCurrentYear": "Tu colegio aún no ha abierto el año académico actual.",
+          "noRuleset": "Tu colegio aún no ha publicado sus requisitos de graduación.",
+          "noCatalog": "Tu colegio aún no ha publicado su catálogo de cursos.",
+          "planProposed": "Tu plan ya está con tu orientador; si lo vuelves a generar, lo reemplazarás.",
+          "noDraft": "No hay ningún borrador del plan sobre el cual actuar."
+        }
+      },
+      "importJob": {
+        "downloadReportFailed": "No se pudo descargar el informe de errores"
+      },
+      "parentPortal": {
+        "inviteFailed": "No se pudo enviar la invitación",
+        "accessRevoked": "Acceso revocado",
+        "revokeFailed": "No se pudo revocar el acceso",
+        "inviteResent": "Invitación reenviada",
+        "resendFailed": "No se pudo reenviar la invitación",
+        "markReadFailed": "No se pudo marcar la notificación como leída",
+        "allMarkedRead": "Todas las notificaciones se marcaron como leídas",
+        "markAllReadFailed": "No se pudieron marcar las notificaciones como leídas"
+      },
+      "portfolio": {
+        "created": "Elemento del portafolio creado",
+        "updated": "Elemento del portafolio actualizado",
+        "deleted": "Elemento del portafolio eliminado"
+      },
+      "university": {
+        "saved": "Universidad guardada",
+        "removed": "Universidad eliminada",
+        "favoriteUpdateFailed": "No se pudo actualizar el favorito"
+      }
+    },
+    "apiClient": {
+      "sessionExpired": "Sesión expirada",
+      "logInAgain": "Vuelve a iniciar sesión.",
+      "sessionExpiredLong": "Tu sesión expiró. Vuelve a iniciar sesión.",
+      "noPermission": "No tienes permiso para realizar esta acción.",
+      "notFound": "No se encontró el recurso solicitado.",
+      "internalError": "Error interno del servidor. Inténtalo de nuevo más tarde.",
+      "requestFailed": "La solicitud falló. Inténtalo de nuevo.",
+      "accessDenied": "Acceso denegado",
+      "unexpected": "Ocurrió un error inesperado.",
+      "serverError": "Error del servidor",
+      "tryAgain": "Algo salió mal. Inténtalo de nuevo.",
+      "connectionLost": "Conexión perdida",
+      "checkConnection": "Revisa tu conexión a internet.",
+      "sessionExpiredShort": "La sesión expiró. Vuelve a iniciar sesión.",
+      "networkError": "Error de red. Revisa tu conexión e inténtalo de nuevo."
+    },
+    "pcaService": {
+      "addFailed": "No se pudo agregar la evaluación PCA"
+    },
+    "subscriptionService": {
+      "subscription": {
+        "description": "Acceso completo para acelerar tu camino profesional",
+        "features": {
+          "platformAccess": "Acceso completo a la plataforma",
+          "careerAnalytics": "Análisis profesional avanzado",
+          "prioritySupport": "Soporte prioritario",
+          "mentorship": "Programa de mentoría profesional",
+          "skillAssessments": "Evaluaciones de habilidades ilimitadas",
+          "jobMatching": "Algoritmo avanzado de coincidencia de empleos",
+          "resumeBuilder": "Constructor de currículum Pro",
+          "interviewPrep": "Herramientas de preparación para entrevistas",
+          "resourceLibrary": "Acceso a la biblioteca de recursos",
+          "community": "Comunidad y red de contactos"
+        }
+      },
+      "cta": {
+        "subscribe": "Suscribirse",
+        "buyNow": "Comprar ahora",
+        "startMonthly": "Empezar plan mensual",
+        "startYearly": "Empezar plan anual"
+      },
+      "info": {
+        "singlePurchase": "Compra única",
+        "freeTrial": "Prueba gratis de 7 días",
+        "savePerYear": "Ahorra ${{amount}} al año"
+      },
+      "description": {
+        "oneTime": "Descarga del documento PDF, información limitada",
+        "monthly": "Acceso completo a la plataforma",
+        "yearly": "Acceso completo con un ahorro significativo"
+      }
+    },
+    "authBrandingPanel": {
+      "headline": "Encuentra tu camino.",
+      "headlineAccent": "Construye tu futuro.",
+      "tagline": "Plataforma de orientación universitaria y vocacional con IA para estudiantes, orientadores y colegios.",
+      "features": {
+        "admissions": "Predicciones de admisión universitaria",
+        "careers": "Descubrimiento de trayectorias profesionales",
+        "insights": "Análisis de estudiantes con IA",
+        "administration": "Administración escolar segura"
+      }
+    },
+    "careerFilters": {
+      "industries": {
+        "technology": "Tecnología",
+        "finance": "Finanzas",
+        "retail": "Comercio minorista",
+        "healthcare": "Salud"
+      },
+      "education": {
+        "highSchool": "Bachillerato",
+        "phd": "Doctorado"
+      }
+    },
+    "bookingModal": {
+      "toasts": {
+        "loadSlotsFailed": "No se pudieron cargar los horarios disponibles",
+        "fillAllFields": "Completa todos los campos",
+        "invalidSlot": "Horario no válido. Intenta actualizar la página.",
+        "rescheduled": "Sesión reprogramada correctamente",
+        "userNotIdentified": "No se pudo identificar al usuario. Inicia sesión.",
+        "noRate": "Este coach aún no ha definido una tarifa por sesión.",
+        "redirectingToPayment": "Redirigiendo al pago...",
+        "paymentInitFailed": "La reserva se creó, pero no se pudo iniciar el pago.",
+        "bookFailed": "No se pudo reservar la sesión. Inténtalo de nuevo."
+      },
+      "title": "Reservar una sesión",
+      "coach": "Coach",
+      "oneHourSession": "Sesión de 1 hora",
+      "oneHour": "1 hora",
+      "durationMinutes": "{{minutes}} min",
+      "previousMonth": "Mes anterior",
+      "nextMonth": "Mes siguiente"
+    },
+    "commandPalette": {
+      "items": {
+        "dashboard": {
+          "description": "Resumen y carreras afines"
+        },
+        "assessments": {
+          "description": "PCA, MIL y evaluación"
+        },
+        "careerPaths": {
+          "description": "Tus 10 carreras más afines"
+        },
+        "university": {
+          "label": "Buscador de universidades",
+          "description": "Recomendaciones personalizadas"
+        },
+        "courses": {
+          "description": "Explora cursos e inscríbete"
+        },
+        "resumes": {
+          "description": "Crea y gestiona tus currículums"
+        },
+        "portfolio": {
+          "description": "Muestra tu trabajo"
+        },
+        "coursePlan": {
+          "description": "Planifica tus materias"
+        },
+        "sessions": {
+          "description": "Orientación y coaching"
+        },
+        "applications": {
+          "description": "Haz seguimiento a tus solicitudes universitarias"
+        },
+        "aiCoach": {
+          "label": "Coach con IA",
+          "description": "Asistente de orientación vocacional"
+        },
+        "startPca": {
+          "label": "Iniciar evaluación PCA",
+          "description": "Evaluación de personalidad"
+        },
+        "startMil": {
+          "label": "Iniciar evaluación MIL",
+          "description": "Evaluación de inteligencia laboral"
+        },
+        "browseUniversities": {
+          "label": "Explorar universidades",
+          "description": "Encuentra tu universidad ideal"
+        }
+      },
+      "searchPlaceholder": "Buscar páginas, acciones...",
+      "noResults": "No se encontraron resultados.",
+      "groups": {
+        "pages": "Páginas",
+        "actions": "Acciones"
+      }
+    },
+    "compareBar": {
+      "panelTitle_one": "Comparando {{count}} universidad",
+      "panelTitle_other": "Comparando {{count}} universidades",
+      "compareButton": "Comparar ({{count}})"
+    },
+    "comparePanel": {
+      "rows": {
+        "globalRank": "Ranking global",
+        "acceptanceRate": "Tasa de admisión",
+        "tuitionPerYear": "Matrícula / año",
+        "type": "Tipo",
+        "setting": "Entorno",
+        "programs": "Programas",
+        "graduationRate": "Tasa de graduación"
+      },
+      "values": {
+        "public": "Pública",
+        "private": "Privada",
+        "community": "Comunitaria",
+        "urban": "Urbano",
+        "suburban": "Suburbano",
+        "rural": "Rural"
+      }
+    },
+    "applicationTracker": {
+      "columns": {
+        "researching": "Investigando",
+        "shortlisted": "Preseleccionadas",
+        "applying": "Preparando solicitud",
+        "applied": "Solicitud enviada",
+        "accepted": "Aceptadas"
+      },
+      "toasts": {
+        "loadFailed": "No se pudieron cargar las solicitudes",
+        "addFailed": "No se pudo agregar la solicitud",
+        "moveFailed": "No se pudo mover la solicitud",
+        "deleteFailed": "No se pudo eliminar la solicitud"
+      },
+      "moveLeft": "Mover a la izquierda",
+      "moveRight": "Mover a la derecha",
+      "remove": "Eliminar",
+      "universityNamePlaceholder": "Nombre de la universidad...",
+      "locationPlaceholder": "Ubicación (opcional)",
+      "deadlineAria": "Fecha límite de la solicitud",
+      "addApplication": "+ Agregar solicitud"
+    },
+    "keyboardShortcuts": {
+      "openCommandPalette": "Abrir la paleta de comandos",
+      "showShortcuts": "Mostrar atajos de teclado",
+      "closePanel": "Cerrar panel / ventana / paleta",
+      "quickNavigate": "Navegación rápida (secciones de la barra lateral)",
+      "title": "Atajos de teclado",
+      "close": "Cerrar",
+      "footer": "Presiona <kbd>?</kbd> para mostrar u ocultar"
+    },
+    "gapReportPanel": {
+      "title": "Lo que tu colegio no puede cubrir",
+      "creditsMissing_one": "Falta {{count}} cr.",
+      "creditsMissing_other": "Faltan {{count}} cr.",
+      "seeOnlineCourses": "Ver cursos en línea que cubren estos vacíos ↓"
+    },
+    "planRationalePanel": {
+      "title": "Por qué este plan"
+    },
+    "sequenceBuilder": {
+      "gradeLabels": {
+        "9": "Grado 9 — primer año",
+        "10": "Grado 10 — segundo año",
+        "11": "Grado 11 — tercer año",
+        "12": "Grado 12 — último año"
+      },
+      "noCourses": "Sin cursos",
+      "proposed": "Propuesto",
+      "creditsShort": "{{count}} cr.",
+      "removalPending": "retiro pendiente",
+      "removeCourse": "Quitar curso",
+      "requestRemoval": "Solicitar retiro",
+      "prereqNotMet": "No cumples los prerrequisitos de {{course}}: requiere {{missing}}",
+      "loading": "Cargando plan de estudios…",
+      "graduationProgress": "Progreso de graduación",
+      "creditsEarnedOf": "{{earned}} / {{required}} créditos obtenidos",
+      "onTrack": "Al día",
+      "atRisk": "En riesgo",
+      "hideSuggestions": "Ocultar sugerencias",
+      "showSuggestions": "Sugerencias de IA y vacíos",
+      "recommendedCourses": "Cursos recomendados",
+      "nextSemester": "Próximo semestre",
+      "priority": {
+        "high": "alta",
+        "medium": "media",
+        "low": "baja"
+      },
+      "longTermPlan": "Plan a largo plazo",
+      "academicGaps": "Vacíos académicos",
+      "creditDeficit": "déficit de {{count}} cr.",
+      "creditsEarnedShort": "{{count}} obtenidos",
+      "creditsRequiredShort": "{{count}} requeridos",
+      "gradeSummary": "{{courses}} cursos · {{credits}} créditos · {{completed}}/{{courses}} completados",
+      "semesters": {
+        "Fall": "Otoño",
+        "Spring": "Primavera",
+        "Summer": "Verano"
+      },
+      "addCourseDirectly": "Agregar curso directamente",
+      "requestToAddCourse": "Solicitar agregar un curso",
+      "add": "Agregar",
+      "request": "Solicitar",
+      "empty": "Aún no hay un plan de estudios disponible.",
+      "changeRequests": "Solicitudes de cambio ({{count}})",
+      "requestActions": {
+        "add": "agregar",
+        "remove": "retirar"
+      },
+      "requestStatuses": {
+        "pending": "pendiente",
+        "approved": "aprobada",
+        "rejected": "rechazada",
+        "cancelled": "cancelada"
+      },
+      "gradeShort": "Gr. {{grade}}",
+      "cancelRequest": "Cancelar solicitud",
+      "addCourse": "Agregar curso",
+      "requestToAddCourseTitle": "Solicitar agregar curso",
+      "gradeLevel": "Grado",
+      "semester": "Semestre",
+      "selectCourse": "Selecciona un curso *",
+      "searchPlaceholder": "Buscar cursos disponibles...",
+      "noCoursesFound": "No se encontraron cursos",
+      "selectedCount": "Seleccionados ({{count}}):",
+      "noteToCounselor": "Nota para el orientador (opcional)",
+      "addNotePlaceholder": "¿Por qué solicitas este curso?",
+      "submitRequest": "Enviar solicitud",
+      "removeDialogTitle": "Solicitar retiro del curso",
+      "removeDialogBody": "Solicitas retirar <bold>{{course}}</bold> de tu plan. Tu orientador revisará la solicitud.",
+      "removeNotePlaceholder": "Motivo para retirar este curso…"
+    },
+    "CareerMatches": {
+      "title": "Tus 3 mejores coincidencias de carrera",
+      "matchScoreAria": "Puntuación de coincidencia de {{title}}",
+      "viewDetailsAria": "Ver detalles de {{title}}",
+      "showMore": "Ver más"
+    },
+    "CoachDashboard": {
+      "upcomingTab": "Próximas ({{count}})",
+      "pastTab": "Pasadas ({{count}})"
+    },
+    "CoursesCatalog": {
+      "markCompletedError": "No se pudo marcar el curso como completado",
+      "pills": {
+        "search": "Búsqueda",
+        "level": "Nivel",
+        "sort": "Orden"
+      }
+    },
+    "ProfileForm": {
+      "validation": {
+        "nameMin": "El nombre debe tener al menos 2 caracteres",
+        "headlineMax": "El titular debe tener menos de 100 caracteres",
+        "bioMax": "La biografía debe tener menos de 500 caracteres",
+        "emailInvalid": "Ingresa un correo electrónico válido",
+        "urlInvalid": "Ingresa una URL válida",
+        "skillNameRequired": "El nombre de la habilidad es obligatorio"
+      },
+      "draftRestored": "Borrador restaurado de la sesión anterior",
+      "updateSuccess": "Perfil actualizado correctamente",
+      "updateError": "No se pudo actualizar el perfil",
+      "fullName": "Nombre completo",
+      "headline": "Titular",
+      "email": "Correo electrónico",
+      "location": "Ubicación",
+      "bio": "Biografía",
+      "bioCounter": "{{count}}/500 caracteres",
+      "socialTitle": "Presencia en redes",
+      "socialDescription": "¿Dónde pueden encontrarte en internet?",
+      "website": "Sitio web / portafolio",
+      "skillsTitle": "Habilidades y tecnologías",
+      "skillsListAria": "Lista de habilidades",
+      "removeSkillAria": "Quitar la habilidad {{skill}}",
+      "competenciesTitle": "Competencias clave",
+      "competenciesDescription": "Califica tu nivel de dominio (0-100).",
+      "newSkill": "Nueva habilidad",
+      "add": "Agregar",
+      "competencyNameAria": "Nombre de la competencia del elemento {{number}}",
+      "removeCompetencyAria": "Quitar la competencia {{number}}",
+      "proficiencyAria": "Nivel de dominio de {{name}}",
+      "competencyFallback": "competencia",
+      "noCompetencies": "No hay competencias agregadas.",
+      "saving": "Guardando cambios...",
+      "save": "Guardar cambios del perfil"
+    },
+    "ProfileHeader": {
+      "userFallback": "Usuario",
+      "selectImage": "Selecciona un archivo de imagen",
+      "avatarTooLarge": "La imagen debe pesar menos de 5 MB",
+      "avatarUpdated": "¡Foto de perfil actualizada!",
+      "avatarUploadError": "No se pudo subir la foto de perfil",
+      "coverTooLarge": "La imagen debe pesar menos de 10 MB",
+      "coverUpdated": "¡Imagen de portada actualizada!",
+      "coverUploadError": "No se pudo subir la imagen de portada",
+      "coverAlt": "Portada",
+      "uploading": "Subiendo...",
+      "editCover": "Editar portada",
+      "changePictureAria": "Cambiar foto de perfil",
+      "editProfile": "Editar perfil",
+      "linkedinAria": "Perfil de LinkedIn",
+      "twitterAria": "Perfil de Twitter"
+    },
+    "ProfileSettings": {
+      "calendarTitle": "Integración con el calendario",
+      "calendarDescription": "Conecta tu calendario para sincronizar sesiones y reservas.",
+      "familyTitle": "Acceso familiar",
+      "familyDescription": "Invita a tu padre, madre o acudiente a seguir tu progreso.",
+      "notificationsTitle": "Notificaciones y privacidad",
+      "notificationsDescription": "Las notificaciones por correo, el resumen semanal, la visibilidad del perfil y más están en Configuración.",
+      "openSettings": "Abrir configuración"
+    },
+    "StudentInviteParentPanel": {
+      "relationship": {
+        "mother": "Madre",
+        "father": "Padre",
+        "sibling": "Hermano/a",
+        "guardian": "Acudiente",
+        "other": "Otro"
+      },
+      "status": {
+        "accepted": "Aceptada",
+        "pending": "Invitación enviada",
+        "expired": "Vencida"
+      },
+      "resendInvite": "Reenviar invitación",
+      "revokeAccess": "Revocar acceso",
+      "title": "Padres y acudientes",
+      "linkedCount_one": "{{count}} vinculado",
+      "linkedCount_other": "{{count}} vinculados",
+      "pendingCount_one": "{{count}} invitación pendiente",
+      "pendingCount_other": "{{count}} invitaciones pendientes",
+      "inviteParent": "Invitar a padre o madre",
+      "fullName": "Nombre completo *",
+      "namePlaceholder": "p. ej., María González",
+      "email": "Correo electrónico *",
+      "emailPlaceholder": "acudiente@correo.com",
+      "relationshipLabel": "Parentesco con el estudiante",
+      "personalMessage": "Mensaje personal",
+      "optional": "(opcional)",
+      "messagePlaceholder": "Agrega un mensaje corto al correo de invitación...",
+      "sending": "Enviando…",
+      "sendInvite": "Enviar invitación",
+      "emptyTitle": "Aún no hay padres ni acudientes vinculados",
+      "emptyDescription": "Haz clic en «Invitar a padre o madre» para enviar una invitación de acceso al portal"
+    },
+    "CareerDetailPanel": {
+      "general": "General",
+      "matchScore": "Puntuación de coincidencia",
+      "aiInsight": "Análisis de IA",
+      "keyFacts": "Datos clave",
+      "medianSalary": "Salario mediano",
+      "salaryPerYear": "${{amount}} mil/año",
+      "growth": "Crecimiento",
+      "remote": "Remoto",
+      "eligible": "Posible",
+      "industries": "Industrias",
+      "skillsToBridge": "Habilidades por desarrollar",
+      "keySkills": "Habilidades clave",
+      "viewFullDetails": "Ver todos los detalles"
+    },
+    "CourseDetailPanel": {
+      "rating": "Calificación",
+      "duration": "Duración",
+      "durationWeeks_one": "{{count}} semana",
+      "durationWeeks_other": "{{count}} semanas",
+      "students": "Estudiantes",
+      "about": "Acerca del curso",
+      "skillsYoullLearn": "Habilidades que aprenderás",
+      "syllabus_one": "Programa ({{count}} módulo)",
+      "syllabus_other": "Programa ({{count}} módulos)",
+      "module": "Módulo {{number}}",
+      "moreModules_one": "+{{count}} módulo más",
+      "moreModules_other": "+{{count}} módulos más",
+      "startLearning": "Empezar a aprender",
+      "reviewCourse": "Repasar el curso",
+      "done": "Terminado"
+    },
+    "UniversityGoalButton": {
+      "isYourGoal": "{{university}} es tu meta de graduación",
+      "studyingWhat": "Ingresar a {{university}}: ¿para estudiar qué?",
+      "majorPlaceholder": "Carrera que te interesa (p. ej., ingeniería de sistemas)",
+      "saveGoal": "Guardar meta"
+    },
+    "errorBoundarySection": {
+      "message": "Esta sección tuvo un error. Intenta actualizar la página."
+    },
+    "loadingSpinner": {
+      "loading": "Cargando",
+      "pleaseWait": "Cargando contenido, espera un momento..."
+    },
+    "queryStateBoundary": {
+      "loadFailed": "No pudimos cargar estos datos. Es un problema temporal, no un registro vacío.",
+      "tryAgain": "Intentar de nuevo"
+    },
+    "stripeCheckout": {
+      "initFailed": "No se pudo iniciar el pago",
+      "redirecting": "Redirigiendo a Stripe...",
+      "payWithStripe": "Pagar con Stripe"
+    },
+    "coachesTable": {
+      "contractStatusAria": "Estado del contrato: {{status}}",
+      "noContractStatus": "Sin estado de contrato"
+    },
+    "activeFilterPills": {
+      "clearAll": "Borrar todo"
+    },
+    "moderationMenu": {
+      "reportSubmitted": "Reporte enviado. Nuestro equipo lo revisará.",
+      "reportFailed": "No se pudo enviar el reporte.",
+      "unblockedToast": "Desbloqueaste a {{name}}.",
+      "blockedToast": "Bloqueaste a {{name}}. Ya no podrá enviarte mensajes.",
+      "actionFailed": "La acción falló. Inténtalo de nuevo.",
+      "moreOptions": "Más opciones",
+      "menuAria": "Reportar o bloquear a este usuario",
+      "reportName": "Reportar a {{name}}",
+      "reasonPlaceholder": "¿Cuál es el problema? (p. ej., acoso, contacto inapropiado)",
+      "submitting": "Enviando…",
+      "submitReport": "Enviar reporte",
+      "unblockName": "Desbloquear a {{name}}",
+      "blockName": "Bloquear a {{name}}"
+    },
+    "recommendationActionMenu": {
+      "actionFailed": "La acción falló",
+      "accept": "Aceptar",
+      "accepted": "Solicitud aceptada",
+      "decline": "Rechazar",
+      "declinePrompt": "Motivo del rechazo (opcional; el estudiante lo verá):",
+      "declined": "Solicitud rechazada",
+      "markInProgress": "Marcar como en progreso",
+      "markedInProgress": "Estado actualizado a en progreso",
+      "uploadLetter": "Subir carta",
+      "downloadLetter": "Descargar carta"
+    },
+    "recommendationStatus": {
+      "requested": "Solicitada",
+      "accepted": "Aceptada",
+      "inProgress": "En progreso",
+      "submitted": "Enviada",
+      "declined": "Rechazada"
+    },
+    "uploadLetterDialog": {
+      "uploaded": "Carta subida",
+      "uploadFailed": "No se pudo subir el archivo",
+      "hint": "Solo PDF. Al subirla, la solicitud se marca como enviada y se notifica al estudiante.",
+      "fileLabel": "PDF de la carta",
+      "upload": "Subir"
+    },
+    "recommendationInbox": {
+      "emptyTitle": "No hay solicitudes de recomendación",
+      "emptyBody": "Cuando un estudiante te pida una carta, aparecerá aquí."
+    },
+    "gradeImportForm": {
+      "uploading": "Subiendo..."
+    },
+    "importJobStatusPanel": {
+      "title": "Trabajo de importación",
+      "status": {
+        "pending": "pendiente",
+        "processing": "en proceso",
+        "completed": "completado",
+        "failed": "fallido"
+      },
+      "totalRows": "Total de filas:",
+      "imported_one": "{{count}} importada",
+      "imported_other": "{{count}} importadas",
+      "failed_one": "{{count}} fallida",
+      "failed_other": "{{count}} fallidas",
+      "fetchFailed": "No se pudo obtener el estado del trabajo. Es posible que el servidor aún no admita consultas periódicas.",
+      "downloadFailures": "Descargar CSV de errores",
+      "dismiss": "Descartar"
+    },
+    "inviteParentPanel": {
+      "relationship": {
+        "mother": "Madre",
+        "father": "Padre",
+        "sibling": "Hermano/a",
+        "guardian": "Tutor legal",
+        "other": "Otro"
+      },
+      "status": {
+        "accepted": "Aceptada",
+        "pending": "Invitación enviada",
+        "expired": "Vencida"
+      },
+      "resendInvite": "Reenviar invitación",
+      "revokeAccess": "Revocar acceso",
+      "title": "Padres y tutores",
+      "linkedCount_one": "{{count}} vinculado",
+      "linkedCount_other": "{{count}} vinculados",
+      "pendingCount_one": "{{count}} invitación pendiente",
+      "pendingCount_other": "{{count}} invitaciones pendientes",
+      "inviteButton": "Invitar padre/madre",
+      "dialogTitle": "Invitar padre, madre o tutor",
+      "dialogDescription": "Envía una invitación de acceso al portal para",
+      "fullName": "Nombre completo *",
+      "namePlaceholder": "p. ej., María González",
+      "email": "Correo electrónico *",
+      "relationshipLabel": "Parentesco con el estudiante",
+      "personalMessage": "Mensaje personal",
+      "optional": "(opcional)",
+      "messagePlaceholder": "Agrega un mensaje corto al correo de invitación...",
+      "sending": "Enviando…",
+      "sendInvite": "Enviar invitación",
+      "emptyTitle": "Aún no hay padres ni tutores vinculados",
+      "emptyHint": "Haz clic en \"Invitar padre/madre\" para enviar una invitación de acceso al portal"
+    },
+    "breadcrumb": {
+      "ariaLabel": "Ruta de navegación"
+    },
+    "errorMessage": {
+      "authFailed": "Error de autenticación"
+    },
+    "miniChart": {
+      "activity": "Actividad"
+    },
+    "skeletons": {
+      "chart": "Cargando datos del gráfico...",
+      "document": "Cargando documento...",
+      "card": "Cargando contenido de la tarjeta...",
+      "page": "Cargando contenido de la página..."
+    },
+    "sessionsList": {
+      "upcoming": "Próximas llamadas",
+      "join": "Unirse",
+      "activeNow": "Activas ahora",
+      "inProgress": "En curso",
+      "rejoin": "Volver a unirse",
+      "recent": "Llamadas recientes",
+      "history": "Historial de llamadas",
+      "emptyTitle": "Aún no hay videollamadas",
+      "emptyHint": "Haz clic en \"Nueva llamada\" para iniciar o programar una videollamada individual."
+    },
+    "videoCall": {
+      "justNow": "Hace un momento",
+      "minutesAgo_one": "hace {{count}} min",
+      "minutesAgo_other": "hace {{count}} min",
+      "hoursAgo_one": "hace {{count}} h",
+      "hoursAgo_other": "hace {{count}} h",
+      "errors": {
+        "loadSession": "No se pudo cargar la sesión. Es posible que haya vencido o que no tengas acceso.",
+        "pleaseTryAgain": "Inténtalo de nuevo.",
+        "connection": "Error de conexión: {{detail}}",
+        "initFailed": "No se pudo iniciar el sistema de video. Actualiza la página.",
+        "joinFailed": "No se pudo unir a la sesión. {{detail}}",
+        "startVideo": "No se pudo activar el video: {{detail}}",
+        "stopVideo": "No se pudo desactivar el video: {{detail}}",
+        "mute": "No se pudo silenciar el audio: {{detail}}",
+        "unmute": "No se pudo activar el audio: {{detail}}"
+      },
+      "callEnded": "Llamada finalizada",
+      "noteSaved": "Nota guardada",
+      "noteSaveFailed": "No se pudo guardar la nota",
+      "unableToJoin": "No es posible unirse",
+      "back": "Volver a mensajes",
+      "initializingSystem": "Iniciando el sistema de video...",
+      "videoOff": "Tu video está desactivado",
+      "yourCamera": "Tu cámara",
+      "gpa": "GPA: {{gpa}}",
+      "assessmentStatus": {
+        "completed": "completada",
+        "in_progress": "en progreso",
+        "not_started": "sin iniciar"
+      },
+      "credits": "Créditos: {{earned}}/{{required}}",
+      "graduationRequirementNotSet": "Requisito de graduación sin definir",
+      "progress": "Progreso: {{percentage}} %",
+      "pastNotes": "Notas anteriores",
+      "noNotes": "Aún no hay notas",
+      "noteType": {
+        "general": "general",
+        "meeting": "reunión",
+        "follow_up": "seguimiento",
+        "academic": "académica",
+        "career": "carrera",
+        "personal": "personal"
+      },
+      "editNote": "Editar nota",
+      "sessionNotes": "Notas de la sesión",
+      "newNote": "Nueva nota",
+      "notesPlaceholder": "Escribe aquí las notas de la sesión...",
+      "saveNote": "Guardar nota",
+      "coursePlanTitle": "Plan de cursos y recomendaciones",
+      "currentEnrollments": "Inscripciones actuales",
+      "creditsShort": "{{credits}} cr.",
+      "noCoursePlan": "No hay datos del plan de cursos",
+      "graduationProgress": "Progreso de graduación",
+      "onTrack": "Al día",
+      "atRisk": "En riesgo",
+      "creditsOf": "{{earned}} / {{required}} créditos",
+      "aiRecommendations": "Recomendaciones de IA",
+      "priority": {
+        "high": "alta",
+        "medium": "media",
+        "low": "baja"
+      },
+      "connecting": "Conectando a la sesión...",
+      "endAndLeave": "Finalizar y salir",
+      "participantVideo": "Video de {{name}}",
+      "startSession": "Iniciar sesión de video",
+      "initializing": "Iniciando...",
+      "waitingFor": "Esperando a que {{name}} se una...",
+      "exitFullScreen": "Salir de pantalla completa",
+      "enterFullScreen": "Pantalla completa",
+      "ending": "Finalizando...",
+      "endSession": "Finalizar sesión",
+      "pastNotesTitle": "Notas anteriores",
+      "newNoteTitle": "Nueva nota",
+      "coursePlanButton": "Plan de cursos y recomendaciones",
+      "turnOffVideo": "Desactivar video",
+      "turnOnVideo": "Activar video",
+      "muteMic": "Silenciar micrófono",
+      "unmuteMic": "Activar micrófono",
+      "dismissError": "Cerrar error"
+    }
   }
 }

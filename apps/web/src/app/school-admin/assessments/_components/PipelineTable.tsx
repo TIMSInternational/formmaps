@@ -113,7 +113,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
             }}>
-              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>Multiple Intelligence Lens</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{t("pipeline.milName")}</span>
               <span style={{
                 fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
                 background: statusBg(student.mil), color: statusColor(student.mil), textTransform: "uppercase",
@@ -238,10 +238,13 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
     const hasMilIncomplete = selectedStudents.some(s => s.mil !== "done");
     const has360Incomplete = selectedStudents.some(s => s.eval360 !== "done");
     const hasPersonalityIncomplete = selectedStudents.some(s => s.personality !== "done");
-    if (hasPcaIncomplete) pendingTypes.push("PCA (Personal Competence Analysis)");
-    if (hasMilIncomplete) pendingTypes.push("MIL (Multiple Intelligence Lens)");
-    if (has360Incomplete) pendingTypes.push("360 Evaluation");
-    if (hasPersonalityIncomplete) pendingTypes.push("Personality Assessment");
+    // Stable codes, not display text: both backends turn them into names in each STUDENT's
+    // language (the reminder email). They still accept the old English strings, for clients
+    // that have not reloaded this bundle.
+    if (hasPcaIncomplete) pendingTypes.push("pca");
+    if (hasMilIncomplete) pendingTypes.push("mil");
+    if (has360Incomplete) pendingTypes.push("eval360");
+    if (hasPersonalityIncomplete) pendingTypes.push("personality");
   }
 
   return (
@@ -342,10 +345,10 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
               <th style={{ ...thStyle, textAlign: "left" }}>{t("counselor:pipeline.colStudent")}</th>
               <th style={thStyle}>{t("counselor:pipeline.colGrade")}</th>
               {EXAM_TYPES.map(ex => (
-                <th key={ex} style={thStyle} title={ex}>{t(EXAM_SHORT[ex])}</th>
+                <th key={ex} style={thStyle} title={t(EXAM_SHORT[ex])}>{t(EXAM_SHORT[ex])}</th>
               ))}
-              <th style={thStyle}>MIL</th>
-              <th style={thStyle}>360</th>
+              <th style={thStyle}>{t("counselor:pipeline.colMil")}</th>
+              <th style={thStyle}>{t("counselor:pipeline.col360")}</th>
               <th style={thStyle}>{t("assessments.pipeline.colPersonality")}</th>
             </tr>
           </thead>

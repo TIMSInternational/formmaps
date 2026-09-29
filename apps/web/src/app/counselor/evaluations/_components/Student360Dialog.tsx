@@ -84,14 +84,14 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
       toast.success(action === "extend" ? t("dialog360.extendToast", { n: days || 7 }) : t("dialog360.resendToast", "Email resent"));
       await refreshGroups();
     } catch {
-      toast.error(`Failed to ${action}`);
+      toast.error(action === "extend" ? t("ui.evaluations.extendFailed") : t("ui.evaluations.resendFailed"));
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleAddEvaluator = async () => {
-    if (!newEval.name.trim() || !newEval.email.trim()) { toast.error("Name and email required"); return; }
+    if (!newEval.name.trim() || !newEval.email.trim()) { toast.error(t("ui.evaluations.nameEmailRequired")); return; }
     setAddLoading(true);
     try {
       const isVocational = newEval.instrument === "vocational";
@@ -110,15 +110,15 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
         },
       });
       toast.success(res?.data?.emailSent === false
-        ? `${newEval.name} added — couldn't email the invitation, use Resend`
-        : `Invitation sent to ${newEval.name}`);
+        ? t("ui.evaluations.addedNoEmail", { name: newEval.name })
+        : t("ui.evaluations.invitationSentTo", { name: newEval.name }));
       setNewEval({ name: "", email: "", relation: "Parent", groupType: "parent", instrument: "vocational" });
       setInstrumentVersion(undefined);
       setShowAddForm(false);
       await refreshGroups();
     } catch (err: unknown) {
       const e = err as { response?: { data?: { message?: string } } };
-      toast.error(e?.response?.data?.message || "Failed to add evaluator");
+      toast.error(e?.response?.data?.message || t("ui.evaluations.addFailed"));
     } finally {
       setAddLoading(false);
     }
@@ -128,10 +128,10 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
     setActionLoading("send-all");
     try {
       await apiRequest(`/evaluation/send-email-invitations/${student.studentId}`, { method: "POST" });
-      toast.success("All invitations sent");
+      toast.success(t("ui.evaluations.allInvitationsSent"));
       await refreshGroups();
     } catch {
-      toast.error("Failed to send invitations");
+      toast.error(t("ui.evaluations.sendInvitationsFailed"));
     } finally {
       setActionLoading(null);
     }
@@ -158,7 +158,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
               {student.name} — {t("dialog360.title", "360° Evaluation")}
             </DialogTitle>
             <DialogDescription style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-              {student.email} {student.gradeLevel ? `| Grade ${student.gradeLevel}` : ""} | {completed}/{groups.length} evaluators completed
+              {student.email} {student.gradeLevel ? `| ${t("evaluations.gradeN", { n: student.gradeLevel })}` : ""} | {t("ui.evaluations.evaluatorsCompleted", { completed, total: groups.length })}
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -219,8 +219,8 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                   style={{ flex: 1, height: 34, borderRadius: 6, padding: "0 8px", fontSize: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", outline: "none" }}>
                   {relationOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
-                <label htmlFor="counselor-instrument-select" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>Instrument</label>
-                <select id="counselor-instrument-select" aria-label="Instrument" value={newEval.instrument}
+                <label htmlFor="counselor-instrument-select" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>{t("ui.evaluations.instrument")}</label>
+                <select id="counselor-instrument-select" aria-label={t("ui.evaluations.instrument")} value={newEval.instrument}
                   onChange={async (e) => {
                     const val = e.target.value;
                     setNewEval({ ...newEval, instrument: val });
@@ -296,7 +296,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                           {g.evaluatorEmail}
                           {g.tokenExpiryDate && !isComplete && (
                             <span style={{ marginLeft: 8, color: isExpired ? "#ef4444" : "var(--admin-font-tertiary)" }}>
-                              | Expires {new Date(g.tokenExpiryDate).toLocaleDateString()}
+                              | {t("ui.evaluations.expires", { date: new Date(g.tokenExpiryDate).toLocaleDateString() })}
                             </span>
                           )}
                         </div>
@@ -312,12 +312,12 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                         </span>
                         {!isComplete && (
                           <div style={{ display: "flex", gap: 2 }}>
-                            <button title="Extend deadline" disabled={!!actionLoading}
+                            <button title={t("ui.evaluations.extendDeadline")} disabled={!!actionLoading}
                               onClick={() => setExtendingGroupId(extendingGroupId === g.id ? null : g.id)}
                               style={{ width: 26, height: 26, borderRadius: 4, border: extendingGroupId === g.id ? "1px solid var(--admin-accent-blue)" : "1px solid var(--admin-border-default)", background: extendingGroupId === g.id ? "rgba(59,130,246,0.05)" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                               <TimerReset style={{ width: 11, height: 11, color: "var(--admin-accent-blue)" }} />
                             </button>
-                            <button title="Resend invitation" disabled={!!actionLoading}
+                            <button title={t("ui.evaluations.resendInvitation")} disabled={!!actionLoading}
                               onClick={() => handleAction(g.id, "resend")}
                               style={{ width: 26, height: 26, borderRadius: 4, border: "1px solid var(--admin-border-default)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                               {actionLoading === `${g.id}-resend` ? <Loader2 style={{ width: 11, height: 11, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 11, height: 11, color: "#f59e0b" }} />}

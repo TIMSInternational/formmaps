@@ -32,11 +32,11 @@ export function UploadLetterDialog({
     setUploading(true);
     try {
       await uploadRecommendationLetter(requestId, file);
-      toast.success("Letter uploaded");
+      toast.success(t("components.uploadLetterDialog.uploaded"));
       onUploaded();
       onClose();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Upload failed");
+      toast.error(err instanceof Error ? err.message : t("components.uploadLetterDialog.uploadFailed"));
     } finally {
       setUploading(false);
     }
@@ -47,7 +47,7 @@ export function UploadLetterDialog({
   return (
     <div
       role="dialog"
-      aria-label="Upload letter"
+      aria-label={t("recommendations.uploadLetter.title")}
       style={{ position: "fixed", inset: 0, zIndex: 60, display: "flex", alignItems: "center", justifyContent: "center", background: "rgba(0,0,0,0.4)" }}
       onClick={onClose}
     >
@@ -57,10 +57,10 @@ export function UploadLetterDialog({
       >
         <h2 style={{ fontSize: 15, fontWeight: 700, color: "var(--admin-font-primary)", marginBottom: 4 }}>{t("recommendations.uploadLetter.title")}</h2>
         <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginBottom: 14 }}>
-          PDF only. Uploading marks the request as submitted and notifies the student.
+          {t("components.uploadLetterDialog.hint")}
         </p>
         <label htmlFor="letter-pdf" style={{ display: "block", fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 6 }}>
-          Letter PDF
+          {t("components.uploadLetterDialog.fileLabel")}
         </label>
         <input
           id="letter-pdf"
@@ -75,7 +75,7 @@ export function UploadLetterDialog({
             disabled={uploading}
             style={{ height: 34, padding: "0 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)", border: "1px solid var(--admin-border-default)", cursor: uploading ? "not-allowed" : "pointer" }}
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={handleUpload}
@@ -83,7 +83,7 @@ export function UploadLetterDialog({
             style={{ height: 34, padding: "0 14px", borderRadius: 6, fontSize: 13, fontWeight: 600, background: "#102B47", color: "#fff", border: "none", cursor: !file || uploading ? "not-allowed" : "pointer", opacity: !file || uploading ? 0.6 : 1, display: "flex", alignItems: "center", gap: 6 }}
           >
             {uploading ? <Loader2 style={{ width: 14, height: 14 }} className="animate-spin" /> : <UploadCloud style={{ width: 14, height: 14 }} />}
-            Upload
+            {t("components.uploadLetterDialog.upload")}
           </button>
         </div>
       </div>

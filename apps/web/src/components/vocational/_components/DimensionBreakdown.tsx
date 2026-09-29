@@ -16,7 +16,8 @@ function bar(value: number) {
 }
 
 export function DimensionBreakdown({ dimensions }: { dimensions: DimensionScore[] }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isEnglish = !(i18n?.language ?? "").toLowerCase().startsWith("es");
   const [open, setOpen] = useState<string | null>(null);
   return (
     <div className={CARD}>
@@ -30,7 +31,7 @@ export function DimensionBreakdown({ dimensions }: { dimensions: DimensionScore[
               <button type="button" onClick={() => setOpen(expanded ? null : d.key)}
                 className="w-full flex items-center gap-3 text-left">
                 {expanded ? <ChevronDown className="h-4 w-4 text-gray-400" /> : <ChevronRight className="h-4 w-4 text-gray-400" />}
-                <span className="text-sm font-medium text-gray-800 w-56 shrink-0">{d.nameEs}</span>
+                <span className="text-sm font-medium text-gray-800 w-56 shrink-0">{isEnglish && d.nameEn ? d.nameEn : d.nameEs}</span>
                 {d.score === null
                   ? <span className="text-xs text-gray-400">{t("evaluation.vocational.report.noResponses")}</span>
                   : (<>{bar(d.score)}<span className="text-xs font-semibold text-gray-700 w-16 text-right">{Math.round(d.score)} · {d.band ? t(`evaluation.vocational.report.bands.${d.band}`, { defaultValue: d.band }) : ""}</span></>)}

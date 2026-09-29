@@ -1,5 +1,8 @@
 import axios, { AxiosInstance, AxiosRequestConfig, InternalAxiosRequestConfig } from 'axios';
 import { toast } from '@/hooks/useToast';
+// The bare i18next singleton (initialised by @/lib/i18n at app start). Importing @/lib/i18n here
+// would pull react-i18next into every module that talks to the API, including tests that mock it.
+import i18n from 'i18next';
 import { refreshAccessToken, isLoggedIn } from '@/services/tokenRefreshService';
 import { forceLogout } from '@/utils/tokenUtils';
 
@@ -59,9 +62,9 @@ apiClient.interceptors.response.use(
       // Without this, React Query keeps refetching → endless refresh churn that
       // looks like a crash. Force a clean logout → /login instead of looping.
       if (status === 401 && originalRequest._retry && isLoggedIn()) {
-        toast.error('Session expired', { description: 'Please log in again.' });
-        forceLogout('Your session has expired. Please log in again.');
-        const dead = new Error('Session expired. Please log in again.') as Error & { status: number };
+        toast.error(i18n.t('components.apiClient.sessionExpired'), { description: i18n.t('components.apiClient.logInAgain') });
+        forceLogout(i18n.t('components.apiClient.sessionExpiredLong'));
+        const dead = new Error(i18n.t('components.apiClient.sessionExpiredShort')) as Error & { status: number };
         dead.status = 401; // 4xx → apiRequest must NOT retry (no churn)
         return Promise.reject(dead);
       }
@@ -93,14 +96,14 @@ apiClient.interceptors.response.use(
             // Tearing down only cookies leaves the persisted store authenticated,
             // which makes AuthWrapper bounce /login back into the portal forever.
             processQueue(new Error('Token refresh failed'));
-            toast.error('Session expired', { description: 'Please log in again.' });
-            forceLogout('Your session has expired. Please log in again.');
-            return Promise.reject(new Error('Session expired. Please log in again.'));
+            toast.error(i18n.t('components.apiClient.sessionExpired'), { description: i18n.t('components.apiClient.logInAgain') });
+            forceLogout(i18n.t('components.apiClient.sessionExpiredLong'));
+            return Promise.reject(new Error(i18n.t('components.apiClient.sessionExpiredShort')));
           }
         } catch (refreshError) {
           processQueue(refreshError as Error);
-          toast.error('Session expired', { description: 'Please log in again.' });
-          forceLogout('Your session has expired. Please log in again.');
+          toast.error(i18n.t('components.apiClient.sessionExpired'), { description: i18n.t('components.apiClient.logInAgain') });
+          forceLogout(i18n.t('components.apiClient.sessionExpiredLong'));
           return Promise.reject(refreshError);
         } finally {
           isRefreshing = false;
@@ -111,26 +114,26 @@ apiClient.interceptors.response.use(
 
       switch (status) {
         case 401:
-          message = 'Your session has expired. Please log in again.';
+          message = i18n.t('components.apiClient.sessionExpiredLong');
           break;
         case 403:
-          message = 'You do not have permission to perform this action.';
+          message = i18n.t('components.apiClient.noPermission');
           break;
         case 404:
-          message = 'The requested resource was not found.';
+          message = i18n.t('components.apiClient.notFound');
           break;
         case 500:
-          message = 'Internal server error. Please try again later.';
+          message = i18n.t('components.apiClient.internalError');
           break;
         default:
-          message = (status >= 500) ? 'Something went wrong. Please try again.' : (data?.message || 'Request failed. Please try again.');
+          message = (status >= 500) ? i18n.t('components.apiClient.tryAgain') : (data?.message || i18n.t('components.apiClient.requestFailed'));
       }
 
       if (status === 403 && data?.code !== 'SUBSCRIPTION_REQUIRED') {
         // Subscription-gate 403s are handled by AuthWrapper's /subscribe redirect;
         // toasting each gated query produced a toast wall during the bounce.
         // Stable id: repeat 403s replace the toast instead of stacking.
-        toast.warning('Access denied', { id: 'access-denied', description: message });
+        toast.warning(i18n.t('components.apiClient.accessDenied'), { id: 'access-denied', description: message });
       }
       // 5xx and network errors: callers decide whether to toast
       // (React Query has its own retry, so toasting here causes false alarms)
@@ -140,9 +143,9 @@ apiClient.interceptors.response.use(
       enhancedError.data = data;
       return Promise.reject(enhancedError);
     } else if (error.request) {
-      return Promise.reject(new Error('Network error. Please check your connection and try again.'));
+      return Promise.reject(new Error(i18n.t('components.apiClient.networkError')));
     } else {
-      return Promise.reject(new Error(error.message || 'An unexpected error occurred.'));
+      return Promise.reject(new Error(error.message || i18n.t('components.apiClient.unexpected')));
     }
   }
 );
@@ -204,9 +207,9 @@ export async function apiRequest<T = any>(
       if (attempt === retries) {
         if (shouldToast) {
           if (status && status >= 500) {
-            toast.error('Server error', { description: 'Something went wrong. Please try again.' });
+            toast.error(i18n.t('components.apiClient.serverError'), { description: i18n.t('components.apiClient.tryAgain') });
           } else if (!status) {
-            toast.error('Connection lost', { description: 'Please check your internet connection.' });
+            toast.error(i18n.t('components.apiClient.connectionLost'), { description: i18n.t('components.apiClient.checkConnection') });
           }
         }
         throw error;

@@ -146,7 +146,7 @@ export default function LIAAssessmentPage() {
           </h2>
           <p className="text-gray-600 mb-6">
             {language === "es"
-              ? "Ya completaste la evaluación MIL. Puedes revisar tus resultados."
+              ? "Ya completaste la evaluación LIA. Puedes revisar tus resultados."
               : "You already completed the LIA assessment. You can review your results."}
           </p>
           <button

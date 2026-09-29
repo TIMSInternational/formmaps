@@ -10,6 +10,7 @@ import {
 } from "@/services/portfolioService";
 import type { PortfolioItemPayload, PortfolioItemType } from "@/types/portfolio";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n";
 
 export const portfolioKeys = {
   all: ["portfolio"] as const,
@@ -44,7 +45,7 @@ export function useCreatePortfolioItem() {
     mutationFn: (payload: PortfolioItemPayload) => createPortfolioItem(payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.all });
-      toast.success("Portfolio item created");
+      toast.success(i18n.t("components.hooks.portfolio.created"));
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -57,7 +58,7 @@ export function useUpdatePortfolioItem() {
       updatePortfolioItem(id, payload),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.all });
-      toast.success("Portfolio item updated");
+      toast.success(i18n.t("components.hooks.portfolio.updated"));
     },
     onError: (err: Error) => toast.error(err.message),
   });
@@ -69,7 +70,7 @@ export function useDeletePortfolioItem() {
     mutationFn: (id: string) => deletePortfolioItem(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: portfolioKeys.all });
-      toast.success("Portfolio item deleted");
+      toast.success(i18n.t("components.hooks.portfolio.deleted"));
     },
     onError: (err: Error) => toast.error(err.message),
   });

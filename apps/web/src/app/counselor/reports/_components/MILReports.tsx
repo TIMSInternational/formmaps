@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Brain, Loader2, Download, XCircle, FileText } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { ScoreBar, StudentInfoHeader, type ReportStudent } from "./ReportShared";
 import { LiaResultsPanel } from "./LiaResultsPanel";
 
 export function MILReports({ student }: { student: ReportStudent }) {
+  const { t } = useTranslation("counselor");
   const [downloading, setDownloading] = useState<string | null>(null);
   const [milData, setMilData] = useState<Record<string, unknown> | null>(null);
   const [fetched, setFetched] = useState(false);
@@ -31,11 +33,11 @@ export function MILReports({ student }: { student: ReportStudent }) {
 
   // API keys are the canonical ExamType names; older payloads used lowercase.
   const cognitiveScores = hasMIL ? [
-    { label: "Reasoning", key: "VerbalReasoning", legacyKey: "reasoning", color: "#8b5cf6" },
-    { label: "Detection", key: "PatternRecognition", legacyKey: "detection", color: "var(--admin-accent-blue)" },
-    { label: "Numeric", key: "NumericVelocity", legacyKey: "numeric", color: "#14b8a6" },
-    { label: "Memory", key: "WorkingMemory", legacyKey: "memory", color: "#f59e0b" },
-    { label: "Orientation", key: "VisualRotation", legacyKey: "orientation", color: "#ef4444" },
+    { label: "Reasoning", labelKey: "ui.reports.mil.reasoning", key: "VerbalReasoning", legacyKey: "reasoning", color: "#8b5cf6" },
+    { label: "Detection", labelKey: "ui.reports.mil.detection", key: "PatternRecognition", legacyKey: "detection", color: "var(--admin-accent-blue)" },
+    { label: "Numeric", labelKey: "ui.reports.mil.numeric", key: "NumericVelocity", legacyKey: "numeric", color: "#14b8a6" },
+    { label: "Memory", labelKey: "ui.reports.mil.memory", key: "WorkingMemory", legacyKey: "memory", color: "#f59e0b" },
+    { label: "Orientation", labelKey: "ui.reports.mil.orientation", key: "VisualRotation", legacyKey: "orientation", color: "#ef4444" },
   ] : [];
 
   const completedExams = (milData?.completedExams as number) ?? 0;
@@ -52,8 +54,8 @@ export function MILReports({ student }: { student: ReportStudent }) {
       }, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
       a.download = `MIL-Profile-${student.name.replace(/\s+/g, "-")}.json`; a.click();
-      toast.success("MIL profile downloaded");
-    } catch { toast.error("Failed"); }
+      toast.success(t("ui.reports.mil.profileDownloaded"));
+    } catch { toast.error(t("ui.reports.downloadFailed")); }
     setDownloading(null);
   };
 
@@ -70,14 +72,14 @@ export function MILReports({ student }: { student: ReportStudent }) {
       }, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
       a.download = `MIL-Exams-${student.name.replace(/\s+/g, "-")}.json`; a.click();
-      toast.success("Exam history downloaded");
-    } catch { toast.error("Failed"); }
+      toast.success(t("ui.reports.mil.historyDownloaded"));
+    } catch { toast.error(t("ui.reports.downloadFailed")); }
     setDownloading(null);
   };
 
   return (
     <div>
-      <StudentInfoHeader student={student} icon={Brain} iconColor="var(--admin-accent-blue)" subtitle="MIL / LIA Assessment" />
+      <StudentInfoHeader student={student} icon={Brain} iconColor="var(--admin-accent-blue)" subtitle={t("ui.reports.mil.subtitle")} />
       <div className="p-5 space-y-5">
         {!fetched ? (
           <div className="space-y-3">
@@ -87,8 +89,8 @@ export function MILReports({ student }: { student: ReportStudent }) {
         ) : !hasMIL ? (
           <div className="text-center py-6 rounded-lg bg-muted/30 border">
             <XCircle className="h-6 w-6 mx-auto mb-2 text-muted-foreground opacity-40" />
-            <div className="text-sm font-semibold">No MIL/LIA Results</div>
-            <div className="text-xs text-muted-foreground mt-1">This student hasn&apos;t completed the cognitive assessments yet.</div>
+            <div className="text-sm font-semibold">{t("ui.reports.mil.noResults")}</div>
+            <div className="text-xs text-muted-foreground mt-1">{t("ui.reports.mil.noResultsDesc")}</div>
           </div>
         ) : (
           <>
@@ -103,14 +105,14 @@ export function MILReports({ student }: { student: ReportStudent }) {
                 <div className="text-2xl font-bold" style={{ color: "#14b8a6" }}>
                   {completedExams}/{totalExams}
                 </div>
-                <div className="text-xs text-muted-foreground mt-1">Exams Completed</div>
+                <div className="text-xs text-muted-foreground mt-1">{t("ui.reports.mil.examsCompleted")}</div>
               </div>
               {milData?.overallScore != null && (
                 <div className="rounded-lg border bg-card p-4 text-center">
                   <div className="text-2xl font-bold" style={{ color: "#8b5cf6" }}>
                     {milData.overallScore as number}%
                   </div>
-                  <div className="text-xs text-muted-foreground mt-1">Overall Score</div>
+                  <div className="text-xs text-muted-foreground mt-1">{t("ui.reports.mil.overallScore")}</div>
                 </div>
               )}
             </motion.div>
@@ -124,12 +126,12 @@ export function MILReports({ student }: { student: ReportStudent }) {
             >
               <div className="text-sm font-semibold flex items-center gap-2">
                 <Brain className="h-4 w-4 text-[var(--admin-accent-blue)]" />
-                MIL Profile
+                {t("ui.reports.mil.profile")}
               </div>
               <div className="space-y-2.5">
                 {cognitiveScores.map((s) => {
                   const val = cognitiveProfile![s.key] ?? cognitiveProfile![s.legacyKey] ?? cognitiveProfile![s.label.toLowerCase()] ?? 0;
-                  return <ScoreBar key={s.key} label={s.label} value={val} color={s.color} />;
+                  return <ScoreBar key={s.key} label={t(s.labelKey)} value={val} color={s.color} />;
                 })}
               </div>
             </motion.div>
@@ -149,7 +151,7 @@ export function MILReports({ student }: { student: ReportStudent }) {
                 onClick={downloadCognitive}
               >
                 {downloading === "cognitive" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-                Download Profile
+                {t("ui.reports.mil.downloadProfile")}
               </Button>
               <Button
                 variant="outline"
@@ -159,7 +161,7 @@ export function MILReports({ student }: { student: ReportStudent }) {
                 onClick={downloadExamHistory}
               >
                 {downloading === "history" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-                Download Exam History
+                {t("ui.reports.mil.downloadHistory")}
               </Button>
               <Button
                 variant="outline"
@@ -168,7 +170,7 @@ export function MILReports({ student }: { student: ReportStudent }) {
                 onClick={() => setShowFullReport((v) => !v)}
               >
                 <FileText className="h-3 w-3" />
-                {showFullReport ? "Hide Full Report" : "View Full Report"}
+                {showFullReport ? t("ui.reports.hideFullReport") : t("ui.reports.viewFullReport")}
               </Button>
             </motion.div>
 

@@ -68,10 +68,10 @@ export function CareerFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("career.all_industries", "All Industries")}</SelectItem>
-                <SelectItem value="Technology">Technology</SelectItem>
-                <SelectItem value="Finance">Finance</SelectItem>
-                <SelectItem value="Retail">Retail</SelectItem>
-                <SelectItem value="Healthcare">Healthcare</SelectItem>
+                <SelectItem value="Technology">{t("components.careerFilters.industries.technology")}</SelectItem>
+                <SelectItem value="Finance">{t("components.careerFilters.industries.finance")}</SelectItem>
+                <SelectItem value="Retail">{t("components.careerFilters.industries.retail")}</SelectItem>
+                <SelectItem value="Healthcare">{t("components.careerFilters.industries.healthcare")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -86,11 +86,11 @@ export function CareerFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("career.all_education", "Any Education")}</SelectItem>
-                <SelectItem value="HighSchool">High School</SelectItem>
-                <SelectItem value="Associate">Associate</SelectItem>
-                <SelectItem value="Bachelors">Bachelors</SelectItem>
-                <SelectItem value="Masters">Masters</SelectItem>
-                <SelectItem value="PhD">PhD</SelectItem>
+                <SelectItem value="HighSchool">{t("components.careerFilters.education.highSchool")}</SelectItem>
+                <SelectItem value="Associate">{t("university.degrees.Associate")}</SelectItem>
+                <SelectItem value="Bachelors">{t("university.degrees.Bachelor")}</SelectItem>
+                <SelectItem value="Masters">{t("university.degrees.Master")}</SelectItem>
+                <SelectItem value="PhD">{t("components.careerFilters.education.phd")}</SelectItem>
               </SelectContent>
             </Select>
           </div>

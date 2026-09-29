@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { ArrowLeft, MapPin, Calendar } from "lucide-react";
 import { TrackedApplication } from "@/services/applicationService";
 import { COLUMN_LABELS, fitBadge } from "./types";
@@ -11,6 +12,7 @@ interface ApplicationHeaderProps {
 }
 
 export function ApplicationHeader({ app, onBack }: ApplicationHeaderProps) {
+  const { t } = useTranslation();
   const fit = fitBadge(app.matchScore);
 
   return (
@@ -21,13 +23,13 @@ export function ApplicationHeader({ app, onBack }: ApplicationHeaderProps) {
         style={{ color: "var(--admin-font-tertiary)" }}
       >
         <ArrowLeft className="h-3 w-3" />
-        Back to tracker
+        {t("studentUi.applications.backToTracker")}
       </button>
 
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div className="flex flex-col gap-1">
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-            Application Detail
+            {t("studentUi.applications.detailBadge")}
           </span>
           <h1 className="text-2xl sm:text-3xl font-bold text-foreground tracking-tight leading-none">
             {app.name}
@@ -53,14 +55,14 @@ export function ApplicationHeader({ app, onBack }: ApplicationHeaderProps) {
                 border: "1px solid var(--admin-border-light)",
               }}
             >
-              {COLUMN_LABELS[app.column] ?? app.column}
+              {COLUMN_LABELS[app.column] ? t(COLUMN_LABELS[app.column]) : app.column}
             </span>
             {fit && (
               <span
                 className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                 style={{ background: fit.bg, color: fit.color }}
               >
-                {fit.label}
+                {t(fit.label)}
               </span>
             )}
             {app.matchScore && (
@@ -68,7 +70,7 @@ export function ApplicationHeader({ app, onBack }: ApplicationHeaderProps) {
                 className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
                 style={{ background: "rgba(59,130,246,0.1)", color: "var(--admin-accent-blue)" }}
               >
-                {app.matchScore}% match
+                {t("studentUi.applications.matchPercent", { score: app.matchScore })}
               </span>
             )}
           </div>

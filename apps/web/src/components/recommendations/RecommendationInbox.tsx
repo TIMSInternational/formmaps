@@ -45,8 +45,8 @@ export function RecommendationInbox({ roleLabel }: { roleLabel?: string }) {
             <div className="w-14 h-14 mx-auto mb-4 rounded-xl border flex items-center justify-center" style={{ borderColor: "var(--admin-border-default)" }}>
               <Inbox className="h-7 w-7" style={{ color: "var(--admin-accent-blue)" }} />
             </div>
-            <h3 className="text-sm font-bold text-foreground mb-1">No recommendation requests</h3>
-            <p className="text-xs text-muted-foreground max-w-md mx-auto">When a student asks you for a letter, it will appear here.</p>
+            <h3 className="text-sm font-bold text-foreground mb-1">{t("components.recommendationInbox.emptyTitle")}</h3>
+            <p className="text-xs text-muted-foreground max-w-md mx-auto">{t("components.recommendationInbox.emptyBody")}</p>
           </div>
         }
       >

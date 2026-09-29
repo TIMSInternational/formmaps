@@ -6,6 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { ChevronUp, ChevronDown } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { VocationalQuestionItem } from "@/services/vocationalTakeService";
+import { optionLabel, toVocationalLang } from "./vocationalLang";
 
 export interface VocationalAnswerValue {
   ratingValue?: number;
@@ -24,7 +25,8 @@ export function VocationalQuestionCard({
   value: VocationalAnswerValue | undefined;
   onChange: (v: VocationalAnswerValue) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = toVocationalLang(i18n?.language);
   const options = question.options ?? [];
 
   if (question.type === "likert") {
@@ -53,7 +55,7 @@ export function VocationalQuestionCard({
           return (
             <label key={o.value} htmlFor={id} className={ROW} style={ROW_STYLE}>
               <RadioGroupItem value={o.value} id={id} />
-              <span className="text-sm text-foreground">{o.labelEs}</span>
+              <span className="text-sm text-foreground">{optionLabel(o, lang)}</span>
             </label>
           );
         })}
@@ -69,7 +71,7 @@ export function VocationalQuestionCard({
         {options.map((o) => (
           <label key={o.value} className={ROW} style={ROW_STYLE}>
             <Checkbox checked={selected.includes(o.value)} onCheckedChange={() => onChange({ selectedValues: toggle(o.value) })} />
-            <span className="text-sm text-foreground">{o.labelEs}</span>
+            <span className="text-sm text-foreground">{optionLabel(o, lang)}</span>
           </label>
         ))}
       </div>
@@ -88,7 +90,10 @@ export function VocationalQuestionCard({
   const order = value?.rankingOrder?.length
     ? value.rankingOrder.slice().sort((a, b) => a.rank - b.rank).map((r) => r.value)
     : options.map((o) => o.value);
-  const labelOf = (v: string) => options.find((o) => o.value === v)?.labelEs ?? v;
+  const labelOf = (v: string) => {
+    const option = options.find((o) => o.value === v);
+    return option ? optionLabel(option, lang) : v;
+  };
   const move = (idx: number, dir: -1 | 1) => {
     const ni = idx + dir;
     if (ni < 0 || ni >= order.length) return;

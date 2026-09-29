@@ -49,18 +49,18 @@ export function StaffPanel() {
   }, [searchTerm, roleFilter]);
 
   const handleInvite = async () => {
-    if (!inviteForm.name || !inviteForm.email) { toast.error("Name and email required"); return; }
+    if (!inviteForm.name || !inviteForm.email) { toast.error(t("school_admin:ui.student360.nameEmailRequired")); return; }
     try {
       const result = await inviteStaff.mutateAsync({ name: inviteForm.name, email: inviteForm.email, roleName: inviteForm.role as "counselor" | "coach" | "staff" }) as { emailSent?: boolean };
       if (result?.emailSent === false) {
-        toast.error("Account created, but the invitation email could not be sent. Check the address, then use Resend.");
+        toast.error(t("school_admin:ui.staff.createdNoEmail"));
       } else {
-        toast.success("Invitation sent");
+        toast.success(t("school_admin:ui.staff.invitationSent"));
       }
       setIsInviteOpen(false);
       setInviteForm({ name: "", email: "", role: "counselor" });
       refetch();
-    } catch (err: any) { toast.error(err.message || "Failed to invite"); }
+    } catch (err: any) { toast.error(err.message || t("school_admin:ui.staff.inviteFailed")); }
   };
 
   const handleResendInvite = async (userId: string) => {
@@ -68,11 +68,11 @@ export function StaffPanel() {
     try {
       const res = await apiRequest(`/api/v1/school-admin/students/${userId}/resend-invite`, { method: "POST" });
       if (res?.data?.emailSent === false) {
-        toast.error("Could not send the invitation email. Verify the address is correct.");
+        toast.error(t("school_admin:ui.staff.resendNoEmail"));
       } else {
-        toast.success("Invitation resent");
+        toast.success(t("school_admin:ui.staff.resent"));
       }
-    } catch { toast.error("Failed to resend invitation"); }
+    } catch { toast.error(t("school_admin:ui.staff.resendFailed")); }
     setActionLoading(null);
   };
 
@@ -80,10 +80,10 @@ export function StaffPanel() {
     setActionLoading("deactivate");
     try {
       await apiRequest(`/api/v1/school-admin/students/${userId}`, { method: "DELETE" });
-      toast.success("User deactivated");
+      toast.success(t("school_admin:ui.staff.deactivated"));
       setSelectedUser(null);
       refetch();
-    } catch { toast.error("Failed to deactivate user"); }
+    } catch { toast.error(t("school_admin:ui.staff.deactivateFailed")); }
     setActionLoading(null);
   };
 
@@ -109,7 +109,7 @@ export function StaffPanel() {
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <div className="relative w-full md:w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--admin-font-light)" }} />
-            <Input placeholder="Search users..." className="pl-9 h-9 rounded-lg text-sm"
+            <Input placeholder={t("school_admin:ui.staff.searchUsers")} className="pl-9 h-9 rounded-lg text-sm"
               style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}
               value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
           </div>
@@ -117,13 +117,13 @@ export function StaffPanel() {
           <Select value={roleFilter} onValueChange={setRoleFilter}>
             <SelectTrigger className="w-[130px] h-9 rounded-lg text-sm"
               style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}>
-              <SelectValue placeholder="All Roles" />
+              <SelectValue placeholder={t("school_admin:ui.staff.allRoles")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">All Roles</SelectItem>
-              <SelectItem value="counselor">Counselor</SelectItem>
-              <SelectItem value="staff">Staff</SelectItem>
-              <SelectItem value="school_admin">Admin</SelectItem>
+              <SelectItem value="all">{t("school_admin:ui.staff.allRoles")}</SelectItem>
+              <SelectItem value="counselor">{t("school_admin:ui.staff.roles.counselor")}</SelectItem>
+              <SelectItem value="staff">{t("school_admin:ui.staff.roles.staff")}</SelectItem>
+              <SelectItem value="school_admin">{t("school_admin:ui.staff.adminShort")}</SelectItem>
             </SelectContent>
           </Select>
 
@@ -135,50 +135,50 @@ export function StaffPanel() {
                 background: "var(--admin-accent-green, #10b981)", color: "#fff",
                 border: "none", cursor: "pointer",
               }}>
-                <UserPlus style={{ width: 14, height: 14 }} /> Invite Staff
+                <UserPlus style={{ width: 14, height: 14 }} /> {t("school_admin:ui.staff.inviteStaff")}
               </button>
             </DialogTrigger>
             <DialogContent style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}>
               <DialogHeader>
-                <DialogTitle style={{ color: "var(--admin-font-primary)" }}>Invite Staff Member</DialogTitle>
+                <DialogTitle style={{ color: "var(--admin-font-primary)" }}>{t("school_admin:ui.staff.inviteStaffMember")}</DialogTitle>
                 <DialogDescription style={{ color: "var(--admin-font-tertiary)" }}>
-                  Send an invitation to a counselor or staff member
+                  {t("school_admin:ui.staff.inviteDescription")}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Full Name</Label>
+                  <Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.student360.fullName")}</Label>
                   <Input value={inviteForm.name} onChange={(e) => setInviteForm({ ...inviteForm, name: e.target.value })}
                     style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)", height: 36 }} />
                 </div>
                 <div className="space-y-2">
-                  <Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Email</Label>
+                  <Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("school_admin:users.table.email")}</Label>
                   <Input type="email" value={inviteForm.email} onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
                     style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)", height: 36 }} />
                 </div>
                 <div className="space-y-2">
-                  <Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Role</Label>
+                  <Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("school_admin:users.table.role")}</Label>
                   <Select value={inviteForm.role} onValueChange={(v) => setInviteForm({ ...inviteForm, role: v })}>
                     <SelectTrigger style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)", height: 36 }}>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="counselor">Counselor</SelectItem>
-                      <SelectItem value="coach">Coach</SelectItem>
-                      <SelectItem value="staff">Staff</SelectItem>
+                      <SelectItem value="counselor">{t("school_admin:ui.staff.roles.counselor")}</SelectItem>
+                      <SelectItem value="coach">{t("school_admin:ui.staff.roles.coach")}</SelectItem>
+                      <SelectItem value="staff">{t("school_admin:ui.staff.roles.staff")}</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
               <DialogFooter>
                 <Button variant="outline" onClick={() => setIsInviteOpen(false)}
-                  style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>Cancel</Button>
+                  style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>{t("school_admin:common.cancel")}</Button>
                 <button onClick={handleInvite} disabled={inviteStaff.isPending}
                   style={{
                     height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600,
                     background: "var(--admin-accent-green, #10b981)", color: "#fff", border: "none", cursor: "pointer",
                   }}>
-                  {inviteStaff.isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : "Send Invite"}
+                  {inviteStaff.isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : t("school_admin:ui.staff.sendInvite")}
                 </button>
               </DialogFooter>
             </DialogContent>
@@ -202,7 +202,7 @@ export function StaffPanel() {
         <Table>
           <TableHeader>
             <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
-              {["Name", "Email", "Role", "Grade", "Status", "Joined"].map((h) => (
+              {[t("school_admin:users.table.name"), t("school_admin:users.table.email"), t("school_admin:users.table.role"), t("school_admin:users.table.grade"), t("school_admin:users.table.status"), t("school_admin:users.table.joined")].map((h) => (
                 <TableHead key={h} className="py-3 px-4" style={{
                   fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
                   color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)",
@@ -219,7 +219,7 @@ export function StaffPanel() {
               <TableRow>
                 <TableCell colSpan={6} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
                   <Users className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} />
-                  <p className="text-sm">No users found</p>
+                  <p className="text-sm">{t("school_admin:ui.staff.noUsers")}</p>
                 </TableCell>
               </TableRow>
             ) : (
@@ -251,7 +251,7 @@ export function StaffPanel() {
                         borderColor: rc.color, color: rc.color, background: rc.bg, border: "none",
                       }}>
                         <Shield className="h-3 w-3 mr-1 opacity-60" />
-                        {role}
+                        {t(`school_admin:ui.staff.roles.${(user.roleName || user.role || "student").toLowerCase()}`, { defaultValue: role })}
                       </Badge>
                     </TableCell>
                     <TableCell className="py-3 px-4" style={{ fontSize: 13, color: "var(--admin-font-light)" }}>
@@ -262,7 +262,7 @@ export function StaffPanel() {
                         background: (user.status || "active") === "active" ? "rgba(16,185,129,0.1)" : "rgba(107,114,128,0.1)",
                         color: (user.status || "active") === "active" ? "#10b981" : "#6b7280",
                       }}>
-                        {user.status || "active"}
+                        {t(`school_admin:users.status.${user.status || "active"}`, { defaultValue: user.status || "active" })}
                       </Badge>
                     </TableCell>
                     <TableCell className="py-3 px-4" style={{ fontSize: 12, color: "var(--admin-font-light)" }}>
@@ -280,16 +280,15 @@ export function StaffPanel() {
           borderTop: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)",
         }}>
           <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>
-            Page <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{page}</span> of{" "}
-            <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{totalPages}</span>
+            {t("school_admin:ui.results.pageOf", { page, total: totalPages })}
           </p>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1} className="h-7 rounded-md text-xs"
-              style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>Previous</Button>
+              style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>{t("school_admin:users.pagination.previous")}</Button>
             <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page >= totalPages} className="h-7 rounded-md text-xs"
-              style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>Next</Button>
+              style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>{t("school_admin:users.pagination.next")}</Button>
           </div>
         </div>
       </div>
@@ -320,7 +319,7 @@ export function StaffPanel() {
                       <Badge variant="outline" className="capitalize text-xs" style={{
                         borderColor: rc.color, color: rc.color, background: rc.bg, border: "none",
                       }}>
-                        {role}
+                        {t(`school_admin:ui.staff.roles.${(selectedUser.roleName || selectedUser.role || "student").toLowerCase()}`, { defaultValue: role })}
                       </Badge>
                     </div>
                   </div>
@@ -335,19 +334,19 @@ export function StaffPanel() {
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <BadgeCheck style={{ width: 14, height: 14, color: isActive ? "#10b981" : "#6b7280", flexShrink: 0 }} />
                     <span style={{ fontSize: 13, color: isActive ? "#10b981" : "#6b7280", fontWeight: 500 }}>
-                      {isActive ? "Active" : "Inactive"}
+                      {isActive ? t("school_admin:users.status.active") : t("school_admin:users.status.inactive")}
                     </span>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <Calendar style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)", flexShrink: 0 }} />
                     <span style={{ fontSize: 13, color: "var(--admin-font-light)" }}>
-                      Joined {selectedUser.createdDate ? new Date(selectedUser.createdDate).toLocaleDateString() : selectedUser.joinedAt ? new Date(selectedUser.joinedAt).toLocaleDateString() : "—"}
+                      {t("school_admin:users.table.joined")} {selectedUser.createdDate ? new Date(selectedUser.createdDate).toLocaleDateString() : selectedUser.joinedAt ? new Date(selectedUser.joinedAt).toLocaleDateString() : "—"}
                     </span>
                   </div>
                   {selectedUser.gradeLevel && (
                     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                       <Users style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)", flexShrink: 0 }} />
-                      <span style={{ fontSize: 13, color: "var(--admin-font-light)" }}>Grade {selectedUser.gradeLevel}</span>
+                      <span style={{ fontSize: 13, color: "var(--admin-font-light)" }}>{t("school_admin:graduation.gradeLabel", { grade: selectedUser.gradeLevel })}</span>
                     </div>
                   )}
                 </div>
@@ -358,11 +357,11 @@ export function StaffPanel() {
                   display: "flex", flexDirection: "column", gap: 8,
                 }}>
                   <div style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)", marginBottom: 2 }}>
-                    Actions
+                    {t("school_admin:users.table.actions")}
                   </div>
 
                   <button
-                    onClick={() => { navigator.clipboard.writeText(selectedUser.email); toast.success("Email copied to clipboard"); }}
+                    onClick={() => { navigator.clipboard.writeText(selectedUser.email); toast.success(t("school_admin:ui.staff.emailCopied")); }}
                     style={{
                       display: "flex", alignItems: "center", gap: 10, padding: "10px 12px",
                       borderRadius: 6, border: "1px solid var(--admin-border-default)",
@@ -374,7 +373,7 @@ export function StaffPanel() {
                     onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-card)"; }}
                   >
                     <Mail style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
-                    Copy Email
+                    {t("school_admin:users.actions.copyEmail")}
                   </button>
 
                   <button
@@ -394,13 +393,13 @@ export function StaffPanel() {
                     {actionLoading === "resend"
                       ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite", color: "var(--admin-font-tertiary)" }} />
                       : <Send style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />}
-                    Resend Invitation
+                    {t("schoolAdmin.students.actions.resendInvite")}
                   </button>
 
                   {isActive && (
                     <button
                       onClick={() => {
-                        if (confirm(`Deactivate ${selectedUser.name}? They will lose access to the platform.`)) {
+                        if (confirm(t("school_admin:ui.staff.confirmDeactivate", { name: selectedUser.name }))) {
                           handleDeactivate(selectedUser.id);
                         }
                       }}
@@ -419,7 +418,7 @@ export function StaffPanel() {
                       {actionLoading === "deactivate"
                         ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />
                         : <UserX style={{ width: 14, height: 14 }} />}
-                      Deactivate User
+                      {t("school_admin:ui.staff.deactivateUser")}
                     </button>
                   )}
                 </div>

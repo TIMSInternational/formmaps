@@ -11,9 +11,11 @@ import {
   BarChart3, Briefcase, XCircle,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { StudentInfoHeader, type ReportStudent } from "./ReportShared";
 
 export function AcademicReports({ student }: { student: ReportStudent }) {
+  const { t } = useTranslation("counselor");
   const [downloading, setDownloading] = useState<string | null>(null);
   const [reportData, setReportData] = useState<Record<string, unknown> | null>(null);
   const [fetched, setFetched] = useState(false);
@@ -54,8 +56,8 @@ export function AcademicReports({ student }: { student: ReportStudent }) {
       }, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
       a.download = `Academic-Summary-${student.name.replace(/\s+/g, "-")}.json`; a.click();
-      toast.success("Academic summary downloaded");
-    } catch { toast.error("Failed"); }
+      toast.success(t("ui.reports.academicSummaryDownloaded"));
+    } catch { toast.error(t("ui.reports.downloadFailed")); }
     setDownloading(null);
   };
 
@@ -72,14 +74,14 @@ export function AcademicReports({ student }: { student: ReportStudent }) {
       }, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
       a.download = `Career-Profile-${student.name.replace(/\s+/g, "-")}.json`; a.click();
-      toast.success("Career profile downloaded");
-    } catch { toast.error("Failed"); }
+      toast.success(t("ui.reports.careerProfileDownloaded"));
+    } catch { toast.error(t("ui.reports.downloadFailed")); }
     setDownloading(null);
   };
 
   return (
     <div>
-      <StudentInfoHeader student={student} icon={Users} iconColor="#10b981" subtitle="Full Academic Summary & Career Reports" />
+      <StudentInfoHeader student={student} icon={Users} iconColor="#10b981" subtitle={t("ui.reports.academicSubtitle")} />
       <div className="p-5 space-y-5">
         {!fetched ? (
           <div className="space-y-3">
@@ -89,8 +91,8 @@ export function AcademicReports({ student }: { student: ReportStudent }) {
         ) : !reportData ? (
           <div className="text-center py-6 rounded-lg bg-muted/30 border">
             <XCircle className="h-6 w-6 mx-auto mb-2 text-muted-foreground opacity-40" />
-            <div className="text-sm font-semibold">No Academic Data</div>
-            <div className="text-xs text-muted-foreground mt-1">No academic report is available for this student yet.</div>
+            <div className="text-sm font-semibold">{t("ui.reports.noAcademicData")}</div>
+            <div className="text-xs text-muted-foreground mt-1">{t("ui.reports.noAcademicDataDesc")}</div>
           </div>
         ) : (
           <>
@@ -113,7 +115,7 @@ export function AcademicReports({ student }: { student: ReportStudent }) {
                     </div>
                     {weightedGpa != null && (
                       <div className="text-xs text-muted-foreground mt-1">
-                        Weighted: <span className="font-semibold text-foreground">{typeof weightedGpa === "number" ? weightedGpa.toFixed(2) : weightedGpa}</span>
+                        {t("ui.reports.weighted")} <span className="font-semibold text-foreground">{typeof weightedGpa === "number" ? weightedGpa.toFixed(2) : weightedGpa}</span>
                       </div>
                     )}
                   </div>
@@ -125,7 +127,7 @@ export function AcademicReports({ student }: { student: ReportStudent }) {
               <div className="rounded-lg border bg-card p-4">
                 <div className="text-xs font-semibold text-muted-foreground flex items-center gap-1.5 mb-2">
                   <BookOpen className="h-3.5 w-3.5" />
-                  Credits
+                  {t("ui.reports.credits")}
                 </div>
                 {hasCredits ? (
                   <div>
@@ -159,15 +161,15 @@ export function AcademicReports({ student }: { student: ReportStudent }) {
               >
                 <div className="text-sm font-semibold flex items-center gap-2">
                   <BarChart3 className="h-4 w-4 text-emerald-500" />
-                  Recent Grades
+                  {t("ui.reports.recentGrades")}
                 </div>
                 <div className="space-y-1">
                   {recentGrades.map((g, idx) => (
                     <div key={idx} className="flex items-center justify-between p-2 rounded-md bg-muted/30 text-sm">
                       <div className="flex items-center gap-2 min-w-0">
-                        <span className="font-medium truncate">{(g.courseCode || g.course || g.name || `Course ${idx + 1}`) as string}</span>
+                        <span className="font-medium truncate">{(g.courseCode || g.course || g.name || t("ui.reports.courseN", { n: idx + 1 })) as string}</span>
                         {g.credits != null && (
-                          <Badge variant="outline" className="text-[10px] shrink-0">{g.credits as number} cr</Badge>
+                          <Badge variant="outline" className="text-[10px] shrink-0">{t("ui.reports.creditsShort", { n: g.credits as number })}</Badge>
                         )}
                       </div>
                       <span className="font-bold shrink-0 ml-2" style={{
@@ -190,9 +192,11 @@ export function AcademicReports({ student }: { student: ReportStudent }) {
             {/* Assessment stats */}
             {assessments && (
               <div className="text-xs text-muted-foreground">
-                PCA: {(assessments.pcaCount as number) || 0} evaluations &middot;
-                MIL avg: {(assessments.milAverage as string) || "\u2014"} &middot;
-                360: {(assessments.evalStatus as string) || "\u2014"}
+                {t("ui.reports.assessmentStats", {
+                  pca: (assessments.pcaCount as number) || 0,
+                  mil: (assessments.milAverage as string) || "\u2014",
+                  eval360: (assessments.evalStatus as string) || "\u2014",
+                })}
               </div>
             )}
 
@@ -211,7 +215,7 @@ export function AcademicReports({ student }: { student: ReportStudent }) {
                 onClick={downloadComprehensive}
               >
                 {downloading === "comprehensive" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-                Download Full Report
+                {t("ui.reports.downloadFullReport")}
               </Button>
               <Button
                 variant="outline"
@@ -221,7 +225,7 @@ export function AcademicReports({ student }: { student: ReportStudent }) {
                 onClick={downloadPCAReport}
               >
                 {downloading === "pca" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Briefcase className="h-3 w-3" />}
-                Download Career Profile
+                {t("ui.reports.downloadCareerProfile")}
               </Button>
             </motion.div>
           </>

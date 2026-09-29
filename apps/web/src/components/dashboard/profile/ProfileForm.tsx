@@ -11,44 +11,46 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { FiSave, FiGithub, FiTwitter, FiLinkedin, FiPlus, FiTrash2, FiLink } from "react-icons/fi";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import { Slider } from "@/components/ui/slider";
 import { Badge } from "@/components/ui/badge";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { getUserProfile, updateUserProfile } from "@/services/userService";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { FormSkeleton } from "@/components/skeletons/FormSkeleton";
 import { useFormAutosave } from "@/hooks/useFormAutosave";
 import { telemetry } from "@/services/telemetryService";
 
-// Robust Schema
-const profileSchema = z.object({
-  fullName: z.string().min(2, "Name must be at least 2 characters"),
-  headline: z.string().max(100, "Headline must be less than 100 characters").optional(),
-  bio: z.string().max(500, "Bio must be less than 500 characters").optional(),
+// Robust Schema (messages resolved in the current UI language)
+const makeProfileSchema = (t: TFunction) => z.object({
+  fullName: z.string().min(2, t("components.ProfileForm.validation.nameMin")),
+  headline: z.string().max(100, t("components.ProfileForm.validation.headlineMax")).optional(),
+  bio: z.string().max(500, t("components.ProfileForm.validation.bioMax")).optional(),
   location: z.string().optional(),
-  email: z.string().email(),
+  email: z.string().email(t("components.ProfileForm.validation.emailInvalid")),
   phone: z.string().optional(),
   socialLinks: z.object({
-    website: z.string().url().optional().or(z.literal("")),
-    github: z.string().url().optional().or(z.literal("")),
-    twitter: z.string().url().optional().or(z.literal("")),
-    linkedin: z.string().url().optional().or(z.literal("")),
+    website: z.string().url(t("components.ProfileForm.validation.urlInvalid")).optional().or(z.literal("")),
+    github: z.string().url(t("components.ProfileForm.validation.urlInvalid")).optional().or(z.literal("")),
+    twitter: z.string().url(t("components.ProfileForm.validation.urlInvalid")).optional().or(z.literal("")),
+    linkedin: z.string().url(t("components.ProfileForm.validation.urlInvalid")).optional().or(z.literal("")),
   }),
   skills: z.array(z.string()),
   competencies: z.array(z.object({
-    label: z.string().min(1, "Skill name required"),
+    label: z.string().min(1, t("components.ProfileForm.validation.skillNameRequired")),
     level: z.number().min(0).max(100)
   }))
 });
 
-type ProfileFormValues = z.infer<typeof profileSchema>;
+type ProfileFormValues = z.infer<ReturnType<typeof makeProfileSchema>>;
 
 export function ProfileForm() {
   const { user, setUser } = useGlobalStore();
   const [newSkill, setNewSkill] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const { t } = useTranslation();
+  const profileSchema = useMemo(() => makeProfileSchema(t), [t]);
 
   const { register, control, handleSubmit, setValue, watch, reset, getValues, formState: { errors, isSubmitting } } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -75,7 +77,7 @@ export function ProfileForm() {
     debounceMs: 2000,
     onRestoreSuccess: (data) => {
       reset(data as ProfileFormValues);
-      toast.info("Draft restored from previous session");
+      toast.info(t("components.ProfileForm.draftRestored"));
     },
   });
 
@@ -162,9 +164,9 @@ export function ProfileForm() {
       await autosave.clearDraft();
       // Track form completion
       telemetry.trackForm("complete", "profile_form", "/dashboard/profile", Date.now() - startTime);
-      toast.success("Profile updated successfully");
+      toast.success(t("components.ProfileForm.updateSuccess"));
     } catch (error: any) {
-      toast.error(error.message || "Failed to update profile");
+      toast.error(error.message || t("components.ProfileForm.updateError"));
     }
   };
 
@@ -190,38 +192,38 @@ export function ProfileForm() {
           <CardContent className="space-y-6 glass-card">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Full Name</Label>
+                <Label htmlFor="fullName">{t("components.ProfileForm.fullName")}</Label>
                 <Input id="fullName" {...register("fullName")} className="bg-white/50 dark:bg-gray-900/50" aria-invalid={!!errors.fullName} />
                 {errors.fullName && <p role="alert" className="text-red-500 text-xs mt-1">{errors.fullName.message}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="headline">Headline</Label>
+                <Label htmlFor="headline">{t("components.ProfileForm.headline")}</Label>
                 <Input id="headline" {...register("headline")} placeholder={t('profile.headlinePlaceholder')} className="bg-white/50 dark:bg-gray-900/50" aria-invalid={!!errors.headline} />
                 {errors.headline && <p role="alert" className="text-red-500 text-xs mt-1">{errors.headline.message}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t("components.ProfileForm.email")}</Label>
                 <Input id="email" type="email" {...register("email")} className="bg-white/50 dark:bg-gray-900/50" aria-invalid={!!errors.email} />
                 {errors.email && <p role="alert" className="text-red-500 text-xs mt-1">{errors.email.message}</p>}
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="location">Location</Label>
+                <Label htmlFor="location">{t("components.ProfileForm.location")}</Label>
                 <Input id="location" {...register("location")} className="bg-white/50 dark:bg-gray-900/50" />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="bio">Bio</Label>
+              <Label htmlFor="bio">{t("components.ProfileForm.bio")}</Label>
               <Textarea
                 id="bio"
                 {...register("bio")}
                 className="min-h-[120px] bg-white/50 dark:bg-gray-900/50 resize-none"
                 aria-invalid={!!errors.bio}
               />
-              <p className="text-xs text-gray-500 text-right" aria-live="polite">{watch("bio")?.length || 0}/500 characters</p>
+              <p className="text-xs text-gray-500 text-right" aria-live="polite">{t("components.ProfileForm.bioCounter", { count: watch("bio")?.length || 0 })}</p>
             </div>
           </CardContent>
         </Card>
@@ -229,13 +231,13 @@ export function ProfileForm() {
         {/* Social Links Section */}
         <Card className="border-none shadow-sm bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm">
           <CardHeader>
-            <CardTitle className="text-xl glass-card">Social Presence</CardTitle>
-            <CardDescription>Where can people find you online?</CardDescription>
+            <CardTitle className="text-xl glass-card">{t("components.ProfileForm.socialTitle")}</CardTitle>
+            <CardDescription>{t("components.ProfileForm.socialDescription")}</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label htmlFor="social-website" className="flex items-center gap-2"><FiLink aria-hidden="true" /> Website / Portfolio</Label>
+                <Label htmlFor="social-website" className="flex items-center gap-2"><FiLink aria-hidden="true" /> {t("components.ProfileForm.website")}</Label>
                 <Input id="social-website" {...register("socialLinks.website")} placeholder={t('profile.websitePlaceholder')} className="bg-white/50 dark:bg-gray-900/50" />
                 {errors.socialLinks?.website && <p role="alert" className="text-red-500 text-xs">{errors.socialLinks.website.message}</p>}
               </div>
@@ -264,8 +266,8 @@ export function ProfileForm() {
           {/* Skills Tags */}
           <Card className="border-none shadow-sm bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm h-full">
             <CardHeader>
-              <CardTitle className="text-xl glass-card" id="skills-title">Skills & Technologies</CardTitle>
-              <CardDescription>Press Enter to add a skill.</CardDescription>
+              <CardTitle className="text-xl glass-card" id="skills-title">{t("components.ProfileForm.skillsTitle")}</CardTitle>
+              <CardDescription>{t("profile.skillsDescription")}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4 glass-card">
               <Input
@@ -277,11 +279,11 @@ export function ProfileForm() {
                 aria-labelledby="skills-title"
                 aria-label={t('profile.addSkillAria')}
               />
-              <div className="flex flex-wrap gap-2 min-h-[100px] content-start" role="list" aria-label="Skills list">
+              <div className="flex flex-wrap gap-2 min-h-[100px] content-start" role="list" aria-label={t("components.ProfileForm.skillsListAria")}>
                 {currentSkills.map((skill) => (
                   <Badge key={skill} variant="secondary" className="px-3 py-1 text-sm bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/20 dark:bg-[var(--admin-accent-blue)]/20 dark:text-[var(--admin-accent-blue)]" role="listitem">
                     {skill}
-                    <button type="button" onClick={() => removeSkill(skill)} className="ml-2 hover:text-red-500" aria-label={`Remove skill ${skill}`}>×</button>
+                    <button type="button" onClick={() => removeSkill(skill)} className="ml-2 hover:text-red-500" aria-label={t("components.ProfileForm.removeSkillAria", { skill })}>×</button>
                   </Badge>
                 ))}
                 {currentSkills.length === 0 && <span className="text-sm text-gray-400 italic">{t('profile.noSkillsYet')}</span>}
@@ -293,11 +295,11 @@ export function ProfileForm() {
           <Card className="border-none shadow-sm bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm h-full">
             <CardHeader className="flex flex-row items-center justify-between glass-card">
               <div>
-                <CardTitle className="text-xl glass-card">Core Competencies</CardTitle>
-                <CardDescription>Rate your proficiency (0-100).</CardDescription>
+                <CardTitle className="text-xl glass-card">{t("components.ProfileForm.competenciesTitle")}</CardTitle>
+                <CardDescription>{t("components.ProfileForm.competenciesDescription")}</CardDescription>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={() => appendCompetency({ label: "New Skill", level: 50 })}>
-                <FiPlus className="mr-2" aria-hidden="true" /> Add
+              <Button type="button" variant="outline" size="sm" onClick={() => appendCompetency({ label: t("components.ProfileForm.newSkill"), level: 50 })}>
+                <FiPlus className="mr-2" aria-hidden="true" /> {t("components.ProfileForm.add")}
               </Button>
             </CardHeader>
             <CardContent className="space-y-6 glass-card">
@@ -307,10 +309,10 @@ export function ProfileForm() {
                     <Input
                       {...register(`competencies.${index}.label`)}
                       className="h-8 border-none bg-transparent font-medium p-0 focus-visible:ring-0"
-                      aria-label={`Competency name for item ${index + 1}`}
+                      aria-label={t("components.ProfileForm.competencyNameAria", { number: index + 1 })}
                       placeholder={t('profile.skillNamePlaceholder')}
                     />
-                    <button type="button" onClick={() => removeCompetency(index)} className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" aria-label={`Remove competency ${index + 1}`}>
+                    <button type="button" onClick={() => removeCompetency(index)} className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" aria-label={t("components.ProfileForm.removeCompetencyAria", { number: index + 1 })}>
                       <FiTrash2 size={16} aria-hidden="true" />
                     </button>
                   </div>
@@ -321,13 +323,13 @@ export function ProfileForm() {
                       step={1}
                       className="flex-1"
                       onValueChange={(vals) => setValue(`competencies.${index}.level`, vals[0])}
-                      aria-label={`Proficiency level for ${watch(`competencies.${index}.label`) || "competency"}`}
+                      aria-label={t("components.ProfileForm.proficiencyAria", { name: watch(`competencies.${index}.label`) || t("components.ProfileForm.competencyFallback") })}
                     />
                     <span className="text-sm font-bold w-12 text-right" aria-hidden="true">{watch(`competencies.${index}.level`)}%</span>
                   </div>
                 </div>
               ))}
-              {competencyFields.length === 0 && <p className="text-sm text-gray-400 italic text-center py-4">No competencies added.</p>}
+              {competencyFields.length === 0 && <p className="text-sm text-gray-400 italic text-center py-4">{t("components.ProfileForm.noCompetencies")}</p>}
             </CardContent>
           </Card>
         </div>
@@ -336,10 +338,10 @@ export function ProfileForm() {
         <div className="flex justify-end pt-4 pb-12">
           <Button type="submit" size="lg" className="w-full md:w-auto bg-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/90 shadow-xl shadow-[var(--admin-accent-blue)]/20 dark:shadow-none" disabled={isSubmitting}>
             {isSubmitting ? (
-              "Saving Changes..."
+              t("components.ProfileForm.saving")
             ) : (
               <>
-                <FiSave className="mr-2" aria-hidden="true" /> Save Profile Changes
+                <FiSave className="mr-2" aria-hidden="true" /> {t("components.ProfileForm.save")}
               </>
             )}
           </Button>

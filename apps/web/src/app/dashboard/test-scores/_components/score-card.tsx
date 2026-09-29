@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import type { TestScore } from "@/services/testScoreService";
 import { formatDateOnly } from "@/lib/dateUtils";
+import { useTranslation } from "react-i18next";
 import { TYPE_COLOR, scoreLabel, scoreSubLabel } from "./score-helpers";
 
 interface ScoreCardProps {
@@ -24,10 +25,11 @@ interface ScoreCardProps {
 }
 
 export function ScoreCard({ score, index, onEdit, onDelete, deleting }: ScoreCardProps) {
+  const { t } = useTranslation();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const colors = TYPE_COLOR[score.testType] ?? TYPE_COLOR["SAT"];
   const main = scoreLabel(score);
-  const sub = scoreSubLabel(score);
+  const sub = scoreSubLabel(score, t);
 
   return (
     <motion.div
@@ -48,7 +50,7 @@ export function ScoreCard({ score, index, onEdit, onDelete, deleting }: ScoreCar
           {score.isOfficial && (
             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
               <CheckCircle2 className="w-3 h-3" />
-              Official
+              {t("studentUi.testScores.card.official")}
             </span>
           )}
           {score.testDate && (
@@ -74,7 +76,7 @@ export function ScoreCard({ score, index, onEdit, onDelete, deleting }: ScoreCar
               className="flex items-center gap-2 bg-red-50 border border-red-200 rounded-lg px-3 py-1.5"
             >
               <AlertTriangle className="w-3.5 h-3.5 text-red-600" />
-              <span className="text-xs font-semibold text-red-700">Delete?</span>
+              <span className="text-xs font-semibold text-red-700">{t("studentUi.testScores.card.deleteConfirm")}</span>
               <button
                 onClick={() => {
                   setConfirmDelete(false);
@@ -83,14 +85,14 @@ export function ScoreCard({ score, index, onEdit, onDelete, deleting }: ScoreCar
                 disabled={deleting === score.id}
                 className="text-xs font-bold text-red-700 hover:text-red-900 disabled:opacity-50"
               >
-                {deleting === score.id ? <Loader2 className="w-3 h-3 animate-spin" /> : "Yes"}
+                {deleting === score.id ? <Loader2 className="w-3 h-3 animate-spin" /> : t("studentUi.testScores.card.yes")}
               </button>
               <span className="text-red-300">&middot;</span>
               <button
                 onClick={() => setConfirmDelete(false)}
                 className="text-xs font-bold text-muted-foreground hover:text-foreground"
               >
-                No
+                {t("studentUi.testScores.card.no")}
               </button>
             </motion.div>
           </AnimatePresence>
@@ -99,14 +101,14 @@ export function ScoreCard({ score, index, onEdit, onDelete, deleting }: ScoreCar
             <button
               onClick={() => onEdit(score)}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors"
-              title="Edit"
+              title={t("common.edit")}
             >
               <Edit2 className="w-4 h-4" />
             </button>
             <button
               onClick={() => setConfirmDelete(true)}
               className="p-1.5 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-colors"
-              title="Delete"
+              title={t("common.delete")}
             >
               <Trash2 className="w-4 h-4" />
             </button>

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { FileDown, Loader2, CheckCircle } from 'lucide-react';
 import { generateReport, ReportType, LIAReportData, PCAReportData } from './reportGenerationService';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 interface ExportReportButtonProps {
   reportType: ReportType;
@@ -30,14 +31,16 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const { t, i18n } = useTranslation('common');
+  const language = i18n.language?.toLowerCase().startsWith('es') ? 'es' : 'en';
 
   const reportLabels: Record<ReportType, string> = {
-    lia: 'LIA Assessment Report',
-    pca: 'Personality Profile Report',
-    evaluation: '360° Evaluation Report',
-    timeline: 'Career Timeline Report',
-    coaching: 'Coaching Session Report',
-    benchmark: 'Benchmark Comparison Report',
+    lia: t('components.exportReportButton.reports.lia'),
+    pca: t('components.exportReportButton.reports.pca'),
+    evaluation: t('components.exportReportButton.reports.evaluation'),
+    timeline: t('components.exportReportButton.reports.timeline'),
+    coaching: t('components.exportReportButton.reports.coaching'),
+    benchmark: t('components.exportReportButton.reports.benchmark'),
   };
 
   const handleExport = async () => {
@@ -47,7 +50,7 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
     setIsComplete(false);
 
     try {
-      await generateReport(reportType, { liaData, pcaData });
+      await generateReport(reportType, { liaData, pcaData, language });
       setIsComplete(true);
       onSuccess?.();
       
@@ -96,10 +99,10 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
       )}
       <span>
         {isGenerating 
-          ? 'Generating PDF...' 
+          ? t('components.exportReportButton.generating')
           : isComplete 
-            ? 'Downloaded!' 
-            : label || `Download ${reportLabels[reportType]}`}
+            ? t('components.exportReportButton.downloaded')
+            : label || t('components.exportReportButton.download', { report: reportLabels[reportType] })}
       </span>
     </button>
   );

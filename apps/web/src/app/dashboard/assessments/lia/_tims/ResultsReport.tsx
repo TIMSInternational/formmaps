@@ -98,7 +98,7 @@ export function ResultsReport({ results, language }: { results: LIAResultsType; 
       <div className={`${heroColors.bg} text-white rounded-2xl p-8`}>
         <div className="text-center">
           <div className="text-sm uppercase tracking-wider opacity-75 mb-2">
-            {language === "es" ? "Medición de Inteligencia Laboral" : "Labor Intelligence Measurement"}
+            {language === "es" ? "Evaluación de Inteligencia Laboral" : "Labor Intelligence Assessment"}
           </div>
           <div className="text-4xl font-bold mb-2">{PERFORMANCE_LEVEL_DISPLAY[performanceLevel][language]}</div>
           <div className="text-xl font-medium opacity-90 italic">
@@ -381,7 +381,7 @@ export function ResultsReport({ results, language }: { results: LIAResultsType; 
               {language === "es" ? "Infracciones detectadas" : "Violations Detected"}
             </h3>
             <span className="ml-auto px-2 py-1 bg-orange-200 text-orange-700 rounded-full text-xs font-medium">
-              {results.violation_count} total
+              {results.violation_count} {language === "es" ? "en total" : "total"}
             </span>
           </div>
           <ul className="space-y-2 text-sm text-orange-700">

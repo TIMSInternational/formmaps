@@ -45,8 +45,8 @@ export function ResultsPanel() {
       const a = document.createElement("a");
       a.href = url; a.download = `results.${format}`; a.click();
       URL.revokeObjectURL(url);
-      toast.success("Results exported");
-    } catch { toast.error("Failed to export"); }
+      toast.success(t("schoolAdmin.results.exportSuccess"));
+    } catch { toast.error(t("schoolAdmin.results.exportError")); }
   };
 
   const getScoreStyle = (score: number) =>
@@ -65,7 +65,7 @@ export function ResultsPanel() {
             background: "var(--admin-bg-icon-box)", border: "1px solid var(--admin-border-default)",
             color: "var(--admin-font-secondary)", cursor: "pointer",
           }}>
-            <FilePlus style={{ width: 14, height: 14 }} /> Import Grades
+            <FilePlus style={{ width: 14, height: 14 }} /> {t("school_admin:ui.gradeImport.title")}
           </button>
           <button onClick={() => handleExport("csv")} style={{
             height: 32, borderRadius: 6, padding: "0 12px", fontSize: 12, fontWeight: 500,
@@ -73,7 +73,7 @@ export function ResultsPanel() {
             background: "var(--admin-bg-icon-box)", border: "1px solid var(--admin-border-default)",
             color: "var(--admin-font-secondary)", cursor: "pointer",
           }}>
-            <Download style={{ width: 14, height: 14 }} /> Export CSV
+            <Download style={{ width: 14, height: 14 }} /> {t("schoolAdmin.results.exportCSV")}
           </button>
         </div>
       </div>
@@ -86,7 +86,7 @@ export function ResultsPanel() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--admin-font-light)" }} />
           <Input
-            placeholder="Search by student name..."
+            placeholder={t("school_admin:ui.results.searchByName")}
             className="pl-9 h-9 rounded-lg text-sm"
             style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}
             value={search}
@@ -96,13 +96,13 @@ export function ResultsPanel() {
         <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
           <SelectTrigger className="w-full sm:w-44 h-9 rounded-lg text-sm"
             style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}>
-            <SelectValue placeholder="Assessment Type" />
+            <SelectValue placeholder={t("school_admin:ui.results.assessmentType")} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="career">Career Assessment</SelectItem>
-            <SelectItem value="skills">Skills Assessment</SelectItem>
-            <SelectItem value="personality">Personality Test</SelectItem>
+            <SelectItem value="all">{t("school_admin:ui.results.allTypes")}</SelectItem>
+            <SelectItem value="career">{t("school_admin:ui.results.careerAssessment")}</SelectItem>
+            <SelectItem value="skills">{t("school_admin:ui.results.skillsAssessment")}</SelectItem>
+            <SelectItem value="personality">{t("school_admin:ui.results.personalityTest")}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -115,7 +115,7 @@ export function ResultsPanel() {
         <Table>
           <TableHeader>
             <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
-              {["Student", "Email", "Grade", "Assessments", "Avg Score", "PCA Status", "Actions"].map((h) => (
+              {[t("schoolAdmin.results.table.student"), t("school_admin:ui.gradeImport.email"), t("school_admin:ui.results.grade"), t("school_admin:ui.results.assessments"), t("school_admin:ui.results.avgScore"), t("school_admin:ui.results.pcaStatus"), t("schoolAdmin.results.table.actions")].map((h) => (
                 <TableHead key={h} className="py-3 px-4" style={{
                   fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
                   color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)",
@@ -132,8 +132,8 @@ export function ResultsPanel() {
               <TableRow>
                 <TableCell colSpan={7} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
                   <FileText className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} />
-                  <p className="text-sm font-medium">No results found</p>
-                  <p className="text-xs mt-1" style={{ color: "var(--admin-font-tertiary)" }}>Results will appear as students complete assessments</p>
+                  <p className="text-sm font-medium">{t("schoolAdmin.results.noResults")}</p>
+                  <p className="text-xs mt-1" style={{ color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.results.emptyHelp")}</p>
                 </TableCell>
               </TableRow>
             ) : (
@@ -183,7 +183,7 @@ export function ResultsPanel() {
                         color: result.pcaStatus === "completed" ? "#10b981" : "var(--admin-font-tertiary)",
                         background: result.pcaStatus === "completed" ? "rgba(16,185,129,0.1)" : "var(--admin-bg-hover)",
                       }}>
-                        {result.pcaStatus === "completed" ? "Completed" : "Not Started"}
+                        {result.pcaStatus === "completed" ? t("school_admin:ui.evaluations.status.completed") : t("school_admin:ui.evaluations.status.not_started")}
                       </Badge>
                     </TableCell>
                     <TableCell className="py-3 px-4">
@@ -194,7 +194,7 @@ export function ResultsPanel() {
                           background: "transparent", border: "1px solid var(--admin-border-default)",
                           color: "var(--admin-font-secondary)", cursor: "pointer",
                         }}>
-                        <Eye style={{ width: 12, height: 12 }} /> View
+                        <Eye style={{ width: 12, height: 12 }} /> {t("common.view")}
                       </button>
                     </TableCell>
                   </TableRow>
@@ -210,19 +210,18 @@ export function ResultsPanel() {
             borderTop: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)",
           }}>
             <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>
-              Page <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{page}</span> of{" "}
-              <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{results.totalPages}</span>
+              {t("school_admin:ui.results.pageOf", { page, total: results.totalPages })}
             </p>
             <div className="flex gap-2">
               <Button variant="outline" size="sm" onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1} className="h-7 rounded-md text-xs"
                 style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>
-                Previous
+                {t("common.previous")}
               </Button>
               <Button variant="outline" size="sm" onClick={() => setPage((p) => p + 1)}
                 disabled={page >= ((results as any)?.totalPages || (results as any)?.data?.totalPages || 1)} className="h-7 rounded-md text-xs"
                 style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>
-                Next
+                {t("common.next")}
               </Button>
             </div>
           </div>

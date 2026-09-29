@@ -38,7 +38,7 @@ export function UniversityGoalButton({
       <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-sm text-emerald-600">
         <CheckCircle2 className="h-4 w-4 shrink-0" />
         <span>
-          {universityName} is your graduation goal
+          {t("components.UniversityGoalButton.isYourGoal", { university: universityName })}
           {target?.major ? ` · ${target.major}` : ""}
         </span>
       </div>
@@ -64,12 +64,12 @@ export function UniversityGoalButton({
   return (
     <div className="space-y-2 rounded-xl border border-[#FFD23F] p-3">
       <p className="text-xs font-semibold text-[var(--admin-font-primary)]">
-        Graduate to {universityName} — studying what?
+        {t("components.UniversityGoalButton.studyingWhat", { university: universityName })}
       </p>
       <input
         value={major}
         onChange={(e) => setMajor(e.target.value)}
-        placeholder="Intended major (e.g. Computer Science)"
+        placeholder={t("components.UniversityGoalButton.majorPlaceholder")}
         maxLength={200}
         className="w-full h-9 rounded-md px-3 text-sm outline-none bg-[var(--admin-bg-hover)] border border-[var(--admin-border-default)] text-[var(--admin-font-primary)]"
       />
@@ -93,7 +93,7 @@ export function UniversityGoalButton({
           onClick={() => setFormOpen(false)}
           className="px-3 py-1.5 rounded-md text-xs font-medium text-[var(--admin-font-secondary)] hover:bg-[var(--admin-bg-hover)]"
         >
-          Cancel
+          {t("common.cancel")}
         </button>
         <button
           type="button"
@@ -107,7 +107,7 @@ export function UniversityGoalButton({
           className="flex items-center gap-1.5 px-4 py-1.5 rounded-md text-xs font-bold bg-[#102B47] text-white hover:opacity-90 disabled:opacity-60"
         >
           {setTarget.isPending && <LoaderCircle className="h-3 w-3 animate-spin" />}
-          Save goal
+          {t("components.UniversityGoalButton.saveGoal")}
         </button>
       </div>
     </div>

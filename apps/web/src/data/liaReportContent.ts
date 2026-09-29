@@ -18,21 +18,21 @@ export interface PerformanceLevelContent {
 // Subtest descriptions
 export const SUBTEST_DESCRIPTIONS: Record<LIASubtest, SubtestContent> = {
   pattern_recognition: {
-    name: { es: 'Detección de características', en: 'Pattern Recognition' },
+    name: { es: 'Reconocimiento de patrones', en: 'Pattern Recognition' },
     description: {
       es: 'Esta prueba mide qué tan rápido y con qué precisión un individuo puede revisar errores y trabajar con exactitud, y luego describir esos datos o hacer una observación sobre ellos. Adicionalmente, mide la habilidad general de instrucción y la velocidad general.',
       en: 'This test measures how quickly and accurately an individual can review errors and work with precision and then describe that data or make an observation about it. Additionally, it measures general instruction ability and general speed.',
     },
   },
   verbal_reasoning: {
-    name: { es: 'Razonamiento', en: 'Verbal Reasoning' },
+    name: { es: 'Razonamiento verbal', en: 'Verbal Reasoning' },
     description: {
       es: 'Esta prueba evalúa la habilidad de un individuo para retener información en la memoria a corto plazo y resolver problemas luego de recibir instrucciones orales o escritas. Evalúa además la capacidad de hacer inferencias a partir de la información proporcionada y de elaborar conclusiones correctas.',
       en: 'This test evaluates an individual\'s ability to retain information in short-term memory and solve problems after receiving oral or written instructions. It also evaluates the ability to make inferences from the information provided and draw correct conclusions.',
     },
   },
   numerical_speed: {
-    name: { es: 'Velocidad y exactitud numérica', en: 'Numerical Speed & Accuracy' },
+    name: { es: 'Velocidad numérica', en: 'Numerical Speed' },
     description: {
       es: 'Esta prueba es relevante en roles en donde sea necesaria la aptitud numérica, en especial aquellos que claramente requieran de capacidad para calcular, tales como ventas técnicas, ventas al detalle y la mayoría de roles gerenciales. Esta habilidad es importante en trabajos en donde se requiere atención y concentración constantes en las tareas del trabajo.',
       en: 'This test is relevant in roles where numerical aptitude is necessary, especially those that clearly require calculation ability, such as technical sales, retail sales, and most management roles. This skill is important in jobs where constant attention and concentration on work tasks is required.',
@@ -46,7 +46,7 @@ export const SUBTEST_DESCRIPTIONS: Record<LIASubtest, SubtestContent> = {
     },
   },
   visual_rotation: {
-    name: { es: 'Orientación', en: 'Visual Rotation' },
+    name: { es: 'Rotación visual', en: 'Visual Rotation' },
     description: {
       es: 'Examina las habilidades individuales para utilizar la orientación y visualización mental para enfrentar problemas mecánicos y técnicos. Una nota alta en esta área tiene vital importancia donde se requieren habilidades mentales, es decir, en la resolución de problemas prácticos o lógicos que implican la interpretación de un plan o un diagrama. Es importante para roles técnicos o en el área de ingeniería, incluyendo aprendices y/o trainees.',
       en: 'Examines individual abilities to use mental orientation and visualization to face mechanical and technical problems. A high score in this area is vitally important where mental skill capabilities are required, i.e., solving practical or logical problems involving the interpretation of a plan or diagram. It is important for technical roles or in engineering, including apprentices and/or trainees.',
@@ -936,6 +936,6 @@ export const GLOBAL_PERFORMANCE_DESCRIPTIONS: Record<LIAPerformanceLevel, { es: 
 
 // MIL assessment intro text
 export const MIL_INTRO_TEXT = {
-  es: 'La prueba MIL es una herramienta utilizada para medir la inteligencia laboral, la cual se relaciona con la capacidad para aprender y desaprender, la habilidad para reaccionar ante retos y ante cambios, para adquirir nuevos conocimientos, capacidad de inferencia sobre aspectos simbólicos o abstractos, sin requerimientos especiales de contenido, conocimiento o memoria. La prueba se encuentra dividida en 5 subpruebas que se enfocan cada una en la medición de aspectos diferentes.',
-  en: 'The MIL test is a tool used to measure labor intelligence, which relates to the ability to learn and unlearn, the ability to react to challenges and changes, to acquire new knowledge, the ability to make inferences about symbolic or abstract aspects, without special requirements of content, knowledge or memory. The test is divided into 5 subtests that each focus on measuring different aspects.',
+  es: 'La prueba LIA es una herramienta utilizada para medir la inteligencia laboral, la cual se relaciona con la capacidad para aprender y desaprender, la habilidad para reaccionar ante retos y ante cambios, para adquirir nuevos conocimientos, capacidad de inferencia sobre aspectos simbólicos o abstractos, sin requerimientos especiales de contenido, conocimiento o memoria. La prueba se encuentra dividida en 5 subpruebas que se enfocan cada una en la medición de aspectos diferentes.',
+  en: 'The LIA test is a tool used to measure labor intelligence, which relates to the ability to learn and unlearn, the ability to react to challenges and changes, to acquire new knowledge, the ability to make inferences about symbolic or abstract aspects, without special requirements of content, knowledge or memory. The test is divided into 5 subtests that each focus on measuring different aspects.',
 };

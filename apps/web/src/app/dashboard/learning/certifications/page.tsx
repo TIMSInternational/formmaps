@@ -92,7 +92,7 @@ export default function CertificationsPage() {
                 </div>
                 <div>
                   <p className="text-lg font-bold text-foreground tabular-nums">{enrolledCourses.length}</p>
-                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Enrolled</p>
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{t("studentUi.learning.certifications.enrolled")}</p>
                 </div>
               </div>
               <div className="w-px h-8 bg-border" />
@@ -102,7 +102,7 @@ export default function CertificationsPage() {
                 </div>
                 <div>
                   <p className="text-lg font-bold text-foreground tabular-nums">{inProgressCourses.length}</p>
-                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">In Progress</p>
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{t("courses.inProgress")}</p>
                 </div>
               </div>
               <div className="w-px h-8 bg-border" />
@@ -112,7 +112,7 @@ export default function CertificationsPage() {
                 </div>
                 <div>
                   <p className="text-lg font-bold text-foreground tabular-nums">{completedCourses.length}</p>
-                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Completed</p>
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">{t("courses.completed")}</p>
                 </div>
               </div>
             </div>
@@ -123,7 +123,7 @@ export default function CertificationsPage() {
             <div className="dash-card p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Clock className="w-4 h-4 text-amber-500" />
-                <h2 className="text-sm font-bold text-foreground">In Progress</h2>
+                <h2 className="text-sm font-bold text-foreground">{t("courses.inProgress")}</h2>
               </div>
               <div className="space-y-3">
                 {inProgressCourses.map((enrollment) => (
@@ -138,7 +138,7 @@ export default function CertificationsPage() {
             <div className="dash-card p-5">
               <div className="flex items-center gap-2 mb-4">
                 <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                <h2 className="text-sm font-bold text-foreground">Completed</h2>
+                <h2 className="text-sm font-bold text-foreground">{t("courses.completed")}</h2>
               </div>
               <div className="space-y-3">
                 {completedCourses.map((enrollment) => (
@@ -152,16 +152,16 @@ export default function CertificationsPage() {
           {enrolledCourses.length === 0 && (
             <div className="dash-card p-8 text-center">
               <BookOpen className="w-8 h-8 text-muted-foreground/30 mx-auto mb-3" />
-              <h3 className="text-sm font-semibold text-foreground mb-1">No courses yet</h3>
+              <h3 className="text-sm font-semibold text-foreground mb-1">{t("studentUi.learning.certifications.emptyTitle")}</h3>
               <p className="text-xs text-muted-foreground mb-4 max-w-xs mx-auto">
-                Browse the course catalog to find courses aligned with your career goals.
+                {t("studentUi.learning.certifications.emptyBody")}
               </p>
               <Link
                 href="/dashboard/learning/courses"
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-foreground text-background text-xs font-semibold hover:bg-foreground/90 transition-colors"
               >
                 <BookOpen className="w-3.5 h-3.5" />
-                Browse Courses
+                {t("studentUi.learning.certifications.browseCourses")}
               </Link>
             </div>
           )}
@@ -172,13 +172,13 @@ export default function CertificationsPage() {
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
                   <PlayCircle className="w-4 h-4 text-indigo-500" />
-                  <h2 className="text-sm font-bold text-foreground">Suggested Next</h2>
+                  <h2 className="text-sm font-bold text-foreground">{t("studentUi.learning.certifications.suggestedNext")}</h2>
                 </div>
                 <Link
                   href="/dashboard/learning/courses"
                   className="text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
                 >
-                  View All →
+                  {t("studentUi.learning.certifications.viewAll")}
                 </Link>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -198,12 +198,12 @@ export default function CertificationsPage() {
                     <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                       {course.duration && (
                         <span className="flex items-center gap-0.5">
-                          <Clock className="w-3 h-3" /> {course.duration}w
+                          <Clock className="w-3 h-3" /> {t("studentUi.learning.certifications.durationWeeks", { count: course.duration })}
                         </span>
                       )}
                       {course.difficulty && (
                         <span className="px-1.5 py-0.5 rounded bg-secondary text-[9px] font-medium">
-                          {course.difficulty}
+                          {t(`courses.difficulty.${String(course.difficulty).toLowerCase()}`, { defaultValue: course.difficulty })}
                         </span>
                       )}
                     </div>
@@ -219,6 +219,7 @@ export default function CertificationsPage() {
 }
 
 function EnrollmentRow({ enrollment, status }: { enrollment: CourseEnrollment; status: "in_progress" | "completed" }) {
+  const { t } = useTranslation();
   const isComplete = status === "completed";
 
   return (
@@ -238,7 +239,7 @@ function EnrollmentRow({ enrollment, status }: { enrollment: CourseEnrollment; s
         <div className="flex items-center gap-3 mt-0.5">
           {enrollment.progress && (
             <span className="text-[11px] text-muted-foreground">
-              {enrollment.progress.completedModules}/{enrollment.progress.totalModules} modules
+              {t("studentUi.learning.certifications.modulesProgress", { completed: enrollment.progress.completedModules, total: enrollment.progress.totalModules })}
             </span>
           )}
           {enrollment.progress?.percentage != null && !isComplete && (

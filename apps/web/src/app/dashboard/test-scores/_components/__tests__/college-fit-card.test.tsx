@@ -1,3 +1,5 @@
+// Real i18next (English) so assertions read the rendered copy, not raw keys.
+import "@/lib/i18n";
 import React from "react";
 import { render, screen } from "@testing-library/react";
 import { CollegeFitCard } from "../college-fit-card";

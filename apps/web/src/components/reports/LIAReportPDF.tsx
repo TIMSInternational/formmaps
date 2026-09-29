@@ -41,6 +41,7 @@ import {
   MatchDial,
   BentoCard,
 } from './ModernPDFComponents';
+import { getPdfT, pdfLocale, PdfLanguageContext, usePdfT, type PdfLanguage } from './pdfI18n';
 
 // Refined Styles for Dense Magazine Layout
 const styles = StyleSheet.create({
@@ -153,22 +154,26 @@ const RadarChart = ({ data }: { data: any[] }) => {
 };
 
 // Sidebar Content Component
-const SidebarContent = ({ title, summary }: { title: string; summary?: string }) => (
+const SidebarContent = ({ title, summary }: { title: string; summary?: string }) => {
+    const t = usePdfT();
+    return (
     <View>
         <Text style={modernStyles.heading2}>{title}</Text>
         {summary && <Text style={{ ...modernStyles.paragraph, color: modernColors.textMutedOnDark }}>{summary}</Text>}
         
         <View style={{ marginTop: 24, padding: 16, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}>
-           <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: modernColors.primary, marginBottom: 6, letterSpacing: 1 }}>QUICK INSIGHT</Text>
+           <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: modernColors.primary, marginBottom: 6, letterSpacing: 1 }}>{t('components.liaReportPdf.quickInsight')}</Text>
            <Text style={{ fontSize: 10, color: modernColors.textOnDark, fontStyle: 'italic', lineHeight: 1.4 }}>
-             "Consistency is the hallmark of professional excellence."
+             {t('components.liaReportPdf.quickInsightQuote')}
            </Text>
         </View>
     </View>
-);
+    );
+};
 
-const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
-  const formatDate = (d: string) => new Date(d).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+const LIAReportPDF: React.FC<{ data: LIAReportData; language?: PdfLanguage }> = ({ data, language }) => {
+  const t = getPdfT(language);
+  const formatDate = (d: string) => new Date(d).toLocaleDateString(pdfLocale(language), { year: 'numeric', month: 'long', day: 'numeric' });
 
   // Real data may omit percentile/band/narrative fields (TIMS-blocked band rebuild).
   // Guard every section so the PDF renders gracefully instead of crashing.
@@ -180,12 +185,13 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
   const peakPercentile = subtestPercentiles.length > 0 ? Math.max(...subtestPercentiles) : null;
 
   return (
+    <PdfLanguageContext.Provider value={language}>
     <Document>
       {/* 1. Cover Page (Full bleed) */}
       <Page size="A4" style={{ backgroundColor: modernColors.headerBg }}>
         <ModernCoverPage
-          title="Labor Intelligence Analysis"
-          subtitle="TIMCARE ANALYTICS"
+          title={t('components.liaReportPdf.coverTitle')}
+          subtitle="FORMMAPS ANALYTICS"
           userName={data.user.name}
           date={formatDate(data.reportDate)}
         />
@@ -193,20 +199,20 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
 
       {/* 2. Executive Summary - The Clean Dossier Layout */}
       <CleanEditorialLayout 
-        title="Executive Summary"
+        title={t('evaluation.tabs.summary')}
         pageNum={2} 
         totalPages={8}
       >
         {/* Hero Section: Score & Classification */}
         <View style={{ marginBottom: 24 }}>
-            <Text style={{ fontSize: 9, color: modernColors.primary, letterSpacing: 2, marginBottom: 8, textTransform: 'uppercase' }}>Performance Classification</Text>
+            <Text style={{ fontSize: 9, color: modernColors.primary, letterSpacing: 2, marginBottom: 8, textTransform: 'uppercase' }}>{t('components.liaReportPdf.performanceClassification')}</Text>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
                  <View>
                     <Text style={{ fontSize: 36, fontFamily: 'Helvetica-Bold', color: modernColors.dark, letterSpacing: -1, lineHeight: 1 }}>{hasClassification ? data.overallScore.classification.toUpperCase() : `${data.overallScore.percentage}%`}</Text>
                     {hasPercentile && (
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 8 }}>
                         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: modernColors.success }} />
-                        <Text style={{ fontSize: 11, color: modernColors.textSecondary }}>Top {100 - (data.overallScore.percentileRank as number)}% of Global Tech Cohort</Text>
+                        <Text style={{ fontSize: 11, color: modernColors.textSecondary }}>{t('components.liaReportPdf.topCohort', { percent: 100 - (data.overallScore.percentileRank as number) })}</Text>
                     </View>
                     )}
                  </View>
@@ -216,14 +222,14 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
 
             {/* Stat Cards */}
             <View style={{ flexDirection: 'row', gap: 16, marginBottom: 32 }}>
-                <StatCard label="Overall Score" value={`${data.overallScore.percentage}%`} subtext="Composite" color={modernColors.primary} variant="light" progress={data.overallScore.percentage} />
+                <StatCard label={t('components.liaReportPdf.overallScore')} value={`${data.overallScore.percentage}%`} subtext={t('components.liaReportPdf.composite')} color={modernColors.primary} variant="light" progress={data.overallScore.percentage} />
                 {hasPercentile && (
-                  <StatCard label="Percentile" value={`${data.overallScore.percentileRank}th`} subtext="Global Cohort" color={modernColors.secondary} variant="light" progress={data.overallScore.percentileRank as number} />
+                  <StatCard label={t('components.liaReportPdf.percentile')} value={t('components.liaReportPdf.ordinal', { value: data.overallScore.percentileRank })} subtext={t('components.liaReportPdf.globalCohort')} color={modernColors.secondary} variant="light" progress={data.overallScore.percentileRank as number} />
                 )}
             </View>
 
         {/* Highlights Section */}
-        <SectionTitle title="Executive Highlights" />
+        <SectionTitle title={t('components.liaReportPdf.executiveHighlights')} />
         <View style={{ marginBottom: 24, padding: 16, backgroundColor: '#f8fafc', borderRadius: 12, borderWidth: 1, borderColor: '#e2e8f0' }}>
             {data.executiveSummary.highlights.map((h, i) => (
                 <View key={i} style={{ flexDirection: 'row', marginBottom: 12 }}>
@@ -236,14 +242,14 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
         {/* Strategy & Growth Split */}
         <View style={{ flexDirection: 'row', gap: 24 }}>
             <View style={{ flex: 1 }}>
-                <SectionTitle title="Strategic Analysis" />
+                <SectionTitle title={t('components.liaReportPdf.strategicAnalysis')} />
                 <Text style={{ fontSize: 10, color: modernColors.textSecondary, lineHeight: 1.6, textAlign: 'justify' }}>
                     {data.executiveSummary.strategicImplications}
                 </Text>
             </View>
 
             <View style={{ flex: 1 }}>
-                <SectionTitle title="Growth Areas" />
+                <SectionTitle title={t('components.liaReportPdf.growthAreas')} />
                 <View>
                   {data.executiveSummary.developmentAreas.map((h, i) => (
                      <View key={i} style={{ flexDirection: 'row', marginBottom: 8 }}>
@@ -260,31 +266,31 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
       <CleanEditorialLayout
          pageNum={3}
          totalPages={8}
-         title="MIL Profile"
+         title={t('components.liaReportPdf.milProfile')}
       >
           {/* Top Section: Chart & Narrative */}
           <View style={{ flexDirection: 'row', gap: 32, marginBottom: 32, alignItems: 'center' }}>
                {/* Chart Container - Centered Visualization */}
                <View style={{ width: 150, alignItems: 'center', justifyContent: 'center' }}>
                    <RadarChart data={data.subtests} />
-                   <Text style={{ fontSize: 9, color: modernColors.textSecondary, marginTop: 12, letterSpacing: 1 }}>PROFILE SHAPE</Text>
+                   <Text style={{ fontSize: 9, color: modernColors.textSecondary, marginTop: 12, letterSpacing: 1 }}>{t('components.liaReportPdf.profileShape')}</Text>
                </View>
 
                {/* Summary Narrative */}
                <View style={{ flex: 1 }}>
-                   <SectionTitle title="MIL Synergy" />
+                   <SectionTitle title={t('components.liaReportPdf.milSynergy')} />
                    <Text style={{ fontSize: 10, color: modernColors.textPrimary, lineHeight: 1.6, textAlign: 'justify' }}>
                        {data.cognitiveSynergy}
                    </Text>
                    <View style={{ flexDirection: 'row', gap: 16, marginTop: 16 }}>
                        <View>
                            <Text style={{ fontSize: 24, fontFamily: 'Helvetica-Bold', color: modernColors.dark }}>{data.subtests.length}</Text>
-                           <Text style={{ fontSize: 8, color: modernColors.textSecondary, textTransform: 'uppercase' }}>Dimensions</Text>
+                           <Text style={{ fontSize: 8, color: modernColors.textSecondary, textTransform: 'uppercase' }}>{t('components.liaReportPdf.dimensions')}</Text>
                        </View>
                        {peakPercentile !== null && (
                        <View>
-                           <Text style={{ fontSize: 24, fontFamily: 'Helvetica-Bold', color: modernColors.primary }}>{peakPercentile}th</Text>
-                           <Text style={{ fontSize: 8, color: modernColors.textSecondary, textTransform: 'uppercase' }}>Peak %</Text>
+                           <Text style={{ fontSize: 24, fontFamily: 'Helvetica-Bold', color: modernColors.primary }}>{t('components.liaReportPdf.ordinal', { value: peakPercentile })}</Text>
+                           <Text style={{ fontSize: 8, color: modernColors.textSecondary, textTransform: 'uppercase' }}>{t('components.liaReportPdf.peakPercentile')}</Text>
                        </View>
                        )}
                    </View>
@@ -292,7 +298,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
           </View>
 
           {/* Detailed Dimensions List - 2 Column Grid */}
-          <SectionTitle title="Detailed Dimensions" />
+          <SectionTitle title={t('components.liaReportPdf.detailedDimensions')} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
                {data.subtests.map((sub, i) => (
                    <View key={i} style={{ 
@@ -321,7 +327,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                            )}
                            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', marginTop: 4 }}>
                                 <View style={{ backgroundColor: i % 2 === 0 ? 'rgba(79, 70, 229, 0.1)' : 'rgba(236, 72, 153, 0.1)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 }}>
-                                    <Text style={{ fontSize: 8, color: i % 2 === 0 ? modernColors.primary : modernColors.secondary, fontFamily: 'Helvetica-Bold' }}>{typeof sub.percentile === 'number' ? `Top ${sub.percentile}%` : `${sub.accuracy}% accuracy`}</Text>
+                                    <Text style={{ fontSize: 8, color: i % 2 === 0 ? modernColors.primary : modernColors.secondary, fontFamily: 'Helvetica-Bold' }}>{typeof sub.percentile === 'number' ? t('components.liaReportPdf.topPercent', { percent: sub.percentile }) : t('components.liaReportPdf.accuracyPercent', { percent: sub.accuracy })}</Text>
                                 </View>
                            </View>
                        </View>
@@ -334,12 +340,12 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
       <CleanEditorialLayout
         pageNum={4}
         totalPages={8}
-        title="Behavioral Insights"
+        title={t('components.liaReportPdf.behavioralInsights')}
       >
          <View style={{ marginBottom: 24 }}>
-             <SectionTitle title="Behavioral Patterns" />
+             <SectionTitle title={t('components.liaReportPdf.behavioralPatterns')} />
              <Text style={{ fontSize: 10, color: modernColors.textSecondary, lineHeight: 1.6 }}>
-                 Observed behaviors during the assessment provide a window into real-world work habits.
+                 {t('components.liaReportPdf.behavioralIntro')}
              </Text>
          </View>
          
@@ -350,7 +356,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                  <View style={{ marginBottom: 12 }}>
                     <SpeedAccuracyVisual color={modernColors.primary} />
                  </View>
-                 <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: modernColors.primary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Speed vs Accuracy</Text>
+                 <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: modernColors.primary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>{t('components.liaReportPdf.speedVsAccuracy')}</Text>
                  <Text style={{ fontSize: 10, color: modernColors.textPrimary, lineHeight: 1.5 }}>
                     {data.behavioralObservations.speedAccuracyBalance}
                  </Text>
@@ -361,7 +367,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                  <View style={{ marginBottom: 12 }}>
                     <StressPulseVisual color={modernColors.secondary} />
                  </View>
-                 <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: modernColors.secondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Stress Response</Text>
+                 <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: modernColors.secondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>{t('components.liaReportPdf.stressResponse')}</Text>
                  <Text style={{ fontSize: 10, color: modernColors.textPrimary, lineHeight: 1.5 }}>
                     {data.behavioralObservations.stressResponse}
                  </Text>
@@ -372,7 +378,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                  <View style={{ marginBottom: 12 }}>
                     <FocusRingVisual color={modernColors.accent} />
                  </View>
-                 <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: modernColors.accent, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Attention Span</Text>
+                 <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: modernColors.accent, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>{t('components.liaReportPdf.attentionSpan')}</Text>
                  <Text style={{ fontSize: 10, color: modernColors.textPrimary, lineHeight: 1.5 }}>
                     {data.behavioralObservations.attentionPattern}
                  </Text>
@@ -383,7 +389,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                  <View style={{ marginBottom: 12 }}>
                     <LogicFlowVisual color={modernColors.dark} />
                  </View>
-                 <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: modernColors.dark, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>Problem Solving</Text>
+                 <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: modernColors.dark, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 }}>{t('components.liaReportPdf.problemSolving')}</Text>
                  <Text style={{ fontSize: 10, color: modernColors.textPrimary, lineHeight: 1.5 }}>
                     {data.behavioralObservations.problemSolvingApproach}
                  </Text>
@@ -409,9 +415,9 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                  
                  {/* Text - Width Constrained to prevent overlap */}
                  <View style={{ width: '75%' }}>
-                     <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: 'rgba(255,255,255,0.9)', marginBottom: 8, letterSpacing: 2, textTransform: 'uppercase' }}>STRATEGIC IMPLICATION</Text>
+                     <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: 'rgba(255,255,255,0.9)', marginBottom: 8, letterSpacing: 2, textTransform: 'uppercase' }}>{t('components.liaReportPdf.strategicImplication')}</Text>
                      <Text style={{ fontSize: 11, color: '#ffffff', lineHeight: 1.7 }}>
-                        These patterns suggest a candidate who will prioritize quality over quantity. They are unlikely to cut corners even when pressured, which is a significant asset in compliance or safety-critical roles, but may require management intervention during 'crunch' periods where speed is paramount.
+                        {t('components.liaReportPdf.strategicImplicationBody')}
                      </Text>
                  </View>
              </View>
@@ -422,29 +428,29 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
       <CleanEditorialLayout
         pageNum={5}
         totalPages={8}
-        title="Professional Operating System"
+        title={t('components.liaReportPdf.professionalOs')}
       >
-          <SectionTitle title="Operating Protocols" />
+          <SectionTitle title={t('components.liaReportPdf.operatingProtocols')} />
           
           <View style={{ flexDirection: 'row', gap: 16 }}>
               {/* Card 1: Work Environment */}
-              <TechCard title="Environment" style={{ flex: 1 }}>
+              <TechCard title={t('components.liaReportPdf.environment')} style={{ flex: 1 }}>
                   <View style={{ alignItems: 'flex-start', marginBottom: 8 }}>
-                      <ToggleControl label="Collaborative Spaces" active={true} />
-                      <ToggleControl label="Remote Ready" active={true} />
+                      <ToggleControl label={t('components.liaReportPdf.collaborativeSpaces')} active={true} />
+                      <ToggleControl label={t('components.liaReportPdf.remoteReady')} active={true} />
                   </View>
                   <Text style={{ fontSize: 10, color: modernColors.textPrimary }}>{data.workStyleAnalysis.workPreference}</Text>
               </TechCard>
 
               {/* Card 2: Decision Making */}
-              <TechCard title="Decision Logic" style={{ flex: 1 }}>
+              <TechCard title={t('components.liaReportPdf.decisionLogic')} style={{ flex: 1 }}>
                    <View style={{ marginBottom: 12 }}>
                        <View style={{ width: '100%', height: 4, backgroundColor: '#e2e8f0', borderRadius: 2 }}>
                            <View style={{ width: '70%', height: 4, backgroundColor: modernColors.secondary, borderRadius: 2 }} />
                        </View>
                        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
-                           <Text style={{ fontSize: 8, color: '#94a3b8' }}>Intuitive</Text>
-                           <Text style={{ fontSize: 8, color: '#94a3b8' }}>Analytical</Text>
+                           <Text style={{ fontSize: 8, color: '#94a3b8' }}>{t('components.liaReportPdf.intuitive')}</Text>
+                           <Text style={{ fontSize: 8, color: '#94a3b8' }}>{t('components.liaReportPdf.analytical')}</Text>
                        </View>
                    </View>
                    <Text style={{ fontSize: 10, color: modernColors.textPrimary }}>{data.workStyleAnalysis.decisionMaking}</Text>
@@ -461,17 +467,17 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
              </Svg>
           </View>
 
-          <SectionTitle title="Interaction Network" />
+          <SectionTitle title={t('components.liaReportPdf.interactionNetwork')} />
           
           <View style={{ flexDirection: 'row', gap: 16 }}>
                 {/* Team Dynamics */}
-               <TechCard title="Team Role" style={{ flex: 1 }}>
+               <TechCard title={t('components.liaReportPdf.teamRole')} style={{ flex: 1 }}>
                     <NetworkNode color={modernColors.primary} />
                     <Text style={{ fontSize: 10, color: modernColors.textPrimary, marginTop: 8 }}>{data.workStyleAnalysis.teamDynamics}</Text>
                </TechCard>
 
                {/* Communication */}
-               <TechCard title="Signal Strength" style={{ flex: 1 }}>
+               <TechCard title={t('components.liaReportPdf.signalStrength')} style={{ flex: 1 }}>
                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                          <View />
                          <SignalBars strength={4} color={modernColors.accent} />
@@ -488,16 +494,16 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
              </Svg>
           </View>
 
-          <SectionTitle title="Command Capabilities" />
+          <SectionTitle title={t('components.liaReportPdf.commandCapabilities')} />
 
           <View style={{ flexDirection: 'row', gap: 16, alignItems: 'center' }}>
                {/* Leadership Gauge */}
                <View style={{ width: '30%', alignItems: 'center', justifyContent: 'center' }}>
-                    <PowerGauge value={85} label="Leadership Potential" color={modernColors.primary} />
+                    <PowerGauge value={85} label={t('components.liaReportPdf.leadershipPotential')} color={modernColors.primary} />
                </View>
                
                {/* Environment Fit List */}
-               <TechCard title="Optimal Environment Fit" style={{ flex: 1, backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' }}>
+               <TechCard title={t('components.liaReportPdf.optimalEnvironmentFit')} style={{ flex: 1, backgroundColor: '#f0fdf4', borderColor: '#bbf7d0' }}>
                     <Text style={{ fontSize: 10, color: '#15803d', lineHeight: 1.6 }}>{data.environmentalFit}</Text>
                </TechCard>
           </View>
@@ -508,8 +514,8 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
       <CleanEditorialLayout
          pageNum={6}
          totalPages={8}
-         title="Career Alignment"
-         subtitle="Strategic role positioning based on cognitive architecture."
+         title={t('components.liaReportPdf.careerAlignment')}
+         subtitle={t('components.liaReportPdf.careerAlignmentSubtitle')}
       >
           {/* Row 1: Hero & Score — only when we have real role recommendations */}
           {data.careerRecommendations.roles.length > 0 && (
@@ -519,7 +525,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                   <View>
                       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
                           <View style={{ paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#15803d', borderRadius: 4 }}>
-                              <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: 'white', letterSpacing: 1 }}>PRIMARY MATCH</Text>
+                              <Text style={{ fontSize: 8, fontFamily: 'Helvetica-Bold', color: 'white', letterSpacing: 1 }}>{t('components.liaReportPdf.primaryMatch')}</Text>
                           </View>
                       </View>
                       <Text style={{ fontSize: 20, fontFamily: 'Helvetica-Bold', color: '#15803d', marginBottom: 8 }}>
@@ -530,14 +536,14 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                       </Text>
                   </View>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12 }}>
-                      <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#15803d', marginRight: 8 }}>COMPATIBILITY VECTOR</Text>
+                      <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#15803d', marginRight: 8 }}>{t('components.liaReportPdf.compatibilityVector')}</Text>
                       <View style={{ flex: 1, height: 1, backgroundColor: '#bbf7d0' }} />
                   </View>
               </BentoCard>
 
               {/* Score Card */}
               <BentoCard flex={1} style={{ alignItems: 'center', justifyContent: 'center' }}>
-                  <Text style={{ fontSize: 8, color: modernColors.textSecondary, letterSpacing: 2, marginBottom: 8 }}>MATCH INDEX</Text>
+                  <Text style={{ fontSize: 8, color: modernColors.textSecondary, letterSpacing: 2, marginBottom: 8 }}>{t('components.liaReportPdf.matchIndex')}</Text>
                   <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
                       <Svg width="80" height="80" viewBox="0 0 100 100">
                           <Circle cx="50" cy="50" r="45" stroke="#f1f5f9" strokeWidth="8" fill="none" />
@@ -564,7 +570,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
           {/* Row 2: Secondary Options */}
           {data.careerRecommendations.roles.length > 1 && (
           <View style={{ marginTop: 16 }}>
-              <BentoCard title="Alternative Pathways" style={{ padding: 16 }}>
+              <BentoCard title={t('components.liaReportPdf.alternativePathways')} style={{ padding: 16 }}>
                   <View style={{ gap: 12 }}>
                       {data.careerRecommendations.roles.slice(1).map((role, i) => (
                           <View key={i} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: i === data.careerRecommendations.roles.length - 2 ? 0 : 12, borderBottomWidth: i === data.careerRecommendations.roles.length - 2 ? 0 : 1, borderBottomColor: '#f1f5f9' }}>
@@ -584,7 +590,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
 
           {/* Row 3: Parameters & Growth */}
           <View style={{ flexDirection: 'row', gap: 16, marginTop: 16 }}>
-              <BentoCard flex={1} title="Search Parameters">
+              <BentoCard flex={1} title={t('components.liaReportPdf.searchParameters')}>
                   <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
                       {data.careerRecommendations.industries.map((ind, i) => (
                           <View key={i} style={{ paddingHorizontal: 8, paddingVertical: 4, backgroundColor: '#f1f5f9', borderRadius: 4 }}>
@@ -599,7 +605,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                   </View>
               </BentoCard>
 
-              <BentoCard flex={1} variant="warning" title="Growth Vector">
+              <BentoCard flex={1} variant="warning" title={t('components.liaReportPdf.growthVector')}>
                   <View style={{ gap: 6 }}>
                       {data.careerRecommendations.skillsGap.map((s, i) => (
                           <View key={i} style={{ flexDirection: 'row', alignItems: 'center' }}>
@@ -617,8 +623,8 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
       <CleanEditorialLayout
          pageNum={7}
          totalPages={8}
-         title="Learning Roadmap"
-         subtitle="Neural plasticity and skill acquisition protocols."
+         title={t('components.liaReportPdf.learningRoadmap')}
+         subtitle={t('components.liaReportPdf.learningRoadmapSubtitle')}
       >
            {/* Top Section: System Metrics */}
            <View style={{ flexDirection: 'row', gap: 16, marginBottom: 24 }}>
@@ -626,7 +632,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                     <Text style={{ fontSize: 48, fontFamily: 'Helvetica-Bold', color: modernColors.primary, letterSpacing: -2 }}>
                         {data.learningDevelopment.agilityScore ?? '—'}
                     </Text>
-                    <Text style={{ fontSize: 7, color: modernColors.textSecondary, letterSpacing: 2, marginTop: 4 }}>AGILITY INDEX</Text>
+                    <Text style={{ fontSize: 7, color: modernColors.textSecondary, letterSpacing: 2, marginTop: 4 }}>{t('components.liaReportPdf.agilityIndex')}</Text>
                     
                     <View style={{ width: '60%', height: 2, backgroundColor: '#e2e8f0', marginTop: 12 }}>
                         <View style={{ width: '85%', height: '100%', backgroundColor: modernColors.primary }} />
@@ -634,14 +640,14 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                 </View>
                 
                 <View style={{ flex: 1, padding: 16, backgroundColor: '#f8fafc', borderRadius: 8, borderWidth: 1, borderColor: '#e2e8f0', justifyContent: 'center' }}>
-                     <Text style={{ fontSize: 8, color: modernColors.accent, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>Absorption Style</Text>
+                     <Text style={{ fontSize: 8, color: modernColors.accent, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 8 }}>{t('components.liaReportPdf.absorptionStyle')}</Text>
                      <Text style={{ fontSize: 10, color: modernColors.textPrimary, lineHeight: 1.6 }}>
                          {data.learningDevelopment.learningStyle}
                      </Text>
                 </View>
            </View>
 
-           <SectionTitle title="Upgrade Sequence" />
+           <SectionTitle title={t('components.liaReportPdf.upgradeSequence')} />
            
            <View style={{ marginTop: 8, paddingLeft: 8 }}>
                 {data.learningDevelopment.actionPlan.map((plan, i) => (
@@ -674,7 +680,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                                   marginLeft: 8
                               }}>
                                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                                      <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: modernColors.primary }}>PHASE 0{i+1}</Text>
+                                      <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: modernColors.primary }}>{t('components.liaReportPdf.phase', { number: `0${i + 1}` })}</Text>
                                       <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: modernColors.textSecondary }}>{plan.period}</Text>
                                   </View>
                                   <Text style={{ fontSize: 10, color: modernColors.textSecondary, lineHeight: 1.5 }}>
@@ -688,14 +694,14 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
            
            <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 12, marginBottom: 16 }}>
                <View style={{ flex: 1, height: 1, backgroundColor: '#e2e8f0' }} />
-               <Text style={{ fontSize: 8, color: '#94a3b8', marginHorizontal: 12, letterSpacing: 1 }}>DATA INGESTION</Text>
+               <Text style={{ fontSize: 8, color: '#94a3b8', marginHorizontal: 12, letterSpacing: 1 }}>{t('components.liaReportPdf.dataIngestion')}</Text>
                <View style={{ flex: 1, height: 1, backgroundColor: '#e2e8f0' }} />
            </View>
            
            <View style={{ gap: 8 }}>
                {data.learningDevelopment.recommendedCourses.map((c, i) => (
                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: '#f0f9ff' , padding: 8, borderRadius: 4, borderWidth: 1, borderColor: '#bae6fd' }}>
-                       <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0284c7', marginRight: 8, opacity: 0.7 }}>[SOURCE_{i+1}]</Text>
+                       <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: '#0284c7', marginRight: 8, opacity: 0.7 }}>{t('components.liaReportPdf.source', { number: i + 1 })}</Text>
                        <Text style={{ fontSize: 10, color: '#0369a1', fontFamily: 'Courier' }}>{c}</Text>
                    </View>
                ))}
@@ -707,13 +713,13 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
       <CleanEditorialLayout
          pageNum={8}
          totalPages={8}
-         title="Assessment Verdict"
-         subtitle="Final synthesis and forward projections."
+         title={t('components.liaReportPdf.assessmentVerdict')}
+         subtitle={t('components.liaReportPdf.assessmentVerdictSubtitle')}
       >
-           <SectionTitle title="Executive Synthesis" />
+           <SectionTitle title={t('components.liaReportPdf.executiveSynthesis')} />
            
            <View style={{ gap: 8 }}>
-               {data.summary.keyTakeaways.map((t, i) => (
+               {data.summary.keyTakeaways.map((takeaway, i) => (
                    <View key={i} style={{ 
                        padding: 12, 
                        borderLeftWidth: 3, 
@@ -724,19 +730,19 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                        borderRadius: 4 
                    }}>
                        <Text style={{ fontSize: 9, color: modernColors.textPrimary, lineHeight: 1.5, fontFamily: 'Courier' }}>
-                           {'>'} {t}
+                           {'>'} {takeaway}
                        </Text>
                    </View>
                ))}
            </View>
             
-           <SectionTitle title="Predictive Analysis" />
+           <SectionTitle title={t('components.liaReportPdf.predictiveAnalysis')} />
            
            <View style={{ flexDirection: 'row', gap: 16 }}>
                {/* Success Panel */}
                <View style={{ flex: 1, backgroundColor: '#f0fdf4', padding: 12, borderRadius: 6, borderWidth: 1, borderColor: '#bbf7d0' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#bbf7d0', paddingBottom: 8 }}>
-                        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#15803d', letterSpacing: 1 }}>SUCCESS MULTIPLIERS</Text>
+                        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#15803d', letterSpacing: 1 }}>{t('components.liaReportPdf.successMultipliers')}</Text>
                     </View>
                     <View style={{ gap: 8 }}>
                         {data.summary.successFactors.map((s, i) => (
@@ -753,7 +759,7 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                {/* Risk Panel */}
                <View style={{ flex: 1, backgroundColor: '#fff1f2', padding: 12, borderRadius: 6, borderWidth: 1, borderColor: '#fecdd3' }}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12, borderBottomWidth: 1, borderBottomColor: '#fecdd3', paddingBottom: 8 }}>
-                        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#be123c', letterSpacing: 1 }}>RISK FACTORS</Text>
+                        <Text style={{ fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#be123c', letterSpacing: 1 }}>{t('components.liaReportPdf.riskFactors')}</Text>
                     </View>
                     <View style={{ gap: 8 }}>
                         {data.summary.riskFactors.map((s, i) => (
@@ -773,19 +779,19 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
            </View>
 
            <View style={{ marginTop: 24 }}>
-               <TechCard title="Recalibration Schedule">
+               <TechCard title={t('components.liaReportPdf.recalibrationSchedule')}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                         <View>
-                            <Text style={{ fontSize: 8, color: modernColors.textSecondary, letterSpacing: 1 }}>NEXT EVALUATION DATE</Text>
+                            <Text style={{ fontSize: 8, color: modernColors.textSecondary, letterSpacing: 1 }}>{t('components.liaReportPdf.nextEvaluationDate')}</Text>
                             <Text style={{ fontSize: 16, fontFamily: 'Helvetica-Bold', color: modernColors.primary, marginTop: 4 }}>{data.summary.nextAssessmentDate}</Text>
                         </View>
                         <View style={{ alignItems: 'flex-end' }}>
                             <Text style={{ fontSize: 9, color: modernColors.textSecondary, fontStyle: 'italic', marginBottom: 4 }}>
-                               Scheduled for performance recalibration.
+                               {t('components.liaReportPdf.scheduledRecalibration')}
                             </Text>
                             <View style={{ flexDirection: 'row', gap: 4 }}>
                                 <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: modernColors.success }} />
-                                <Text style={{ fontSize: 8, color: modernColors.success, fontFamily: 'Helvetica-Bold' }}>ACTIVE</Text>
+                                <Text style={{ fontSize: 8, color: modernColors.success, fontFamily: 'Helvetica-Bold' }}>{t('components.liaReportPdf.active')}</Text>
                             </View>
                         </View>
                     </View>
@@ -796,10 +802,11 @@ const LIAReportPDF: React.FC<{ data: LIAReportData }> = ({ data }) => {
                <Text style={{ fontSize: 6, color: '#94a3b8', textAlign: 'justify', lineHeight: 1.4, marginBottom: 8 }}>
                    {data.summary.methodology}
                </Text>
-               <Text style={{ fontSize: 6, color: '#94a3b8', textAlign: 'center' }}>© 2026 TimCare AI Analytics. All rights reserved.</Text>
+               <Text style={{ fontSize: 6, color: '#94a3b8', textAlign: 'center' }}>{t('components.liaReportPdf.copyright')}</Text>
            </View>
       </CleanEditorialLayout>
     </Document>
+    </PdfLanguageContext.Provider>
   );
 };
 

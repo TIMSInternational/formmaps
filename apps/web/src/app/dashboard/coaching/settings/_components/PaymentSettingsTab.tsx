@@ -15,6 +15,7 @@ import {
 } from "@/services/coachService";
 import { Payout, BankAccount } from "@/types/coach";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { LinkBankAccountForm } from "./LinkBankAccountForm";
 import { ConnectedAccountCard } from "./ConnectedAccountCard";
 import { PayoutHistorySection } from "./PayoutHistorySection";
@@ -53,8 +54,9 @@ interface PaymentSettingsTabProps {
   onPayoutsUpdated?: (payouts: Payout[]) => void;
 }
 
-const formatCurrency = (value?: number, currency = "USD") =>
-  new Intl.NumberFormat("en-US", {
+// Amounts stay in the payout currency; only the number format follows the UI language.
+const makeFormatCurrency = (locale: string) => (value?: number, currency = "USD") =>
+  new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
     maximumFractionDigits: 2,
@@ -67,6 +69,8 @@ export function PaymentSettingsTab({
   onBankAccountUpdated,
   onPayoutsUpdated,
 }: PaymentSettingsTabProps) {
+  const { t, i18n } = useTranslation();
+  const formatCurrency = makeFormatCurrency(i18n.language?.startsWith("es") ? "es-CO" : "en-US");
   const [isLoading, setIsLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
   const [isSavingFrequency, setIsSavingFrequency] = useState(false);
@@ -221,11 +225,11 @@ export function PaymentSettingsTab({
         Array.isArray(earningsHistoryResult) ? earningsHistoryResult : []
       );
     } catch {
-      toast.error("Failed to load payment settings");
+      toast.error(t("studentUi.coaching.payouts.loadSettingsFailed"));
     } finally {
       setIsLoading(false);
     }
-  }, [payoutPage, payoutStatus]);
+  }, [payoutPage, payoutStatus, t]);
 
   useEffect(() => {
     fetchStripeAccount();
@@ -243,7 +247,7 @@ export function PaymentSettingsTab({
     try {
       await connectStripe(stripeAccount, fetchStripeAccount);
     } catch (error: unknown) {
-      const errMsg = (error as Record<string, string>)?.message || "Failed to connect Stripe account";
+      const errMsg = (error as Record<string, string>)?.message || t("studentUi.coaching.bank.connectStripeFailed");
       toast.error(errMsg);
     } finally {
       setIsConnecting(false);
@@ -254,7 +258,7 @@ export function PaymentSettingsTab({
     try {
       await disconnectAccount(setStripeAccount, onBankAccountUpdated);
     } catch (error: unknown) {
-      const errMsg = (error as Record<string, string>)?.message || "Failed to disconnect Stripe account";
+      const errMsg = (error as Record<string, string>)?.message || t("studentUi.coaching.bank.disconnectStripeFailed");
       toast.error(errMsg);
     }
   };
@@ -264,7 +268,7 @@ export function PaymentSettingsTab({
     try {
       await saveFrequency(value, setPayoutFrequency);
     } catch (error: unknown) {
-      const errMsg = (error as Record<string, string>)?.message || "Failed to update payout frequency";
+      const errMsg = (error as Record<string, string>)?.message || t("studentUi.coaching.payouts.frequencyUpdateFailed");
       toast.error(errMsg);
     } finally {
       setIsSavingFrequency(false);
@@ -282,7 +286,7 @@ export function PaymentSettingsTab({
         setBankRoutingNumber,
       });
     } catch (error: unknown) {
-      const errMsg = (error as Record<string, string>)?.message || "Failed to update payout method";
+      const errMsg = (error as Record<string, string>)?.message || t("studentUi.coaching.payouts.methodUpdateFailed");
       toast.error(errMsg);
     } finally {
       setIsSavingMethod(false);
@@ -306,9 +310,9 @@ export function PaymentSettingsTab({
   return (
     <div className="p-6 sm:p-10 space-y-8">
       <div>
-        <h2 className="text-xl font-bold text-gray-900">Payments & Payouts</h2>
+        <h2 className="text-xl font-bold text-gray-900">{t("studentUi.coaching.payouts.title")}</h2>
         <p className="text-gray-500 font-medium mt-1">
-          Manage your Stripe connection and view payout history.
+          {t("studentUi.coaching.payouts.subtitle")}
         </p>
       </div>
 

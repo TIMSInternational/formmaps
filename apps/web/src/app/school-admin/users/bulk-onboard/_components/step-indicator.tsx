@@ -1,14 +1,17 @@
 "use client";
 
 import { CheckCircle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
-const STEPS = ["Upload", "Preview & Validate", "Complete"];
+const STEP_KEYS = ["upload", "preview", "complete"] as const;
 
 interface StepIndicatorProps {
   current: number;
 }
 
 export function StepIndicator({ current }: StepIndicatorProps) {
+  const { t } = useTranslation("school_admin");
+  const STEPS = STEP_KEYS.map((k) => t(`ui.bulkOnboardSteps.${k}`));
   return (
     <div className="flex items-center gap-0">
       {STEPS.map((label, i) => {

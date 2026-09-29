@@ -11,6 +11,7 @@ import {
   Check,
 } from "lucide-react";
 import { GenerateButton } from "@/components/ai";
+import { useTranslation } from "react-i18next";
 
 interface ExperienceEntry {
   id: string;
@@ -62,6 +63,7 @@ export function ExperienceEditor({
   removeExperience,
   setSaveSuccess,
 }: ExperienceEditorProps) {
+  const { t } = useTranslation();
   const triggerSave = () => {
     handleSaveExperience();
     setSaveSuccess(true);
@@ -77,7 +79,7 @@ export function ExperienceEditor({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="block text-xs font-medium text-foreground mb-1">
-            Job Title *
+            {t("resumeBuilder.experienceEditor.jobTitle", "Job Title *")}
           </label>
           <input
             type="text"
@@ -89,13 +91,13 @@ export function ExperienceEditor({
               }))
             }
             onBlur={isNew ? undefined : triggerSave}
-            placeholder="Software Engineer"
+            placeholder={t("resumeBuilder.experienceEditor.jobTitlePlaceholder", "Software Engineer")}
             className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-foreground mb-1">
-            Company *
+            {t("resumeBuilder.experienceEditor.company", "Company *")}
           </label>
           <input
             type="text"
@@ -107,7 +109,7 @@ export function ExperienceEditor({
               }))
             }
             onBlur={isNew ? undefined : triggerSave}
-            placeholder="Company Name"
+            placeholder={t("resumeBuilder.experienceEditor.companyPlaceholder", "Company Name")}
             className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none"
           />
         </div>
@@ -115,7 +117,7 @@ export function ExperienceEditor({
       <div className="grid grid-cols-3 gap-2">
         <div>
           <label className="block text-xs font-medium text-foreground mb-1">
-            Location
+            {t("resumeBuilder.experienceStep.location", "Location")}
           </label>
           <input
             type="text"
@@ -127,13 +129,13 @@ export function ExperienceEditor({
               }))
             }
             onBlur={isNew ? undefined : triggerSave}
-            placeholder="City, State"
+            placeholder={t("resumeBuilder.experienceEditor.locationPlaceholder", "City, State")}
             className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-foreground mb-1">
-            Start Date
+            {t("resumeBuilder.experienceStep.startDate", "Start Date")}
           </label>
           <input
             type="text"
@@ -145,13 +147,13 @@ export function ExperienceEditor({
               }))
             }
             onBlur={isNew ? undefined : triggerSave}
-            placeholder="Jan 2023"
+            placeholder={t("resumeBuilder.experienceEditor.startDatePlaceholder", "Jan 2023")}
             className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-foreground mb-1">
-            End Date
+            {t("resumeBuilder.experienceStep.endDate", "End Date")}
           </label>
           <input
             type="text"
@@ -163,7 +165,7 @@ export function ExperienceEditor({
               }))
             }
             onBlur={isNew ? undefined : triggerSave}
-            placeholder="Present"
+            placeholder={t("resumeBuilder.experienceStep.present", "Present")}
             disabled={experienceForm.current}
             className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none disabled:opacity-50"
           />
@@ -187,13 +189,13 @@ export function ExperienceEditor({
           htmlFor={`current-${entryId || "new"}`}
           className="text-xs text-foreground cursor-pointer"
         >
-          I currently work here
+          {t("resumeBuilder.experienceStep.currentlyWorkHere", "I currently work here")}
         </label>
       </div>
       <div>
         <div className="flex items-center justify-between gap-2 mb-1">
           <label className="block text-xs font-medium text-foreground">
-            Description
+            {t("resumeBuilder.experienceEditor.description", "Description")}
           </label>
           <GenerateButton
             field="experience_bullets"
@@ -229,7 +231,10 @@ export function ExperienceEditor({
             }))
           }
           onBlur={isNew ? undefined : triggerSave}
-          placeholder="&#8226; Achievement or responsibility&#10;&#8226; Another achievement&#10;&#8226; One more point"
+          placeholder={t(
+            "resumeBuilder.experienceEditor.descriptionPlaceholder",
+            "• Achievement or responsibility\n• Another achievement\n• One more point"
+          )}
           rows={4}
           className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none resize-none"
         />
@@ -240,14 +245,14 @@ export function ExperienceEditor({
             onClick={() => setEditingExperience(null)}
             className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-secondary/50 transition-colors"
           >
-            Cancel
+            {t("common.cancel", "Cancel")}
           </button>
           <button
             onClick={triggerSave}
             className="flex items-center gap-1 px-3 py-1.5 text-xs bg-[#102B47] text-white rounded-lg hover:bg-[#0b1f33] transition-colors"
           >
             <Check className="w-3 h-3" />
-            Add
+            {t("resumeBuilder.alignStep.add", "Add")}
           </button>
         </div>
       )}
@@ -275,10 +280,10 @@ export function ExperienceEditor({
       >
         <Briefcase className="w-5 h-5 text-[#2E9098] flex-shrink-0" />
         <span className="font-semibold text-foreground flex-1 text-left">
-          Professional Experience
+          {t("resumeBuilder.experienceEditor.sectionTitle", "Professional Experience")}
         </span>
         <span className="px-2 py-0.5 text-xs font-semibold bg-[#FFD23F] text-[#102B47] rounded-full">
-          {experience.length} entries
+          {t("resumeBuilder.experienceEditor.entries", { count: experience.length, defaultValue: "{{count}} entries" })}
         </span>
         <motion.div
           animate={{
@@ -333,7 +338,7 @@ export function ExperienceEditor({
                                     <span>
                                       {exp.startDate} -{" "}
                                       {exp.current
-                                        ? "Present"
+                                        ? t("resumeBuilder.experienceStep.present", "Present")
                                         : exp.endDate}
                                     </span>
                                   </>
@@ -345,6 +350,7 @@ export function ExperienceEditor({
                                 onClick={() =>
                                   handleEditExperience(exp.id)
                                 }
+                                aria-label={t("common.edit", "Edit")}
                                 className="p-1.5 hover:bg-accent rounded-lg transition-colors"
                               >
                                 <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
@@ -358,6 +364,7 @@ export function ExperienceEditor({
                                     2000
                                   );
                                 }}
+                                aria-label={t("common.delete", "Delete")}
                                 className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors"
                               >
                                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
@@ -380,7 +387,7 @@ export function ExperienceEditor({
                   className="w-full flex items-center justify-center gap-1 px-3 py-2 border border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-[#2E9098] hover:text-[#2E9098] transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Add Experience
+                  {t("resumeBuilder.experienceStep.addExperience", "Add Experience")}
                 </button>
               )}
             </div>

@@ -7,7 +7,7 @@ import {
   Users,
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
-import { format } from "date-fns";
+import { useTranslation } from "react-i18next";
 import { Card, CardHeader } from "./shared-ui";
 import type { EvaluationGroupWithId } from "@/services/evaluationService";
 import type { StudentGpa } from "@/services/transcriptService";
@@ -45,19 +45,20 @@ export function OverviewTab({
   personalityTotal,
   evalGroups,
 }: OverviewTabProps) {
+  const { t, i18n } = useTranslation("school_admin");
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Graduation Progress */}
       <Card>
-        <CardHeader icon={GraduationCap} color="var(--admin-accent-blue)" title="Graduation Pathway" />
+        <CardHeader icon={GraduationCap} color="var(--admin-accent-blue)" title={t("ui.studentDetail.overview.graduationPathway")} />
         <div style={{ padding: 16 }}>
           {graduationProgress ? (
             <div className="space-y-4">
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "end" }}>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Credits Acquired</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("ui.studentDetail.overview.creditsAcquired")}</div>
                   <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 2 }}>
-                    {graduationProgress.totalCreditsEarned} <span style={{ fontSize: 14, color: "var(--admin-font-tertiary)", fontWeight: 400 }}>/ {graduationProgress.totalCreditsRequired} req.</span>
+                    {graduationProgress.totalCreditsEarned} <span style={{ fontSize: 14, color: "var(--admin-font-tertiary)", fontWeight: 400 }}>/ {t("ui.studentDetail.overview.required", { count: graduationProgress.totalCreditsRequired })}</span>
                   </div>
                 </div>
                 <span style={{
@@ -65,7 +66,7 @@ export function OverviewTab({
                   background: graduationProgress.isOnTrack ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
                   color: graduationProgress.isOnTrack ? "#10b981" : "#ef4444",
                 }}>
-                  {graduationProgress.isOnTrack ? "On Track" : "At Risk"}
+                  {graduationProgress.isOnTrack ? t("academicGaps.stats.onTrack") : t("academicGaps.stats.atRisk")}
                 </span>
               </div>
               <Progress
@@ -75,7 +76,7 @@ export function OverviewTab({
             </div>
           ) : (
             <div style={{ textAlign: "center", padding: "20px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
-              Graduation data is not fully calculated yet.
+              {t("ui.studentDetail.overview.noGraduation")}
             </div>
           )}
         </div>
@@ -83,26 +84,26 @@ export function OverviewTab({
 
       {/* GPA & Transcript Summary */}
       <Card>
-        <CardHeader icon={BarChart3} color="#f59e0b" title="GPA & Academic Standing" />
+        <CardHeader icon={BarChart3} color="#f59e0b" title={t("ui.studentDetail.overview.gpaStanding")} />
         <div style={{ padding: 16 }}>
           {gpaData ? (
             <div className="space-y-3">
               <div style={{ display: "flex", gap: 16 }}>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Weighted GPA</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("ui.gpa.weightedGpa")}</div>
                   <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 2 }}>
                     {gpaData.gpaWeighted?.toFixed(2) ?? "\u2014"}
                   </div>
                 </div>
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Unweighted</div>
+                  <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("ui.studentDetail.overview.unweighted")}</div>
                   <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 2 }}>
                     {gpaData.gpaUnweighted?.toFixed(2) ?? "\u2014"}
                   </div>
                 </div>
                 {gpaData.classRank && (
                   <div>
-                    <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Class Rank</div>
+                    <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("ui.studentDetail.overview.classRank")}</div>
                     <div style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 2 }}>
                       #{gpaData.classRank} <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)", fontWeight: 400 }}>/ {gpaData.classSize}</span>
                     </div>
@@ -110,12 +111,12 @@ export function OverviewTab({
                 )}
               </div>
               <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-                Total Credits: {gpaData.totalCredits} {gpaData.computedAt && `| Last computed: ${format(new Date(gpaData.computedAt), "MMM d, yyyy")}`}
+                {t("ui.studentDetail.overview.totalCredits", { count: gpaData.totalCredits })} {gpaData.computedAt && `| ${t("ui.studentDetail.overview.lastComputed", { date: new Date(gpaData.computedAt).toLocaleDateString(i18n.language?.startsWith("es") ? "es-CO" : "en-US", { month: "short", day: "numeric", year: "numeric" }) })}`}
               </div>
             </div>
           ) : (
             <div style={{ textAlign: "center", padding: "20px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
-              No GPA data computed yet.
+              {t("ui.studentDetail.overview.noGpa")}
             </div>
           )}
         </div>
@@ -123,13 +124,13 @@ export function OverviewTab({
 
       {/* Assessment Completion Summary */}
       <Card>
-        <CardHeader icon={TrendingUp} color="#14b8a6" title="Assessment Completion" />
+        <CardHeader icon={TrendingUp} color="#14b8a6" title={t("ui.studentDetail.overview.assessmentCompletion")} />
         <div style={{ padding: 16 }} className="space-y-3">
           {[
             { label: "MIL / LIA", completed: milCompleted, total: milTotal, color: "var(--admin-accent-blue)" },
-            { label: "PCA Exams", completed: pcaCompleted, total: pcaTotal || 1, color: "#8b5cf6" },
-            { label: "360 Evaluations", completed: evalCompleted, total: evalTotal || 1, color: "#14b8a6" },
-            { label: "Personality", completed: personalityCompleted, total: personalityTotal || 1, color: "#6366f1" },
+            { label: t("ui.studentDetail.overview.pcaExams"), completed: pcaCompleted, total: pcaTotal || 1, color: "#8b5cf6" },
+            { label: t("ui.studentReport.evaluations360"), completed: evalCompleted, total: evalTotal || 1, color: "#14b8a6" },
+            { label: t("ui.studentReport.personality"), completed: personalityCompleted, total: personalityTotal || 1, color: "#6366f1" },
           ].map((item) => {
             const pct = item.total > 0 ? Math.round((item.completed / item.total) * 100) : 0;
             return (
@@ -149,10 +150,10 @@ export function OverviewTab({
 
       {/* 360 Evaluation Status */}
       <Card>
-        <CardHeader icon={Users} color="#ec4899" title="360 Evaluation Status" badge={
+        <CardHeader icon={Users} color="#ec4899" title={t("ui.studentDetail.overview.evalStatus")} badge={
           evalTotal > 0 ? (
             <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3, background: "rgba(236,72,153,0.1)", color: "#ec4899", marginLeft: 4 }}>
-              {evalCompleted}/{evalTotal} complete
+              {t("ui.studentDetail.examsComplete", { completed: evalCompleted, total: evalTotal })}
             </span>
           ) : null
         } />
@@ -167,7 +168,7 @@ export function OverviewTab({
                 }}>
                   <div>
                     <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{g.evaluatorName}</div>
-                    <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{g.relation} | {g.evaluatorEmail}</div>
+                    <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{g.relation ? t(`ui.student360.relationShort.${g.relation}`, { defaultValue: g.relation }) : ""} | {g.evaluatorEmail}</div>
                   </div>
                   <span style={{
                     fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
@@ -175,14 +176,14 @@ export function OverviewTab({
                     color: g.isEvaluationCompleted ? "#10b981" : g.isTokenUsed ? "var(--admin-accent-blue)" : "#f59e0b",
                     textTransform: "uppercase",
                   }}>
-                    {g.isEvaluationCompleted ? "Completed" : g.isTokenUsed ? "In Progress" : "Pending"}
+                    {g.isEvaluationCompleted ? t("ui.student360.status.completed") : g.isTokenUsed ? t("ui.studentDetail.overview.inProgress") : t("ui.student360.status.pending")}
                   </span>
                 </div>
               ))}
             </div>
           ) : (
             <div style={{ textAlign: "center", padding: "20px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
-              No 360 evaluations assigned yet.
+              {t("ui.studentDetail.overview.no360")}
             </div>
           )}
         </div>

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   MoreVertical, Trash2, Copy, Edit3, Calendar,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { Resume } from "@/services/resumeService";
 import { ResumeOriginalThumbnail } from "./ResumeOriginalThumbnail";
 
@@ -17,9 +18,9 @@ interface ResumeCardProps {
   onDelete: (resumeId: string) => void;
 }
 
-function formatDate(dateString: string) {
+function formatDate(dateString: string, language?: string) {
   const date = new Date(dateString);
-  return date.toLocaleDateString("en-US", {
+  return date.toLocaleDateString(language?.startsWith("es") ? "es-CO" : "en-US", {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -27,6 +28,7 @@ function formatDate(dateString: string) {
 }
 
 export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate, onDelete }: ResumeCardProps) {
+  const { t, i18n } = useTranslation();
   const typesetPreview = (
     <div style={{ transform: "scale(0.95)", transformOrigin: "top left", width: "105%", pointerEvents: "none" }}>
       <div className="text-center border-b border-black pb-[2px] mb-[2px]">
@@ -39,13 +41,13 @@ export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate
       </div>
       {resume.summary && (
         <div className="mb-[4px]">
-          <div className="text-[8px] font-bold uppercase border-b border-black/50 pb-[1px] mb-[2px] text-black">Summary</div>
+          <div className="text-[8px] font-bold uppercase border-b border-black/50 pb-[1px] mb-[2px] text-black">{t("resumeBuilder.resumeCard.summary", "Summary")}</div>
           <div className="text-[7px] leading-[1.2] text-gray-700 line-clamp-2">{resume.summary}</div>
         </div>
       )}
       {resume.experience?.length > 0 && (
         <div className="mb-[4px]">
-          <div className="text-[8px] font-bold uppercase border-b border-black/50 pb-[1px] mb-[2px] text-black">Experience</div>
+          <div className="text-[8px] font-bold uppercase border-b border-black/50 pb-[1px] mb-[2px] text-black">{t("resumeBuilder.resumeCard.experience", "Experience")}</div>
           {resume.experience.slice(0, 3).map((exp, i) => (
             <div key={i} className="mb-[3px]">
               <div className="flex justify-between text-[7.5px] text-black">
@@ -59,7 +61,7 @@ export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate
       )}
       {Object.values(resume.skills?.skills || {}).flat().length > 0 && (
         <div>
-          <div className="text-[8px] font-bold uppercase border-b border-black/50 pb-[1px] mb-[2px] text-black">Skills</div>
+          <div className="text-[8px] font-bold uppercase border-b border-black/50 pb-[1px] mb-[2px] text-black">{t("resumeBuilder.resumeCard.skills", "Skills")}</div>
           <div className="text-[7px] leading-[1.2] text-gray-600 line-clamp-2">
             {Object.values(resume.skills?.skills || {}).flat().slice(0, 15).join(", ")}
           </div>
@@ -99,7 +101,7 @@ export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate
         {/* Hover overlay */}
         <div className="absolute inset-0 bg-foreground/0 group-hover:bg-foreground/10 transition-colors flex items-center justify-center">
           <span className="opacity-0 group-hover:opacity-100 px-3 py-1.5 bg-[#102B47] text-white rounded-xl text-xs font-medium transition-opacity">
-            Edit Resume
+            {t("resumeBuilder.resumeCard.editResume", "Edit Resume")}
           </span>
         </div>
       </div>
@@ -112,14 +114,16 @@ export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate
           </h3>
           {resume.hasOriginal && (
             <span className="rounded-full bg-[#FFD23F] px-2 py-0.5 text-[10px] font-semibold text-[#102B47] shrink-0">
-              Original
+              {t("resumeBuilder.resumeCard.original", "Original")}
             </span>
           )}
         </div>
 
         <div className="flex items-center text-xs text-muted-foreground mb-3">
           <Calendar className="w-3 h-3 mr-1.5" />
-          Updated {formatDate(resume.updatedAt || resume.createdAt || new Date().toISOString())}
+          {t("resumeBuilder.resumeCard.updated", "Updated {{date}}", {
+            date: formatDate(resume.updatedAt || resume.createdAt || new Date().toISOString(), i18n?.language),
+          })}
         </div>
 
         {/* Actions */}
@@ -130,10 +134,10 @@ export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate
               onEdit(resume._id);
             }}
             className="flex items-center gap-1 px-2.5 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
-            title="Edit resume"
+            title={t("resumeBuilder.resumeCard.editResumeTitle", "Edit resume")}
           >
             <Edit3 className="w-3 h-3" />
-            <span className="hidden sm:inline">Edit</span>
+            <span className="hidden sm:inline">{t("common.edit", "Edit")}</span>
           </button>
 
           {/* Menu Button */}
@@ -144,7 +148,8 @@ export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate
                 onToggleMenu();
               }}
               className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-secondary rounded-lg transition-colors"
-              title="More options"
+              title={t("resumeBuilder.resumeCard.moreOptions", "More options")}
+              aria-label={t("resumeBuilder.resumeCard.moreOptions", "More options")}
             >
               <MoreVertical className="w-3.5 h-3.5" />
             </button>
@@ -164,14 +169,14 @@ export function ResumeCard({ resume, showMenu, onToggleMenu, onEdit, onDuplicate
                     className="w-full text-left px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary flex items-center gap-2 transition-colors border-b border-border"
                   >
                     <Copy className="w-3.5 h-3.5" />
-                    Duplicate
+                    {t("resumeBuilder.resumeCard.duplicate", "Duplicate")}
                   </button>
                   <button
                     onClick={() => onDelete(resume._id)}
                     className="w-full text-left px-3 py-2 text-xs text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
-                    Delete
+                    {t("common.delete", "Delete")}
                   </button>
                 </motion.div>
               )}

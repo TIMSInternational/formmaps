@@ -79,14 +79,21 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   // Loop-guard: useSetLanguage sets the store BEFORE calling changeLanguage,
   // so by the time this fires the store already has the correct value and
   // the `language !== globalStoreLanguage` check will skip the redundant set.
+  // Also keeps <html lang> truthful (the root layout renders "en"), so screen readers and the
+  // browser's spell-check/hyphenation treat Spanish pages as Spanish.
   useEffect(() => {
     const handleLanguageChange = (lng: string) => {
-      const globalStoreLanguage = lng === "es" ? "spanish" : "english";
+      const isSpanish = (lng || "").toLowerCase().startsWith("es");
+      if (typeof document !== "undefined") document.documentElement.lang = isSpanish ? "es" : "en";
+      const globalStoreLanguage = isSpanish ? "spanish" : "english";
       if (language !== globalStoreLanguage) {
         setLanguage(globalStoreLanguage);
       }
     };
 
+    if (i18n.language && typeof document !== "undefined") {
+      document.documentElement.lang = i18n.language.toLowerCase().startsWith("es") ? "es" : "en";
+    }
     i18n.on("languageChanged", handleLanguageChange);
 
     return () => {

@@ -9,6 +9,7 @@ import {
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { telemetry } from "@/services/telemetryService";
 import { toast } from "@/hooks/useToast";
+import i18n from "@/lib/i18n";
 
 const FAVORITES_KEY = "formmaps_career_favorites";
 
@@ -51,9 +52,9 @@ export function useFavorites() {
         return next;
       });
       removeFavorite(user.id, careerId).catch(() => {
-        toast.error("Failed to remove favorite");
+        toast.error(i18n.t("components.hooks.favorites.removeFailed"));
       });
-      toast.success("Removed from favorites");
+      toast.success(i18n.t("components.hooks.favorites.removed"));
       telemetry.trackFavorite("remove", careerId, "career");
       return false;
     }
@@ -63,9 +64,9 @@ export function useFavorites() {
       return next;
     });
     addFavorite(user.id, careerId).catch(() => {
-      toast.error("Failed to save favorite");
+      toast.error(i18n.t("components.hooks.favorites.saveFailed"));
     });
-    toast.success("Added to favorites");
+    toast.success(i18n.t("components.hooks.favorites.added"));
     telemetry.trackFavorite("add", careerId, "career");
     return true;
   }, [user.id, favorites]);

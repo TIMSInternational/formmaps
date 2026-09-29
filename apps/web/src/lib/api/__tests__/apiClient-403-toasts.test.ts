@@ -5,6 +5,7 @@
  *   bounce produced a 17-toast "Access denied" wall.
  * - Other 403s toast once with a stable id so repeats replace, not stack.
  */
+import "@/lib/i18n";
 import { toast } from "@/hooks/useToast";
 import { apiClient } from "@/lib/api/apiClient";
 

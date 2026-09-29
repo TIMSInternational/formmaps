@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api/apiClient";
 import { Settings, Save, Trophy, Loader2, BookOpen } from "lucide-react";
@@ -25,6 +26,7 @@ const GRADE_ORDER = ["A+", "A", "A-", "B+", "B", "B-", "C+", "C", "C-", "D+", "D
 
 // ─── CLASS RANKINGS TAB ───
 function ClassRankingsTab() {
+  const { t } = useTranslation("school_admin");
   const [computing, setComputing] = useState(false);
   const queryClient = useQueryClient();
 
@@ -42,9 +44,9 @@ function ClassRankingsTab() {
     setComputing(true);
     try {
       await computeClassRanks();
-      toast.success("Class ranks computed");
+      toast.success(t("ui.gpa.ranksComputed"));
       queryClient.invalidateQueries({ queryKey: ["class-rankings"] });
-    } catch { toast.error("Failed to compute ranks"); }
+    } catch { toast.error(t("ui.gpa.ranksFailed")); }
     setComputing(false);
   };
 
@@ -54,8 +56,8 @@ function ClassRankingsTab() {
     <div className="space-y-4">
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
         <div>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>Class Rankings</h2>
-          <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Student GPA rankings based on your grading configuration</p>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.gpa.classRankings")}</h2>
+          <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("ui.gpa.rankingsSubtitle")}</p>
         </div>
         <button onClick={handleCompute} disabled={computing} style={{
           height: 36, borderRadius: 6, padding: "0 16px", fontSize: 12, fontWeight: 600,
@@ -64,7 +66,7 @@ function ClassRankingsTab() {
           opacity: computing ? 0.7 : 1,
         }}>
           {computing ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Trophy style={{ width: 14, height: 14 }} />}
-          {computing ? "Computing..." : "Compute Ranks"}
+          {computing ? t("ui.gpa.computing") : t("ui.gpa.computeRanks")}
         </button>
       </div>
 
@@ -73,14 +75,14 @@ function ClassRankingsTab() {
       ) : students.length === 0 ? (
         <div style={{ textAlign: "center", padding: 48 }}>
           <Trophy style={{ width: 40, height: 40, color: "var(--admin-font-light)", margin: "0 auto 16px", opacity: 0.3 }} />
-          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>No rankings yet. Import grades first, then click "Compute Ranks".</p>
+          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("ui.gpa.noRankings")}</p>
         </div>
       ) : (
         <div style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
           <Table>
             <TableHeader>
               <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
-                {["Rank", "Student", "Grade", "GPA", "Weighted GPA", "Percentile"].map(h => (
+                {[t("ui.gpa.rank"), t("academicGaps.table.student"), t("academicGaps.table.grade"), "GPA", t("ui.gpa.weightedGpa"), t("ui.gpa.percentile")].map(h => (
                   <TableHead key={h} className="py-3 px-4" style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)" }}>{h}</TableHead>
                 ))}
               </TableRow>
@@ -99,7 +101,7 @@ function ClassRankingsTab() {
                       <span style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{s.studentName || s.name || "—"}</span>
                     </TableCell>
                     <TableCell className="py-3 px-4" style={{ fontSize: 13, color: "var(--admin-font-light)" }}>
-                      {s.gradeLevel ? `Gr. ${s.gradeLevel}` : "—"}
+                      {s.gradeLevel ? t("ui.common.gradeShort", { grade: s.gradeLevel }) : "—"}
                     </TableCell>
                     <TableCell className="py-3 px-4">
                       <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{Number(gpa).toFixed(2)}</span>
@@ -128,6 +130,7 @@ function ClassRankingsTab() {
 
 // ─── GPA CONFIG TAB (existing, simplified) ───
 function GpaConfigTab() {
+  const { t } = useTranslation("school_admin");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [scale, setScale] = useState<4 | 5>(4);
@@ -153,8 +156,8 @@ function GpaConfigTab() {
     setSaving(true);
     try {
       await updateGpaConfig({ scale, unweightedMap: gradeMap, weightBonuses: bonuses } as Partial<GpaConfig>);
-      toast.success("GPA configuration saved");
-    } catch { toast.error("Failed to save"); }
+      toast.success(t("ui.gpa.configSaved"));
+    } catch { toast.error(t("graduation.rulesFailed")); }
     setSaving(false);
   };
 
@@ -170,7 +173,7 @@ function GpaConfigTab() {
           opacity: saving ? 0.6 : 1,
         }}>
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          {saving ? "Saving..." : "Save Configuration"}
+          {saving ? t("common:common.saving") : t("ui.gpa.saveConfig")}
         </button>
       </div>
 
@@ -179,13 +182,13 @@ function GpaConfigTab() {
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)" }}>
           <Settings className="h-4 w-4" style={{ color: "var(--admin-accent-blue)" }} />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Grading Scale</div>
-            <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Set point values for each letter grade</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.gpa.gradingScale")}</div>
+            <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.gpa.gradingScaleSubtitle")}</div>
           </div>
         </div>
         <div style={{ padding: "16px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 16, marginBottom: 16 }}>
-            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)" }}>Scale:</span>
+            <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)" }}>{t("ui.gpa.scale")}</span>
             {([4, 5] as const).map(s => (
               <label key={s} style={{ display: "flex", alignItems: "center", gap: 6, cursor: "pointer", fontSize: 13, color: scale === s ? "var(--admin-font-primary)" : "var(--admin-font-tertiary)", fontWeight: scale === s ? 600 : 400 }}>
                 <input type="radio" checked={scale === s} onChange={() => { setScale(s); setGradeMap(s === 5 ? { ...DEFAULT_MAP_5 } : { ...DEFAULT_MAP_4 }); }}
@@ -212,13 +215,13 @@ function GpaConfigTab() {
         <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 8, background: "var(--admin-bg-hover)" }}>
           <Trophy className="h-4 w-4" style={{ color: "var(--admin-accent-blue)" }} />
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Weight Bonuses</div>
-            <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Extra points for Honors/AP/IB courses</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.gpa.weightBonuses")}</div>
+            <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.gpa.weightBonusesSubtitle")}</div>
           </div>
         </div>
         <div style={{ padding: 16, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
           {[
-            { key: "honors", label: "Honors", color: "#8b5cf6" },
+            { key: "honors", label: t("ui.courses.honors"), color: "#8b5cf6" },
             { key: "ap", label: "AP", color: "var(--admin-accent-blue)" },
             { key: "ib", label: "IB", color: "#10b981" },
           ].map(({ key, label, color }) => (
@@ -229,7 +232,7 @@ function GpaConfigTab() {
                 <input type="number" min={0} max={2} step={0.1} value={bonuses[key] ?? 0}
                   onChange={(e) => setBonuses(prev => ({ ...prev, [key]: parseFloat(e.target.value) || 0 }))}
                   style={{ width: 60, height: 30, borderRadius: 4, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", fontSize: 13, fontWeight: 600, padding: "0 8px" }} />
-                <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>pts</span>
+                <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.gpa.pts")}</span>
               </div>
             </div>
           ))}
@@ -241,15 +244,16 @@ function GpaConfigTab() {
 
 // ─── MAIN PANEL ───
 export function GpaPanel() {
+  const { t } = useTranslation("school_admin");
   const [activeTab, setActiveTab] = useState("gradebook");
 
   return (
     <div className="space-y-6">
       <AdminTabBar
         tabs={[
-          { key: "gradebook", label: "Gradebook", icon: BookOpen },
-          { key: "config", label: "GPA Configuration", icon: Settings },
-          { key: "rankings", label: "Class Rankings", icon: Trophy },
+          { key: "gradebook", label: t("academics.tabs.gradebook"), icon: BookOpen },
+          { key: "config", label: t("ui.gpa.gpaConfiguration"), icon: Settings },
+          { key: "rankings", label: t("ui.gpa.classRankings"), icon: Trophy },
         ]}
         activeTab={activeTab}
         onChange={setActiveTab}

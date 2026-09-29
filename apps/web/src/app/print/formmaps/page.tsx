@@ -1,4 +1,8 @@
+"use client";
+
 import React from "react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { Glasses, Settings, Calculator, Puzzle, Timer } from "lucide-react";
 import type { AssessmentReportData } from "@/types/assessmentReport";
 
@@ -6,91 +10,89 @@ import type { AssessmentReportData } from "@/types/assessmentReport";
 // NOTE: /print is not behind the middleware guard, so this page is publicly
 // reachable. Every value here must stay obviously fictional -- it previously
 // carried two real-person-shaped names, one with a full results profile.
-const defaultMockData: AssessmentReportData = {
-  candidate: {
-    name: "Valentina Ejemplo",
-    assessmentDate: "Septiembre 23/2025",
-  },
-  executiveSummary: {
-    text: "Valentina shows two exceptional cognitive markers: Detection of Characteristics = 96% (Exceptional) and Spatial Orientation / Visualization = Exceptional (78%). Her PCA shows high Influence, a service orientation, a strong concern for quality, and low Dominance. In simple terms: she has a keen eye for detail, can visualize in 2D/3D with ease, and relates very well to others — making her an ideal candidate for Architecture, Industrial Design, and programs that combine design with technical precision.",
-    summaryTitle: "Influence / Technical precision",
-    steps: [
-      { number: 1, text: "Translate LIA and PCA results into clear study recommendations." },
-      { number: 2, text: "Prioritize majors (Top-10) with cognitive behavioral justification." },
-      { number: 3, text: "Provide an exploration and decision plan (0–12 months) for a student." },
-      { number: 4, text: "Deliver an immediate operational plan (8 weeks) and tracking KPIs." },
-      { number: 5, text: "Map recommended universities and facilitate immediate application actions." },
-    ],
-  },
-  liaSubtests: [
-    { title: "Detection of characteristics", description: "Identifies errors, patterns and details; agile learning and precise execution — key for quality control and project review.", iconType: "glasses" },
-    { title: "Reasoning", description: "verbal fluency and logical analysis: Useful for argumentation, problem solving and presenting proposals.", iconType: "gears" },
-    { title: "Numerical speed and accuracy", description: "Agility for practical calculations; sufficient for basic technical tasks.", iconType: "math" },
-    { title: "Working memory", description: "Retention and manipulation of information; for Sara it is adequate, and it is advisable to support it with tools.", iconType: "puzzle" },
-    { title: "Orientation / General visualization", description: "Mental rotation, interpretation of plans and 3D prototyping — a differentiating ability for spatially oriented majors.", iconType: "timer" },
-  ],
-  integratedDiagnosis: {
-    chartData: [
-      { label: "F", value: 14, color: "#1a1a2e" },
-      { label: "A", value: 35, color: "#0f172a" },
-      { label: "B", value: 25, color: "#006d77" },
-      { label: "C", value: 9, color: "#99e2e8" },
-      { label: "D", value: 17, color: "#22d3ee" },
-    ],
-    legend: [
-      { label: "A", title: "Strengths:", description: "She quickly detects details and communicates very well with others.", bg: "#0f172a", borderColor: "#0f172a" },
-      { label: "B", title: "Opportunities:", description: "Her reasoning and verbal skills are good and can grow even more.", bg: "#006d77", borderColor: "#008996" },
-      { label: "C", title: "Stable Areas:", description: "Her memory works well when information is clear and organized.", bg: "#99e2e8", borderColor: "#22d3ee" },
-      { label: "D", title: "Risks:", description: "She may struggle to make firm decisions in difficult situations.", bg: "#22d3ee", borderColor: "#22d3ee" },
-      { label: "F", title: "Needs:", description: "She benefits from checklists and step-by-step tasks to stay on track.", bg: "#1a1a2e", borderColor: "#008996" },
-    ],
-    majors: {
-      perfectFit: [
-        { id: 1, title: "Architecture", description: "Spatial visualization + portfolio from the start; client interaction." },
-        { id: 2, title: "Industrial Design / Product Design", description: "3D prototyping, testing and product improvement." },
-        { id: 3, title: "Civil Engineering", description: "plan reading, site control and technical management.", extra: "(project design and supervision)" },
-      ],
-      highlyRecommended: [
-        { id: 4, title: "Interior Architecture / Interior Design" },
-        { id: 5, title: "Mechanical Engineering", extra: "(design and prototyping)" },
-        { id: 6, title: "Materials Engineering / Materials Science" },
-      ],
-      complementary: [
-        "Naval Engineering / Naval Architecture",
-        "UX/UI with physical prototyping / 3D product focus",
-        "Technical Quality Control / Quality Engineering",
-      ],
+// Built at render time so the sample renders in the viewer's language.
+function buildDefaultMockData(t: TFunction): AssessmentReportData {
+  const s = (key: string) => t(`pages.print.sample.${key}`);
+  return {
+    candidate: {
+      name: "Valentina Ejemplo",
+      assessmentDate: s("assessmentDate"),
     },
-  },
-  notRecommended: [
-    { category: "Programs that rely exclusively on repetitive routines with little visualization", reason: "(e.g., some pure branches of accounting without a technical component)." },
-    { category: "Programs that demand high dominance or aggressive sales without support", reason: "(due to low dominance)." },
-  ],
-  explorationPlan: [
-    { phase: "Month 0–1", title: "Quick confirmation", activities: "Intensive SketchUp, AutoCAD course (20–40 h); drawing workshop (10–20 h); 1-day job-shadowing at a studio/workshop.", kpi: "enjoy at least 2 of the 3 activities.", kpiLabel: "KPI:" },
-    { phase: "Month 1–3", title: "Minimum portfolio", activities: "Create 2 projects, (A) plan + elevation + 3D view of a space; (B) documented object/prototype.", kpi: "from 2 professionals", kpiLabel: "Request feedback:" },
-    { phase: "Month 3–6", title: "Technical validation", activities: "Intermediate courses (BIM / SolidWorks); micro-internship 2–4 weeks.", kpi: "improved portfolio and positive feedback from 1 professional.", kpiLabel: "KPI:" },
-    { phase: "Month 6–12", title: "Decision and admission", activities: "Select 2–4 programs (1–2 reach schools, 1–2 safe options). Prepare final portfolio, letters and admission tests.", kpi: "submitted to at least 2 programs.", kpiLabel: "KPI:" },
-  ],
-  operationalPlan: [
-    { phase: "Week 1–2", text: "Enroll in a basic CAD course; define the portfolio project" },
-    { phase: "Week 3–4", text: "Execute the first draft; feedback session with a mentor." },
-    { phase: "Week 5–6", text: "3D modeling; second feedback and adjustment." },
-    { phase: "Week 7–8", text: "Present portfolio version 1; list target universities; prepare admission steps." },
-  ],
-  indicators: [],
-  training: [],
-  universityMapping: [],
-  conclusion: { text: "", nextSteps: [] },
-};
+    executiveSummary: {
+      text: s("summaryText"),
+      summaryTitle: s("summaryTitle"),
+      steps: [1, 2, 3, 4, 5].map((number) => ({ number, text: s(`step${number}`) })),
+    },
+    liaSubtests: [
+      { title: s("subtests.detection.title"), description: s("subtests.detection.description"), iconType: "glasses" },
+      { title: s("subtests.reasoning.title"), description: s("subtests.reasoning.description"), iconType: "gears" },
+      { title: s("subtests.numerical.title"), description: s("subtests.numerical.description"), iconType: "math" },
+      { title: s("subtests.memory.title"), description: s("subtests.memory.description"), iconType: "puzzle" },
+      { title: s("subtests.orientation.title"), description: s("subtests.orientation.description"), iconType: "timer" },
+    ],
+    integratedDiagnosis: {
+      chartData: [
+        { label: "F", value: 14, color: "#1a1a2e" },
+        { label: "A", value: 35, color: "#0f172a" },
+        { label: "B", value: 25, color: "#006d77" },
+        { label: "C", value: 9, color: "#99e2e8" },
+        { label: "D", value: 17, color: "#22d3ee" },
+      ],
+      legend: [
+        { label: "A", title: s("legend.strengths.title"), description: s("legend.strengths.description"), bg: "#0f172a", borderColor: "#0f172a" },
+        { label: "B", title: s("legend.opportunities.title"), description: s("legend.opportunities.description"), bg: "#006d77", borderColor: "#008996" },
+        { label: "C", title: s("legend.stable.title"), description: s("legend.stable.description"), bg: "#99e2e8", borderColor: "#22d3ee" },
+        { label: "D", title: s("legend.risks.title"), description: s("legend.risks.description"), bg: "#22d3ee", borderColor: "#22d3ee" },
+        { label: "F", title: s("legend.needs.title"), description: s("legend.needs.description"), bg: "#1a1a2e", borderColor: "#008996" },
+      ],
+      majors: {
+        perfectFit: [
+          { id: 1, title: s("majors.architecture.title"), description: s("majors.architecture.description") },
+          { id: 2, title: s("majors.industrialDesign.title"), description: s("majors.industrialDesign.description") },
+          { id: 3, title: s("majors.civilEngineering.title"), description: s("majors.civilEngineering.description"), extra: s("majors.civilEngineering.extra") },
+        ],
+        highlyRecommended: [
+          { id: 4, title: s("majors.interiorDesign.title") },
+          { id: 5, title: s("majors.mechanicalEngineering.title"), extra: s("majors.mechanicalEngineering.extra") },
+          { id: 6, title: s("majors.materialsEngineering.title") },
+        ],
+        complementary: [
+          s("majors.complementary1"),
+          s("majors.complementary2"),
+          s("majors.complementary3"),
+        ],
+      },
+    },
+    notRecommended: [
+      { category: s("notRecommended.routine.category"), reason: s("notRecommended.routine.reason") },
+      { category: s("notRecommended.sales.category"), reason: s("notRecommended.sales.reason") },
+    ],
+    explorationPlan: [1, 2, 3, 4].map((n) => ({
+      phase: s(`exploration.phase${n}.phase`),
+      title: s(`exploration.phase${n}.title`),
+      activities: s(`exploration.phase${n}.activities`),
+      kpi: s(`exploration.phase${n}.kpi`),
+      kpiLabel: n === 2 ? s("exploration.phase2.kpiLabel") : s("kpiLabel"),
+    })),
+    operationalPlan: [1, 3, 5, 7].map((n) => ({
+      phase: s(`operational.week${n}.phase`),
+      text: s(`operational.week${n}.text`),
+    })),
+    indicators: [],
+    training: [],
+    universityMapping: [],
+    conclusion: { text: "", nextSteps: [] },
+  };
+}
 
 interface FormMapsReportProps {
   data?: AssessmentReportData;
 }
 
 export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
+  const { t } = useTranslation();
   // Merge provided data with defaults — use provided data if available, otherwise fallback
-  const d = data || defaultMockData;
+  const d = data || buildDefaultMockData(t);
   const candidateName = d.candidate.name;
   const candidateDate = d.candidate.assessmentDate;
   const firstName = candidateName.split(" ")[0];
@@ -157,9 +159,6 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
               <h2 className="text-5xl font-medium tracking-tight leading-[0.85] font-montserrat">
                 FORMMAPS
               </h2>
-              <h3 className="text-sm font-bold text-[#67e8f9] tracking-[0.3em] ml-0.5 mt-2 font-montserrat">
-                LOGO ACA
-              </h3>
             </div>
           </div>
         </div>
@@ -171,13 +170,7 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
             <div className="w-[40%] flex flex-col items-center mt-[-3mm] pr-2">
               <div className="bg-[#eff6ff] rounded-[2.5rem] p-6 relative overflow-hidden shadow-sm border border-slate-100">
                 <p className="text-[rgb(0,59,89)] font-bold text-[1.1rem] leading-tight mb-5 text-left font-roboto tracking-tight">
-                  This report practically integrates the results of Valentina
-                  Ejemplo’s Work Intelligence Assessment (LIA) and Personal
-                  Competences Analysis (PCA) to guide her vocational decision.
-                  The structure provides a clear presentation and an appropriate
-                  level of detail, with a practical focus designed to support
-                  students deciding whether to enter undergraduate programs or
-                  technical study tracks.
+                  {t("pages.print.intro", { name: candidateName })}
                 </p>
               </div>
 
@@ -188,7 +181,7 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
                     <img
                       src="/report/1.jpeg"
                       className="w-[160%] max-w-none ml-[-5%] mt-[10%]"
-                      alt="Profile Illustration"
+                      alt={t("pages.print.profileIllustrationAlt")}
                     />
                   </div>
                 </div>
@@ -196,7 +189,7 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
                 {/* Pill */}
                 <div className="mt-[-54px] z-10 bg-[#008996] rounded-full py-2.5 px-10 text-center shadow-none ">
                   <span className="text-white font-bold text-xs tracking-wide font-antonio">
-                    {d.executiveSummary.summaryTitle || "Influence / Technical precision"}
+                    {d.executiveSummary.summaryTitle || t("pages.print.sample.summaryTitle")}
                   </span>
                 </div>
               </div>
@@ -205,7 +198,7 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
             {/* Right Column: Text & Steps */}
             <div className="w-[60%] pt-2 -mt-[20mm]">
               <h2 className="text-[#008996] text-3xl font-bold mb-2 font-antonio">
-                Executive Summary
+                {t("pages.print.executiveSummary")}
               </h2>
               <p className="text-[#1e293b] text-md leading-6 mb-12 text-justify font-medium font-roboto">
                 {d.executiveSummary.text}
@@ -257,10 +250,10 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
 
         <div className="px-10 pb-12">
           <h2 className="text-[#008996] text-3xl font-bold mb-2 font-montserrat tracking-tight">
-            1. Operational meaning of the LIA subtests
+            {t("pages.print.section1.title")}
           </h2>
           <p className="text-[#0f172a] text-lg font-medium mb-12 font-roboto">
-            Summary applied to the student
+            {t("pages.print.section1.subtitle")}
           </p>
 
           <div className="flex flex-col gap-5">
@@ -326,9 +319,9 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
 
         <div className="px-10 pb-12">
           <h2 className="text-[#008996] text-3xl font-bold mb-2 font-montserrat tracking-tight">
-            2. Integrated diagnosis (MIL+PCA)
+            {t("pages.print.section2.title")}
           </h2>
-          <p className="text-[#0f172a] text-xl font-medium mb-8 font-roboto">Strengths and risks</p>
+          <p className="text-[#0f172a] text-xl font-medium mb-8 font-roboto">{t("pages.print.section2.subtitle")}</p>
 
           {/* DIAGNOSIS CONTENT */}
           <div className="bg-[#f3f4f6] rounded-[3rem] p-8 pb-10 mb-12 flex flex-row gap-6 items-center relative overflow-hidden">
@@ -531,17 +524,17 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
           </div>
 
           <h2 className="text-[#008996] text-2xl font-bold mb-1 font-montserrat tracking-tight">
-            3. Prioritized top majors
+            {t("pages.print.section3.title")}
           </h2>
           <p className="text-slate-500 text-base mb-6 font-roboto">
-            LIA fit (detection + orientation) and PCA (influence, service, quality)
+            {t("pages.print.section3.subtitle")}
           </p>
 
           <div className="space-y-5">
             {/* Perfect Fit */}
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-[#0f172a] font-bold text-sm whitespace-nowrap font-montserrat">Perfect fit</h3>
+                <h3 className="text-[#0f172a] font-bold text-sm whitespace-nowrap font-montserrat">{t("pages.print.section3.perfectFit")}</h3>
                 <div className="h-[1px] bg-[#008996] flex-1"></div>
               </div>
               <ul className="space-y-1 pl-8">
@@ -558,7 +551,7 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
             {/* Highly Recommended */}
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-[#0f172a] font-bold text-sm whitespace-nowrap font-montserrat">Highly recommended</h3>
+                <h3 className="text-[#0f172a] font-bold text-sm whitespace-nowrap font-montserrat">{t("pages.print.section3.highlyRecommended")}</h3>
                 <div className="h-[1px] bg-[#008996] flex-1"></div>
               </div>
               <ul className="space-y-1 pl-8">
@@ -574,7 +567,7 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
             {/* Complementary */}
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <h3 className="text-[#0f172a] font-bold text-sm whitespace-nowrap font-montserrat">Complementary</h3>
+                <h3 className="text-[#0f172a] font-bold text-sm whitespace-nowrap font-montserrat">{t("pages.print.section3.complementary")}</h3>
                 <div className="h-[1px] bg-[#008996] flex-1"></div>
               </div>
               <ul className="space-y-1 pl-8">
@@ -616,7 +609,7 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
 
           {/* Section 4: Majors NOT recommended */}
           <h2 className="text-[#008996] text-[22px] font-bold mb-6 font-montserrat  mt-[44px]">
-            4. Majors NOT recommended for {firstName}
+            {t("pages.print.section4.title", { name: firstName })}
           </h2>
 
           <div className="space-y-6 mb-12">
@@ -630,9 +623,9 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
 
           {/* Section 5: Exploration and decision plan */}
           <h2 className="text-[#008996] text-xl font-bold mb-1 font-montserrat tracking-wide pt-9">
-            5. Exploration and decision plan (0–12 months)
+            {t("pages.print.section5.title")}
           </h2>
-          <p className="text-[#0f172a] text-[18px] mb-6 font-roboto font-medium tracking-wider">Step-by-step for a student</p>
+          <p className="text-[#0f172a] text-[18px] mb-6 font-roboto font-medium tracking-wider">{t("pages.print.section5.subtitle")}</p>
 
           <div className="relative mb-10">
             {/* Mountain icon - positioned at top right of the timeline */}
@@ -686,9 +679,9 @@ export default function FormMapsValuesPage({ data }: FormMapsReportProps = {}) {
 
           {/* Section 6: Immediate operational plan */}
           <h2 className="text-[#008996] text-2xl font-bold mb-1 pt-10 font-montserrat tracking-tight">
-            6. Immediate operational plan: 8 weeks
+            {t("pages.print.section6.title")}
           </h2>
-          <p className="text-[#0f172a] text-[18px] mb-6 font-roboto font-medium tracking-wide">Action checklist</p>
+          <p className="text-[#0f172a] text-[18px] mb-6 font-roboto font-medium tracking-wide">{t("pages.print.section6.subtitle")}</p>
 
           <div className="relative">
             {/* Clipboard icon */}

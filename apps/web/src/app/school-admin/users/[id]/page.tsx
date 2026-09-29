@@ -52,7 +52,6 @@ import {
 } from "@/hooks/useStudentDetailData";
 import { getInitials as _getInitials } from "@/lib/stringUtils";
 
-import { format } from "date-fns";
 import { StudentStatus } from "@/types/student";
 
 import { OverviewTab } from "./_components/overview-tab";
@@ -62,7 +61,8 @@ import { NotesTab } from "./_components/notes-tab";
 import { ExtracurricularsTab } from "./_components/extracurriculars-tab";
 
 export default function StudentDetailsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const fmtDate = (d: string, opts: Intl.DateTimeFormatOptions) => new Date(d).toLocaleDateString(i18n.language?.startsWith("es") ? "es-CO" : "en-US", opts);
   const router = useRouter();
   const params = useParams();
   const studentId = params.id as string;
@@ -210,13 +210,13 @@ export default function StudentDetailsPage() {
             {student.joinedAt && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, color: "var(--admin-font-secondary)" }}>
                 <Calendar style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
-                <span>{t("schoolAdmin.students.joined", "Joined")} {format(new Date(student.joinedAt), "MMM d, yyyy")}</span>
+                <span>{t("schoolAdmin.students.joined", "Joined")} {fmtDate(student.joinedAt, { month: "short", day: "numeric", year: "numeric" })}</span>
               </div>
             )}
             {(student as unknown as { gradeLevel?: string }).gradeLevel && (
               <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 14, color: "var(--admin-font-secondary)" }}>
                 <GraduationCap style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
-                <span>Grade {(student as unknown as { gradeLevel?: string }).gradeLevel}</span>
+                <span>{t("school_admin:graduation.gradeLabel", { grade: (student as unknown as { gradeLevel?: string }).gradeLevel })}</span>
               </div>
             )}
           </div>
@@ -227,12 +227,12 @@ export default function StudentDetailsPage() {
           {student.id && (
             <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "var(--admin-font-light)", justifyContent: "flex-end" }}>
               <ShieldCheck style={{ width: 12, height: 12 }} />
-              <span style={{ fontFamily: "monospace", fontSize: 10 }}>ID: {student.id.substring(0, 8).toUpperCase()}</span>
+              <span style={{ fontFamily: "monospace", fontSize: 10 }}>{t("school_admin:ui.studentDetail.page.id", { id: student.id.substring(0, 8).toUpperCase() })}</span>
             </div>
           )}
           {student.lastActive && (
             <div style={{ fontSize: 11, color: "var(--admin-font-light)", marginTop: 4 }}>
-              Last active: {format(new Date(student.lastActive), "MMM d, yyyy")}
+              {t("school_admin:ui.studentDetail.page.lastActive", { date: fmtDate(student.lastActive, { month: "short", day: "numeric", year: "numeric" }) })}
             </div>
           )}
         </div>
@@ -242,9 +242,9 @@ export default function StudentDetailsPage() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: "GPA", value: gpaData?.gpaWeighted?.toFixed(2) ?? gpaData?.gpaUnweighted?.toFixed(2) ?? "\u2014", icon: Award, color: "#f59e0b" },
-          { label: "Credits", value: `${plan?.graduationProgress?.totalCreditsEarned ?? gpaData?.totalCredits ?? "0"} / ${plan?.graduationProgress?.totalCreditsRequired ?? "0"}`, icon: GraduationCap, color: "var(--admin-accent-blue)" },
-          { label: "Assessments", value: `${milCompleted + pcaCompleted + evalCompleted + personalityCompleted} / ${milTotal + pcaTotal + evalTotal + personalityTotal}`, icon: FileText, color: "#14b8a6" },
-          { label: "Last Seen", value: student.lastActive ? format(new Date(student.lastActive), "MMM do") : "Never", icon: Activity, color: "var(--admin-accent-blue)" },
+          { label: t("school_admin:ui.courses.credits"), value: `${plan?.graduationProgress?.totalCreditsEarned ?? gpaData?.totalCredits ?? "0"} / ${plan?.graduationProgress?.totalCreditsRequired ?? "0"}`, icon: GraduationCap, color: "var(--admin-accent-blue)" },
+          { label: t("school_admin:ui.results.assessments"), value: `${milCompleted + pcaCompleted + evalCompleted + personalityCompleted} / ${milTotal + pcaTotal + evalTotal + personalityTotal}`, icon: FileText, color: "#14b8a6" },
+          { label: t("school_admin:ui.studentDetail.page.lastSeen"), value: student.lastActive ? fmtDate(student.lastActive, { month: "short", day: "numeric" }) : t("school_admin:ui.studentDetail.page.never"), icon: Activity, color: "var(--admin-accent-blue)" },
         ].map((stat) => (
           <div key={stat.label} style={{
             borderRadius: 8, border: "1px solid var(--admin-border-default)",
@@ -270,12 +270,12 @@ export default function StudentDetailsPage() {
           borderRadius: 8, padding: 2, height: "auto",
         }} className="flex flex-wrap">
           {[
-            { value: "overview", icon: User, label: "Overview" },
-            { value: "assessments", icon: Brain, label: "Assessments" },
-            { value: "courses", icon: BookOpen, label: "Academics" },
-            { value: "notes", icon: MessageSquare, label: "Notes" },
-            { value: "graduation", icon: Heart, label: "Extracurriculars" },
-            { value: "parents", icon: Users, label: "Guardians" },
+            { value: "overview", icon: User, label: t("school_admin:ui.studentDetail.page.tabs.overview") },
+            { value: "assessments", icon: Brain, label: t("school_admin:ui.results.assessments") },
+            { value: "courses", icon: BookOpen, label: t("school_admin:academics.title") },
+            { value: "notes", icon: MessageSquare, label: t("school_admin:ui.studentDetail.notes.notes") },
+            { value: "graduation", icon: Heart, label: t("school_admin:ui.studentDetail.page.tabs.extracurriculars") },
+            { value: "parents", icon: Users, label: t("school_admin:ui.studentDetail.page.tabs.guardians") },
           ].map((tab) => (
             <TabsTrigger key={tab.value} value={tab.value} style={{ borderRadius: 6, fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 4 }}>
               <tab.icon style={{ width: 14, height: 14 }} /> {tab.label}

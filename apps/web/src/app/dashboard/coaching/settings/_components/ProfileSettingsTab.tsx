@@ -115,20 +115,20 @@ export function ProfileSettingsTab() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Profile Information</CardTitle>
+        <CardTitle>{t("coaching.settings.profileTitle")}</CardTitle>
         <CardDescription>
-          Update your public coaching profile visible to students.
+          {t("coaching.settings.profileDescription")}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Profile Image */}
         <div className="space-y-2">
-          <Label>Profile Image</Label>
+          <Label>{t("studentUi.coaching.profileSettings.profileImage")}</Label>
           <div className="flex items-center gap-4">
             {profile.image ? (
               <img
                 src={profile.image}
-                alt="Profile"
+                alt={t("coach.nav.profile")}
                 className="h-20 w-20 rounded-full object-cover"
               />
             ) : (
@@ -138,14 +138,14 @@ export function ProfileSettingsTab() {
             )}
             <Button variant="outline" size="sm">
               <Upload className="mr-2 h-4 w-4" />
-              Upload Image
+              {t("coaching.settings.uploadImage")}
             </Button>
           </div>
         </div>
 
         {/* Name */}
         <div className="space-y-2">
-          <Label htmlFor="name">Full Name</Label>
+          <Label htmlFor="name">{t("coaching.settings.fullName")}</Label>
           <Input
             id="name"
             value={profile.name}
@@ -156,68 +156,68 @@ export function ProfileSettingsTab() {
 
         {/* Title */}
         <div className="space-y-2">
-          <Label htmlFor="title">Professional Title</Label>
+          <Label htmlFor="title">{t("coaching.settings.professionalTitle")}</Label>
           <Input
             id="title"
             value={profile.title}
             onChange={(e) => setProfile({ ...profile, title: e.target.value })}
-            placeholder="Senior Career Coach"
+            placeholder={t("studentUi.coaching.profileSettings.titlePlaceholder")}
           />
         </div>
 
         {/* Bio */}
         <div className="space-y-2">
-          <Label htmlFor="bio">Bio</Label>
+          <Label htmlFor="bio">{t("onboarding.personalInfo.bio")}</Label>
           <Textarea
             id="bio"
             value={profile.bio}
             onChange={(e) => setProfile({ ...profile, bio: e.target.value })}
-            placeholder="Tell students about your coaching experience..."
+            placeholder={t("coaching.settings.bioPlaceholder")}
             rows={5}
           />
           <p className="text-sm text-muted-foreground">
-            {profile.bio.length} / 500 characters
+            {t("studentUi.coaching.profileSettings.bioCount", { count: profile.bio.length, max: 500 })}
           </p>
         </div>
 
         {/* Specialization */}
         <div className="space-y-2">
-          <Label htmlFor="specialization">Specialization</Label>
+          <Label htmlFor="specialization">{t("admin.coaches.table.specialization")}</Label>
           <Input
             id="specialization"
             value={profile.specialization}
             onChange={(e) =>
               setProfile({ ...profile, specialization: e.target.value })
             }
-            placeholder="Tech Leadership"
+            placeholder={t("studentUi.coaching.profileSettings.specializationPlaceholder")}
           />
         </div>
 
         {/* Location */}
         <div className="space-y-2">
-          <Label htmlFor="location">Location</Label>
+          <Label htmlFor="location">{t("coaching.profile.location")}</Label>
           <Input
             id="location"
             value={profile.location}
             onChange={(e) =>
               setProfile({ ...profile, location: e.target.value })
             }
-            placeholder="San Francisco, CA"
+            placeholder={t("studentUi.coaching.profileSettings.locationPlaceholder")}
           />
         </div>
 
         {/* Languages */}
         <div className="space-y-2">
-          <Label>Languages</Label>
+          <Label>{t("coaching.profile.languages")}</Label>
           <div className="flex gap-2">
             <Input
               value={newLanguage}
               onChange={(e) => setNewLanguage(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && addLanguage()}
-              placeholder="Add a language"
+              placeholder={t("studentUi.coaching.profileSettings.addLanguage")}
             />
             <Button type="button" onClick={addLanguage} variant="outline">
-              Add
+              {t("studentUi.coaching.profileSettings.add")}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2 mt-2">
@@ -235,16 +235,16 @@ export function ProfileSettingsTab() {
 
         {/* Tags */}
         <div className="space-y-2">
-          <Label>Expertise Tags</Label>
+          <Label>{t("studentUi.coaching.profileSettings.expertiseTags")}</Label>
           <div className="flex gap-2">
             <Input
               value={newTag}
               onChange={(e) => setNewTag(e.target.value)}
               onKeyPress={(e) => e.key === "Enter" && addTag()}
-              placeholder="Add a tag"
+              placeholder={t("studentUi.coaching.profileSettings.addTag")}
             />
             <Button type="button" onClick={addTag} variant="outline">
-              Add
+              {t("studentUi.coaching.profileSettings.add")}
             </Button>
           </div>
           <div className="flex flex-wrap gap-2 mt-2">
@@ -266,10 +266,10 @@ export function ProfileSettingsTab() {
             {isSaving ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Saving...
+                {t("common.saving")}
               </>
             ) : (
-              "Save Changes"
+              t("common.saveChanges")
             )}
           </Button>
         </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import { Trash2, ExternalLink } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface Scholarship {
   id: string;
@@ -13,12 +14,12 @@ interface Scholarship {
   status: "researching" | "applying" | "submitted" | "awarded" | "rejected";
 }
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  researching: { label: "Researching", color: "var(--admin-accent-blue)", bg: "rgba(59,130,246,0.1)" },
-  applying: { label: "Applying", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-  submitted: { label: "Submitted", color: "#8b5cf6", bg: "rgba(139,92,246,0.1)" },
-  awarded: { label: "Awarded", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
-  rejected: { label: "Rejected", color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
+const STATUS_CONFIG: Record<string, { labelKey: string; color: string; bg: string }> = {
+  researching: { labelKey: "ui.scholarships.status.researching", color: "var(--admin-accent-blue)", bg: "rgba(59,130,246,0.1)" },
+  applying: { labelKey: "ui.scholarships.status.applying", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+  submitted: { labelKey: "ui.scholarships.status.submitted", color: "#8b5cf6", bg: "rgba(139,92,246,0.1)" },
+  awarded: { labelKey: "ui.scholarships.status.awarded", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+  rejected: { labelKey: "ui.scholarships.status.rejected", color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
 };
 
 const STATUS_OPTIONS = ["researching", "applying", "submitted", "awarded", "rejected"];
@@ -34,6 +35,7 @@ interface ScholarshipCardProps {
 }
 
 export function ScholarshipCard({ scholarship: s, onStatusChange, onDelete }: ScholarshipCardProps) {
+  const { t } = useTranslation("counselor");
   const cfg = STATUS_CONFIG[s.status] || STATUS_CONFIG.researching;
 
   return (
@@ -59,14 +61,14 @@ export function ScholarshipCard({ scholarship: s, onStatusChange, onDelete }: Sc
       <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 10 }}>
         {s.deadline && (
           <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-            Deadline: {new Date(s.deadline).toLocaleDateString()}
+            {t("ui.scholarships.deadline", { date: new Date(s.deadline).toLocaleDateString() })}
           </span>
         )}
         <span style={{
           fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
           background: cfg.bg, color: cfg.color,
         }}>
-          {cfg.label}
+          {t(cfg.labelKey)}
         </span>
       </div>
 
@@ -86,16 +88,16 @@ export function ScholarshipCard({ scholarship: s, onStatusChange, onDelete }: Sc
             color: "var(--admin-font-primary)", outline: "none", fontFamily: "inherit", cursor: "pointer",
           }}>
           {STATUS_OPTIONS.map((opt) => (
-            <option key={opt} value={opt}>{STATUS_CONFIG[opt].label}</option>
+            <option key={opt} value={opt}>{t(STATUS_CONFIG[opt].labelKey)}</option>
           ))}
         </select>
         {s.url && (
           <a href={s.url} target="_blank" rel="noopener noreferrer"
             style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 11, color: "var(--admin-accent-blue)", textDecoration: "none" }}>
-            <ExternalLink style={{ width: 12, height: 12 }} /> Link
+            <ExternalLink style={{ width: 12, height: 12 }} /> {t("ui.scholarships.link")}
           </a>
         )}
-        <button onClick={() => onDelete(s.id)} title="Delete scholarship"
+        <button onClick={() => onDelete(s.id)} title={t("ui.scholarships.deleteTitle")}
           style={{
             marginLeft: "auto", width: 28, height: 28, borderRadius: 4,
             border: "1px solid var(--admin-border-default)", background: "transparent",

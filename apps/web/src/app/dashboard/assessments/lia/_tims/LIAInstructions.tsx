@@ -179,10 +179,10 @@ export function LIASubtestIntro({
       example: (
         <div className="bg-gray-50 border border-gray-200 p-4 rounded-lg space-y-2 text-gray-700">
           <p className="italic">{language === 'es' ? '"Mateo es más lento que Liam"' : '"Mateo is slower than Liam"'}</p>
-          <p className="italic">{language === 'es' ? '"Liam es más rápido que Pedro"' : '"Liam is faster than Pedro"'}</p>
+          <p className="italic">{language === 'es' ? '"Pedro es más rápido que Mateo"' : '"Pedro is faster than Mateo"'}</p>
           <p className="font-semibold mt-2 text-gray-900">{language === 'es' ? '¿Quién es el más lento?' : 'Who is the slowest?'}</p>
           <p className="text-sm text-gray-500">
-            {language === 'es' ? 'Respuesta: Mateo o Pedro (depende de los datos)' : 'Answer: Mateo or Pedro (depends on data)'}
+            {language === 'es' ? 'Respuesta: Mateo' : 'Answer: Mateo'}
           </p>
         </div>
       ),

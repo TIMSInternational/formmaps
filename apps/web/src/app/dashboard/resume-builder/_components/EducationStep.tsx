@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 
 interface EducationForm {
   degree: string;
@@ -23,6 +24,7 @@ const initialEducationForm: EducationForm = {
 };
 
 export function EducationStep() {
+  const { t } = useTranslation();
   const { resumeBuilder, addEducation, updateEducation, removeEducation } = useGlobalStore();
   const { education } = resumeBuilder.data;
   
@@ -64,9 +66,9 @@ export function EducationStep() {
       className="space-y-6"
     >
       <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-2">Education</h2>
+        <h2 className="text-xl font-semibold text-gray-900 mb-2">{t("resumeBuilder.educationStep.title", "Education")}</h2>
         <p className="text-sm text-gray-600">
-          Add your educational background, starting with your highest degree.
+          {t("resumeBuilder.educationStep.subtitle", "Add your educational background, starting with your highest degree.")}
         </p>
       </div>
 
@@ -81,7 +83,7 @@ export function EducationStep() {
                   <p className="text-sm text-gray-600">{edu.institution}</p>
                   <p className="text-xs text-gray-500">
                     {edu.location} • {edu.graduationDate}
-                    {edu.gpa && ` • GPA: ${edu.gpa}`}
+                    {edu.gpa && ` • ${t("resumeBuilder.educationStep.gpaValue", "GPA: {{gpa}}", { gpa: edu.gpa })}`}
                   </p>
                 </div>
                 <div className="flex space-x-2">
@@ -90,7 +92,7 @@ export function EducationStep() {
                     variant="outline"
                     onClick={() => handleEdit(edu)}
                   >
-                    Edit
+                    {t("common.edit", "Edit")}
                   </Button>
                   <Button
                     size="sm"
@@ -98,7 +100,7 @@ export function EducationStep() {
                     onClick={() => removeEducation(edu.id)}
                     className="text-red-600 hover:text-red-700"
                   >
-                    Remove
+                    {t("resumeBuilder.experienceStep.remove", "Remove")}
                   </Button>
                 </div>
               </div>
@@ -111,44 +113,46 @@ export function EducationStep() {
       {isAdding ? (
         <div className="border border-gray-200 rounded-lg p-4 space-y-4">
           <h3 className="font-semibold text-gray-900">
-            {editingId ? 'Edit Education' : 'Add New Education'}
+            {editingId
+              ? t("resumeBuilder.educationStep.editEducation", "Edit Education")
+              : t("resumeBuilder.educationStep.addNewEducation", "Add New Education")}
           </h3>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="degree">Degree *</Label>
+              <Label htmlFor="degree">{t("resumeBuilder.educationStep.degree", "Degree *")}</Label>
               <Input
                 id="degree"
                 value={formData.degree}
                 onChange={(e) => handleInputChange('degree', e.target.value)}
-                placeholder="Bachelor of Science in Computer Science"
+                placeholder={t("resumeBuilder.educationStep.degreePlaceholder", "Bachelor of Science in Computer Science")}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="institution">Institution *</Label>
+              <Label htmlFor="institution">{t("resumeBuilder.educationStep.institution", "Institution *")}</Label>
               <Input
                 id="institution"
                 value={formData.institution}
                 onChange={(e) => handleInputChange('institution', e.target.value)}
-                placeholder="University of California"
+                placeholder={t("resumeBuilder.educationStep.institutionPlaceholder", "University of California")}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="location">{t("resumeBuilder.experienceStep.location", "Location")}</Label>
               <Input
                 id="location"
                 value={formData.location}
                 onChange={(e) => handleInputChange('location', e.target.value)}
-                placeholder="Berkeley, CA"
+                placeholder={t("resumeBuilder.educationStep.locationPlaceholder", "Berkeley, CA")}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="graduationDate">Graduation Date</Label>
+              <Label htmlFor="graduationDate">{t("resumeBuilder.educationStep.graduationDate", "Graduation Date")}</Label>
               <Input
                 id="graduationDate"
                 type="month"
@@ -158,7 +162,7 @@ export function EducationStep() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="gpa">GPA (Optional)</Label>
+              <Label htmlFor="gpa">{t("resumeBuilder.educationStep.gpaOptional", "GPA (Optional)")}</Label>
               <Input
                 id="gpa"
                 value={formData.gpa}
@@ -170,16 +174,18 @@ export function EducationStep() {
 
           <div className="flex space-x-2">
             <Button onClick={handleSubmit}>
-              {editingId ? 'Update Education' : 'Add Education'}
+              {editingId
+                ? t("resumeBuilder.educationStep.updateEducation", "Update Education")
+                : t("resumeBuilder.educationStep.addEducation", "Add Education")}
             </Button>
             <Button variant="outline" onClick={handleCancel}>
-              Cancel
+              {t("common.cancel", "Cancel")}
             </Button>
           </div>
         </div>
       ) : (
         <Button onClick={() => setIsAdding(true)} className="w-full">
-          + Add Education
+          {t("resumeBuilder.educationStep.addEducationPlus", "+ Add Education")}
         </Button>
       )}
     </motion.div>

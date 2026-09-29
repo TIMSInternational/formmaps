@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { ChevronDown, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import {
   respondToRecommendation,
   updateRecommendationStatus,
@@ -45,6 +46,7 @@ export function RecommendationActionMenu({
   isMyRequest: boolean;
   onAction: () => void;
 }) {
+  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
@@ -65,7 +67,7 @@ export function RecommendationActionMenu({
       await fn();
       onAction();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Action failed");
+      toast.error(err instanceof Error ? err.message : t("components.recommendationActionMenu.actionFailed"));
     } finally {
       setLoading(false);
     }
@@ -74,7 +76,7 @@ export function RecommendationActionMenu({
   return (
     <div style={{ position: "relative" }}>
       <button
-        aria-label="Actions"
+        aria-label={t("common.actions")}
         onClick={() => setOpen((v) => !v)}
         disabled={loading}
         style={{
@@ -97,7 +99,7 @@ export function RecommendationActionMenu({
           <Loader2 style={{ width: 11, height: 11 }} className="animate-spin" />
         ) : (
           <>
-            Actions
+            {t("common.actions")}
             <ChevronDown style={{ width: 11, height: 11 }} />
           </>
         )}
@@ -131,23 +133,23 @@ export function RecommendationActionMenu({
               {canRespond && (
                 <>
                   <MenuButton
-                    label="Accept"
+                    label={t("components.recommendationActionMenu.accept")}
                     color="#10b981"
                     onClick={() =>
                       handle(async () => {
                         await respondToRecommendation(req.id, "accept");
-                        toast.success("Request accepted");
+                        toast.success(t("components.recommendationActionMenu.accepted"));
                       })
                     }
                   />
                   <MenuButton
-                    label="Decline"
+                    label={t("components.recommendationActionMenu.decline")}
                     color="#ef4444"
                     onClick={() =>
                       handle(async () => {
-                        const reason = window.prompt("Reason for declining (optional — the student will see this):") ?? undefined;
+                        const reason = window.prompt(t("components.recommendationActionMenu.declinePrompt")) ?? undefined;
                         await respondToRecommendation(req.id, "decline", reason || undefined);
-                        toast.success("Request declined");
+                        toast.success(t("components.recommendationActionMenu.declined"));
                       })
                     }
                   />
@@ -155,26 +157,26 @@ export function RecommendationActionMenu({
               )}
               {canMarkInProgress && (
                 <MenuButton
-                  label="Mark In Progress"
+                  label={t("components.recommendationActionMenu.markInProgress")}
                   color="#f97316"
                   onClick={() =>
                     handle(async () => {
                       await updateRecommendationStatus(req.id, "in_progress");
-                      toast.success("Status updated to In Progress");
+                      toast.success(t("components.recommendationActionMenu.markedInProgress"));
                     })
                   }
                 />
               )}
               {canUpload && (
                 <MenuButton
-                  label="Upload Letter"
+                  label={t("components.recommendationActionMenu.uploadLetter")}
                   color="var(--admin-accent-blue)"
                   onClick={() => { setOpen(false); setUploadOpen(true); }}
                 />
               )}
               {canDownload && (
                 <MenuButton
-                  label="Download Letter"
+                  label={t("components.recommendationActionMenu.downloadLetter")}
                   color="var(--admin-accent-blue)"
                   onClick={() =>
                     handle(async () => {

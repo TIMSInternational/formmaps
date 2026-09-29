@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import {
   BookOpen,
   CheckCircle2,
@@ -109,13 +110,15 @@ interface SequenceBuilderProps {
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const GRADE_LABELS: Record<number, string> = {
-  9: "Grade 9 — Freshman",
-  10: "Grade 10 — Sophomore",
-  11: "Grade 11 — Junior",
-  12: "Grade 12 — Senior",
+// i18n keys (common namespace) for the grade row headers
+const GRADE_LABEL_KEYS: Record<number, string> = {
+  9: "components.sequenceBuilder.gradeLabels.9",
+  10: "components.sequenceBuilder.gradeLabels.10",
+  11: "components.sequenceBuilder.gradeLabels.11",
+  12: "components.sequenceBuilder.gradeLabels.12",
 };
 
+// Values are data (sent to the API / compared); labels come from i18n.
 const SEMESTERS = ["Fall", "Spring", "Summer"];
 
 const STATUS_COLORS: Record<string, string> = {
@@ -162,9 +165,10 @@ function CourseCell({
   isRemovePending,
   readOnly,
 }: CourseCellProps) {
+  const { t } = useTranslation();
   if (courses.length === 0) {
     return (
-      <p className="text-xs text-gray-400 italic py-2 px-1">No courses</p>
+      <p className="text-xs text-gray-400 italic py-2 px-1">{t("components.sequenceBuilder.noCourses")}</p>
     );
   }
 
@@ -190,14 +194,14 @@ function CourseCell({
                   {c.courseName}
                   {c.status === "draft_proposed" && (
                     <span className="ml-1.5 inline-block align-middle text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#FFD23F] text-[#102B47]">
-                      Proposed
+                      {t("components.sequenceBuilder.proposed")}
                     </span>
                   )}
                 </p>
                 <p className="text-[10px] opacity-70 mt-0.5">
-                  {c.courseCode} · {c.credits} cr
+                  {c.courseCode} · {t("components.sequenceBuilder.creditsShort", { count: c.credits })}
                   {c.grade ? ` · ${c.grade}` : ""}
-                  {hasPendingRemove ? " · removal pending" : ""}
+                  {hasPendingRemove ? ` · ${t("components.sequenceBuilder.removalPending")}` : ""}
                 </p>
               </div>
             </div>
@@ -209,8 +213,8 @@ function CourseCell({
                 className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 text-current hover:text-red-600"
                 title={
                   mode === "counselor"
-                    ? "Remove course"
-                    : "Request removal"
+                    ? t("components.sequenceBuilder.removeCourse")
+                    : t("components.sequenceBuilder.requestRemoval")
                 }
               >
                 <Trash2 className="h-3.5 w-3.5" />
@@ -242,6 +246,7 @@ export function SequenceBuilder({
   readOnly,
   extraEnrollments,
 }: SequenceBuilderProps) {
+  const { t } = useTranslation();
   const [expandedGrades, setExpandedGrades] = useState<number[]>([9, 10, 11, 12]);
   const [showRecsPanel, setShowRecsPanel] = useState(false);
   const hasRecs = recommendations && ((recommendations.nextSemester?.length ?? 0) > 0 || (recommendations.longTerm?.length ?? 0) > 0);
@@ -377,7 +382,9 @@ export function SequenceBuilder({
          );
          
          if (missing.length > 0) {
-            setPrereqError(`Prerequisites not met for ${course.name}: Requires ${missing.join(", ")}`);
+            setPrereqError(
+              t("components.sequenceBuilder.prereqNotMet", { course: course.name, missing: missing.join(", ") })
+            );
             hasError = true;
             break;
          }
@@ -440,7 +447,7 @@ export function SequenceBuilder({
     return (
       <div className="flex items-center justify-center py-16 text-gray-400">
         <LoaderCircle className="h-6 w-6 animate-spin mr-2" />
-        Loading course plan…
+        {t("components.sequenceBuilder.loading")}
       </div>
     );
   }
@@ -456,11 +463,13 @@ export function SequenceBuilder({
             </div>
             <div>
               <p className="font-semibold text-gray-900 text-sm">
-                Graduation Progress
+                {t("components.sequenceBuilder.graduationProgress")}
               </p>
               <p className="text-xs text-gray-500">
-                {gradProg.totalCreditsEarned} / {gradProg.totalCreditsRequired}{" "}
-                credits earned
+                {t("components.sequenceBuilder.creditsEarnedOf", {
+                  earned: gradProg.totalCreditsEarned,
+                  required: gradProg.totalCreditsRequired,
+                })}
               </p>
             </div>
           </div>
@@ -476,7 +485,7 @@ export function SequenceBuilder({
                 : "bg-red-100 text-red-700"
             )}
           >
-            {gradProg.isOnTrack ? "On Track" : "At Risk"}
+            {gradProg.isOnTrack ? t("components.sequenceBuilder.onTrack") : t("components.sequenceBuilder.atRisk")}
           </Badge>
         </div>
       )}
@@ -495,7 +504,7 @@ export function SequenceBuilder({
           >
             {showRecsPanel ? <PanelLeftClose className="h-4 w-4" /> : <PanelLeftOpen className="h-4 w-4" />}
             <Sparkles className={cn("h-4 w-4", showRecsPanel ? "text-indigo-500" : "text-gray-400")} />
-            {showRecsPanel ? "Hide Suggestions" : "AI Suggestions & Gaps"}
+            {showRecsPanel ? t("components.sequenceBuilder.hideSuggestions") : t("components.sequenceBuilder.showSuggestions")}
           </button>
 
           {showRecsPanel && (
@@ -505,12 +514,12 @@ export function SequenceBuilder({
                 <div className="rounded-xl border border-amber-200 bg-amber-50/50 overflow-hidden">
                   <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-200 bg-amber-50">
                     <Lightbulb className="h-4 w-4 text-amber-600" />
-                    <span className="text-sm font-semibold text-amber-800">Recommended Courses</span>
+                    <span className="text-sm font-semibold text-amber-800">{t("components.sequenceBuilder.recommendedCourses")}</span>
                   </div>
                   <div className="p-3 space-y-3 max-h-80 overflow-y-auto">
                     {recommendations!.nextSemester && recommendations!.nextSemester.length > 0 && (
                       <div>
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 mb-2 px-1">Next Semester</div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 mb-2 px-1">{t("components.sequenceBuilder.nextSemester")}</div>
                         <div className="space-y-1.5">
                           {recommendations!.nextSemester.map((rec) => (
                             <div key={rec.courseId || rec.courseCode} className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-white border border-amber-100 text-xs">
@@ -523,7 +532,7 @@ export function SequenceBuilder({
                                 "text-[9px] px-1.5 py-0.5 rounded font-bold uppercase flex-shrink-0",
                                 rec.priority === "high" ? "bg-rose-100 text-rose-700" : rec.priority === "medium" ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
                               )}>
-                                {rec.priority}
+                                {t(`components.sequenceBuilder.priority.${rec.priority}`, { defaultValue: rec.priority })}
                               </span>
                             </div>
                           ))}
@@ -532,7 +541,7 @@ export function SequenceBuilder({
                     )}
                     {recommendations!.longTerm && recommendations!.longTerm.length > 0 && (
                       <div>
-                        <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 mb-2 px-1">Long-Term Plan</div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-amber-600 mb-2 px-1">{t("components.sequenceBuilder.longTermPlan")}</div>
                         <div className="space-y-1.5">
                           {recommendations!.longTerm.map((rec) => (
                             <div key={rec.courseId || rec.courseCode} className="flex items-start justify-between gap-2 p-2.5 rounded-lg bg-white border border-amber-100 text-xs">
@@ -555,21 +564,21 @@ export function SequenceBuilder({
                 <div className="rounded-xl border border-red-200 bg-red-50/50 overflow-hidden">
                   <div className="flex items-center gap-2 px-4 py-3 border-b border-red-200 bg-red-50">
                     <AlertTriangle className="h-4 w-4 text-red-600" />
-                    <span className="text-sm font-semibold text-red-800">Academic Gaps</span>
+                    <span className="text-sm font-semibold text-red-800">{t("components.sequenceBuilder.academicGaps")}</span>
                   </div>
                   <div className="p-3 space-y-2 max-h-80 overflow-y-auto">
                     {academicGaps!.creditGaps!.map((gap) => (
                       <div key={gap.category} className="p-2.5 rounded-lg bg-white border border-red-100">
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="text-xs font-semibold text-gray-900">{gap.category}</span>
-                          <span className="text-[10px] text-red-600 font-medium">{gap.deficit} cr deficit</span>
+                          <span className="text-[10px] text-red-600 font-medium">{t("components.sequenceBuilder.creditDeficit", { count: gap.deficit })}</span>
                         </div>
                         <div className="w-full bg-red-100 rounded-full h-1.5">
                           <div className="bg-red-500 h-1.5 rounded-full transition-all" style={{ width: `${gap.creditsRequired > 0 ? Math.min((gap.creditsEarned / gap.creditsRequired) * 100, 100) : 0}%` }} />
                         </div>
                         <div className="flex justify-between mt-1 text-[10px] text-gray-400">
-                          <span>{gap.creditsEarned} earned</span>
-                          <span>{gap.creditsRequired} required</span>
+                          <span>{t("components.sequenceBuilder.creditsEarnedShort", { count: gap.creditsEarned })}</span>
+                          <span>{t("components.sequenceBuilder.creditsRequiredShort", { count: gap.creditsRequired })}</span>
                         </div>
                       </div>
                     ))}
@@ -606,12 +615,15 @@ export function SequenceBuilder({
                   <ChevronRight className="h-4 w-4 text-gray-400" />
                 )}
                 <span className="font-semibold text-sm text-gray-800">
-                  {GRADE_LABELS[grade] || `Grade ${grade}`}
+                  {GRADE_LABEL_KEYS[grade] ? t(GRADE_LABEL_KEYS[grade]) : t("coursePlan.page.grade", { grade })}
                 </span>
               </div>
               <span className="text-xs text-gray-500">
-                {allCourses.length} courses · {totalCredits} credits ·{" "}
-                {completedCount}/{allCourses.length} completed
+                {t("components.sequenceBuilder.gradeSummary", {
+                  courses: allCourses.length,
+                  credits: totalCredits,
+                  completed: completedCount,
+                })}
               </span>
             </button>
 
@@ -624,7 +636,7 @@ export function SequenceBuilder({
                     <div key={sem} className="p-4 space-y-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">
-                          {sem}
+                          {t(`components.sequenceBuilder.semesters.${sem}`, { defaultValue: sem })}
                         </h4>
                         {!readOnly && (
                           <button
@@ -632,12 +644,12 @@ export function SequenceBuilder({
                             className="flex items-center gap-1 text-xs text-teal-600 hover:text-teal-700 font-medium"
                             title={
                               mode === "counselor"
-                                ? "Add course directly"
-                                : "Request to add a course"
+                                ? t("components.sequenceBuilder.addCourseDirectly")
+                                : t("components.sequenceBuilder.requestToAddCourse")
                             }
                           >
                             <Plus className="h-3.5 w-3.5" />
-                            {mode === "counselor" ? "Add" : "Request"}
+                            {mode === "counselor" ? t("components.sequenceBuilder.add") : t("components.sequenceBuilder.request")}
                           </button>
                         )}
                       </div>
@@ -662,7 +674,7 @@ export function SequenceBuilder({
       {!isLoading && !plan && (
         <div className="text-center py-16 text-gray-400">
           <BookOpen className="h-10 w-10 mx-auto mb-3 opacity-30" />
-          <p className="text-sm">No course plan available yet.</p>
+          <p className="text-sm">{t("components.sequenceBuilder.empty")}</p>
         </div>
       )}
 
@@ -670,7 +682,7 @@ export function SequenceBuilder({
       {mode === "student" && pendingRequests && pendingRequests.length > 0 && (
         <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-3">
           <h3 className="text-sm font-semibold text-amber-800">
-            Change Requests ({pendingRequests.length})
+            {t("components.sequenceBuilder.changeRequests", { count: pendingRequests.length })}
           </h3>
           <div className="space-y-2">
             {pendingRequests.map((req) => (
@@ -685,18 +697,20 @@ export function SequenceBuilder({
                       REQUEST_STATUS_COLORS[req.status]
                     )}
                   >
-                    {req.action} · {req.status}
+                    {t(`components.sequenceBuilder.requestActions.${req.action}`, { defaultValue: req.action })} ·{" "}
+                    {t(`components.sequenceBuilder.requestStatuses.${req.status}`, { defaultValue: req.status })}
                   </Badge>
                   <span className="font-medium truncate">{req.courseName}</span>
                   <span className="text-gray-400">
-                    Gr.{req.gradeLevel} · {req.semester}
+                    {t("components.sequenceBuilder.gradeShort", { grade: req.gradeLevel })} ·{" "}
+                    {t(`components.sequenceBuilder.semesters.${req.semester}`, { defaultValue: req.semester })}
                   </span>
                 </div>
                 {req.status === "pending" && onCancelRequest && (
                   <button
                     onClick={() => onCancelRequest(req.id)}
                     className="ml-2 text-gray-400 hover:text-red-500 flex-shrink-0"
-                    title="Cancel request"
+                    title={t("components.sequenceBuilder.cancelRequest")}
                   >
                     <X className="h-3.5 w-3.5" />
                   </button>
@@ -720,13 +734,13 @@ export function SequenceBuilder({
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {mode === "counselor" ? "Add Course" : "Request to Add Course"}
+              {mode === "counselor" ? t("components.sequenceBuilder.addCourse") : t("components.sequenceBuilder.requestToAddCourseTitle")}
             </DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label className="text-xs">Grade Level</Label>
+                <Label className="text-xs">{t("components.sequenceBuilder.gradeLevel")}</Label>
                 <Select
                   value={String(addForm.gradeLevel)}
                   onValueChange={(v) =>
@@ -737,14 +751,14 @@ export function SequenceBuilder({
                   <SelectContent>
                     {[9, 10, 11, 12].map((g) => (
                       <SelectItem key={g} value={String(g)}>
-                        Grade {g}
+                        {t("coursePlan.page.grade", { grade: g })}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
               <div className="space-y-1.5">
-                <Label className="text-xs">Semester</Label>
+                <Label className="text-xs">{t("components.sequenceBuilder.semester")}</Label>
                 <Select
                   value={addForm.semester}
                   onValueChange={(v) => setAddForm((f) => ({ ...f, semester: v }))}
@@ -753,7 +767,7 @@ export function SequenceBuilder({
                   <SelectContent>
                     {SEMESTERS.map((s) => (
                       <SelectItem key={s} value={s}>
-                        {s}
+                        {t(`components.sequenceBuilder.semesters.${s}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -763,19 +777,19 @@ export function SequenceBuilder({
 
             {/* Course search & selection */}
             <div className="space-y-1.5">
-              <Label className="text-xs">Select a Course *</Label>
+              <Label className="text-xs">{t("components.sequenceBuilder.selectCourse")}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
                 <Input
                   value={courseSearch}
                   onChange={(e) => setCourseSearch(e.target.value)}
-                  placeholder="Search available courses..."
+                  placeholder={t("components.sequenceBuilder.searchPlaceholder")}
                   className="pl-9"
                 />
               </div>
               <div className="max-h-[200px] overflow-y-auto border rounded-lg divide-y">
                 {availableCourses.length === 0 ? (
-                  <p className="text-xs text-gray-400 text-center py-6">No courses found</p>
+                  <p className="text-xs text-gray-400 text-center py-6">{t("components.sequenceBuilder.noCoursesFound")}</p>
                 ) : (
                   availableCourses.map((c) => (
                     <button
@@ -797,7 +811,7 @@ export function SequenceBuilder({
                     >
                       <div className="min-w-0">
                         <p className="font-medium text-gray-800 truncate">{c.name}</p>
-                        <p className="text-[10px] text-gray-500">{c.code} · {c.credits} cr · {c.department || "General"}</p>
+                        <p className="text-[10px] text-gray-500">{c.code} · {t("components.sequenceBuilder.creditsShort", { count: c.credits })} · {c.department || t("career.general")}</p>
                       </div>
                       {addForm.selectedCourses.some(sc => sc.id === c.id) && (
                         <CheckCircle2 className="h-4 w-4 text-teal-600 flex-shrink-0 ml-2" />
@@ -808,7 +822,7 @@ export function SequenceBuilder({
               </div>
               {addForm.selectedCourses.length > 0 && (
                 <div className="text-xs text-teal-700 bg-teal-50 rounded-md px-3 py-2 mt-2 max-h-[80px] overflow-y-auto">
-                  <span className="font-semibold block mb-1">Selected ({addForm.selectedCourses.length}):</span>
+                  <span className="font-semibold block mb-1">{t("components.sequenceBuilder.selectedCount", { count: addForm.selectedCourses.length })}</span>
                   <div className="flex flex-wrap gap-1.5">
                     {addForm.selectedCourses.map(sc => (
                        <Badge key={sc.id} variant="secondary" className="bg-teal-100 text-teal-800 hover:bg-teal-200 border-none font-medium flex items-center gap-1">
@@ -833,13 +847,13 @@ export function SequenceBuilder({
 
             {mode === "student" && (
               <div className="space-y-1.5">
-                <Label className="text-xs">Note to counselor (optional)</Label>
+                <Label className="text-xs">{t("components.sequenceBuilder.noteToCounselor")}</Label>
                 <Textarea
                   value={addForm.studentNote}
                   onChange={(e) =>
                     setAddForm((f) => ({ ...f, studentNote: e.target.value }))
                   }
-                  placeholder="Why are you requesting this course?"
+                  placeholder={t("components.sequenceBuilder.addNotePlaceholder")}
                   rows={2}
                 />
               </div>
@@ -852,7 +866,7 @@ export function SequenceBuilder({
               size="sm"
               onClick={() => setAddDialog((d) => ({ ...d, open: false }))}
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               size="sm"
@@ -871,7 +885,7 @@ export function SequenceBuilder({
               ) : (
                 <Send className="h-3.5 w-3.5" />
               )}
-              {mode === "counselor" ? "Add Course" : "Submit Request"}
+              {mode === "counselor" ? t("components.sequenceBuilder.addCourse") : t("components.sequenceBuilder.submitRequest")}
             </Button>
           </div>
         </DialogContent>
@@ -886,26 +900,26 @@ export function SequenceBuilder({
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Request Course Removal</DialogTitle>
+            <DialogTitle>{t("components.sequenceBuilder.removeDialogTitle")}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
             {removeNoteDialog.course && (
               <p className="text-sm text-gray-600">
-                Requesting removal of{" "}
-                <span className="font-semibold">
-                  {removeNoteDialog.course.courseName}
-                </span>{" "}
-                from your plan. Your counselor will review this.
+                <Trans
+                  i18nKey="components.sequenceBuilder.removeDialogBody"
+                  values={{ course: removeNoteDialog.course.courseName }}
+                  components={{ bold: <span className="font-semibold" /> }}
+                />
               </p>
             )}
             <div className="space-y-1.5">
-              <Label className="text-xs">Note to counselor (optional)</Label>
+              <Label className="text-xs">{t("components.sequenceBuilder.noteToCounselor")}</Label>
               <Textarea
                 value={removeNoteDialog.note}
                 onChange={(e) =>
                   setRemoveNoteDialog((d) => ({ ...d, note: e.target.value }))
                 }
-                placeholder="Reason for removing this course…"
+                placeholder={t("components.sequenceBuilder.removeNotePlaceholder")}
                 rows={2}
               />
             </div>
@@ -918,7 +932,7 @@ export function SequenceBuilder({
                 setRemoveNoteDialog({ open: false, course: null, note: "" })
               }
             >
-              Cancel
+              {t("common.cancel")}
             </Button>
             <Button
               size="sm"
@@ -930,7 +944,7 @@ export function SequenceBuilder({
                 <LoaderCircle className="h-3.5 w-3.5 animate-spin" />
               )}
               <Send className="h-3.5 w-3.5" />
-              Submit Request
+              {t("components.sequenceBuilder.submitRequest")}
             </Button>
           </div>
         </DialogContent>

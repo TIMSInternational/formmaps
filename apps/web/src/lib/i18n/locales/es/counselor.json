@@ -1,7 +1,7 @@
 {
   "dashboard": {
-    "badge": "Consejero",
-    "title": "Vista general del consejero",
+    "badge": "Orientador",
+    "title": "Vista general del orientador",
     "summary": "Resumen de tu carga de casos y próximas acciones.",
     "myStudents": "Mis estudiantes",
     "academicGaps": "Brechas académicas",
@@ -15,7 +15,7 @@
     "followUps": "Seguimientos",
     "requests": "Solicitudes",
     "noFollowUps": "Sin seguimientos próximos",
-    "followUpHint": "Establece una fecha de seguimiento en una nota de consejero para verla aquí",
+    "followUpHint": "Establece una fecha de seguimiento en una nota de orientador para verla aquí",
     "noRequests": "Sin solicitudes pendientes",
     "requestsHint": "Las solicitudes de cambio de cursos de los estudiantes aparecerán aquí",
     "recentNotes": "Notas recientes",
@@ -113,7 +113,7 @@
   "studentDetail": {
     "notFound": "Estudiante no encontrado",
     "backToStudents": "Volver a estudiantes",
-    "tabNotes": "Notas del consejero",
+    "tabNotes": "Notas del orientador",
     "tabAssessments": "Evaluaciones",
     "tabGrades": "Calificaciones",
     "tabCoursePlan": "Plan de cursos",
@@ -140,7 +140,7 @@
     "saving": "Guardando…",
     "saveNote": "Guardar nota",
     "historyTitle": "Historial de notas ({{n}})",
-    "noNotes": "Aún no hay notas del consejero para este estudiante.",
+    "noNotes": "Aún no hay notas del orientador para este estudiante.",
     "private": "Privado",
     "followUpLabel": "Seguimiento:"
   },
@@ -275,7 +275,7 @@
   "sessions": {
     "badge": "Programación",
     "title": "Mis sesiones",
-    "subtitle": "Gestiona sesiones de consejería con tus estudiantes",
+    "subtitle": "Gestiona sesiones de orientación con tus estudiantes",
     "statTotal": "Total",
     "statUpcoming": "Próximas",
     "statCompleted": "Completadas",
@@ -286,7 +286,7 @@
     "tabPast": "Pasadas ({{n}})",
     "tabAll": "Todas ({{n}})",
     "noSessions": "Sin sesiones {{tab}}",
-    "noUpcoming": "No hay próximas sesiones de consejería programadas.",
+    "noUpcoming": "No hay próximas sesiones de orientación programadas.",
     "noCategory": "No hay sesiones en esta categoría.",
     "noneInCategory": "No hay sesiones en esta categoría.",
     "studentNotes": "Notas del estudiante:",
@@ -307,8 +307,8 @@
     "completeDialogDesc": "Agrega notas posteriores a la sesión para {{name}}.",
     "completeTitle": "Marcar sesión como completada",
     "completeDesc": "Agrega notas posteriores a la sesión para {{name}}.",
-    "completeNotesLabel": "Notas del consejero (opcional)",
-    "counselorNotesLabel": "Notas del consejero (opcional)",
+    "completeNotesLabel": "Notas del orientador (opcional)",
+    "counselorNotesLabel": "Notas del orientador (opcional)",
     "completeNotesPlaceholder": "Resumen de la sesión, puntos de acción, seguimientos...",
     "counselorNotesPlaceholder": "Resumen de la sesión, puntos de acción, seguimientos...",
     "completeCancelBtn": "Cancelar",
@@ -336,7 +336,7 @@
     "student": "Estudiante"
   },
   "settings": {
-    "title": "Configuración del consejero",
+    "title": "Configuración del orientador",
     "subtitle": "Gestiona integraciones y disponibilidad",
     "saveChanges": "Guardar cambios",
     "profileTitle": "Perfil",
@@ -369,16 +369,16 @@
     "passwordsNoMatch": "Las contraseñas no coinciden"
   },
   "recommendations": {
-    "badge": "Consejero",
+    "badge": "Orientador",
     "title": "Panel de recomendaciones",
-    "subtitle": "Monitorea y responde a las cartas de recomendación en tu escuela.",
+    "subtitle": "Monitorea y responde a las cartas de recomendación en tu colegio.",
     "statRequested": "Solicitadas",
     "statAccepted": "Aceptadas",
     "statInProgress": "En progreso",
     "statSubmitted": "Enviadas",
     "tableTitle": "Todas las solicitudes",
     "noRequests": "Sin solicitudes",
-    "noRequestsDesc": "Aún no se han realizado solicitudes de recomendación en tu escuela.",
+    "noRequestsDesc": "Aún no se han realizado solicitudes de recomendación en tu colegio.",
     "colStudent": "Estudiante",
     "colRecommender": "Recomendador",
     "colStatus": "Estado",
@@ -445,5 +445,557 @@
     "subtitle": "Consulta y descarga los informes de evaluación de tus estudiantes asignados",
     "fullAcademicSummary": "Resumen académico completo",
     "viewReport": "Ver informe"
+  },
+  "ui": {
+    "academicGaps": {
+      "deficitCredits_one": "-{{count}} crédito",
+      "deficitCredits_other": "-{{count}} créditos",
+      "earned": "Obtenidos: {{n}}",
+      "required": "Requeridos: {{n}}",
+      "hideCourses": "Ocultar cursos para cerrar esta brecha ({{n}})",
+      "viewCourses": "Ver cursos para cerrar esta brecha ({{n}})",
+      "creditsShort": "{{n}} cr.",
+      "loadError": "No se pudieron cargar los datos de brechas.",
+      "studentFallback": "Estudiante"
+    },
+    "dashboard": {
+      "gradeSemester": "· Gr. {{grade}} {{semester}}"
+    },
+    "academics": {
+      "subtitle": "Análisis de brechas académicas, análisis de la carga de casos e informes de estudiantes",
+      "tabInsights": "Análisis de la carga de casos",
+      "tabReports": "Informes"
+    },
+    "activities": {
+      "categories": {
+        "academic": "Académica",
+        "athletic": "Deportiva",
+        "arts": "Artes",
+        "communityService": "Servicio comunitario",
+        "work": "Trabajo",
+        "leadership": "Liderazgo",
+        "all": "Todas"
+      },
+      "dateRangeOngoing": "{{start}} - Actualidad",
+      "hoursPerWeekValue": "{{n}} h/semana",
+      "weeksPerYearValue": "{{n}} semanas/año",
+      "collapse": "Contraer",
+      "expand": "Expandir",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "awardsLabel": "Premios:",
+      "editActivity": "Editar actividad",
+      "addActivity": "Agregar actividad",
+      "form": {
+        "name": "Nombre de la actividad",
+        "organization": "Organización",
+        "role": "Rol / cargo",
+        "startDate": "Fecha de inicio",
+        "endDate": "Fecha de finalización (opcional)",
+        "hoursPerWeek": "Horas/semana",
+        "weeksPerYear": "Semanas/año",
+        "description": "Descripción",
+        "awards": "Premios / reconocimientos (opcional)",
+        "update": "Actualizar",
+        "submit": "Enviar",
+        "cancel": "Cancelar"
+      },
+      "toast": {
+        "added": "Actividad agregada",
+        "addFailed": "No se pudo agregar la actividad",
+        "updated": "Actividad actualizada",
+        "updateFailed": "No se pudo actualizar la actividad",
+        "removed": "Actividad eliminada",
+        "deleteFailed": "No se pudo eliminar la actividad",
+        "nameRequired": "El nombre de la actividad es obligatorio",
+        "startDateRequired": "La fecha de inicio es obligatoria"
+      },
+      "title": "Actividades y currículum",
+      "subtitle": "Haz seguimiento de las actividades extracurriculares, la experiencia laboral y los logros para las solicitudes universitarias.",
+      "searchStudent": "Busca y selecciona un estudiante...",
+      "emptyFiltered": "Ninguna actividad coincide con este filtro.",
+      "empty": "Aún no hay actividades registradas. Haz clic en \"Agregar actividad\" para empezar."
+    },
+    "alerts": {
+      "dismissed": "Alerta descartada",
+      "dismissedCount_one": "Se descartó {{count}} alerta",
+      "dismissedCount_other": "Se descartaron {{count}} alertas",
+      "status": {
+        "active": "activa",
+        "acknowledged": "leída",
+        "dismissed": "descartada"
+      },
+      "dismiss": "Descartar"
+    },
+    "assessments": {
+      "subtitle": "Evaluaciones 360° y recomendaciones de cursos para tus estudiantes"
+    },
+    "collegeApps": {
+      "addApplication": "Agregar solicitud",
+      "form": {
+        "college": "Universidad",
+        "searchColleges": "Buscar universidades...",
+        "deadlineType": "Tipo de plazo",
+        "rolling": "Continua",
+        "deadline": "Fecha límite",
+        "fit": "Ajuste",
+        "add": "Agregar"
+      },
+      "status": {
+        "researching": "Investigando",
+        "applying": "Postulando",
+        "submitted": "Enviada",
+        "accepted": "Aceptada",
+        "rejected": "Rechazada",
+        "waitlisted": "En lista de espera",
+        "enrolled": "Matriculada"
+      },
+      "confidence": {
+        "high": "confianza alta",
+        "medium": "confianza media",
+        "low": "confianza baja"
+      },
+      "estimated": "Est.",
+      "removeApplication": "Eliminar solicitud",
+      "toast": {
+        "removed": "Solicitud eliminada",
+        "deleteFailed": "No se pudo eliminar la solicitud",
+        "added": "Solicitud agregada",
+        "addFailed": "No se pudo agregar la solicitud"
+      },
+      "title": "Solicitudes universitarias",
+      "subtitle": "Haz seguimiento y gestiona las solicitudes universitarias de tus estudiantes. Controla fechas límite, estados y resultados.",
+      "stats": {
+        "total": "Total de solicitudes",
+        "submitted": "Enviadas",
+        "accepted": "Aceptadas",
+        "pending": "Pendientes"
+      },
+      "columns": {
+        "college": "Universidad",
+        "chances": "Probabilidad",
+        "fit": "Ajuste",
+        "deadlineType": "Tipo de plazo",
+        "deadlineDate": "Fecha límite",
+        "status": "Estado",
+        "actions": "Acciones"
+      },
+      "empty": "Aún no hay solicitudes. Haz clic en \"Agregar solicitud\" para empezar.",
+      "selectStudentHint": "Selecciona un estudiante arriba para ver y gestionar sus solicitudes universitarias."
+    },
+    "collegePrep": {
+      "fit": {
+        "reach": "Reto",
+        "match": "Objetivo",
+        "safety": "Segura",
+        "highReach": "Reto alto"
+      },
+      "studentLabel": "Estudiante:",
+      "selectStudent": "Selecciona un estudiante...",
+      "statusUpdated": "Estado actualizado",
+      "statusUpdateFailed": "No se pudo actualizar el estado",
+      "subtitle": "Gestiona solicitudes universitarias, ensayos, documentos, becas y actividades",
+      "tabs": {
+        "applications": "Solicitudes",
+        "collegeList": "Lista de universidades",
+        "essays": "Ensayos",
+        "documents": "Documentos",
+        "scholarships": "Becas",
+        "activities": "Actividades"
+      }
+    },
+    "communication": {
+      "subtitle": "Mensajes, videollamadas, notas de sesión y alertas de estudiantes",
+      "tabs": {
+        "messages": "Mensajes",
+        "videoCalls": "Videollamadas",
+        "sessionNotes": "Notas de sesión"
+      }
+    },
+    "collegeList": {
+      "classification": {
+        "likely": "Probable",
+        "competitive": "Competitiva"
+      },
+      "strengths": "Fortalezas",
+      "weaknesses": "Debilidades",
+      "acceptanceRate": "{{rate}} % de admisión",
+      "tuitionPerYear": "US${{amount}}/año",
+      "toast": {
+        "added": "Universidad agregada a la lista",
+        "addFailed": "No se pudo agregar la universidad",
+        "removed": "Universidad eliminada de la lista",
+        "removeFailed": "No se pudo eliminar la universidad",
+        "reclassified": "Clasificación actualizada",
+        "reclassifyFailed": "No se pudo actualizar la clasificación"
+      },
+      "title": "Creador de listas de universidades",
+      "subtitle": "Crea y organiza listas de universidades para tus estudiantes. Busca universidades, clasifica su ajuste y gestiona su lista objetivo.",
+      "searchAndAdd": "Buscar y agregar universidades",
+      "searchPlaceholder": "Buscar universidades por nombre...",
+      "noResults": "No se encontraron universidades para \"{{query}}\"",
+      "added": "Agregada",
+      "add": "Agregar",
+      "listTitle": "Lista de universidades de {{name}} ({{count}})",
+      "studentFallback": "Estudiante",
+      "empty": "Aún no hay universidades en la lista. Busca arriba para agregar universidades.",
+      "removeFromList": "Quitar de la lista",
+      "selectStudentPrompt": "Selecciona un estudiante arriba para crear y gestionar su lista de universidades."
+    },
+    "documents": {
+      "types": {
+        "transcript": "Certificado de notas",
+        "recommendationLetter": "Carta de recomendación",
+        "schoolReport": "Informe del colegio",
+        "midYearReport": "Informe de mitad de año",
+        "finalReport": "Informe final",
+        "other": "Otro"
+      },
+      "status": {
+        "requested": "Solicitado",
+        "inProgress": "En progreso",
+        "sent": "Enviado",
+        "confirmed": "Confirmado"
+      },
+      "toast": {
+        "created": "Solicitud de documento creada",
+        "createFailed": "No se pudo crear la solicitud de documento",
+        "deleted": "Solicitud de documento eliminada",
+        "deleteFailed": "No se pudo eliminar la solicitud de documento",
+        "recipientRequired": "El destinatario es obligatorio"
+      },
+      "title": "Gestor de documentos",
+      "subtitle": "Haz seguimiento de las solicitudes de certificados de notas, cartas de recomendación e informes del colegio.",
+      "stats": {
+        "total": "Total de solicitudes",
+        "sent": "Enviados",
+        "pending": "Pendientes",
+        "confirmed": "Confirmados"
+      },
+      "newRequest": "Nueva solicitud",
+      "newDocumentRequest": "Nueva solicitud de documento",
+      "form": {
+        "recipient": "Destinatario (nombre de la universidad)",
+        "notes": "Notas (opcional)",
+        "submit": "Enviar",
+        "cancel": "Cancelar"
+      },
+      "table": {
+        "type": "Tipo",
+        "recipient": "Destinatario",
+        "status": "Estado",
+        "requested": "Solicitado",
+        "sent": "Enviado",
+        "actions": "Acciones"
+      },
+      "empty": "Aún no hay solicitudes de documentos. Haz clic en \"Nueva solicitud\" para empezar.",
+      "deleteRequest": "Eliminar solicitud"
+    },
+    "essays": {
+      "status": {
+        "draft": "Borrador",
+        "inReview": "En revisión",
+        "revision": "Corrección",
+        "final": "Final"
+      },
+      "types": {
+        "personalStatement": "Ensayo personal",
+        "supplemental": "Complementario",
+        "commonApp": "Common App",
+        "coalition": "Coalition",
+        "scholarship": "Beca",
+        "other": "Otro"
+      },
+      "toast": {
+        "commentAdded": "Comentario agregado",
+        "commentFailed": "No se pudo agregar el comentario"
+      },
+      "title": "Centro de ensayos",
+      "subtitle": "Revisa los ensayos de los estudiantes, haz seguimiento de su progreso y da retroalimentación mediante comentarios.",
+      "stats": {
+        "total": "Total de ensayos",
+        "drafts": "Borradores",
+        "inReview": "En revisión",
+        "final": "Finales"
+      },
+      "empty": "Aún no hay ensayos. Los ensayos aparecerán aquí cuando el estudiante los cree.",
+      "wordCount_one": "{{count}} palabra",
+      "wordCount_other": "{{count}} palabras",
+      "content": "Contenido del ensayo",
+      "noContent": "No hay contenido disponible.",
+      "commentsCount": "Comentarios ({{count}})",
+      "noComments": "Aún no hay comentarios. Sé el primero en dar retroalimentación.",
+      "commentPlaceholder": "Agrega un comentario o retroalimentación...",
+      "send": "Enviar",
+      "selectStudentPrompt": "Selecciona un estudiante arriba para revisar sus ensayos y darle retroalimentación.",
+      "unknownAuthor": "Desconocido"
+    },
+    "evaluations": {
+      "extendFailed": "No se pudo extender el plazo",
+      "resendFailed": "No se pudo reenviar",
+      "nameEmailRequired": "El nombre y el correo son obligatorios",
+      "addedNoEmail": "Se agregó a {{name}}, pero no se pudo enviar la invitación por correo; usa Reenviar",
+      "invitationSentTo": "Invitación enviada a {{name}}",
+      "addFailed": "No se pudo agregar el evaluador",
+      "allInvitationsSent": "Todas las invitaciones fueron enviadas",
+      "sendInvitationsFailed": "No se pudieron enviar las invitaciones",
+      "evaluatorsCompleted": "{{completed}}/{{total}} evaluadores terminaron",
+      "instrument": "Instrumento",
+      "expires": "Vence el {{date}}",
+      "extendDeadline": "Extender plazo",
+      "resendInvitation": "Reenviar invitación",
+      "loadFailed": "No se pudieron cargar los datos de evaluación",
+      "resendInvitationEmails": "Reenviar correos de invitación",
+      "invitationsResentFor": "Invitaciones reenviadas para {{name}}",
+      "viewVocationalReport": "Ver informe vocacional"
+    },
+    "insights": {
+      "below25": "Menos de 2.5",
+      "eyebrow": "Analíticas",
+      "title": "Análisis de la carga de casos",
+      "subtitle": "Una vista completa de las métricas de tu carga de casos, el progreso de las evaluaciones y las analíticas de tus estudiantes.",
+      "totalStudents": "TOTAL DE ESTUDIANTES",
+      "averageGpa": "GPA PROMEDIO",
+      "atRiskStudents": "ESTUDIANTES EN RIESGO",
+      "assessmentCompletion": "FINALIZACIÓN DE EVALUACIONES",
+      "aiBriefing": "Informe de IA",
+      "generating": "Generando...",
+      "noBriefing": "Aún no hay un informe disponible. Haz clic en Regenerar para crear uno.",
+      "urgentActions": "Acciones urgentes",
+      "generatedAt": "Generado el {{date}}",
+      "gpaDistribution": "Distribución del GPA",
+      "pcaComplete": "PCA completada",
+      "milComplete": "MIL completada",
+      "eval360Complete": "360° completada",
+      "topCareerClusters": "Principales grupos de carreras"
+    },
+    "broadcast": {
+      "enterMessage": "Escribe un mensaje",
+      "sentToast_one": "Mensaje enviado a {{count}} estudiante",
+      "sentToast_other": "Mensaje enviado a {{count}} estudiantes",
+      "failed": "No se pudo enviar el mensaje masivo",
+      "title": "Mensaje masivo a mis estudiantes",
+      "description": "Envía un mensaje a todos los estudiantes que tienes asignados. Cada estudiante lo recibirá como una conversación directa.",
+      "placeholder": "Escribe tu mensaje para todos los estudiantes...",
+      "sending": "Enviando...",
+      "send": "Enviar mensaje a todos mis estudiantes",
+      "sentTo_one": "Enviado a {{count}} estudiante",
+      "sentTo_other": "Enviado a {{count}} estudiantes"
+    },
+    "notes": {
+      "typeFollowUp": "Seguimiento",
+      "title": "Notas de sesión",
+      "subtitle": "Todas tus notas de sesión de todos tus estudiantes",
+      "searchPlaceholder": "Buscar por nombre del estudiante o contenido de la nota...",
+      "groupTimeline": "Cronología",
+      "groupByStudent": "Por estudiante",
+      "groupByType": "Por tipo",
+      "noNotes": "No se encontraron notas",
+      "adjustFilter": "Intenta ajustar tu búsqueda o filtro",
+      "noNotesYet": "Aún no has creado notas de sesión",
+      "dateAtTime": "{{date}} a las {{time}}",
+      "completedSuffix": "(completado)",
+      "previous": "Anterior",
+      "pageOf": "Página {{page}} de {{total}}",
+      "next": "Siguiente"
+    },
+    "onboarding": {
+      "calendar": {
+        "notEnabled": "La sincronización del calendario aún no está habilitada en este servidor. Puedes conectarlo más tarde en Configuración.",
+        "startFailed": "No se pudo iniciar la conexión del calendario. Puedes conectarlo más tarde en Configuración.",
+        "accountCreated": "¡Cuenta creada!",
+        "intro": "Conecta tu calendario para sincronizar eventos y mantenerte organizado, u omite este paso y hazlo más tarde en Configuración.",
+        "title": "Conecta tu calendario",
+        "optional": "Opcional: siempre puedes conectarlo más tarde desde Configuración.",
+        "connected": "¡Calendario de {{provider}} conectado!",
+        "willSync": "Tu calendario se sincronizará con tu panel de orientador.",
+        "syncWith": "Sincronizar con {{provider}}",
+        "goToDashboard": "Ir al panel",
+        "skipForNow": "Omitir por ahora"
+      },
+      "nameRequired": "El nombre completo es obligatorio",
+      "passwordMin": "La contraseña debe tener al menos 8 caracteres",
+      "passwordsMismatch": "Las contraseñas no coinciden",
+      "failed": "No se pudo completar el registro. Inténtalo de nuevo.",
+      "invalidLinkTitle": "Enlace de invitación no válido",
+      "invalidLinkDesc": "A este enlace de invitación le falta un token. Revisa el correo que recibiste e inténtalo de nuevo, o contacta al administrador de tu colegio.",
+      "verifying": "Verificando tu invitación…",
+      "expiredTitle": "Invitación vencida o no válida",
+      "expiredDesc": "Este enlace de invitación venció o ya no es válido. Contacta al administrador de tu colegio para recibir una nueva invitación.",
+      "goToLogin": "Ir a iniciar sesión",
+      "welcomeTitle": "¡Te damos la bienvenida!",
+      "welcomeDesc": "Tu cuenta de orientador está lista. Redirigiendo a tu panel…",
+      "title": "Configura tu cuenta de orientador",
+      "subtitle": "Te invitaron a unirte como orientador en FormMaps",
+      "school": "Colegio",
+      "yourSchool": "Tu colegio",
+      "invitedBy": "Invitación de",
+      "students": "Estudiantes",
+      "allStudents": "Todos los estudiantes",
+      "assignedCount_one": "{{count}} asignado",
+      "assignedCount_other": "{{count}} asignados",
+      "createAccount": "Crea tu cuenta",
+      "createAccountDesc": "Define una contraseña segura para comenzar",
+      "fullName": "Nombre completo",
+      "fullNamePlaceholder": "Tu nombre completo",
+      "password": "Contraseña",
+      "passwordPlaceholder": "Al menos 8 caracteres",
+      "confirmPassword": "Confirmar contraseña",
+      "confirmPlaceholder": "Repite tu contraseña",
+      "optionalDetails": "Datos opcionales del perfil",
+      "phone": "Teléfono",
+      "timezone": "Zona horaria",
+      "timezonePlaceholder": "Selecciona la zona horaria",
+      "completeSetup": "Completar configuración"
+    },
+    "reports": {
+      "gradeN": "Grado {{n}}",
+      "academicSummaryDownloaded": "Resumen académico descargado",
+      "careerProfileDownloaded": "Perfil vocacional descargado",
+      "downloadFailed": "No se pudo descargar",
+      "academicSubtitle": "Resumen académico completo e informes vocacionales",
+      "noAcademicData": "Sin datos académicos",
+      "noAcademicDataDesc": "Aún no hay un informe académico disponible para este estudiante.",
+      "weighted": "Ponderado:",
+      "credits": "Créditos",
+      "recentGrades": "Calificaciones recientes",
+      "courseN": "Curso {{n}}",
+      "creditsShort": "{{n}} cr.",
+      "assessmentStats": "PCA: {{pca}} evaluaciones · Promedio MIL: {{mil}} · 360: {{eval360}}",
+      "downloadFullReport": "Descargar informe completo",
+      "downloadCareerProfile": "Descargar perfil vocacional",
+      "mil": {
+        "reasoning": "Razonamiento",
+        "detection": "Detección",
+        "numeric": "Numérico",
+        "memory": "Memoria",
+        "orientation": "Orientación",
+        "profileDownloaded": "Perfil MIL descargado",
+        "historyDownloaded": "Historial de exámenes descargado",
+        "subtitle": "Evaluación MIL / LIA",
+        "noResults": "Sin resultados MIL/LIA",
+        "noResultsDesc": "Este estudiante aún no ha completado las evaluaciones cognitivas.",
+        "examsCompleted": "Exámenes completados",
+        "overallScore": "Puntuación general",
+        "profile": "Perfil MIL",
+        "downloadProfile": "Descargar perfil",
+        "downloadHistory": "Descargar historial de exámenes"
+      },
+      "hideFullReport": "Ocultar informe completo",
+      "viewFullReport": "Ver informe completo",
+      "pca": {
+        "dominance": "Dominancia (D)",
+        "influence": "Influencia (I)",
+        "solidity": "Solidez (S)",
+        "control": "Control (C)",
+        "chartDownloaded": "Gráfico PCA descargado",
+        "chartFailed": "No se pudo descargar el gráfico",
+        "fullDownloaded": "Informe PCA completo descargado",
+        "fullFailed": "No se pudo generar el informe",
+        "subtitle": "Informe de evaluación PCA",
+        "noResults": "Sin resultados PCA",
+        "noResultsDesc": "Este estudiante aún no ha completado la evaluación PCA.",
+        "workAdaptation": "Perfil PCA — Adaptación al trabajo",
+        "underPressure": "Bajo presión",
+        "selfImage": "Autoimagen",
+        "topCareerMatches": "Carreras más afines",
+        "careerN": "Carrera {{n}}",
+        "completedOn": "Completada: {{date}}",
+        "downloadChart": "Descargar gráfico"
+      }
+    },
+    "scheduling": {
+      "subtitle": "Gestiona las sesiones de orientación y consulta tu calendario",
+      "tabSessions": "Sesiones",
+      "tabCalendar": "Calendario"
+    },
+    "scholarships": {
+      "status": {
+        "researching": "Investigando",
+        "applying": "Postulando",
+        "submitted": "Enviada",
+        "awarded": "Otorgada",
+        "rejected": "Rechazada"
+      },
+      "deadline": "Fecha límite: {{date}}",
+      "link": "Enlace",
+      "deleteTitle": "Eliminar beca",
+      "form": {
+        "nameRequired": "El nombre es obligatorio",
+        "name": "Nombre de la beca",
+        "provider": "Entidad otorgante",
+        "amount": "Monto ($)",
+        "deadline": "Fecha límite",
+        "url": "URL (opcional)",
+        "notes": "Notas (opcional)",
+        "submit": "Enviar"
+      },
+      "add": "Agregar beca",
+      "filter": {
+        "all": "Todas",
+        "researching": "Investigando",
+        "applied": "Postuladas",
+        "awarded": "Otorgadas"
+      },
+      "toast": {
+        "added": "Beca agregada",
+        "addFailed": "No se pudo agregar la beca",
+        "statusUpdated": "Estado actualizado",
+        "updateFailed": "No se pudo actualizar",
+        "removed": "Beca eliminada",
+        "deleteFailed": "No se pudo eliminar"
+      },
+      "title": "Seguimiento de becas",
+      "subtitle": "Haz seguimiento de las oportunidades de becas, las postulaciones y los otorgamientos de tus estudiantes.",
+      "studentSearch": "Busca y selecciona un estudiante...",
+      "stats": {
+        "total": "Total de becas",
+        "potential": "Potencial total",
+        "awarded": "Monto otorgado",
+        "pending": "Pendientes"
+      },
+      "emptyFiltered": "Ninguna beca coincide con este filtro.",
+      "empty": "Aún no hay becas registradas. Haz clic en «Agregar beca» para empezar."
+    },
+    "students": {
+      "coursePlanRequestMeta": "{{code}} · {{credits}} cr. · Gr. {{grade}} · {{semester}}",
+      "approvePlanDesc_one": "Al aprobar, se agrega ahora {{count}} curso planificado al plan del año en curso del estudiante. Los años futuros permanecen en el plan aprobado y se aplican al cambiar de año escolar.",
+      "approvePlanDesc_other": "Al aprobar, se agregan ahora {{count}} cursos planificados al plan del año en curso del estudiante. Los años futuros permanecen en el plan aprobado y se aplican al cambiar de año escolar."
+    },
+    "video": {
+      "callNow": "Llamar ahora",
+      "schedule": "Programar",
+      "searchCall": "Busca por nombre o correo para iniciar una llamada...",
+      "searchSchedule": "Busca un estudiante para programar una llamada...",
+      "searching": "Buscando...",
+      "noContacts": "No se encontraron contactos",
+      "call": "Llamar",
+      "select": "Seleccionar",
+      "schedulingCall": "Programando videollamada",
+      "dateTime": "Fecha y hora",
+      "duration": "Duración",
+      "minutes_one": "{{count}} minuto",
+      "minutes_other": "{{count}} minutos",
+      "hours_one": "{{count}} hora",
+      "hours_other": "{{count}} horas",
+      "hoursDecimal": "{{n}} horas",
+      "notes": "Notas (opcional)",
+      "notesPlaceholder": "Agenda o temas para tratar...",
+      "scheduling": "Programando...",
+      "scheduleCall": "Programar llamada",
+      "toast": {
+        "startCallFailed": "No se pudo iniciar la videollamada",
+        "scheduled": "Llamada programada con {{name}}",
+        "scheduleFailed": "No se pudo programar la llamada",
+        "startSessionFailed": "No se pudo iniciar la sesión",
+        "cancelled": "Llamada programada cancelada",
+        "cancelFailed": "No se pudo cancelar"
+      },
+      "title": "Videollamadas",
+      "notAvailable": "Videollamadas no disponibles",
+      "notAvailableDesc": "Las videollamadas no están habilitadas en tu colegio. Contacta a tu administrador para habilitar esta función.",
+      "subtitle": "Inicia o programa videollamadas individuales con estudiantes.",
+      "newCall": "Nueva llamada"
+    }
   }
 }

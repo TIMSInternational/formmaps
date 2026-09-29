@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TableCell, TableRow } from "@/components/ui/table";
 import {
@@ -28,12 +29,12 @@ const typeIcons: Record<AlertType, React.ReactNode> = {
   inactive: <Info className="h-3.5 w-3.5" style={{ color: "var(--admin-font-tertiary)" }} />,
 };
 
-const typeLabels: Record<AlertType, string> = {
-  grade_drop: "Grade Drop",
-  missing_assessment: "Missing Assessment",
-  credit_gap: "Credit Gap",
-  no_career_path: "No Career Path",
-  inactive: "Inactive",
+const typeLabelKeys: Record<AlertType, string> = {
+  grade_drop: "ui.alerts.type.grade_drop",
+  missing_assessment: "ui.alerts.type.missing_assessment",
+  credit_gap: "ui.alerts.type.credit_gap",
+  no_career_path: "ui.alerts.type.no_career_path",
+  inactive: "ui.alerts.type.inactive",
 };
 
 interface AlertRecord {
@@ -54,6 +55,7 @@ interface AlertTableRowProps {
 }
 
 export function AlertTableRow({ alert, isSelected, onToggleSelect, onMarkRead, onDismiss }: AlertTableRowProps) {
+  const { t } = useTranslation("school_admin");
   const pBadge = priorityBadge[alert.priority as AlertPriority] || priorityBadge.low;
 
   return (
@@ -67,7 +69,7 @@ export function AlertTableRow({ alert, isSelected, onToggleSelect, onMarkRead, o
       <TableCell>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           {typeIcons[alert.type as AlertType] || typeIcons.inactive}
-          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{typeLabels[alert.type as AlertType] || "General"}</span>
+          <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{typeLabelKeys[alert.type as AlertType] ? t(typeLabelKeys[alert.type as AlertType]) : t("ui.alerts.type.general")}</span>
         </div>
       </TableCell>
       <TableCell>
@@ -96,7 +98,7 @@ export function AlertTableRow({ alert, isSelected, onToggleSelect, onMarkRead, o
           background: pBadge.bg, color: pBadge.color,
           textTransform: "uppercase", letterSpacing: "0.03em",
         }}>
-          {alert.priority}
+          {t(`ui.alerts.priority.${alert.priority}`, { defaultValue: alert.priority })}
         </span>
       </TableCell>
       <TableCell>
@@ -105,7 +107,7 @@ export function AlertTableRow({ alert, isSelected, onToggleSelect, onMarkRead, o
             fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
             background: "rgba(99,102,241,0.1)", color: "var(--admin-accent-blue)",
           }}>
-            Action Req.
+            {t("ui.alerts.actionRequired")}
           </span>
         ) : (
           <span style={{
@@ -113,7 +115,7 @@ export function AlertTableRow({ alert, isSelected, onToggleSelect, onMarkRead, o
             background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
             textTransform: "capitalize",
           }}>
-            {alert.status}
+            {t(`ui.alerts.status.${alert.status}`, { defaultValue: alert.status })}
           </span>
         )}
       </TableCell>
@@ -122,7 +124,7 @@ export function AlertTableRow({ alert, isSelected, onToggleSelect, onMarkRead, o
           {alert.status === "active" && (
             <button
               onClick={() => onMarkRead(alert.id)}
-              title="Acknowledge"
+              title={t("ui.alerts.acknowledge")}
               style={{ width: 28, height: 28, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "#10b981" }}
             >
               <CheckCircle2 style={{ width: 14, height: 14 }} />
@@ -131,7 +133,7 @@ export function AlertTableRow({ alert, isSelected, onToggleSelect, onMarkRead, o
           {alert.status !== "dismissed" && (
             <button
               onClick={() => onDismiss(alert.id)}
-              title="Dismiss Alert"
+              title={t("ui.alerts.dismissAlert")}
               style={{ width: 28, height: 28, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer", color: "var(--admin-font-tertiary)" }}
             >
               <Trash2 style={{ width: 14, height: 14 }} />

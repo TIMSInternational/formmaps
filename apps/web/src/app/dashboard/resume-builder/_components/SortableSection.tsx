@@ -14,6 +14,7 @@ import type { LucideIcon } from "lucide-react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface Section {
   id: string;
@@ -53,6 +54,7 @@ export function SortableSection({
   onCancelEditTitle,
   onTitleChange,
 }: SortableSectionProps) {
+  const { t } = useTranslation();
   const {
     attributes,
     listeners,
@@ -112,7 +114,7 @@ export function SortableSection({
             "focus:outline-none focus:ring-2 focus:ring-[#2E9098]/50",
             isDragging && "cursor-grabbing bg-[#102B47]/20"
           )}
-          title="Drag to reorder"
+          title={t("resumeBuilder.sortableSection.dragToReorder", "Drag to reorder")}
         >
           <GripVertical className="w-5 h-5" />
         </button>
@@ -142,7 +144,7 @@ export function SortableSection({
                 onSaveTitle?.(section.id);
               }}
               className="p-1 hover:bg-accent rounded transition-colors"
-              title="Save title"
+              title={t("resumeBuilder.sortableSection.saveTitle", "Save title")}
             >
               <Check className="w-4 h-4 text-green-600" />
             </button>
@@ -152,7 +154,7 @@ export function SortableSection({
                 onCancelEditTitle?.();
               }}
               className="p-1 hover:bg-accent rounded transition-colors"
-              title="Cancel"
+              title={t("resumeBuilder.sortableSection.cancel", "Cancel")}
             >
               <X className="w-4 h-4 text-muted-foreground" />
             </button>
@@ -178,7 +180,7 @@ export function SortableSection({
                     onEditTitle(section.id, section.title);
                   }}
                   className="p-1 opacity-0 group-hover:opacity-100 hover:bg-accent rounded transition-all"
-                  title="Edit section title"
+                  title={t("resumeBuilder.sortableSection.editSectionTitle", "Edit section title")}
                 >
                   <Pencil className="w-3 h-3 text-muted-foreground" />
                 </button>

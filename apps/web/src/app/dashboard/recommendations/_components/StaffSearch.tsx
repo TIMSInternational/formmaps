@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "motion/react";
 import { Search, X, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { apiRequest } from "@/lib/api/apiClient";
+import { useTranslation } from "react-i18next";
 
 export interface StaffUser {
   id: string;
@@ -19,6 +20,7 @@ interface StaffSearchProps {
 }
 
 export default function StaffSearch({ value, onChange }: StaffSearchProps) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<StaffUser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -32,7 +34,7 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
       setError(false);
       return;
     }
-    const t = setTimeout(async () => {
+    const timer = setTimeout(async () => {
       setLoading(true);
       setError(false);
       try {
@@ -52,7 +54,7 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
         setLoading(false);
       }
     }, 300);
-    return () => clearTimeout(t);
+    return () => clearTimeout(timer);
   }, [query]);
 
   if (value) {
@@ -106,7 +108,7 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
           style={{ color: "var(--admin-font-tertiary)" }}
         />
         <Input
-          placeholder="Search counselors and staff..."
+          placeholder={t("studentUi.recommendations.staffSearch.placeholder")}
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           className="pl-9 h-9 text-sm"
@@ -150,7 +152,7 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
                   color: "var(--admin-font-tertiary)",
                 }}
               >
-                Search failed. Please try again.
+                {t("studentUi.recommendations.staffSearch.failed")}
               </div>
             )}
             {!error && results.length === 0 && (
@@ -161,7 +163,7 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
                   color: "var(--admin-font-tertiary)",
                 }}
               >
-                No counselors or staff found at your school.
+                {t("studentUi.recommendations.staffSearch.noResults")}
               </div>
             )}
             {results.map((u) => (

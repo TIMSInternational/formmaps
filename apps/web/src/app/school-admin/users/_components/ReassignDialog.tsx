@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,7 @@ export function ReassignDialog({
   counselors,
   onReassigned,
 }: ReassignDialogProps) {
+  const { t } = useTranslation("school_admin");
   const [targetId, setTargetId] = useState<string>("");
   const [loading, setLoading] = useState(false);
 
@@ -45,12 +47,12 @@ export function ReassignDialog({
     try {
       const { assignStudents } = await import("@/services/schoolProfileService");
       await assignStudents(targetId, { studentIds: [student.id] });
-      toast.success(`${student.name} reassigned successfully.`);
+      toast.success(t("ui.reassign.success", { name: student.name }));
       onOpenChange(false);
       setTargetId("");
       onReassigned();
     } catch {
-      toast.error("Failed to reassign student.");
+      toast.error(t("ui.reassign.failed"));
     } finally {
       setLoading(false);
     }
@@ -63,17 +65,17 @@ export function ReassignDialog({
           <DialogHeader>
             <DialogTitle style={{ fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
               <ArrowRightLeft style={{ width: 18, height: 18, color: "var(--admin-accent-blue)" }} />
-              Reassign Student
+              {t("ui.reassign.title")}
             </DialogTitle>
             <DialogDescription style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-              Move <strong>{student?.name}</strong> to a different counselor&#39;s caseload.
+              <Trans t={t} i18nKey="ui.reassign.description" values={{ name: student?.name }} components={{ b: <strong /> }} />
             </DialogDescription>
           </DialogHeader>
         </div>
 
         <div style={{ padding: 16 }} className="space-y-3">
           <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase" }}>
-            Select New Counselor
+            {t("ui.reassign.selectNew")}
           </div>
           <div style={{
             maxHeight: 250, overflow: "auto",
@@ -107,7 +109,7 @@ export function ReassignDialog({
             ))}
             {targets.length === 0 && (
               <div style={{ textAlign: "center", padding: "20px 0", fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-                No other counselors available.
+                {t("ui.reassign.noOthers")}
               </div>
             )}
           </div>
@@ -123,7 +125,7 @@ export function ReassignDialog({
               border: "1px solid var(--admin-border-default)", cursor: "pointer",
             }}
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={handleReassign}
@@ -138,7 +140,7 @@ export function ReassignDialog({
             }}
           >
             {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-            Reassign Student
+            {t("ui.reassign.title")}
           </button>
         </div>
       </DialogContent>

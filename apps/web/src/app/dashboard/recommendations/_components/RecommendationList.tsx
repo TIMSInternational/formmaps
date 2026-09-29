@@ -132,7 +132,7 @@ export default function RecommendationList({ requests }: RecommendationListProps
       >
         <FileText style={{ width: 14, height: 14, color: "var(--admin-accent-blue)" }} />
         <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-          My Requests
+          {t("ui.recommendations.myRequests")}
         </span>
         <span
           style={{

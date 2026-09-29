@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import { motion } from "motion/react";
 import {
   ArrowLeft,
@@ -23,6 +24,7 @@ interface ReviewResumeStepProps {
 
 /* ---------- Score Gauge (SVG circle) ---------- */
 function ScoreGauge({ score }: { score: number }) {
+  const { t } = useTranslation();
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
   const progress = (score / 100) * circumference;
@@ -39,7 +41,11 @@ function ScoreGauge({ score }: { score: number }) {
         ? "stroke-amber-500"
         : "stroke-red-500";
   const label =
-    score > 75 ? "Great" : score >= 50 ? "Fair" : "Needs Work";
+    score > 75
+      ? t("resumeBuilder.reviewStep.great", "Great")
+      : score >= 50
+        ? t("resumeBuilder.scoreGauge.fair", "Fair")
+        : t("resumeBuilder.reviewStep.needsWork", "Needs Work");
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -84,15 +90,16 @@ function ResumePreviewHTML({
 }: {
   tailoredResume: TailoredResume;
 }) {
+  const { t } = useTranslation();
   return (
     <div className="aspect-[8.5/11] w-full overflow-y-auto rounded-lg border border-border bg-white p-8">
       {/* Name */}
       <div className="text-center mb-4">
         <h1 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
-          Your Name
+          {t("resumeBuilder.reviewStep.yourName", "Your Name")}
         </h1>
         <p className="text-[10px] text-gray-500 mt-0.5">
-          email@example.com | (000) 000-0000 | City, State
+          {t("resumeBuilder.reviewStep.contactPlaceholder", "email@example.com | (000) 000-0000 | City, State")}
         </p>
       </div>
 
@@ -100,7 +107,7 @@ function ResumePreviewHTML({
       {tailoredResume.tailoredSummary && (
         <div className="mb-3">
           <h2 className="text-[10px] font-bold text-gray-900 uppercase tracking-wider border-b border-gray-300 pb-0.5 mb-1.5">
-            Summary
+            {t("resumeBuilder.previewHighlights.summary", "Summary")}
           </h2>
           <p className="text-[9px] leading-relaxed text-gray-700">
             {tailoredResume.tailoredSummary}
@@ -112,7 +119,7 @@ function ResumePreviewHTML({
       {tailoredResume.tailoredExperience.length > 0 && (
         <div className="mb-3">
           <h2 className="text-[10px] font-bold text-gray-900 uppercase tracking-wider border-b border-gray-300 pb-0.5 mb-1.5">
-            Relevant Experience
+            {t("resumeBuilder.previewHighlights.relevantExperience", "Relevant Experience")}
           </h2>
           <div className="space-y-2">
             {tailoredResume.tailoredExperience.map((exp, idx) => (
@@ -143,7 +150,7 @@ function ResumePreviewHTML({
       {tailoredResume.tailoredSkills.length > 0 && (
         <div className="mb-3">
           <h2 className="text-[10px] font-bold text-gray-900 uppercase tracking-wider border-b border-gray-300 pb-0.5 mb-1.5">
-            Technical Skills
+            {t("resumeBuilder.previewHighlights.technicalSkills", "Technical Skills")}
           </h2>
           <p className="text-[9px] text-gray-700 leading-relaxed">
             {tailoredResume.tailoredSkills.join(" | ")}
@@ -154,10 +161,10 @@ function ResumePreviewHTML({
       {/* Education placeholder */}
       <div>
         <h2 className="text-[10px] font-bold text-gray-900 uppercase tracking-wider border-b border-gray-300 pb-0.5 mb-1.5">
-          Education
+          {t("resumeBuilder.previewHighlights.education", "Education")}
         </h2>
         <p className="text-[9px] text-gray-500 italic">
-          Education section will be carried over from your current resume.
+          {t("resumeBuilder.reviewStep.educationCarried", "Education section will be carried over from your current resume.")}
         </p>
       </div>
     </div>
@@ -167,14 +174,17 @@ function ResumePreviewHTML({
 /* ---------- AI Suggestion Buttons ---------- */
 const aiSuggestions = [
   {
+    id: "actionVerbs",
     label: "Use stronger action verbs for experience",
     icon: Zap,
   },
   {
+    id: "shortenSummary",
     label: "Shorten my summary to be more concise",
     icon: Lightbulb,
   },
   {
+    id: "removeUnrelated",
     label: "Remove skills not related to this job",
     icon: TrendingUp,
   },
@@ -189,6 +199,7 @@ export function ReviewResumeStep({
   onDownload,
   onCreateResume,
 }: ReviewResumeStepProps) {
+  const { t } = useTranslation();
   const newScore = tailoredResume.atsScore;
 
   const scoreDelta = useMemo(
@@ -209,14 +220,16 @@ export function ReviewResumeStep({
           {/* Top toolbar */}
           <div className="flex items-center gap-2 mb-4">
             <span className="text-xs font-medium text-muted-foreground">
-              Preview
+              {t("resumeBuilder.resumePreview.preview", "Preview")}
             </span>
             <span className="ml-auto text-[10px] text-muted-foreground">
-              Tailored for{" "}
+              {t("resumeBuilder.jobContextCard.tailoredFor", "Tailored for")}{" "}
               <span className="font-semibold text-foreground">
                 {extractedJob.jobTitle}
               </span>
-              {extractedJob.company ? ` at ${extractedJob.company}` : ""}
+              {extractedJob.company
+                ? ` ${t("resumeBuilder.aiTailorPanel.atCompany", "at {{company}}", { company: extractedJob.company })}`
+                : ""}
             </span>
           </div>
 
@@ -233,24 +246,26 @@ export function ReviewResumeStep({
             transition={{ duration: 0.3, delay: 0.05 }}
           >
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">
-              Score Improvement
+              {t("resumeBuilder.reviewStep.scoreImprovement", "Score Improvement")}
             </h3>
             <ScoreGauge score={newScore} />
 
             <div className="mt-4 text-center">
               <p className="text-xs text-muted-foreground">
-                Your score jumped from{" "}
-                <span className="font-semibold text-foreground">
-                  {previousScore}
-                </span>{" "}
-                to{" "}
-                <span className="font-semibold text-emerald-600">
-                  {newScore}
-                </span>
+                <Trans
+                  i18nKey="resumeBuilder.reviewStep.scoreJumped"
+                  defaults="Your score jumped from <0>{{from}}</0> to <1>{{to}}</1>"
+                  values={{ from: previousScore, to: newScore }}
+                  components={[
+                    <span key="0" className="font-semibold text-foreground" />,
+                    <span key="1" className="font-semibold text-emerald-600" />,
+                  ]}
+                />
               </p>
               {scoreDelta > 0 && (
                 <span className="inline-flex items-center gap-1 mt-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600">
-                  <TrendingUp className="h-3 w-3" />+{scoreDelta} points
+                  <TrendingUp className="h-3 w-3" />
+                  {t("resumeBuilder.reviewStep.pointsDelta", { count: scoreDelta, defaultValue: "+{{count}} points" })}
                 </span>
               )}
             </div>
@@ -265,7 +280,7 @@ export function ReviewResumeStep({
               transition={{ duration: 0.3, delay: 0.1 }}
             >
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                What Changed
+                {t("resumeBuilder.wizardReview.whatChanged", "What Changed")}
               </h3>
               <ul className="space-y-2">
                 {tailoredResume.changes.map((change, idx) => (
@@ -289,19 +304,19 @@ export function ReviewResumeStep({
             transition={{ duration: 0.3, delay: 0.15 }}
           >
             <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-              AI Suggestions
+              {t("resumeBuilder.reviewStep.aiSuggestions", "AI Suggestions")}
             </h3>
             <div className="space-y-2">
               {aiSuggestions.map((suggestion) => {
                 const Icon = suggestion.icon;
                 return (
                   <button
-                    key={suggestion.label}
+                    key={suggestion.id}
                     type="button"
                     className="w-full flex items-center gap-2.5 rounded-lg border border-border bg-secondary px-3 py-2.5 text-left text-xs font-medium text-foreground hover:bg-secondary/80 transition-colors"
                   >
                     <Icon className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                    {suggestion.label}
+                    {t(`resumeBuilder.reviewStep.suggestions.${suggestion.id}`, suggestion.label)}
                   </button>
                 );
               })}
@@ -323,7 +338,7 @@ export function ReviewResumeStep({
           className="flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back
+          {t("common.back", "Back")}
         </button>
 
         <div className="flex items-center gap-3">
@@ -333,14 +348,14 @@ export function ReviewResumeStep({
             className="flex items-center gap-2 rounded-xl border border-border bg-secondary px-5 py-2.5 text-sm font-medium text-foreground hover:bg-secondary/80 transition-colors"
           >
             <Download className="h-4 w-4" />
-            Download Resume
+            {t("resumeBuilder.wizardReview.download", "Download Resume")}
           </button>
           <button
             type="button"
             onClick={onCreateResume}
             className="flex items-center gap-2 rounded-xl bg-emerald-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-emerald-600 transition-colors"
           >
-            Create & Edit
+            {t("resumeBuilder.wizardReview.createEdit", "Create & Edit")}
             <ArrowRight className="h-4 w-4" />
           </button>
         </div>

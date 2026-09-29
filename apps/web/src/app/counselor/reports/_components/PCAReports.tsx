@@ -17,6 +17,7 @@ import { ScoreBar, StudentInfoHeader, type ReportStudent } from "./ReportShared"
 
 export function PCAReports({ student }: { student: ReportStudent }) {
   const { t, i18n } = useTranslation();
+  const { t: tC } = useTranslation("counselor");
   const [downloading, setDownloading] = useState<string | null>(null);
   const [pcaData, setPcaData] = useState<Record<string, unknown> | null>(null);
   const [careerData, setCareerData] = useState<Record<string, unknown> | null>(null);
@@ -39,10 +40,10 @@ export function PCAReports({ student }: { student: ReportStudent }) {
   const hasPCA = pcaData && pcaData.pcaD1 != null;
 
   const discScores = hasPCA ? [
-    { label: "Dominance (D)", value: pcaData.pcaD1 as number, color: "#ef4444" },
-    { label: "Influence (I)", value: pcaData.pcaI1 as number, color: "var(--admin-accent-blue)" },
-    { label: "Solidity (S)", value: pcaData.pcaS1 as number, color: "#22c55e" },
-    { label: "Control (C)", value: pcaData.pcaC1 as number, color: "#eab308" },
+    { label: tC("ui.reports.pca.dominance"), value: pcaData.pcaD1 as number, color: "#ef4444" },
+    { label: tC("ui.reports.pca.influence"), value: pcaData.pcaI1 as number, color: "var(--admin-accent-blue)" },
+    { label: tC("ui.reports.pca.solidity"), value: pcaData.pcaS1 as number, color: "#22c55e" },
+    { label: tC("ui.reports.pca.control"), value: pcaData.pcaC1 as number, color: "#eab308" },
   ] : [];
 
   const careerMatches = (careerData?.careerMatches || careerData?.careers || careerData?.topCareers || []) as Record<string, unknown>[];
@@ -56,8 +57,8 @@ export function PCAReports({ student }: { student: ReportStudent }) {
       const a = document.createElement("a"); a.href = url;
       a.download = `PCA-Chart-${student.name.replace(/\s+/g, "-")}.png`; a.click();
       URL.revokeObjectURL(url);
-      toast.success("PCA chart downloaded");
-    } catch { toast.error("Failed to download chart"); }
+      toast.success(tC("ui.reports.pca.chartDownloaded"));
+    } catch { toast.error(tC("ui.reports.pca.chartFailed")); }
     setDownloading(null);
   };
 
@@ -109,14 +110,14 @@ export function PCAReports({ student }: { student: ReportStudent }) {
       const blob = new Blob([JSON.stringify(report, null, 2)], { type: "application/json" });
       const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
       a.download = `PCA-Full-Report-${student.name.replace(/\s+/g, "-")}.json`; a.click();
-      toast.success("Full PCA report downloaded");
-    } catch { toast.error("Failed to generate report"); }
+      toast.success(tC("ui.reports.pca.fullDownloaded"));
+    } catch { toast.error(tC("ui.reports.pca.fullFailed")); }
     setDownloading(null);
   };
 
   return (
     <div>
-      <StudentInfoHeader student={student} icon={Target} iconColor="#8b5cf6" subtitle="PCA Assessment Report" />
+      <StudentInfoHeader student={student} icon={Target} iconColor="#8b5cf6" subtitle={tC("ui.reports.pca.subtitle")} />
       <div className="p-5 space-y-5">
         {!fetched ? (
           <div className="space-y-3">
@@ -127,8 +128,8 @@ export function PCAReports({ student }: { student: ReportStudent }) {
         ) : !hasPCA ? (
           <div className="text-center py-6 rounded-lg bg-muted/30 border">
             <XCircle className="h-6 w-6 mx-auto mb-2 text-muted-foreground opacity-40" />
-            <div className="text-sm font-semibold">No PCA Results</div>
-            <div className="text-xs text-muted-foreground mt-1">This student hasn&apos;t completed the PCA assessment yet.</div>
+            <div className="text-sm font-semibold">{tC("ui.reports.pca.noResults")}</div>
+            <div className="text-xs text-muted-foreground mt-1">{tC("ui.reports.pca.noResultsDesc")}</div>
           </div>
         ) : (
           <>
@@ -141,7 +142,7 @@ export function PCAReports({ student }: { student: ReportStudent }) {
             >
               <div className="text-sm font-semibold flex items-center gap-2">
                 <Target className="h-4 w-4 text-violet-500" />
-                PCA Profile — Work Adaptation
+                {tC("ui.reports.pca.workAdaptation")}
               </div>
               <div className="space-y-2.5">
                 {discScores.map((s) => (
@@ -160,7 +161,7 @@ export function PCAReports({ student }: { student: ReportStudent }) {
               >
                 {pcaData.pcaD2 != null && (
                   <div className="rounded-lg border bg-card p-4 space-y-2.5">
-                    <div className="text-xs font-semibold text-muted-foreground">Under Pressure</div>
+                    <div className="text-xs font-semibold text-muted-foreground">{tC("ui.reports.pca.underPressure")}</div>
                     {[
                       { label: "D", value: pcaData.pcaD2 as number, color: "#ef4444" },
                       { label: "I", value: pcaData.pcaI2 as number, color: "#eab308" },
@@ -173,7 +174,7 @@ export function PCAReports({ student }: { student: ReportStudent }) {
                 )}
                 {pcaData.pcaD3 != null && (
                   <div className="rounded-lg border bg-card p-4 space-y-2.5">
-                    <div className="text-xs font-semibold text-muted-foreground">Self Image</div>
+                    <div className="text-xs font-semibold text-muted-foreground">{tC("ui.reports.pca.selfImage")}</div>
                     {[
                       { label: "D", value: pcaData.pcaD3 as number, color: "#ef4444" },
                       { label: "I", value: pcaData.pcaI3 as number, color: "#eab308" },
@@ -197,12 +198,12 @@ export function PCAReports({ student }: { student: ReportStudent }) {
               >
                 <div className="text-sm font-semibold flex items-center gap-2">
                   <Briefcase className="h-4 w-4 text-amber-500" />
-                  Top Career Matches
+                  {tC("ui.reports.pca.topCareerMatches")}
                 </div>
                 <div className="space-y-1.5">
                   {careerMatches.slice(0, 3).map((career, idx) => (
                     <div key={idx} className="flex items-center justify-between p-2 rounded-md bg-muted/30">
-                      <span className="text-sm">{String(career.name || career.title || career.career || `Career ${idx + 1}`)}</span>
+                      <span className="text-sm">{String(career.name || career.title || career.career || tC("ui.reports.pca.careerN", { n: idx + 1 }))}</span>
                       {Boolean(career.match || career.score) && (
                         <Badge variant="outline" className="text-xs">{String(career.match || career.score)}%</Badge>
                       )}
@@ -215,7 +216,7 @@ export function PCAReports({ student }: { student: ReportStudent }) {
             {pcaData.pcaFec && (
               <div className="text-xs text-muted-foreground flex items-center gap-1">
                 <CheckCircle2 className="h-3 w-3 text-emerald-500" />
-                Completed: {pcaData.pcaFec as string}
+                {tC("ui.reports.pca.completedOn", { date: pcaData.pcaFec as string })}
               </div>
             )}
 
@@ -235,7 +236,7 @@ export function PCAReports({ student }: { student: ReportStudent }) {
                   onClick={downloadChart}
                 >
                   {downloading === "chart" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Image className="h-3 w-3" />}
-                  Download Chart
+                  {tC("ui.reports.pca.downloadChart")}
                 </Button>
               )}
               {Boolean(pcaData.pcaCod) && ([
@@ -263,7 +264,7 @@ export function PCAReports({ student }: { student: ReportStudent }) {
                 onClick={downloadFullReport}
               >
                 {downloading === "full" ? <Loader2 className="h-3 w-3 animate-spin" /> : <Download className="h-3 w-3" />}
-                Download Full Report
+                {tC("ui.reports.downloadFullReport")}
               </Button>
               <Button
                 variant="outline"

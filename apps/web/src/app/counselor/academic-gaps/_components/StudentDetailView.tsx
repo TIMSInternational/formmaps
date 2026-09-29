@@ -5,6 +5,7 @@ import {
   TrendingDown, BookOpen, AlertCircle, Target,
   CheckCircle2, Briefcase,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { MiniBar, GapSkeleton, GapCategoryCard } from "./GapHelpers";
 
 interface GapData {
@@ -39,6 +40,7 @@ export function StudentDetailView({
   allRecs: CourseRecommendation[];
   recsLoading: boolean;
 }) {
+  const { t } = useTranslation("counselor");
   return (
     <div style={{ minHeight: 460 }}>
       <AnimatePresence mode="wait">
@@ -58,10 +60,10 @@ export function StudentDetailView({
             <div style={{ textAlign: "center", maxWidth: 300 }}>
               <Target style={{ width: 36, height: 36, color: "var(--admin-font-tertiary, #888)", margin: "0 auto 12px", opacity: 0.35 }} />
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary, #111)", margin: "0 0 6px" }}>
-                Select a Student
+                {t("academicGaps.selectStudent")}
               </h3>
               <p style={{ fontSize: 12, color: "var(--admin-font-tertiary, #888)", lineHeight: 1.5, margin: 0 }}>
-                Choose a student from the list to view their credit gaps, missing coursework, and recommended courses.
+                {t("academicGaps.selectStudentDesc")}
               </p>
             </div>
           </motion.div>
@@ -93,7 +95,7 @@ export function StudentDetailView({
               <div style={{ textAlign: "center", padding: "40px 0" }}>
                 <AlertCircle style={{ width: 28, height: 28, color: "var(--admin-font-tertiary, #888)", margin: "0 auto 8px", opacity: 0.4 }} />
                 <p style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-tertiary, #888)", margin: 0 }}>
-                  Unable to load gap data.
+                  {t("ui.academicGaps.loadError")}
                 </p>
               </div>
             )}
@@ -110,6 +112,7 @@ export function StudentDetailView({
 }
 
 function CreditSummaryCard({ gaps }: { gaps: GapData }) {
+  const { t } = useTranslation("counselor");
   return (
     <div style={{
       background: "var(--admin-bg-card, #fff)",
@@ -119,11 +122,11 @@ function CreditSummaryCard({ gaps }: { gaps: GapData }) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 14 }}>
         <div>
           <h2 style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary, #111)", margin: 0 }}>
-            {gaps.studentName || "Student"}
+            {gaps.studentName || t("ui.academicGaps.studentFallback")}
           </h2>
           {gaps.gradeLevel && (
             <p style={{ fontSize: 11, color: "var(--admin-font-tertiary, #888)", margin: "2px 0 0" }}>
-              Grade {gaps.gradeLevel}
+              {t("academicGaps.gradeN", { n: gaps.gradeLevel })}
             </p>
           )}
         </div>
@@ -133,7 +136,7 @@ function CreditSummaryCard({ gaps }: { gaps: GapData }) {
               {Math.round(((gaps.creditsEarned ?? 0) / (gaps.creditsRequired ?? 1)) * 100)}%
             </span>
             <p style={{ fontSize: 11, color: "var(--admin-font-tertiary, #888)", margin: "2px 0 0" }}>
-              {gaps.creditsEarned} / {gaps.creditsRequired} credits
+              {t("academicGaps.creditsOf", { earned: gaps.creditsEarned, required: gaps.creditsRequired })}
             </p>
           </div>
         )}
@@ -143,7 +146,7 @@ function CreditSummaryCard({ gaps }: { gaps: GapData }) {
       )}
       {((gaps.creditsRequired ?? 0) - (gaps.creditsEarned ?? 0)) > 0 && (
         <p style={{ fontSize: 11, fontWeight: 600, color: "#ef4444", margin: "6px 0 0" }}>
-          {(gaps.creditsRequired ?? 0) - (gaps.creditsEarned ?? 0)} credits remaining to graduate
+          {t("academicGaps.creditsRemaining", { n: (gaps.creditsRequired ?? 0) - (gaps.creditsEarned ?? 0) })}
         </p>
       )}
     </div>
@@ -151,6 +154,7 @@ function CreditSummaryCard({ gaps }: { gaps: GapData }) {
 }
 
 function GapCategories({ gaps, allRecs }: { gaps: GapData; allRecs: CourseRecommendation[] }) {
+  const { t } = useTranslation("counselor");
   return (
     <>
       {/* Credit gaps */}
@@ -165,13 +169,13 @@ function GapCategories({ gaps, allRecs }: { gaps: GapData; allRecs: CourseRecomm
               <TrendingDown style={{ width: 14, height: 14, color: "#ef4444" }} />
             </div>
             <span style={{ fontSize: 13, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>
-              Credit Deficiencies
+              {t("academicGaps.creditDeficiencies")}
             </span>
             <span style={{
               fontSize: 10, fontWeight: 600, color: "#ef4444",
               background: "rgba(239,68,68,0.1)", padding: "2px 6px", borderRadius: 4,
             }}>
-              {gaps.creditGaps!.length} categories
+              {t("academicGaps.categoriesCount", { n: gaps.creditGaps!.length })}
             </span>
           </div>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
@@ -194,7 +198,7 @@ function GapCategories({ gaps, allRecs }: { gaps: GapData; allRecs: CourseRecomm
               <BookOpen style={{ width: 14, height: 14, color: "#f59e0b" }} />
             </div>
             <span style={{ fontSize: 13, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>
-              Missing Required Courses
+              {t("academicGaps.missingCourses")}
             </span>
           </div>
           <div style={{
@@ -243,7 +247,7 @@ function GapCategories({ gaps, allRecs }: { gaps: GapData; allRecs: CourseRecomm
               <Briefcase style={{ width: 14, height: 14, color: "#a855f7" }} />
             </div>
             <span style={{ fontSize: 13, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>
-              Career Alignment Warnings
+              {t("academicGaps.careerWarnings")}
             </span>
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -295,10 +299,10 @@ function GapCategories({ gaps, allRecs }: { gaps: GapData; allRecs: CourseRecomm
         >
           <CheckCircle2 style={{ width: 28, height: 28, color: "#10b981", margin: "0 auto 8px" }} />
           <h3 style={{ fontSize: 15, fontWeight: 700, color: "var(--admin-font-primary, #111)", margin: "0 0 4px" }}>
-            Student is On Track
+            {t("academicGaps.onTrackTitle")}
           </h3>
           <p style={{ fontSize: 12, color: "var(--admin-font-tertiary, #888)", margin: 0, maxWidth: 320, marginLeft: "auto", marginRight: "auto" }}>
-            No academic gaps, missing requirements, or career alignment issues detected.
+            {t("academicGaps.onTrackDesc")}
           </p>
         </motion.div>
       )}
@@ -307,6 +311,7 @@ function GapCategories({ gaps, allRecs }: { gaps: GapData; allRecs: CourseRecomm
 }
 
 function RecommendedCoursesCard({ allRecs, recsLoading }: { allRecs: CourseRecommendation[]; recsLoading: boolean }) {
+  const { t } = useTranslation("counselor");
   return (
     <div style={{
       background: "var(--admin-bg-card, #fff)",
@@ -326,14 +331,14 @@ function RecommendedCoursesCard({ allRecs, recsLoading }: { allRecs: CourseRecom
           <BookOpen style={{ width: 14, height: 14, color: "#10b981" }} />
         </div>
         <span style={{ fontSize: 13, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>
-          Recommended Courses
+          {t("academicGaps.recommendedCourses")}
         </span>
         {allRecs.length > 0 && (
           <span style={{
             fontSize: 10, fontWeight: 600, color: "#10b981",
             background: "rgba(16,185,129,0.1)", padding: "2px 6px", borderRadius: 4,
           }}>
-            {allRecs.length} courses
+            {t("academicGaps.coursesCount", { n: allRecs.length })}
           </span>
         )}
       </div>
@@ -386,7 +391,7 @@ function RecommendedCoursesCard({ allRecs, recsLoading }: { allRecs: CourseRecom
                     fontSize: 10, fontWeight: 700, color: "var(--admin-accent-blue)",
                     background: "rgba(99,102,241,0.1)", padding: "2px 7px", borderRadius: 4,
                   }}>
-                    {r.credits} cr
+                    {t("ui.academicGaps.creditsShort", { n: r.credits })}
                   </span>
                   {r.source && (
                     <span style={{
@@ -406,7 +411,7 @@ function RecommendedCoursesCard({ allRecs, recsLoading }: { allRecs: CourseRecom
         ) : (
           <div style={{ textAlign: "center", padding: "24px 0" }}>
             <p style={{ fontSize: 12, color: "var(--admin-font-tertiary, #888)", margin: 0 }}>
-              No recommendations available
+              {t("academicGaps.noRecommendations")}
             </p>
           </div>
         )}

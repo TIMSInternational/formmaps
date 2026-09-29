@@ -1,4 +1,6 @@
 import React from "react";
+import i18n from "@/lib/i18n";
+import { translateProficiency } from "../../_lib/resume-constants";
 import {
   Document,
   Page,
@@ -8,6 +10,9 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import { Linkedin, Globe, Github, Twitter, FolderOpen } from "lucide-react";
+
+// Labels printed in the résumé document itself, resolved in the UI language at render time.
+const t = i18n.t.bind(i18n);
 
 // Define styles for the Modern template
 const modernStyles = StyleSheet.create({
@@ -286,7 +291,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
           >
             {data.personalInfo.nationality && (
               <Text style={[modernStyles.contactItem, { fontSize: 9 }]}>
-                Nationality: {data.personalInfo.nationality}
+                {t("resumeBuilder.doc.nationality", { defaultValue: "Nationality: {{value}}", value: data.personalInfo.nationality })}
               </Text>
             )}
             {data.personalInfo.dateOfBirth && (
@@ -297,7 +302,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
                   </Text>
                 )}
                 <Text style={[modernStyles.contactItem, { fontSize: 9 }]}>
-                  DOB: {data.personalInfo.dateOfBirth}
+                  {t("resumeBuilder.doc.dob", { defaultValue: "DOB: {{value}}", value: data.personalInfo.dateOfBirth })}
                 </Text>
               </>
             )}
@@ -308,7 +313,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
       {/* Career Objective */}
       {data.personalInfo.careerObjective && (
         <View style={modernStyles.section}>
-          <Text style={modernStyles.sectionTitle}>Career Objective</Text>
+          <Text style={modernStyles.sectionTitle}>{t("resumeBuilder.doc.careerObjective", "Career Objective")}</Text>
           <Text style={modernStyles.description}>
             {data.personalInfo.careerObjective}
           </Text>
@@ -318,7 +323,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
       {/* Professional Summary */}
       {data.personalInfo.summary && (
         <View style={modernStyles.section}>
-          <Text style={modernStyles.sectionTitle}>Professional Summary</Text>
+          <Text style={modernStyles.sectionTitle}>{t("resumeBuilder.doc.professionalSummary", "Professional Summary")}</Text>
           <Text style={modernStyles.description}>
             {data.personalInfo.summary}
           </Text>
@@ -328,7 +333,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
       {/* Experience */}
       {data.experience.length > 0 && (
         <View style={modernStyles.section}>
-          <Text style={modernStyles.sectionTitle}>EXPERIENCE</Text>
+          <Text style={modernStyles.sectionTitle}>{t("resumeBuilder.doc.experience", "Experience").toUpperCase()}</Text>
           {data.experience.map((exp) => (
             <View key={exp.id} style={modernStyles.experienceItem}>
               <View style={modernStyles.jobHeader}>
@@ -338,7 +343,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
                 </View>
                 <View>
                   <Text style={modernStyles.dateLocation}>
-                    {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                    {exp.startDate} - {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate}
                   </Text>
                   <Text style={modernStyles.dateLocation}>{exp.location}</Text>
                 </View>
@@ -356,7 +361,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
       {/* Education */}
       {data.education.length > 0 && (
         <View style={modernStyles.section}>
-          <Text style={modernStyles.sectionTitle}>EDUCATION</Text>
+          <Text style={modernStyles.sectionTitle}>{t("resumeBuilder.doc.education", "Education").toUpperCase()}</Text>
           {data.education.map((edu) => (
             <View key={edu.id} style={modernStyles.experienceItem}>
               <View style={modernStyles.jobHeader}>
@@ -372,7 +377,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
                 </View>
               </View>
               {edu.gpa && (
-                <Text style={modernStyles.description}>GPA: {edu.gpa}</Text>
+                <Text style={modernStyles.description}>{t("resumeBuilder.doc.gpa", { defaultValue: "GPA: {{value}}", value: edu.gpa })}</Text>
               )}
             </View>
           ))}
@@ -382,7 +387,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
       {/* Skills */}
       {data.skills.length > 0 && (
         <View style={modernStyles.section}>
-          <Text style={modernStyles.sectionTitle}>SKILLS</Text>
+          <Text style={modernStyles.sectionTitle}>{t("resumeBuilder.doc.skills", "Skills").toUpperCase()}</Text>
           <View style={modernStyles.skillsContainer}>
             {data.skills.map((skill) => (
               <Text key={skill.id} style={modernStyles.skillItem}>
@@ -398,7 +403,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
         data.customFields.filter((f) => f.enabled && f.value).length > 0 && (
           <View style={modernStyles.section}>
             <Text style={modernStyles.sectionTitle}>
-              ADDITIONAL INFORMATION
+              {t("resumeBuilder.doc.additionalInformation", "Additional Information").toUpperCase()}
             </Text>
             {data.customFields
               .filter((f) => f.enabled && f.value)
@@ -430,7 +435,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
                     </Text>
                     {entry.technologies && (
                       <Text style={modernStyles.company}>
-                        Technologies: {entry.technologies}
+                        {t("resumeBuilder.doc.technologies", { defaultValue: "Technologies: {{value}}", value: entry.technologies })}
                       </Text>
                     )}
                     {entry.description && (
@@ -440,7 +445,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
                     )}
                     {entry.link && (
                       <Text style={[modernStyles.description, { fontSize: 9 }]}>
-                        Link: {entry.link}
+                        {t("resumeBuilder.doc.link", { defaultValue: "Link: {{value}}", value: entry.link })}
                       </Text>
                     )}
                   </>
@@ -454,7 +459,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
                     </Text>
                     {entry.issuer && (
                       <Text style={modernStyles.company}>
-                        Issued by: {entry.issuer}
+                        {t("resumeBuilder.doc.issuedBy", { defaultValue: "Issued by: {{value}}", value: entry.issuer })}
                       </Text>
                     )}
                     {entry.date && (
@@ -478,7 +483,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
                     </Text>
                     {entry.proficiency && (
                       <Text style={modernStyles.description}>
-                        {entry.proficiency}
+                        {translateProficiency(entry.proficiency)}
                       </Text>
                     )}
                   </View>
@@ -492,12 +497,12 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
                     </Text>
                     {entry.authors && (
                       <Text style={modernStyles.company}>
-                        Authors: {entry.authors}
+                        {t("resumeBuilder.doc.authors", { defaultValue: "Authors: {{value}}", value: entry.authors })}
                       </Text>
                     )}
                     {entry.publisher && (
                       <Text style={modernStyles.company}>
-                        Publisher: {entry.publisher}
+                        {t("resumeBuilder.doc.publisher", { defaultValue: "Publisher: {{value}}", value: entry.publisher })}
                       </Text>
                     )}
                     {entry.description && (
@@ -507,7 +512,7 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
                     )}
                     {entry.link && (
                       <Text style={[modernStyles.description, { fontSize: 9 }]}>
-                        Link: {entry.link}
+                        {t("resumeBuilder.doc.link", { defaultValue: "Link: {{value}}", value: entry.link })}
                       </Text>
                     )}
                     {entry.date && (
@@ -611,17 +616,17 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
         {(data.personalInfo.nationality || data.personalInfo.dateOfBirth) && (
           <div className="flex justify-center gap-2 text-gray-600 text-xs mt-1">
             {data.personalInfo.nationality && (
-              <span>Nationality: {data.personalInfo.nationality}</span>
+              <span>{t("resumeBuilder.doc.nationality", { defaultValue: "Nationality: {{value}}", value: data.personalInfo.nationality })}</span>
             )}
             {data.personalInfo.dateOfBirth && (
-              <span>DOB: {data.personalInfo.dateOfBirth}</span>
+              <span>{t("resumeBuilder.doc.dob", { defaultValue: "DOB: {{value}}", value: data.personalInfo.dateOfBirth })}</span>
             )}
           </div>
         )}
 
         {data.personalInfo.careerObjective && (
           <p className="text-gray-700 text-xs mt-2 leading-relaxed">
-            <strong>Career Objective:</strong>{" "}
+            <strong>{t("resumeBuilder.doc.careerObjective", "Career Objective")}:</strong>{" "}
             {data.personalInfo.careerObjective.substring(0, 100)}...
           </p>
         )}
@@ -636,7 +641,7 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
       {data.experience.length > 0 && (
         <div className="mb-4">
           <h2 className="text-sm font-bold text-gray-800 mb-2 border-b border-gray-300 pb-1">
-            EXPERIENCE
+            {t("resumeBuilder.doc.experience", "Experience").toUpperCase()}
           </h2>
           {data.experience.slice(0, 2).map((exp) => (
             <div key={exp.id} className="mb-3">
@@ -650,7 +655,7 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
                   </p>
                 </div>
                 <span className="text-gray-500 text-xs">
-                  {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                  {exp.startDate} - {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate}
                 </span>
               </div>
               <div className="text-xs text-gray-700">
@@ -670,7 +675,7 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
         {data.education.length > 0 && (
           <div>
             <h2 className="text-sm font-bold text-gray-800 mb-2 border-b border-gray-300 pb-1">
-              EDUCATION
+              {t("resumeBuilder.doc.education", "Education").toUpperCase()}
             </h2>
             {data.education.slice(0, 1).map((edu) => (
               <div key={edu.id} className="mb-2">
@@ -680,7 +685,7 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
                 <p className="text-gray-600 text-xs">{edu.institution}</p>
                 <p className="text-gray-500 text-xs">{edu.graduationDate}</p>
                 {edu.gpa && (
-                  <p className="text-gray-500 text-xs">GPA: {edu.gpa}</p>
+                  <p className="text-gray-500 text-xs">{t("resumeBuilder.doc.gpa", { defaultValue: "GPA: {{value}}", value: edu.gpa })}</p>
                 )}
               </div>
             ))}
@@ -691,7 +696,7 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
         {data.skills.length > 0 && (
           <div className="mb-4">
             <h2 className="text-sm font-bold text-gray-800 mb-2 border-b border-gray-300 pb-1">
-              SKILLS
+              {t("resumeBuilder.doc.skills", "Skills").toUpperCase()}
             </h2>
             <div className="flex flex-wrap gap-1">
               {data.skills.slice(0, 6).map((skill) => (
@@ -711,7 +716,7 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
           data.customFields.filter((f) => f.enabled && f.value).length > 0 && (
             <div className="mb-4">
               <h2 className="text-sm font-bold text-gray-800 mb-2 border-b border-gray-300 pb-1">
-                ADDITIONAL INFORMATION
+                {t("resumeBuilder.doc.additionalInformation", "Additional Information").toUpperCase()}
               </h2>
               {data.customFields
                 .filter((f) => f.enabled && f.value)
@@ -762,7 +767,7 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
                       </span>
                       {entry.proficiency && (
                         <span className="text-xs text-gray-600">
-                          {entry.proficiency}
+                          {translateProficiency(entry.proficiency)}
                         </span>
                       )}
                     </div>
@@ -774,12 +779,12 @@ export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
                       </h3>
                       {entry.authors && (
                         <p className="text-[#2E9098] text-xs">
-                          Authors: {entry.authors}
+                          {t("resumeBuilder.doc.authors", { defaultValue: "Authors: {{value}}", value: entry.authors })}
                         </p>
                       )}
                       {entry.publisher && (
                         <p className="text-[#2E9098] text-xs">
-                          Publisher: {entry.publisher}
+                          {t("resumeBuilder.doc.publisher", { defaultValue: "Publisher: {{value}}", value: entry.publisher })}
                         </p>
                       )}
                       {entry.description && (

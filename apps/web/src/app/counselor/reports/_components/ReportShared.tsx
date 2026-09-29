@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 
 export interface ReportStudent {
   id: string;
@@ -33,6 +34,7 @@ export function ScoreBar({ label, value, max = 100, color }: { label: string; va
 export function StudentInfoHeader({ student, icon: Icon, iconColor, subtitle }: {
   student: ReportStudent; icon: React.ElementType; iconColor: string; subtitle: string;
 }) {
+  const { t } = useTranslation("counselor");
   return (
     <div className="p-5 border-b bg-muted/30">
       <div className="flex items-center gap-3">
@@ -44,7 +46,7 @@ export function StudentInfoHeader({ student, icon: Icon, iconColor, subtitle }: 
       </div>
       <div className="flex items-center gap-4 mt-3 text-xs text-muted-foreground">
         <span>{student.email}</span>
-        {student.gradeLevel && <span>Grade {student.gradeLevel}</span>}
+        {student.gradeLevel && <span>{t("ui.reports.gradeN", { n: student.gradeLevel })}</span>}
       </div>
     </div>
   );

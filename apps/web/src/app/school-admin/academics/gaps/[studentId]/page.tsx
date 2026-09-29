@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api/apiClient";
 import { useStudent } from "@/hooks/useSchoolAdmin";
@@ -17,6 +18,7 @@ interface StudentWithGrade { name?: string; gradeLevel?: number | string }
 interface GpaWithGpa { gpa?: number; gpaUnweighted?: number | null; gpaWeighted?: number | null }
 
 export default function StudentGapAnalysisPage() {
+  const { t } = useTranslation("school_admin");
   const params = useParams();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -57,10 +59,10 @@ export default function StudentGapAnalysisPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Course added to student's plan");
+      toast.success(t("ui.studentGaps.courseAdded"));
       queryClient.invalidateQueries({ queryKey: ["ai-recommendations", studentId] });
     },
-    onError: () => toast.error("Failed to add course"),
+    onError: () => toast.error(t("ui.studentGaps.addFailed")),
   });
 
   const [approvedCourses, setApprovedCourses] = useState<Set<string>>(new Set());
@@ -85,12 +87,12 @@ export default function StudentGapAnalysisPage() {
           display: "flex", alignItems: "center", gap: 4, padding: 0, fontSize: 13,
         }}>
           <ArrowLeft style={{ width: 14, height: 14 }} />
-          Academics
+          {t("academics.title")}
         </button>
         <ChevronRight style={{ width: 12, height: 12 }} />
-        <span style={{ color: "var(--admin-font-tertiary)" }}>Academic Gaps</span>
+        <span style={{ color: "var(--admin-font-tertiary)" }}>{t("academics.tabs.gaps")}</span>
         <ChevronRight style={{ width: 12, height: 12 }} />
-        <span style={{ color: "var(--admin-font-primary)", fontWeight: 600 }}>{student?.name || "Student"}</span>
+        <span style={{ color: "var(--admin-font-primary)", fontWeight: 600 }}>{student?.name || t("graduation.table.student")}</span>
       </div>
 
       {/* Student Header Card */}
@@ -110,15 +112,15 @@ export default function StudentGapAnalysisPage() {
           <div style={{ flex: 1 }}>
             <h1 style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)", margin: 0 }}>{student?.name}</h1>
             <div style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2, display: "flex", gap: 16 }}>
-              {(student as StudentWithGrade | undefined)?.gradeLevel && <span>Grade {(student as StudentWithGrade).gradeLevel}</span>}
-              {(gpaData as GpaWithGpa | undefined)?.gpa != null && <span>GPA: {Number((gpaData as GpaWithGpa).gpa).toFixed(2)}</span>}
-              <span>{progress?.totalCreditsEarned || 0} / {progress?.totalCreditsRequired || 0} credits</span>
+              {(student as StudentWithGrade | undefined)?.gradeLevel && <span>{t("graduation.gradeLabel", { grade: (student as StudentWithGrade).gradeLevel })}</span>}
+              {(gpaData as GpaWithGpa | undefined)?.gpa != null && <span>{t("ui.studentGaps.gpa", { gpa: Number((gpaData as GpaWithGpa).gpa).toFixed(2) })}</span>}
+              <span>{t("ui.studentGaps.creditsOf", { earned: progress?.totalCreditsEarned || 0, required: progress?.totalCreditsRequired || 0 })}</span>
             </div>
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontSize: 32, fontWeight: 700, color: statusColor }}>{overallPct}%</div>
             <div style={{ fontSize: 11, fontWeight: 600, color: statusColor, textTransform: "uppercase" }}>
-              {overallPct >= 75 ? "On Track" : overallPct >= 50 ? "At Risk" : "Off Track"}
+              {overallPct >= 75 ? t("academicGaps.stats.onTrack") : overallPct >= 50 ? t("academicGaps.stats.atRisk") : t("academicGaps.stats.offTrack")}
             </div>
           </div>
         </div>
@@ -152,9 +154,9 @@ export default function StudentGapAnalysisPage() {
           background: "var(--admin-bg-card)", textAlign: "center",
         }}>
           <Sparkles style={{ width: 32, height: 32, color: "#8b5cf6", margin: "0 auto 12px" }} />
-          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary)", margin: "0 0 6px" }}>AI Course Pathway</h3>
+          <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary)", margin: "0 0 6px" }}>{t("ui.studentGaps.aiPathway")}</h3>
           <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", maxWidth: 400, margin: "0 auto 16px" }}>
-            Generate a personalized semester-by-semester course plan based on this student's career interests, cognitive profile, and graduation requirements.
+            {t("ui.studentGaps.aiPathwayHelp")}
           </p>
           <button onClick={() => generateRecs()} disabled={aiLoading} style={{
             height: 44, borderRadius: 8, padding: "0 28px", fontSize: 14, fontWeight: 600,
@@ -164,7 +166,7 @@ export default function StudentGapAnalysisPage() {
             opacity: aiLoading ? 0.7 : 1,
           }}>
             {aiLoading ? <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} /> : <Sparkles style={{ width: 16, height: 16 }} />}
-            {aiLoading ? "Analyzing Student Profile..." : "Generate Course Pathway"}
+            {aiLoading ? t("ui.studentGaps.analyzingProfile") : t("ui.studentGaps.generatePathway")}
           </button>
         </div>
       )}
@@ -173,8 +175,8 @@ export default function StudentGapAnalysisPage() {
       {aiLoading && (
         <div style={{ padding: "40px", borderRadius: 12, background: "rgba(139,92,246,0.05)", border: "1px solid rgba(139,92,246,0.15)", textAlign: "center" }}>
           <Loader2 style={{ width: 28, height: 28, color: "#8b5cf6", margin: "0 auto 12px", animation: "spin 1s linear infinite" }} />
-          <div style={{ fontSize: 14, fontWeight: 600, color: "#8b5cf6" }}>Building personalized course pathway...</div>
-          <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>Analyzing career profile, cognitive strengths, and graduation requirements</div>
+          <div style={{ fontSize: 14, fontWeight: 600, color: "#8b5cf6" }}>{t("ui.studentGaps.building")}</div>
+          <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>{t("ui.studentGaps.buildingDetail")}</div>
         </div>
       )}
 
@@ -187,7 +189,7 @@ export default function StudentGapAnalysisPage() {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
             <Sparkles style={{ width: 14, height: 14, color: "#8b5cf6" }} />
-            <span style={{ fontSize: 11, fontWeight: 600, color: "#8b5cf6", textTransform: "uppercase" }}>AI Plan Summary</span>
+            <span style={{ fontSize: 11, fontWeight: 600, color: "#8b5cf6", textTransform: "uppercase" }}>{t("ui.studentGaps.aiSummary")}</span>
           </div>
           {aiData.summary}
         </div>
@@ -211,7 +213,7 @@ export default function StudentGapAnalysisPage() {
               }}>{si + 1}</div>
               <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{sem.label}</span>
             </div>
-            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{sem.courses.length} courses</span>
+            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.curriculum.courseCount", { count: sem.courses.length })}</span>
           </div>
 
           <div style={{ padding: 16 }} className="space-y-3">
@@ -229,13 +231,13 @@ export default function StudentGapAnalysisPage() {
                       <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
                         <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{course.courseName}</span>
                         <span style={{ fontFamily: "monospace", fontSize: 11, color: "var(--admin-font-tertiary)" }}>{course.courseCode}</span>
-                        <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: `${priorityColor}15`, color: priorityColor, textTransform: "capitalize" }}>{course.priority}</span>
-                        {course.isHonors && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>Honors</span>}
+                        <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: `${priorityColor}15`, color: priorityColor, textTransform: "capitalize" }}>{t(`ui.studentGaps.priority.${course.priority}`, { defaultValue: course.priority })}</span>
+                        {course.isHonors && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>{t("ui.courses.honors")}</span>}
                         {course.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "var(--admin-accent-blue)" }}>{course.frameworkType}</span>}
                       </div>
                       <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.5, marginBottom: 6 }}>{course.reason}</div>
                       <div style={{ display: "flex", gap: 8, fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-                        {course.credits > 0 && <span>{course.credits} credits</span>}
+                        {course.credits > 0 && <span>{t("ui.studentGaps.credits", { count: course.credits })}</span>}
                         {course.department && <span>· {course.department}</span>}
                       </div>
                     </div>
@@ -256,7 +258,7 @@ export default function StudentGapAnalysisPage() {
                       }}
                     >
                       {isApproved ? <Check style={{ width: 14, height: 14 }} /> : <Plus style={{ width: 14, height: 14 }} />}
-                      {isApproved ? "Added" : "Add to Plan"}
+                      {isApproved ? t("ui.studentGaps.added") : t("ui.studentGaps.addToPlan")}
                     </button>
                   </div>
                 </div>

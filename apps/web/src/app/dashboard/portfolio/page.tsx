@@ -78,19 +78,19 @@ export default function PortfolioPage() {
         className="flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-            {t("portfolio.badge", "Student Portfolio")}
+            {t("student:portfolio.badge", "Student Portfolio")}
           </p>
           <h1 className="text-2xl font-bold tracking-tight text-foreground mb-1">
-            {t("portfolio.title", "My Achievement Portfolio")}
+            {t("student:portfolio.title", "My Achievement Portfolio")}
           </h1>
           <p className="text-sm text-muted-foreground">
-            {t("portfolio.subtitle", "Curate your extracurriculars, projects, and experiences in one beautiful space.")}
+            {t("student:portfolio.subtitle", "Curate your extracurriculars, projects, and experiences in one beautiful space.")}
           </p>
         </div>
         <div className="flex-shrink-0">
           <Button onClick={openCreateForm} className="bg-foreground text-background hover:bg-foreground/90">
             <Plus className="h-4 w-4 mr-2" />
-            {t("portfolio.addItem", "Add New Experience")}
+            {t("student:portfolio.addItem", "Add New Experience")}
           </Button>
         </div>
       </motion.div>
@@ -100,10 +100,10 @@ export default function PortfolioPage() {
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
           className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
-            { icon: FolderOpen, bg: "bg-indigo-100", color: "text-indigo-600", label: t("portfolio.totalItems", "Total Items"), value: summary.totalItems },
-            { icon: Heart, bg: "bg-rose-100", color: "text-rose-600", label: t("portfolio.totalHours", "Volunteer Hours"), value: `${summary.totalVolunteerHours || 0}`, suffix: "hrs" },
-            { icon: Trophy, bg: "bg-amber-100", color: "text-amber-600", label: t("portfolio.awards", "Awards Won"), value: summary.byType?.award || 0 },
-            { icon: Star, bg: "bg-purple-100", color: "text-purple-600", label: t("portfolio.categories", "Categories"), value: summary.byType ? Object.keys(summary.byType).length : 0 },
+            { icon: FolderOpen, bg: "bg-indigo-100", color: "text-indigo-600", label: t("student:portfolio.totalItems", "Total Items"), value: summary.totalItems },
+            { icon: Heart, bg: "bg-rose-100", color: "text-rose-600", label: t("student:portfolio.totalHours", "Volunteer Hours"), value: `${summary.totalVolunteerHours || 0}`, suffix: t("studentUi.portfolio.hoursSuffix") },
+            { icon: Trophy, bg: "bg-amber-100", color: "text-amber-600", label: t("student:portfolio.awards", "Awards Won"), value: summary.byType?.award || 0 },
+            { icon: Star, bg: "bg-purple-100", color: "text-purple-600", label: t("student:portfolio.categories", "Categories"), value: summary.byType ? Object.keys(summary.byType).length : 0 },
           ].map((stat, i) => (
             <div key={i} className="dash-card p-5">
               <div className="flex items-center gap-3 mb-3">
@@ -126,7 +126,7 @@ export default function PortfolioPage() {
         className="flex flex-wrap gap-2 items-center p-1 bg-secondary rounded-xl w-fit">
         {["all", ...(Object.keys(typeConfig) as PortfolioItemType[])].map((type) => {
           const isActive = activeType === type;
-          const label = type === "all" ? "All" : typeConfig[type as PortfolioItemType].label;
+          const label = type === "all" ? t("studentUi.portfolio.filterAll") : t(typeConfig[type as PortfolioItemType].label);
           return (
             <button key={type} onClick={() => setActiveType(type as "all" | PortfolioItemType)}
               className={cn("relative px-4 py-2 text-sm font-medium rounded-xl transition-colors duration-200 outline-none",
@@ -162,10 +162,10 @@ export default function PortfolioPage() {
               <FolderOpen className="h-7 w-7 text-muted-foreground" />
             </div>
             <h3 className="text-sm font-bold text-foreground mb-1">
-              {t("portfolio.noItemsTitle", "Build Your Portfolio")}
+              {t("student:portfolio.noItemsTitle", "Build Your Portfolio")}
             </h3>
             <p className="text-xs text-muted-foreground max-w-md mx-auto mb-6">
-              {t("portfolio.noItems", "Showcase your achievements, projects, and experiences to stand out. Start adding items to build your professional profile.")}
+              {t("student:portfolio.noItems", "Showcase your achievements, projects, and experiences to stand out. Start adding items to build your professional profile.")}
             </p>
             <Button onClick={openCreateForm} className="bg-foreground text-background hover:bg-foreground/90">
               <Plus className="h-4 w-4 mr-2" />

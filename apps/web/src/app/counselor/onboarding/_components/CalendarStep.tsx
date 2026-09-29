@@ -9,6 +9,7 @@ import {
 import { CheckCircle2, Calendar } from "lucide-react";
 import { getCalendarAuthUrl } from "@/services/calendarService";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface CalendarStepProps {
   onboardedEmail: string | null;
@@ -16,6 +17,7 @@ interface CalendarStepProps {
 }
 
 export function CalendarStep({ onboardedEmail, onGoToDashboard }: CalendarStepProps) {
+  const { t } = useTranslation("counselor");
   const [calendarConnected, setCalendarConnected] = useState(false);
   const [isConnectingCalendar, setIsConnectingCalendar] = useState(false);
   const [connectedProvider, setConnectedProvider] = useState<"google" | "outlook" | null>(null);
@@ -25,13 +27,13 @@ export function CalendarStep({ onboardedEmail, onGoToDashboard }: CalendarStepPr
       setIsConnectingCalendar(true);
       const res = await getCalendarAuthUrl(provider);
       if (!res.configured || !res.url) {
-        toast.error("Calendar sync isn't enabled on this server yet. You can connect later in Settings.");
+        toast.error(t("ui.onboarding.calendar.notEnabled"));
         setIsConnectingCalendar(false);
         return;
       }
       window.location.href = res.url;
     } catch {
-      toast.error("Failed to start calendar connection. You can connect later in Settings.");
+      toast.error(t("ui.onboarding.calendar.startFailed"));
       setIsConnectingCalendar(false);
     }
   };
@@ -47,25 +49,25 @@ export function CalendarStep({ onboardedEmail, onGoToDashboard }: CalendarStepPr
           <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: "spring", delay: 0.1 }}>
             <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-3" />
           </motion.div>
-          <h1 className="text-2xl font-bold text-gray-900">Account Created!</h1>
-          <p className="text-gray-500 text-sm">Connect your calendar to sync events and stay organized — or skip and do it later in Settings.</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t("ui.onboarding.calendar.accountCreated")}</h1>
+          <p className="text-gray-500 text-sm">{t("ui.onboarding.calendar.intro")}</p>
         </div>
 
         <Card className="border-0 shadow-xl">
           <CardHeader>
             <CardTitle className="text-lg flex items-center gap-2">
               <Calendar className="h-5 w-5 text-indigo-500" />
-              Connect Your Calendar
+              {t("ui.onboarding.calendar.title")}
             </CardTitle>
-            <CardDescription>Optional — you can always connect it later from Settings.</CardDescription>
+            <CardDescription>{t("ui.onboarding.calendar.optional")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             {calendarConnected ? (
               <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-lg">
                 <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
                 <div>
-                  <p className="text-sm font-medium text-green-700 capitalize">{connectedProvider} Calendar Connected!</p>
-                  <p className="text-xs text-gray-500">Your calendar will sync with your counselor dashboard.</p>
+                  <p className="text-sm font-medium text-green-700 ">{t("ui.onboarding.calendar.connected", { provider: connectedProvider === "outlook" ? "Outlook" : "Google" })}</p>
+                  <p className="text-xs text-gray-500">{t("ui.onboarding.calendar.willSync")}</p>
                 </div>
               </div>
             ) : (
@@ -85,7 +87,7 @@ export function CalendarStep({ onboardedEmail, onGoToDashboard }: CalendarStepPr
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900">Google Calendar</p>
-                    <p className="text-xs text-gray-500">Sync with Google</p>
+                    <p className="text-xs text-gray-500">{t("ui.onboarding.calendar.syncWith", { provider: "Google" })}</p>
                   </div>
                 </button>
 
@@ -99,7 +101,7 @@ export function CalendarStep({ onboardedEmail, onGoToDashboard }: CalendarStepPr
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900">Outlook Calendar</p>
-                    <p className="text-xs text-gray-500">Sync with Microsoft</p>
+                    <p className="text-xs text-gray-500">{t("ui.onboarding.calendar.syncWith", { provider: "Microsoft" })}</p>
                   </div>
                 </button>
               </div>
@@ -110,7 +112,7 @@ export function CalendarStep({ onboardedEmail, onGoToDashboard }: CalendarStepPr
                 onClick={onGoToDashboard}
                 className="flex-1 bg-gradient-to-r from-indigo-600 to-slate-700 hover:from-indigo-700 hover:to-slate-800 text-white"
               >
-                {calendarConnected ? "Go to Dashboard" : "Skip for Now"}
+                {calendarConnected ? t("ui.onboarding.calendar.goToDashboard") : t("ui.onboarding.calendar.skipForNow")}
               </Button>
             </div>
           </CardContent>

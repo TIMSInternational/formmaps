@@ -178,7 +178,7 @@ export function OverviewCard({
     <div className="min-h-[60vh] flex items-center justify-center p-6">
       <div className="max-w-2xl w-full bg-white rounded-2xl shadow-sm p-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          {language === "es" ? "Medición de Inteligencia Laboral (MIL)" : "Labor Intelligence Assessment (LIA)"}
+          {language === "es" ? "Evaluación de Inteligencia Laboral (LIA)" : "Labor Intelligence Assessment (LIA)"}
         </h1>
         <p className="text-gray-600 mb-6">
           {language === "es"

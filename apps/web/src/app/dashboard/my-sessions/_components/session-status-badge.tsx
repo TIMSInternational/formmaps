@@ -46,26 +46,26 @@ export function getStatusBadge(status: string, t: TFunction) {
   }
 }
 
-export function getCounselorStatusBadge(status: string) {
+export function getCounselorStatusBadge(status: string, t: TFunction) {
   if (status === "confirmed")
     return (
       <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-emerald-200 bg-emerald-50 text-emerald-700 inline-flex items-center gap-1">
         <CheckCircle2 className="h-3 w-3" />
-        Upcoming
+        {t("studentUi.sessions.badge.upcoming")}
       </span>
     );
   if (status === "completed")
     return (
       <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-blue-200 bg-blue-50 text-blue-700 inline-flex items-center gap-1">
         <CheckCircle2 className="h-3 w-3" />
-        Completed
+        {t("sessions.status.completed")}
       </span>
     );
   if (status === "cancelled")
     return (
       <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-red-200 bg-red-50 text-red-700 inline-flex items-center gap-1">
         <XCircle className="h-3 w-3" />
-        Cancelled
+        {t("sessions.status.cancelled")}
       </span>
     );
   return <Badge variant="secondary">{status}</Badge>;

@@ -1,5 +1,7 @@
 "use client";
 import React from "react";
+import i18n from "@/lib/i18n";
+import { translateProficiency } from "../../_lib/resume-constants";
 import {
   Document,
   Page,
@@ -9,6 +11,9 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import { Linkedin, Globe, Github, Twitter, FolderOpen } from "lucide-react";
+
+// Labels printed in the résumé document itself, resolved in the UI language at render time.
+const t = i18n.t.bind(i18n);
 
 // Register fonts for better typography
 Font.register({
@@ -334,12 +339,12 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
             <View style={styles.contactInfo}>
               {data.personalInfo.nationality && (
                 <Text style={[styles.contactItem, { fontSize: 9 }]}>
-                  Nationality: {data.personalInfo.nationality}
+                  {t("resumeBuilder.doc.nationality", { defaultValue: "Nationality: {{value}}", value: data.personalInfo.nationality })}
                 </Text>
               )}
               {data.personalInfo.dateOfBirth && (
                 <Text style={[styles.contactItem, { fontSize: 9 }]}>
-                  DOB: {data.personalInfo.dateOfBirth}
+                  {t("resumeBuilder.doc.dob", { defaultValue: "DOB: {{value}}", value: data.personalInfo.dateOfBirth })}
                 </Text>
               )}
             </View>
@@ -349,7 +354,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
         {/* Executive Summary */}
         {data.personalInfo.summary && (
           <View style={styles.summary}>
-            <Text style={styles.summaryTitle}>Executive Summary</Text>
+            <Text style={styles.summaryTitle}>{t("resumeBuilder.doc.executiveSummary", "Executive Summary")}</Text>
             <Text style={styles.summaryText}>{data.personalInfo.summary}</Text>
           </View>
         )}
@@ -357,7 +362,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
         {/* Career Objective */}
         {(data.personalInfo as any).careerObjective && (
           <View style={styles.summary}>
-            <Text style={styles.summaryTitle}>Career Objective</Text>
+            <Text style={styles.summaryTitle}>{t("resumeBuilder.doc.careerObjective", "Career Objective")}</Text>
             <Text style={styles.summaryText}>
               {(data.personalInfo as any).careerObjective}
             </Text>
@@ -367,7 +372,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
         {/* Languages */}
         {(data.personalInfo as any).languages && (
           <View style={styles.summary}>
-            <Text style={styles.summaryTitle}>Languages</Text>
+            <Text style={styles.summaryTitle}>{t("resumeBuilder.doc.languages", "Languages")}</Text>
             <Text style={styles.summaryText}>
               {(data.personalInfo as any).languages}
             </Text>
@@ -380,7 +385,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
             {/* Professional Experience */}
             {data.experience.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Professional Experience</Text>
+                <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.professionalExperience", "Professional Experience")}</Text>
                 {data.experience.map((exp) => (
                   <View key={exp.id} style={styles.experienceItem}>
                     <View style={styles.jobHeader}>
@@ -390,7 +395,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
                       </View>
                       <Text style={styles.jobDetails}>
                         {exp.startDate} -{" "}
-                        {exp.current ? "Present" : exp.endDate}
+                        {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate}
                       </Text>
                     </View>
                     <Text style={styles.jobDetails}>{exp.location}</Text>
@@ -410,7 +415,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
             {/* Education */}
             {data.education.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Education</Text>
+                <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.education", "Education")}</Text>
                 {data.education.map((edu) => (
                   <View key={edu.id} style={styles.educationItem}>
                     <View style={styles.educationLeft}>
@@ -424,7 +429,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
                       </Text>
                       {edu.gpa && (
                         <Text style={styles.graduationDate}>
-                          GPA: {edu.gpa}
+                          {t("resumeBuilder.doc.gpa", { defaultValue: "GPA: {{value}}", value: edu.gpa })}
                         </Text>
                       )}
                     </View>
@@ -436,11 +441,11 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
             {/* Core Competencies */}
             {Object.keys(skillsByCategory).length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Core Competencies</Text>
+                <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.coreCompetencies", "Core Competencies")}</Text>
                 {Object.entries(skillsByCategory).map(([category, skills]) => (
                   <View key={category} style={styles.skillCategory}>
                     <Text style={styles.skillCategoryTitle}>
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                      {t(`resumeBuilder.doc.skillCategory.${category}`, { defaultValue: category.charAt(0).toUpperCase() + category.slice(1) })}
                     </Text>
                     {skills.map((skill) => (
                       <Text key={skill.id} style={styles.skillItem}>
@@ -458,7 +463,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
                 0 && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>
-                    Additional Information
+                    {t("resumeBuilder.doc.additionalInformation", "Additional Information")}
                   </Text>
                   {data.customFields
                     .filter((f) => f.enabled && f.value)
@@ -484,7 +489,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
                           </Text>
                           {entry.technologies && (
                             <Text style={styles.institution}>
-                              Technologies: {entry.technologies}
+                              {t("resumeBuilder.doc.technologies", { defaultValue: "Technologies: {{value}}", value: entry.technologies })}
                             </Text>
                           )}
                           {entry.description && (
@@ -494,7 +499,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
                           )}
                           {entry.link && (
                             <Text style={[styles.skillItem, { fontSize: 9 }]}>
-                              Link: {entry.link}
+                              {t("resumeBuilder.doc.link", { defaultValue: "Link: {{value}}", value: entry.link })}
                             </Text>
                           )}
                         </>
@@ -506,7 +511,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
                           </Text>
                           {entry.issuer && (
                             <Text style={styles.institution}>
-                              Issued by: {entry.issuer}
+                              {t("resumeBuilder.doc.issuedBy", { defaultValue: "Issued by: {{value}}", value: entry.issuer })}
                             </Text>
                           )}
                           {entry.date && (
@@ -528,7 +533,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
                           </Text>
                           {entry.proficiency && (
                             <Text style={styles.skillItem}>
-                              {entry.proficiency}
+                              {translateProficiency(entry.proficiency)}
                             </Text>
                           )}
                         </View>
@@ -540,12 +545,12 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
                           </Text>
                           {entry.authors && (
                             <Text style={styles.institution}>
-                              Authors: {entry.authors}
+                              {t("resumeBuilder.doc.authors", { defaultValue: "Authors: {{value}}", value: entry.authors })}
                             </Text>
                           )}
                           {entry.publisher && (
                             <Text style={styles.institution}>
-                              Publisher: {entry.publisher}
+                              {t("resumeBuilder.doc.publisher", { defaultValue: "Publisher: {{value}}", value: entry.publisher })}
                             </Text>
                           )}
                           {entry.description && (
@@ -555,7 +560,7 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
                           )}
                           {entry.link && (
                             <Text style={[styles.skillItem, { fontSize: 9 }]}>
-                              Link: {entry.link}
+                              {t("resumeBuilder.doc.link", { defaultValue: "Link: {{value}}", value: entry.link })}
                             </Text>
                           )}
                           {entry.date && (
@@ -660,10 +665,10 @@ export function ExecutiveTemplatePreview({ data }: ExecutiveTemplatePDFProps) {
         {(data.personalInfo.nationality || data.personalInfo.dateOfBirth) && (
           <div className="flex gap-3 text-gray-600 text-xs">
             {data.personalInfo.nationality && (
-              <span>Nationality: {data.personalInfo.nationality}</span>
+              <span>{t("resumeBuilder.doc.nationality", { defaultValue: "Nationality: {{value}}", value: data.personalInfo.nationality })}</span>
             )}
             {data.personalInfo.dateOfBirth && (
-              <span>DOB: {data.personalInfo.dateOfBirth}</span>
+              <span>{t("resumeBuilder.doc.dob", { defaultValue: "DOB: {{value}}", value: data.personalInfo.dateOfBirth })}</span>
             )}
           </div>
         )}
@@ -673,7 +678,7 @@ export function ExecutiveTemplatePreview({ data }: ExecutiveTemplatePDFProps) {
       {data.personalInfo.summary && (
         <div className="bg-gray-50 border-l-4 border-gray-800 p-3 mb-4">
           <h2 className="text-sm font-bold text-gray-800 mb-2 uppercase tracking-wide">
-            Executive Summary
+            {t("resumeBuilder.doc.executiveSummary", "Executive Summary")}
           </h2>
           <p className="text-gray-700 text-xs leading-relaxed">
             {data.personalInfo.summary.substring(0, 200)}...
@@ -685,7 +690,7 @@ export function ExecutiveTemplatePreview({ data }: ExecutiveTemplatePDFProps) {
         {/* Experience */}
         <div className="col-span-2">
           <h2 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide border-b border-gray-300 pb-1">
-            Professional Experience
+            {t("resumeBuilder.doc.professionalExperience", "Professional Experience")}
           </h2>
           {data.experience.slice(0, 2).map((exp) => (
             <div key={exp.id} className="mb-4 pl-3 border-l-2 border-gray-300">
@@ -699,7 +704,7 @@ export function ExecutiveTemplatePreview({ data }: ExecutiveTemplatePDFProps) {
                   </p>
                 </div>
                 <span className="text-gray-500 text-xs">
-                  {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                  {exp.startDate} - {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate}
                 </span>
               </div>
               <div className="text-xs text-gray-700">
@@ -716,7 +721,7 @@ export function ExecutiveTemplatePreview({ data }: ExecutiveTemplatePDFProps) {
         {/* Education & Skills */}
         <div>
           <h2 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide border-b border-gray-300 pb-1">
-            Education
+            {t("resumeBuilder.doc.education", "Education")}
           </h2>
           {data.education.slice(0, 1).map((edu) => (
             <div key={edu.id} className="mb-4">
@@ -727,7 +732,7 @@ export function ExecutiveTemplatePreview({ data }: ExecutiveTemplatePDFProps) {
           ))}
 
           <h2 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide border-b border-gray-300 pb-1 mt-6">
-            Core Competencies
+            {t("resumeBuilder.doc.coreCompetencies", "Core Competencies")}
           </h2>
           <div className="space-y-2">
             {data.skills.slice(0, 6).map((skill) => (
@@ -743,7 +748,7 @@ export function ExecutiveTemplatePreview({ data }: ExecutiveTemplatePDFProps) {
               0 && (
               <div className="mt-6">
                 <h2 className="text-sm font-bold text-gray-800 mb-3 uppercase tracking-wide border-b border-gray-300 pb-1">
-                  Additional Information
+                  {t("resumeBuilder.doc.additionalInformation", "Additional Information")}
                 </h2>
                 <div className="space-y-2">
                   {data.customFields
@@ -799,7 +804,7 @@ export function ExecutiveTemplatePreview({ data }: ExecutiveTemplatePDFProps) {
                           </span>
                           {entry.proficiency && (
                             <span className="text-xs text-gray-600">
-                              {entry.proficiency}
+                              {translateProficiency(entry.proficiency)}
                             </span>
                           )}
                         </div>
@@ -811,12 +816,12 @@ export function ExecutiveTemplatePreview({ data }: ExecutiveTemplatePDFProps) {
                           </p>
                           {entry.authors && (
                             <p className="text-xs text-gray-600">
-                              Authors: {entry.authors}
+                              {t("resumeBuilder.doc.authors", { defaultValue: "Authors: {{value}}", value: entry.authors })}
                             </p>
                           )}
                           {entry.publisher && (
                             <p className="text-xs text-gray-600">
-                              Publisher: {entry.publisher}
+                              {t("resumeBuilder.doc.publisher", { defaultValue: "Publisher: {{value}}", value: entry.publisher })}
                             </p>
                           )}
                           {entry.description && (

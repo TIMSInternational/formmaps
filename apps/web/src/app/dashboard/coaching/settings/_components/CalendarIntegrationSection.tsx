@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface CalendarConnection {
   connected: boolean;
@@ -23,17 +24,17 @@ export function CalendarIntegrationSection({
   onConnect,
   onDisconnect,
 }: CalendarIntegrationSectionProps) {
+  const { t } = useTranslation();
   return (
     <div className="bg-white p-6 rounded-2xl border border-gray-200 shadow-sm space-y-4">
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-[var(--admin-accent-blue)]" />
-            Calendar Integration
+            {t("calendarIntegration.title")}
           </h3>
           <p className="text-sm text-gray-500 mt-1">
-            Sync your availability with your external calendar to avoid double
-            bookings.
+            {t("studentUi.coaching.calendar.description")}
           </p>
         </div>
         {calendarConnection.connected && (
@@ -41,10 +42,12 @@ export function CalendarIntegrationSection({
             variant="secondary"
             className="bg-emerald-50 text-emerald-700 border-emerald-200"
           >
-            Connected to{" "}
-            {calendarConnection.provider === "google"
-              ? "Google Calendar"
-              : "Outlook"}
+            {t("studentUi.coaching.calendar.connectedTo", {
+              provider:
+                calendarConnection.provider === "google"
+                  ? "Google Calendar"
+                  : "Outlook",
+            })}
           </Badge>
         )}
       </div>
@@ -64,9 +67,9 @@ export function CalendarIntegrationSection({
               <span className="font-bold text-lg text-blue-500">G</span>
             </div>
             <div>
-              <p className="font-medium text-gray-900">Google Calendar</p>
+              <p className="font-medium text-gray-900">{t("onboarding.calendar.google")}</p>
               <p className="text-xs text-gray-500">
-                Connect your Gmail calendar
+                {t("studentUi.coaching.calendar.googleDesc")}
               </p>
             </div>
           </div>
@@ -78,7 +81,7 @@ export function CalendarIntegrationSection({
                 onClick={onDisconnect}
                 className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-100"
               >
-                Disconnect
+                {t("calendarIntegration.disconnect")}
               </Button>
             ) : (
               <Button
@@ -89,7 +92,7 @@ export function CalendarIntegrationSection({
                   isConnectingCalendar || calendarConnection.connected
                 }
               >
-                Connect
+                {t("onboarding.calendar.connect")}
               </Button>
             )}
           </div>
@@ -109,9 +112,9 @@ export function CalendarIntegrationSection({
               <span className="font-bold text-lg text-blue-700">M</span>
             </div>
             <div>
-              <p className="font-medium text-gray-900">Outlook Calendar</p>
+              <p className="font-medium text-gray-900">{t("onboarding.calendar.outlook")}</p>
               <p className="text-xs text-gray-500">
-                Connect your Microsoft calendar
+                {t("studentUi.coaching.calendar.outlookDesc")}
               </p>
             </div>
           </div>
@@ -123,7 +126,7 @@ export function CalendarIntegrationSection({
                 onClick={onDisconnect}
                 className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-100"
               >
-                Disconnect
+                {t("calendarIntegration.disconnect")}
               </Button>
             ) : (
               <Button
@@ -134,7 +137,7 @@ export function CalendarIntegrationSection({
                   isConnectingCalendar || calendarConnection.connected
                 }
               >
-                Connect
+                {t("onboarding.calendar.connect")}
               </Button>
             )}
           </div>

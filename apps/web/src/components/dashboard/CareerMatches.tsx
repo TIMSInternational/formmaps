@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 
 const careerMatches = [
   {
@@ -19,13 +20,14 @@ const careerMatches = [
 ];
 
 export function CareerMatches() {
+  const { t } = useTranslation();
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       className="bg-white p-6 rounded-lg shadow-sm border"
     >
-      <h3 className="text-lg font-semibold text-gray-900 mb-6">Top 3 Career Match</h3>
+      <h3 className="text-lg font-semibold text-gray-900 mb-6">{t('components.CareerMatches.title')}</h3>
       
       <div className="space-y-4">
         {careerMatches.map((match, index) => (
@@ -55,7 +57,7 @@ export function CareerMatches() {
                 aria-valuenow={match.progress} 
                 aria-valuemin={0} 
                 aria-valuemax={100}
-                aria-label={`${match.title} match score`}
+                aria-label={t('components.CareerMatches.matchScoreAria', { title: match.title })}
               >
                 <svg className="w-12 h-12 transform -rotate-90" aria-hidden="true">
                   <circle
@@ -88,7 +90,7 @@ export function CareerMatches() {
               </div>
               <button 
                 className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition"
-                aria-label={`View details for ${match.title}`}
+                aria-label={t('components.CareerMatches.viewDetailsAria', { title: match.title })}
               >
                 <span className="text-gray-600" aria-hidden="true">→</span>
               </button>
@@ -98,7 +100,7 @@ export function CareerMatches() {
       </div>
       
       <button className="text-sm text-[var(--admin-accent-blue)] hover:text-[var(--admin-accent-blue)] mt-4">
-        Show more
+        {t('components.CareerMatches.showMore')}
       </button>
     </motion.div>
   );

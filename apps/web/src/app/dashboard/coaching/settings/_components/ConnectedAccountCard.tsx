@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 interface StripeAccountInfo {
   connected: boolean;
@@ -67,6 +68,7 @@ export function ConnectedAccountCard({
   onMethodSave,
   onDisconnect,
 }: ConnectedAccountCardProps) {
+  const { t } = useTranslation();
   return (
     <div className="space-y-6">
       <div className="bg-emerald-50/50 border border-emerald-100 rounded-2xl p-6 relative overflow-hidden">
@@ -77,17 +79,17 @@ export function ConnectedAccountCard({
           </div>
           <div className="flex-1">
             <h3 className="text-lg font-bold text-gray-900">
-              Bank Account Connected
+              {t("studentUi.coaching.bank.connectedTitle")}
             </h3>
             <p className="text-gray-600 text-sm mt-1">
-              Your account is ready to receive payouts.
+              {t("studentUi.coaching.bank.connectedDescription")}
             </p>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6">
               {bankAccountForm.bankName && (
                 <div className="bg-white p-3 rounded-xl border border-emerald-100/50 shadow-sm">
                   <span className="text-xs font-bold text-gray-400 uppercase">
-                    Bank Name
+                    {t("studentUi.coaching.bank.bankName")}
                   </span>
                   <p className="font-semibold text-gray-900 truncate">
                     {bankAccountForm.bankName}
@@ -97,7 +99,7 @@ export function ConnectedAccountCard({
               {bankAccountForm.accountHolderName && (
                 <div className="bg-white p-3 rounded-xl border border-emerald-100/50 shadow-sm">
                   <span className="text-xs font-bold text-gray-400 uppercase">
-                    Account Holder
+                    {t("studentUi.coaching.bank.accountHolder")}
                   </span>
                   <p className="font-semibold text-gray-900 truncate">
                     {bankAccountForm.accountHolderName}
@@ -107,7 +109,7 @@ export function ConnectedAccountCard({
               {stripeAccount.email && (
                 <div className="bg-white p-3 rounded-xl border border-emerald-100/50 shadow-sm">
                   <span className="text-xs font-bold text-gray-400 uppercase">
-                    Account Email
+                    {t("studentUi.coaching.bank.accountEmail")}
                   </span>
                   <p className="font-semibold text-gray-900 truncate">
                     {stripeAccount.email}
@@ -116,7 +118,7 @@ export function ConnectedAccountCard({
               )}
               <div className="bg-white p-3 rounded-xl border border-emerald-100/50 shadow-sm">
                 <span className="text-xs font-bold text-gray-400 uppercase">
-                  Bank Account
+                  {t("studentUi.coaching.bank.bankAccount")}
                 </span>
                 <p className="font-semibold text-gray-900">
                   ****{stripeAccount.last4}
@@ -137,7 +139,7 @@ export function ConnectedAccountCard({
                   rel="noopener noreferrer"
                 >
                   <ExternalLink className="mr-2 h-4 w-4" />
-                  View Dashboard
+                  {t("studentUi.coaching.bank.viewDashboard")}
                 </a>
               </Button>
               <Button
@@ -146,7 +148,7 @@ export function ConnectedAccountCard({
                 onClick={onDisconnect}
                 className="text-red-500 hover:text-red-600 hover:bg-red-50"
               >
-                Disconnect
+                {t("studentUi.coaching.bank.disconnect")}
               </Button>
             </div>
           </div>
@@ -156,13 +158,13 @@ export function ConnectedAccountCard({
       <div className="bg-white border-gray-100 rounded-2xl p-6 border shadow-sm space-y-6">
         <div className="space-y-4">
           <h3 className="text-lg font-bold text-gray-900">
-            Payout Preferences
+            {t("studentUi.coaching.bank.payoutPreferences")}
           </h3>
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div>
-              <p className="font-medium text-gray-900">Payout Frequency</p>
+              <p className="font-medium text-gray-900">{t("studentUi.coaching.bank.payoutFrequency")}</p>
               <p className="text-sm text-gray-500">
-                Choose how often you want to receive your earnings.
+                {t("studentUi.coaching.bank.payoutFrequencyHint")}
               </p>
             </div>
             <div className="w-full sm:w-[200px]">
@@ -172,14 +174,14 @@ export function ConnectedAccountCard({
                 disabled={isSavingFrequency}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select frequency" />
+                  <SelectValue placeholder={t("studentUi.coaching.bank.selectFrequency")} />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="biweekly">
-                    Bi-weekly (Every 2 weeks)
+                    {t("studentUi.coaching.bank.frequencyBiweekly")}
                   </SelectItem>
                   <SelectItem value="monthly">
-                    Monthly (1st of month)
+                    {t("studentUi.coaching.bank.frequencyMonthly")}
                   </SelectItem>
                 </SelectContent>
               </Select>
@@ -190,26 +192,26 @@ export function ConnectedAccountCard({
             <div className="space-y-2">
               <div className="flex items-center justify-between">
                 <p className="font-medium text-gray-900">
-                  Bank Details <span className="text-red-500">*</span>
+                  {t("studentUi.coaching.bank.bankDetails")} <span className="text-red-500">*</span>
                 </p>
                 <Badge
                   variant="outline"
                   className="bg-gray-50 text-gray-600 border-gray-200"
                 >
-                  Bank Transfer
+                  {t("studentUi.coaching.bank.bankTransfer")}
                 </Badge>
               </div>
               <p className="text-sm text-gray-500 mb-4">
-                Your earnings will be transferred to this bank account.
+                {t("studentUi.coaching.bank.bankTransferHint")}
               </p>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-gray-500 uppercase">
-                    Bank Name
+                    {t("studentUi.coaching.bank.bankName")}
                   </label>
                   <Input
-                    placeholder="Bank name"
+                    placeholder={t("studentUi.coaching.bank.bankNamePlaceholder")}
                     value={bankName}
                     onChange={(e) => onBankNameChange(e.target.value)}
                     required
@@ -217,10 +219,10 @@ export function ConnectedAccountCard({
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-gray-500 uppercase">
-                    Account Holder
+                    {t("studentUi.coaching.bank.accountHolder")}
                   </label>
                   <Input
-                    placeholder="Account holder name"
+                    placeholder={t("studentUi.coaching.bank.accountHolderPlaceholder")}
                     value={accountHolderName}
                     onChange={(e) => onAccountHolderNameChange(e.target.value)}
                     required
@@ -228,10 +230,10 @@ export function ConnectedAccountCard({
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-gray-500 uppercase">
-                    Account Number
+                    {t("studentUi.coaching.bank.accountNumber")}
                   </label>
                   <Input
-                    placeholder="Account number"
+                    placeholder={t("studentUi.coaching.bank.accountNumberPlaceholder")}
                     value={bankAccountNumber}
                     onChange={(e) => onBankAccountNumberChange(e.target.value)}
                     required
@@ -239,10 +241,10 @@ export function ConnectedAccountCard({
                 </div>
                 <div className="space-y-1">
                   <label className="text-xs font-medium text-gray-500 uppercase">
-                    Routing Number
+                    {t("studentUi.coaching.bank.routingNumber")}
                   </label>
                   <Input
-                    placeholder="Routing number"
+                    placeholder={t("studentUi.coaching.bank.routingNumberPlaceholder")}
                     value={bankRoutingNumber}
                     onChange={(e) => onBankRoutingNumberChange(e.target.value)}
                     required
@@ -265,10 +267,10 @@ export function ConnectedAccountCard({
                   {isSavingMethod ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                      Saving...
+                      {t("common.saving")}
                     </>
                   ) : (
-                    "Save Bank Details"
+                    t("studentUi.coaching.bank.saveBankDetails")
                   )}
                 </Button>
               </div>

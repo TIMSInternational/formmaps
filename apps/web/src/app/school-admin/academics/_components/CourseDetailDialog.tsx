@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ interface CourseDetailDialogProps {
 }
 
 export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseDetailDialogProps) {
+  const { t } = useTranslation("school_admin");
   const queryClient = useQueryClient();
   const updateCourse = useUpdateSchoolCourse();
   const deleteCourse = useDeleteSchoolCourse();
@@ -78,7 +80,7 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
       frameworkType: (editForm.frameworkType ? String(editForm.frameworkType) : undefined) as FrameworkType | undefined,
     }}, {
       onSuccess: () => {
-        toast.success("Course updated");
+        toast.success(t("ui.courses.updated"));
         onCourseUpdated({
           ...course,
           name: String(editForm.name), description: String(editForm.description),
@@ -91,13 +93,13 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
         setEditing(false);
         queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
       },
-      onError: () => toast.error("Failed to update"),
+      onError: () => toast.error(t("ui.courses.updateFailed")),
     });
   };
 
   const handleDelete = () => {
-    if (confirm(`Delete ${course.name}?`)) {
-      deleteCourse.mutate(course.id, { onSuccess: () => { toast.success("Course deleted"); onClose(); } });
+    if (confirm(t("ui.courses.confirmDelete", { name: course.name }))) {
+      deleteCourse.mutate(course.id, { onSuccess: () => { toast.success(t("ui.courses.deleted")); onClose(); } });
     }
   };
 
@@ -107,52 +109,52 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
       <Dialog open onOpenChange={(open) => { if (!open) setEditing(false); }}>
         <DialogContent style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)", maxWidth: 520 }}>
           <DialogHeader>
-            <DialogTitle style={{ color: "var(--admin-font-primary)" }}>Edit: {course.code}</DialogTitle>
+            <DialogTitle style={{ color: "var(--admin-font-primary)" }}>{t("ui.courses.editTitle", { code: course.code })}</DialogTitle>
           </DialogHeader>
           <div className="space-y-3 max-h-[60vh] overflow-y-auto py-2">
             <div className="space-y-1">
-              <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Name *</Label>
+              <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.nameRequired")}</Label>
               <Input style={inputStyle} value={String(editForm.name || "")} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} />
             </div>
             <div className="space-y-1">
-              <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Description</Label>
-              <Textarea style={{ ...inputStyle, height: "auto", minHeight: 80 }} rows={3} value={String(editForm.description || "")} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} placeholder="What students will learn in this course..." />
+              <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.description")}</Label>
+              <Textarea style={{ ...inputStyle, height: "auto", minHeight: 80 }} rows={3} value={String(editForm.description || "")} onChange={(e) => setEditForm({ ...editForm, description: e.target.value })} placeholder={t("ui.courses.descriptionPlaceholder")} />
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1">
-                <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Department</Label>
+                <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.department")}</Label>
                 <Input style={inputStyle} value={String(editForm.department || "")} onChange={(e) => setEditForm({ ...editForm, department: e.target.value })} />
               </div>
               <div className="space-y-1">
-                <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Credits</Label>
+                <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.credits")}</Label>
                 <Input type="number" min={0} style={inputStyle} value={String(editForm.credits ?? "")} onChange={(e) => setEditForm({ ...editForm, credits: Number(e.target.value) })} />
               </div>
               <div className="space-y-1">
-                <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Max Enrollment</Label>
-                <Input type="number" min={0} style={inputStyle} value={String(editForm.maxEnrollment ?? "")} onChange={(e) => setEditForm({ ...editForm, maxEnrollment: e.target.value ? Number(e.target.value) : "" })} placeholder="No limit" />
+                <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.maxEnrollment")}</Label>
+                <Input type="number" min={0} style={inputStyle} value={String(editForm.maxEnrollment ?? "")} onChange={(e) => setEditForm({ ...editForm, maxEnrollment: e.target.value ? Number(e.target.value) : "" })} placeholder={t("ui.courses.noLimit")} />
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Grade Levels</Label>
+                <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.gradeLevels")}</Label>
                 <Input style={inputStyle} value={String(editForm.gradeLevelsString || "")} onChange={(e) => setEditForm({ ...editForm, gradeLevelsString: e.target.value })} placeholder="9, 10, 11" />
               </div>
               <div className="space-y-1">
-                <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Framework</Label>
+                <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.framework")}</Label>
                 <Select value={String(editForm.frameworkType || "NONE")} onValueChange={(v) => setEditForm({ ...editForm, frameworkType: v === "NONE" ? "" : v })}>
                   <SelectTrigger style={inputStyle}><SelectValue /></SelectTrigger>
-                  <SelectContent><SelectItem value="NONE">None</SelectItem><SelectItem value="AP">AP</SelectItem><SelectItem value="IB">IB</SelectItem><SelectItem value="NATIONAL">National</SelectItem></SelectContent>
+                  <SelectContent><SelectItem value="NONE">{t("ui.courses.frameworkNone")}</SelectItem><SelectItem value="AP">AP</SelectItem><SelectItem value="IB">IB</SelectItem><SelectItem value="NATIONAL">{t("ui.courses.frameworkNational")}</SelectItem></SelectContent>
                 </Select>
               </div>
             </div>
             <div className="space-y-1">
-              <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Prerequisites (comma-separated codes)</Label>
+              <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.prereqsCommaSeparated")}</Label>
               <Input style={inputStyle} value={String(editForm.prerequisitesString || "")} onChange={(e) => setEditForm({ ...editForm, prerequisitesString: e.target.value })} placeholder="MATH-101, ENG-101" />
             </div>
             <div className="flex items-center gap-3" style={{ padding: "4px 0" }}>
               <input type="checkbox" id="isHonors" checked={Boolean(editForm.isHonors)} onChange={(e) => setEditForm({ ...editForm, isHonors: e.target.checked })}
                 style={{ width: 16, height: 16, accentColor: "#f59e0b" }} />
-              <Label htmlFor="isHonors" style={{ fontSize: 13, color: "var(--admin-font-primary)", cursor: "pointer" }}>Honors course (weighted GPA)</Label>
+              <Label htmlFor="isHonors" style={{ fontSize: 13, color: "var(--admin-font-primary)", cursor: "pointer" }}>{t("ui.courses.honorsWeighted")}</Label>
             </div>
           </div>
           <DialogFooter className="gap-2">
@@ -160,7 +162,7 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
               height: 36, borderRadius: 6, padding: "0 16px", fontSize: 13, fontWeight: 500,
               background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
               color: "var(--admin-font-secondary)", cursor: "pointer",
-            }}>Cancel</button>
+            }}>{t("common.cancel")}</button>
             <button onClick={handleSave} disabled={updateCourse.isPending} style={{
               height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600,
               background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
@@ -168,7 +170,7 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
               opacity: updateCourse.isPending ? 0.6 : 1,
             }}>
               {updateCourse.isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Check style={{ width: 14, height: 14 }} />}
-              Save Changes
+              {t("common:common.saveChanges")}
             </button>
           </DialogFooter>
         </DialogContent>
@@ -187,8 +189,8 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
           <div style={{ display: "flex", gap: 6, marginBottom: 10, flexWrap: "wrap" }}>
             <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 600, padding: "3px 8px", borderRadius: 4, background: "rgba(255,255,255,0.15)", color: "#fff" }}>{course.code}</span>
             {course.frameworkType && <Badge style={{ fontSize: 10, background: "rgba(255,255,255,0.18)", color: "#fff", border: "none" }}>{course.frameworkType}</Badge>}
-            {course.isHonors && <Badge style={{ fontSize: 10, background: "#FFD23F", color: "#111", border: "none" }}>Honors</Badge>}
-            <Badge style={{ fontSize: 10, background: course.status === "active" ? "rgba(5,150,105,0.95)" : "rgba(255,255,255,0.18)", color: "#fff", border: "none" }}>{course.status || "active"}</Badge>
+            {course.isHonors && <Badge style={{ fontSize: 10, background: "#FFD23F", color: "#111", border: "none" }}>{t("ui.courses.honors")}</Badge>}
+            <Badge style={{ fontSize: 10, background: course.status === "active" ? "rgba(5,150,105,0.95)" : "rgba(255,255,255,0.18)", color: "#fff", border: "none" }}>{t(`ui.courses.status.${course.status || "active"}`, { defaultValue: course.status || "active" })}</Badge>
           </div>
           <h2 style={{ fontSize: 22, fontWeight: 700, color: "#fff", lineHeight: 1.3, margin: 0 }}>{course.name}</h2>
           {course.department && <div style={{ fontSize: 13, color: "rgba(255,255,255,0.85)", marginTop: 4 }}>{course.department}</div>}
@@ -197,9 +199,9 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
         <div style={{ padding: "20px 28px 24px", display: "flex", flexDirection: "column", gap: 16 }}>
           {/* Description */}
           <div style={{ padding: "14px 16px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
-            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Description</div>
+            <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{t("ui.courses.description")}</div>
             <div style={{ fontSize: 13, color: course.description ? "var(--admin-font-primary)" : "var(--admin-font-tertiary)", lineHeight: 1.6 }}>
-              {course.description || "No description has been added for this course yet."}
+              {course.description || t("ui.courses.noDescription")}
             </div>
           </div>
 
@@ -207,15 +209,15 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
             <div style={{ padding: "12px 14px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)" }}>{course.credits}</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginTop: 2 }}>Credits</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginTop: 2 }}>{t("ui.courses.credits")}</div>
             </div>
             <div style={{ padding: "12px 14px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)" }}>{enrolled}</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginTop: 2 }}>Enrolled</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginTop: 2 }}>{t("ui.courses.enrolled")}</div>
             </div>
             <div style={{ padding: "12px 14px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", textAlign: "center" }}>
               <div style={{ fontSize: 22, fontWeight: 700, color: cap ? "var(--admin-font-primary)" : "var(--admin-font-tertiary)" }}>{cap || "\u2014"}</div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginTop: 2 }}>Capacity</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginTop: 2 }}>{t("ui.courses.capacity")}</div>
             </div>
           </div>
 
@@ -223,7 +225,7 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
           {cap && (
             <div>
               <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>Enrollment</span>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.enrollment")}</span>
                 <span style={{ fontSize: 11, fontWeight: 600, color: fillPct >= 90 ? "#ef4444" : fillPct >= 70 ? "#f59e0b" : "#10b981" }}>{enrolled} / {cap} ({fillPct.toFixed(0)}%)</span>
               </div>
               <div style={{ height: 6, borderRadius: 3, background: "var(--admin-bg-hover)", overflow: "hidden" }}>
@@ -235,10 +237,10 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
           {/* Grade levels */}
           {(course.gradeLevels || []).length > 0 && (
             <div>
-              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Grade Levels</div>
+              <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>{t("ui.courses.gradeLevels")}</div>
               <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                 {course.gradeLevels!.map((g: number) => (
-                  <span key={g} style={{ fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 6, background: "rgba(16,185,129,0.1)", color: "#10b981" }}>Grade {g}</span>
+                  <span key={g} style={{ fontSize: 12, fontWeight: 600, padding: "4px 10px", borderRadius: 6, background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{t("graduation.gradeLabel", { grade: g })}</span>
                 ))}
               </div>
             </div>
@@ -249,11 +251,11 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
             interface ChainItem { code: string; name: string; department?: string; depth: number; isHonors?: boolean; frameworkType?: string | null; credits?: number }
             const chain: ChainItem[] = prereqChain!.chain;
             const depths = [...new Set(chain.map((c) => c.depth))].sort((a, b) => a - b);
-            const depthLabel = (d: number) => d === 1 ? "Direct prerequisites" : `${d} steps away`;
+            const depthLabel = (d: number) => d === 1 ? t("ui.courses.directPrereqs") : t("ui.courses.stepsAway", { count: d });
             return (
               <div>
                 <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
-                  Prerequisite Chain ({chain.length} course{chain.length !== 1 ? "s" : ""})
+                  {t("ui.courses.prereqChain", { count: chain.length })}
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                   {depths.map((depth: number, di: number) => {
@@ -274,9 +276,9 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
                                 <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", fontFamily: "monospace" }}>{p.code}{p.department ? ` \u00b7 ${p.department}` : ""}</div>
                               </div>
                               <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
-                                {p.isHonors && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>Honors</span>}
+                                {p.isHonors && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(245,158,11,0.1)", color: "#f59e0b" }}>{t("ui.courses.honors")}</span>}
                                 {p.frameworkType && <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(59,130,246,0.1)", color: "var(--admin-accent-blue)" }}>{p.frameworkType}</span>}
-                                {Number(p.credits) > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>{p.credits} cr</span>}
+                                {Number(p.credits) > 0 && <span style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.creditsAbbr", { count: Number(p.credits) })}</span>}
                               </div>
                             </div>
                           ))}
@@ -296,7 +298,7 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
           {course.prerequisites && course.prerequisites.length > 0 && !prereqChain?.chain?.length && (
             <div>
               <div style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
-                {prereqLoading ? "Loading Prerequisite Chain..." : "Prerequisites"}
+                {prereqLoading ? t("ui.courses.loadingPrereqChain") : t("ui.courses.prerequisites")}
               </div>
               {!prereqLoading && (
                 <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
@@ -315,7 +317,7 @@ export function CourseDetailDialog({ course, onClose, onCourseUpdated }: CourseD
               background: "var(--admin-accent-blue)", color: "#fff", border: "none", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
             }}>
-              <Save style={{ width: 14, height: 14 }} /> Edit Course
+              <Save style={{ width: 14, height: 14 }} /> {t("ui.courses.editCourse")}
             </button>
             <button onClick={(e) => { e.stopPropagation(); handleDelete(); }} style={{
               width: 40, height: 40, borderRadius: 8, border: "1px solid rgba(239,68,68,0.3)",
