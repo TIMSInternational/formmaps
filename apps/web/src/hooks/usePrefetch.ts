@@ -8,10 +8,10 @@ import { useCallback } from "react";
  * Use this to improve perceived navigation speed
  *
  * @example
- * const { prefetch, prefetchProps } = usePrefetch("/dashboard/career/market");
+ * const { prefetch, prefetchProps } = usePrefetch("/dashboard/career");
  *
  * // Option 1: Use prefetchProps spread
- * <Link href="/dashboard/career/market" {...prefetchProps}>Market</Link>
+ * <Link href="/dashboard/career" {...prefetchProps}>Market</Link>
  *
  * // Option 2: Use prefetch callback manually
  * <div onMouseEnter={prefetch}>Hover me</div>
