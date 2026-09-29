@@ -161,7 +161,7 @@
       "labels": []
     },
     "41": {
-      "text": "Ordene las áreas académicas y profesionales según la afinidad que reconozco en mí:",
+      "text": "Ordena las áreas académicas y profesionales según la afinidad que reconoces en ti:",
       "labels": [
         "Ingeniería",
         "Tecnología y sistemas",
@@ -186,7 +186,7 @@
       ]
     },
     "42": {
-      "text": "Seleccione las industrias donde considero que tendría mayor posibilidad de éxito profesional:",
+      "text": "Selecciona las industrias en las que consideras que tendrías mayor posibilidad de éxito profesional:",
       "labels": [
         "Tecnología",
         "Banca y finanzas",
@@ -211,7 +211,7 @@
       ]
     },
     "43": {
-      "text": "Seleccione las actividades que más disfruto o creo que podría disfrutar:",
+      "text": "Selecciona las actividades que más disfrutas o crees que podrías disfrutar:",
       "labels": [
         "Resolver problemas complejos",
         "Liderar personas",
@@ -231,7 +231,7 @@
       ]
     },
     "44": {
-      "text": "Seleccione el tipo de trabajo que probablemente disfrutaría yo más:",
+      "text": "Selecciona el tipo de trabajo que probablemente disfrutarías más:",
       "labels": [
         "Analítico",
         "Creativo",
@@ -250,13 +250,13 @@
       "labels": []
     },
     "46": {
-      "text": "¿Qué tan claro tengo si realmente quiero estudiar una carrera universitaria o técnica?",
+      "text": "¿Qué tan claro tengo que quiero estudiar una carrera universitaria o técnica, y qué tan comprometido/a estoy con esa decisión?",
       "labels": [
-        "Nada claro / comprometido",
-        "Poco claro / comprometido",
-        "Moderadamente claro / comprometido",
-        "Bastante claro / comprometido",
-        "Muy claro / comprometido"
+        "Nada claro / comprometido/a",
+        "Poco claro / comprometido/a",
+        "Moderadamente claro / comprometido/a",
+        "Bastante claro / comprometido/a",
+        "Muy claro / comprometido/a"
       ]
     },
     "47": {
@@ -288,7 +288,7 @@
       "labels": []
     },
     "50": {
-      "text": "Ordene lo que más influye en mi realización profesional:",
+      "text": "Ordena lo que más influye en tu realización profesional:",
       "labels": [
         "Ingresos",
         "Estabilidad",
@@ -556,7 +556,7 @@
       "labels": []
     },
     "47": {
-      "text": "¿En qué ámbito han observado los mayores talentos de su hijo/a: académico, social, creativo, técnico, deportivo, artístico, comercial u otro?",
+      "text": "¿Qué tanto potencial han observado en su hijo/a en el ámbito en el que más se destaca (académico, social, creativo, técnico, deportivo, artístico, comercial u otro)?",
       "labels": [
         "Muy poco potencial",
         "Potencial limitado",
@@ -574,7 +574,7 @@
       "labels": []
     },
     "50": {
-      "text": "¿Cuál es su principal preocupación respecto al futuro profesional de su hijo/a?",
+      "text": "¿Cuáles son sus principales preocupaciones respecto al futuro profesional de su hijo/a?",
       "labels": [
         "Falta de claridad",
         "Baja motivación",

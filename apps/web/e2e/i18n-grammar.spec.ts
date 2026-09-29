@@ -36,7 +36,9 @@ const ROLES: { name: string; email: string; pages: string[] }[] = [
       "/dashboard/timeline", "/dashboard/course-plan", "/dashboard/university", "/dashboard/career-paths",
       "/dashboard/profile", "/dashboard/settings", "/dashboard/book-counselor", "/dashboard/my-sessions",
       "/dashboard/messages", "/dashboard/applications", "/dashboard/test-scores", "/dashboard/recommendations",
-      "/dashboard/community-service", "/this-page-does-not-exist"],
+      "/dashboard/community-service", "/dashboard/resume-builder", "/dashboard/resumes",
+      "/dashboard/portfolio", "/dashboard/learning", "/dashboard/timeline", "/dashboard/transcript",
+      "/dashboard/subscriptions", "/dashboard/video", "/dashboard/book-coach", "/this-page-does-not-exist"],
   },
   { name: "parent", email: "test.parent@formmaps.dev",
     pages: ["/parent", "/parent/children", "/parent/evaluations", "/parent/notifications"] },
@@ -44,12 +46,33 @@ const ROLES: { name: string; email: string; pages: string[] }[] = [
     pages: ["/teacher", "/teacher/evaluations", "/teacher/recommendations"] },
   { name: "counselor", email: "test.counselor@formmaps.dev",
     pages: ["/counselor", "/counselor/students", "/counselor/evaluations", "/counselor/messages",
-      "/counselor/calendar", "/counselor/reports", "/counselor/settings"] },
+      "/counselor/calendar", "/counselor/reports", "/counselor/settings", "/counselor/academic-gaps",
+      "/counselor/academics", "/counselor/activities", "/counselor/alerts", "/counselor/assessments",
+      "/counselor/college-apps", "/counselor/college-list", "/counselor/college-prep", "/counselor/communication",
+      "/counselor/documents", "/counselor/essays", "/counselor/insights", "/counselor/notes",
+      "/counselor/recommendations", "/counselor/scheduling", "/counselor/scholarships", "/counselor/sessions",
+      "/counselor/video"] },
   { name: "school-admin", email: "test.schooladmin@formmaps.dev",
     pages: ["/school-admin", "/school-admin/users", "/school-admin/parents", "/school-admin/academics",
       "/school-admin/assessments", "/school-admin/analytics", "/school-admin/insights",
-      "/school-admin/reports", "/school-admin/settings"] },
+      "/school-admin/reports", "/school-admin/settings", "/school-admin/academic-gaps", "/school-admin/alerts",
+      "/school-admin/calendar", "/school-admin/counselor-students", "/school-admin/counselor-workload",
+      "/school-admin/courses", "/school-admin/curriculum", "/school-admin/data-mappings",
+      "/school-admin/evaluations", "/school-admin/gpa-config", "/school-admin/grades", "/school-admin/graduation",
+      "/school-admin/integrations", "/school-admin/messages", "/school-admin/notes", "/school-admin/profile",
+      "/school-admin/recommendations", "/school-admin/results", "/school-admin/students", "/school-admin/video"] },
+  { name: "coach", email: "test.coach@formmaps.dev",
+    pages: ["/dashboard/coaching", "/dashboard/coaching/analytics", "/dashboard/coaching/calendar",
+      "/dashboard/coaching/earnings", "/dashboard/coaching/messages", "/dashboard/coaching/profile",
+      "/dashboard/coaching/recommendations", "/dashboard/coaching/schedule", "/dashboard/coaching/sessions",
+      "/dashboard/coaching/settings", "/dashboard/coaching/students"] },
+  { name: "platform-admin", email: "test.admin@formmaps.dev",
+    pages: ["/admin", "/admin/analytics", "/admin/careers", "/admin/coaches", "/admin/courses", "/admin/payouts",
+      "/admin/plans", "/admin/questions", "/admin/schools", "/admin/settings", "/admin/transactions", "/admin/users"] },
 ];
+
+// Signed-out pages: their language comes from the browser (the cached i18nextLng), not an account.
+const PUBLIC_PAGES = ["/login", "/signup", "/forgot-password", "/terms", "/privacy", "/subscribe"];
 
 // ---------------------------------------------------------------- locale-derived expectations
 function flatten(o: Record<string, unknown>, p = "", acc: Record<string, string> = {}) {
@@ -82,10 +105,13 @@ const esOnly = new Set([...esValues].filter((v) => isSentenceLike(v) && !enValue
 const regressions: Record<Lang, string[]> = JSON.parse(
   fs.readFileSync(path.join(FIXTURES, "i18n-grammar-regressions.json"), "utf8"),
 );
-// variant → question number → corrected Spanish text + the option labels / scale anchors it must show.
-const instrument360: Record<string, Record<string, { text: string; labels: string[] }>> = JSON.parse(
-  fs.readFileSync(path.join(FIXTURES, "vocational-360-es.json"), "utf8"),
-);
+// lang → variant → question number → corrected text + the option labels / scale anchors it must show.
+type Instrument = Record<string, Record<string, { text: string; labels: string[] }>>;
+const instrument360: Partial<Record<Lang, Instrument>> = {};
+for (const l of ["es", "en"] as Lang[]) {
+  const f = path.join(FIXTURES, `vocational-360-${l}.json`);
+  if (fs.existsSync(f)) instrument360[l] = JSON.parse(fs.readFileSync(f, "utf8"));
+}
 
 // Hardcoded English outside the locales: a line that reads as an English sentence.
 const EN_WORDS = new Set(("the and your you to of with for is are this that will be from on in an have has not yet " +
@@ -95,6 +121,13 @@ const ES_HINT = /[áéíóúñ¿¡]|\b(el|la|los|las|de|del|que|y|en|un|una|tu|t
 // Free text that fixture users typed into the local DB (recommendation requests, decline reasons).
 // It is user content, not UI copy, so its language is not the app's to translate.
 const USER_CONTENT = ["Please write me a recommendation for college.", "I cannot write this letter at this time"];
+
+// Profile content on specific pages: the demo coaches' tags come from seedDemoCoaches.ts and real
+// coaches type their own, so their language is the coach's, not the UI's. Scoped per page so the
+// same words elsewhere (e.g. booking topics) are still checked.
+const PAGE_CONTENT: Record<string, string[]> = {
+  "/dashboard/book-coach": ["Financial Aid", "Career Planning", "Interview Prep"],
+};
 
 function looksEnglish(line: string) {
   if (USER_CONTENT.some((u) => line.includes(u))) return false;
@@ -150,6 +183,11 @@ async function setLanguage(page: Page, lang: Lang) {
   }, lang);
 }
 
+async function htmlLangIssue(page: Page, lang: Lang, pageName: string): Promise<Issue[]> {
+  const actual = await page.getAttribute("html", "lang");
+  return actual === lang ? [] : [{ page: pageName, lang, kind: "html-lang", text: `<html lang="${actual}">` }];
+}
+
 async function visibleLines(page: Page) {
   const text = await page.innerText("body");
   return [...new Set(text.split("\n").map((l) => l.replace(/\s+/g, " ").trim()).filter(Boolean))];
@@ -160,7 +198,9 @@ function check(lines: string[], lang: Lang, pageName: string): Issue[] {
   const add = (kind: string, text: string) => issues.push({ page: pageName, lang, kind, text });
   const other = lang === "es" ? enOnly : esOnly;
   const bad = new Set(regressions[lang]);
+  const pageContent = new Set(PAGE_CONTENT[pageName] ?? []);
   for (const line of lines) {
+    if (pageContent.has(line)) continue;
     if (/\{\{|\}\}/.test(line)) add("unrendered-interpolation", line);
     if (keyPaths.has(line) || /^(common|student|parent|counselor|teacher|school_admin|coach|platform_owner):[\w.]+$/.test(line)) {
       add("raw-i18n-key", line);
@@ -204,7 +244,7 @@ test.describe("i18n + grammar sweep", () => {
         for (const p of role.pages) {
           await page.goto(p, { timeout: 180_000 });
           await waitForContent(page);
-          issues.push(...check(await visibleLines(page), lang, p));
+          issues.push(...check(await visibleLines(page), lang, p), ...(await htmlLangIssue(page, lang, p)));
         }
         await context.close();
         record(testInfo, `${role.name}-${lang}`, issues);
@@ -213,38 +253,63 @@ test.describe("i18n + grammar sweep", () => {
     }
   }
 
-  test("student 360: gate screen and every self-evaluation question read correctly in Spanish", async ({ browser }, testInfo) => {
-    test.setTimeout(300_000);
-    const { page } = await signedIn(browser, "test.student@formmaps.dev");
-    await page.goto("/");
-    await setLanguage(page, "es");
-    await page.goto("/dashboard/assessments/evaluation", { timeout: 180_000 });
-    await waitForContent(page);
-    const start = page.getByRole("button", { name: "Comenzar autoevaluación" });
-    await expect(start, "360 gate should offer the Spanish start button").toBeVisible();
-    const gateIssues = check(await visibleLines(page), "es", "/dashboard/assessments/evaluation");
-    await start.click();
-    await page.waitForURL(/\/evaluation\/evaluator\?token=/, { timeout: 120_000 });
-    const issues = [...gateIssues, ...(await check360(page, "self", "es"))];
-    record(testInfo, "student-360-es", issues);
-    expect(issues, JSON.stringify(issues, null, 1)).toEqual([]);
-  });
-
-  const tokens: Record<string, string> = JSON.parse(process.env.E2E_360_TOKENS || "{}");
-  for (const variant of ["parent", "teacher", "sibling_friend"]) {
-    test(`360 ${variant} evaluator reads every question correctly in Spanish`, async ({ page }, testInfo) => {
-      test.skip(!tokens[variant], `no E2E_360_TOKENS.${variant} (evaluator tokens are not readable by students)`);
-      test.setTimeout(240_000);
-      await page.addInitScript(() => {
-        window.localStorage.setItem("i18nextLng", "es");
+  for (const lang of ["es", "en"] as Lang[]) {
+    test(`signed-out pages render clean ${lang === "es" ? "Spanish" : "English"}`, async ({ page }, testInfo) => {
+      test.setTimeout(PUBLIC_PAGES.length * 150_000);
+      await page.addInitScript((l) => {
+        window.localStorage.setItem("i18nextLng", l);
         window.localStorage.setItem("telemetry_consent", JSON.stringify({ version: "1.0",
           timestamp: new Date().toISOString(), preferences: { necessary: true, analytics: false, marketing: false } }));
-      });
-      await page.goto(`/evaluation/evaluator?token=${encodeURIComponent(tokens[variant])}`, { timeout: 180_000 });
-      const issues = await check360(page, variant, "es");
-      record(testInfo, `360-${variant}-es`, issues);
+      }, lang);
+      const issues: Issue[] = [];
+      for (const p of PUBLIC_PAGES) {
+        await page.goto(p, { timeout: 180_000 });
+        await waitForContent(page);
+        issues.push(...check(await visibleLines(page), lang, p), ...(await htmlLangIssue(page, lang, p)));
+      }
+      record(testInfo, `public-${lang}`, issues);
       expect(issues, JSON.stringify(issues, null, 1)).toEqual([]);
     });
+  }
+
+  for (const lang of ["es", "en"] as Lang[]) {
+    test(`student 360: gate screen and every self-evaluation question read correctly in ${lang === "es" ? "Spanish" : "English"}`, async ({ browser }, testInfo) => {
+      test.skip(!instrument360[lang], `no fixtures/vocational-360-${lang}.json`);
+      test.setTimeout(300_000);
+      const { page } = await signedIn(browser, "test.student@formmaps.dev");
+      await page.goto("/");
+      await setLanguage(page, lang);
+      await page.goto("/dashboard/assessments/evaluation", { timeout: 180_000 });
+      await waitForContent(page);
+      const start = page.getByRole("button", { name: (lang === "es" ? es : en)["common:evaluation.page.startSelf"] });
+      await expect(start, "360 gate should offer the start button in the UI language").toBeVisible();
+      const gateIssues = check(await visibleLines(page), lang, "/dashboard/assessments/evaluation");
+      await start.click();
+      await page.waitForURL(/\/evaluation\/evaluator\?token=/, { timeout: 120_000 });
+      const issues = [...gateIssues, ...(await check360(page, "self", lang))];
+      record(testInfo, `student-360-${lang}`, issues);
+      expect(issues, JSON.stringify(issues, null, 1)).toEqual([]);
+    });
+  }
+
+  const tokens: Record<string, string> = JSON.parse(process.env.E2E_360_TOKENS || "{}");
+  for (const lang of ["es", "en"] as Lang[]) {
+    for (const variant of ["parent", "teacher", "sibling_friend"]) {
+      test(`360 ${variant} evaluator reads every question correctly in ${lang === "es" ? "Spanish" : "English"}`, async ({ page }, testInfo) => {
+        test.skip(!tokens[variant], `no E2E_360_TOKENS.${variant} (evaluator tokens are not readable by students)`);
+        test.skip(!instrument360[lang], `no fixtures/vocational-360-${lang}.json`);
+        test.setTimeout(240_000);
+        await page.addInitScript(() => {
+          window.localStorage.setItem("telemetry_consent", JSON.stringify({ version: "1.0",
+            timestamp: new Date().toISOString(), preferences: { necessary: true, analytics: false, marketing: false } }));
+        });
+        // Emailed invite links carry ?lang=, and the page must honour it over the browser default.
+        await page.goto(`/evaluation/evaluator?token=${encodeURIComponent(tokens[variant])}&lang=${lang}`, { timeout: 180_000 });
+        const issues = await check360(page, variant, lang);
+        record(testInfo, `360-${variant}-${lang}`, issues);
+        expect(issues, JSON.stringify(issues, null, 1)).toEqual([]);
+      });
+    }
   }
 });
 
@@ -253,7 +318,7 @@ async function check360(page: Page, variant: string, lang: Lang): Promise<Issue[
   await expect(page.locator('[id^="voc-q-"]').first()).toBeVisible({ timeout: 120_000 });
   await waitForContent(page);
   const issues = check(await visibleLines(page), lang, pageName);
-  const expected = instrument360[variant];
+  const expected = instrument360[lang]![variant];
   const cards = page.locator('[id^="voc-q-"]');
   const n = await cards.count();
   const seen = new Set<string>();
