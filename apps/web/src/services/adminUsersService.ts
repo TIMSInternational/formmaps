@@ -179,18 +179,27 @@ export interface RoleOption {
   name: string;
 }
 
-/** Active roles with their ids — PUT /admin/users/:id takes a roleId, not a name. */
+/** Active roles, for display. The role change itself goes by NAME (see updateUserRole). */
 export async function getActiveRoles(): Promise<RoleOption[]> {
   const response = await apiRequest("/api/role/active", { method: "GET" });
   const rows = (response?.data ?? response ?? []) as Array<{ id?: string; name?: string }>;
   return rows.filter((r): r is RoleOption => typeof r.id === "string" && typeof r.name === "string");
 }
 
-/** Change a user's role (audited server-side as USER_UPDATE with before/after). */
-export async function updateUserRole(userId: string, roleId: string): Promise<void> {
-  await apiRequest(`/api/v1/admin/users/${encodeURIComponent(userId)}`, {
+/**
+ * Roles the dedicated role endpoint accepts. Super Admin is deliberately absent: the panel can
+ * never mint platform power — that stays an audited SQL step (infra/aws/sql/promote-*.sql).
+ */
+export const ASSIGNABLE_ROLES = ["student", "counselor", "school_admin", "teacher", "parent", "coach"] as const;
+
+/**
+ * Change a user's role via PUT /admin/users/:id/role — roleId + roleName together, audited as
+ * USER_ROLE_CHANGE, refuses Super Admin, the caller's own account, and a no-op change.
+ */
+export async function updateUserRole(userId: string, roleName: string): Promise<void> {
+  await apiRequest(`/api/v1/admin/users/${encodeURIComponent(userId)}/role`, {
     method: "PUT",
-    data: { roleId },
+    data: { role: roleName },
     showErrorToast: false,
   });
 }

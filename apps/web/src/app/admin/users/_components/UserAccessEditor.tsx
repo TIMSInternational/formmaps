@@ -13,20 +13,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useConfirmDialog } from "@/components/ui/confirm-dialog";
-import { useGlobalStore } from "@/store/useGlobalStore";
-import { normalizeRole } from "@/lib/roleUtils";
-import { Roles } from "@/lib/permissions";
 import {
   getActiveRoles,
   linkUserToSchool,
   updateUserRole,
+  ASSIGNABLE_ROLES,
   type RoleOption,
 } from "@/services/adminUsersService";
 import { getSchools } from "@/services/schoolService";
 import type { School } from "@/types/school";
 
-/** Roles that grant platform-wide power — only a Super Admin may hand them out. */
-const PLATFORM_ROLES = new Set(["super admin", "admin"]);
 
 const roleLabel = (t: (k: string, o?: Record<string, unknown>) => string, name: string) =>
   t(`admin.users.roleNames.${name.toLowerCase().replace(/\s+/g, "_")}`, { defaultValue: name });
@@ -45,8 +41,6 @@ export function UserAccessEditor({
 }) {
   const { t } = useTranslation();
   const { confirm, ConfirmDialog } = useConfirmDialog();
-  const viewerRole = useGlobalStore((s) => s.user?.role ?? null);
-  const viewerIsSuperAdmin = normalizeRole(viewerRole) === Roles.SUPER_ADMIN;
 
   const [roles, setRoles] = useState<RoleOption[]>([]);
   const [rolesLoading, setRolesLoading] = useState(true);
@@ -79,9 +73,11 @@ export function UserAccessEditor({
     return () => { cancelled = true; };
   }, [schoolOpen, schools.length, t]);
 
+  // Only what PUT /admin/users/:id/role accepts. Super Admin is never offered, even to a Super
+  // Admin: platform power is granted by an audited SQL step, not a dropdown.
   const assignableRoles = useMemo(
-    () => roles.filter((r) => viewerIsSuperAdmin || !PLATFORM_ROLES.has(r.name.toLowerCase())),
-    [roles, viewerIsSuperAdmin],
+    () => roles.filter((r) => (ASSIGNABLE_ROLES as readonly string[]).includes(r.name.toLowerCase())),
+    [roles],
   );
   const currentRole = roles.find((r) => r.name.toLowerCase() === (user.role || "").toLowerCase());
 
@@ -106,7 +102,7 @@ export function UserAccessEditor({
     if (!ok) return;
     setSavingRole(true);
     try {
-      await updateUserRole(user.id, next.id);
+      await updateUserRole(user.id, next.name.toLowerCase());
       toast.success(t("admin.users.access.roleChanged", { name: user.name, role: roleLabel(t, next.name) }));
       onChanged();
     } catch {

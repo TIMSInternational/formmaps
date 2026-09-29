@@ -17,6 +17,8 @@ jest.mock("@/services/adminUsersService", () => ({
   getActiveRoles: jest.fn(),
   updateUserRole: jest.fn(),
   linkUserToSchool: jest.fn(),
+  // The real allowlist, so the test fails if the editor offers a role the endpoint refuses.
+  ASSIGNABLE_ROLES: jest.requireActual("@/services/adminUsersService").ASSIGNABLE_ROLES,
 }));
 jest.mock("@/services/schoolService", () => ({ getSchools: jest.fn() }));
 
@@ -79,12 +81,12 @@ async function roleSelect() {
   return sel;
 }
 
-it("changes the role by id, after a confirmation that names both roles", async () => {
+it("changes the role by NAME via the dedicated role endpoint, after a confirmation that names both roles", async () => {
   const onChanged = jest.fn();
   render(<UserAccessEditor user={user} onChanged={onChanged} />);
   fireEvent.change(await roleSelect(), { target: { value: "r-sa" } });
 
-  await waitFor(() => expect(updateUserRole).toHaveBeenCalledWith("u1", "r-sa"));
+  await waitFor(() => expect(updateUserRole).toHaveBeenCalledWith("u1", "school_admin"));
   expect(mockConfirm).toHaveBeenCalledWith(expect.objectContaining({
     description: expect.stringMatching(/Change Greta Fernández from Student to School admin\?/),
   }));
@@ -99,14 +101,12 @@ it("does nothing when the admin cancels", async () => {
   expect(updateUserRole).not.toHaveBeenCalled();
 });
 
-it("only a Super Admin is offered the Super Admin role", async () => {
-  const { unmount } = render(<UserAccessEditor user={user} onChanged={jest.fn()} />);
-  expect(Array.from((await roleSelect()).options).map((o) => o.textContent)).toContain("Super Admin");
-  unmount();
-
-  mockViewerRole = "school_admin";
+it("never offers Super Admin — not even to a Super Admin (platform power is an audited SQL step)", async () => {
+  mockViewerRole = "Super Admin";
   render(<UserAccessEditor user={user} onChanged={jest.fn()} />);
-  expect(Array.from((await roleSelect()).options).map((o) => o.textContent)).not.toContain("Super Admin");
+  const labels = Array.from((await roleSelect()).options).map((o) => o.textContent);
+  expect(labels).not.toContain("Super Admin");
+  expect(labels).toEqual(expect.arrayContaining(["Student", "Counselor", "School admin"]));
 });
 
 it("moves the user to a searched school after confirming", async () => {
