@@ -26,7 +26,7 @@ public static class ReportEmailEndpoints
     private static async Task<IResult> SendReportEmailAsync(
         IRequestContextAccessor accessor, IProtectedRequestGuard guard, IUserAccessGuard userAccessGuard,
         IReportEmailRecipientReader recipientReader, EmailTemplates templates, IEmailSender emailSender,
-        string userId, CancellationToken ct)
+        IEmailLanguageResolver emailLanguages, string userId, CancellationToken ct)
     {
         var context = accessor.Current;
         var identity = guard.RequireIdentity(context);
@@ -48,7 +48,8 @@ public static class ReportEmailEndpoints
             return NotFound();
         }
 
-        var message = templates.BuildReportEmail(recipient.Name);
+        // To the student, in their saved language (EmailLanguage rule 2).
+        var message = templates.BuildReportEmail(recipient.Name, await emailLanguages.ForUserAsync(recipient.Id, ct));
         var emailSent = await emailSender.SendAsync(recipient.Email, message.Subject, message.Html, ct);
 
         return Results.Ok(new { success = true, data = new { emailSent, recipient = recipient.Email } });

@@ -23,8 +23,11 @@ internal static class RecommendationTestWorld
     public static RecommendationsRepository Repository(NpgsqlDataSource appDataSource, DateTime now) =>
         new(Factory(appDataSource), new FixedTimeProvider(now));
 
+    /// <param name="languages">Email language per recipient. Defaults to English for everyone, which keeps this suite's
+    /// English subject pins meaningful; the bilingual copy itself is pinned in the unit tests.</param>
     public static RecommendationsService Service(
-        NpgsqlDataSource appDataSource, DateTime now, FakeObjectStorage storage, FakeEmailSender mailer)
+        NpgsqlDataSource appDataSource, DateTime now, FakeObjectStorage storage, FakeEmailSender mailer,
+        IEmailLanguageResolver? languages = null)
     {
         var factory = Factory(appDataSource);
         var options = new EmailOptions(
@@ -36,7 +39,28 @@ internal static class RecommendationTestWorld
             storage,
             mailer,
             new RecommendationEmails(new EmailTemplates(options), options),
-            new FixedTimeProvider(now));
+            new FixedTimeProvider(now),
+            languages ?? new FixedEmailLanguages(EmailLanguage.English));
+    }
+
+    /// <summary>Every recipient gets <paramref name="language"/>, unless listed in <paramref name="perUser"/>.</summary>
+    public sealed class FixedEmailLanguages(string language, IReadOnlyDictionary<string, string>? perUser = null)
+        : IEmailLanguageResolver
+    {
+        public Task<string> ForUserAsync(string? userId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(userId is not null && perUser?.TryGetValue(userId, out var l) == true ? l : language);
+
+        public async Task<IReadOnlyDictionary<string, string>> ForUsersAsync(
+            IReadOnlyCollection<string> userIds, CancellationToken cancellationToken = default)
+        {
+            var map = new Dictionary<string, string>();
+            foreach (var id in userIds)
+            {
+                map[id] = await ForUserAsync(id, cancellationToken);
+            }
+
+            return map;
+        }
     }
 
     private static NpgsqlFormMapsDatabaseSessionFactory Factory(NpgsqlDataSource dataSource) =>

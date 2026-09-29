@@ -99,10 +99,12 @@ public sealed class VocationalReader(IFormMapsDatabaseSessionFactory databaseSes
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
         string instrumentId, version, name;
+        string? nameEn;
         JsonElement groupWeights, integrationWeights, interpretationBands;
         await using (var command = Command(session, """
             SELECT "id", "version", "name", "groupWeights"::text AS "groupWeights",
-                   "integrationWeights"::text AS "integrationWeights", "interpretationBands"::text AS "interpretationBands"
+                   "integrationWeights"::text AS "integrationWeights", "interpretationBands"::text AS "interpretationBands",
+                   "nameEn"
             FROM "vocational_instruments" WHERE "status" = 'active' AND "isActive" = true LIMIT 1
             """))
         {
@@ -118,11 +120,13 @@ public sealed class VocationalReader(IFormMapsDatabaseSessionFactory databaseSes
             groupWeights = ReadJson(reader, 3);
             integrationWeights = ReadJson(reader, 4);
             interpretationBands = ReadJson(reader, 5);
+            nameEn = reader.IsDBNull(6) ? null : reader.GetString(6);
         }
 
         var dimensions = new List<InstrumentDimensionDto>();
         await using (var command = Command(session, """
-            SELECT "key", "nameEs", "nameEn", "weight"::double precision AS "weight", "scaleAnchors"::text AS "scaleAnchors", "order"
+            SELECT "key", "nameEs", "nameEn", "weight"::double precision AS "weight", "scaleAnchors"::text AS "scaleAnchors", "order",
+                   "scaleAnchorsEn"::text AS "scaleAnchorsEn"
             FROM "vocational_dimensions" WHERE "instrumentId" = @instrumentId AND "isActive" = true
             ORDER BY "order" ASC
             """))
@@ -137,25 +141,30 @@ public sealed class VocationalReader(IFormMapsDatabaseSessionFactory databaseSes
                     NameEn: reader.IsDBNull(2) ? null : reader.GetString(2),
                     Weight: reader.GetDouble(3),
                     ScaleAnchors: ReadJson(reader, 4),
+                    // legacy: a non-array (NULL / jsonb 'null' / malformed) English set surfaces as JSON null.
+                    ScaleAnchorsEn: AnchorArrayOrNull(ReadJson(reader, 6)),
                     Order: reader.GetInt32(5)));
             }
         }
 
-        return new InstrumentDto(version, name, groupWeights, integrationWeights, interpretationBands, dimensions);
+        return new InstrumentDto(version, name, groupWeights, integrationWeights, interpretationBands, dimensions, nameEn);
     }
 
     public async Task<IReadOnlyList<QuestionnaireItem>> GetQuestionnaireAsync(
-        RequestContext context, string group, CancellationToken cancellationToken = default)
+        RequestContext context, string group, string lang = VocationalLanguage.Spanish, CancellationToken cancellationToken = default)
     {
+        lang = VocationalLanguage.Normalize(lang);
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
         var items = new List<QuestionnaireItem>();
         // Active questions for the group (question.group null = all groups), joined to their dimension (key +
         // fallback scaleAnchors) and the group's text variant. (questionId, group) is unique -> ≤1 variant row.
+        // The English columns ride along; VocationalLanguage resolves text/anchors/option labels per field.
         await using var command = Command(session, """
             SELECT q."number", q."block", q."type", q."area", d."key" AS "dimensionKey",
                    q."scaleAnchors"::text AS "questionScale", d."scaleAnchors"::text AS "dimensionScale",
-                   q."options"::text AS "options", v."textEs"
+                   q."options"::text AS "options", v."textEs",
+                   v."textEn", q."scaleAnchorsEn"::text AS "questionScaleEn", d."scaleAnchorsEn"::text AS "dimensionScaleEn"
             FROM "vocational_questions" q
             LEFT JOIN "vocational_dimensions" d ON d."id" = q."dimensionId"
             LEFT JOIN "vocational_question_variants" v ON v."questionId" = q."id" AND v."group" = @group AND v."isActive" = true
@@ -172,32 +181,28 @@ public sealed class VocationalReader(IFormMapsDatabaseSessionFactory databaseSes
                 Type: reader.GetString(2),
                 Area: reader.IsDBNull(3) ? null : reader.GetString(3),
                 DimensionKey: reader.IsDBNull(4) ? null : reader.GetString(4),
-                // legacy: q.scaleAnchors ?? q.dimension?.scaleAnchors ?? null (skips SQL-null AND jsonb 'null').
-                ScaleAnchors: FirstNonNullJson(
-                    reader.IsDBNull(5) ? null : reader.GetString(5),
-                    reader.IsDBNull(6) ? null : reader.GetString(6)),
-                Options: ReadJson(reader, 7),
-                Text: reader.IsDBNull(8) ? string.Empty : reader.GetString(8)));
+                // legacy: q.scaleAnchors ?? q.dimension?.scaleAnchors ?? null (skips SQL-null AND jsonb 'null'),
+                // with English taken from the same level only when it is a complete same-length translation.
+                ScaleAnchors: VocationalLanguage.ResolveScaleAnchors(
+                    ReadJson(reader, 5), ReadJson(reader, 10), ReadJson(reader, 6), ReadJson(reader, 11), lang),
+                Options: VocationalLanguage.ResolveOptions(ReadJson(reader, 7), lang),
+                Text: reader.IsDBNull(8)
+                    ? string.Empty
+                    : VocationalLanguage.ResolveText(reader.GetString(8), reader.IsDBNull(9) ? null : reader.GetString(9), lang)));
         }
 
         return items;
     }
 
-    // JS `a ?? b ?? null`: the first jsonb text whose value is not null (SQL-null OR jsonb 'null' are skipped).
-    private static JsonElement FirstNonNullJson(string? first, string? second)
+    // legacy getInstrument: `isAnchorArray(d.scaleAnchorsEn) ? d.scaleAnchorsEn : null` — a non-empty array of
+    // strings passes through verbatim; anything else (SQL NULL, jsonb 'null', malformed) is JSON null.
+    private static JsonElement AnchorArrayOrNull(JsonElement element)
     {
-        foreach (var raw in new[] { first, second })
+        var isAnchorArray = element.ValueKind == JsonValueKind.Array && element.GetArrayLength() > 0
+            && element.EnumerateArray().All(item => item.ValueKind == JsonValueKind.String);
+        if (isAnchorArray)
         {
-            if (raw is null)
-            {
-                continue;
-            }
-
-            using var document = JsonDocument.Parse(raw);
-            if (document.RootElement.ValueKind != JsonValueKind.Null)
-            {
-                return document.RootElement.Clone();
-            }
+            return element;
         }
 
         using var nullDocument = JsonDocument.Parse("null");

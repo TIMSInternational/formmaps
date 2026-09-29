@@ -240,15 +240,59 @@ public sealed class SchoolAdminEmailWriterTests : IClassFixture<SchoolAdminDatab
         Assert.All(sender.Sent, m => Assert.StartsWith("FormMaps — Assessment Reminder from", m.Subject));
     }
 
+    // ---- recipient language (EmailLanguage rules; the resolver is faked — its SQL is not what is under test) ----
+
+    [Fact]
+    public async Task SendReminders_speaks_each_students_language_and_maps_codes_and_old_display_strings()
+    {
+        await SeedSchoolAsync();
+        await SeedUserAsync("stu-en", "Ann", "ann@school.test", "student", School);
+        await SeedUserAsync("stu-es", "Ana", "ana@school.test", "student", School);
+
+        var sender = new FakeSender(alwaysTrue: true);
+        var languages = new FakeLanguages(new Dictionary<string, string> { ["stu-en"] = "en", ["stu-es"] = "es" });
+        await Writer(sender, languages).SendRemindersAsync(
+            Ctx(), School, ["stu-en", "stu-es"], ["pca", "MIL (Multiple Intelligence Lens)"]);
+
+        var en = Assert.Single(sender.Sent, m => m.To == "ann@school.test");
+        Assert.Equal("FormMaps — Assessment Reminder from Test School", en.Subject);
+        Assert.Contains("<li>PCA (Personal Competence Analysis)</li>", en.Html);
+        Assert.Contains("<li>MIL (Labor Intelligence Measurement)</li>", en.Html);
+        Assert.DoesNotContain("Multiple Intelligence Lens", en.Html);
+
+        var es = Assert.Single(sender.Sent, m => m.To == "ana@school.test");
+        Assert.Equal("FormMaps — Recordatorio de evaluaciones de Test School", es.Subject);
+        Assert.Contains("<li>PCA (Análisis de Competencias Personales)</li>", es.Html);
+        Assert.Contains("<li>MIL (Medición de Inteligencia Laboral)</li>", es.Html);
+    }
+
+    [Fact]
+    public async Task Setup360_invites_speak_the_evaluated_students_language_and_the_link_carries_lang()
+    {
+        await SeedSchoolAsync();
+        await SeedUserAsync("stu-1", "Ana Student", "ana@school.test", "student", School);
+        await SeedParentLinkAsync("stu-1", "mama@example.com", "Marta", "Madre");
+
+        var sender = new FakeSender(alwaysTrue: true);
+        await Writer(sender, new FakeLanguages(new Dictionary<string, string> { ["stu-1"] = "es" }))
+            .Setup360Async(Ctx(), School, Actor, ["stu-1"], null);
+
+        var invite = Assert.Single(sender.Sent);
+        Assert.Equal("Solicitud de evaluación 360° para Ana Student", invite.Subject);
+        Assert.Contains("Hola, Marta:", invite.Html);
+        Assert.Matches(@"/evaluation/evaluator\?token=[^""&]+&amp;lang=es|/evaluation/evaluator\?token=[^""&]+&lang=es", invite.Html);
+    }
+
     // ---- helpers ----
 
-    private SchoolAdminEmailWriter Writer(FakeSender sender)
+    /// <summary>Defaults every recipient to English, which keeps the pre-existing English subject pins meaningful.</summary>
+    private SchoolAdminEmailWriter Writer(FakeSender sender, IEmailLanguageResolver? languages = null)
     {
         var options = new EmailOptions("noreply@formmaps.com", "https://app.formmaps.com",
             "https://app.formmaps.ai", "logo", "postal", "us-east-1");
         return new SchoolAdminEmailWriter(
             new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()),
-            sender, new EmailTemplates(options), options);
+            sender, new EmailTemplates(options), options, languages ?? new FakeLanguages(new Dictionary<string, string>(), "en"));
     }
 
     private static RequestContext Ctx() =>
@@ -357,6 +401,18 @@ public sealed class SchoolAdminEmailWriterTests : IClassFixture<SchoolAdminDatab
     }
 
     private sealed record GroupRow(string Email, string Relation, string GroupType, string Token, string? CreatedBy);
+
+    private sealed class FakeLanguages(IReadOnlyDictionary<string, string> perUser, string fallback = EmailLanguage.Default)
+        : IEmailLanguageResolver
+    {
+        public Task<string> ForUserAsync(string? userId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(userId is not null && perUser.TryGetValue(userId, out var l) ? l : fallback);
+
+        public Task<IReadOnlyDictionary<string, string>> ForUsersAsync(
+            IReadOnlyCollection<string> userIds, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyDictionary<string, string>>(
+                userIds.ToDictionary(id => id, id => perUser.TryGetValue(id, out var l) ? l : fallback));
+    }
 
     private sealed class FakeSender : IEmailSender
     {

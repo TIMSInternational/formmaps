@@ -60,7 +60,7 @@ public static class AuthEndpoints
     private static async Task<IResult> LoginAsync(
         LoginRequest? body, HttpContext httpContext, IAuthRepository repository,
         AccessTokenFactory tokenFactory, SessionPolicy sessionPolicy, IEmailSender emailSender, EmailTemplates emailTemplates,
-        CancellationToken cancellationToken)
+        IEmailLanguageResolver emailLanguages, CancellationToken cancellationToken)
     {
         if (body is null || string.IsNullOrWhiteSpace(body.Email) || string.IsNullOrWhiteSpace(body.Password))
             return BadRequest("Invalid email or password");
@@ -86,8 +86,11 @@ public static class AuthEndpoints
             if (newCount >= 5)
             {
                 // Best-effort account-locked notice -- fire-and-forget, matches legacy's
-                // import(...).then(sendEmail).catch(()=>{}) (never awaited, never fails the request).
-                var locked = emailTemplates.BuildAccountLocked(forgotPasswordUrl: FrontendUrl.Build("/forgot-password"));
+                // import(...).then(sendEmail).catch(()=>{}) (never awaited, never fails the request). In the
+                // account holder's saved language (EmailLanguage rule 2); the lookup never throws.
+                var lockedLanguage = await emailLanguages.ForUserAsync(user.Id, CancellationToken.None);
+                var locked = emailTemplates.BuildAccountLocked(
+                    forgotPasswordUrl: FrontendUrl.Build("/forgot-password"), language: lockedLanguage);
                 _ = emailSender.SendAsync(email, locked.Subject, locked.Html, CancellationToken.None);
             }
             return Unauthorized("Invalid email or password");
@@ -252,7 +255,7 @@ public static class AuthEndpoints
     private static async Task<IResult> ChangePasswordAsync(
         ChangePasswordRequest? body, HttpContext httpContext, IRequestContextAccessor accessor, IProtectedRequestGuard guard,
         IAuthRepository repository, IEmailSender emailSender, EmailTemplates emailTemplates, IAuditEventWriter auditEventWriter,
-        ILoggerFactory loggerFactory, CancellationToken cancellationToken)
+        ILoggerFactory loggerFactory, IEmailLanguageResolver emailLanguages, CancellationToken cancellationToken)
     {
         var context = accessor.Current;
         var decision = guard.RequireIdentity(context);
@@ -390,7 +393,9 @@ public static class AuthEndpoints
         // generalizes -- this one is synchronous-but-non-fatal, not detached).
         try
         {
-            var notice = emailTemplates.BuildPasswordChanged(target.Name, changedByAdmin: isAdminAction);
+            var notice = emailTemplates.BuildPasswordChanged(
+                target.Name, changedByAdmin: isAdminAction,
+                language: await emailLanguages.ForUserAsync(target.Id, cancellationToken));
             await emailSender.SendAsync(target.Email, notice.Subject, notice.Html, cancellationToken);
         }
         catch
@@ -683,7 +688,9 @@ public static class AuthEndpoints
 
             var resetUrl = FrontendUrl.Build($"/forgot-password?token={rawToken}");
             var emailTemplates = scope.ServiceProvider.GetRequiredService<EmailTemplates>();
-            var message = emailTemplates.BuildPasswordReset(user.Name, resetUrl);
+            var language = await scope.ServiceProvider.GetRequiredService<IEmailLanguageResolver>()
+                .ForUserAsync(user.Id, CancellationToken.None);
+            var message = emailTemplates.BuildPasswordReset(user.Name, resetUrl, language);
             await emailSender.SendAsync(user.Email, message.Subject, message.Html, CancellationToken.None);
         }
         catch

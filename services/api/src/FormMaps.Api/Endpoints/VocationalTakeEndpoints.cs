@@ -30,11 +30,13 @@ public static class VocationalTakeEndpoints
         return app;
     }
 
-    // GET /evaluation/vocational/{token}
+    // GET /evaluation/vocational/{token}[?lang=en|es] — lang picks the questionnaire language (default Spanish;
+    // English falls back to Spanish per field). Same shape as legacy getVocationalForm, incl. data.lang.
     private static async Task<IResult> GetFormAsync(
-        string token, IVocationalTakeService service, CancellationToken cancellationToken)
+        string token, HttpContext http, IVocationalTakeService service, CancellationToken cancellationToken)
     {
-        var result = await service.GetFormAsync(token, cancellationToken);
+        var lang = VocationalLanguage.Normalize(http.Request.Query["lang"].Count > 0 ? http.Request.Query["lang"][0] : null);
+        var result = await service.GetFormAsync(token, lang, cancellationToken);
         return result.Status switch
         {
             VocationalFormStatus.Ok => Results.Ok(new
@@ -47,6 +49,7 @@ public static class VocationalTakeEndpoints
                     evaluatorName = result.EvaluatorName,
                     studentName = result.StudentName,
                     isEvaluationCompleted = false,
+                    lang = result.Lang ?? lang,
                     questions = result.Questions,
                 },
             }),

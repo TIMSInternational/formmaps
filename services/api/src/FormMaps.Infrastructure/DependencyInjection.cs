@@ -372,6 +372,9 @@ public static class DependencyInjection
         services.AddSingleton<IAmazonSimpleEmailServiceV2>(
             _ => new AmazonSimpleEmailServiceV2Client(RegionEndpoint.GetBySystemName(emailOptions.AwsRegion)));
         services.AddScoped<IEmailSender, SesEmailSender>();
+        // The recipient-language rule for every email (EmailLanguage). Scoped: it resolves the scoped session factory
+        // lazily, so a host with no database configured still boots and just gets the Spanish default.
+        services.AddScoped<IEmailLanguageResolver, EmailLanguageResolver>();
         services.AddScoped<ISchoolAdminEmailWriter, SchoolAdminEmailWriter>();
 
         // FM-DOTNET-088: object storage (S3) + routes/upload.ts — the FIRST file-upload surface in .NET. Port of

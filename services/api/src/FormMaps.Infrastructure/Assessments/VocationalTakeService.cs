@@ -23,8 +23,10 @@ public sealed class VocationalTakeService(
     IVocationalWriter vocationalWriter,
     ILogger<VocationalTakeService> logger) : IVocationalTakeService
 {
-    public async Task<VocationalFormResult> GetFormAsync(string token, CancellationToken cancellationToken = default)
+    public async Task<VocationalFormResult> GetFormAsync(
+        string token, string lang = VocationalLanguage.Spanish, CancellationToken cancellationToken = default)
     {
+        lang = VocationalLanguage.Normalize(lang);
         var system = RequestContext.System();
         GroupRow? group;
         string? studentName;
@@ -56,14 +58,15 @@ public sealed class VocationalTakeService(
         }
 
         var g = Evaluation360Scoring.NormalizeGroupType(group.GroupType);
-        var questions = await vocationalReader.GetQuestionnaireAsync(system, g, cancellationToken);
+        var questions = await vocationalReader.GetQuestionnaireAsync(system, g, lang, cancellationToken);
         return new VocationalFormResult(
             VocationalFormStatus.Ok,
             Group: g,
             InstrumentVersion: group.InstrumentVersion,
             EvaluatorName: group.EvaluatorName,
             StudentName: studentName,
-            Questions: questions);
+            Questions: questions,
+            Lang: lang);
     }
 
     public async Task<VocationalSubmitResult> SubmitAsync(
@@ -100,7 +103,7 @@ public sealed class VocationalTakeService(
 
             group = resolved;
             var g = Evaluation360Scoring.NormalizeGroupType(group.GroupType);
-            questions = await vocationalReader.GetQuestionnaireAsync(system, g, cancellationToken);
+            questions = await vocationalReader.GetQuestionnaireAsync(system, g, VocationalLanguage.Spanish, cancellationToken);
         }
 
         // last-wins on a duplicate question number (legacy `new Map(questions.map(q => [q.number, q]))`).

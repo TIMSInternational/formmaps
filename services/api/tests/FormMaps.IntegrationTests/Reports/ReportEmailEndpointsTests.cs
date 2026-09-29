@@ -109,8 +109,21 @@ public sealed class ReportEmailEndpointsTests
                 services.AddSingleton<IReportEmailRecipientReader>(reader);
                 services.RemoveAll<IEmailSender>();
                 services.AddSingleton<IEmailSender>(sender);
+                // The student's saved language (EmailLanguage rule 2) — English here, so the subject pin above holds.
+                services.RemoveAll<IEmailLanguageResolver>();
+                services.AddSingleton<IEmailLanguageResolver>(new EnglishLanguages());
             });
         }
+    }
+
+    private sealed class EnglishLanguages : IEmailLanguageResolver
+    {
+        public Task<string> ForUserAsync(string? userId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(EmailLanguage.English);
+
+        public Task<IReadOnlyDictionary<string, string>> ForUsersAsync(
+            IReadOnlyCollection<string> userIds, CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyDictionary<string, string>>(userIds.ToDictionary(id => id, _ => EmailLanguage.English));
     }
 
     private sealed class FakeGuard(bool allow) : IUserAccessGuard
