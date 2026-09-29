@@ -1,0 +1,1188 @@
+{
+  "self": {
+    "1": {
+      "text": "¿Qué tanto interés personal tengo por matemáticas, estadística o análisis numérico?",
+      "labels": []
+    },
+    "2": {
+      "text": "¿Qué tanto interés personal tengo por tecnología, innovación o herramientas digitales?",
+      "labels": []
+    },
+    "3": {
+      "text": "¿Qué tanto interés personal tengo por ciencias biológicas, salud o medicina?",
+      "labels": []
+    },
+    "4": {
+      "text": "¿Qué tanto interés personal tengo por fenómenos sociales, económicos o políticos?",
+      "labels": []
+    },
+    "5": {
+      "text": "¿Qué tanto interés personal tengo por actividades creativas, artísticas, visuales o de diseño?",
+      "labels": []
+    },
+    "6": {
+      "text": "¿Cómo evalúo mi facilidad para comprender conceptos matemáticos, estadísticos o numéricos?",
+      "labels": []
+    },
+    "7": {
+      "text": "¿Cómo evalúo mi facilidad para aprender conceptos científicos, técnicos o tecnológicos?",
+      "labels": []
+    },
+    "8": {
+      "text": "¿Cómo evalúo mi facilidad para expresarme con claridad de forma oral y escrita?",
+      "labels": []
+    },
+    "9": {
+      "text": "¿Cómo evalúo mi facilidad para analizar problemas complejos y proponer soluciones efectivas?",
+      "labels": []
+    },
+    "10": {
+      "text": "¿Cómo evalúo mi facilidad para integrar conocimientos de distintas áreas para generar nuevas ideas?",
+      "labels": []
+    },
+    "11": {
+      "text": "¿Con qué frecuencia tiendo a aprender mejor mediante experiencias prácticas, proyectos o casos reales?",
+      "labels": []
+    },
+    "12": {
+      "text": "¿Con qué frecuencia tiendo a buscar información adicional cuando un tema me interesa?",
+      "labels": []
+    },
+    "13": {
+      "text": "¿Con qué frecuencia tiendo a perseverar cuando un tema o actividad resulta difícil?",
+      "labels": []
+    },
+    "14": {
+      "text": "¿Con qué frecuencia tiendo a aprender rápidamente nuevas herramientas, plataformas o metodologías?",
+      "labels": []
+    },
+    "15": {
+      "text": "¿Con qué frecuencia tiendo a estudiar o trabajar sin necesidad de supervisión constante?",
+      "labels": []
+    },
+    "16": {
+      "text": "¿Qué tanto me motiva lograr metas ambiciosas y superar retos?",
+      "labels": []
+    },
+    "17": {
+      "text": "¿Qué tanto me motiva ayudar, orientar o servir a otras personas?",
+      "labels": []
+    },
+    "18": {
+      "text": "¿Qué tanto me motiva aprender continuamente y desarrollar nuevas capacidades?",
+      "labels": []
+    },
+    "19": {
+      "text": "¿Qué tanto me motiva obtener reconocimiento por mis logros y aportes?",
+      "labels": []
+    },
+    "20": {
+      "text": "¿Qué tanto me motiva generar impacto positivo en la sociedad o en una comunidad?",
+      "labels": []
+    },
+    "21": {
+      "text": "¿Qué tan característico es en mí relacionarme con nuevas personas y construir vínculos?",
+      "labels": []
+    },
+    "22": {
+      "text": "¿Qué tan característico es en mí persuadir, convencer o influir en otros?",
+      "labels": []
+    },
+    "23": {
+      "text": "¿Qué tan característico es en mí escuchar activamente y comprender distintos puntos de vista?",
+      "labels": []
+    },
+    "24": {
+      "text": "¿Qué tan característico es en mí trabajar en equipo y colaborar con otros?",
+      "labels": []
+    },
+    "25": {
+      "text": "¿Qué tan característico es en mí asumir liderazgo cuando la situación lo requiere?",
+      "labels": []
+    },
+    "26": {
+      "text": "¿Qué tan de acuerdo estoy con que suelo preferir ambientes estructurados, organizados y con reglas claras?",
+      "labels": []
+    },
+    "27": {
+      "text": "¿Qué tan de acuerdo estoy con que suelo adaptarme fácilmente al cambio, la incertidumbre o los nuevos retos?",
+      "labels": []
+    },
+    "28": {
+      "text": "¿Qué tan de acuerdo estoy con que suelo ser cuidadoso/a con los detalles y la calidad del trabajo?",
+      "labels": []
+    },
+    "29": {
+      "text": "¿Qué tan de acuerdo estoy con que suelo tolerar adecuadamente la presión, los plazos exigentes o la carga de trabajo?",
+      "labels": []
+    },
+    "30": {
+      "text": "¿Qué tan de acuerdo estoy con que suelo cumplir compromisos, responsabilidades y fechas de entrega?",
+      "labels": []
+    },
+    "31": {
+      "text": "¿Qué potencial considero que tengo para destacarme en roles analíticos, técnicos o de datos?",
+      "labels": []
+    },
+    "32": {
+      "text": "¿Qué potencial considero que tengo para destacarme liderando equipos, proyectos o iniciativas?",
+      "labels": []
+    },
+    "33": {
+      "text": "¿Qué potencial considero que tengo para destacarme en funciones comerciales, ventas, negociación o relacionamiento con clientes?",
+      "labels": []
+    },
+    "34": {
+      "text": "¿Qué potencial considero que tengo para destacarme en actividades creativas, diseño, comunicación o generación de contenido?",
+      "labels": []
+    },
+    "35": {
+      "text": "¿Qué potencial considero que tengo para destacarme en investigación, generación de conocimiento o solución de problemas complejos?",
+      "labels": []
+    },
+    "36": {
+      "text": "¿Qué tan desarrollada considero que está en mí la comprensión de la importancia de construir una carrera profesional?",
+      "labels": []
+    },
+    "37": {
+      "text": "¿Qué tan desarrollado considero que está en mí el interés genuino en continuar estudios superiores o especializarme?",
+      "labels": []
+    },
+    "38": {
+      "text": "¿Qué tan desarrollada considero que está en mí la búsqueda de información sobre carreras, universidades, becas u oportunidades profesionales?",
+      "labels": []
+    },
+    "39": {
+      "text": "¿Qué tan desarrollada considero que está en mí la exploración de opciones de futuro por iniciativa propia?",
+      "labels": []
+    },
+    "40": {
+      "text": "¿Qué tan desarrollado considero que está mi compromiso con mi proyecto de vida académico y profesional?",
+      "labels": []
+    },
+    "41": {
+      "text": "Ordene las áreas académicas y profesionales según la afinidad que reconozco en mí:",
+      "labels": [
+        "Ingeniería",
+        "Tecnología y sistemas",
+        "Matemáticas y estadística",
+        "Ciencias de la salud",
+        "Psicología",
+        "Educación",
+        "Negocios y administración",
+        "Marketing y comunicación",
+        "Finanzas y economía",
+        "Derecho",
+        "Arquitectura",
+        "Diseño",
+        "Ciencias sociales",
+        "Relaciones internacionales",
+        "Emprendimiento",
+        "Biotecnología",
+        "Ciencias ambientales",
+        "Logística y operaciones",
+        "Producción audiovisual",
+        "Investigación científica"
+      ]
+    },
+    "42": {
+      "text": "Seleccione las industrias donde considero que tendría mayor posibilidad de éxito profesional:",
+      "labels": [
+        "Tecnología",
+        "Banca y finanzas",
+        "Consumo masivo",
+        "Consultoría",
+        "Salud",
+        "Educación",
+        "Gobierno",
+        "Organismos internacionales",
+        "Marketing y publicidad",
+        "Entretenimiento",
+        "Deportes",
+        "Energía",
+        "Construcción",
+        "Manufactura",
+        "Comercio electrónico",
+        "Turismo",
+        "Logística",
+        "Telecomunicaciones",
+        "Investigación y desarrollo",
+        "Emprendimiento"
+      ]
+    },
+    "43": {
+      "text": "Seleccione las actividades que más disfruto o creo que podría disfrutar:",
+      "labels": [
+        "Resolver problemas complejos",
+        "Liderar personas",
+        "Convencer o negociar",
+        "Analizar información",
+        "Investigar",
+        "Diseñar",
+        "Crear contenido",
+        "Enseñar",
+        "Ayudar a otros",
+        "Vender",
+        "Programar",
+        "Construir",
+        "Organizar",
+        "Planificar",
+        "Innovar"
+      ]
+    },
+    "44": {
+      "text": "Seleccione el tipo de trabajo que probablemente disfrutaría yo más:",
+      "labels": [
+        "Analítico",
+        "Creativo",
+        "Comercial",
+        "Técnico",
+        "Científico",
+        "Emprendedor",
+        "Social",
+        "Administrativo",
+        "Estratégico",
+        "Operativo"
+      ]
+    },
+    "45": {
+      "text": "¿Cuál considero que es mi mayor talento, fortaleza o potencial profesional y por qué?",
+      "labels": []
+    },
+    "46": {
+      "text": "¿Qué tan claro tengo si realmente quiero estudiar una carrera universitaria o técnica?",
+      "labels": [
+        "Nada claro / comprometido",
+        "Poco claro / comprometido",
+        "Moderadamente claro / comprometido",
+        "Bastante claro / comprometido",
+        "Muy claro / comprometido"
+      ]
+    },
+    "47": {
+      "text": "¿Qué tan seguro/a me siento sobre la carrera o área profesional que actualmente me interesa?",
+      "labels": [
+        "Nada seguro/a",
+        "Poco seguro/a",
+        "Moderadamente seguro/a",
+        "Bastante seguro/a",
+        "Totalmente seguro/a"
+      ]
+    },
+    "48": {
+      "text": "¿Qué aspectos me preocupan más sobre mi futuro profesional?",
+      "labels": [
+        "Elegir carrera equivocada",
+        "No encontrar trabajo",
+        "No cumplir expectativas familiares",
+        "No saber qué me gusta",
+        "Costo de estudios",
+        "Estudiar fuera del país",
+        "Presión académica",
+        "Falta de experiencia",
+        "Otro"
+      ]
+    },
+    "49": {
+      "text": "¿Qué tipo de vida profesional imagino para mí dentro de 10 años y por qué?",
+      "labels": []
+    },
+    "50": {
+      "text": "Ordene lo que más influye en mi realización profesional:",
+      "labels": [
+        "Ingresos",
+        "Estabilidad",
+        "Reconocimiento",
+        "Ayudar a otros",
+        "Innovación",
+        "Libertad",
+        "Prestigio",
+        "Aprendizaje continuo"
+      ]
+    }
+  },
+  "parent": {
+    "1": {
+      "text": "¿Qué tanto interés han observado en su hijo/a por matemáticas, estadística o análisis numérico?",
+      "labels": []
+    },
+    "2": {
+      "text": "¿Qué tanto interés han observado en su hijo/a por tecnología, innovación o herramientas digitales?",
+      "labels": []
+    },
+    "3": {
+      "text": "¿Qué tanto interés han observado en su hijo/a por ciencias biológicas, salud o medicina?",
+      "labels": []
+    },
+    "4": {
+      "text": "¿Qué tanto interés han observado en su hijo/a por fenómenos sociales, económicos o políticos?",
+      "labels": []
+    },
+    "5": {
+      "text": "¿Qué tanto interés han observado en su hijo/a por actividades creativas, artísticas, visuales o de diseño?",
+      "labels": []
+    },
+    "6": {
+      "text": "¿Cómo valorarían la facilidad de su hijo/a para comprender conceptos matemáticos, estadísticos o numéricos?",
+      "labels": []
+    },
+    "7": {
+      "text": "¿Cómo valorarían la facilidad de su hijo/a para aprender conceptos científicos, técnicos o tecnológicos?",
+      "labels": []
+    },
+    "8": {
+      "text": "¿Cómo valorarían la facilidad de su hijo/a para expresarse con claridad de forma oral y escrita?",
+      "labels": []
+    },
+    "9": {
+      "text": "¿Cómo valorarían la facilidad de su hijo/a para analizar problemas complejos y proponer soluciones efectivas?",
+      "labels": []
+    },
+    "10": {
+      "text": "¿Cómo valorarían la facilidad de su hijo/a para integrar conocimientos de distintas áreas para generar nuevas ideas?",
+      "labels": []
+    },
+    "11": {
+      "text": "¿Con qué frecuencia observan que su hijo/a tiende a aprender mejor mediante experiencias prácticas, proyectos o casos reales?",
+      "labels": []
+    },
+    "12": {
+      "text": "¿Con qué frecuencia observan que su hijo/a tiende a buscar información adicional cuando un tema le interesa?",
+      "labels": []
+    },
+    "13": {
+      "text": "¿Con qué frecuencia observan que su hijo/a tiende a perseverar cuando un tema o actividad resulta difícil?",
+      "labels": []
+    },
+    "14": {
+      "text": "¿Con qué frecuencia observan que su hijo/a tiende a aprender rápidamente nuevas herramientas, plataformas o metodologías?",
+      "labels": []
+    },
+    "15": {
+      "text": "¿Con qué frecuencia observan que su hijo/a tiende a estudiar o trabajar sin necesidad de supervisión constante?",
+      "labels": []
+    },
+    "16": {
+      "text": "¿Qué tanto consideran que a su hijo/a le motiva lograr metas ambiciosas y superar retos?",
+      "labels": []
+    },
+    "17": {
+      "text": "¿Qué tanto consideran que a su hijo/a le motiva ayudar, orientar o servir a otras personas?",
+      "labels": []
+    },
+    "18": {
+      "text": "¿Qué tanto consideran que a su hijo/a le motiva aprender continuamente y desarrollar nuevas capacidades?",
+      "labels": []
+    },
+    "19": {
+      "text": "¿Qué tanto consideran que a su hijo/a le motiva obtener reconocimiento por sus logros y aportes?",
+      "labels": []
+    },
+    "20": {
+      "text": "¿Qué tanto consideran que a su hijo/a le motiva generar impacto positivo en la sociedad o en una comunidad?",
+      "labels": []
+    },
+    "21": {
+      "text": "¿Qué tan característico es en su hijo/a relacionarse con nuevas personas y construir vínculos?",
+      "labels": []
+    },
+    "22": {
+      "text": "¿Qué tan característico es en su hijo/a persuadir, convencer o influir en otros?",
+      "labels": []
+    },
+    "23": {
+      "text": "¿Qué tan característico es en su hijo/a escuchar activamente y comprender distintos puntos de vista?",
+      "labels": []
+    },
+    "24": {
+      "text": "¿Qué tan característico es en su hijo/a trabajar en equipo y colaborar con otros?",
+      "labels": []
+    },
+    "25": {
+      "text": "¿Qué tan característico es en su hijo/a asumir liderazgo cuando la situación lo requiere?",
+      "labels": []
+    },
+    "26": {
+      "text": "¿Qué tan de acuerdo están con que su hijo/a suele preferir ambientes estructurados, organizados y con reglas claras?",
+      "labels": []
+    },
+    "27": {
+      "text": "¿Qué tan de acuerdo están con que su hijo/a suele adaptarse fácilmente al cambio, la incertidumbre o los nuevos retos?",
+      "labels": []
+    },
+    "28": {
+      "text": "¿Qué tan de acuerdo están con que su hijo/a suele ser cuidadoso/a con los detalles y la calidad del trabajo?",
+      "labels": []
+    },
+    "29": {
+      "text": "¿Qué tan de acuerdo están con que su hijo/a suele tolerar adecuadamente la presión, los plazos exigentes o la carga de trabajo?",
+      "labels": []
+    },
+    "30": {
+      "text": "¿Qué tan de acuerdo están con que su hijo/a suele cumplir compromisos, responsabilidades y fechas de entrega?",
+      "labels": []
+    },
+    "31": {
+      "text": "¿Qué potencial observan en su hijo/a para destacarse en roles analíticos, técnicos o de datos?",
+      "labels": []
+    },
+    "32": {
+      "text": "¿Qué potencial observan en su hijo/a para destacarse liderando equipos, proyectos o iniciativas?",
+      "labels": []
+    },
+    "33": {
+      "text": "¿Qué potencial observan en su hijo/a para destacarse en funciones comerciales, ventas, negociación o relacionamiento con clientes?",
+      "labels": []
+    },
+    "34": {
+      "text": "¿Qué potencial observan en su hijo/a para destacarse en actividades creativas, diseño, comunicación o generación de contenido?",
+      "labels": []
+    },
+    "35": {
+      "text": "¿Qué potencial observan en su hijo/a para destacarse en investigación, generación de conocimiento o solución de problemas complejos?",
+      "labels": []
+    },
+    "36": {
+      "text": "¿Qué tan desarrollada observan en su hijo/a la comprensión de la importancia de construir una carrera profesional?",
+      "labels": []
+    },
+    "37": {
+      "text": "¿Qué tan desarrollado observan en su hijo/a el interés genuino en continuar estudios superiores o especializarse?",
+      "labels": []
+    },
+    "38": {
+      "text": "¿Qué tan desarrollada observan en su hijo/a la búsqueda de información sobre carreras, universidades, becas u oportunidades profesionales?",
+      "labels": []
+    },
+    "39": {
+      "text": "¿Qué tan desarrollada observan en su hijo/a la exploración de opciones de futuro por iniciativa propia?",
+      "labels": []
+    },
+    "40": {
+      "text": "¿Qué tan desarrollado observan en su hijo/a el compromiso con su proyecto de vida académico y profesional?",
+      "labels": []
+    },
+    "41": {
+      "text": "Ordenen las áreas académicas y profesionales según la afinidad que observan en su hijo/a:",
+      "labels": [
+        "Ingeniería",
+        "Tecnología y sistemas",
+        "Matemáticas y estadística",
+        "Ciencias de la salud",
+        "Psicología",
+        "Educación",
+        "Negocios y administración",
+        "Marketing y comunicación",
+        "Finanzas y economía",
+        "Derecho",
+        "Arquitectura",
+        "Diseño",
+        "Ciencias sociales",
+        "Relaciones internacionales",
+        "Emprendimiento",
+        "Biotecnología",
+        "Ciencias ambientales",
+        "Logística y operaciones",
+        "Producción audiovisual",
+        "Investigación científica"
+      ]
+    },
+    "42": {
+      "text": "Seleccionen las industrias donde observan mayor posibilidad de éxito profesional para su hijo/a:",
+      "labels": [
+        "Tecnología",
+        "Banca y finanzas",
+        "Consumo masivo",
+        "Consultoría",
+        "Salud",
+        "Educación",
+        "Gobierno",
+        "Organismos internacionales",
+        "Marketing y publicidad",
+        "Entretenimiento",
+        "Deportes",
+        "Energía",
+        "Construcción",
+        "Manufactura",
+        "Comercio electrónico",
+        "Turismo",
+        "Logística",
+        "Telecomunicaciones",
+        "Investigación y desarrollo",
+        "Emprendimiento"
+      ]
+    },
+    "43": {
+      "text": "Seleccionen las actividades que consideran que su hijo/a más disfruta o podría disfrutar:",
+      "labels": [
+        "Resolver problemas complejos",
+        "Liderar personas",
+        "Convencer o negociar",
+        "Analizar información",
+        "Investigar",
+        "Diseñar",
+        "Crear contenido",
+        "Enseñar",
+        "Ayudar a otros",
+        "Vender",
+        "Programar",
+        "Construir",
+        "Organizar",
+        "Planificar",
+        "Innovar"
+      ]
+    },
+    "44": {
+      "text": "Seleccionen el tipo de trabajo que probablemente disfrutaría más su hijo/a:",
+      "labels": [
+        "Analítico",
+        "Creativo",
+        "Comercial",
+        "Técnico",
+        "Científico",
+        "Emprendedor",
+        "Social",
+        "Administrativo",
+        "Estratégico",
+        "Operativo"
+      ]
+    },
+    "45": {
+      "text": "¿Cuál consideran que es el mayor talento, fortaleza o potencial profesional de su hijo/a y por qué?",
+      "labels": []
+    },
+    "46": {
+      "text": "¿Qué actividades, juegos, temas o intereses ha buscado espontáneamente su hijo/a desde niño/a?",
+      "labels": []
+    },
+    "47": {
+      "text": "¿En qué ámbito han observado los mayores talentos de su hijo/a: académico, social, creativo, técnico, deportivo, artístico, comercial u otro?",
+      "labels": [
+        "Muy poco potencial",
+        "Potencial limitado",
+        "Potencial moderado",
+        "Alto potencial",
+        "Potencial excepcional"
+      ]
+    },
+    "48": {
+      "text": "¿Qué carrera o área profesional consideran que permitiría desarrollar mejor el potencial de su hijo/a y por qué?",
+      "labels": []
+    },
+    "49": {
+      "text": "¿Qué fortalezas consideran que diferencian a su hijo/a de otros jóvenes de su edad?",
+      "labels": []
+    },
+    "50": {
+      "text": "¿Cuál es su principal preocupación respecto al futuro profesional de su hijo/a?",
+      "labels": [
+        "Falta de claridad",
+        "Baja motivación",
+        "Presión externa",
+        "Dificultad académica",
+        "Elección poco realista",
+        "Falta de disciplina",
+        "Empleabilidad",
+        "Adaptación a la universidad",
+        "Otro"
+      ]
+    }
+  },
+  "teacher": {
+    "1": {
+      "text": "Desde su experiencia docente, ¿qué tanto interés académico muestra el/la estudiante por matemáticas, estadística o análisis numérico?",
+      "labels": []
+    },
+    "2": {
+      "text": "Desde su experiencia docente, ¿qué tanto interés académico muestra el/la estudiante por tecnología, innovación o herramientas digitales?",
+      "labels": []
+    },
+    "3": {
+      "text": "Desde su experiencia docente, ¿qué tanto interés académico muestra el/la estudiante por ciencias biológicas, salud o medicina?",
+      "labels": []
+    },
+    "4": {
+      "text": "Desde su experiencia docente, ¿qué tanto interés académico muestra el/la estudiante por fenómenos sociales, económicos o políticos?",
+      "labels": []
+    },
+    "5": {
+      "text": "Desde su experiencia docente, ¿qué tanto interés académico muestra el/la estudiante por actividades creativas, artísticas, visuales o de diseño?",
+      "labels": []
+    },
+    "6": {
+      "text": "Desde su experiencia docente, ¿cómo valora la facilidad del/de la estudiante para comprender conceptos matemáticos, estadísticos o numéricos?",
+      "labels": []
+    },
+    "7": {
+      "text": "Desde su experiencia docente, ¿cómo valora la facilidad del/de la estudiante para aprender conceptos científicos, técnicos o tecnológicos?",
+      "labels": []
+    },
+    "8": {
+      "text": "Desde su experiencia docente, ¿cómo valora la facilidad del/de la estudiante para expresarse con claridad de forma oral y escrita?",
+      "labels": []
+    },
+    "9": {
+      "text": "Desde su experiencia docente, ¿cómo valora la facilidad del/de la estudiante para analizar problemas complejos y proponer soluciones efectivas?",
+      "labels": []
+    },
+    "10": {
+      "text": "Desde su experiencia docente, ¿cómo valora la facilidad del/de la estudiante para integrar conocimientos de distintas áreas para generar nuevas ideas?",
+      "labels": []
+    },
+    "11": {
+      "text": "En el contexto académico, ¿con qué frecuencia el/la estudiante tiende a aprender mejor mediante experiencias prácticas, proyectos o casos reales?",
+      "labels": []
+    },
+    "12": {
+      "text": "En el contexto académico, ¿con qué frecuencia el/la estudiante tiende a buscar información adicional cuando un tema le interesa?",
+      "labels": []
+    },
+    "13": {
+      "text": "En el contexto académico, ¿con qué frecuencia el/la estudiante tiende a perseverar cuando un tema o actividad resulta difícil?",
+      "labels": []
+    },
+    "14": {
+      "text": "En el contexto académico, ¿con qué frecuencia el/la estudiante tiende a aprender rápidamente nuevas herramientas, plataformas o metodologías?",
+      "labels": []
+    },
+    "15": {
+      "text": "En el contexto académico, ¿con qué frecuencia el/la estudiante tiende a estudiar o trabajar sin necesidad de supervisión constante?",
+      "labels": []
+    },
+    "16": {
+      "text": "Desde su observación, ¿qué tanto parece motivarle al/a la estudiante lograr metas ambiciosas y superar retos?",
+      "labels": []
+    },
+    "17": {
+      "text": "Desde su observación, ¿qué tanto parece motivarle al/a la estudiante ayudar, orientar o servir a otras personas?",
+      "labels": []
+    },
+    "18": {
+      "text": "Desde su observación, ¿qué tanto parece motivarle al/a la estudiante aprender continuamente y desarrollar nuevas capacidades?",
+      "labels": []
+    },
+    "19": {
+      "text": "Desde su observación, ¿qué tanto parece motivarle al/a la estudiante obtener reconocimiento por sus logros y aportes?",
+      "labels": []
+    },
+    "20": {
+      "text": "Desde su observación, ¿qué tanto parece motivarle al/a la estudiante generar impacto positivo en la sociedad o en una comunidad?",
+      "labels": []
+    },
+    "21": {
+      "text": "En el entorno escolar, ¿qué tan característico es en el/la estudiante relacionarse con nuevas personas y construir vínculos?",
+      "labels": []
+    },
+    "22": {
+      "text": "En el entorno escolar, ¿qué tan característico es en el/la estudiante persuadir, convencer o influir en otros?",
+      "labels": []
+    },
+    "23": {
+      "text": "En el entorno escolar, ¿qué tan característico es en el/la estudiante escuchar activamente y comprender distintos puntos de vista?",
+      "labels": []
+    },
+    "24": {
+      "text": "En el entorno escolar, ¿qué tan característico es en el/la estudiante trabajar en equipo y colaborar con otros?",
+      "labels": []
+    },
+    "25": {
+      "text": "En el entorno escolar, ¿qué tan característico es en el/la estudiante asumir liderazgo cuando la situación lo requiere?",
+      "labels": []
+    },
+    "26": {
+      "text": "En tareas, proyectos o clases, ¿qué tan de acuerdo está con que el/la estudiante suele preferir ambientes estructurados, organizados y con reglas claras?",
+      "labels": []
+    },
+    "27": {
+      "text": "En tareas, proyectos o clases, ¿qué tan de acuerdo está con que el/la estudiante suele adaptarse fácilmente al cambio, la incertidumbre o los nuevos retos?",
+      "labels": []
+    },
+    "28": {
+      "text": "En tareas, proyectos o clases, ¿qué tan de acuerdo está con que el/la estudiante suele ser cuidadoso/a con los detalles y la calidad del trabajo?",
+      "labels": []
+    },
+    "29": {
+      "text": "En tareas, proyectos o clases, ¿qué tan de acuerdo está con que el/la estudiante suele tolerar adecuadamente la presión, los plazos exigentes o la carga de trabajo?",
+      "labels": []
+    },
+    "30": {
+      "text": "En tareas, proyectos o clases, ¿qué tan de acuerdo está con que el/la estudiante suele cumplir compromisos, responsabilidades y fechas de entrega?",
+      "labels": []
+    },
+    "31": {
+      "text": "Desde su criterio académico, ¿qué potencial observa en el/la estudiante para destacarse en roles analíticos, técnicos o de datos?",
+      "labels": []
+    },
+    "32": {
+      "text": "Desde su criterio académico, ¿qué potencial observa en el/la estudiante para destacarse liderando equipos, proyectos o iniciativas?",
+      "labels": []
+    },
+    "33": {
+      "text": "Desde su criterio académico, ¿qué potencial observa en el/la estudiante para destacarse en funciones comerciales, ventas, negociación o relacionamiento con clientes?",
+      "labels": []
+    },
+    "34": {
+      "text": "Desde su criterio académico, ¿qué potencial observa en el/la estudiante para destacarse en actividades creativas, diseño, comunicación o generación de contenido?",
+      "labels": []
+    },
+    "35": {
+      "text": "Desde su criterio académico, ¿qué potencial observa en el/la estudiante para destacarse en investigación, generación de conocimiento o solución de problemas complejos?",
+      "labels": []
+    },
+    "36": {
+      "text": "Desde su observación, ¿qué tan desarrollada está en el/la estudiante la comprensión de la importancia de construir una carrera profesional?",
+      "labels": []
+    },
+    "37": {
+      "text": "Desde su observación, ¿qué tan desarrollado está en el/la estudiante el interés genuino en continuar estudios superiores o especializarse?",
+      "labels": []
+    },
+    "38": {
+      "text": "Desde su observación, ¿qué tan desarrollada está en el/la estudiante la búsqueda de información sobre carreras, universidades, becas u oportunidades profesionales?",
+      "labels": []
+    },
+    "39": {
+      "text": "Desde su observación, ¿qué tan desarrollada está en el/la estudiante la exploración de opciones de futuro por iniciativa propia?",
+      "labels": []
+    },
+    "40": {
+      "text": "Desde su observación, ¿qué tan desarrollado está en el/la estudiante el compromiso con su proyecto de vida académico y profesional?",
+      "labels": []
+    },
+    "41": {
+      "text": "Ordene las áreas académicas y profesionales según la afinidad que observa en el/la estudiante desde el contexto académico:",
+      "labels": [
+        "Ingeniería",
+        "Tecnología y sistemas",
+        "Matemáticas y estadística",
+        "Ciencias de la salud",
+        "Psicología",
+        "Educación",
+        "Negocios y administración",
+        "Marketing y comunicación",
+        "Finanzas y economía",
+        "Derecho",
+        "Arquitectura",
+        "Diseño",
+        "Ciencias sociales",
+        "Relaciones internacionales",
+        "Emprendimiento",
+        "Biotecnología",
+        "Ciencias ambientales",
+        "Logística y operaciones",
+        "Producción audiovisual",
+        "Investigación científica"
+      ]
+    },
+    "42": {
+      "text": "Seleccione las industrias donde observa mayor posibilidad de éxito profesional para el/la estudiante:",
+      "labels": [
+        "Tecnología",
+        "Banca y finanzas",
+        "Consumo masivo",
+        "Consultoría",
+        "Salud",
+        "Educación",
+        "Gobierno",
+        "Organismos internacionales",
+        "Marketing y publicidad",
+        "Entretenimiento",
+        "Deportes",
+        "Energía",
+        "Construcción",
+        "Manufactura",
+        "Comercio electrónico",
+        "Turismo",
+        "Logística",
+        "Telecomunicaciones",
+        "Investigación y desarrollo",
+        "Emprendimiento"
+      ]
+    },
+    "43": {
+      "text": "Seleccione las actividades que considera que el/la estudiante más disfruta o podría disfrutar:",
+      "labels": [
+        "Resolver problemas complejos",
+        "Liderar personas",
+        "Convencer o negociar",
+        "Analizar información",
+        "Investigar",
+        "Diseñar",
+        "Crear contenido",
+        "Enseñar",
+        "Ayudar a otros",
+        "Vender",
+        "Programar",
+        "Construir",
+        "Organizar",
+        "Planificar",
+        "Innovar"
+      ]
+    },
+    "44": {
+      "text": "Seleccione el tipo de trabajo que probablemente disfrutaría más el/la estudiante:",
+      "labels": [
+        "Analítico",
+        "Creativo",
+        "Comercial",
+        "Técnico",
+        "Científico",
+        "Emprendedor",
+        "Social",
+        "Administrativo",
+        "Estratégico",
+        "Operativo"
+      ]
+    },
+    "45": {
+      "text": "¿Cuál considera que es el mayor talento, fortaleza o potencial profesional del/de la estudiante y por qué?",
+      "labels": []
+    },
+    "46": {
+      "text": "¿En qué área académica observa el mejor desempeño del/de la estudiante?",
+      "labels": [
+        "Matemáticas",
+        "Ciencias",
+        "Comunicación",
+        "Ciencias sociales",
+        "Arte/diseño",
+        "Tecnología",
+        "Idiomas",
+        "Liderazgo/proyectos",
+        "Otra"
+      ]
+    },
+    "47": {
+      "text": "¿Qué tipo de pensamiento predomina en el/la estudiante?",
+      "labels": [
+        "Lógico-analítico",
+        "Creativo",
+        "Práctico",
+        "Social-comunicativo",
+        "Técnico",
+        "Estratégico",
+        "Reflexivo",
+        "Emprendedor"
+      ]
+    },
+    "48": {
+      "text": "¿Qué nivel de potencial profesional observa en el/la estudiante para destacarse en educación superior y vida laboral?",
+      "labels": [
+        "Muy poco potencial",
+        "Potencial limitado",
+        "Potencial moderado",
+        "Alto potencial",
+        "Potencial excepcional"
+      ]
+    },
+    "49": {
+      "text": "¿Qué carrera, área académica o familia profesional le recomendaría explorar al/a la estudiante y por qué?",
+      "labels": []
+    },
+    "50": {
+      "text": "¿Qué habilidad considera más importante fortalecer para mejorar el éxito universitario y profesional del/de la estudiante?",
+      "labels": []
+    }
+  },
+  "sibling_friend": {
+    "1": {
+      "text": "En su vida cotidiana, ¿qué tanto interés real observa en el/la estudiante por matemáticas, estadística o análisis numérico?",
+      "labels": []
+    },
+    "2": {
+      "text": "En su vida cotidiana, ¿qué tanto interés real observa en el/la estudiante por tecnología, innovación o herramientas digitales?",
+      "labels": []
+    },
+    "3": {
+      "text": "En su vida cotidiana, ¿qué tanto interés real observa en el/la estudiante por ciencias biológicas, salud o medicina?",
+      "labels": []
+    },
+    "4": {
+      "text": "En su vida cotidiana, ¿qué tanto interés real observa en el/la estudiante por fenómenos sociales, económicos o políticos?",
+      "labels": []
+    },
+    "5": {
+      "text": "En su vida cotidiana, ¿qué tanto interés real observa en el/la estudiante por actividades creativas, artísticas, visuales o de diseño?",
+      "labels": []
+    },
+    "6": {
+      "text": "Desde lo que usted conoce, ¿cómo valora la facilidad del/de la estudiante para comprender conceptos matemáticos, estadísticos o numéricos?",
+      "labels": []
+    },
+    "7": {
+      "text": "Desde lo que usted conoce, ¿cómo valora la facilidad del/de la estudiante para aprender conceptos científicos, técnicos o tecnológicos?",
+      "labels": []
+    },
+    "8": {
+      "text": "Desde lo que usted conoce, ¿cómo valora la facilidad del/de la estudiante para expresarse con claridad de forma oral y escrita?",
+      "labels": []
+    },
+    "9": {
+      "text": "Desde lo que usted conoce, ¿cómo valora la facilidad del/de la estudiante para analizar problemas complejos y proponer soluciones efectivas?",
+      "labels": []
+    },
+    "10": {
+      "text": "Desde lo que usted conoce, ¿cómo valora la facilidad del/de la estudiante para integrar conocimientos de distintas áreas para generar nuevas ideas?",
+      "labels": []
+    },
+    "11": {
+      "text": "Fuera del aula o en contextos cotidianos, ¿con qué frecuencia observa que el/la estudiante tiende a aprender mejor mediante experiencias prácticas, proyectos o casos reales?",
+      "labels": []
+    },
+    "12": {
+      "text": "Fuera del aula o en contextos cotidianos, ¿con qué frecuencia observa que el/la estudiante tiende a buscar información adicional cuando un tema le interesa?",
+      "labels": []
+    },
+    "13": {
+      "text": "Fuera del aula o en contextos cotidianos, ¿con qué frecuencia observa que el/la estudiante tiende a perseverar cuando un tema o actividad resulta difícil?",
+      "labels": []
+    },
+    "14": {
+      "text": "Fuera del aula o en contextos cotidianos, ¿con qué frecuencia observa que el/la estudiante tiende a aprender rápidamente nuevas herramientas, plataformas o metodologías?",
+      "labels": []
+    },
+    "15": {
+      "text": "Fuera del aula o en contextos cotidianos, ¿con qué frecuencia observa que el/la estudiante tiende a estudiar o trabajar sin necesidad de supervisión constante?",
+      "labels": []
+    },
+    "16": {
+      "text": "Según lo que usted ve en su vida diaria, ¿qué tanto le motiva al/a la estudiante lograr metas ambiciosas y superar retos?",
+      "labels": []
+    },
+    "17": {
+      "text": "Según lo que usted ve en su vida diaria, ¿qué tanto le motiva al/a la estudiante ayudar, orientar o servir a otras personas?",
+      "labels": []
+    },
+    "18": {
+      "text": "Según lo que usted ve en su vida diaria, ¿qué tanto le motiva al/a la estudiante aprender continuamente y desarrollar nuevas capacidades?",
+      "labels": []
+    },
+    "19": {
+      "text": "Según lo que usted ve en su vida diaria, ¿qué tanto le motiva al/a la estudiante obtener reconocimiento por sus logros y aportes?",
+      "labels": []
+    },
+    "20": {
+      "text": "Según lo que usted ve en su vida diaria, ¿qué tanto le motiva al/a la estudiante generar impacto positivo en la sociedad o en una comunidad?",
+      "labels": []
+    },
+    "21": {
+      "text": "En su forma natural de relacionarse, ¿qué tan característico es en el/la estudiante relacionarse con nuevas personas y construir vínculos?",
+      "labels": []
+    },
+    "22": {
+      "text": "En su forma natural de relacionarse, ¿qué tan característico es en el/la estudiante persuadir, convencer o influir en otros?",
+      "labels": []
+    },
+    "23": {
+      "text": "En su forma natural de relacionarse, ¿qué tan característico es en el/la estudiante escuchar activamente y comprender distintos puntos de vista?",
+      "labels": []
+    },
+    "24": {
+      "text": "En su forma natural de relacionarse, ¿qué tan característico es en el/la estudiante trabajar en equipo y colaborar con otros?",
+      "labels": []
+    },
+    "25": {
+      "text": "En su forma natural de relacionarse, ¿qué tan característico es en el/la estudiante asumir liderazgo cuando la situación lo requiere?",
+      "labels": []
+    },
+    "26": {
+      "text": "En actividades cotidianas, compromisos o proyectos, ¿qué tan de acuerdo está con que el/la estudiante suele preferir ambientes estructurados, organizados y con reglas claras?",
+      "labels": []
+    },
+    "27": {
+      "text": "En actividades cotidianas, compromisos o proyectos, ¿qué tan de acuerdo está con que el/la estudiante suele adaptarse fácilmente al cambio, la incertidumbre o los nuevos retos?",
+      "labels": []
+    },
+    "28": {
+      "text": "En actividades cotidianas, compromisos o proyectos, ¿qué tan de acuerdo está con que el/la estudiante suele ser cuidadoso/a con los detalles y la calidad del trabajo?",
+      "labels": []
+    },
+    "29": {
+      "text": "En actividades cotidianas, compromisos o proyectos, ¿qué tan de acuerdo está con que el/la estudiante suele tolerar adecuadamente la presión, los plazos exigentes o la carga de trabajo?",
+      "labels": []
+    },
+    "30": {
+      "text": "En actividades cotidianas, compromisos o proyectos, ¿qué tan de acuerdo está con que el/la estudiante suele cumplir compromisos, responsabilidades y fechas de entrega?",
+      "labels": []
+    },
+    "31": {
+      "text": "Según su percepción cercana, ¿qué potencial cree que tiene el/la estudiante para destacarse en roles analíticos, técnicos o de datos?",
+      "labels": []
+    },
+    "32": {
+      "text": "Según su percepción cercana, ¿qué potencial cree que tiene el/la estudiante para destacarse liderando equipos, proyectos o iniciativas?",
+      "labels": []
+    },
+    "33": {
+      "text": "Según su percepción cercana, ¿qué potencial cree que tiene el/la estudiante para destacarse en funciones comerciales, ventas, negociación o relacionamiento con clientes?",
+      "labels": []
+    },
+    "34": {
+      "text": "Según su percepción cercana, ¿qué potencial cree que tiene el/la estudiante para destacarse en actividades creativas, diseño, comunicación o generación de contenido?",
+      "labels": []
+    },
+    "35": {
+      "text": "Según su percepción cercana, ¿qué potencial cree que tiene el/la estudiante para destacarse en investigación, generación de conocimiento o solución de problemas complejos?",
+      "labels": []
+    },
+    "36": {
+      "text": "Según su relación cercana, ¿qué tan desarrollada observa en el/la estudiante la comprensión de la importancia de construir una carrera profesional?",
+      "labels": []
+    },
+    "37": {
+      "text": "Según su relación cercana, ¿qué tan desarrollado observa en el/la estudiante el interés genuino en continuar estudios superiores o especializarse?",
+      "labels": []
+    },
+    "38": {
+      "text": "Según su relación cercana, ¿qué tan desarrollada observa en el/la estudiante la búsqueda de información sobre carreras, universidades, becas u oportunidades profesionales?",
+      "labels": []
+    },
+    "39": {
+      "text": "Según su relación cercana, ¿qué tan desarrollada observa en el/la estudiante la exploración de opciones de futuro por iniciativa propia?",
+      "labels": []
+    },
+    "40": {
+      "text": "Según su relación cercana, ¿qué tan desarrollado observa en el/la estudiante el compromiso con su proyecto de vida académico y profesional?",
+      "labels": []
+    },
+    "41": {
+      "text": "Ordene las áreas académicas y profesionales según la afinidad que observa en el/la estudiante desde su relación cercana:",
+      "labels": [
+        "Ingeniería",
+        "Tecnología y sistemas",
+        "Matemáticas y estadística",
+        "Ciencias de la salud",
+        "Psicología",
+        "Educación",
+        "Negocios y administración",
+        "Marketing y comunicación",
+        "Finanzas y economía",
+        "Derecho",
+        "Arquitectura",
+        "Diseño",
+        "Ciencias sociales",
+        "Relaciones internacionales",
+        "Emprendimiento",
+        "Biotecnología",
+        "Ciencias ambientales",
+        "Logística y operaciones",
+        "Producción audiovisual",
+        "Investigación científica"
+      ]
+    },
+    "42": {
+      "text": "Seleccione las industrias donde observa mayor posibilidad de éxito profesional para el/la estudiante:",
+      "labels": [
+        "Tecnología",
+        "Banca y finanzas",
+        "Consumo masivo",
+        "Consultoría",
+        "Salud",
+        "Educación",
+        "Gobierno",
+        "Organismos internacionales",
+        "Marketing y publicidad",
+        "Entretenimiento",
+        "Deportes",
+        "Energía",
+        "Construcción",
+        "Manufactura",
+        "Comercio electrónico",
+        "Turismo",
+        "Logística",
+        "Telecomunicaciones",
+        "Investigación y desarrollo",
+        "Emprendimiento"
+      ]
+    },
+    "43": {
+      "text": "Seleccione las actividades que considera que el/la estudiante más disfruta o podría disfrutar en su vida real:",
+      "labels": [
+        "Resolver problemas complejos",
+        "Liderar personas",
+        "Convencer o negociar",
+        "Analizar información",
+        "Investigar",
+        "Diseñar",
+        "Crear contenido",
+        "Enseñar",
+        "Ayudar a otros",
+        "Vender",
+        "Programar",
+        "Construir",
+        "Organizar",
+        "Planificar",
+        "Innovar"
+      ]
+    },
+    "44": {
+      "text": "Seleccione el tipo de trabajo que probablemente disfrutaría más el/la estudiante:",
+      "labels": [
+        "Analítico",
+        "Creativo",
+        "Comercial",
+        "Técnico",
+        "Científico",
+        "Emprendedor",
+        "Social",
+        "Administrativo",
+        "Estratégico",
+        "Operativo"
+      ]
+    },
+    "45": {
+      "text": "¿Cuál considera que es el mayor talento, fortaleza o potencial profesional del/de la estudiante y por qué?",
+      "labels": []
+    },
+    "46": {
+      "text": "¿Qué actividades realiza el/la estudiante voluntariamente en su tiempo libre cuando nadie se lo exige?",
+      "labels": []
+    },
+    "47": {
+      "text": "¿Qué temas le apasionan al/a la estudiante o sobre cuáles conversa con más entusiasmo?",
+      "labels": [
+        "Tecnología",
+        "Negocios",
+        "Deporte",
+        "Moda",
+        "Música",
+        "Arte",
+        "Salud",
+        "Psicología",
+        "Política",
+        "Viajes",
+        "Videojuegos",
+        "Redes sociales",
+        "Emprendimiento",
+        "Ciencia",
+        "Otro"
+      ]
+    },
+    "48": {
+      "text": "¿En qué tipo de trabajo o industria imagina más exitoso/a al/a la estudiante?",
+      "labels": [
+        "Tecnología",
+        "Banca",
+        "Marketing",
+        "Entretenimiento",
+        "Educación",
+        "Salud",
+        "Emprendimiento",
+        "Deportes",
+        "Consultoría",
+        "Diseño",
+        "Sector público",
+        "Turismo",
+        "Otro"
+      ]
+    },
+    "49": {
+      "text": "¿Cuál considera que es la principal fortaleza personal del/de la estudiante y en qué situaciones se nota?",
+      "labels": []
+    },
+    "50": {
+      "text": "¿Qué actividad cree que le generaría mayor satisfacción y felicidad profesional al/a la estudiante?",
+      "labels": []
+    }
+  }
+}
