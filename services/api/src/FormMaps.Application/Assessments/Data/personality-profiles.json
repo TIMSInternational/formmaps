@@ -9,12 +9,12 @@
     "alias_en": "The Resolute Technician",
     "tagline": "Práctico, orientado a resultados, autónomo.",
     "tagline_en": "Practical, results-oriented, autonomous.",
-    "description_es": "“El nombre” es resolutivo, autónomo, observador y lógico. Tiende a enfocarse en los hechos y en lo que puede arreglar o mejorar con sus propias manos. Es analítico, rápido al actuar y se siente más cómodo en entornos donde puede tomar decisiones por sí mismo sin intervenciones externas innecesarias. Experto en resolver problemas con lógica y precisión; se adapta bien a lo inesperado y actúa con eficiencia en entornos concretos y prácticos.",
-    "description_en": "“The name” is resolute, autonomous, observant and logical. He tends to focus on facts and on what he can fix or improve with his own hands. He is analytical, quick to act and most comfortable in environments where he can make decisions on his own without unnecessary external intervention. An expert at solving problems with logic and precision; he adapts well to the unexpected and acts efficiently in concrete, practical settings.",
+    "description_es": "El ISTP es resolutivo, autónomo, observador y lógico. Tiende a enfocarse en los hechos y en lo que puede arreglar o mejorar con sus propias manos. Es analítico, rápido al actuar y se siente más cómodo en entornos donde puede tomar decisiones por sí mismo sin intervenciones externas innecesarias. Experto en resolver problemas con lógica y precisión; se adapta bien a lo inesperado y actúa con eficiencia en entornos concretos y prácticos.",
+    "description_en": "The ISTP is resolute, autonomous, observant and logical. He tends to focus on facts and on what he can fix or improve with his own hands. He is analytical, quick to act and most comfortable in environments where he can make decisions on his own without unnecessary external intervention. An expert at solving problems with logic and precision; he adapts well to the unexpected and acts efficiently in concrete, practical settings.",
     "strengths_es": [
       "Gran capacidad para resolver problemas prácticos.",
       "Pensamiento analítico, lógico y objetivo.",
-      "Adaptabilidad a situaciones nuevas y cambio.",
+      "Adaptabilidad a situaciones nuevas y al cambio.",
       "Serenidad bajo presión.",
       "Fuerte independencia y autosuficiencia."
     ],
@@ -107,7 +107,7 @@
       "Allow pauses or silences in conversations.",
       "Avoid exaggerated emotional language.",
       "Give him autonomy to act his own way.",
-      "Respect his silences; speak when there is something important to say."
+      "Respect his silences; he speaks when he has something important to say."
     ],
     "potential_es": {
       "social": "Buen observador, útil en momentos de crisis o emergencias.",
@@ -153,7 +153,7 @@
     "strengths_en": [
       "Clear long-term vision.",
       "Highly developed logical and strategic thinking.",
-      "High level of self-demand and self-directed learning.",
+      "High personal standards and self-directed learning.",
       "Independence and orientation toward innovation."
     ],
     "weaknesses_es": [
@@ -422,7 +422,7 @@
     ],
     "howToDevelop_es": [
       "Talleres de comunicación asertiva y gestión emocional.",
-      "Programas de balance vida-trabajo enfocados en su bienestar.",
+      "Programas de equilibrio entre vida personal y trabajo enfocados en su bienestar.",
       "Asignación de responsabilidades compartidas para evitar sobrecarga.",
       "Espacios seguros para expresar sus propias necesidades y emociones."
     ],
@@ -480,7 +480,7 @@
       "objective": "Reforzar su equilibrio personal desarrollando límites sanos y empoderando su voz sin perder su esencia servicial.",
       "practices": [
         "Coaching centrado en el autocuidado y autoestima.",
-        "Role playing para situaciones de confrontación positiva.",
+        "Juegos de rol para situaciones de confrontación positiva.",
         "Definición conjunta de límites y prioridades personales.",
         "Entrenamiento en negociación y expresión directa de necesidades."
       ]
@@ -501,7 +501,7 @@
     "alias_en": "The Discreet Artist",
     "tagline": "El Creativo Reservado",
     "tagline_en": "The Reserved Creative",
-    "description_es": "Sensible, intuitivo y de expresión sutil, el ISFP vive el presente con una conexión estética y emocional única. Auténtico sin necesidad de palabras, prefiere actuar que hablar, y suele impactar con gestos silenciosos, pero profundamente significativos. Valora la armonía, la libertad creativa y el respeto mutuo.",
+    "description_es": "Sensible, intuitivo y de expresión sutil, el ISFP vive el presente con una conexión estética y emocional única. Auténtico sin necesidad de palabras, prefiere actuar a hablar, y suele impactar con gestos silenciosos, pero profundamente significativos. Valora la armonía, la libertad creativa y el respeto mutuo.",
     "description_en": "Sensitive, intuitive and subtle in expression, the ISFP lives in the present with a unique aesthetic and emotional connection. Authentic without needing words, he prefers to act rather than speak, and often makes an impact with silent yet deeply meaningful gestures. He values harmony, creative freedom and mutual respect.",
     "strengths_es": [
       "Gran creatividad con una mirada estética única.",
@@ -791,7 +791,7 @@
     ],
     "howToDevelop_en": [
       "Coaching oriented toward measurable results.",
-      "Dynamics to socialize ideas clearly.",
+      "Activities to share ideas clearly.",
       "Time management and follow-up tools.",
       "Support in evaluating when “good enough” is enough."
     ],
@@ -1205,7 +1205,7 @@
     "coachingStrategy_es": {
       "objective": "Humanizar su liderazgo manteniendo su enfoque organizativo.",
       "practices": [
-        "Role playing con perfiles emocionales.",
+        "Juegos de rol con perfiles emocionales.",
         "Talleres sobre motivación no transaccional.",
         "Acompañamiento en cultura de innovación.",
         "Dinámicas sobre confianza y flexibilidad."
@@ -1257,7 +1257,7 @@
     ],
     "improvementAreas_es": [
       "Establecer límites personales saludables.",
-      "Aceptar opiniones disonantes sin tomarlas personal.",
+      "Aceptar opiniones disonantes sin tomárselas como algo personal.",
       "Delegar responsabilidades.",
       "Valorar el autocuidado sin culpa."
     ],
@@ -1473,8 +1473,8 @@
     "alias_en": "The Creative Inspirer",
     "tagline": "El Motivador Entusiasta",
     "tagline_en": "The Enthusiastic Motivator",
-    "description_es": "Energético, empático y lleno de ideas. Inspirador natural que busca sentido en todo lo que hace, fomenta conexiones profundas y se mueve bien en entornos dinámicos y cambiantes. Entusiasta, empático y espontáneo, conecta emocionalmente con los demás, tiene gran creatividad y busca experiencias con propósito. Inspira desde su autenticidad y optimismo.",
-    "description_en": "Energetic, empathetic and full of ideas. A natural inspirer who seeks meaning in everything he does, fosters deep connections and thrives in dynamic, changing environments. Enthusiastic, empathetic and spontaneous, he connects emotionally with others, has great creativity and seeks purposeful experiences. He inspires through his authenticity and optimism.",
+    "description_es": "Energético, empático y lleno de ideas. Inspirador natural que busca sentido en todo lo que hace, fomenta conexiones profundas y se mueve bien en entornos dinámicos y cambiantes. Entusiasta y espontáneo, conecta emocionalmente con los demás, tiene gran creatividad y busca experiencias con propósito. Inspira desde su autenticidad y optimismo.",
+    "description_en": "Energetic, empathetic and full of ideas. A natural inspirer who seeks meaning in everything he does, fosters deep connections and thrives in dynamic, changing environments. Enthusiastic and spontaneous, he connects emotionally with others, has great creativity and seeks purposeful experiences. He inspires through his authenticity and optimism.",
     "strengths_es": [
       "Altamente creativo e imaginativo.",
       "Empático y con gran inteligencia emocional.",
@@ -1623,7 +1623,7 @@
       "objective": "Convertir su creatividad emocional en proyectos sostenibles y con impacto real, alineando su creatividad y emoción con constancia y planificación.",
       "practices": [
         "Metodologías ágiles con enfoque emocional.",
-        "Mentoring estructurado para ejecución.",
+        "Mentoría estructurada para la ejecución.",
         "Reflexión guiada sobre sus motivaciones profundas.",
         "Actividades de impacto a corto y mediano plazo.",
         "Espacios creativos con metas realistas.",
@@ -1656,8 +1656,8 @@
     "alias_en": "The Persuasive Innovator",
     "tagline": "El Estratega Creativo",
     "tagline_en": "The Creative Strategist",
-    "description_es": "Ingenioso, ágil mentalmente y provocador positivo. Encuentra posibilidades en cada obstáculo, desafía lo establecido y lidera con carisma. Disfruta del debate y del cambio constante. Rápido, creativo y argumentativo, le apasiona explorar ideas nuevas, desafiar el status quo y encontrar caminos alternativos para resolver problemas. Energético, versátil y de pensamiento divergente.",
-    "description_en": "Ingenious, mentally agile and a positive provocateur. He finds possibilities in every obstacle, challenges the established order and leads with charisma. He enjoys debate and constant change. Quick, creative and argumentative, he is passionate about exploring new ideas, challenging the status quo and finding alternative paths to solve problems. Energetic, versatile and of divergent thinking.",
+    "description_es": "Ingenioso, ágil mentalmente y provocador positivo. Encuentra posibilidades en cada obstáculo, desafía lo establecido y lidera con carisma. Disfruta del debate y del cambio constante. Rápido, creativo y argumentativo, le apasiona explorar ideas nuevas, desafiar el statu quo y encontrar caminos alternativos para resolver problemas. Energético, versátil y de pensamiento divergente.",
+    "description_en": "Ingenious, mentally agile and a positive provocateur. He finds possibilities in every obstacle, challenges the established order and leads with charisma. He enjoys debate and constant change. Quick, creative and argumentative, he is passionate about exploring new ideas, challenging the status quo and finding alternative paths to solve problems. Energetic, versatile and a divergent thinker.",
     "strengths_es": [
       "Alta capacidad para generar ideas innovadoras.",
       "Gran habilidad verbal y argumentativa.",
@@ -1807,7 +1807,7 @@
     "coachingStrategy_es": {
       "objective": "Canalizar su energía innovadora hacia logros concretos y sostenibles, dirigiendo su creatividad hacia impacto real y sostenido.",
       "practices": [
-        "Coaching basado en accountability y entrega.",
+        "Coaching basado en la rendición de cuentas y la entrega.",
         "Mentores que lo reten intelectualmente.",
         "Seguimiento sistemático de avances.",
         "Espacios donde sus ideas se materialicen en resultados.",
@@ -1894,7 +1894,7 @@
     ],
     "motivation_es": [
       "Proyectos con impacto humano y propósito compartido.",
-      "Oportunidades para guiar, mentorear y desarrollar a otros.",
+      "Oportunidades para guiar, orientar y desarrollar a otros.",
       "Ambientes colaborativos, armónicos y de reconocimiento.",
       "Reconocimiento auténtico por su aporte al bienestar del equipo."
     ],

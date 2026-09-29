@@ -65,7 +65,7 @@
   "3": {
    "premises": [
     "Lily is smarter than Mia.",
-    "Lily is more clumsy than Maria."
+    "Lily is clumsier than Maria."
    ],
    "question": "Who is the smartest?",
    "options": [
@@ -76,8 +76,8 @@
   },
   "4": {
    "premises": [
-    "Pablo is les happy than Luis.",
-    "Pedro is les happy than Pablo."
+    "Pablo is less happy than Luis.",
+    "Pedro is less happy than Pablo."
    ],
    "question": "Who is the happiest?",
    "options": [
@@ -355,7 +355,7 @@
     "Pablo is more tired than Alex.",
     "Diego is more tired than Pablo."
    ],
-   "question": "Who is more tired?",
+   "question": "Who is the most tired?",
    "options": [
     "Pablo",
     "Alex",
@@ -427,7 +427,7 @@
     "Jennifer is less patient than Maria.",
     "Jennifer is more patient than Isabella."
    ],
-   "question": "¿Who is the least patient?",
+   "question": "Who is the least patient?",
    "options": [
     "Jennifer",
     "Maria",

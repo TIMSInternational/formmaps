@@ -674,7 +674,7 @@ public class SchoolAdminEndpointsTests
         using var client = factory.CreateClient();
         var response = await SendPost(client, "/api/v1/school-admin/assessments/setup-360", new { studentIds = new[] { "s1" } });
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
-        Assert.Contains("No students to setup", await response.Content.ReadAsStringAsync());
+        Assert.Contains("No students to set up", await response.Content.ReadAsStringAsync());
     }
 
     [Fact]
