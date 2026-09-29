@@ -132,7 +132,8 @@
     "notStarted": "NOT STARTED",
     "male": "Male",
     "female": "Female",
-    "to": "to"
+    "to": "to",
+    "continue": "Continue"
   },
   "error": {
     "somethingWentWrong": "Something went wrong",
@@ -659,12 +660,21 @@
         "all": "All Roles",
         "student": "Student",
         "coach": "Coach",
-        "admin": "Admin"
+        "admin": "Admin",
+        "counselor": "Counselor",
+        "school_admin": "School admin",
+        "teacher": "Teacher",
+        "parent": "Parent"
       },
       "status": {
         "all": "All Status",
         "active": "Active",
-        "inactive": "Inactive"
+        "inactive": "Inactive",
+        "invited": "Invited",
+        "invitedExpiresToday": "Invited · expires today",
+        "invitedExpiresIn_one": "Invited · expires in {{count}} day",
+        "invitedExpiresIn_other": "Invited · expires in {{count}} days",
+        "expired": "Invitation expired"
       },
       "addUser": "Add User",
       "dialogTitle": "Add New User",
@@ -697,7 +707,8 @@
         "copyEmail": "Copy Email",
         "viewProfile": "View Profile",
         "editDetails": "Edit Details",
-        "deactivateUser": "Deactivate User"
+        "deactivateUser": "Deactivate User",
+        "resendInvite": "Resend invitation"
       },
       "openMenu": "Open menu",
       "invite": {
@@ -762,6 +773,65 @@
         "sending": "Sending…",
         "inviteAnother": "Invite another",
         "done": "Done"
+      },
+      "stats": {
+        "totalUsers": "Total Users",
+        "activeUsers": "Active Users (MAU)",
+        "newSignups": "New Signups",
+        "growthRate": "Growth Rate",
+        "fromLastMonth": "from last month"
+      },
+      "deactivate": {
+        "title": "Deactivate user",
+        "body": "Are you sure you want to deactivate {{name}}? They will no longer be able to access the platform.",
+        "cta": "Deactivate",
+        "done": "{{name}} has been deactivated",
+        "failed": "Couldn't deactivate this user. Please try again."
+      },
+      "resend": {
+        "title": "Resend invitation",
+        "body": "Send {{name}} a new invitation link at {{email}}? Any older link stops working.",
+        "cta": "Send new link",
+        "done": "A new invitation was sent to {{email}}",
+        "notDelivered": "The new invitation was created, but the email to {{email}} could not be sent.",
+        "alreadyActive": "{{name}} has already finished setting up their account.",
+        "failed": "Couldn't resend the invitation. Please try again."
+      },
+      "access": {
+        "heading": "Access",
+        "role": "Role",
+        "roleHint": "The new role applies the next time they sign in.",
+        "loadingRoles": "Loading roles…",
+        "roleConfirmTitle": "Change role",
+        "roleConfirmBody": "Change {{name}} from {{from}} to {{to}}? What they can see and do changes the next time they sign in.",
+        "roleConfirmCta": "Change role",
+        "roleChanged": "{{name}} is now {{role}}",
+        "roleFailed": "Couldn't change the role. Please try again.",
+        "school": "School",
+        "changeSchool": "Change school",
+        "schoolConfirmTitle": "Move to another school",
+        "schoolConfirmBody": "Move {{name}} to {{school}}? Staff at their current school will no longer see them.",
+        "schoolConfirmCta": "Move",
+        "schoolChanged": "{{name}} now belongs to {{school}}",
+        "schoolFailed": "Couldn't change the school. Please try again."
+      },
+      "roleNames": {
+        "student": "Student",
+        "counselor": "Counselor",
+        "school_admin": "School admin",
+        "teacher": "Teacher",
+        "parent": "Parent",
+        "coach": "Coach",
+        "super_admin": "Super Admin",
+        "admin": "Admin"
+      },
+      "staffStats": {
+        "totalUsers": "Total users",
+        "inSchool": "in school",
+        "counselors": "Counselors",
+        "activeStaff": "active staff",
+        "students": "Students",
+        "enrolled": "enrolled"
       }
     },
     "schools": {
@@ -1660,7 +1730,11 @@
       "termsOfService": "Terms of Service",
       "and": "and",
       "privacyPolicy": "Privacy Policy",
-      "marketingOptIn": "I'd like to receive career tips and product updates via email"
+      "marketingOptIn": "I'd like to receive career tips and product updates via email",
+      "emailUnavailableShort": "This email can't be used to create a new account.",
+      "emailUnavailable": "This email already has an account or a pending invitation. If you were invited, use the link in your invitation email to finish setting up.",
+      "emailUnavailableSignIn": "Sign in",
+      "emailUnavailableReset": "Forgot your password? Reset it"
     },
     "password": {
       "show": "Show password",
@@ -1721,7 +1795,13 @@
     "errors": {
       "loginFailed": "Login failed. Please try again.",
       "registrationFailed": "Registration failed. Please try again.",
-      "genericSignup": "An error occurred during signup. Please try again."
+      "genericSignup": "An error occurred during signup. Please try again.",
+      "invalidCredentials": "That email and password don't match. Check them and try again.",
+      "invitedHint": "Invited recently? Finish setting up from the link in your invitation email — don't use Sign up.",
+      "accountLocked_one": "Too many failed attempts. For your security this account is locked for {{count}} minute.",
+      "accountLocked_other": "Too many failed attempts. For your security this account is locked for {{count}} minutes.",
+      "rateLimited": "Too many sign-in attempts right now. Please wait a few minutes and try again.",
+      "accountDisabled": "This account has been deactivated. Contact your school administrator if you think this is a mistake."
     }
   },
   "transactions": {
@@ -1926,7 +2006,14 @@
     },
     "counselor": {
       "infoTitle": "Counselor Information",
-      "infoDesc": "Tell us about yourself to set up your profile."
+      "infoDesc": "Tell us about yourself to set up your profile.",
+      "email": "Your Email",
+      "name": "Your Full Name",
+      "namePlaceholder": "e.g. Sarah Jenkins",
+      "phone": "Phone Number",
+      "schoolName": "School",
+      "timezone": "Timezone",
+      "unassigned": "Unassigned"
     },
     "coach": {
       "personalTitle": "Personal Information",
@@ -1951,7 +2038,32 @@
       "alreadyCompleted": "You have already completed onboarding."
     },
     "invite": {
-      "context": "You've been invited to {{school}} as {{role}}."
+      "context": "You've been invited to {{school}} as {{role}}.",
+      "problem": {
+        "brandLine1": "Find your path.",
+        "brandLine2": "Shape your future.",
+        "expiredHeading": "This invitation has expired",
+        "expiredBody": "For your security, invitation links only work for a limited time. We can email you a fresh one right now.",
+        "sendNewLink": "Send me a new link",
+        "sending": "Sending…",
+        "sentHeading": "Check your email",
+        "sentBody": "We sent a new invitation link to {{email}}. It works until {{date}}.",
+        "sentBodyNoDate": "We sent a new invitation link to {{email}}.",
+        "sentSpamHint": "Not there in a few minutes? Check your spam or junk folder.",
+        "rateLimited": "You've asked for several links already. Please wait a few minutes and try again.",
+        "resendFailed": "We couldn't send a new link. Please ask your school administrator to invite you again.",
+        "askSchool": "You can also ask your school administrator to send you a new invitation.",
+        "usedHeading": "This invitation was already accepted",
+        "usedBody": "Your account is already set up. Sign in with your email and the password you created.",
+        "signIn": "Sign in",
+        "forgotPassword": "Forgot your password?",
+        "invalidHeading": "This invitation link isn't valid",
+        "invalidBody": "The link may be incomplete, or it was replaced by a newer invitation. Open the most recent invitation email, or ask your school administrator for a new one.",
+        "haveAccount": "Already have an account? Sign in",
+        "unknownHeading": "We couldn't check your invitation",
+        "unknownBody": "This is usually a connection problem. Please try again in a moment.",
+        "tryAgain": "Try again"
+      }
     }
   },
   "compare": {
@@ -2754,5 +2866,8 @@
     "potentialSocial": "Social",
     "potentialLaboral": "Professional",
     "sectionCoachingStrategy": "Coaching Strategy"
+  },
+  "validation": {
+    "required": "This field is required"
   }
 }

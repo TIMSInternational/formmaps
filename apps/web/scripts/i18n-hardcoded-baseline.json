@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-08-08T03:22:37.614Z",
-  "totalFindings": 497,
+  "generatedAt": "2026-09-29T00:35:48.507Z",
+  "totalFindings": 480,
   "note": "Baseline for --fail-on-new. Existing findings are tolerated; new file/text fingerprints fail CI.",
   "findings": [
     {
@@ -425,7 +425,7 @@
     },
     {
       "file": "src/app/dashboard/assessments/_components/PCAResultsPanel.tsx",
-      "line": 478,
+      "line": 484,
       "text": "Competency Levels"
     },
     {
@@ -502,86 +502,6 @@
       "file": "src/app/dashboard/book-counselor/page.tsx",
       "line": 246,
       "text": "Select a counselor"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 56,
-      "text": "Senior Developer Salary"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 57,
-      "text": "Average base pay"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 72,
-      "text": "View History"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 112,
-      "text": "Open Roles"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 163,
-      "text": "Trending Skills"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 164,
-      "text": "High demand technologies in your sector"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 168,
-      "text": "Match Rate"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 211,
-      "text": "Career Path"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 212,
-      "text": "Salary progression"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 247,
-      "text": "Top Hiring"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 249,
-      "text": "View All"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 269,
-      "text": "Hot Spots"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 297,
-      "text": "Recent Opportunities"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 298,
-      "text": "Curated specifically for your profile"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 301,
-      "text": "View All Jobs"
-    },
-    {
-      "file": "src/app/dashboard/career/market/_components/MarketSections.tsx",
-      "line": 349,
-      "text": "Accelerate your growth"
     },
     {
       "file": "src/app/dashboard/coaching/earnings/page.tsx",
@@ -1570,42 +1490,42 @@
     },
     {
       "file": "src/app/not-found.tsx",
-      "line": 8,
+      "line": 10,
       "text": "Page Not Found"
     },
     {
       "file": "src/app/print/formmaps/page.tsx",
-      "line": 108,
+      "line": 111,
       "text": "Reference Design"
     },
     {
       "file": "src/app/print/formmaps/page.tsx",
-      "line": 188,
+      "line": 191,
       "text": "Profile Illustration"
     },
     {
       "file": "src/app/print/formmaps/page.tsx",
-      "line": 328,
+      "line": 331,
       "text": "Strengths and risks"
     },
     {
       "file": "src/app/print/formmaps/page.tsx",
-      "line": 541,
+      "line": 544,
       "text": "Perfect fit"
     },
     {
       "file": "src/app/print/formmaps/page.tsx",
-      "line": 558,
+      "line": 561,
       "text": "Highly recommended"
     },
     {
       "file": "src/app/print/formmaps/page.tsx",
-      "line": 596,
+      "line": 599,
       "text": "Reference Overlay"
     },
     {
       "file": "src/app/print/formmaps/page.tsx",
-      "line": 688,
+      "line": 691,
       "text": "Action checklist"
     },
     {
@@ -1660,7 +1580,7 @@
     },
     {
       "file": "src/app/school-admin/_components/SchoolAdminSidebar.tsx",
-      "line": 356,
+      "line": 380,
       "text": "School Administrator"
     },
     {
@@ -1720,32 +1640,32 @@
     },
     {
       "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
-      "line": 193,
+      "line": 209,
       "text": "Add Course"
     },
     {
       "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
-      "line": 199,
+      "line": 215,
       "text": "Introduction to Algebra"
     },
     {
       "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
-      "line": 203,
+      "line": 231,
       "text": "Grade Levels"
     },
     {
       "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
-      "line": 225,
+      "line": 253,
       "text": "Total Courses"
     },
     {
       "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
-      "line": 237,
+      "line": 265,
       "text": "Filter department"
     },
     {
       "file": "src/app/school-admin/academics/_components/CoursesPanel.tsx",
-      "line": 254,
+      "line": 282,
       "text": "No courses found"
     },
     {
@@ -2380,17 +2300,17 @@
     },
     {
       "file": "src/app/school-admin/users/_components/InvitePanel.tsx",
-      "line": 209,
+      "line": 266,
       "text": "Full Name"
     },
     {
       "file": "src/app/school-admin/users/_components/InvitePanel.tsx",
-      "line": 210,
+      "line": 267,
       "text": "Email Address"
     },
     {
       "file": "src/app/school-admin/users/_components/InvitePanel.tsx",
-      "line": 222,
+      "line": 279,
       "text": "John Smith"
     },
     {
@@ -2415,12 +2335,7 @@
     },
     {
       "file": "src/app/school-admin/users/_components/StaffPanel.tsx",
-      "line": 191,
-      "text": "Total Users"
-    },
-    {
-      "file": "src/app/school-admin/users/_components/StaffPanel.tsx",
-      "line": 221,
+      "line": 222,
       "text": "No users found"
     },
     {

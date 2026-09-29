@@ -21,6 +21,7 @@ import {
 import { makeSignupSchema, type SignupFormData } from "./_components/signupSchema";
 import { PasswordInput } from "./_components/PasswordInput";
 import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
+import { isEmailUnavailable } from "@/lib/auth/authErrors";
 
 const inputStyle = { background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" } as const;
 const focusOn = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue)"; };
@@ -44,6 +45,8 @@ export default function SignupPage() {
   });
 
   const [isLoading, setIsLoading] = useState(false);
+  // The email already has an account or a pending invitation: explain the way in, not just "no".
+  const [emailUnavailable, setEmailUnavailable] = useState(false);
   const { setUser } = useGlobalStore();
   const {
     handleSubmit,
@@ -56,6 +59,7 @@ export default function SignupPage() {
 
   const handleSubmitForm = async (data: SignupFormData) => {
     setIsLoading(true);
+    setEmailUnavailable(false);
 
     try {
       // No role lookup: those endpoints require auth (401 for anonymous users)
@@ -87,6 +91,12 @@ export default function SignupPage() {
       });
       router.push("/dashboard");
     } catch (err: unknown) {
+      if (isEmailUnavailable(err)) {
+        setEmailUnavailable(true);
+        form.setError("email", { message: t("auth.signup.emailUnavailableShort") });
+        setIsLoading(false);
+        return;
+      }
       const error = err as { response?: { data?: { errors?: Record<string, string | string[]>; message?: string } }; message?: string };
       if (error.response?.data?.errors) {
         const apiErrors = error.response.data.errors;
@@ -209,6 +219,20 @@ export default function SignupPage() {
                   </FormItem>
                 )}
               />
+              {emailUnavailable && (
+                <div
+                  role="status"
+                  data-testid="signup-email-unavailable"
+                  className="rounded-lg px-3 py-2.5 text-xs flex flex-col gap-1.5"
+                  style={{ background: "#EAF3F4", color: "#102B47", border: "1px solid #C7DFE2" }}
+                >
+                  <span>{t("auth.signup.emailUnavailable")}</span>
+                  <span className="flex flex-wrap gap-x-3 gap-y-1">
+                    <Link href="/login" className="underline font-medium">{t("auth.signup.emailUnavailableSignIn")}</Link>
+                    <Link href="/forgot-password" className="underline font-medium">{t("auth.signup.emailUnavailableReset")}</Link>
+                  </span>
+                </div>
+              )}
 
               {/* Date of birth (13+ age gate) */}
               <FormField

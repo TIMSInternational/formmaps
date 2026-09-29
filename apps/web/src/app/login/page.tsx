@@ -25,6 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { AuthErrorMessage } from "@/components/ui/error-message";
+import { describeLoginError, type DescribedLoginError } from "@/lib/auth/authErrors";
 import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
 import { Eye, EyeOff } from "lucide-react";
 
@@ -44,7 +45,7 @@ export default function LoginPage() {
     [t],
   );
   const [showPassword, setShowPassword] = useState(false);
-  const [apiError, setApiError] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<DescribedLoginError | null>(null);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -98,12 +99,9 @@ export default function LoginPage() {
 
       // Hard navigation to avoid race conditions with AuthWrapper's router.replace
       window.location.href = redirectTo;
-    } catch (err: any) {
-      const message =
-        err.response?.data?.message ||
-        err.message ||
-        t("auth.errors.loginFailed");
-      setApiError(message);
+    } catch (err: unknown) {
+      // Explained from the API's code in the user's language — never its raw English message.
+      setApiError(describeLoginError(err));
     }
   };
 
@@ -214,7 +212,16 @@ export default function LoginPage() {
                 )}
               />
 
-              {apiError && <AuthErrorMessage message={apiError} />}
+              {apiError && (
+                <div className="flex flex-col gap-1.5">
+                  <AuthErrorMessage message={t(apiError.key, apiError.params)} />
+                  {apiError.inviteHint && (
+                    <p className="text-xs" style={{ color: "#555" }} data-testid="login-invite-hint">
+                      {t("auth.errors.invitedHint")}
+                    </p>
+                  )}
+                </div>
+              )}
 
               <button
                 type="submit"
