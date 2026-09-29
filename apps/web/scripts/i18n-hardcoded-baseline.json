@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-29T00:35:48.507Z",
-  "totalFindings": 480,
+  "generatedAt": "2026-09-29T18:08:40.491Z",
+  "totalFindings": 478,
   "note": "Baseline for --fail-on-new. Existing findings are tolerated; new file/text fingerprints fail CI.",
   "findings": [
     {
@@ -449,23 +449,13 @@
       "text": "Select relationship"
     },
     {
-      "file": "src/app/dashboard/assessments/evaluation/_components/EvaluatorGroupCard.tsx",
-      "line": 113,
-      "text": "No evaluators yet"
-    },
-    {
-      "file": "src/app/dashboard/assessments/evaluation/_components/InvitationActions.tsx",
-      "line": 53,
-      "text": "Send Email Invitations"
-    },
-    {
       "file": "src/app/dashboard/assessments/evaluation/page.tsx",
-      "line": 223,
+      "line": 225,
       "text": "Select Evaluators for Email"
     },
     {
       "file": "src/app/dashboard/assessments/evaluation/page.tsx",
-      "line": 236,
+      "line": 238,
       "text": "Select Evaluators for SMS"
     },
     {

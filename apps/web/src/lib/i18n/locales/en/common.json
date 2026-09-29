@@ -293,7 +293,19 @@
       "resendError": "Error resending invitation link. Please try again.",
       "groupsIncomplete": "Please complete all evaluator groups before sending invitations. Each group must have at least the minimum required evaluators.",
       "noPhoneNumbers": "No evaluators have phone numbers available for SMS invitations.",
-      "smsComingSoon": "SMS functionality coming soon!"
+      "smsComingSoon": "SMS functionality coming soon!",
+      "editUnavailable": "Changes to an evaluator can't be saved yet. To correct a name or email, remove the evaluator and add them again.",
+      "noPhone": "This evaluator has no phone number.",
+      "emailsSent": "Email invitations sent.",
+      "smsFailed": "Error sending SMS invitations. Please try again."
+    },
+    "page": {
+      "startSelf": "Start self-evaluation",
+      "selfDone": "Self-evaluation done",
+      "startSelfFailed": "We couldn't start your self-evaluation. Please try again.",
+      "startFailed": "We couldn't start the evaluation. Please try again.",
+      "noEvaluatorsYet": "No evaluators yet",
+      "sendEmailInvitations": "Send email invitations"
     },
     "evaluatorManagement": {
       "title": "Evaluator Management",

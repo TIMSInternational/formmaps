@@ -14,8 +14,10 @@ import { useGlobalStore } from "@/store/useGlobalStore";
 import { useEvaluationGroups } from "@/hooks/useAssessmentQueries";
 import { getSelfEvaluationUrl } from "@/services/evaluationService";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 export default function EvaluatorsPage() {
+  const { t } = useTranslation();
   const { user, language } = useGlobalStore();
   const router = useRouter();
   const [starting, setStarting] = useState(false);
@@ -39,10 +41,10 @@ export default function EvaluatorsPage() {
       if (selfEval) {
         router.push(selfEval.url);
       } else {
-        toast.error("Failed to start self-evaluation.");
+        toast.error(t("evaluation.page.startSelfFailed"));
       }
     } catch {
-      toast.error("Failed to start evaluation.");
+      toast.error(t("evaluation.page.startFailed"));
     } finally {
       setStarting(false);
     }
@@ -121,7 +123,7 @@ export default function EvaluatorsPage() {
             {starting ? (
               <><Loader2 className="w-4 h-4 animate-spin" /> Starting...</>
             ) : (
-              <>Start Self-Evaluation <ArrowRight className="w-4 h-4" /></>
+              <>{t("evaluation.page.startSelf")} <ArrowRight className="w-4 h-4" /></>
             )}
           </button>
         </motion.div>
@@ -150,7 +152,7 @@ export default function EvaluatorsPage() {
           </h1>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="text-[11px] font-semibold text-emerald-700">Self-Evaluation Done</span>
+            <span className="text-[11px] font-semibold text-emerald-700">{t("evaluation.page.selfDone")}</span>
           </div>
         </div>
         <p className="text-sm text-muted-foreground mt-1 max-w-md">

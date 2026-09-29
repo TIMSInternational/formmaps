@@ -292,9 +292,8 @@ export function useEvaluatorManagement() {
             : newEvaluator.relationship;
 
         if (isEditing) {
-          toast.success(
-            "Evaluator details updated successfully! Note: API update functionality will be implemented soon."
-          );
+          // Editing is not implemented server-side; say so instead of claiming a save.
+          toast.info(t("evaluation.toast.editUnavailable"));
         } else {
           const created = await createEvaluationGroup({
             evaluatorName: newEvaluator.name,
@@ -393,9 +392,9 @@ export function useEvaluatorManagement() {
       );
       setEvaluatorGroups(updatedGroups);
       await loadApiEvaluators();
-      toast.success("Evaluator removed successfully!");
+      toast.success(t("evaluation.toast.evalRemoved"));
     } catch (error) {
-      toast.error("Error removing evaluator. Please try again.");
+      toast.error(t("evaluation.toast.evalRemoveFailed"));
     }
   };
 
@@ -429,7 +428,7 @@ export function useEvaluatorManagement() {
     phoneNumber: string
   ) => {
     if (!phoneNumber || phoneNumber === "Not provided") {
-      toast.error("Phone number is not available for this evaluator.");
+      toast.error(t("evaluation.toast.noPhone"));
       return;
     }
     toast.info(
@@ -459,7 +458,7 @@ export function useEvaluatorManagement() {
 
       if (result.success) {
         toast.success(
-          result.message || "Email invitations sent successfully!"
+          result.message || t("evaluation.toast.emailsSent")
         );
       } else {
         toast.warning(t("evaluation.toast.emailPartial"));
@@ -507,7 +506,7 @@ export function useEvaluatorManagement() {
           ` (${evaluatorsWithPhone.length} ${t("dashboard.evaluationEvaluators")})`
       );
     } catch (error) {
-      toast.error("Error sending SMS invitations. Please try again.");
+      toast.error(t("evaluation.toast.smsFailed"));
     } finally {
       setLoading(false);
     }
