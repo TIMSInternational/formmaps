@@ -75,19 +75,32 @@ export async function getDimensionNamesEn(): Promise<Record<string, string>> {
   return names;
 }
 
+/** The rater groups GET /api/v1/vocational360/questionnaire accepts (both backends 400 without one). */
+const QUESTIONNAIRE_GROUPS = ["self", "parent", "teacher", "sibling_friend"] as const;
+
 /**
  * Option value → display label in the given language, from the active questionnaire
- * (GET /api/v1/vocational360/questionnaire?lang=). Rankings store option VALUES (slugs such as
- * "ingenieria"); this turns them back into the labels the evaluators saw.
+ * (GET /api/v1/vocational360/questionnaire?group=&lang=). Rankings store option VALUES (slugs such
+ * as "ingenieria"); this turns them back into the labels the evaluators saw. `group` is required,
+ * and the group-specific questions carry their own options, so every group is read and merged; a
+ * group that fails to load only costs its own labels.
  */
 export async function getOptionLabels(lang: "es" | "en"): Promise<Record<string, string>> {
-  const res = await apiRequest(`/api/v1/vocational360/questionnaire?lang=${lang}`);
-  const data = unwrap<{ questions?: { options?: { value: string; label?: string; labelEs?: string; labelEn?: string | null }[] | null }[] } | null>(res);
+  const responses = await Promise.allSettled(
+    QUESTIONNAIRE_GROUPS.map((group) => apiRequest(`/api/v1/vocational360/questionnaire?group=${group}&lang=${lang}`)),
+  );
   const labels: Record<string, string> = {};
-  for (const q of data?.questions ?? []) {
-    for (const o of q.options ?? []) {
-      const label = o.label ?? (lang === "en" ? o.labelEn : null) ?? o.labelEs;
-      if (label && !(o.value in labels)) labels[o.value] = label;
+  for (const r of responses) {
+    if (r.status !== "fulfilled") continue;
+    type Question = { options?: { value: string; label?: string; labelEs?: string; labelEn?: string | null }[] | null };
+    // Both backends put the question ARRAY straight in `data`; `{ questions }` is tolerated too.
+    const data = unwrap<Question[] | { questions?: Question[] } | null>(r.value);
+    const questions = Array.isArray(data) ? data : data?.questions ?? [];
+    for (const q of questions) {
+      for (const o of q.options ?? []) {
+        const label = o.label ?? (lang === "en" ? o.labelEn : null) ?? o.labelEs;
+        if (label && !(o.value in labels)) labels[o.value] = label;
+      }
     }
   }
   return labels;

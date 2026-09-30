@@ -1,4 +1,4 @@
-import { recompute360, recomputeIntegrated } from "../vocationalReportService";
+import { recompute360, recomputeIntegrated, getOptionLabels } from "../vocationalReportService";
 import { apiRequest } from "@/lib/api/apiClient";
 
 jest.mock("@/lib/api/apiClient", () => ({ apiRequest: jest.fn() }));
@@ -27,5 +27,29 @@ describe("vocationalReportService", () => {
     mockApi.mockResolvedValue({ status: "never_computed" });
     const out = await recompute360("stu1");
     expect(out.status).toBe("never_computed");
+  });
+
+  it("getOptionLabels asks for every rater group (the API 400s without one) and merges their labels", async () => {
+    mockApi.mockImplementation(async (url: string) => {
+      const group = new URL(url, "http://x").searchParams.get("group");
+      if (group === "teacher") throw new Error("boom");
+      const questions = [
+        { options: [{ value: "ingenieria", labelEs: "Ingeniería", labelEn: "Engineering", label: "Ingeniería" }] },
+        { options: null },
+        { options: [{ value: `only_${group}`, labelEs: `solo ${group}`, label: `solo ${group}` }] },
+      ];
+      // The real API returns the array itself as `data`; one group uses the { questions } form.
+      return { success: true, data: group === "parent" ? { questions } : questions };
+    });
+    const labels = await getOptionLabels("es");
+    expect(mockApi.mock.calls.map(([u]) => u)).toEqual([
+      "/api/v1/vocational360/questionnaire?group=self&lang=es",
+      "/api/v1/vocational360/questionnaire?group=parent&lang=es",
+      "/api/v1/vocational360/questionnaire?group=teacher&lang=es",
+      "/api/v1/vocational360/questionnaire?group=sibling_friend&lang=es",
+    ]);
+    expect(labels).toEqual({
+      ingenieria: "Ingeniería", only_self: "solo self", only_parent: "solo parent", only_sibling_friend: "solo sibling_friend",
+    });
   });
 });
