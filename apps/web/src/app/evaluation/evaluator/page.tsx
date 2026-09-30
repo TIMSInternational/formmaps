@@ -11,7 +11,7 @@ import { QuestionCard } from "./_components/QuestionCard";
 import { EvaluatorNavigation } from "./_components/EvaluatorNavigation";
 import type { EvaluationQuestion, ApiQuestion, ApiEvaluatorData, ApiResponse, EvaluationData, QuestionResponse } from "./_components/types";
 import { DEFAULT_RESPONSE_SCALE } from "./_components/types";
-import { validateEvaluationToken, sendEvaluatorViolations } from "@/services/evaluationService";
+import { validateEvaluationToken, sendEvaluatorViolations, VALIDATE_TOKEN_REASONS } from "@/services/evaluationService";
 import { VocationalEvaluator } from "./_components/VocationalEvaluator";
 import { langFromQuery } from "./_components/vocationalLang";
 import { RequireChromium } from "@/components/proctoring/RequireChromium";
@@ -139,6 +139,19 @@ export default function EvaluatorPage() {
     }
     (async () => {
       const result = await validateEvaluationToken(token);
+      if (!result.isValid && result.reason) {
+        // Say what happened to the link instead of loading it: a completed evaluation must not
+        // look like a broken one (evaluators re-open emailed links), and the backend's reason is
+        // English-only, so it is mapped to translated copy rather than shown.
+        if (result.reason === VALIDATE_TOKEN_REASONS.used) setAlreadySubmitted(true);
+        else if (result.reason === VALIDATE_TOKEN_REASONS.expired)
+          setError(`${t("evaluation.vocational.expiredTitle")}. ${t("evaluation.vocational.expiredBody")}`);
+        else setError(t("evaluation.vocational.loadError"));
+        setInstrument(null);
+        setIsLoading(false);
+        setIsValidating(false);
+        return;
+      }
       const resolvedInstrument = result.instrument ?? null;
       setInstrument(resolvedInstrument);
       if (resolvedInstrument === "vocational") {

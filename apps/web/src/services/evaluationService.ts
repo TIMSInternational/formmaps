@@ -909,6 +909,13 @@ export function validatePhoneNumber(phone: string): {
 /**
  * Validate evaluation invitation token with enhanced validation
  */
+/** The `reason` strings both validate-token implementations (Node + .NET) return. */
+export const VALIDATE_TOKEN_REASONS = {
+  notFound: "Token not found",
+  expired: "Token expired",
+  used: "Token already used",
+} as const;
+
 export async function validateEvaluationToken(
   token: string,
   language: "english" | "spanish" = "english"
@@ -923,6 +930,8 @@ export async function validateEvaluationToken(
   isTokenUsed?: boolean;
   isEvaluationCompleted?: boolean;
   instrument?: string | null;
+  /** Why the link can't be used, when the API says `valid: false` — see VALIDATE_TOKEN_REASONS. */
+  reason?: string;
   error?: string;
 }> {
   try {
@@ -930,6 +939,13 @@ export async function validateEvaluationToken(
     const result = await apiRequest(
       `/evaluation/validate-token?token=${token}&lang=${langParam}`
     );
+    // Both backends answer 200 { data: { valid: false, reason } } for a used, expired or unknown
+    // token. Reading that as valid sent the page down the legacy loader, which showed "Group not
+    // found" to an evaluator re-opening a link they had already completed.
+    const payload = result?.data ?? result;
+    if (payload?.valid === false) {
+      return { isValid: false, reason: payload.reason };
+    }
     return {
       isValid: true,
       evaluatorName: result.evaluatorName,

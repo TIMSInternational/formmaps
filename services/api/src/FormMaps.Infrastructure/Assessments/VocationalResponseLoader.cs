@@ -61,7 +61,12 @@ public static class VocationalResponseLoader
         while (await reader.ReadAsync(cancellationToken))
         {
             var groupId = reader.GetString(0);
-            var groupType = reader.GetString(1);
+            // groupType is stored under two conventions: the web's create-group writes "Self" / "Parent" /
+            // "Teacher" / "SiblingFriend", seeds and older rows use "self" / "sibling_friend". Normalize the
+            // way the legacy service does (normalizeGroupType) BEFORE the canonical-group filter — comparing
+            // the raw value dropped every group the app itself creates, so a real student's 360 was always
+            // not_ready ("needs_self_plus_one") and never persisted.
+            var groupType = Evaluation360Scoring.NormalizeGroupType(reader.GetString(1));
             // Only the four canonical rater groups are scored (legacy filter on VOCATIONAL_GROUPS).
             if (!VocationalScoring.Groups.Contains(groupType))
             {
