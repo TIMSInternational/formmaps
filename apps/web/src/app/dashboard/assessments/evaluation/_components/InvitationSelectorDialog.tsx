@@ -1,6 +1,8 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { EvaluationGroupWithId } from "@/services/evaluationService";
+import { relationshipLabel } from "./AddEvaluatorDialog";
 import {
   Dialog,
   DialogContent,
@@ -33,6 +35,7 @@ export function InvitationSelectorDialog({
   sendLabel,
   checkboxColor,
 }: InvitationSelectorDialogProps) {
+  const { t } = useTranslation();
   const colorClasses =
     checkboxColor === "blue"
       ? "text-[var(--admin-accent-blue)] focus:ring-[var(--admin-accent-blue)]"
@@ -68,7 +71,7 @@ export function InvitationSelectorDialog({
                   htmlFor={`${checkboxColor}-${group.id}`}
                   className="text-sm font-medium text-foreground leading-none"
                 >
-                  {group.evaluatorName} ({group.relation})
+                  {group.evaluatorName} ({relationshipLabel(t, group.relation)})
                 </label>
               </div>
             ))}
@@ -78,7 +81,7 @@ export function InvitationSelectorDialog({
               onClick={() => onOpenChange(false)}
               className="px-4 py-2 text-sm font-medium text-foreground border border-border rounded-xl hover:bg-secondary transition-colors"
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               onClick={() => {

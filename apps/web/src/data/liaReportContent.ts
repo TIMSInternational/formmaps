@@ -18,21 +18,21 @@ export interface PerformanceLevelContent {
 // Subtest descriptions
 export const SUBTEST_DESCRIPTIONS: Record<LIASubtest, SubtestContent> = {
   pattern_recognition: {
-    name: { es: 'Detección de características', en: 'Pattern Recognition' },
+    name: { es: 'Reconocimiento de patrones', en: 'Pattern Recognition' },
     description: {
-      es: 'Esta prueba mide que tan rápido y exacto un individuo puede revisar errores y trabajar con exactitud y luego describir esos datos o hacer una observación sobre los mismos. Adicionalmente, mide la habilidad general de instrucción y la Velocidad General.',
-      en: 'This test measures how quickly and accurately an individual can review errors and work with precision and then describe that data or make an observation about it. Additionally, it measures general instruction ability and General Speed.',
+      es: 'Esta prueba mide qué tan rápido y con qué precisión un individuo puede revisar errores y trabajar con exactitud, y luego describir esos datos o hacer una observación sobre ellos. Adicionalmente, mide la habilidad general de instrucción y la velocidad general.',
+      en: 'This test measures how quickly and accurately an individual can review errors and work with precision and then describe that data or make an observation about it. Additionally, it measures general instruction ability and general speed.',
     },
   },
   verbal_reasoning: {
-    name: { es: 'Razonamiento', en: 'Verbal Reasoning' },
+    name: { es: 'Razonamiento verbal', en: 'Verbal Reasoning' },
     description: {
-      es: 'Esta prueba evalúa la habilidad de un individuo para retener información en la memoria a corto plazo y resolver problemas luego de recibir instrucciones orales o escritas. Evalúa además la capacidad de hacer inferencias, a la razón de la información proporcionada y elaborar correctas conclusiones.',
+      es: 'Esta prueba evalúa la habilidad de un individuo para retener información en la memoria a corto plazo y resolver problemas luego de recibir instrucciones orales o escritas. Evalúa además la capacidad de hacer inferencias a partir de la información proporcionada y de elaborar conclusiones correctas.',
       en: 'This test evaluates an individual\'s ability to retain information in short-term memory and solve problems after receiving oral or written instructions. It also evaluates the ability to make inferences from the information provided and draw correct conclusions.',
     },
   },
   numerical_speed: {
-    name: { es: 'Velocidad y exactitud numérica', en: 'Numerical Speed & Accuracy' },
+    name: { es: 'Velocidad numérica', en: 'Numerical Speed' },
     description: {
       es: 'Esta prueba es relevante en roles en donde sea necesaria la aptitud numérica, en especial aquellos que claramente requieran de capacidad para calcular, tales como ventas técnicas, ventas al detalle y la mayoría de roles gerenciales. Esta habilidad es importante en trabajos en donde se requiere atención y concentración constantes en las tareas del trabajo.',
       en: 'This test is relevant in roles where numerical aptitude is necessary, especially those that clearly require calculation ability, such as technical sales, retail sales, and most management roles. This skill is important in jobs where constant attention and concentration on work tasks is required.',
@@ -46,10 +46,10 @@ export const SUBTEST_DESCRIPTIONS: Record<LIASubtest, SubtestContent> = {
     },
   },
   visual_rotation: {
-    name: { es: 'Orientación', en: 'Visual Rotation' },
+    name: { es: 'Rotación visual', en: 'Visual Rotation' },
     description: {
-      es: 'Examina las habilidades individuales para utilizar la orientación y visualización mental para enfrentar problemas mecánicos y técnicos. Una nota alta en esta área tiene vital importancia en donde las capacidades de habilidades mentales son requeridas, i.e. resoluciones de problemas prácticos o lógicos que implican la interpretación de un plan o un diagrama. Es importante para roles técnicos o en el área de ingeniería, incluyendo aprendices y/o trainees.',
-      en: 'Examines individual abilities to use mental orientation and visualization to face mechanical and technical problems. A high score in this area is vitally important where mental skill capabilities are required, i.e. solving practical or logical problems involving the interpretation of a plan or diagram. It is important for technical roles or in engineering, including apprentices and/or trainees.',
+      es: 'Examina las habilidades individuales para utilizar la orientación y visualización mental para enfrentar problemas mecánicos y técnicos. Una nota alta en esta área tiene vital importancia donde se requieren habilidades mentales, es decir, en la resolución de problemas prácticos o lógicos que implican la interpretación de un plan o un diagrama. Es importante para roles técnicos o en el área de ingeniería, incluyendo aprendices y/o trainees.',
+      en: 'Examines individual abilities to use mental orientation and visualization to face mechanical and technical problems. A high score in this area is vitally important where mental skill capabilities are required, i.e., solving practical or logical problems involving the interpretation of a plan or diagram. It is important for technical roles or in engineering, including apprentices and/or trainees.',
     },
   },
 };
@@ -100,7 +100,7 @@ export const SUBTEST_LEVEL_CONTENT: Record<LIASubtest, Record<LIAPerformanceLeve
       interpretations: {
         es: [
           'Presenta dificultades frecuentes en cuanto a la exactitud de sus labores.',
-          'Puede identificar algunos errores pero se le escapan muchos.',
+          'Puede identificar algunos errores, pero se le escapan muchos.',
           'La atención a los detalles es inconsistente.',
           'Requiere supervisión frecuente para labores de precisión.',
           'Tiende a distraerse.',
@@ -136,17 +136,17 @@ export const SUBTEST_LEVEL_CONTENT: Record<LIASubtest, Record<LIAPerformanceLeve
       interpretations: {
         es: [
           'Esta persona en ocasiones presenta ciertas dificultades en cuanto a la exactitud de sus labores.',
-          'Es capaz de identificar errores en diagramas, textos e información variada sin embargo en ocasiones esto le puede tomar más tiempo de lo esperado.',
-          'Presta igual cantidad de atención a detalles relevantes como irrelevantes.',
-          'Si su trabajo requiere precisión y exactitud puede lograrlo, sin embargo se recomienda supervisarlo.',
+          'Es capaz de identificar errores en diagramas, textos e información variada; sin embargo, en ocasiones esto le puede tomar más tiempo de lo esperado.',
+          'Presta la misma atención tanto a los detalles relevantes como a los irrelevantes.',
+          'Si su trabajo requiere precisión y exactitud, puede lograrlo; sin embargo, se recomienda supervisarlo.',
           'Parece distraído(a).',
           'Es preciso y exacto, siempre y cuando cuente con tiempos razonables para ejecutar sus labores.',
         ],
         en: [
           'This person sometimes has certain difficulties regarding the accuracy of their work.',
-          'Is able to identify errors in diagrams, texts, and various information, however this can sometimes take longer than expected.',
+          'Is able to identify errors in diagrams, texts, and various information; however, this can sometimes take longer than expected.',
           'Pays equal attention to relevant and irrelevant details.',
-          'If their work requires precision and accuracy they can achieve it, however supervision is recommended.',
+          'If their work requires precision and accuracy, they can achieve it; however, supervision is recommended.',
           'Appears distracted.',
           'Is precise and accurate, as long as they have reasonable times to execute their tasks.',
         ],
@@ -238,14 +238,14 @@ export const SUBTEST_LEVEL_CONTENT: Record<LIASubtest, Record<LIAPerformanceLeve
       interpretations: {
         es: [
           'Se le dificulta retener información en la memoria a corto plazo.',
-          'Tiene problemas para resolver problemas incluso con instrucciones claras.',
+          'Tiene dificultades para resolver problemas incluso con instrucciones claras.',
           'No logra hacer inferencias de la información proporcionada.',
           'Sus conclusiones suelen ser incorrectas o incompletas.',
           'El razonamiento lógico es un área de gran debilidad.',
         ],
         en: [
           'Has difficulty retaining information in short-term memory.',
-          'Has problems solving problems even with clear instructions.',
+          'Has difficulty solving problems even with clear instructions.',
           'Cannot make inferences from the information provided.',
           'Their conclusions are usually incorrect or incomplete.',
           'Logical reasoning is an area of great weakness.',
@@ -273,7 +273,7 @@ export const SUBTEST_LEVEL_CONTENT: Record<LIASubtest, Record<LIAPerformanceLeve
         es: [
           'Presenta dificultades para retener información en la memoria a corto plazo.',
           'La resolución de problemas le toma más tiempo del esperado.',
-          'Puede hacer algunas inferencias pero con limitaciones.',
+          'Puede hacer algunas inferencias, pero con limitaciones.',
           'Sus conclusiones requieren verificación frecuente.',
           'El razonamiento lógico es un área de debilidad.',
         ],
@@ -381,15 +381,15 @@ export const SUBTEST_LEVEL_CONTENT: Record<LIASubtest, Record<LIAPerformanceLeve
       },
       strategies: {
         es: [
-          'Enfrentarle a problemas y/o situaciones que le exijan utilizar sus habilidades de razonamiento con el fin de perfeccionarla.',
+          'Enfrentarle a problemas y/o situaciones que le exijan utilizar sus habilidades de razonamiento con el fin de perfeccionarlas.',
           'Supervisar labores de terceros que impliquen esta habilidad.',
-          'Entrenamientos fast tracks que le permitan continuar afianzando sus destrezas.',
+          'Entrenamientos acelerados que le permitan continuar afianzando sus destrezas.',
           'Aportar su experiencia y conocimiento en esta área para apoyar y/o brindar ayuda a compañeros que no posean esta habilidad desarrollada.',
         ],
         en: [
           'Present them with problems and/or situations that require using their reasoning skills to perfect them.',
           'Supervise third-party work involving this skill.',
-          'Fast track training to continue strengthening their skills.',
+          'Fast-track training to continue strengthening their skills.',
           'Contribute their experience and knowledge in this area to support and/or help colleagues who do not have this skill developed.',
         ],
       },
@@ -437,15 +437,15 @@ export const SUBTEST_LEVEL_CONTENT: Record<LIASubtest, Record<LIAPerformanceLeve
         es: [
           'Se siente inseguro cuando se trata de conceptos cuantitativos.',
           'Las labores que requieren manipulación numérica le toman mucho tiempo.',
-          'Puede realizar labores con cifras pero con dificultad.',
-          'En entornos que requieren cálculo necesita apoyo adicional.',
+          'Puede realizar labores con cifras, pero con dificultad.',
+          'En entornos que requieren cálculo, necesita apoyo adicional.',
           'La atención en aplicaciones numéricas es limitada.',
         ],
         en: [
           'Feels insecure when dealing with quantitative concepts.',
           'Tasks requiring numerical manipulation take a long time.',
           'Can perform tasks with figures but with difficulty.',
-          'In environments requiring calculation needs additional support.',
+          'In environments requiring calculation, needs additional support.',
           'Attention in numerical applications is limited.',
         ],
       },
@@ -500,7 +500,7 @@ export const SUBTEST_LEVEL_CONTENT: Record<LIASubtest, Record<LIAPerformanceLeve
       interpretations: {
         es: [
           'Normalmente se presenta confiado cuando se trata de conceptos cuantitativos.',
-          'Cuando debe de desempeñar labores que requieran manipulación numérica, lo realiza de manera satisfactoria y con buenos tiempos de ejecución.',
+          'Cuando debe desempeñar labores que requieran manipulación numérica, las realiza de manera satisfactoria y con buenos tiempos de ejecución.',
           'Es anuente a realizar labores que impliquen cifras.',
           'Es capaz de trabajar en entornos en los que se requiere el cálculo y donde la atención y la concentración son necesarias en relación con aplicaciones numéricas.',
         ],
@@ -567,7 +567,7 @@ export const SUBTEST_LEVEL_CONTENT: Record<LIASubtest, Record<LIAPerformanceLeve
           'Es pausado cuando se trata de almacenar simultáneamente gran cantidad de datos en su mente.',
           'Se le complica mantener y manipular la información de manera temporal.',
           'No tendrá tanto éxito en la conclusión de labores que impliquen grandes cargas de trabajo mental.',
-          'El lograr concentrarse, retener, procesar e interpretar información, requiere para él un gran esfuerzo.',
+          'El lograr concentrarse, retener, procesar e interpretar información requiere para él un gran esfuerzo.',
           'Se le dificulta reconocer y seleccionar las metas y procedimientos adecuados para la resolución de un problema.',
           'Presenta dificultad para establecer planes de consecución de logros.',
           'Existe una falta de análisis sobre las actividades necesarias para la consecución de un objetivo y dificultades para la ejecución del mismo, no logrando la monitorización ni la posible modificación de sus labores según las metas planificadas.',
@@ -586,7 +586,7 @@ export const SUBTEST_LEVEL_CONTENT: Record<LIASubtest, Record<LIAPerformanceLeve
       strategies: {
         es: [
           'Someterse a diferentes tipos de ejercicios tales como memorizar 20 palabras en dos minutos, memorizar números solos, recordar los nombres de las personas, su profesión y número telefónico, entre otras cosas.',
-          'Pruebas de concentración y mantenimiento de la habilidad de ejecución. Ejemplo: Brindarle al individuo una serie de instrucciones para que elabore un plan de acción, que lo sistematice paso a paso y con el mayor detalle posible, luego debe de recrear dicho plan de acción y sus respectivos pasos de manera oral, desde el inicio hasta el final. De esa manera se mide la capacidad del evaluado para poder hacer labores meticulosas durante lapsos de tiempo y con precisión y exactitud.',
+          'Pruebas de concentración y mantenimiento de la habilidad de ejecución. Ejemplo: Brindarle al individuo una serie de instrucciones para que elabore un plan de acción, que lo sistematice paso a paso y con el mayor detalle posible; luego debe recrear dicho plan de acción y sus respectivos pasos de manera oral, desde el inicio hasta el final. De esa manera se mide la capacidad del evaluado para poder hacer labores meticulosas durante lapsos de tiempo y con precisión y exactitud.',
         ],
         en: [
           'Undergo different types of exercises such as memorizing 20 words in two minutes, memorizing numbers alone, remembering people\'s names, their profession and phone number, among other things.',
@@ -602,7 +602,7 @@ export const SUBTEST_LEVEL_CONTENT: Record<LIASubtest, Record<LIAPerformanceLeve
           'La manipulación temporal de información es un área de debilidad.',
           'Labores con alta carga mental representan un desafío significativo.',
           'Requiere esfuerzo adicional para procesar información compleja.',
-          'Puede establecer metas básicas pero tiene dificultad con planes complejos.',
+          'Puede establecer metas básicas, pero tiene dificultad con planes complejos.',
         ],
         en: [
           'Has difficulties retaining information for moderate periods.',
@@ -745,26 +745,26 @@ export const SUBTEST_LEVEL_CONTENT: Record<LIASubtest, Record<LIAPerformanceLeve
         es: [
           'Se le dificulta crear y manipular imágenes mentales de los objetos.',
           'Le es difícil usar las habilidades mentales de visualización para comparar formas.',
-          'Trabajar en entornos donde las habilidades de visualización sean requisitos previos para la comprensión y ejecución de tareas, será un ambiente que se le dificulta.',
+          'Le resultará difícil trabajar en entornos donde las habilidades de visualización sean requisitos previos para la comprensión y ejecución de tareas.',
           'No tendrá éxito si debe encontrar solución a problemas mecánicos o técnicos.',
         ],
         en: [
           'Has difficulty creating and manipulating mental images of objects.',
           'Finds it difficult to use mental visualization skills to compare shapes.',
-          'Working in environments where visualization skills are prerequisites for understanding and executing tasks will be a difficult environment.',
+          'Working in environments where visualization skills are prerequisites for understanding and executing tasks will be difficult for them.',
           'Will not be successful if they must find solutions to mechanical or technical problems.',
         ],
       },
       strategies: {
         es: [
           'Ser constantemente capacitado por profesionales de áreas técnicas y/o mecánicas si su trabajo requiere la utilización de habilidades de orientación.',
-          'Asegurarse de que la información crítica y los trabajos relacionados con orientación, sean previamente verificada por otra persona.',
-          'Realizar diferentes tipos de ejercicios o actividades, tales como laberintos: en donde se deba encontrar la vía para llegar a la meta, esto puede ser de manera escrita o visual.',
+          'Asegurarse de que la información crítica y los trabajos relacionados con orientación sean verificados previamente por otra persona.',
+          'Realizar diferentes tipos de ejercicios o actividades, tales como laberintos, en los que se deba encontrar la vía para llegar a la meta; esto puede hacerse de manera escrita o visual.',
         ],
         en: [
           'Be constantly trained by professionals in technical and/or mechanical areas if their work requires the use of orientation skills.',
-          'Ensure that critical information and orientation-related work is previously verified by another person.',
-          'Perform different types of exercises or activities, such as mazes: where one must find the way to reach the goal, this can be done in written or visual form.',
+          'Ensure that critical information and orientation-related work are previously verified by another person.',
+          'Perform different types of exercises or activities, such as mazes, where one must find the way to reach the goal; this can be done in written or visual form.',
         ],
       },
     },
@@ -887,7 +887,7 @@ export const SUBTEST_LEVEL_CONTENT: Record<LIASubtest, Record<LIAPerformanceLeve
         es: [
           'Liderar proyectos técnicos de alta complejidad.',
           'Diseñar soluciones innovadoras a problemas técnicos.',
-          'Capacitar y mentorear a otros en habilidades de visualización.',
+          'Capacitar y brindar mentoría a otros en habilidades de visualización.',
           'Participar en el desarrollo de estándares técnicos.',
         ],
         en: [
@@ -917,11 +917,11 @@ export const GLOBAL_PERFORMANCE_DESCRIPTIONS: Record<LIAPerformanceLevel, { es: 
     en: 'Very limited adaptation capacity. Requires significant development in multiple areas.',
   },
   low: {
-    es: 'Capacidad de adaptación por debajo del promedio. Beneficiaría de entrenamiento cognitivo.',
+    es: 'Capacidad de adaptación por debajo del promedio. Se beneficiaría de entrenamiento cognitivo.',
     en: 'Below-average adaptation capacity. Would benefit from cognitive training.',
   },
   acceptable: {
-    es: 'Capacidad de adaptación dentro del rango normal. Adecuado para la mayoría de roles.',
+    es: 'Capacidad de adaptación dentro del rango normal. Adecuada para la mayoría de roles.',
     en: 'Adaptation capacity within normal range. Suitable for most roles.',
   },
   high: {
@@ -936,6 +936,6 @@ export const GLOBAL_PERFORMANCE_DESCRIPTIONS: Record<LIAPerformanceLevel, { es: 
 
 // MIL assessment intro text
 export const MIL_INTRO_TEXT = {
-  es: 'La prueba MIL es una herramienta utilizada para medir la inteligencia laboral, ésta se relaciona con la capacidad para aprender y desaprender, la habilidad para reaccionar ante retos y ante cambios, para adquirir nuevos conocimientos, capacidad de inferencia sobre aspectos simbólicos o abstractos, sin requerimientos especiales de contenido, conocimiento o memoria. La prueba se encuentra dividida en 5 subpruebas que se enfocan cada una en la medición de aspectos diferentes.',
-  en: 'The MIL test is a tool used to measure labor intelligence, which relates to the ability to learn and unlearn, the ability to react to challenges and changes, to acquire new knowledge, the ability to make inferences about symbolic or abstract aspects, without special requirements of content, knowledge or memory. The test is divided into 5 subtests that each focus on measuring different aspects.',
+  es: 'La prueba LIA es una herramienta utilizada para medir la inteligencia laboral, la cual se relaciona con la capacidad para aprender y desaprender, la habilidad para reaccionar ante retos y ante cambios, para adquirir nuevos conocimientos, capacidad de inferencia sobre aspectos simbólicos o abstractos, sin requerimientos especiales de contenido, conocimiento o memoria. La prueba se encuentra dividida en 5 subpruebas que se enfocan cada una en la medición de aspectos diferentes.',
+  en: 'The LIA test is a tool used to measure labor intelligence, which relates to the ability to learn and unlearn, the ability to react to challenges and changes, to acquire new knowledge, the ability to make inferences about symbolic or abstract aspects, without special requirements of content, knowledge or memory. The test is divided into 5 subtests that each focus on measuring different aspects.',
 };

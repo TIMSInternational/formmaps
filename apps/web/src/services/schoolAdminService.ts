@@ -15,6 +15,7 @@ import { decodeJWTToken, isAdminRole, getCurrentUser } from "./authService";
 import { apiRequest } from "@/lib/api/apiClient";
 import { toCamel } from "@/lib/toCamel";
 import { currentLanguage } from "@/lib/i18n/currentLanguage";
+import i18n from "@/lib/i18n";
 
 // Helper to get current language from i18n
 export const getCurrentLanguage = (): "en" | "sp" => {
@@ -223,8 +224,11 @@ export async function getPerformanceTrends(
   metric: "score" | "completion" | "time" = "score"
 ): Promise<PerformanceTrendData> {
   const defaultData: PerformanceTrendData = {
-    labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-    datasets: [{ label: "Average Score", data: [0, 0, 0, 0, 0, 0] }],
+    // Placeholder months, named in the UI language (en: Jan…Jun, es: ene…jun).
+    labels: Array.from({ length: 6 }, (_, i) =>
+      new Intl.DateTimeFormat(currentLanguage(), { month: "short" }).format(new Date(2000, i, 1)),
+    ),
+    datasets: [{ label: i18n.t("schoolAdmin.analytics.trends.metric.score"), data: [0, 0, 0, 0, 0, 0] }],
   };
 
   try {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation, Trans } from "react-i18next";
 import { Radar, Users, AlertTriangle, RefreshCw, TimerReset, Send, Loader2, CalendarDays, X } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -54,6 +55,7 @@ function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClose }: {
   onExtend: (days: number) => void;
   onClose: () => void;
 }) {
+  const { t, i18n } = useTranslation("school_admin");
   const [showCalendar, setShowCalendar] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
@@ -61,11 +63,11 @@ function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClose }: {
   const isExpired = currentDate < new Date();
 
   const presets = [
-    { label: "1 day", days: 1 },
-    { label: "3 days", days: 3 },
-    { label: "1 week", days: 7 },
-    { label: "2 weeks", days: 14 },
-    { label: "1 month", days: 30 },
+    { label: t("ui.student360.preset.days", { count: 1 }), days: 1 },
+    { label: t("ui.student360.preset.days", { count: 3 }), days: 3 },
+    { label: t("ui.student360.preset.weeks", { count: 1 }), days: 7 },
+    { label: t("ui.student360.preset.weeks", { count: 2 }), days: 14 },
+    { label: t("ui.student360.preset.months", { count: 1 }), days: 30 },
   ];
 
   const handleCalendarSelect = (date: Date | undefined) => {
@@ -89,13 +91,13 @@ function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClose }: {
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <CalendarDays style={{ width: 13, height: 13, color: "var(--admin-accent-blue)" }} />
-          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-primary)" }}>Extend Deadline</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.student360.extendDeadline")}</span>
           <span style={{
             fontSize: 10, padding: "1px 6px", borderRadius: 3,
             background: isExpired ? "rgba(239,68,68,0.1)" : "rgba(59,130,246,0.1)",
             color: isExpired ? "#ef4444" : "var(--admin-accent-blue)", fontWeight: 600,
           }}>
-            {isExpired ? "EXPIRED" : `Due ${currentDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}`}
+            {isExpired ? t("ui.student360.expiredUpper") : t("ui.student360.due", { date: currentDate.toLocaleDateString(i18n.language === "es" ? "es-CO" : "en-US", { month: "short", day: "numeric" }) })}
           </span>
         </div>
         <button onClick={onClose} style={{ width: 20, height: 20, borderRadius: 4, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -104,7 +106,7 @@ function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClose }: {
       </div>
 
       <div style={{ padding: "8px 12px", display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
-        <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", fontWeight: 600 }}>Quick:</span>
+        <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", fontWeight: 600 }}>{t("ui.student360.quick")}</span>
         {presets.map((p) => (
           <button key={p.days} disabled={isLoading}
             onClick={() => onExtend(p.days)}
@@ -127,7 +129,7 @@ function ExtendDeadlinePicker({ currentExpiry, isLoading, onExtend, onClose }: {
             display: "flex", alignItems: "center", gap: 4,
           }}>
           <CalendarDays style={{ width: 11, height: 11 }} />
-          Pick date
+          {t("ui.student360.pickDate")}
         </button>
       </div>
 
@@ -161,6 +163,7 @@ interface Student360DialogProps {
 }
 
 export function Student360Dialog({ student, open, onOpenChange }: Student360DialogProps) {
+  const { t } = useTranslation("school_admin");
   const [groups, setGroups] = useState<EvaluationGroup[]>([]);
   const [loading, setLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -197,17 +200,17 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
       }
       else if (action === "resend") await resendEvaluationEmail(groupId);
       else await resetEvaluationCompletion(groupId);
-      toast.success(action === "extend" ? `Extended by ${days || 7} day(s)` : action === "resend" ? "Email resent" : "Completion reset");
+      toast.success(action === "extend" ? t("ui.student360.extendedBy", { count: days || 7 }) : action === "resend" ? t("ui.student360.emailResent") : t("ui.student360.completionReset"));
       await refreshGroups();
     } catch {
-      toast.error(`Failed to ${action}`);
+      toast.error(t(`ui.student360.actionFailed.${action}`));
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleAddEvaluator = async () => {
-    if (!newEval.name.trim() || !newEval.email.trim()) { toast.error("Name and email required"); return; }
+    if (!newEval.name.trim() || !newEval.email.trim()) { toast.error(t("ui.student360.nameEmailRequired")); return; }
     setAddLoading(true);
     try {
       const isVocational = newEval.instrument === "vocational";
@@ -224,15 +227,15 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
       });
       // The invitation email is now sent on create (parity with other invites).
       toast.success(res?.data?.emailSent === false
-        ? `${newEval.name} added — couldn't email the invitation, use Resend`
-        : `Invitation sent to ${newEval.name}`);
+        ? t("ui.student360.addedNoEmail", { name: newEval.name })
+        : t("ui.student360.invitationSent", { name: newEval.name }));
       setNewEval({ name: "", email: "", relation: "Parent", groupType: "parent", instrument: "generic" });
       setInstrumentVersion(undefined);
       setShowAddForm(false);
       await refreshGroups();
     } catch (err: unknown) {
       const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message;
-      toast.error(message || "Failed to add evaluator");
+      toast.error(message || t("ui.student360.addFailed"));
     } finally {
       setAddLoading(false);
     }
@@ -242,20 +245,20 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
     setActionLoading("send-all");
     try {
       await apiRequest(`/evaluation/send-email-invitations/${student.id}`, { method: "POST" });
-      toast.success("All invitations sent");
+      toast.success(t("ui.student360.allSent"));
       await refreshGroups();
     } catch {
-      toast.error("Failed to send invitations");
+      toast.error(t("ui.student360.sendFailed"));
     } finally {
       setActionLoading(null);
     }
   };
 
   const relationOptions = [
-    { value: "Parent", group: "parent", label: "Parent / Guardian" },
-    { value: "Teacher", group: "teacher", label: "Teacher" },
-    { value: "SiblingFriend", group: "sibling_friend", label: "Sibling / Friend" },
-    { value: "Self", group: "self", label: "Self Evaluation" },
+    { value: "Parent", group: "parent", label: t("ui.student360.relation.Parent") },
+    { value: "Teacher", group: "teacher", label: t("ui.student360.relation.Teacher") },
+    { value: "SiblingFriend", group: "sibling_friend", label: t("ui.student360.relation.SiblingFriend") },
+    { value: "Self", group: "self", label: t("ui.student360.relation.Self") },
   ];
 
   const completed = groups.filter((g) => g.isEvaluationCompleted).length;
@@ -269,10 +272,10 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
           <DialogHeader>
             <DialogTitle style={{ fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
               <Radar style={{ width: 18, height: 18, color: "#14b8a6" }} />
-              {student.name} — 360° Evaluation
+              {t("ui.student360.title", { name: student.name })}
             </DialogTitle>
             <DialogDescription style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-              {student.email} {student.gradeLevel ? `| Grade ${student.gradeLevel}` : ""} | {completed}/{groups.length} evaluators completed
+              {student.email} {student.gradeLevel ? `| ${t("graduation.gradeLabel", { grade: student.gradeLevel })}` : ""} | {t("ui.student360.evaluatorsCompleted", { completed, total: groups.length })}
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -281,7 +284,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
           {/* Progress */}
           <div style={{ padding: "12px 16px", borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Evaluation Progress</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.student360.progress")}</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: pct === 100 ? "#10b981" : "var(--admin-font-primary)" }}>{pct}%</span>
             </div>
             <div style={{ height: 6, borderRadius: 3, background: "var(--admin-bg-card)", overflow: "hidden" }}>
@@ -298,7 +301,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                 background: "#14b8a6", color: "#fff", border: "none", cursor: "pointer",
               }}>
               <Users style={{ width: 12, height: 12 }} />
-              Add Evaluator
+              {t("ui.student360.addEvaluator")}
             </button>
             {groups.length > 0 && unsent > 0 && (
               <button onClick={handleSendAll} disabled={actionLoading === "send-all"}
@@ -309,7 +312,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                   border: "1px solid rgba(59,130,246,0.3)", cursor: "pointer",
                 }}>
                 {actionLoading === "send-all" ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 12, height: 12 }} />}
-                Send All Invitations ({unsent})
+                {t("ui.student360.sendAll", { count: unsent })}
               </button>
             )}
             {groups.length > 0 && (
@@ -317,9 +320,9 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                 setActionLoading("resend-all");
                 try {
                   await apiRequest(`/evaluation/send-email-invitations/${student.id}`, { method: "POST" });
-                  toast.success("Invitations resent to all evaluators");
+                  toast.success(t("ui.student360.resentAll"));
                   await refreshGroups();
-                } catch { toast.error("Failed"); }
+                } catch { toast.error(t("ui.student360.sendFailed")); }
                 finally { setActionLoading(null); }
               }} disabled={!!actionLoading}
                 style={{
@@ -329,7 +332,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                   border: "1px solid var(--admin-border-default)", cursor: "pointer",
                 }}>
                 <RefreshCw style={{ width: 12, height: 12 }} />
-                Resend All
+                {t("ui.student360.resendAll")}
               </button>
             )}
           </div>
@@ -337,11 +340,11 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
           {/* Add Evaluator Form */}
           {showAddForm && (
             <div style={{ padding: 14, borderRadius: 6, border: "1px solid #14b8a640", background: "rgba(20,184,166,0.03)" }} className="space-y-3">
-              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Add New Evaluator</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.student360.addNewEvaluator")}</div>
               <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-                <input placeholder="Full name" value={newEval.name} onChange={(e) => setNewEval({ ...newEval, name: e.target.value })}
+                <input placeholder={t("ui.student360.fullName")} value={newEval.name} onChange={(e) => setNewEval({ ...newEval, name: e.target.value })}
                   style={{ flex: 1, minWidth: 140, height: 34, borderRadius: 6, padding: "0 10px", fontSize: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", outline: "none" }} />
-                <input placeholder="Email address" type="email" value={newEval.email} onChange={(e) => setNewEval({ ...newEval, email: e.target.value })}
+                <input placeholder={t("ui.student360.emailAddress")} type="email" value={newEval.email} onChange={(e) => setNewEval({ ...newEval, email: e.target.value })}
                   style={{ flex: 1, minWidth: 180, height: 34, borderRadius: 6, padding: "0 10px", fontSize: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", outline: "none" }} />
               </div>
               <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -353,8 +356,8 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                   style={{ flex: 1, height: 34, borderRadius: 6, padding: "0 8px", fontSize: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", outline: "none" }}>
                   {relationOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                 </select>
-                <label htmlFor="admin-instrument-select" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>Instrument</label>
-                <select id="admin-instrument-select" aria-label="Instrument" value={newEval.instrument}
+                <label htmlFor="admin-instrument-select" style={{ position: "absolute", width: 1, height: 1, overflow: "hidden", clip: "rect(0,0,0,0)", whiteSpace: "nowrap" }}>{t("ui.student360.instrument")}</label>
+                <select id="admin-instrument-select" aria-label={t("ui.student360.instrument")} value={newEval.instrument}
                   onChange={async (e) => {
                     const val = e.target.value;
                     setNewEval({ ...newEval, instrument: val });
@@ -370,8 +373,8 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                     }
                   }}
                   style={{ flex: 1, height: 34, borderRadius: 6, padding: "0 8px", fontSize: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", outline: "none" }}>
-                  <option value="generic">Generic 360</option>
-                  <option value="vocational">Vocational 360</option>
+                  <option value="generic">{t("ui.student360.generic360")}</option>
+                  <option value="vocational">{t("ui.student360.vocational360")}</option>
                 </select>
                 <button onClick={handleAddEvaluator} disabled={addLoading || !newEval.name.trim() || !newEval.email.trim()}
                   style={{
@@ -380,11 +383,11 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                     background: "#14b8a6", color: "#fff", border: "none", cursor: "pointer",
                     opacity: (addLoading || !newEval.name.trim() || !newEval.email.trim()) ? 0.6 : 1,
                   }}>
-                  {addLoading ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : "Add"}
+                  {addLoading ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : t("ui.gradebook.add")}
                 </button>
                 <button onClick={() => setShowAddForm(false)}
                   style={{ height: 34, borderRadius: 6, padding: "0 12px", fontSize: 12, background: "transparent", color: "var(--admin-font-tertiary)", border: "1px solid var(--admin-border-default)", cursor: "pointer" }}>
-                  Cancel
+                  {t("common.cancel")}
                 </button>
               </div>
             </div>
@@ -398,12 +401,12 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
           ) : groups.length === 0 ? (
             <div style={{ textAlign: "center", padding: "24px 0" }}>
               <Radar style={{ width: 24, height: 24, color: "var(--admin-font-tertiary)", margin: "0 auto 8px", opacity: 0.4 }} />
-              <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>No evaluators assigned yet. Click &quot;Add Evaluator&quot; to get started.</div>
+              <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("ui.student360.noEvaluators")}</div>
             </div>
           ) : (
             <div className="space-y-2">
               <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Evaluators ({groups.length})
+                {t("ui.student360.evaluatorsCount", { count: groups.length })}
               </div>
               {groups.map((g) => {
                 const isComplete = g.isEvaluationCompleted;
@@ -423,14 +426,14 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                             background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
                             textTransform: "uppercase", border: "1px solid var(--admin-border-default)",
                           }}>
-                            {g.relation || g.groupType}
+                            {g.relation ? t(`ui.student360.relationShort.${g.relation}`, { defaultValue: g.relation }) : g.groupType}
                           </span>
                         </div>
                         <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
                           {g.evaluatorEmail}
                           {g.tokenExpiryDate && !isComplete && (
                             <span style={{ marginLeft: 8, color: isExpired ? "#ef4444" : "var(--admin-font-tertiary)" }}>
-                              | Expires {new Date(g.tokenExpiryDate).toLocaleDateString()}
+                              | {t("ui.student360.expires", { date: new Date(g.tokenExpiryDate).toLocaleDateString() })}
                             </span>
                           )}
                         </div>
@@ -442,16 +445,16 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                           color: isComplete ? "#10b981" : isExpired ? "#ef4444" : g.isEmailSent ? "#f59e0b" : "#6b7280",
                           textTransform: "uppercase",
                         }}>
-                          {isComplete ? "Completed" : isExpired ? "Expired" : g.isEmailSent ? "Pending" : "Not Sent"}
+                          {isComplete ? t("ui.student360.status.completed") : isExpired ? t("ui.student360.status.expired") : g.isEmailSent ? t("ui.student360.status.pending") : t("ui.student360.status.notSent")}
                         </span>
                         {!isComplete && (
                           <div style={{ display: "flex", gap: 2 }}>
-                            <button title="Extend deadline" disabled={!!actionLoading}
+                            <button title={t("ui.student360.extendDeadlineTitle")} disabled={!!actionLoading}
                               onClick={() => setExtendingGroupId(extendingGroupId === g.id ? null : g.id)}
                               style={{ width: 26, height: 26, borderRadius: 4, border: extendingGroupId === g.id ? "1px solid var(--admin-accent-blue)" : "1px solid var(--admin-border-default)", background: extendingGroupId === g.id ? "rgba(59,130,246,0.05)" : "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                               <TimerReset style={{ width: 11, height: 11, color: "var(--admin-accent-blue)" }} />
                             </button>
-                            <button title="Resend invitation" disabled={!!actionLoading}
+                            <button title={t("ui.student360.resendInvitation")} disabled={!!actionLoading}
                               onClick={() => handleAction(g.id, "resend")}
                               style={{ width: 26, height: 26, borderRadius: 4, border: "1px solid var(--admin-border-default)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                               {actionLoading === `${g.id}-resend` ? <Loader2 style={{ width: 11, height: 11, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 11, height: 11, color: "#f59e0b" }} />}
@@ -459,7 +462,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                           </div>
                         )}
                         {isComplete && (
-                          <button title="Reset completion" disabled={!!actionLoading}
+                          <button title={t("ui.student360.resetCompletion")} disabled={!!actionLoading}
                             onClick={() => setResetConfirmGroup(g)}
                             style={{ width: 26, height: 26, borderRadius: 4, border: "1px solid var(--admin-border-default)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                             <RefreshCw style={{ width: 11, height: 11, color: "#ef4444" }} />
@@ -485,11 +488,11 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
         <div style={{ padding: "12px 20px", borderTop: "1px solid var(--admin-border-default)", display: "flex", justifyContent: "flex-end", gap: 8 }}>
           <button onClick={() => onOpenChange(false)}
             style={{ height: 36, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, background: "transparent", color: "var(--admin-font-primary)", border: "1px solid var(--admin-border-default)", cursor: "pointer" }}>
-            Close
+            {t("common.close")}
           </button>
           <a href={`/school-admin/users/${student.id}`}
             style={{ height: 36, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "var(--admin-accent-blue)", color: "#fff", textDecoration: "none" }}>
-            View Full Profile
+            {t("assessments.pipeline.viewFullProfile")}
           </a>
         </div>
       </DialogContent>
@@ -498,8 +501,8 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
       <Dialog open={!!resetConfirmGroup} onOpenChange={(o) => { if (!o) setResetConfirmGroup(null); }}>
         <DialogContent className="max-w-sm" style={{ padding: 0, overflow: "hidden" }} aria-describedby={undefined}>
           <DialogHeader className="sr-only">
-            <DialogTitle>Reset Evaluation Confirmation</DialogTitle>
-            <DialogDescription>Confirm that you want to reset this evaluation</DialogDescription>
+            <DialogTitle>{t("ui.student360.resetConfirmTitle")}</DialogTitle>
+            <DialogDescription>{t("ui.student360.resetConfirmDescription")}</DialogDescription>
           </DialogHeader>
           <div style={{ padding: "20px 24px", textAlign: "center" }} className="space-y-4">
             <div style={{
@@ -512,12 +515,15 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
 
             <div>
               <h3 style={{ fontSize: 16, fontWeight: 700, color: "var(--admin-font-primary)", marginBottom: 4 }}>
-                Reset Evaluation?
+                {t("ui.student360.resetQuestion")}
               </h3>
               <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", lineHeight: 1.5 }}>
-                This will <strong style={{ color: "#ef4444" }}>permanently delete</strong> all responses from{" "}
-                <strong>{resetConfirmGroup?.evaluatorName}</strong> ({resetConfirmGroup?.relation}).
-                They will need to complete the evaluation again from scratch.
+                <Trans
+                  t={t}
+                  i18nKey="ui.student360.resetBody"
+                  values={{ name: resetConfirmGroup?.evaluatorName, relation: resetConfirmGroup?.relation ? t(`ui.student360.relationShort.${resetConfirmGroup.relation}`, { defaultValue: resetConfirmGroup.relation }) : "" }}
+                  components={{ danger: <strong style={{ color: "#ef4444" }} />, b: <strong /> }}
+                />
               </p>
             </div>
 
@@ -526,7 +532,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
               background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.15)",
               fontSize: 11, color: "#ef4444", fontWeight: 500, textAlign: "left",
             }}>
-              This action cannot be undone. The evaluator will receive a new invitation link and their previous answers will be erased.
+              {t("ui.student360.resetWarning")}
             </div>
 
             <div style={{ display: "flex", gap: 8, justifyContent: "center", paddingTop: 4 }}>
@@ -537,7 +543,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                   color: "var(--admin-font-primary)",
                   border: "1px solid var(--admin-border-default)", cursor: "pointer",
                 }}>
-                Cancel
+                {t("common.cancel")}
               </button>
               <button
                 onClick={async () => {
@@ -554,7 +560,7 @@ export function Student360Dialog({ student, open, onOpenChange }: Student360Dial
                   border: "none", cursor: "pointer",
                 }}>
                 {actionLoading ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : null}
-                Yes, Reset Evaluation
+                {t("ui.student360.yesReset")}
               </button>
             </div>
           </div>

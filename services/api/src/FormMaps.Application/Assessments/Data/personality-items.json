@@ -4,9 +4,9 @@
       "n": 1,
       "dimension": "EI",
       "prompt_es": "En una reunión social grande, ¿cómo te sientes normalmente?",
-      "optionA_es": "Energizado y animado",
+      "optionA_es": "Energizado/a y animado/a",
       "optionA_pole": "E",
-      "optionB_es": "Agotado y con deseo de estar solo/a",
+      "optionB_es": "Agotado/a y con deseo de estar solo/a",
       "optionB_pole": "I",
       "prompt_en": "At a large social gathering, how do you normally feel?",
       "optionA_en": "Energized and lively",
@@ -18,7 +18,7 @@
       "prompt_es": "¿Prefieres pasar tu tiempo libre...?",
       "optionA_es": "Con muchas personas, en actividades grupales",
       "optionA_pole": "E",
-      "optionB_es": "Solo o con una persona cercana, en calma",
+      "optionB_es": "Solo/a o con una persona cercana, en calma",
       "optionB_pole": "I",
       "prompt_en": "Do you prefer to spend your free time...?",
       "optionA_en": "With many people, in group activities",
@@ -207,7 +207,7 @@
     {
       "n": 18,
       "dimension": "SN",
-      "prompt_es": "¿En una conversación, tiendes a...?",
+      "prompt_es": "En una conversación, ¿tiendes a...?",
       "optionA_es": "Hablar de hechos concretos",
       "optionA_pole": "S",
       "optionB_es": "Usar metáforas e ideas abstractas",
@@ -465,7 +465,7 @@
       "optionB_es": "“Dejo espacio para lo inesperado”",
       "optionB_pole": "P",
       "prompt_en": "Which phrase represents you more?",
-      "optionA_en": "\"A task done is one task less\"",
+      "optionA_en": "\"A task done is one less task\"",
       "optionB_en": "\"I leave room for the unexpected\""
     },
     {
@@ -486,7 +486,7 @@
       "n": 1,
       "dimension": "EI",
       "prompt_es": "Cuando entras a un grupo nuevo de estudiantes que no conoces:",
-      "optionA_es": "Inicias conversación y te presentas",
+      "optionA_es": "Inicias una conversación y te presentas",
       "optionA_pole": "E",
       "optionB_es": "Observas primero y hablas cuando ya hay confianza",
       "optionB_pole": "I",
@@ -498,7 +498,7 @@
       "n": 2,
       "dimension": "EI",
       "prompt_es": "En un trabajo grupal recién asignado:",
-      "optionA_es": "Propones empezar y organizan conversando",
+      "optionA_es": "Propones empezar y organizarse conversando",
       "optionA_pole": "E",
       "optionB_es": "Prefieres que definan y luego aportas",
       "optionB_pole": "I",
@@ -562,7 +562,7 @@
       "optionA_pole": "E",
       "optionB_es": "Mantienes distancia inicial",
       "optionB_pole": "I",
-      "prompt_en": "When you meet a new professor:",
+      "prompt_en": "When you meet a new teacher:",
       "optionA_en": "You interact naturally",
       "optionB_en": "You keep an initial distance"
     },
@@ -584,7 +584,7 @@
       "prompt_es": "En eventos sociales grandes:",
       "optionA_es": "Te activas",
       "optionA_pole": "E",
-      "optionB_es": "Te drenas",
+      "optionB_es": "Te agotas",
       "optionB_pole": "I",
       "prompt_en": "At large social events:",
       "optionA_en": "You get energized",
@@ -690,9 +690,9 @@
       "n": 18,
       "dimension": "EI",
       "prompt_es": "Cuando colaboras:",
-      "optionA_es": "Co-creas en voz alta",
+      "optionA_es": "Cocreas en voz alta",
       "optionA_pole": "E",
-      "optionB_es": "Co-creas en silencio",
+      "optionB_es": "Cocreas en silencio",
       "optionB_pole": "I",
       "prompt_en": "When you collaborate:",
       "optionA_en": "You co-create out loud",
@@ -737,7 +737,7 @@
     {
       "n": 22,
       "dimension": "SN",
-      "prompt_es": "Si estás aprendiendo un tema difícil (por ejemplo, química, mates o economía), te sirve más:",
+      "prompt_es": "Si estás aprendiendo un tema difícil (por ejemplo, química, matemáticas o economía), te sirve más:",
       "optionA_es": "Ver ejercicios resueltos paso a paso y repetir el método",
       "optionA_pole": "S",
       "optionB_es": "Entender el “por qué” del método antes de practicar",
@@ -754,7 +754,7 @@
       "optionA_pole": "S",
       "optionB_es": "Explique el concepto general y lo relacione con otras ideas",
       "optionB_pole": "N",
-      "prompt_en": "When a professor explains quickly, you prefer that they:",
+      "prompt_en": "When a teacher explains quickly, you prefer that they:",
       "optionA_en": "Repeat with concrete examples and clear definitions",
       "optionB_en": "Explain the general concept and relate it to other ideas"
     },
@@ -810,7 +810,7 @@
       "n": 28,
       "dimension": "SN",
       "prompt_es": "Si estás aprendiendo una herramienta digital nueva (app, programa, etc.), tú:",
-      "optionA_es": "Sigues tutorial o guía paso a paso hasta dominar lo básico",
+      "optionA_es": "Sigues un tutorial o una guía paso a paso hasta dominar lo básico",
       "optionA_pole": "S",
       "optionB_es": "Exploras botones/funciones y aprendes probando por tu cuenta",
       "optionB_pole": "N",
@@ -875,7 +875,7 @@
       "optionB_es": "Comparas perspectivas y tratas de ver una explicación más amplia",
       "optionB_pole": "N",
       "prompt_en": "When you face contradictory information, you:",
-      "optionA_en": "Trust more the \"proven\" source and verifiable data",
+      "optionA_en": "Trust the \"proven\" source and verifiable data more",
       "optionB_en": "Compare perspectives and try to see a broader explanation"
     },
     {
@@ -923,7 +923,7 @@
       "optionB_es": "Está llena de detalles pero no te dicen la idea central",
       "optionB_pole": "N",
       "prompt_en": "When you listen to an explanation, it's harder for you if:",
-      "optionA_en": "It's very abstract and doesn't land in examples",
+      "optionA_en": "It's very abstract and isn't grounded in examples",
       "optionB_en": "It's full of details but they don't tell you the central idea"
     },
     {
@@ -1018,7 +1018,7 @@
       "optionA_pole": "T",
       "optionB_es": "Buscas conversar primero para entender su perspectiva y negociar",
       "optionB_pole": "F",
-      "prompt_en": "If a professor grades you unfairly, you:",
+      "prompt_en": "If a teacher grades you unfairly, you:",
       "optionA_en": "Go with arguments, evidence, and request a formal review",
       "optionB_en": "Seek to talk first to understand their perspective and negotiate"
     },
@@ -1044,7 +1044,7 @@
       "optionB_pole": "F",
       "prompt_en": "If a strong conflict arises between two people in your group, you:",
       "optionA_en": "Propose clear rules, agreements, and a final decision to move forward",
-      "optionB_en": "Seek for them to talk, understand each other, and repair the relationship"
+      "optionB_en": "Try to get them to talk, understand each other, and repair the relationship"
     },
     {
       "n": 48,
@@ -1056,7 +1056,7 @@
       "optionB_pole": "F",
       "prompt_en": "If you're under pressure and have to choose quickly, you:",
       "optionA_en": "Decide with the best available information and take responsibility",
-      "optionB_en": "Ask for a brief conversation to gauge effects on people and the climate"
+      "optionB_en": "Ask for a brief conversation to gauge the effects on people and the group atmosphere"
     },
     {
       "n": 49,
@@ -1073,12 +1073,12 @@
     {
       "n": 50,
       "dimension": "TF",
-      "prompt_es": "Si tienes que escoger entre “hacerlo perfecto” o “entregar a tiempo”, tú:",
+      "prompt_es": "Si tienes que escoger entre “hacerlo perfecto” y “entregar a tiempo”, tú:",
       "optionA_es": "Priorizas entregar a tiempo con calidad suficiente y mejoras después",
       "optionA_pole": "T",
       "optionB_es": "Priorizas calidad alta aunque implique negociar extensión o ajustar alcance",
       "optionB_pole": "F",
-      "prompt_en": "If you have to choose between \"doing it perfectly\" or \"delivering on time\", you:",
+      "prompt_en": "If you have to choose between \"doing it perfectly\" and \"delivering on time\", you:",
       "optionA_en": "Prioritize delivering on time with sufficient quality and improve later",
       "optionB_en": "Prioritize high quality even if it means negotiating an extension or adjusting scope"
     },
@@ -1145,7 +1145,7 @@
     {
       "n": 56,
       "dimension": "TF",
-      "prompt_es": "Si te dan feedback duro, tú:",
+      "prompt_es": "Si te dan retroalimentación dura, tú:",
       "optionA_es": "Te enfocas en lo útil, lo conviertes en mejora y sigues",
       "optionA_pole": "T",
       "optionB_es": "Te importa el tono, procesas lo emocional y luego mejoras",
@@ -1181,12 +1181,12 @@
     {
       "n": 59,
       "dimension": "TF",
-      "prompt_es": "Si tienes que elegir entre “ser honesto” o “evitar herir”, tú:",
+      "prompt_es": "Si tienes que elegir entre “ser honesto” y “evitar herir”, tú:",
       "optionA_es": "Dices la verdad con claridad aunque incomode",
       "optionA_pole": "T",
       "optionB_es": "Dices la verdad con cuidado para proteger la relación",
       "optionB_pole": "F",
-      "prompt_en": "If you have to choose between \"being honest\" or \"avoiding hurting\", you:",
+      "prompt_en": "If you have to choose between \"being honest\" and \"avoiding hurting others\", you:",
       "optionA_en": "Tell the truth clearly even if it's uncomfortable",
       "optionB_en": "Tell the truth carefully to protect the relationship"
     },
@@ -1247,7 +1247,7 @@
       "optionB_es": "Prefieres trabajar en ráfagas cuando se acerca la fecha",
       "optionB_pole": "P",
       "prompt_en": "If you have an important deadline in 10 days, you:",
-      "optionA_en": "Prefer to make strong progress at the start to arrive with margin",
+      "optionA_en": "Prefer to make strong progress at the start so you finish with time to spare",
       "optionB_en": "Prefer to work in bursts as the date approaches"
     },
     {
@@ -1258,7 +1258,7 @@
       "optionA_pole": "J",
       "optionB_es": "Te adaptas improvisando soluciones para cumplir igualmente",
       "optionB_pole": "P",
-      "prompt_en": "If the plan changes at the last minute (the professor changes the conditions), you:",
+      "prompt_en": "If the plan changes at the last minute (the teacher changes the conditions), you:",
       "optionA_en": "Reorganize quickly, redefining steps to keep control",
       "optionB_en": "Adapt by improvising solutions to comply anyway"
     },
@@ -1266,7 +1266,7 @@
       "n": 66,
       "dimension": "JP",
       "prompt_es": "Si tienes varias tareas al mismo tiempo, tú:",
-      "optionA_es": "Priorizas, haces lista y ejecutas una por una",
+      "optionA_es": "Priorizas, haces una lista y ejecutas una por una",
       "optionA_pole": "J",
       "optionB_es": "Alternas tareas según energía e inspiración del momento",
       "optionB_pole": "P",
@@ -1278,7 +1278,7 @@
       "n": 67,
       "dimension": "JP",
       "prompt_es": "Cuando terminas un proyecto, tú:",
-      "optionA_es": "Cierras, revisas y entregas con checklist final",
+      "optionA_es": "Cierras, revisas y entregas con una lista de verificación final",
       "optionA_pole": "J",
       "optionB_es": "Entregas y mejoras en el camino si te dan chance",
       "optionB_pole": "P",
@@ -1356,7 +1356,7 @@
       "optionB_pole": "P",
       "prompt_en": "In long projects (months), you:",
       "optionA_en": "Need a plan with milestones to sustain consistency",
-      "optionB_en": "Need variety so you don't get bored and to keep motivation"
+      "optionB_en": "Need variety so you don't get bored and stay motivated"
     },
     {
       "n": 74,
@@ -1397,14 +1397,14 @@
     {
       "n": 77,
       "dimension": "JP",
-      "prompt_es": "Cuando trabajas en algo creativo (video, diseño, escrito), tú:",
-      "optionA_es": "Te ayuda un guion/estructura antes de producir",
+      "prompt_es": "Cuando trabajas en algo creativo (video, diseño, escrito), te ayuda más:",
+      "optionA_es": "Tener un guion/estructura antes de producir",
       "optionA_pole": "J",
-      "optionB_es": "Te ayuda producir primero y luego ordenar",
+      "optionB_es": "Producir primero y luego ordenar",
       "optionB_pole": "P",
-      "prompt_en": "When you work on something creative (video, design, writing), you:",
-      "optionA_en": "It helps you to have a script/structure before producing",
-      "optionB_en": "It helps you to produce first and then organize"
+      "prompt_en": "When you work on something creative (video, design, writing), it helps you more to:",
+      "optionA_en": "Have a script/structure before producing",
+      "optionB_en": "Produce first and then organize"
     },
     {
       "n": 78,

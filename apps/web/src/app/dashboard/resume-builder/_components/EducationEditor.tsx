@@ -9,6 +9,7 @@ import {
   Trash2,
   Check,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface EducationEntry {
   id: string;
@@ -56,6 +57,7 @@ export function EducationEditor({
   removeEducation,
   setSaveSuccess,
 }: EducationEditorProps) {
+  const { t } = useTranslation();
   const triggerSave = () => {
     handleSaveEducation();
     setSaveSuccess(true);
@@ -71,7 +73,7 @@ export function EducationEditor({
       <div className="grid grid-cols-2 gap-2">
         <div>
           <label className="block text-xs font-medium text-foreground mb-1">
-            Degree *
+            {t("resumeBuilder.educationStep.degree", "Degree *")}
           </label>
           <input
             type="text"
@@ -83,13 +85,13 @@ export function EducationEditor({
               })
             }
             onBlur={isNew ? undefined : triggerSave}
-            placeholder="Bachelor of Science"
+            placeholder={t("resumeBuilder.educationEditor.degreePlaceholder", "Bachelor of Science")}
             className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-foreground mb-1">
-            Institution *
+            {t("resumeBuilder.educationStep.institution", "Institution *")}
           </label>
           <input
             type="text"
@@ -101,7 +103,7 @@ export function EducationEditor({
               })
             }
             onBlur={isNew ? undefined : triggerSave}
-            placeholder="University Name"
+            placeholder={t("resumeBuilder.educationEditor.institutionPlaceholder", "University Name")}
             className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none"
           />
         </div>
@@ -109,7 +111,7 @@ export function EducationEditor({
       <div className="grid grid-cols-3 gap-2">
         <div>
           <label className="block text-xs font-medium text-foreground mb-1">
-            Location
+            {t("resumeBuilder.experienceStep.location", "Location")}
           </label>
           <input
             type="text"
@@ -121,13 +123,13 @@ export function EducationEditor({
               })
             }
             onBlur={isNew ? undefined : triggerSave}
-            placeholder="City, State"
+            placeholder={t("resumeBuilder.experienceEditor.locationPlaceholder", "City, State")}
             className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-foreground mb-1">
-            Graduation Date
+            {t("resumeBuilder.educationStep.graduationDate", "Graduation Date")}
           </label>
           <input
             type="text"
@@ -139,13 +141,13 @@ export function EducationEditor({
               })
             }
             onBlur={isNew ? undefined : triggerSave}
-            placeholder="May 2024"
+            placeholder={t("resumeBuilder.educationEditor.graduationPlaceholder", "May 2024")}
             className="w-full px-3 py-1.5 text-sm border border-border rounded-lg bg-background text-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none"
           />
         </div>
         <div>
           <label className="block text-xs font-medium text-foreground mb-1">
-            GPA
+            {t("resumeBuilder.educationEditor.gpa", "GPA")}
           </label>
           <input
             type="text"
@@ -168,14 +170,14 @@ export function EducationEditor({
             onClick={() => setEditingEducation(null)}
             className="px-3 py-1.5 text-xs border border-border rounded-lg hover:bg-secondary/50 transition-colors"
           >
-            Cancel
+            {t("common.cancel", "Cancel")}
           </button>
           <button
             onClick={triggerSave}
             className="flex items-center gap-1 px-3 py-1.5 text-xs bg-[#102B47] text-white rounded-lg hover:bg-[#0b1f33] transition-colors"
           >
             <Check className="w-3 h-3" />
-            Add
+            {t("resumeBuilder.alignStep.add", "Add")}
           </button>
         </div>
       )}
@@ -203,10 +205,10 @@ export function EducationEditor({
       >
         <GraduationCap className="w-5 h-5 text-[#2E9098] flex-shrink-0" />
         <span className="font-semibold text-foreground flex-1 text-left">
-          Education
+          {t("resumeBuilder.educationStep.title", "Education")}
         </span>
         <span className="px-2 py-0.5 text-xs font-semibold bg-[#FFD23F] text-[#102B47] rounded-full">
-          {education.length} entries
+          {t("resumeBuilder.experienceEditor.entries", { count: education.length, defaultValue: "{{count}} entries" })}
         </span>
         <motion.div
           animate={{
@@ -264,7 +266,7 @@ export function EducationEditor({
                                 {edu.gpa && (
                                   <>
                                     <span>&middot;</span>
-                                    <span>GPA: {edu.gpa}</span>
+                                    <span>{t("resumeBuilder.educationStep.gpaValue", "GPA: {{gpa}}", { gpa: edu.gpa })}</span>
                                   </>
                                 )}
                               </div>
@@ -274,6 +276,7 @@ export function EducationEditor({
                                 onClick={() =>
                                   handleEditEducation(edu.id)
                                 }
+                                aria-label={t("common.edit", "Edit")}
                                 className="p-1.5 hover:bg-accent rounded-lg transition-colors"
                               >
                                 <Pencil className="w-3.5 h-3.5 text-muted-foreground" />
@@ -287,6 +290,7 @@ export function EducationEditor({
                                     2000
                                   );
                                 }}
+                                aria-label={t("common.delete", "Delete")}
                                 className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors"
                               >
                                 <Trash2 className="w-3.5 h-3.5 text-destructive" />
@@ -309,7 +313,7 @@ export function EducationEditor({
                   className="w-full flex items-center justify-center gap-1 px-3 py-2 border border-dashed border-border rounded-lg text-xs text-muted-foreground hover:border-[#2E9098] hover:text-[#2E9098] transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" />
-                  Add Education
+                  {t("resumeBuilder.educationStep.addEducation", "Add Education")}
                 </button>
               )}
             </div>

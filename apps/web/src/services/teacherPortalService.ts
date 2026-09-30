@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api/apiClient";
+import i18n from "@/lib/i18n";
 
 // ============================================
 // Teacher Portal Types
@@ -82,10 +83,10 @@ export async function verifyTeacherInviteToken(
   if (!data.isValid) {
     throw new Error(
       data.status === "expired"
-        ? "This invitation has expired."
+        ? i18n.t("onboarding.inviteErrors.expired", { ns: "teacher" })
         : data.status === "used"
-        ? "This invitation has already been used."
-        : "This invitation link is invalid."
+        ? i18n.t("onboarding.inviteErrors.used", { ns: "teacher" })
+        : i18n.t("onboarding.inviteErrors.invalid", { ns: "teacher" })
     );
   }
   return data;

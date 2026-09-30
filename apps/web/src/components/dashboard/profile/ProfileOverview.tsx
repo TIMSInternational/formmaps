@@ -11,10 +11,14 @@ import { UserProfile, UserActivity } from "@/types/user";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { es, enUS } from "date-fns/locale";
+import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import { ProfileSkeleton } from "@/components/skeletons/ProfileSkeleton";
 
 export function ProfileOverview() {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith("es") ? es : enUS;
   const { user } = useGlobalStore();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [activities, setActivities] = useState<UserActivity[]>([]);
@@ -107,7 +111,7 @@ export function ProfileOverview() {
 
             <CardHeader className="relative px-8 pt-8 pb-4 glass-card">
               <CardTitle className="text-2xl font-bold flex items-center gap-2 glass-card">
-                About Me <span className="text-2xl">👋</span>
+                {t("profile.overview.aboutMe")} <span className="text-2xl">👋</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="px-8 pb-8 relative z-10 glass-card">
@@ -117,9 +121,9 @@ export function ProfileOverview() {
                 </p>
               ) : (
                 <div className="text-center py-4">
-                  <p className="text-gray-400 italic">No bio added yet.</p>
+                  <p className="text-gray-400 italic">{t("profile.overview.noBio")}</p>
                   <Button variant="outline" size="sm" className="mt-3" asChild>
-                    <Link href="/dashboard/profile?tab=edit">Add Bio</Link>
+                    <Link href="/dashboard/profile?tab=edit">{t("profile.overview.addBio")}</Link>
                   </Button>
                 </div>
               )}
@@ -136,7 +140,7 @@ export function ProfileOverview() {
 
               {skills.length === 0 && bio && (
                 <div className="mt-6">
-                  <p className="text-sm text-gray-400 italic">No skills added yet. <Link href="/dashboard/profile?tab=edit" className="text-[var(--admin-accent-blue)] hover:underline">Add skills</Link></p>
+                  <p className="text-sm text-gray-400 italic">{t("profile.overview.noSkills")} <Link href="/dashboard/profile?tab=edit" className="text-[var(--admin-accent-blue)] hover:underline">{t("profile.overview.addSkills")}</Link></p>
                 </div>
               )}
             </CardContent>
@@ -150,9 +154,9 @@ export function ProfileOverview() {
         {/* Stats Grid - Glass Cards */}
         <motion.div variants={item} className="grid grid-cols-2 lg:grid-cols-1 gap-4">
           {[
-            { label: "Courses Completed", value: stats.coursesCompleted.toString(), icon: FiBookOpen, gradient: "from-blue-500 to-cyan-500", text: "text-blue-50" },
-            { label: "Applications", value: stats.applicationsSubmitted.toString(), icon: FiBriefcase, gradient: "from-violet-500 to-purple-500", text: "text-purple-50" },
-            { label: "Sessions", value: stats.mentorshipSessions.toString(), icon: FiAward, gradient: "from-orange-400 to-pink-500", text: "text-orange-50" },
+            { label: t("profile.overview.coursesCompleted"), value: stats.coursesCompleted.toString(), icon: FiBookOpen, gradient: "from-blue-500 to-cyan-500", text: "text-blue-50" },
+            { label: t("nav.applications"), value: stats.applicationsSubmitted.toString(), icon: FiBriefcase, gradient: "from-violet-500 to-purple-500", text: "text-purple-50" },
+            { label: t("nav.sessions"), value: stats.mentorshipSessions.toString(), icon: FiAward, gradient: "from-orange-400 to-pink-500", text: "text-orange-50" },
           ].map((stat, i) => (
             <div key={i} className={cn("relative overflow-hidden rounded-2xl p-6 text-white shadow-lg group transition-all hover:scale-[1.02]", "bg-gradient-to-br " + stat.gradient)}>
               <div className="relative z-10 flex justify-between items-start">
@@ -175,7 +179,7 @@ export function ProfileOverview() {
           <Card className="border-none shadow-sm bg-gray-50/50 dark:bg-gray-800/20 rounded-3xl glass-card">
             <CardHeader>
               <CardTitle className="text-lg font-bold flex items-center glass-card">
-                <FiClock className="mr-2 text-gray-400" aria-hidden="true" /> Recent Activity
+                <FiClock className="mr-2 text-gray-400" aria-hidden="true" /> {t("admin.analytics.cards.recentActivity")}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -187,7 +191,7 @@ export function ProfileOverview() {
                   {activities.map((activity, i) => {
                     const Icon = getActivityIcon(activity.type);
                     const style = getActivityStyle(activity.type);
-                    const timeAgo = formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true });
+                    const timeAgo = formatDistanceToNow(new Date(activity.timestamp), { addSuffix: true, locale: dateLocale });
 
                     return (
                       <div key={activity.id || i} className="flex gap-4 p-3 rounded-xl hover:bg-white dark:hover:bg-gray-800 transition-colors relative z-10 group cursor-pointer">
@@ -198,7 +202,7 @@ export function ProfileOverview() {
                           <h4 className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate group-hover:text-[var(--admin-accent-blue)] transition-colors">
                             {activity.description}
                           </h4>
-                          <p className="text-xs text-gray-500 truncate">{activity.type.replace(/_/g, " ")}</p>
+                          <p className="text-xs text-gray-500 truncate">{t(`profile.overview.activityTypes.${activity.type}`, { defaultValue: activity.type.replace(/_/g, " ") })}</p>
                         </div>
                         <span className="text-xs text-gray-400 shrink-0 self-start">{timeAgo}</span>
                       </div>
@@ -207,14 +211,14 @@ export function ProfileOverview() {
                 </div>
               ) : (
                 <div className="text-center py-6">
-                  <p className="text-gray-400 text-sm italic">No recent activity</p>
+                  <p className="text-gray-400 text-sm italic">{t("parent:progress.noActivity")}</p>
                 </div>
               )}
 
               {activities.length > 0 && (
                 <Button variant="ghost" className="w-full mt-4 text-xs font-semibold text-gray-500 hover:text-gray-900" asChild>
                   <Link href="/dashboard/activity">
-                    View All Activity <FiArrowUpRight className="ml-1" aria-hidden="true" />
+                    {t("profile.overview.viewAllActivity")} <FiArrowUpRight className="ml-1" aria-hidden="true" />
                   </Link>
                 </Button>
               )}

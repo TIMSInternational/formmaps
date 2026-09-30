@@ -58,6 +58,33 @@ it("blocks submit until every question is answered", async () => {
   expect(submit).not.toHaveBeenCalled();
 });
 
+it("requests the questionnaire in the UI language (English and Spanish)", async () => {
+  getForm.mockResolvedValue({ group: "teacher", questions: [] });
+  const { unmount } = render(<VocationalEvaluator token="tok" language="english" />);
+  await waitFor(() => expect(getForm).toHaveBeenCalledWith("tok", "en"));
+  unmount();
+  render(<VocationalEvaluator token="tok" language="es-CO" />);
+  await waitFor(() => expect(getForm).toHaveBeenLastCalledWith("tok", "es"));
+});
+
+it("re-fetches on a language change and keeps the answers already given", async () => {
+  const form = (text: string) => ({ group: "teacher", questions: [
+    { number: 1, type: "open", scaleAnchors: null, options: null, text, block: "open", area: null, dimensionKey: null } ] });
+  getForm.mockImplementation(async (_t: string, lang: string) => form(lang === "es" ? "Cuéntanos" : "Tell us"));
+  submit.mockResolvedValue({ ok: true, count: 1 });
+  const { rerender } = render(<VocationalEvaluator token="tok" language="en" />);
+  await waitFor(() => screen.getByText("Tell us"));
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "Mi respuesta" } });
+
+  rerender(<VocationalEvaluator token="tok" language="es" />);
+  await waitFor(() => screen.getByText("Cuéntanos"));
+  expect(getForm).toHaveBeenLastCalledWith("tok", "es");
+  expect(screen.getByRole("textbox")).toHaveValue("Mi respuesta");
+
+  fireEvent.click(screen.getByRole("button", { name: /submit|enviar|finish/i }));
+  await waitFor(() => expect(submit).toHaveBeenCalledWith("tok", [{ questionNumber: 1, type: "open", textValue: "Mi respuesta" }]));
+});
+
 it("submits answered questions as typed answers", async () => {
   getForm.mockResolvedValue({ group: "teacher", questions: [
     { number: 1, type: "open", scaleAnchors: null, options: null, text: "Tell us", block: "open", area: null, dimensionKey: null } ] });

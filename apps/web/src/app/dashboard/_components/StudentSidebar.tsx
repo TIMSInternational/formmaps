@@ -365,7 +365,7 @@ export function StudentSidebar() {
           <button
             onClick={handleNewChat}
             disabled={assessmentActive}
-            title={assessmentActive ? "AI chat is unavailable during an assessment" : undefined}
+            title={assessmentActive ? t("studentUi.dashboard.sidebar.chatUnavailable") : undefined}
             style={{
               display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 10px 0 8px",
               borderRadius: 6, border: "none", cursor: assessmentActive ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 500,
@@ -484,7 +484,7 @@ export function StudentSidebar() {
               <button
                 onClick={handleNewChat}
                 disabled={assessmentActive}
-                title={assessmentActive ? "AI chat is unavailable during an assessment" : undefined}
+                title={assessmentActive ? t("studentUi.dashboard.sidebar.chatUnavailable") : undefined}
                 style={{
                   display: "flex", alignItems: "center", gap: 6, height: 28, padding: "0 12px",
                   borderRadius: 6, border: "none", cursor: assessmentActive ? "not-allowed" : "pointer", fontSize: 12, fontWeight: 500,
@@ -573,8 +573,8 @@ export function StudentSidebar() {
           }}>{user.name?.charAt(0)?.toUpperCase() || "S"}</div>
           {!collapsed && <>
             <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-              <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name || "Student"}</div>
-              <div style={{ fontSize: 10, color: C.fontTertiary }}>Student</div>
+              <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name || t("dashboard.role.student")}</div>
+              <div style={{ fontSize: 10, color: C.fontTertiary }}>{t("dashboard.role.student")}</div>
             </div>
             <ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} />
           </>}

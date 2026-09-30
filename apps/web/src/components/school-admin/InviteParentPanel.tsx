@@ -53,13 +53,15 @@ interface Props {
   studentName: string;
 }
 
-const RELATIONSHIP_LABELS: Record<ParentRelationship, string> = {
-  mother: "Mother",
-  father: "Father",
-  sibling: "Sibling",
-  guardian: "Guardian",
-  other: "Other",
+// i18n keys (common namespace) for each relationship value; the value is API data.
+const RELATIONSHIP_LABEL_KEYS: Record<ParentRelationship, string> = {
+  mother: "components.inviteParentPanel.relationship.mother",
+  father: "components.inviteParentPanel.relationship.father",
+  sibling: "components.inviteParentPanel.relationship.sibling",
+  guardian: "components.inviteParentPanel.relationship.guardian",
+  other: "components.inviteParentPanel.relationship.other",
 };
+const RELATIONSHIP_ORDER: ParentRelationship[] = ["mother", "father", "sibling", "guardian", "other"];
 
 const RELATIONSHIP_COLORS: Record<ParentRelationship, string> = {
   mother: "bg-pink-100 text-pink-700",
@@ -70,9 +72,9 @@ const RELATIONSHIP_COLORS: Record<ParentRelationship, string> = {
 };
 
 const STATUS_CONFIG = {
-  accepted: { icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50", label: "Accepted" },
-  pending: { icon: Clock, color: "text-amber-600", bg: "bg-amber-50", label: "Invite Sent" },
-  expired: { icon: AlertCircle, color: "text-red-600", bg: "bg-red-50", label: "Expired" },
+  accepted: { icon: CheckCircle2, color: "text-green-600", bg: "bg-green-50", labelKey: "components.inviteParentPanel.status.accepted" },
+  pending: { icon: Clock, color: "text-amber-600", bg: "bg-amber-50", labelKey: "components.inviteParentPanel.status.pending" },
+  expired: { icon: AlertCircle, color: "text-red-600", bg: "bg-red-50", labelKey: "components.inviteParentPanel.status.expired" },
 };
 
 function ParentRow({
@@ -114,7 +116,7 @@ function ParentRow({
             variant="secondary"
             className={cn("text-xs px-2 py-0.5", RELATIONSHIP_COLORS[parent.relationship])}
           >
-            {RELATIONSHIP_LABELS[parent.relationship]}
+            {t(RELATIONSHIP_LABEL_KEYS[parent.relationship])}
           </Badge>
         </div>
         <div className="flex items-center gap-1 mt-0.5">
@@ -125,7 +127,7 @@ function ParentRow({
 
       <div className={cn("flex items-center gap-1 px-2 py-1 rounded-md text-xs font-medium", cfg.bg, cfg.color)}>
         <StatusIcon className="h-3 w-3" />
-        {cfg.label}
+        {t(cfg.labelKey)}
       </div>
 
       <div className="flex items-center gap-1 shrink-0">
@@ -134,7 +136,7 @@ function ParentRow({
             variant="ghost"
             size="icon"
             className="h-7 w-7 text-gray-400 hover:text-indigo-600"
-            title="Resend invite"
+            title={t("components.inviteParentPanel.resendInvite")}
             disabled={resend.isPending}
             onClick={() =>
               resend.mutate({ studentId, parentLinkId: parent.id })
@@ -147,7 +149,7 @@ function ParentRow({
           variant="ghost"
           size="icon"
           className="h-7 w-7 text-gray-400 hover:text-red-600"
-          title="Revoke access"
+          title={t("components.inviteParentPanel.revokeAccess")}
           disabled={revoke.isPending}
           onClick={() =>
             revoke.mutate({ studentId, parentLinkId: parent.id })
@@ -201,10 +203,10 @@ export function InviteParentPanel({ studentId, studentName }: Props) {
         <div>
           <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
             <Users className="h-4 w-4 text-indigo-500" />
-            Parents & Guardians
+            {t("components.inviteParentPanel.title")}
           </h3>
           <p className="text-xs text-gray-500 mt-0.5">
-            {acceptedCount} linked · {pendingCount} pending invite
+            {t("components.inviteParentPanel.linkedCount", { count: acceptedCount })} · {t("components.inviteParentPanel.pendingCount", { count: pendingCount })}
           </p>
         </div>
 
@@ -212,15 +214,15 @@ export function InviteParentPanel({ studentId, studentName }: Props) {
           <DialogTrigger asChild>
             <Button size="sm" className="gap-2 bg-indigo-600 hover:bg-indigo-700">
               <UserPlus className="h-4 w-4" />
-              Invite Parent
+              {t("components.inviteParentPanel.inviteButton")}
             </Button>
           </DialogTrigger>
 
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
-              <DialogTitle>Invite Parent / Guardian</DialogTitle>
+              <DialogTitle>{t("components.inviteParentPanel.dialogTitle")}</DialogTitle>
               <DialogDescription>
-                Send a portal access invite for{" "}
+                {t("components.inviteParentPanel.dialogDescription")}{" "}
                 <span className="font-medium text-gray-900">{studentName}</span>
               </DialogDescription>
             </DialogHeader>
@@ -228,17 +230,17 @@ export function InviteParentPanel({ studentId, studentName }: Props) {
             <div className="space-y-4 py-2">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 space-y-1.5">
-                  <Label htmlFor="parent-name">Full Name *</Label>
+                  <Label htmlFor="parent-name">{t("components.inviteParentPanel.fullName")}</Label>
                   <Input
                     id="parent-name"
-                    placeholder="e.g. Maria Gonzalez"
+                    placeholder={t("components.inviteParentPanel.namePlaceholder")}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                   />
                 </div>
 
                 <div className="col-span-2 space-y-1.5">
-                  <Label htmlFor="parent-email">Email Address *</Label>
+                  <Label htmlFor="parent-email">{t("components.inviteParentPanel.email")}</Label>
                   <Input
                     id="parent-email"
                     type="email"
@@ -249,7 +251,7 @@ export function InviteParentPanel({ studentId, studentName }: Props) {
                 </div>
 
                 <div className="col-span-2 space-y-1.5">
-                  <Label>Relationship to Student</Label>
+                  <Label>{t("components.inviteParentPanel.relationshipLabel")}</Label>
                   <Select
                     value={relationship}
                     onValueChange={(v) => setRelationship(v as ParentRelationship)}
@@ -258,23 +260,21 @@ export function InviteParentPanel({ studentId, studentName }: Props) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="mother">Mother</SelectItem>
-                      <SelectItem value="father">Father</SelectItem>
-                      <SelectItem value="sibling">Sibling</SelectItem>
-                      <SelectItem value="guardian">Guardian</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      {RELATIONSHIP_ORDER.map((r) => (
+                        <SelectItem key={r} value={r}>{t(RELATIONSHIP_LABEL_KEYS[r])}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div className="col-span-2 space-y-1.5">
                   <Label htmlFor="parent-msg">
-                    Personal Message{" "}
-                    <span className="text-xs text-gray-400">(optional)</span>
+                    {t("components.inviteParentPanel.personalMessage")}{" "}
+                    <span className="text-xs text-gray-400">{t("components.inviteParentPanel.optional")}</span>
                   </Label>
                   <Textarea
                     id="parent-msg"
-                    placeholder="Add a short message to the invite email..."
+                    placeholder={t("components.inviteParentPanel.messagePlaceholder")}
                     rows={3}
                     value={message}
                     onChange={(e) => setMessage(e.target.value)}
@@ -285,7 +285,7 @@ export function InviteParentPanel({ studentId, studentName }: Props) {
 
             <DialogFooter className="gap-2">
               <Button variant="outline" onClick={() => setOpen(false)}>
-                Cancel
+                {t("common.cancel")}
               </Button>
               <Button
                 onClick={handleInvite}
@@ -293,7 +293,7 @@ export function InviteParentPanel({ studentId, studentName }: Props) {
                 className="gap-2 bg-indigo-600 hover:bg-indigo-700"
               >
                 <Send className="h-4 w-4" />
-                {invite.isPending ? "Sending…" : "Send Invite"}
+                {invite.isPending ? t("components.inviteParentPanel.sending") : t("components.inviteParentPanel.sendInvite")}
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -308,10 +308,10 @@ export function InviteParentPanel({ studentId, studentName }: Props) {
           <div className="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl">
             <Users className="h-10 w-10 text-gray-300 mx-auto mb-3" />
             <p className="text-sm text-gray-500 font-medium">
-              No parents or guardians linked yet
+              {t("components.inviteParentPanel.emptyTitle")}
             </p>
             <p className="text-xs text-gray-400 mt-1">
-              Click "Invite Parent" to send a portal access invite
+              {t("components.inviteParentPanel.emptyHint")}
             </p>
           </div>
         ) : (

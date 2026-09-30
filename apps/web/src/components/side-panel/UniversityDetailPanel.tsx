@@ -139,7 +139,7 @@ export function UniversityDetailPanel({
               className="text-xs ml-2"
               style={{ color: "var(--admin-font-tertiary)" }}
             >
-              {t("Match Score", "Puntuacion")}
+              {t("Match Score", "Puntaje de coincidencia")}
             </span>
           </div>
         </div>
@@ -199,7 +199,7 @@ export function UniversityDetailPanel({
       {/* AI Insights */}
       {matchReasons && matchReasons.length > 0 && (
         <div className="space-y-2">
-          <SectionLabel icon={Sparkles} label={t("Why it's a great fit", "Por que es ideal")} accent />
+          <SectionLabel icon={Sparkles} label={t("Why it's a great fit", "Por qué es ideal")} accent />
           <div className="space-y-1.5">
             {matchReasons.map((r, idx) => (
               <div key={idx} className="flex items-start gap-2">
@@ -221,11 +221,11 @@ export function UniversityDetailPanel({
 
       {/* Stats Grid */}
       <div className="space-y-2">
-        <SectionLabel icon={Award} label={t("Key Facts", "Datos Clave")} />
+        <SectionLabel icon={Award} label={t("Key Facts", "Datos clave")} />
         <div className="grid grid-cols-2 gap-2">
           <StatBox icon={Award} label={t("Rank", "Ranking")} value={globalRank ? `#${globalRank}` : "--"} accent="text-amber-400" />
-          <StatBox icon={Users} label={t("Accept", "Acepta")} value={formatAcceptanceRate(acceptRate)} accent="text-blue-400" />
-          <StatBox icon={DollarSign} label={t("Tuition", "Matricula")} value={tuition > 0 ? `$${(tuition / 1000).toFixed(0)}k` : "--"} accent="text-emerald-400" />
+          <StatBox icon={Users} label={t("Acceptance", "Aceptación")} value={formatAcceptanceRate(acceptRate)} accent="text-blue-400" />
+          <StatBox icon={DollarSign} label={t("Tuition", "Matrícula")} value={tuition > 0 ? `$${(tuition / 1000).toFixed(0)}k` : "--"} accent="text-emerald-400" />
           <StatBox icon={GraduationCap} label={t("Programs", "Programas")} value={String(recommendedPrograms?.length || university.programs?.length || "--")} accent="text-purple-400" />
         </div>
       </div>
@@ -268,7 +268,7 @@ export function UniversityDetailPanel({
       {/* Programs */}
       {recommendedPrograms && recommendedPrograms.length > 0 && (
         <div className="space-y-2">
-          <SectionLabel icon={GraduationCap} label={t("Recommended Programs", "Programas Recomendados")} />
+          <SectionLabel icon={GraduationCap} label={t("Recommended Programs", "Programas recomendados")} />
           <div className="space-y-1.5">
             {recommendedPrograms.map((p, idx) => (
               <div
@@ -308,7 +308,7 @@ export function UniversityDetailPanel({
                       "bg-emerald-500/10 text-emerald-400",
                     )}
                   >
-                    {p.academicRigorLevel >= 8 ? "High" : p.academicRigorLevel >= 5 ? "Medium" : "Standard"}
+                    {p.academicRigorLevel >= 8 ? t("High", "Alta") : p.academicRigorLevel >= 5 ? t("Medium", "Media") : t("Standard", "Estándar")}
                   </span>
                 )}
               </div>
@@ -335,7 +335,7 @@ export function UniversityDetailPanel({
             style={{ background: "var(--admin-accent-blue)" }}
           >
             <Globe className="h-4 w-4" />
-            {t("Visit Website", "Visitar Sitio")}
+            {t("Visit Website", "Visitar sitio web")}
             <ArrowUpRight className="h-3.5 w-3.5" />
           </a>
         )}

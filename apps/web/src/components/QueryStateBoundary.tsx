@@ -1,5 +1,6 @@
 "use client";
 import { ReactNode } from "react";
+import { useTranslation } from "react-i18next";
 import { AlertCircle, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -22,6 +23,7 @@ export function QueryStateBoundary({
   isLoading, isError, isEmpty = false, onRetry,
   loadingFallback, errorFallback, emptyFallback, children,
 }: QueryStateBoundaryProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return (
       <div role="status" aria-busy="true" className="space-y-4">
@@ -36,9 +38,9 @@ export function QueryStateBoundary({
         <div className="w-14 h-14 mx-auto mb-4 bg-red-50 rounded-xl border border-red-100 flex items-center justify-center">
           <AlertCircle className="h-7 w-7 text-[#dc2626]" />
         </div>
-        <h3 className="text-sm font-bold text-foreground mb-1">Something went wrong</h3>
-        <p className="text-xs text-muted-foreground max-w-md mx-auto mb-4">We couldn&apos;t load this data. This is a temporary problem, not an empty record.</p>
-        {onRetry && (<Button onClick={onRetry} className="bg-[#102B47] text-white hover:bg-[#102B47]/90"><RefreshCw className="h-4 w-4 mr-2" />Try again</Button>)}
+        <h3 className="text-sm font-bold text-foreground mb-1">{t("error.somethingWentWrong")}</h3>
+        <p className="text-xs text-muted-foreground max-w-md mx-auto mb-4">{t("components.queryStateBoundary.loadFailed")}</p>
+        {onRetry && (<Button onClick={onRetry} className="bg-[#102B47] text-white hover:bg-[#102B47]/90"><RefreshCw className="h-4 w-4 mr-2" />{t("components.queryStateBoundary.tryAgain")}</Button>)}
       </div>
     );
   }

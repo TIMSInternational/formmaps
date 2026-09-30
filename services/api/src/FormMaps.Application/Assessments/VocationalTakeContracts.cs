@@ -17,14 +17,18 @@ public enum VocationalFormStatus
     InvalidGroup,
 }
 
-/// <summary>getVocationalForm result. Ok carries the questionnaire; Completed carries only EvaluatorName.</summary>
+/// <summary>
+/// getVocationalForm result. Ok carries the questionnaire (resolved for <see cref="Lang"/>); Completed carries
+/// only EvaluatorName.
+/// </summary>
 public sealed record VocationalFormResult(
     VocationalFormStatus Status,
     string? Group = null,
     string? InstrumentVersion = null,
     string? EvaluatorName = null,
     string? StudentName = null,
-    IReadOnlyList<QuestionnaireItem>? Questions = null);
+    IReadOnlyList<QuestionnaireItem>? Questions = null,
+    string? Lang = null);
 
 /// <summary>One incoming vocational answer (discriminated by <see cref="Type"/>; zod-validated at the edge).</summary>
 public sealed record VocationalAnswerInput(
@@ -56,7 +60,9 @@ public sealed record ViolationsResult(bool Found, int Saved = 0, int ViolationCo
 
 public interface IVocationalTakeService
 {
-    Task<VocationalFormResult> GetFormAsync(string token, CancellationToken cancellationToken = default);
+    /// <summary>The evaluator's questionnaire in <paramref name="lang"/> ("es" | "en"; default Spanish, as before).</summary>
+    Task<VocationalFormResult> GetFormAsync(
+        string token, string lang = VocationalLanguage.Spanish, CancellationToken cancellationToken = default);
 
     Task<VocationalSubmitResult> SubmitAsync(
         string token, IReadOnlyList<VocationalAnswerInput> answers, CancellationToken cancellationToken = default);

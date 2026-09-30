@@ -1,3 +1,5 @@
+// Real i18next (English) so assertions read the rendered copy, not raw keys.
+import "@/lib/i18n";
 /**
  * Task 8 — Community Service page: error boundary, real per-school requirement,
  * pending edit/delete, rejection note.
@@ -216,7 +218,7 @@ describe("CommunityServicePage", () => {
 
       render(<CommunityServicePage />);
       const goal = await screen.findByTestId("community-service-goal");
-      expect(goal.textContent).toEqual(expect.stringContaining("noGoalSet"));
+      expect(goal.textContent).toMatch(/no community service hours goal set/i);
       expect(screen.queryByText("0%")).toBeNull();
     });
   });

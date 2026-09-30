@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export interface FilterPill {
   key: string;
@@ -15,6 +16,7 @@ interface ActiveFilterPillsProps {
 }
 
 export function ActiveFilterPills({ pills, onRemove, onClearAll }: ActiveFilterPillsProps) {
+  const { t } = useTranslation();
   if (pills.length === 0) return null;
 
   return (
@@ -40,7 +42,7 @@ export function ActiveFilterPills({ pills, onRemove, onClearAll }: ActiveFilterP
         className="text-[11px] font-medium px-1.5 py-1 rounded transition-colors"
         style={{ color: "var(--admin-font-tertiary, #818181)" }}
       >
-        Clear all
+        {t("components.activeFilterPills.clearAll")}
       </button>
     </div>
   );

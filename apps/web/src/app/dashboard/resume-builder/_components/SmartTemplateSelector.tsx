@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { cn } from "@/lib/utils";
 import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
 import { TemplatePreviewCard } from "./TemplatePreviewCard";
+import { useTranslation } from "react-i18next";
 
 interface SmartTemplateSelectorProps {
   onTemplateSelect?: (templateId: string) => void;
@@ -14,6 +15,7 @@ interface SmartTemplateSelectorProps {
 export function SmartTemplateSelector({
   onTemplateSelect,
 }: SmartTemplateSelectorProps) {
+  const { t } = useTranslation();
   const { resumeBuilder, setResumeTemplate } = useGlobalStore();
   const { careerField, template: selectedTemplate } = resumeBuilder.data;
 
@@ -41,7 +43,7 @@ export function SmartTemplateSelector({
   useEffect(() => {
     if (!isBrowsing && selectedTemplate) {
       const index = relevantTemplates.findIndex(
-        (t) => t.id === selectedTemplate
+        (tpl) => tpl.id === selectedTemplate
       );
       if (index !== -1) {
         setCurrentIndex(index);
@@ -78,7 +80,7 @@ export function SmartTemplateSelector({
     setIsBrowsing(false); // Reset browsing state when template is selected
 
     // Trigger a smooth background transition
-    const currentTemplate = relevantTemplates.find((t) => t.id === templateId);
+    const currentTemplate = relevantTemplates.find((tpl) => tpl.id === templateId);
     if (currentTemplate) {
       // Update CSS custom properties for smooth background transitions
       document.documentElement.style.setProperty(
@@ -94,7 +96,7 @@ export function SmartTemplateSelector({
   if (relevantTemplates.length === 0) {
     return (
       <div className="text-center py-8">
-        <p className="text-gray-500">No templates available</p>
+        <p className="text-gray-500">{t("resumeBuilder.smartTemplateSelector.empty", "No templates available")}</p>
       </div>
     );
   }
@@ -111,13 +113,11 @@ export function SmartTemplateSelector({
           <div className="flex items-center justify-center space-x-2">
             <Sparkles className="w-5 h-5 text-indigo-500" />
             <h3 className="text-lg font-semibold text-gray-900">
-              Templates for {selectedField.name}
+              {t("resumeBuilder.smartTemplateSelector.templatesFor", { defaultValue: "Templates for {{field}}", field: selectedField.name })}
             </h3>
           </div>
           <p className="text-sm text-gray-600">
-            Showing {relevantTemplates.length} template
-            {relevantTemplates.length !== 1 ? "s" : ""}
-            optimized for your career field
+            {t("resumeBuilder.smartTemplateSelector.showing", { count: relevantTemplates.length, defaultValue: "Showing {{count}} templates optimized for your career field" })}
           </p>
         </motion.div>
       )}
@@ -129,6 +129,7 @@ export function SmartTemplateSelector({
           onClick={handlePrevious}
           className="absolute left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-white transition-all duration-200 hover:scale-105"
           disabled={relevantTemplates.length <= 1}
+          aria-label={t("resumeBuilder.smartTemplateSelector.previous", "Previous template")}
         >
           <ChevronLeft className="w-6 h-6 text-gray-600" />
         </button>
@@ -137,6 +138,7 @@ export function SmartTemplateSelector({
           onClick={handleNext}
           className="absolute right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-white/90 backdrop-blur-sm rounded-full shadow-lg border border-gray-200 flex items-center justify-center hover:bg-white transition-all duration-200 hover:scale-105"
           disabled={relevantTemplates.length <= 1}
+          aria-label={t("resumeBuilder.smartTemplateSelector.next", "Next template")}
         >
           <ChevronRight className="w-6 h-6 text-gray-600" />
         </button>
@@ -159,7 +161,7 @@ export function SmartTemplateSelector({
             {/* Selected Template Badge */}
             {selectedTemplate === currentTemplate.id && (
               <div className="absolute top-4 right-4 z-20 bg-indigo-500 text-white px-3 py-1 rounded-full text-xs font-medium">
-                ✓ Currently Selected
+                ✓ {t("resumeBuilder.smartTemplateSelector.currentlySelected", "Currently Selected")}
               </div>
             )}
 
@@ -193,21 +195,21 @@ export function SmartTemplateSelector({
                   )}
                 >
                   {selectedTemplate === currentTemplate.id
-                    ? "Selected"
-                    : "Select"}
+                    ? t("resumeBuilder.smartTemplateSelector.selected", "Selected")
+                    : t("resumeBuilder.smartTemplateSelector.select", "Select")}
                 </button>
               </div>
 
               {/* Template Category */}
               <div className="flex items-center space-x-2">
                 <span className="text-xs font-medium text-gray-500">
-                  Category:
+                  {t("resumeBuilder.smartTemplateSelector.category", "Category:")}
                 </span>
                 <span
                   className="px-2 py-1 text-xs rounded-full text-white font-medium"
                   style={{ backgroundColor: currentTemplate.color }}
                 >
-                  {currentTemplate.category}
+                  {t(`resumeBuilder.smartTemplateSelector.categories.${currentTemplate.category}`, { defaultValue: currentTemplate.category })}
                 </span>
               </div>
             </div>
@@ -231,7 +233,8 @@ export function SmartTemplateSelector({
                   ? "bg-indigo-500 scale-125"
                   : "bg-gray-300 hover:bg-gray-400"
               )}
-              title={`View ${template.name} template`}
+              title={t("resumeBuilder.smartTemplateSelector.viewTemplate", { defaultValue: "View {{name}} template", name: template.name })}
+              aria-label={t("resumeBuilder.smartTemplateSelector.viewTemplate", { defaultValue: "View {{name}} template", name: template.name })}
             />
           ))}
         </div>
@@ -239,7 +242,7 @@ export function SmartTemplateSelector({
 
       {/* Template Count */}
       <div className="text-center text-sm text-gray-500">
-        Template {currentIndex + 1} of {relevantTemplates.length}
+        {t("resumeBuilder.smartTemplateSelector.counter", { defaultValue: "Template {{current}} of {{total}}", current: currentIndex + 1, total: relevantTemplates.length })}
       </div>
     </div>
   );

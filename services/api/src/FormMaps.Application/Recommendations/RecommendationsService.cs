@@ -30,7 +30,8 @@ public sealed class RecommendationsService(
     IObjectStorage storage,
     IEmailSender emailSender,
     RecommendationEmails emails,
-    TimeProvider timeProvider)
+    TimeProvider timeProvider,
+    IEmailLanguageResolver emailLanguages)
 {
     /// <summary>
     /// Roles a student may request a letter from. Must be active staff at the student's OWN school. Mirrored by the
@@ -116,12 +117,15 @@ public sealed class RecommendationsService(
         // contract; the catch mirrors legacy's try/catch and keeps a throwing double from failing the write.)
         try
         {
+            // To the recommender, in the recommender's language (EmailLanguage rule 2). An empty student name gets the
+            // template's localised "A student" / "Un/a estudiante".
             var message = emails.BuildRequest(
                 recommender.Name,
-                string.IsNullOrEmpty(student?.Name) ? "A student" : student.Name,
+                student?.Name ?? "",
                 input.Relationship,
                 input.RequestMessage,
-                due);
+                due,
+                await emailLanguages.ForUserAsync(recommender.Id, cancellationToken));
             await emailSender.SendAsync(recommender.Email, message.Subject, message.Html, cancellationToken);
         }
         catch
@@ -276,7 +280,9 @@ public sealed class RecommendationsService(
             context, id, recommenderId, newStatus, writeDeclineReason: !accepted, declineReason, cancellationToken);
 
         // NOT wrapped in try/catch in legacy — but sendEmail itself never throws, and neither does IEmailSender.
-        var message = emails.BuildRespond(request.Student.Name, request.Recommender.Name, accepted, declineReason);
+        var message = emails.BuildRespond(
+            request.Student.Name, request.Recommender.Name, accepted, declineReason,
+            await emailLanguages.ForUserAsync(request.Student.Id, cancellationToken));
         await emailSender.SendAsync(request.Student.Email, message.Subject, message.Html, cancellationToken);
 
         return updated;
@@ -444,10 +450,11 @@ public sealed class RecommendationsService(
 
     // =========================================================================================================
 
-    private Task NotifyLetterSubmittedAsync(UserRef student, string? recommenderName, CancellationToken cancellationToken)
+    private async Task NotifyLetterSubmittedAsync(UserRef student, string? recommenderName, CancellationToken cancellationToken)
     {
-        var message = emails.BuildSubmitted(student.Name, recommenderName, timeProvider.GetUtcNow().UtcDateTime);
-        return emailSender.SendAsync(student.Email, message.Subject, message.Html, cancellationToken);
+        var language = await emailLanguages.ForUserAsync(student.Id, cancellationToken);
+        var message = emails.BuildSubmitted(student.Name, recommenderName, timeProvider.GetUtcNow().UtcDateTime, language);
+        await emailSender.SendAsync(student.Email, message.Subject, message.Html, cancellationToken);
     }
 
     /// <summary>

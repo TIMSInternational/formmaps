@@ -22,12 +22,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Check, Loader2, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface SubscriptionPlansProps {
   className?: string;
 }
 
 export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
+  const { t, i18n } = useTranslation();
   const { user } = useGlobalStore();
   const [subscriptionData, setSubscriptionData] =
     useState<SubscriptionData | null>(null);
@@ -57,7 +59,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
         setError(
           err instanceof Error
             ? err.message
-            : "Failed to load subscription data"
+            : t("studentUi.subscriptions.loadDataFailed")
         );
       } finally {
         setLoading(false);
@@ -91,11 +93,11 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
             />
           </svg>
           <p className="text-lg font-semibold">
-            Failed to load subscription plans
+            {t("studentUi.subscriptions.loadPlansFailed")}
           </p>
           <p className="text-sm text-muted-foreground mt-2">{error}</p>
         </div>
-        <Button onClick={() => window.location.reload()}>Try Again</Button>
+        <Button onClick={() => window.location.reload()}>{t("common.tryAgain")}</Button>
       </div>
     );
   }
@@ -128,17 +130,16 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                 </div>
                 <div>
                   <h3 className="font-semibold text-emerald-900 text-lg">
-                    Active Subscription
+                    {t("studentUi.subscriptions.active.title")}
                   </h3>
                   <p className="text-emerald-700 text-sm">
-                    You are currently on the <span className="font-medium">{currentPlan.name}</span> plan.
+                    {t("studentUi.subscriptions.active.onPlanPrefix")} <span className="font-medium">{currentPlan.name}</span>{t("studentUi.subscriptions.active.onPlanSuffix")}
                     {subscriptionStatus?.expiryDate && (
                       <span className="opacity-90">
                         {" "}
-                        Renews on{" "}
-                        {new Date(
-                          subscriptionStatus.expiryDate
-                        ).toLocaleDateString()}
+                        {t("studentUi.subscriptions.active.renewsOn", {
+                          date: new Date(subscriptionStatus.expiryDate).toLocaleDateString(i18n.language),
+                        })}
                       </span>
                     )}
                   </p>
@@ -146,7 +147,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
               </div>
               <div className="text-right">
                 <Badge variant="outline" className="text-emerald-700 border-emerald-200 bg-emerald-100/50 px-3 py-1">
-                  Active
+                  {t("studentUi.subscriptions.active.badge")}
                 </Badge>
               </div>
             </CardContent>
@@ -161,7 +162,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
         className="text-center space-y-4"
       >
         <Badge variant="secondary" className="px-4 py-1.5 text-sm font-medium bg-[var(--admin-accent-blue)]/10 text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/20 border-[var(--admin-accent-blue)]/20">
-          Upgrade Your Experience
+          {t("studentUi.subscriptions.upgradeBadge")}
         </Badge>
         <h2 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
           {subscription.name}
@@ -193,7 +194,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                 <div className="absolute -top-4 left-0 right-0 flex justify-center">
                   <Badge className="bg-gradient-to-r from-[var(--admin-accent-blue)] to-[#102B47] text-white shadow-lg border-0 px-4 py-1 h-auto text-sm gap-1.5">
                     <Sparkles className="w-3.5 h-3.5 fill-current" />
-                    Most Popular
+                    {t("studentUi.subscriptions.mostPopular")}
                   </Badge>
                 </div>
               )}
@@ -222,7 +223,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                     </span>
                     {option.discount && (
                       <Badge variant="outline" className="text-emerald-600 border-emerald-200 bg-emerald-50 text-xs">
-                        Save {option.discount}%
+                        {t("studentUi.subscriptions.save", { discount: option.discount })}
                       </Badge>
                     )}
                   </div>
@@ -245,7 +246,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
               <CardFooter className="pt-8 pb-8">
                 {hasActiveSubscription && currentPlan?.id === option.id ? (
                   <Button disabled variant="secondary" className="w-full h-12 text-base rounded-xl font-medium">
-                    Current Plan
+                    {t("studentUi.subscriptions.currentPlan")}
                   </Button>
                 ) : (
                   <StripeCheckout
@@ -258,7 +259,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                       window.location.reload();
                     }}
                     onError={(error: string) => {
-                      alert(`Payment failed: ${error}`);
+                      alert(t("studentUi.subscriptions.paymentFailed", { error }));
                       setProcessingPayment(null);
                     }}
                     disabled={processingPayment !== null}
@@ -276,7 +277,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                       {processingPayment === option.id ? (
                         <>
                           <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Processing...
+                          {t("studentUi.subscriptions.processing")}
                         </>
                       ) : (
                         option.ctaText

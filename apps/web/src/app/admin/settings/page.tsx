@@ -62,14 +62,14 @@ export default function AdminSettingsPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [settings, setSettings] = useState<AdminSettings>({
-    general: { siteName: "TimCare", supportEmail: "support@timcare.com", maintenanceMode: false },
+    general: { siteName: "FormMaps", supportEmail: "", maintenanceMode: false },
     finance: { platformFeePercent: 15, currency: "USD", payoutSchedule: "monthly" },
     security: { sessionTimeoutMinutes: 60 },
     system: { maxUploadSizeMB: 10 },
     legal: {
-      privacyUrl: "https://timcare.com/privacy",
-      termsUrl: "https://timcare.com/terms",
-      helpUrl: "https://help.timcare.com"
+      privacyUrl: "https://app.formmaps.com/privacy",
+      termsUrl: "https://app.formmaps.com/terms",
+      helpUrl: ""
     },
   });
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface Application {
   id: string;
@@ -38,19 +39,19 @@ const CONFIDENCE_COLORS: Record<string, string> = {
 };
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  researching: { label: "Researching", color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
-  applying: { label: "Applying", color: "var(--admin-accent-blue)", bg: "rgba(59,130,246,0.1)" },
-  submitted: { label: "Submitted", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-  accepted: { label: "Accepted", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
-  rejected: { label: "Rejected", color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
-  waitlisted: { label: "Waitlisted", color: "#f97316", bg: "rgba(249,115,22,0.1)" },
-  enrolled: { label: "Enrolled", color: "#059669", bg: "rgba(5,150,105,0.1)" },
+  researching: { label: "ui.collegeApps.status.researching", color: "#6b7280", bg: "rgba(107,114,128,0.1)" },
+  applying: { label: "ui.collegeApps.status.applying", color: "var(--admin-accent-blue)", bg: "rgba(59,130,246,0.1)" },
+  submitted: { label: "ui.collegeApps.status.submitted", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+  accepted: { label: "ui.collegeApps.status.accepted", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+  rejected: { label: "ui.collegeApps.status.rejected", color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
+  waitlisted: { label: "ui.collegeApps.status.waitlisted", color: "#f97316", bg: "rgba(249,115,22,0.1)" },
+  enrolled: { label: "ui.collegeApps.status.enrolled", color: "#059669", bg: "rgba(5,150,105,0.1)" },
 };
 
 const FIT_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  reach: { label: "Reach", color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
-  match: { label: "Match", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-  safety: { label: "Safety", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+  reach: { label: "ui.collegePrep.fit.reach", color: "#ef4444", bg: "rgba(239,68,68,0.1)" },
+  match: { label: "ui.collegePrep.fit.match", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+  safety: { label: "ui.collegePrep.fit.safety", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
 };
 
 const STATUSES = ["researching", "applying", "submitted", "accepted", "rejected", "waitlisted", "enrolled"] as const;
@@ -65,6 +66,7 @@ interface ApplicationRowProps {
 }
 
 export function ApplicationRow({ app, prediction, isLast, onStatusChange, onDelete, deleteDisabled }: ApplicationRowProps) {
+  const { t, i18n } = useTranslation("counselor");
   const statusCfg = STATUS_CONFIG[app.status] || STATUS_CONFIG.researching;
   const fitCfg = FIT_CONFIG[app.fit] || FIT_CONFIG.match;
   const predColors = prediction ? (PREDICTION_COLORS[prediction.classification] || PREDICTION_COLORS.match) : null;
@@ -92,13 +94,13 @@ export function ApplicationRow({ app, prediction, isLast, onStatusChange, onDele
               <span style={{
                 width: 6, height: 6, borderRadius: "50%", flexShrink: 0,
                 background: CONFIDENCE_COLORS[prediction.confidence] || CONFIDENCE_COLORS.low,
-              }} title={`${prediction.confidence} confidence`} />
+              }} title={t(`ui.collegeApps.confidence.${prediction.confidence}`)} />
               {prediction.percentageDisplay}%
             </span>
             <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>
               {prediction.predictionSource && prediction.predictionSource !== "rule_based"
                 ? `ML${prediction.modelMetrics ? ` (${Math.round(prediction.modelMetrics.accuracy * 100)}%)` : ""}`
-                : "Est."}
+                : t("ui.collegeApps.estimated")}
             </span>
           </>
         ) : (
@@ -110,11 +112,11 @@ export function ApplicationRow({ app, prediction, isLast, onStatusChange, onDele
         padding: "3px 10px", borderRadius: 6, width: "fit-content",
         background: fitCfg.bg, color: fitCfg.color,
       }}>
-        {fitCfg.label}
+        {t(fitCfg.label)}
       </span>
       <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)" }}>{app.deadlineType}</span>
       <span style={{ fontSize: 12, color: "var(--admin-font-secondary)" }}>
-        {new Date(app.deadlineDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+        {new Date(app.deadlineDate).toLocaleDateString(i18n.language, { month: "short", day: "numeric", year: "numeric" })}
       </span>
       <div>
         <select
@@ -128,7 +130,7 @@ export function ApplicationRow({ app, prediction, isLast, onStatusChange, onDele
           }}
         >
           {STATUSES.map((s) => (
-            <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
+            <option key={s} value={s}>{t(STATUS_CONFIG[s].label)}</option>
           ))}
         </select>
       </div>
@@ -136,7 +138,7 @@ export function ApplicationRow({ app, prediction, isLast, onStatusChange, onDele
         <button
           onClick={() => onDelete(app.id)}
           disabled={deleteDisabled}
-          title="Remove application"
+          title={t("ui.collegeApps.removeApplication")}
           style={{
             width: 28, height: 28, borderRadius: 6,
             border: "1px solid var(--admin-border-default)", background: "transparent",

@@ -19,7 +19,8 @@ public sealed class SchoolAdminEmailWriter(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     IEmailSender emailSender,
     EmailTemplates templates,
-    EmailOptions options) : ISchoolAdminEmailWriter
+    EmailOptions options,
+    IEmailLanguageResolver emailLanguages) : ISchoolAdminEmailWriter
 {
     private const long TokenExpiryMs = 48L * 60 * 60 * 1000;
 
@@ -45,12 +46,16 @@ public sealed class SchoolAdminEmailWriter(
 
         var students = await LoadStudentsAsync(session, studentIds, schoolId, cancellationToken);
 
+        // assessmentTypes are stable codes ("pca" | "mil" | "eval360" | "personality") — or, from a web client that has
+        // not redeployed, the old English display strings. The template localises either, per student (EmailLanguage
+        // rule 2: each student's saved language, Spanish when none).
         var pending = assessmentTypes.ToList();
+        var languages = await emailLanguages.ForUsersAsync(students.Select(s => s.Id).ToArray(), cancellationToken);
         var sent = 0;
         var failed = 0;
         foreach (var s in students)
         {
-            var msg = templates.BuildAssessmentReminder(s.Name, schoolName, pending);
+            var msg = templates.BuildAssessmentReminder(s.Name, schoolName, pending, languages[s.Id]);
             var ok = await emailSender.SendAsync(s.Email, msg.Subject, msg.Html, cancellationToken);
             if (ok)
             {
@@ -169,7 +174,7 @@ public sealed class SchoolAdminEmailWriter(
         var now = Now();
         var expiry = now.AddMilliseconds(TokenExpiryMs);
         var groups = new List<GroupInsert>();
-        var invites = new List<(string Email, string Name, string StudentName, string Token)>();
+        var invites = new List<(string Email, string Name, string StudentName, string StudentId, string Token)>();
         var skipped = 0;
 
         foreach (var student in students)
@@ -197,7 +202,9 @@ public sealed class SchoolAdminEmailWriter(
 
                 var token = InvitationTokenGenerator.Generate();
                 groups.Add(new GroupInsert(name, parentEmail, string.IsNullOrEmpty(link.Relation) ? "Parent" : link.Relation!, "Parent", student.Id, token, userId));
-                invites.Add((link.ParentEmail, name, student.Name, token));
+                // The greeting gets the stored name or nothing (the template's localised "Hello," / "Hola:") — never
+                // the English "Parent" placeholder the group row keeps.
+                invites.Add((link.ParentEmail, link.ParentName ?? string.Empty, student.Name, student.Id, token));
             }
 
             // (c) Counselor (if assigned).
@@ -208,7 +215,7 @@ public sealed class SchoolAdminEmailWriter(
                 {
                     var token = InvitationTokenGenerator.Generate();
                     groups.Add(new GroupInsert(counselor.Name, counselor.Email, "Counselor", "Teacher", student.Id, token, userId));
-                    invites.Add((counselor.Email, counselor.Name, student.Name, token));
+                    invites.Add((counselor.Email, counselor.Name, student.Name, student.Id, token));
                 }
                 else
                 {
@@ -224,12 +231,15 @@ public sealed class SchoolAdminEmailWriter(
 
         await session.CommitAsync(cancellationToken);
 
-        // Best-effort invites AFTER commit (matches legacy: createMany, then Promise.allSettled sends).
+        // Best-effort invites AFTER commit (matches legacy: createMany, then Promise.allSettled sends). Each invite
+        // speaks the EVALUATED STUDENT's language (EmailLanguage rule 3) and its link carries it (lang=).
+        var studentLanguages = await emailLanguages.ForUsersAsync(sIds, cancellationToken);
         var emailsSent = 0;
         foreach (var invite in invites)
         {
-            var url = $"{options.InviteBaseUrl}/evaluation/evaluator?token={invite.Token}";
-            var msg = templates.BuildEvaluationInvite(invite.Name, invite.StudentName, url);
+            var language = studentLanguages.TryGetValue(invite.StudentId, out var l) ? l : EmailLanguage.Default;
+            var url = EmailLanguage.EvaluatorInviteUrl(options.InviteBaseUrl, invite.Token, language);
+            var msg = templates.BuildEvaluationInvite(invite.Name, invite.StudentName, url, language);
             if (await emailSender.SendAsync(invite.Email, msg.Subject, msg.Html, cancellationToken))
             {
                 emailsSent++;

@@ -72,7 +72,8 @@ public static class VocationalEndpoints
             return Results.Json(new { success = false, message = "Invalid group" }, statusCode: StatusCodes.Status400BadRequest);
         }
 
-        var data = await reader.GetQuestionnaireAsync(context, group, cancellationToken);
+        var lang = VocationalLanguage.Normalize(http.Request.Query["lang"].Count > 0 ? http.Request.Query["lang"][0] : null);
+        var data = await reader.GetQuestionnaireAsync(context, group, lang, cancellationToken);
         return Results.Ok(new { success = true, data });
     }
 

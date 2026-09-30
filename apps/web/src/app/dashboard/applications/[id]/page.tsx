@@ -11,6 +11,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { apiRequest } from "@/lib/api/apiClient";
 import { TrackedApplication } from "@/services/applicationService";
 import { Essay, ChecklistItem } from "../_components/types";
@@ -28,6 +29,7 @@ type TabId = "overview" | "essays" | "checklist";
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ApplicationDetailPage() {
+  const { t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
@@ -76,11 +78,11 @@ export default function ApplicationDetailPage() {
       setNotes((data as TrackedApplication)?.notes ?? "");
     } catch {
       setAppLoadError(true);
-      toast.error("Failed to load application");
+      toast.error(t("studentUi.applications.toast.loadApplicationFailed"));
     } finally {
       setIsLoadingApp(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     loadApp();
@@ -98,11 +100,11 @@ export default function ApplicationDetailPage() {
       setEssayDrafts(draftsFromEssays(list));
     } catch {
       setEssaysError(true);
-      toast.error("Failed to load essays");
+      toast.error(t("studentUi.applications.toast.loadEssaysFailed"));
     } finally {
       setLoadingEssays(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   useEffect(() => {
     if (activeTab !== "essays" || essays.length > 0) return;
@@ -119,13 +121,13 @@ export default function ApplicationDetailPage() {
         const res = await apiRequest<{ data: ChecklistItem[] }>(`/api/v1/student/applications/${id}/checklist`, { method: "GET" });
         setChecklist((res as { data: ChecklistItem[] })?.data ?? (res as unknown as ChecklistItem[]) ?? []);
       } catch {
-        toast.error("Failed to load checklist");
+        toast.error(t("studentUi.applications.toast.loadChecklistFailed"));
       } finally {
         setLoadingChecklist(false);
       }
     }
     load();
-  }, [activeTab, id, checklist.length]);
+  }, [activeTab, id, checklist.length, t]);
 
   // ── Overview: save notes ──────────────────────────────────────────────────
 
@@ -138,13 +140,13 @@ export default function ApplicationDetailPage() {
         showErrorToast: true,
       });
       setNotesDirty(false);
-      toast.success("Notes saved");
+      toast.success(t("studentUi.applications.toast.notesSaved"));
     } catch {
       // error toasted by apiRequest
     } finally {
       setSavingNotes(false);
     }
-  }, [id, notes]);
+  }, [id, notes, t]);
 
   // ── Essays ────────────────────────────────────────────────────────────────
 
@@ -165,11 +167,11 @@ export default function ApplicationDetailPage() {
       setEssays((prev) => [...prev, created]);
       setNewEssay({ title: "", prompt: "", wordLimit: "", dueDate: "" });
       setShowAddEssay(false);
-      toast.success("Essay added");
+      toast.success(t("studentUi.applications.toast.essayAdded"));
     } catch {
       // error toasted
     }
-  }, [id, newEssay]);
+  }, [id, newEssay, t]);
 
   const saveEssayDraft = useCallback(async (essayId: string) => {
     try {
@@ -182,13 +184,13 @@ export default function ApplicationDetailPage() {
       });
       const updated: Essay = (res as unknown as { data: { data: Essay } })?.data?.data ?? (res as { data: Essay })?.data ?? ({} as Essay);
       setEssays((prev) => prev.map((e) => (e.id === essayId ? { ...e, ...updated } : e)));
-      toast.success("Draft saved");
+      toast.success(t("studentUi.applications.toast.draftSaved"));
     } catch {
       // error toasted
     } finally {
       setSavingEssay(null);
     }
-  }, [id, essayDrafts]);
+  }, [id, essayDrafts, t]);
 
   const requestAiReview = useCallback(async (essayId: string) => {
     try {
@@ -198,15 +200,15 @@ export default function ApplicationDetailPage() {
         data: {},
         showErrorToast: true,
       });
-      const feedback: string = (res as { data: { feedback: string } })?.data?.feedback ?? (res as unknown as { feedback: string })?.feedback ?? "No feedback returned.";
+      const feedback: string = (res as { data: { feedback: string } })?.data?.feedback ?? (res as unknown as { feedback: string })?.feedback ?? t("studentUi.applications.essays.noFeedback");
       setAiReviews((prev) => ({ ...prev, [essayId]: feedback }));
-      toast.success("AI review complete");
+      toast.success(t("studentUi.applications.toast.aiReviewComplete"));
     } catch {
       // error toasted
     } finally {
       setReviewingEssay(null);
     }
-  }, [id, essayDrafts]);
+  }, [id, essayDrafts, t]);
 
   // ── Checklist ─────────────────────────────────────────────────────────────
 
@@ -219,13 +221,13 @@ export default function ApplicationDetailPage() {
       });
       const list: ChecklistItem[] = (res as { data: ChecklistItem[] })?.data ?? (res as unknown as ChecklistItem[]) ?? [];
       setChecklist(list);
-      toast.success("Checklist generated");
+      toast.success(t("studentUi.applications.toast.checklistGenerated"));
     } catch {
       // error toasted
     } finally {
       setGeneratingChecklist(false);
     }
-  }, [id]);
+  }, [id, t]);
 
   const toggleChecklistItem = useCallback(async (item: ChecklistItem) => {
     const updated = { ...item, isCompleted: !item.isCompleted };
@@ -239,11 +241,11 @@ export default function ApplicationDetailPage() {
       });
     } catch {
       setChecklist((prev) => prev.map((c) => (c.id === item.id ? item : c)));
-      toast.error("Failed to update item");
+      toast.error(t("studentUi.applications.toast.updateItemFailed"));
     } finally {
       setSavingItem(null);
     }
-  }, [id]);
+  }, [id, t]);
 
   const addChecklistItem = useCallback(async () => {
     if (!newItem.name.trim()) return;
@@ -262,18 +264,18 @@ export default function ApplicationDetailPage() {
       setChecklist((prev) => [...prev, created]);
       setNewItem({ name: "", category: "other", dueDate: "", notes: "" });
       setShowAddItem(false);
-      toast.success("Item added");
+      toast.success(t("studentUi.applications.toast.itemAdded"));
     } catch {
       // error toasted
     }
-  }, [id, newItem]);
+  }, [id, newItem, t]);
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
   const tabs: { id: TabId; label: string; icon: React.ReactNode }[] = [
-    { id: "overview", label: "Overview", icon: <GraduationCap className="h-3.5 w-3.5" /> },
-    { id: "essays", label: "Essays", icon: <BookOpen className="h-3.5 w-3.5" /> },
-    { id: "checklist", label: "Checklist", icon: <CheckSquare className="h-3.5 w-3.5" /> },
+    { id: "overview", label: t("common.overview"), icon: <GraduationCap className="h-3.5 w-3.5" /> },
+    { id: "essays", label: t("studentUi.applications.tabs.essays"), icon: <BookOpen className="h-3.5 w-3.5" /> },
+    { id: "checklist", label: t("studentUi.applications.tabs.checklist"), icon: <CheckSquare className="h-3.5 w-3.5" /> },
   ];
 
   const appNotFound = !isLoadingApp && !appLoadError && !app;
@@ -292,9 +294,9 @@ export default function ApplicationDetailPage() {
       emptyFallback={
         <div className="flex flex-col items-center justify-center py-24 gap-3">
           <FileText className="h-10 w-10 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground">Application not found.</p>
+          <p className="text-sm text-muted-foreground">{t("studentUi.applications.notFound")}</p>
           <button onClick={() => router.push("/dashboard/applications")} className="text-xs underline" style={{ color: "var(--admin-accent-blue)" }}>
-            Back to tracker
+            {t("studentUi.applications.backToTracker")}
           </button>
         </div>
       }

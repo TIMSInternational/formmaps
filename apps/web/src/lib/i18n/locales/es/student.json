@@ -11,7 +11,7 @@
     "subtitle": "Una vista completa de tu historial académico, promedio y progreso de créditos.",
     "failedToLoad": "Error al cargar el expediente.",
     "noCoursesTitle": "Aún no hay materias",
-    "noCoursesBody": "Tu expediente se llenará una vez que tu escuela haya ingresado las calificaciones.",
+    "noCoursesBody": "Tu expediente se llenará una vez que tu colegio haya ingresado las calificaciones.",
     "unweightedGpa": "Promedio sin ponderar",
     "weightedGpa": "Promedio ponderado",
     "classRank": "Posición en la clase",
@@ -41,7 +41,15 @@
     "scoreAdded": "Resultado agregado",
     "scoreDeleted": "Resultado eliminado",
     "failedToSave": "Error al guardar el resultado",
-    "failedToDelete": "Error al eliminar el resultado"
+    "failedToDelete": "Error al eliminar el resultado",
+    "list": {
+      "emptyTitle": "Aún no tienes puntajes de exámenes",
+      "emptyBody": "Agrega tus resultados del SAT, ACT, AP u otros exámenes para construir tu perfil académico.",
+      "addFirst": "Agrega tu primer puntaje",
+      "apExams": "Exámenes AP",
+      "resultCount_one": "{{count}} resultado",
+      "resultCount_other": "{{count}} resultados"
+    }
   },
   "communityService": {
     "badge": "Requisito de graduación",
@@ -56,7 +64,7 @@
     "goalLabel": "Meta",
     "noGoalSet": "No hay una meta de horas de servicio comunitario configurada para tu cuenta",
     "noHoursTitle": "Aún no hay horas registradas",
-    "noHoursBody": "Haz clic en \"Registrar Horas\" para comenzar a rastrear tu servicio comunitario.",
+    "noHoursBody": "Haz clic en \"Registrar horas\" arriba para empezar a llevar el control de tu servicio comunitario.",
     "deleteConfirm": "¿Eliminar esta entrada? Esta acción no se puede deshacer.",
     "form": {
       "editTitle": "Editar entrada de servicio",
@@ -97,9 +105,21 @@
   "recommendations": {
     "badge": "Solicitudes",
     "title": "Cartas de recomendación",
-    "subtitle": "Solicita y da seguimiento a cartas de tus consejeros y maestros.",
+    "subtitle": "Solicita y da seguimiento a cartas de tus orientadores y profesores.",
     "requestLetter": "Solicitar carta",
-    "failedToLoad": "Error al cargar las solicitudes de recomendación"
+    "failedToLoad": "Error al cargar las solicitudes de recomendación",
+    "list": {
+      "stepInProgress": "En progreso",
+      "downloadFailed": "No se pudo descargar la carta. Inténtalo de nuevo.",
+      "emptyTitle": "Aún no hay solicitudes",
+      "emptyBody": "Haz clic en \"Solicitar carta\" para pedirle una recomendación a un orientador o profesor.",
+      "unknownRecommender": "Desconocido",
+      "due": "Vence el {{date}}",
+      "preparing": "Preparando…",
+      "downloadLetter": "Descargar carta",
+      "declinedWithReason": "Rechazada: {{reason}}. Puedes solicitar otro recomendador.",
+      "declined": "Rechazada. Puedes solicitar otro recomendador."
+    }
   },
   "university": {
     "failedToLoad": "Error al cargar las universidades"
@@ -108,9 +128,9 @@
     "market": {
       "liveData": "Datos del mercado en vivo",
       "title": "Pulso del",
-      "titleAccent": "Mercado",
+      "titleAccent": "mercado",
       "subtitle": "Información en tiempo real sobre salarios, tendencias de contratación y habilidades demandadas.",
-      "lastUpdated": "Última actualización: Ahora mismo",
+      "lastUpdated": "Última actualización: ahora mismo",
       "backToDashboard": "Volver al panel"
     },
     "personality": {
@@ -118,6 +138,11 @@
       "description": "Agrega tu tipo de personalidad de 4 letras para coincidencias de carrera aún más precisas",
       "recommended": "Recomendado",
       "completed": "Completado"
+    }
+  },
+  "ui": {
+    "recommendations": {
+      "myRequests": "Mis solicitudes"
     }
   }
 }

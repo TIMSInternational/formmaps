@@ -73,7 +73,7 @@ export function CourseManager() {
   };
 
   const handleDelete = async (courseId: string) => {
-    const confirmed = await confirm({ title: "Delete Course", description: t("admin.courses.confirmDelete") || "Are you sure you want to delete this course?", confirmLabel: "Delete", variant: "destructive" });
+    const confirmed = await confirm({ title: t("pages.admin.courses.deleteTitle"), description: t("admin.courses.confirmDelete"), confirmLabel: t("pages.admin.courses.deleteLabel"), variant: "destructive" });
     if (confirmed) {
       try {
         // prefer API-backed deletion
@@ -163,13 +163,13 @@ export function CourseManager() {
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
             <CardTitle className="text-xl">
-              All Courses ({filteredCourses.length})
+              {t("pages.admin.courses.allCount", { count: filteredCourses.length })}
             </CardTitle>
             <div className="flex flex-col sm:flex-row gap-3">
               <div className="relative flex-1 sm:w-64">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
-                  placeholder="Search courses..."
+                  placeholder={t("admin.courses.searchPlaceholder")}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10"

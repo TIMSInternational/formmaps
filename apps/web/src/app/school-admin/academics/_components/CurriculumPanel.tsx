@@ -37,7 +37,7 @@ export function CurriculumPanel() {
     if (!frameworks) return;
     updateFrameworks.mutate(
       { frameworks: frameworks.map(f => f.type === fw.type ? { type: f.type, enabled: !f.enabled } : { type: f.type, enabled: f.enabled }) },
-      { onSuccess: () => toast.success("Updated"), onError: () => toast.error("Failed") }
+      { onSuccess: () => toast.success(t("school_admin:ui.curriculum.updated")), onError: () => toast.error(t("school_admin:ui.curriculum.updateFailed")) }
     );
   };
 
@@ -51,9 +51,9 @@ export function CurriculumPanel() {
     <div className="space-y-6">
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <AdminStatCard label="Frameworks" value={String(safeFrameworks.length)} icon={Settings2} sub={`${enabledCount} enabled`} trend={0} />
-        <AdminStatCard label="Total Courses" value={String(totalCourses)} icon={BookOpen} sub="across all frameworks" trend={0} />
-        <AdminStatCard label="Selected" value={selectedType || "\u2014"} icon={Layers} sub="currently viewing" />
+        <AdminStatCard label={t("school_admin:ui.curriculum.frameworks")} value={String(safeFrameworks.length)} icon={Settings2} sub={t("school_admin:ui.curriculum.enabledCount", { count: enabledCount })} trend={0} />
+        <AdminStatCard label={t("school_admin:ui.courses.totalCourses")} value={String(totalCourses)} icon={BookOpen} sub={t("school_admin:ui.curriculum.acrossAllFrameworks")} trend={0} />
+        <AdminStatCard label={t("school_admin:ui.curriculum.selected")} value={selectedType || "\u2014"} icon={Layers} sub={t("school_admin:ui.curriculum.currentlyViewing")} />
       </div>
 
       {/* Framework Toggles */}
@@ -63,8 +63,8 @@ export function CurriculumPanel() {
             <Settings2 style={{ width: 16, height: 16, color: "var(--admin-accent-blue)" }} />
           </div>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Framework Configuration</div>
-            <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Toggle frameworks to populate course registry</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("school_admin:ui.curriculum.configTitle")}</div>
+            <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.curriculum.configSubtitle")}</div>
           </div>
         </div>
         <div style={{ padding: 16 }}>
@@ -86,7 +86,7 @@ export function CurriculumPanel() {
                   <Switch checked={fw.enabled} onCheckedChange={() => handleToggle(fw)} onClick={(e) => e.stopPropagation()} />
                 </div>
                 <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 2 }}>{fw.label || fw.type}</div>
-                <div style={{ fontSize: 12, color: fw.enabled ? "var(--admin-accent-blue)" : "var(--admin-font-tertiary)" }}>{fw.courseCount || 0} courses</div>
+                <div style={{ fontSize: 12, color: fw.enabled ? "var(--admin-accent-blue)" : "var(--admin-font-tertiary)" }}>{t("school_admin:ui.curriculum.courseCount", { count: fw.courseCount || 0 })}</div>
               </div>
             ))}
           </div>
@@ -103,14 +103,14 @@ export function CurriculumPanel() {
               </div>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                  <span style={{ color: "#14b8a6" }}>{safeFrameworks.find(f => f.type === selectedType)?.label || selectedType}</span> Course Repository
+                  {t("school_admin:ui.curriculum.repositoryTitle", { framework: safeFrameworks.find(f => f.type === selectedType)?.label || selectedType })}
                 </div>
-                <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Browse and modify catalogue</div>
+                <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.curriculum.repositorySubtitle")}</div>
               </div>
             </div>
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--admin-font-light)" }} />
-              <Input placeholder="Search by code or title..." className="pl-9 h-9 rounded-lg text-sm"
+              <Input placeholder={t("school_admin:ui.curriculum.searchByCodeOrTitle")} className="pl-9 h-9 rounded-lg text-sm"
                 style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}
                 value={courseSearch} onChange={(e) => { setCourseSearch(e.target.value); setCoursePage(1); }} />
             </div>
@@ -119,7 +119,7 @@ export function CurriculumPanel() {
           <Table>
             <TableHeader>
               <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
-                {["Code", "Course Title", "Department", "Credits", "Grades"].map((h) => (
+                {[t("school_admin:ui.courses.code"), t("school_admin:ui.curriculum.courseTitle"), t("school_admin:ui.courses.department"), t("school_admin:ui.courses.credits"), t("school_admin:ui.curriculum.grades")].map((h) => (
                   <TableHead key={h} className="py-3 px-4" style={{
                     fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
                     color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)",
@@ -134,7 +134,7 @@ export function CurriculumPanel() {
                 <TableRow>
                   <TableCell colSpan={5} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
                     <GraduationCap className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} />
-                    <p className="text-sm">No courses found</p>
+                    <p className="text-sm">{t("courses.noCoursesFound")}</p>
                   </TableCell>
                 </TableRow>
               ) : (
@@ -152,7 +152,7 @@ export function CurriculumPanel() {
                     <TableCell className="py-3 px-4">
                       <div className="flex flex-wrap gap-1">
                         {(c.gradeLevel || c.gradeLevels || []).map((g: number) => (
-                          <span key={g} style={{ fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(16,185,129,0.1)", color: "#10b981" }}>Gr. {g}</span>
+                          <span key={g} style={{ fontSize: 10, fontWeight: 600, padding: "2px 6px", borderRadius: 4, background: "rgba(16,185,129,0.1)", color: "#10b981" }}>{t("school_admin:ui.common.gradeShort", { grade: g })}</span>
                         ))}
                       </div>
                     </TableCell>
@@ -166,7 +166,7 @@ export function CurriculumPanel() {
           {courses && courses.totalPages > 1 && (
             <div className="flex items-center justify-between p-3" style={{ borderTop: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)" }}>
               <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>
-                {((coursePage - 1) * 10) + 1}–{Math.min(coursePage * 10, courses.total)} of {courses.total}
+                {t("school_admin:ui.common.rangeOf", { from: ((coursePage - 1) * 10) + 1, to: Math.min(coursePage * 10, courses.total), total: courses.total })}
               </p>
               <div className="flex gap-1">
                 <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md" disabled={coursePage <= 1}

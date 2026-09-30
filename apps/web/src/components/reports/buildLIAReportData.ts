@@ -3,6 +3,8 @@ import {
   EXAM_TYPE_TO_ID,
   type LIAWeightedComposite,
 } from "@/services/milService";
+import { currentLanguage } from "@/lib/i18n/currentLanguage";
+import { getPdfT, type PdfLanguage } from "./pdfI18n";
 
 /**
  * Minimal real-data input the LIA results page already has in scope.
@@ -16,6 +18,8 @@ import {
  * still stay empty — bands are the only real classification we have.
  */
 export interface BuildLIAReportInput {
+  /** Language the report is rendered in (default: the current UI language). */
+  language?: PdfLanguage;
   user: { id: string | null; name: string | null; email: string | null };
   overallScore: number;
   averageAccuracy?: number;
@@ -43,14 +47,17 @@ export interface BuildLIAReportInput {
  * narrative prose here.
  */
 export function buildLIAReportData(input: BuildLIAReportInput): LIAReportData {
-  const name = input.user.name?.trim() || "Student";
+  const language = input.language ?? currentLanguage();
+  const isSpanish = language === "es";
+  const t = getPdfT(language);
+  const name = input.user.name?.trim() || t("onboarding.student.nameFallback");
   const composite = input.weightedComposite;
 
   // Index per-domain bands by canonical exam id so we can match them to subtests.
   const bandByExamId = new Map<string, string>();
   for (const d of composite?.perDomain ?? []) {
     const examId = EXAM_TYPE_TO_ID[d.type];
-    if (examId) bandByExamId.set(examId, d.labelEn);
+    if (examId) bandByExamId.set(examId, isSpanish ? d.band : d.labelEn);
   }
 
   return {
@@ -69,7 +76,7 @@ export function buildLIAReportData(input: BuildLIAReportInput): LIAReportData {
       // No real percentile data yet (TIMS norm tables outstanding).
       percentileRank: null,
       // Real band classification from the weighted composite (provisional cut-offs).
-      classification: composite?.labelEn ?? "",
+      classification: (isSpanish ? composite?.band : composite?.labelEn) ?? "",
     },
     executiveSummary: {
       highlights: [],

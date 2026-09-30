@@ -9,6 +9,7 @@ import {
   StyleSheet,
   Image,
 } from '@react-pdf/renderer';
+import { pdfLocale, usePdfLanguage, usePdfT } from './pdfI18n';
 
 // Note: Using built-in Helvetica font for compatibility
 // Custom fonts can be added later by downloading .ttf files locally
@@ -162,28 +163,31 @@ export const ReportHeader: React.FC<ReportHeaderProps> = ({
   userName,
   reportDate,
   accentColor = 'var(--admin-accent-blue)',
-}) => (
+}) => {
+  const t = usePdfT();
+  return (
   <View style={sharedStyles.header}>
     <View style={{ marginBottom: 15 }}>
       <Text style={{ fontSize: 20, fontWeight: 700, color: accentColor, marginBottom: 3 }}>
-        TimCare
+        FormMaps
       </Text>
-      <Text style={{ fontSize: 9, color: '#6b7280' }}>Career Development Platform</Text>
+      <Text style={{ fontSize: 9, color: '#6b7280' }}>{t('components.pdfReport.platform')}</Text>
     </View>
     <Text style={sharedStyles.title}>{title}</Text>
     {subtitle && <Text style={sharedStyles.subtitle}>{subtitle}</Text>}
     <View style={{ ...sharedStyles.row, marginTop: 10, gap: 20 }}>
       <View>
-        <Text style={{ fontSize: 8, color: '#9ca3af', marginBottom: 2 }}>PREPARED FOR</Text>
+        <Text style={{ fontSize: 8, color: '#9ca3af', marginBottom: 2 }}>{t('components.pcaReportPdf.preparedFor')}</Text>
         <Text style={{ fontSize: 11, fontWeight: 500, color: '#1a1a2e' }}>{userName}</Text>
       </View>
       <View>
-        <Text style={{ fontSize: 8, color: '#9ca3af', marginBottom: 2 }}>REPORT DATE</Text>
+        <Text style={{ fontSize: 8, color: '#9ca3af', marginBottom: 2 }}>{t('components.pdfReport.reportDate')}</Text>
         <Text style={{ fontSize: 11, fontWeight: 500, color: '#1a1a2e' }}>{reportDate}</Text>
       </View>
     </View>
   </View>
-);
+  );
+};
 
 // Report Footer Component
 interface ReportFooterProps {
@@ -191,21 +195,25 @@ interface ReportFooterProps {
   totalPages?: number;
 }
 
-export const ReportFooter: React.FC<ReportFooterProps> = ({ pageNumber, totalPages }) => (
+export const ReportFooter: React.FC<ReportFooterProps> = ({ pageNumber, totalPages }) => {
+  const t = usePdfT();
+  const language = usePdfLanguage();
+  return (
   <View style={sharedStyles.footer} fixed>
     <Text style={sharedStyles.footerText}>
-      TimCare Assessment Report • Confidential
+      {t('components.pdfReport.footerConfidential')}
     </Text>
     <Text style={sharedStyles.footerText}>
-      Generated on {new Date().toLocaleDateString()}
+      {t('components.pdfReport.generatedOn', { date: new Date().toLocaleDateString(pdfLocale(language)) })}
     </Text>
     {pageNumber && totalPages && (
       <Text style={sharedStyles.pageNumber}>
-        Page {pageNumber} of {totalPages}
+        {t('components.modernPdf.pageOf', { page: pageNumber, total: totalPages })}
       </Text>
     )}
   </View>
-);
+  );
+};
 
 // Progress Bar Component for PDF
 interface ProgressBarProps {

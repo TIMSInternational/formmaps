@@ -6,8 +6,10 @@ import { cn } from "@/lib/utils";
 import { validateAllSteps } from "./validation";
 import { ChevronLeft, ChevronRight, AlertTriangle } from "lucide-react";
 import { telemetry } from "@/services/telemetryService";
+import { useTranslation } from "react-i18next";
 
 export function NavigationButtons() {
+  const { t } = useTranslation();
   const { resumeBuilder, setResumeStep } = useGlobalStore();
   const currentStep = resumeBuilder.currentStep;
   const isFirstStep = currentStep === 1;
@@ -29,7 +31,7 @@ export function NavigationButtons() {
   const handleNext = () => {
     if (!isLastStep) {
       // Track step completion before moving to next
-      const stepName = resumeSteps[currentStep - 1]?.title || `Step ${currentStep}`;
+      const stepName = resumeSteps[currentStep - 1]?.telemetryName || `Step ${currentStep}`;
       telemetry.trackResumeStep(currentStep, stepName);
       setResumeStep(currentStep + 1);
     }
@@ -63,12 +65,12 @@ export function NavigationButtons() {
         <div className="flex items-start space-x-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
           <AlertTriangle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
           <div className="text-sm">
-            <p className="text-amber-800 font-medium">Missing information:</p>
+            <p className="text-amber-800 font-medium">{t("resumeBuilder.navigationButtons.missingInfo", "Missing information:")}</p>
             <p className="text-amber-700">
               {currentStepValidation.missingFields.join(", ")}
             </p>
             <p className="text-amber-600 text-xs mt-1">
-              You can continue and come back to complete this later.
+              {t("resumeBuilder.navigationButtons.continueLater", "You can continue and come back to complete this later.")}
             </p>
           </div>
         </div>
@@ -86,12 +88,12 @@ export function NavigationButtons() {
           )}
         >
           <ChevronLeft className="w-4 h-4" />
-          <span>Previous</span>
+          <span>{t("common.previous", "Previous")}</span>
         </Button>
 
         <div className="flex items-center space-x-3">
           <span className="text-sm text-gray-500">
-            Step {currentStep} of {resumeSteps.length}
+            {t("resumeBuilder.navigationButtons.stepOf", "Step {{current}} of {{total}}", { current: currentStep, total: resumeSteps.length })}
           </span>
           <div className="flex space-x-1">
             {resumeSteps.map((_, index) => (
@@ -118,7 +120,7 @@ export function NavigationButtons() {
             (isLastStep || isNextDisabled()) && "opacity-50 cursor-not-allowed"
           )}
         >
-          <span>{isLastStep ? "Complete" : "Next"}</span>
+          <span>{isLastStep ? t("resumeBuilder.navigationButtons.complete", "Complete") : t("common.next", "Next")}</span>
           {!isLastStep && <ChevronRight className="w-4 h-4" />}
         </Button>
       </div>

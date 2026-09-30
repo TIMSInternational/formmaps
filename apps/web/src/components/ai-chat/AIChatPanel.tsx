@@ -12,11 +12,13 @@ import { askAi } from "@/services/aiChatService";
 import type { ChatMessage } from "./useChatThreads";
 import { AnimatedAIInput } from "@/components/ui/animated-ai-input";
 import { ShiningText } from "@/components/ui/shining-text";
+import { useTranslation } from "react-i18next";
 
 const REQUEST_TIMEOUT_MS = 45_000;
 
 /** Side-panel chat UI — works with ChatContext threads */
 export function AIChatSidePanel() {
+  const { t } = useTranslation();
   const { currentThread, currentThreadId, addMessage, createThread } = useChat();
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,6 +26,7 @@ export function AIChatSidePanel() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const abortRef = useRef<AbortController | null>(null);
   const { user } = useGlobalStore();
+  const firstName = user?.name?.split(" ")[0];
   const { role } = usePermission();
   const suggestions = getChatSuggestions(role);
 
@@ -126,16 +129,18 @@ export function AIChatSidePanel() {
               <Sparkles style={{ width: 18, height: 18, color: "var(--admin-accent-blue)" }} />
             </div>
             <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-              Hi {user?.name?.split(" ")[0] || "there"}!
+              {firstName
+                ? t("aiChat.welcome.greeting", { name: firstName })
+                : t("aiChat.welcome.greetingNoName")}
             </div>
             <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
-              How can I help you today?
+              {t("aiChat.welcome.help")}
             </div>
             <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 6, textAlign: "left" }}>
               <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
                 <Lightbulb style={{ width: 12, height: 12, color: "var(--admin-font-tertiary)" }} />
                 <span style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--admin-font-tertiary)" }}>
-                  Try asking
+                  {t("aiChat.welcome.tryAsking")}
                 </span>
               </div>
               {suggestions.map((s) => (

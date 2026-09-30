@@ -146,7 +146,7 @@ export function AvailabilitySettingsTab({
       }
       window.location.href = res.url;
     } catch (error) {
-      toast.error(`Failed to connect to ${provider}`);
+      toast.error(t("calendarIntegration.connectProviderFailed", { provider }));
       setIsConnectingCalendar(false);
     }
   };
@@ -231,19 +231,19 @@ export function AvailabilitySettingsTab({
               <SelectValue placeholder={t("coach:settings.availability.timezone")} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="UTC">UTC (Universal Time)</SelectItem>
-              <SelectItem value="America/New_York">Eastern Time (ET)</SelectItem>
-              <SelectItem value="America/Chicago">Central Time (CT)</SelectItem>
-              <SelectItem value="America/Denver">Mountain Time (MT)</SelectItem>
-              <SelectItem value="America/Los_Angeles">Pacific Time (PT)</SelectItem>
-              <SelectItem value="Europe/London">London (GMT)</SelectItem>
-              <SelectItem value="Europe/Paris">Paris (CET)</SelectItem>
-              <SelectItem value="Europe/Berlin">Berlin (CET)</SelectItem>
-              <SelectItem value="Asia/Dubai">Dubai (GST)</SelectItem>
-              <SelectItem value="Asia/Calcutta">India (IST)</SelectItem>
-              <SelectItem value="Asia/Singapore">Singapore (SGT)</SelectItem>
-              <SelectItem value="Asia/Tokyo">Tokyo (JST)</SelectItem>
-              <SelectItem value="Australia/Sydney">Sydney (AEDT)</SelectItem>
+              <SelectItem value="UTC">{t("studentUi.coaching.timezones.utc")}</SelectItem>
+              <SelectItem value="America/New_York">{t("studentUi.coaching.timezones.eastern")}</SelectItem>
+              <SelectItem value="America/Chicago">{t("studentUi.coaching.timezones.central")}</SelectItem>
+              <SelectItem value="America/Denver">{t("studentUi.coaching.timezones.mountain")}</SelectItem>
+              <SelectItem value="America/Los_Angeles">{t("studentUi.coaching.timezones.pacific")}</SelectItem>
+              <SelectItem value="Europe/London">{t("studentUi.coaching.timezones.london")}</SelectItem>
+              <SelectItem value="Europe/Paris">{t("studentUi.coaching.timezones.paris")}</SelectItem>
+              <SelectItem value="Europe/Berlin">{t("studentUi.coaching.timezones.berlin")}</SelectItem>
+              <SelectItem value="Asia/Dubai">{t("studentUi.coaching.timezones.dubai")}</SelectItem>
+              <SelectItem value="Asia/Calcutta">{t("studentUi.coaching.timezones.india")}</SelectItem>
+              <SelectItem value="Asia/Singapore">{t("studentUi.coaching.timezones.singapore")}</SelectItem>
+              <SelectItem value="Asia/Tokyo">{t("studentUi.coaching.timezones.tokyo")}</SelectItem>
+              <SelectItem value="Australia/Sydney">{t("studentUi.coaching.timezones.sydney")}</SelectItem>
             </SelectContent>
           </Select>
         </div>

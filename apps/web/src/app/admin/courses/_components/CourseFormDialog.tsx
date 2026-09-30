@@ -127,7 +127,7 @@ export function CourseFormDialog({
                     value={formData.title}
                     onChange={(e) => handleChange("title", e.target.value)}
                     required
-                    placeholder="e.g., Python for Data Science"
+                    placeholder={t("pages.admin.courses.placeholders.title")}
                   />
                 </div>
 
@@ -140,7 +140,7 @@ export function CourseFormDialog({
                     value={formData.provider}
                     onChange={(e) => handleChange("provider", e.target.value)}
                     required
-                    placeholder="e.g., Coursera"
+                    placeholder={t("pages.admin.courses.placeholders.provider")}
                   />
                 </div>
 
@@ -153,7 +153,7 @@ export function CourseFormDialog({
                     value={formData.instructor}
                     onChange={(e) => handleChange("instructor", e.target.value)}
                     required
-                    placeholder="e.g., Dr. John Smith"
+                    placeholder={t("pages.admin.courses.placeholders.instructor")}
                   />
                 </div>
 
@@ -166,7 +166,7 @@ export function CourseFormDialog({
                     value={formData.category}
                     onChange={(e) => handleChange("category", e.target.value)}
                     required
-                    placeholder="e.g., Technology"
+                    placeholder={t("pages.admin.courses.placeholders.category")}
                   />
                 </div>
 
@@ -239,7 +239,7 @@ export function CourseFormDialog({
                     }
                     required
                     rows={2}
-                    placeholder="Brief description for course cards"
+                    placeholder={t("pages.admin.courses.placeholders.shortDescription")}
                   />
                 </div>
 
@@ -255,7 +255,7 @@ export function CourseFormDialog({
                     }
                     required
                     rows={4}
-                    placeholder="Detailed course description"
+                    placeholder={t("pages.admin.courses.placeholders.fullDescription")}
                   />
                 </div>
               </div>
@@ -313,7 +313,7 @@ export function CourseFormDialog({
                     value={formData.language}
                     onChange={(e) => handleChange("language", e.target.value)}
                     required
-                    placeholder="e.g., English"
+                    placeholder={t("pages.admin.courses.placeholders.language")}
                   />
                 </div>
 
@@ -326,7 +326,7 @@ export function CourseFormDialog({
                     value={formData.country}
                     onChange={(e) => handleChange("country", e.target.value)}
                     required
-                    placeholder="e.g., United States"
+                    placeholder={t("pages.admin.courses.placeholders.country")}
                   />
                 </div>
 
@@ -339,7 +339,7 @@ export function CourseFormDialog({
                     value={formData.region}
                     onChange={(e) => handleChange("region", e.target.value)}
                     required
-                    placeholder="e.g., North America"
+                    placeholder={t("pages.admin.courses.placeholders.region")}
                   />
                 </div>
               </div>

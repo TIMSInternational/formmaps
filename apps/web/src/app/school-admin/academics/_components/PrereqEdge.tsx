@@ -1,6 +1,7 @@
 "use client";
 
 import { memo, useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import {
   BaseEdge, EdgeLabelRenderer, getBezierPath, getSmoothStepPath, Position, type EdgeProps,
 } from "@xyflow/react";
@@ -44,6 +45,7 @@ function PrereqEdgeComponent({
   id, sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition,
   selected, markerEnd, data,
 }: EdgeProps) {
+  const { t } = useTranslation("school_admin");
   const [isHovered, setIsHovered] = useState(false);
   const onDelete = (data as PrereqEdgeData | undefined)?.onDelete;
 
@@ -79,7 +81,7 @@ function PrereqEdgeComponent({
           }}
         >
           <button
-            aria-label="Remove prerequisite"
+            aria-label={t("ui.pathways.removePrereq")}
             onClick={(e) => { e.stopPropagation(); onDelete?.(id); }}
             style={{
               width: 28, height: 28, borderRadius: 6,

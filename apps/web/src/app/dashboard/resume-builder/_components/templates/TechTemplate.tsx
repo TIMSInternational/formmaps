@@ -1,5 +1,7 @@
 "use client";
 import React from "react";
+import i18n from "@/lib/i18n";
+import { translateProficiency } from "../../_lib/resume-constants";
 import {
   Document,
   Page,
@@ -9,6 +11,9 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import { Linkedin, Globe, Github, Twitter, FolderOpen } from "lucide-react";
+
+// Labels printed in the résumé document itself, resolved in the UI language at render time.
+const t = i18n.t.bind(i18n);
 
 // Register fonts for better typography
 Font.register({
@@ -285,7 +290,7 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
         <View style={styles.header}>
           <Text style={styles.name}>{data.personalInfo.fullName}</Text>
           <Text style={styles.title}>
-            {data.personalInfo.professionalTitle || "Software Engineer"}
+            {data.personalInfo.professionalTitle}
           </Text>
           <View style={styles.contactInfo}>
             <Text style={styles.contactItem}>{data.personalInfo.email}</Text>
@@ -333,12 +338,12 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
             <View style={styles.contactInfo}>
               {data.personalInfo.nationality && (
                 <Text style={[styles.contactItem, { fontSize: 9 }]}>
-                  Nationality: {data.personalInfo.nationality}
+                  {t("resumeBuilder.doc.nationality", { defaultValue: "Nationality: {{value}}", value: data.personalInfo.nationality })}
                 </Text>
               )}
               {data.personalInfo.dateOfBirth && (
                 <Text style={[styles.contactItem, { fontSize: 9 }]}>
-                  DOB: {data.personalInfo.dateOfBirth}
+                  {t("resumeBuilder.doc.dob", { defaultValue: "DOB: {{value}}", value: data.personalInfo.dateOfBirth })}
                 </Text>
               )}
             </View>
@@ -364,7 +369,7 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
         {/* Languages */}
         {(data.personalInfo as any).languages && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Languages</Text>
+            <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.languages", "Languages")}</Text>
             <Text style={styles.description}>
               {(data.personalInfo as any).languages}
             </Text>
@@ -377,7 +382,7 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
             {/* Professional Experience */}
             {data.experience.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Experience</Text>
+                <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.experience", "Experience")}</Text>
                 {data.experience.map((exp) => (
                   <View key={exp.id} style={styles.experienceItem}>
                     <View style={styles.jobHeader}>
@@ -387,7 +392,7 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
                       </View>
                       <Text style={styles.jobDetails}>
                         {exp.startDate} -{" "}
-                        {exp.current ? "Present" : exp.endDate}
+                        {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate}
                       </Text>
                     </View>
                     {exp.description.map((desc, index) => (
@@ -403,14 +408,14 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
             {/* Education */}
             {data.education.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Education</Text>
+                <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.education", "Education")}</Text>
                 {data.education.map((edu) => (
                   <View key={edu.id} style={styles.educationItem}>
                     <Text style={styles.degree}>{edu.degree}</Text>
                     <Text style={styles.institution}>{edu.institution}</Text>
                     <Text style={styles.graduationDate}>
                       {edu.graduationDate} • {edu.location}
-                      {edu.gpa && ` • GPA: ${edu.gpa}`}
+                      {edu.gpa && ` • ${t("resumeBuilder.doc.gpa", { defaultValue: "GPA: {{value}}", value: edu.gpa })}`}
                     </Text>
                   </View>
                 ))}
@@ -423,11 +428,11 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
             {/* Technical Skills */}
             {Object.keys(skillsByCategory).length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Skills</Text>
+                <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.skills", "Skills")}</Text>
                 {Object.entries(skillsByCategory).map(([category, skills]) => (
                   <View key={category} style={styles.skillCategory}>
                     <Text style={styles.skillCategoryTitle}>
-                      {category.charAt(0).toUpperCase() + category.slice(1)}
+                      {t(`resumeBuilder.doc.skillCategory.${category}`, { defaultValue: category.charAt(0).toUpperCase() + category.slice(1) })}
                     </Text>
                     <View style={styles.skillsGrid}>
                       {skills.map((skill) => (
@@ -447,7 +452,7 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
                 0 && (
                 <View style={styles.section}>
                   <Text style={styles.sectionTitle}>
-                    Additional Information
+                    {t("resumeBuilder.doc.additionalInformation", "Additional Information")}
                   </Text>
                   {data.customFields
                     .filter((f) => f.enabled && f.value)
@@ -473,7 +478,7 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
                           </Text>
                           {entry.technologies && (
                             <Text style={styles.company}>
-                              Technologies: {entry.technologies}
+                              {t("resumeBuilder.doc.technologies", { defaultValue: "Technologies: {{value}}", value: entry.technologies })}
                             </Text>
                           )}
                           {entry.description && (
@@ -483,7 +488,7 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
                           )}
                           {entry.link && (
                             <Text style={[styles.description, { fontSize: 8 }]}>
-                              Link: {entry.link}
+                              {t("resumeBuilder.doc.link", { defaultValue: "Link: {{value}}", value: entry.link })}
                             </Text>
                           )}
                         </>
@@ -495,7 +500,7 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
                           </Text>
                           {entry.issuer && (
                             <Text style={styles.company}>
-                              Issued by: {entry.issuer}
+                              {t("resumeBuilder.doc.issuedBy", { defaultValue: "Issued by: {{value}}", value: entry.issuer })}
                             </Text>
                           )}
                           {entry.date && (
@@ -517,7 +522,7 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
                           </Text>
                           {entry.proficiency && (
                             <Text style={styles.description}>
-                              {entry.proficiency}
+                              {translateProficiency(entry.proficiency)}
                             </Text>
                           )}
                         </View>
@@ -529,12 +534,12 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
                           </Text>
                           {entry.authors && (
                             <Text style={styles.company}>
-                              Authors: {entry.authors}
+                              {t("resumeBuilder.doc.authors", { defaultValue: "Authors: {{value}}", value: entry.authors })}
                             </Text>
                           )}
                           {entry.publisher && (
                             <Text style={styles.company}>
-                              Publisher: {entry.publisher}
+                              {t("resumeBuilder.doc.publisher", { defaultValue: "Publisher: {{value}}", value: entry.publisher })}
                             </Text>
                           )}
                           {entry.description && (
@@ -544,7 +549,7 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
                           )}
                           {entry.link && (
                             <Text style={[styles.description, { fontSize: 8 }]}>
-                              Link: {entry.link}
+                              {t("resumeBuilder.doc.link", { defaultValue: "Link: {{value}}", value: entry.link })}
                             </Text>
                           )}
                           {entry.date && (
@@ -581,7 +586,7 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
 
             {/* Code Sample */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Code Sample</Text>
+              <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.codeSample", "Code Sample")}</Text>
               <View style={styles.codeBlock}>
                 <Text>const developer = {"{"};</Text>
                 <Text> name: "{data.personalInfo.fullName}",</Text>
@@ -605,7 +610,7 @@ export function TechTemplatePreview({ data }: TechTemplatePDFProps) {
       <div className="bg-slate-900 text-white p-4 rounded-lg mb-4">
         <h1 className="text-xl font-bold mb-1">{data.personalInfo.fullName}</h1>
         <p className="text-sky-400 font-bold text-sm mb-2">
-          {data.personalInfo.professionalTitle || "Software Engineer"}
+          {data.personalInfo.professionalTitle}
         </p>
         <div className="flex flex-wrap gap-2 text-xs mb-2">
           <span className="bg-slate-700 px-2 py-1 rounded">
@@ -669,7 +674,7 @@ export function TechTemplatePreview({ data }: TechTemplatePDFProps) {
             )}
             {data.personalInfo.dateOfBirth && (
               <span className="bg-slate-700 px-2 py-1 rounded text-xs">
-                DOB: {data.personalInfo.dateOfBirth}
+                {t("resumeBuilder.doc.dob", { defaultValue: "DOB: {{value}}", value: data.personalInfo.dateOfBirth })}
               </span>
             )}
           </div>
@@ -689,7 +694,7 @@ export function TechTemplatePreview({ data }: TechTemplatePDFProps) {
         {/* Experience */}
         <div className="col-span-2">
           <h2 className="text-sm font-bold text-slate-900 mb-3 border-b-2 border-sky-500 pb-1">
-            Experience
+            {t("resumeBuilder.doc.experience", "Experience")}
           </h2>
           {data.experience.slice(0, 2).map((exp) => (
             <div
@@ -706,7 +711,7 @@ export function TechTemplatePreview({ data }: TechTemplatePDFProps) {
                   </p>
                 </div>
                 <span className="text-slate-500 text-xs bg-slate-200 px-2 py-1 rounded">
-                  {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                  {exp.startDate} - {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate}
                 </span>
               </div>
               <div className="text-xs text-slate-600">
@@ -723,11 +728,11 @@ export function TechTemplatePreview({ data }: TechTemplatePDFProps) {
         {/* Skills & Education */}
         <div>
           <h2 className="text-sm font-bold text-slate-900 mb-3 border-b-2 border-sky-500 pb-1">
-            Skills
+            {t("resumeBuilder.doc.skills", "Skills")}
           </h2>
           <div className="mb-4">
             <h3 className="text-xs font-bold text-slate-900 bg-slate-200 px-2 py-1 rounded mb-2">
-              Technical
+              {t("resumeBuilder.doc.technical", "Technical")}
             </h3>
             <div className="flex flex-wrap gap-1">
               {data.skills
@@ -745,7 +750,7 @@ export function TechTemplatePreview({ data }: TechTemplatePDFProps) {
           </div>
 
           <h2 className="text-sm font-bold text-slate-900 mb-3 border-b-2 border-sky-500 pb-1 mt-4">
-            Education
+            {t("resumeBuilder.doc.education", "Education")}
           </h2>
           {data.education.slice(0, 1).map((edu) => (
             <div key={edu.id} className="mb-3 p-3 bg-slate-50 rounded">
@@ -761,7 +766,7 @@ export function TechTemplatePreview({ data }: TechTemplatePDFProps) {
               0 && (
               <div className="mt-4">
                 <h2 className="text-sm font-bold text-slate-900 mb-3 border-b-2 border-sky-500 pb-1">
-                  Additional Information
+                  {t("resumeBuilder.doc.additionalInformation", "Additional Information")}
                 </h2>
                 <div className="space-y-2">
                   {data.customFields
@@ -817,7 +822,7 @@ export function TechTemplatePreview({ data }: TechTemplatePDFProps) {
                           </span>
                           {entry.proficiency && (
                             <span className="text-xs text-slate-600">
-                              {entry.proficiency}
+                              {translateProficiency(entry.proficiency)}
                             </span>
                           )}
                         </div>
@@ -829,12 +834,12 @@ export function TechTemplatePreview({ data }: TechTemplatePDFProps) {
                           </p>
                           {entry.authors && (
                             <p className="text-xs text-sky-600">
-                              Authors: {entry.authors}
+                              {t("resumeBuilder.doc.authors", { defaultValue: "Authors: {{value}}", value: entry.authors })}
                             </p>
                           )}
                           {entry.publisher && (
                             <p className="text-xs text-sky-600">
-                              Publisher: {entry.publisher}
+                              {t("resumeBuilder.doc.publisher", { defaultValue: "Publisher: {{value}}", value: entry.publisher })}
                             </p>
                           )}
                           {entry.description && (
@@ -860,7 +865,7 @@ export function TechTemplatePreview({ data }: TechTemplatePDFProps) {
 
           {/* Code Sample */}
           <h2 className="text-sm font-bold text-slate-900 mb-3 border-b-2 border-sky-500 pb-1 mt-4">
-            Code Sample
+            {t("resumeBuilder.doc.codeSample", "Code Sample")}
           </h2>
           <div className="bg-slate-900 text-slate-200 p-2 rounded text-xs font-mono">
             <div>const dev = {"{"}</div>

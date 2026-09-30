@@ -9,6 +9,7 @@ import {
 import { apiRequest } from "@/lib/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface Student {
   id: string;
@@ -35,11 +36,20 @@ const DOC_TYPES = [
   "Other",
 ];
 
-const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
-  requested: { label: "Requested", color: "var(--admin-accent-blue)", bg: "rgba(59,130,246,0.1)" },
-  in_progress: { label: "In Progress", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-  sent: { label: "Sent", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
-  confirmed: { label: "Confirmed", color: "#059669", bg: "rgba(5,150,105,0.1)" },
+const DOC_TYPE_KEYS: Record<string, string> = {
+  Transcript: "ui.documents.types.transcript",
+  "Letter of Recommendation": "ui.documents.types.recommendationLetter",
+  "School Report": "ui.documents.types.schoolReport",
+  "Mid-Year Report": "ui.documents.types.midYearReport",
+  "Final Report": "ui.documents.types.finalReport",
+  Other: "ui.documents.types.other",
+};
+
+const STATUS_CONFIG: Record<string, { labelKey: string; color: string; bg: string }> = {
+  requested: { labelKey: "ui.documents.status.requested", color: "var(--admin-accent-blue)", bg: "rgba(59,130,246,0.1)" },
+  in_progress: { labelKey: "ui.documents.status.inProgress", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+  sent: { labelKey: "ui.documents.status.sent", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+  confirmed: { labelKey: "ui.documents.status.confirmed", color: "#059669", bg: "rgba(5,150,105,0.1)" },
 };
 
 const STATUS_FLOW = ["requested", "in_progress", "sent", "confirmed"];
@@ -54,6 +64,7 @@ const DOC_ICONS: Record<string, React.ElementType> = {
 };
 
 export default function CounselorDocumentsPage() {
+  const { t } = useTranslation("counselor");
   const queryClient = useQueryClient();
   const [studentSearch, setStudentSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -89,12 +100,12 @@ export default function CounselorDocumentsPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Document request created");
+      toast.success(t("ui.documents.toast.created"));
       queryClient.invalidateQueries({ queryKey: ["student-documents", selectedStudent?.id] });
       setShowForm(false);
       setForm({ type: "Transcript", recipient: "", notes: "" });
     },
-    onError: () => toast.error("Failed to create document request"),
+    onError: () => toast.error(t("ui.documents.toast.createFailed")),
   });
 
   // Update document status
@@ -106,10 +117,10 @@ export default function CounselorDocumentsPage() {
       });
     },
     onSuccess: () => {
-      toast.success("Status updated");
+      toast.success(t("ui.collegePrep.statusUpdated"));
       queryClient.invalidateQueries({ queryKey: ["student-documents", selectedStudent?.id] });
     },
-    onError: () => toast.error("Failed to update status"),
+    onError: () => toast.error(t("ui.collegePrep.statusUpdateFailed")),
   });
 
   // Delete document
@@ -118,10 +129,10 @@ export default function CounselorDocumentsPage() {
       return apiRequest(`/api/v1/college/documents/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
-      toast.success("Document request deleted");
+      toast.success(t("ui.documents.toast.deleted"));
       queryClient.invalidateQueries({ queryKey: ["student-documents", selectedStudent?.id] });
     },
-    onError: () => toast.error("Failed to delete"),
+    onError: () => toast.error(t("ui.documents.toast.deleteFailed")),
   });
 
   const filteredStudents = (students as Student[]).filter(
@@ -141,13 +152,13 @@ export default function CounselorDocumentsPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
         <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-tertiary)" }}>
-          College Prep
+          {t("nav.collegePrep")}
         </p>
         <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em", marginTop: 2 }}>
-          Document Manager
+          {t("ui.documents.title")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2, maxWidth: 600 }}>
-          Track transcript requests, letters of recommendation, and school reports.
+          {t("ui.documents.subtitle")}
         </p>
       </motion.div>
 
@@ -161,7 +172,7 @@ export default function CounselorDocumentsPage() {
         }}>
           <Search style={{ width: 14, height: 14, color: "var(--admin-font-light)", flexShrink: 0 }} />
           <input
-            placeholder="Search and select a student..."
+            placeholder={t("ui.activities.searchStudent")}
             value={selectedStudent ? selectedStudent.name : studentSearch}
             onChange={(e) => {
               setStudentSearch(e.target.value);
@@ -196,7 +207,7 @@ export default function CounselorDocumentsPage() {
                 </div>
               ) : filteredStudents.length === 0 ? (
                 <div style={{ padding: 16, fontSize: 12, color: "var(--admin-font-tertiary)", textAlign: "center" }}>
-                  No students found
+                  {t("academicGaps.noStudents")}
                 </div>
               ) : (
                 filteredStudents.map((s) => (
@@ -225,12 +236,12 @@ export default function CounselorDocumentsPage() {
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
             {[
-              { label: "TOTAL REQUESTS", value: totalRequests, color: "var(--admin-font-primary)" },
-              { label: "SENT", value: sentCount, color: "#10b981" },
-              { label: "PENDING", value: pendingCount, color: "#f59e0b" },
-              { label: "CONFIRMED", value: confirmedCount, color: "#059669" },
+              { id: "total", label: t("ui.documents.stats.total"), value: totalRequests, color: "var(--admin-font-primary)" },
+              { id: "sent", label: t("ui.documents.stats.sent"), value: sentCount, color: "#10b981" },
+              { id: "pending", label: t("ui.documents.stats.pending"), value: pendingCount, color: "#f59e0b" },
+              { id: "confirmed", label: t("ui.documents.stats.confirmed"), value: confirmedCount, color: "#059669" },
             ].map((stat) => (
-              <div key={stat.label} style={{
+              <div key={stat.id} style={{
                 padding: 16, borderRadius: 10,
                 border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)",
               }}>
@@ -255,7 +266,7 @@ export default function CounselorDocumentsPage() {
                 background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
               }}>
               <Plus style={{ width: 14, height: 14 }} />
-              New Request
+              {t("ui.documents.newRequest")}
             </button>
           </motion.div>
 
@@ -267,7 +278,7 @@ export default function CounselorDocumentsPage() {
                 background: "rgba(59,130,246,0.03)",
               }}>
               <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 12 }}>
-                New Document Request
+                {t("ui.documents.newDocumentRequest")}
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
@@ -277,9 +288,9 @@ export default function CounselorDocumentsPage() {
                       border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)",
                       color: "var(--admin-font-primary)", outline: "none", fontFamily: "inherit",
                     }}>
-                    {DOC_TYPES.map((t) => <option key={t} value={t}>{t}</option>)}
+                    {DOC_TYPES.map((docType) => <option key={docType} value={docType}>{t(DOC_TYPE_KEYS[docType])}</option>)}
                   </select>
-                  <input placeholder="Recipient (college name)" value={form.recipient}
+                  <input placeholder={t("ui.documents.form.recipient")} value={form.recipient}
                     onChange={(e) => setForm({ ...form, recipient: e.target.value })}
                     style={{
                       flex: 1, minWidth: 200, height: 36, borderRadius: 6, padding: "0 10px", fontSize: 13,
@@ -288,7 +299,7 @@ export default function CounselorDocumentsPage() {
                     }}
                   />
                 </div>
-                <textarea placeholder="Notes (optional)" value={form.notes}
+                <textarea placeholder={t("ui.documents.form.notes")} value={form.notes}
                   onChange={(e) => setForm({ ...form, notes: e.target.value })}
                   rows={2}
                   style={{
@@ -300,7 +311,7 @@ export default function CounselorDocumentsPage() {
                 <div style={{ display: "flex", gap: 8 }}>
                   <button
                     onClick={() => {
-                      if (!form.recipient.trim()) { toast.error("Recipient is required"); return; }
+                      if (!form.recipient.trim()) { toast.error(t("ui.documents.toast.recipientRequired")); return; }
                       createMutation.mutate(form);
                     }}
                     disabled={createMutation.isPending}
@@ -311,7 +322,7 @@ export default function CounselorDocumentsPage() {
                       opacity: createMutation.isPending ? 0.6 : 1,
                     }}>
                     {createMutation.isPending && <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />}
-                    Submit
+                    {t("ui.documents.form.submit")}
                   </button>
                   <button onClick={() => setShowForm(false)}
                     style={{
@@ -319,7 +330,7 @@ export default function CounselorDocumentsPage() {
                       background: "transparent", color: "var(--admin-font-tertiary)",
                       border: "1px solid var(--admin-border-default)", cursor: "pointer", fontFamily: "inherit",
                     }}>
-                    Cancel
+                    {t("ui.documents.form.cancel")}
                   </button>
                 </div>
               </div>
@@ -334,7 +345,7 @@ export default function CounselorDocumentsPage() {
               display: "grid", gridTemplateColumns: "1.5fr 1.5fr 1fr 1fr 1fr 120px",
               padding: "10px 16px", borderBottom: "1px solid var(--admin-border-light)", background: "var(--admin-bg-hover)",
             }}>
-              {["TYPE", "RECIPIENT", "STATUS", "REQUESTED", "SENT", "ACTIONS"].map((h) => (
+              {[t("ui.documents.table.type"), t("ui.documents.table.recipient"), t("ui.documents.table.status"), t("ui.documents.table.requested"), t("ui.documents.table.sent"), t("ui.documents.table.actions")].map((h) => (
                 <span key={h} style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)" }}>
                   {h}
                 </span>
@@ -349,7 +360,7 @@ export default function CounselorDocumentsPage() {
               <div style={{ padding: 48, textAlign: "center" }}>
                 <FileCheck style={{ width: 32, height: 32, color: "var(--admin-font-light)", margin: "0 auto 12px" }} />
                 <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>
-                  No document requests yet. Click &quot;New Request&quot; to get started.
+                  {t("ui.documents.empty")}
                 </p>
               </div>
             ) : (
@@ -365,7 +376,7 @@ export default function CounselorDocumentsPage() {
                   }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <DocIcon style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)", flexShrink: 0 }} />
-                      <span style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{doc.type}</span>
+                      <span style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-primary)" }}>{DOC_TYPE_KEYS[doc.type] ? t(DOC_TYPE_KEYS[doc.type]) : doc.type}</span>
                     </div>
                     <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>{doc.recipient}</span>
                     <span style={{
@@ -373,7 +384,7 @@ export default function CounselorDocumentsPage() {
                       padding: "3px 10px", borderRadius: 6, width: "fit-content",
                       background: cfg.bg, color: cfg.color,
                     }}>
-                      {cfg.label}
+                      {t(cfg.labelKey)}
                     </span>
                     <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>
                       {doc.requestedDate ? new Date(doc.requestedDate).toLocaleDateString() : "—"}
@@ -392,12 +403,12 @@ export default function CounselorDocumentsPage() {
                             color: "var(--admin-font-primary)", outline: "none", fontFamily: "inherit", cursor: "pointer",
                           }}>
                           {STATUS_FLOW.slice(currentIdx).map((s) => (
-                            <option key={s} value={s}>{STATUS_CONFIG[s].label}</option>
+                            <option key={s} value={s}>{t(STATUS_CONFIG[s].labelKey)}</option>
                           ))}
                         </select>
                       )}
                       <button onClick={() => deleteMutation.mutate(doc.id)}
-                        title="Delete request"
+                        title={t("ui.documents.deleteRequest")}
                         style={{
                           width: 28, height: 28, borderRadius: 4,
                           border: "1px solid var(--admin-border-default)", background: "transparent",

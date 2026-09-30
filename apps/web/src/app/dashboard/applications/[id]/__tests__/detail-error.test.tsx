@@ -1,3 +1,5 @@
+// Real i18next (English) so assertions read the rendered copy, not raw keys.
+import "@/lib/i18n";
 /**
  * Task 7 — distinct error states on the application detail page.
  * When the app-load fetch rejects, the page must show an error/retry UI

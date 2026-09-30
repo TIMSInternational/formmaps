@@ -17,7 +17,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { format } from "date-fns";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { Card, CardHeader } from "./shared-ui";
@@ -32,7 +31,7 @@ interface NotesTabProps {
 }
 
 export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [newNote, setNewNote] = useState("");
   const [noteType, setNoteType] = useState<NoteType>("general");
 
@@ -51,27 +50,27 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
       {/* Add Note Form */}
       <Card className="h-fit">
-        <CardHeader icon={Plus} color="#10b981" title="New Entry" />
+        <CardHeader icon={Plus} color="#10b981" title={t("school_admin:ui.studentDetail.notes.newEntry")} />
         <div style={{ padding: 16 }} className="space-y-3">
           <div className="space-y-1">
-            <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Category</label>
+            <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("school_admin:ui.studentDetail.notes.category")}</label>
             <Select value={noteType} onValueChange={(v) => setNoteType(v as NoteType)}>
               <SelectTrigger className="h-9 text-xs" style={{ borderRadius: 6 }}>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="general">General Observation</SelectItem>
-                <SelectItem value="meeting">Meeting Summary</SelectItem>
-                <SelectItem value="follow_up">Action items / Follow-up</SelectItem>
-                <SelectItem value="academic">Academic Intervention</SelectItem>
-                <SelectItem value="career">Career Guidance</SelectItem>
-                <SelectItem value="personal">Personal / Social</SelectItem>
+                <SelectItem value="general">{t("school_admin:ui.studentDetail.notes.type.general")}</SelectItem>
+                <SelectItem value="meeting">{t("school_admin:ui.studentDetail.notes.type.meeting")}</SelectItem>
+                <SelectItem value="follow_up">{t("school_admin:ui.studentDetail.notes.type.follow_up")}</SelectItem>
+                <SelectItem value="academic">{t("school_admin:ui.studentDetail.notes.type.academic")}</SelectItem>
+                <SelectItem value="career">{t("school_admin:ui.studentDetail.notes.type.career")}</SelectItem>
+                <SelectItem value="personal">{t("school_admin:ui.studentDetail.notes.type.personal")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-1">
-            <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Notes</label>
+            <label style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em" }}>{t("school_admin:ui.studentDetail.notes.notes")}</label>
             <Textarea
               placeholder={t("schoolAdmin.students.notePlaceholder", "Document interaction details here...")}
               value={newNote}
@@ -95,7 +94,7 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
             }}
           >
             <Send style={{ width: 12, height: 12 }} />
-            Publish to File
+            {t("school_admin:ui.studentDetail.notes.publish")}
           </button>
         </div>
       </Card>
@@ -110,13 +109,13 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
           }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <FileText style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Counselor Notes</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("school_admin:ui.studentDetail.notes.counselorNotes")}</span>
               <span style={{
                 fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
                 background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
                 border: "1px solid var(--admin-border-default)",
               }}>
-                {notes.length} entries
+                {t("school_admin:ui.studentDetail.notes.entries", { count: notes.length })}
               </span>
             </div>
           </div>
@@ -124,9 +123,9 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
             {notes.length === 0 ? (
               <div style={{ textAlign: "center", padding: "40px 16px" }}>
                 <MessageSquare style={{ width: 24, height: 24, color: "var(--admin-font-tertiary)", margin: "0 auto 8px", opacity: 0.4 }} />
-                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>No notes found</div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("school_admin:ui.studentDetail.notes.noneFound")}</div>
                 <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
-                  There are currently no notes on file for this student.
+                  {t("school_admin:ui.studentDetail.notes.noneOnFile")}
                 </div>
               </div>
             ) : (
@@ -144,7 +143,7 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
                           background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
                           textTransform: "uppercase", letterSpacing: "0.03em",
                         }}>
-                          {note.type.replace('_', ' ')}
+                          {t(`school_admin:ui.studentDetail.notes.typeShort.${note.type}`, { defaultValue: note.type.replace("_", " ") })}
                         </span>
                         {note.isPrivate && (
                           <span style={{
@@ -152,18 +151,18 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
                             background: "rgba(245,158,11,0.1)", color: "#f59e0b",
                             textTransform: "uppercase", letterSpacing: "0.03em",
                           }}>
-                            Confidential
+                            {t("school_admin:ui.studentDetail.notes.confidential")}
                           </span>
                         )}
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                         <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>
-                          {note.createdDate && format(new Date(note.createdDate), "MMM d, yyyy")}
+                          {note.createdDate && new Date(note.createdDate).toLocaleDateString(i18n.language?.startsWith("es") ? "es-CO" : "en-US", { month: "short", day: "numeric", year: "numeric" })}
                         </span>
                         <button
                           className="opacity-0 group-hover:opacity-100 transition-opacity"
                           onClick={() => deleteNote.mutate({ noteId: note.id, studentId })}
-                          title="Delete entry"
+                          title={t("school_admin:ui.studentDetail.notes.deleteEntry")}
                           style={{ width: 22, height: 22, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer" }}
                         >
                           <Trash2 style={{ width: 12, height: 12, color: "#ef4444" }} />
@@ -179,7 +178,7 @@ export function NotesTab({ studentId, notes, createNote, deleteNote }: NotesTabP
                       <div style={{ marginTop: 8, display: "flex", alignItems: "center", gap: 4, padding: "3px 8px", borderRadius: 4, background: "rgba(245,158,11,0.08)", width: "fit-content" }}>
                         <Clock style={{ width: 11, height: 11, color: "#f59e0b" }} />
                         <span style={{ fontSize: 10, fontWeight: 600, color: "#f59e0b", textTransform: "uppercase", letterSpacing: "0.03em" }}>
-                          Follow-up: {format(new Date(note.followUpDate), "MMM d, yyyy")}
+                          {t("school_admin:ui.studentDetail.notes.followUp", { date: new Date(note.followUpDate).toLocaleDateString(i18n.language?.startsWith("es") ? "es-CO" : "en-US", { month: "short", day: "numeric", year: "numeric" }) })}
                         </span>
                       </div>
                     )}

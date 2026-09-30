@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { Trash2 } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { StudentRow } from "./types";
@@ -13,6 +14,7 @@ interface ManualRowProps {
 }
 
 export function ManualRow({ row, onChange, onRemove, index }: ManualRowProps) {
+  const { t } = useTranslation("school_admin");
   const inputStyle: React.CSSProperties = {
     background: "var(--admin-bg-hover)",
     border: "1px solid var(--admin-border-default)",
@@ -39,7 +41,7 @@ export function ManualRow({ row, onChange, onRemove, index }: ManualRowProps) {
       <td className="px-3 py-2">
         <input
           style={inputStyle}
-          placeholder="Full name"
+          placeholder={t("ui.student360.fullName")}
           value={row.name}
           onChange={(e) => onChange(row.id, "name", e.target.value)}
         />
@@ -65,16 +67,16 @@ export function ManualRow({ row, onChange, onRemove, index }: ManualRowProps) {
               justifyContent: "space-between",
             }}
           >
-            <SelectValue placeholder="Class level" />
+            <SelectValue placeholder={t("ui.bulkOnboard.classLevel")} />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="placeholder" disabled>
-              Select class
+              {t("ui.bulkOnboard.selectClass")}
             </SelectItem>
-            <SelectItem value="Freshman">Freshman</SelectItem>
-            <SelectItem value="Sophomore">Sophomore</SelectItem>
-            <SelectItem value="Junior">Junior</SelectItem>
-            <SelectItem value="Senior">Senior</SelectItem>
+            <SelectItem value="Freshman">{t("ui.bulkOnboard.levels.Freshman")}</SelectItem>
+            <SelectItem value="Sophomore">{t("ui.bulkOnboard.levels.Sophomore")}</SelectItem>
+            <SelectItem value="Junior">{t("ui.bulkOnboard.levels.Junior")}</SelectItem>
+            <SelectItem value="Senior">{t("ui.bulkOnboard.levels.Senior")}</SelectItem>
           </SelectContent>
         </Select>
       </td>

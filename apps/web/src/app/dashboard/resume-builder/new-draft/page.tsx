@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { tailorResume } from "@/services/resumeService";
@@ -24,6 +25,7 @@ interface ResumeNewContext {
 }
 
 export default function NewDraftPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user } = useGlobalStore();
 
@@ -75,7 +77,9 @@ export default function NewDraftPage() {
   async function createBlankResume(ctx: ResumeNewContext) {
     try {
       const purposeLabel =
-        ctx.purpose === "college_application" ? "College Application" : "General Resume";
+        ctx.purpose === "college_application"
+          ? t("resumeBuilder.newDraftPage.collegeApplication", "College Application")
+          : t("resumeBuilder.newDraftPage.generalResume", "General Resume");
       const payload = {
         id: crypto.randomUUID(),
         userId: "placeholder",
@@ -110,7 +114,11 @@ export default function NewDraftPage() {
       );
     } catch (err) {
       setLoading(false);
-      setError(err instanceof Error ? err.message : "Failed to create resume");
+      setError(
+        err instanceof Error
+          ? err.message
+          : t("resumeBuilder.newResumePage.createFailed", "Failed to create resume")
+      );
     }
   }
 
@@ -138,7 +146,11 @@ export default function NewDraftPage() {
 
       setTailoredResume(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to tailor resume");
+      setError(
+        err instanceof Error
+          ? err.message
+          : t("resumeBuilder.newDraftPage.tailorFailed", "Failed to tailor resume")
+      );
     } finally {
       setLoading(false);
     }
@@ -151,7 +163,9 @@ export default function NewDraftPage() {
       setError(null);
 
       try {
-        const jobTitle = context?.extractedJobData?.jobTitle ?? "Untitled";
+        const jobTitle =
+          context?.extractedJobData?.jobTitle ??
+          t("resumeBuilder.newDraftPage.untitled", "Untitled");
         const company = context?.extractedJobData?.company ?? "";
         const base = context?.baseResume;
 
@@ -209,14 +223,18 @@ export default function NewDraftPage() {
       } catch (err: any) {
         const errData = err?.data;
         const msg = errData?.errors
-          ? "Validation errors: " + JSON.stringify(errData.errors)
+          ? t("resumeBuilder.newDraftPage.validationErrors", "Validation errors: {{errors}}", {
+              errors: JSON.stringify(errData.errors),
+            })
           : errData?.message ||
-            (err instanceof Error ? err.message : "Failed to create resume");
+            (err instanceof Error
+              ? err.message
+              : t("resumeBuilder.newResumePage.createFailed", "Failed to create resume"));
         setError(msg);
         setCreating(false);
       }
     },
-    [creating, user, router, context]
+    [creating, user, router, context, t]
   );
 
   const handleDownloadPDF = useCallback(
@@ -272,19 +290,25 @@ export default function NewDraftPage() {
         const blob = await pdf(pdfDoc).toBlob();
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
-        const jobTitle = context?.extractedJobData?.jobTitle ?? "resume";
+        const jobTitle =
+          context?.extractedJobData?.jobTitle ??
+          t("resumeBuilder.resumePreview.fileName", "resume");
         const company = context?.extractedJobData?.company ?? "";
         link.href = url;
-        link.download = `${base?.personal?.fullName || user?.name || "resume"}_${company || jobTitle}.pdf`;
+        link.download = `${
+          base?.personal?.fullName ||
+          user?.name ||
+          t("resumeBuilder.resumePreview.fileName", "resume")
+        }_${company || jobTitle}.pdf`;
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
       } catch {
-        setError("Failed to generate PDF. Please try again.");
+        setError(t("resumeBuilder.originalPdfEditor.generateFailed", "Couldn't generate the PDF. Please try again."));
       }
     },
-    [user, context]
+    [user, context, t]
   );
 
   if (loading) {
@@ -299,10 +323,10 @@ export default function NewDraftPage() {
           <Loader2 className="h-8 w-8 animate-spin text-foreground mx-auto" />
           <div>
             <p className="text-sm font-semibold text-foreground">
-              Tailoring your resume...
+              {t("resumeBuilder.wizardReview.tailoring", "Tailoring your resume...")}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Analyzing the job posting and optimizing your content
+              {t("resumeBuilder.wizardReview.tailoringHint", "Analyzing the job posting and optimizing your content")}
             </p>
           </div>
         </motion.div>
@@ -320,7 +344,7 @@ export default function NewDraftPage() {
           transition={{ duration: 0.3 }}
         >
           <p className="text-sm font-semibold text-foreground">
-            Something went wrong
+            {t("resumeBuilder.newDraftPage.somethingWrong", "Something went wrong")}
           </p>
           <p className="text-xs text-muted-foreground">{error}</p>
           <Link
@@ -328,7 +352,7 @@ export default function NewDraftPage() {
             className="inline-flex items-center gap-1.5 text-sm text-foreground underline underline-offset-2 hover:text-foreground/80 transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            Try again
+            {t("resumeBuilder.newDraftPage.tryAgain", "Try again")}
           </Link>
         </motion.div>
       </div>
@@ -348,13 +372,13 @@ export default function NewDraftPage() {
           className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back
+          {t("common.back", "Back")}
         </Link>
         <h1 className="text-2xl font-semibold text-foreground">
-          AI Resume Tailoring
+          {t("resumeBuilder.newDraftPage.title", "AI Resume Tailoring")}
         </h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Review the AI suggestions below and choose what to include
+          {t("resumeBuilder.newDraftPage.subtitle", "Review the AI suggestions below and choose what to include")}
         </p>
       </motion.div>
 
@@ -394,7 +418,7 @@ export default function NewDraftPage() {
             >
               <Loader2 className="h-7 w-7 animate-spin text-foreground mx-auto" />
               <p className="text-sm font-semibold text-foreground">
-                Creating your resume...
+                {t("resumeBuilder.newResumePage.creating", "Creating your resume...")}
               </p>
             </motion.div>
           </div>

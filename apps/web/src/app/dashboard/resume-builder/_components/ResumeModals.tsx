@@ -8,6 +8,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import {
   AVAILABLE_SECTIONS,
@@ -134,6 +135,9 @@ export function ResumeModals({
   handleToggleCustomFieldEnabled,
   handleRemoveCustomFieldConfig,
 }: ResumeModalsProps) {
+  const { t } = useTranslation();
+  const visibleLabel = t("resumeBuilder.resumeModals.visible", "Visible");
+  const hiddenLabel = t("resumeBuilder.resumeModals.hidden", "Hidden");
   return (
     <>
       {/* Personal Info Modal */}
@@ -155,10 +159,11 @@ export function ResumeModals({
             >
               <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between z-10">
                 <h2 className="text-xl font-bold text-foreground">
-                  Edit Personal Information
+                  {t("resumeBuilder.resumeModals.editPersonalInfo", "Edit Personal Information")}
                 </h2>
                 <button
                   onClick={() => setShowPersonalInfoModal(false)}
+                  aria-label={t("common.close")}
                   className="p-2 hover:bg-accent rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-muted-foreground" />
@@ -169,7 +174,7 @@ export function ResumeModals({
                 {/* Full Name */}
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">
-                    Full Name *
+                    {t("resumeBuilder.resumeModals.fullNameRequired", "Full Name *")}
                   </label>
                   <input
                     type="text"
@@ -180,7 +185,7 @@ export function ResumeModals({
                         fullName: e.target.value,
                       })
                     }
-                    placeholder="John Doe"
+                    placeholder={t("resumeBuilder.resumeModals.fullNamePlaceholder", "John Doe")}
                     className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                   />
                 </div>
@@ -188,7 +193,7 @@ export function ResumeModals({
                 {/* Professional Title */}
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">
-                    Professional Title
+                    {t("resumeBuilder.resumeModals.professionalTitle", "Professional Title")}
                   </label>
                   <input
                     type="text"
@@ -199,7 +204,7 @@ export function ResumeModals({
                         professionalTitle: e.target.value,
                       })
                     }
-                    placeholder="Senior Software Engineer"
+                    placeholder={t("resumeBuilder.resumeModals.titlePlaceholder", "Senior Software Engineer")}
                     className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                   />
                 </div>
@@ -209,7 +214,7 @@ export function ResumeModals({
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-sm font-semibold text-foreground">
-                        Email
+                        {t("resumeBuilder.resumeModals.email", "Email")}
                       </label>
                       <button
                         onClick={() =>
@@ -225,7 +230,7 @@ export function ResumeModals({
                         ) : (
                           <EyeOff className="w-3 h-3" />
                         )}
-                        {fieldVisibility.email ? "Visible" : "Hidden"}
+                        {fieldVisibility.email ? visibleLabel : hiddenLabel}
                       </button>
                     </div>
                     <input
@@ -245,7 +250,7 @@ export function ResumeModals({
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-sm font-semibold text-foreground">
-                        Phone
+                        {t("resumeBuilder.resumeModals.phone", "Phone")}
                       </label>
                       <button
                         onClick={() =>
@@ -261,7 +266,7 @@ export function ResumeModals({
                         ) : (
                           <EyeOff className="w-3 h-3" />
                         )}
-                        {fieldVisibility.phone ? "Visible" : "Hidden"}
+                        {fieldVisibility.phone ? visibleLabel : hiddenLabel}
                       </button>
                     </div>
                     <input
@@ -283,7 +288,7 @@ export function ResumeModals({
                 <div>
                   <div className="flex items-center justify-between mb-2">
                     <label className="text-sm font-semibold text-foreground">
-                      Location
+                      {t("resumeBuilder.resumeModals.location", "Location")}
                     </label>
                     <button
                       onClick={() =>
@@ -299,7 +304,7 @@ export function ResumeModals({
                       ) : (
                         <EyeOff className="w-3 h-3" />
                       )}
-                      {fieldVisibility.location ? "Visible" : "Hidden"}
+                      {fieldVisibility.location ? visibleLabel : hiddenLabel}
                     </button>
                   </div>
                   <input
@@ -311,7 +316,7 @@ export function ResumeModals({
                         location: e.target.value,
                       })
                     }
-                    placeholder="San Francisco, CA"
+                    placeholder={t("resumeBuilder.resumeModals.locationPlaceholder", "San Francisco, CA")}
                     className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                   />
                 </div>
@@ -321,7 +326,7 @@ export function ResumeModals({
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-sm font-semibold text-foreground">
-                        LinkedIn URL
+                        {t("resumeBuilder.resumeModals.linkedinUrl", "LinkedIn URL")}
                       </label>
                       <button
                         onClick={() =>
@@ -337,7 +342,7 @@ export function ResumeModals({
                         ) : (
                           <EyeOff className="w-3 h-3" />
                         )}
-                        {fieldVisibility.linkedin ? "Visible" : "Hidden"}
+                        {fieldVisibility.linkedin ? visibleLabel : hiddenLabel}
                       </button>
                     </div>
                     <input
@@ -357,7 +362,7 @@ export function ResumeModals({
                   <div>
                     <div className="flex items-center justify-between mb-2">
                       <label className="text-sm font-semibold text-foreground">
-                        Website/Portfolio
+                        {t("resumeBuilder.resumeModals.website", "Website/Portfolio")}
                       </label>
                       <button
                         onClick={() =>
@@ -373,7 +378,7 @@ export function ResumeModals({
                         ) : (
                           <EyeOff className="w-3 h-3" />
                         )}
-                        {fieldVisibility.website ? "Visible" : "Hidden"}
+                        {fieldVisibility.website ? visibleLabel : hiddenLabel}
                       </button>
                     </div>
                     <input
@@ -394,7 +399,7 @@ export function ResumeModals({
                 {/* Professional Summary */}
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">
-                    Professional Summary
+                    {t("resumeBuilder.resumeModals.professionalSummary", "Professional Summary")}
                   </label>
                   <textarea
                     value={personalInfoForm.summary}
@@ -404,12 +409,12 @@ export function ResumeModals({
                         summary: e.target.value,
                       })
                     }
-                    placeholder="A brief summary of your professional background and key achievements..."
+                    placeholder={t("resumeBuilder.resumeModals.summaryPlaceholder", "A brief summary of your professional background and key achievements...")}
                     rows={4}
                     className="w-full px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all resize-none"
                   />
                   <p className="text-xs text-muted-foreground mt-1">
-                    2-3 sentences highlighting your experience and expertise
+                    {t("resumeBuilder.resumeModals.summaryHint", "2-3 sentences highlighting your experience and expertise")}
                   </p>
                 </div>
               </div>
@@ -419,14 +424,14 @@ export function ResumeModals({
                   onClick={() => setShowPersonalInfoModal(false)}
                   className="px-4 py-2 border border-border rounded-lg text-sm font-medium hover:bg-secondary/50 transition-colors"
                 >
-                  Cancel
+                  {t("common.cancel", "Cancel")}
                 </button>
                 <button
                   onClick={handleSavePersonalInfo}
                   className="flex items-center gap-2 px-6 py-2 bg-[#102B47] text-white rounded-lg text-sm font-medium hover:bg-[#0b1f33] transition-colors"
                 >
                   <Check className="w-4 h-4" />
-                  Save Changes
+                  {t("resumeBuilder.resumeModals.saveChanges", "Save Changes")}
                 </button>
               </div>
             </motion.div>
@@ -453,10 +458,11 @@ export function ResumeModals({
             >
               <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between z-10">
                 <h2 className="text-xl font-bold text-foreground">
-                  Manage Skills
+                  {t("resumeBuilder.resumeModals.manageSkills", "Manage Skills")}
                 </h2>
                 <button
                   onClick={() => setShowSkillsModal(false)}
+                  aria-label={t("common.close")}
                   className="p-2 hover:bg-accent rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-muted-foreground" />
@@ -467,7 +473,7 @@ export function ResumeModals({
                 {/* Add New Skill */}
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-2">
-                    Add New Skill
+                    {t("resumeBuilder.resumeModals.addNewSkill", "Add New Skill")}
                   </label>
                   <div className="flex gap-2">
                     <input
@@ -486,7 +492,7 @@ export function ResumeModals({
                           setTimeout(() => setSaveSuccess(false), 2000);
                         }
                       }}
-                      placeholder="e.g., JavaScript, Project Management, etc."
+                      placeholder={t("resumeBuilder.resumeModals.skillPlaceholder", "e.g., JavaScript, Project Management, etc.")}
                       className="flex-1 px-4 py-2 border border-border rounded-lg bg-background text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098] outline-none transition-all"
                     />
                     <button
@@ -508,14 +514,14 @@ export function ResumeModals({
                     </button>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Press Enter or click + to add
+                    {t("resumeBuilder.resumeModals.pressEnterHint", "Press Enter or click + to add")}
                   </p>
                 </div>
 
                 {/* Current Skills */}
                 <div>
                   <label className="block text-sm font-semibold text-foreground mb-3">
-                    Current Skills ({skills.length})
+                    {t("resumeBuilder.resumeModals.currentSkills", "Current Skills ({{count}})", { count: skills.length })}
                   </label>
                   {skills.length > 0 ? (
                     <div className="flex flex-wrap gap-2">
@@ -531,6 +537,7 @@ export function ResumeModals({
                               setSaveSuccess(true);
                               setTimeout(() => setSaveSuccess(false), 2000);
                             }}
+                            aria-label={t("resumeBuilder.a11y.removeSkill", { name: skill.name })}
                             className="opacity-0 group-hover:opacity-100 transition-opacity"
                           >
                             <X className="w-3 h-3" />
@@ -540,7 +547,7 @@ export function ResumeModals({
                     </div>
                   ) : (
                     <div className="text-sm text-muted-foreground text-center py-8 bg-muted/30 rounded-lg">
-                      No skills added yet. Add your first skill above.
+                      {t("resumeBuilder.resumeModals.noSkills", "No skills added yet. Add your first skill above.")}
                     </div>
                   )}
                 </div>
@@ -552,7 +559,7 @@ export function ResumeModals({
                   className="flex items-center gap-2 px-6 py-2 bg-[#102B47] text-white rounded-lg text-sm font-medium hover:bg-[#0b1f33] transition-colors"
                 >
                   <Check className="w-4 h-4" />
-                  Done
+                  {t("resumeBuilder.resumeModals.done", "Done")}
                 </button>
               </div>
             </motion.div>
@@ -579,10 +586,11 @@ export function ResumeModals({
             >
               <div className="sticky top-0 bg-card border-b border-border px-6 py-4 flex items-center justify-between">
                 <h2 className="text-xl font-bold text-foreground">
-                  Add content
+                  {t("resumeBuilder.resumeModals.addContent", "Add content")}
                 </h2>
                 <button
                   onClick={() => setShowAddContentModal(false)}
+                  aria-label={t("common.close")}
                   className="p-2 hover:bg-accent rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-muted-foreground" />
@@ -627,7 +635,7 @@ export function ResumeModals({
                 ).length === 0 && (
                   <div className="text-center py-8">
                     <p className="text-muted-foreground text-sm">
-                      All available sections have been added to your resume.
+                      {t("resumeBuilder.resumeModals.allSectionsAdded", "All available sections have been added to your resume.")}
                     </p>
                   </div>
                 )}
@@ -659,13 +667,14 @@ export function ResumeModals({
             >
               <div className="flex items-center justify-between p-6 border-b border-border">
                 <h2 className="text-xl font-bold text-foreground">
-                  Name Your Custom Section
+                  {t("resumeBuilder.resumeModals.nameCustomSection", "Name Your Custom Section")}
                 </h2>
                 <button
                   onClick={() => {
                     setShowCustomSectionTitleModal(false);
                     setCustomSectionTitle("");
                   }}
+                  aria-label={t("common.close")}
                   className="p-2 hover:bg-accent rounded-lg transition-colors"
                 >
                   <X className="w-5 h-5 text-muted-foreground" />
@@ -674,7 +683,7 @@ export function ResumeModals({
               <div className="p-6 space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-foreground mb-2">
-                    Section Title <span className="text-destructive">*</span>
+                    {t("resumeBuilder.resumeModals.sectionTitle", "Section Title")} <span className="text-destructive">*</span>
                   </label>
                   <input
                     type="text"
@@ -685,13 +694,15 @@ export function ResumeModals({
                         handleConfirmCustomSectionTitle();
                       }
                     }}
-                    placeholder="e.g., Hobbies, Volunteer Work, Additional Information"
+                    placeholder={t("resumeBuilder.resumeModals.sectionTitlePlaceholder", "e.g., Hobbies, Volunteer Work, Additional Information")}
                     className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098]"
                     autoFocus
                   />
                   <p className="text-xs text-muted-foreground mt-2">
-                    Give your custom section a descriptive name that will appear
-                    on your resume.
+                    {t(
+                      "resumeBuilder.resumeModals.sectionTitleHint",
+                      "Give your custom section a descriptive name that will appear on your resume."
+                    )}
                   </p>
                 </div>
                 <div className="flex gap-3 justify-end pt-2">
@@ -702,14 +713,14 @@ export function ResumeModals({
                     }}
                     className="px-4 py-2 border border-border rounded-lg hover:bg-secondary/50 transition-colors"
                   >
-                    Cancel
+                    {t("common.cancel", "Cancel")}
                   </button>
                   <button
                     onClick={handleConfirmCustomSectionTitle}
                     disabled={!customSectionTitle.trim()}
                     className="px-4 py-2 bg-[#102B47] text-white rounded-lg hover:bg-[#0b1f33] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    Create Section
+                    {t("resumeBuilder.resumeModals.createSection", "Create Section")}
                   </button>
                 </div>
               </div>
@@ -737,10 +748,11 @@ export function ResumeModals({
             >
               <div className="bg-card border-b border-border px-4 py-3 flex items-center justify-between flex-shrink-0">
                 <h2 className="text-lg font-bold text-foreground">
-                  Manage Personal Info Fields
+                  {t("resumeBuilder.resumeModals.manageFields", "Manage Personal Info Fields")}
                 </h2>
                 <button
                   onClick={() => setShowManageFieldsModal(false)}
+                  aria-label={t("common.close")}
                   className="p-1.5 hover:bg-accent rounded-lg transition-colors"
                 >
                   <X className="w-4 h-4" />
@@ -749,35 +761,37 @@ export function ResumeModals({
 
               <div className="p-4 space-y-4 overflow-y-auto flex-1">
                 <p className="text-xs text-muted-foreground">
-                  Toggle which fields appear in your Personal Information
-                  section. Only enabled fields will be shown in the form.
+                  {t(
+                    "resumeBuilder.resumeModals.manageFieldsHint",
+                    "Toggle which fields appear in your Personal Information section. Only enabled fields will be shown in the form."
+                  )}
                 </p>
 
                 {/* Basic Information */}
                 <div className="space-y-2">
                   <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                    Basic Information
+                    {t("resumeBuilder.resumeModals.basicInfo", "Basic Information")}
                   </h3>
 
                   {/* Full Name - Always Required */}
                   <div className="flex items-center justify-between p-2 bg-muted/30 rounded-lg border border-border">
                     <div>
                       <label className="text-sm font-medium text-foreground">
-                        Full Name
+                        {t("resumeBuilder.resumeModals.fullName", "Full Name")}
                       </label>
                       <p className="text-xs text-muted-foreground">
-                        Required field - always visible
+                        {t("resumeBuilder.resumeModals.requiredAlwaysVisible", "Required field - always visible")}
                       </p>
                     </div>
                     <div className="px-2 py-0.5 bg-[#102B47]/10 text-[#2E9098] text-xs font-medium rounded-full">
-                      Required
+                      {t("resumeBuilder.resumeModals.required", "Required")}
                     </div>
                   </div>
 
                   {/* Professional Title */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Professional Title
+                      {t("resumeBuilder.resumeModals.professionalTitle", "Professional Title")}
                     </label>
                     <button
                       onClick={() =>
@@ -806,13 +820,13 @@ export function ResumeModals({
                 {/* Contact Information */}
                 <div className="space-y-2">
                   <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                    Contact Information
+                    {t("resumeBuilder.resumeModals.contactInfo", "Contact Information")}
                   </h3>
 
                   {/* Email */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Email
+                      {t("resumeBuilder.resumeModals.email", "Email")}
                     </label>
                     <button
                       onClick={() =>
@@ -838,7 +852,7 @@ export function ResumeModals({
                   {/* Phone */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Phone
+                      {t("resumeBuilder.resumeModals.phone", "Phone")}
                     </label>
                     <button
                       onClick={() =>
@@ -864,7 +878,7 @@ export function ResumeModals({
                   {/* Location */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Location
+                      {t("resumeBuilder.resumeModals.location", "Location")}
                     </label>
                     <button
                       onClick={() =>
@@ -891,13 +905,13 @@ export function ResumeModals({
                 {/* Social Links */}
                 <div className="space-y-2">
                   <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                    Social Links
+                    {t("resumeBuilder.resumeModals.socialLinks", "Social Links")}
                   </h3>
 
                   {/* LinkedIn */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      LinkedIn URL
+                      {t("resumeBuilder.resumeModals.linkedinUrl", "LinkedIn URL")}
                     </label>
                     <button
                       onClick={() =>
@@ -923,7 +937,7 @@ export function ResumeModals({
                   {/* Website */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Website/Portfolio
+                      {t("resumeBuilder.resumeModals.website", "Website/Portfolio")}
                     </label>
                     <button
                       onClick={() =>
@@ -949,7 +963,7 @@ export function ResumeModals({
                   {/* GitHub */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      GitHub
+                      {t("resumeBuilder.resumeModals.github", "GitHub")}
                     </label>
                     <button
                       onClick={() =>
@@ -975,7 +989,7 @@ export function ResumeModals({
                   {/* Twitter */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Twitter
+                      {t("resumeBuilder.resumeModals.twitter", "Twitter")}
                     </label>
                     <button
                       onClick={() =>
@@ -1002,13 +1016,13 @@ export function ResumeModals({
                 {/* Personal Details */}
                 <div className="space-y-2">
                   <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                    Personal Details
+                    {t("resumeBuilder.resumeModals.personalDetails", "Personal Details")}
                   </h3>
 
                   {/* Date of Birth */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Date of Birth
+                      {t("resumeBuilder.resumeModals.dateOfBirth", "Date of Birth")}
                     </label>
                     <button
                       onClick={() =>
@@ -1034,7 +1048,7 @@ export function ResumeModals({
                   {/* Nationality */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Nationality
+                      {t("resumeBuilder.resumeModals.nationality", "Nationality")}
                     </label>
                     <button
                       onClick={() =>
@@ -1060,7 +1074,7 @@ export function ResumeModals({
                   {/* Languages */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Languages
+                      {t("resumeBuilder.resumeModals.languages", "Languages")}
                     </label>
                     <button
                       onClick={() =>
@@ -1086,7 +1100,7 @@ export function ResumeModals({
                   {/* Marital Status */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Marital Status
+                      {t("resumeBuilder.resumeModals.maritalStatus", "Marital Status")}
                     </label>
                     <button
                       onClick={() =>
@@ -1114,7 +1128,7 @@ export function ResumeModals({
                   {/* Driver's License */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Driver's License
+                      {t("resumeBuilder.resumeModals.driversLicense", "Driver's License")}
                     </label>
                     <button
                       onClick={() =>
@@ -1142,7 +1156,7 @@ export function ResumeModals({
                   {/* Military Service */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Military Service
+                      {t("resumeBuilder.resumeModals.militaryService", "Military Service")}
                     </label>
                     <button
                       onClick={() =>
@@ -1170,7 +1184,7 @@ export function ResumeModals({
                   {/* Visa Status */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Visa Status
+                      {t("resumeBuilder.resumeModals.visaStatus", "Visa Status")}
                     </label>
                     <button
                       onClick={() =>
@@ -1196,7 +1210,7 @@ export function ResumeModals({
                   {/* Preferred Pronouns */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Preferred Pronouns
+                      {t("resumeBuilder.resumeModals.preferredPronouns", "Preferred Pronouns")}
                     </label>
                     <button
                       onClick={() =>
@@ -1225,13 +1239,13 @@ export function ResumeModals({
                 {/* Professional Summary */}
                 <div className="space-y-2">
                   <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                    Professional Summary
+                    {t("resumeBuilder.resumeModals.professionalSummary", "Professional Summary")}
                   </h3>
 
                   {/* Summary */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Professional Summary
+                      {t("resumeBuilder.resumeModals.professionalSummary", "Professional Summary")}
                     </label>
                     <button
                       onClick={() =>
@@ -1257,7 +1271,7 @@ export function ResumeModals({
                   {/* Career Objective */}
                   <div className="flex items-center justify-between p-2 bg-background rounded-lg border border-border hover:border-[#2E9098]/50 transition-colors">
                     <label className="text-sm font-medium text-foreground cursor-pointer flex-1">
-                      Career Objective
+                      {t("resumeBuilder.resumeModals.careerObjective", "Career Objective")}
                     </label>
                     <button
                       onClick={() =>
@@ -1286,10 +1300,10 @@ export function ResumeModals({
                 {/* Custom Fields */}
                 <div className="space-y-2">
                   <h3 className="text-xs font-semibold text-foreground uppercase tracking-wide">
-                    Custom Fields
+                    {t("resumeBuilder.resumeModals.customFields", "Custom Fields")}
                   </h3>
                   <p className="text-xs text-muted-foreground">
-                    Add custom fields to your Personal Information section.
+                    {t("resumeBuilder.resumeModals.customFieldsHint", "Add custom fields to your Personal Information section.")}
                   </p>
 
                   {/* Add New Custom Field Form */}
@@ -1297,7 +1311,7 @@ export function ResumeModals({
                     <div className="grid grid-cols-2 gap-2">
                       <div>
                         <label className="block text-xs font-medium text-foreground mb-1">
-                          Field Name
+                          {t("resumeBuilder.resumeModals.fieldName", "Field Name")}
                         </label>
                         <input
                           type="text"
@@ -1305,13 +1319,13 @@ export function ResumeModals({
                           onChange={(e) =>
                             setNewCustomFieldName(e.target.value)
                           }
-                          placeholder="e.g., Portfolio"
+                          placeholder={t("resumeBuilder.resumeModals.fieldNamePlaceholder", "e.g., Portfolio")}
                           className="w-full px-3 py-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098]"
                         />
                       </div>
                       <div>
                         <label className="block text-xs font-medium text-foreground mb-1">
-                          Field Type
+                          {t("resumeBuilder.resumeModals.fieldType", "Field Type")}
                         </label>
                         <select
                           value={newCustomFieldType}
@@ -1322,8 +1336,8 @@ export function ResumeModals({
                           }
                           className="w-full px-3 py-1.5 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-[#2E9098] focus:border-[#2E9098]"
                         >
-                          <option value="text">Text Input</option>
-                          <option value="textarea">Text Area</option>
+                          <option value="text">{t("resumeBuilder.resumeModals.textInput", "Text Input")}</option>
+                          <option value="textarea">{t("resumeBuilder.resumeModals.textArea", "Text Area")}</option>
                         </select>
                       </div>
                     </div>
@@ -1331,7 +1345,7 @@ export function ResumeModals({
                       onClick={handleCreateCustomField}
                       className="w-full px-3 py-1.5 bg-[#102B47] text-white rounded-lg hover:bg-[#0b1f33] transition-colors text-sm font-medium"
                     >
-                      Add Custom Field
+                      {t("resumeBuilder.resumeModals.addCustomField", "Add Custom Field")}
                     </button>
                   </div>
 
@@ -1349,8 +1363,8 @@ export function ResumeModals({
                             </label>
                             <p className="text-xs text-muted-foreground">
                               {field.type === "text"
-                                ? "Text Input"
-                                : "Text Area"}
+                                ? t("resumeBuilder.resumeModals.textInput", "Text Input")
+                                : t("resumeBuilder.resumeModals.textArea", "Text Area")}
                             </p>
                           </div>
                           <div className="flex items-center gap-2">
@@ -1374,6 +1388,7 @@ export function ResumeModals({
                               onClick={() =>
                                 handleRemoveCustomFieldConfig(field.id)
                               }
+                              aria-label={t("resumeBuilder.a11y.removeField")}
                               className="p-1.5 hover:bg-destructive/10 rounded-lg transition-colors"
                             >
                               <X className="w-3.5 h-3.5 text-destructive" />
@@ -1391,7 +1406,7 @@ export function ResumeModals({
                   onClick={() => setShowManageFieldsModal(false)}
                   className="px-4 py-1.5 bg-[#102B47] text-white rounded-lg hover:bg-[#0b1f33] transition-colors text-sm font-medium"
                 >
-                  Done
+                  {t("resumeBuilder.resumeModals.done", "Done")}
                 </button>
               </div>
             </motion.div>

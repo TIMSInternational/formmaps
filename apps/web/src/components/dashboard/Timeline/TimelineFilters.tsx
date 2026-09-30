@@ -75,13 +75,13 @@ const statusOptions: {
   },
   {
     value: "in_progress",
-    label: { en: "In Progress", sp: "En Progreso" },
+    label: { en: "In Progress", sp: "En progreso" },
     color: "text-blue-600 border-blue-200 hover:bg-blue-50",
     activeColor: "bg-blue-50 text-blue-700 border-blue-200 ring-1 ring-blue-200",
   },
   {
     value: "not_started",
-    label: { en: "Not Started", sp: "No Iniciado" },
+    label: { en: "Not Started", sp: "No iniciado" },
     color: "text-gray-600 border-gray-200 hover:bg-gray-50",
     activeColor: "bg-gray-100 text-gray-700 border-gray-200 ring-1 ring-gray-200",
   },

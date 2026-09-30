@@ -16,6 +16,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { Coach, DaySchedule, TimeSlot } from "@/types/coach";
 import { toast } from "sonner";
 import { format, getDay } from "date-fns";
+import { es, enUS } from "date-fns/locale";
 import {
   Clock,
   Video,
@@ -115,7 +116,8 @@ export function BookingModal({
     Intl.DateTimeFormat().resolvedOptions().timeZone
   );
   const { user } = useGlobalStore();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n?.language?.startsWith("es") ? es : enUS;
 
   // Fetch slots from API
   useEffect(() => {
@@ -132,7 +134,7 @@ export function BookingModal({
         );
         setSlotsData(data);
       } catch (error) {
-        toast.error("Could not load available times");
+        toast.error(t("components.bookingModal.toasts.loadSlotsFailed"));
       } finally {
         setIsLoadingSlots(false);
       }
@@ -182,7 +184,7 @@ export function BookingModal({
 
   const handleBook = async () => {
     if (!date || !selectedTime || !topic || !coach) {
-      toast.error("Please fill in all fields");
+      toast.error(t("components.bookingModal.toasts.fillAllFields"));
       return;
     }
 
@@ -205,7 +207,7 @@ export function BookingModal({
       if (!originalSlotIso) {
         // Fallback logic if we can't match (shouldn't happen with correct API)
         // Construct date from 'date' + 'selectedTime'
-        toast.error("Invalid time slot. Please try refreshing.");
+        toast.error(t("components.bookingModal.toasts.invalidSlot"));
         return;
       }
 
@@ -225,7 +227,7 @@ export function BookingModal({
           start: startDate.toISOString(),
           end: endDate.toISOString(),
         });
-        toast.success("Session rescheduled successfully");
+        toast.success(t("components.bookingModal.toasts.rescheduled"));
         // Track session reschedule (treated as cancel + book)
         telemetry.trackSession("cancel", bookingId, undefined, undefined, undefined, "rescheduled");
         telemetry.trackSession("book", response.id, coach.id, topic);
@@ -248,7 +250,7 @@ export function BookingModal({
       // checkout before the slot is held/confirmed (no free-booking path).
       if (mode === "book") {
         if (!user.id) {
-          toast.error("User not identified. Please log in.");
+          toast.error(t("components.bookingModal.toasts.userNotIdentified"));
           setIsBooking(false);
           return;
         }
@@ -256,13 +258,13 @@ export function BookingModal({
         const amountInCents = Math.round((slotsData?.price?.amount ?? 0) * 100);
         if (amountInCents <= 0) {
           // Defensive: the API rejects coaches with no rate, so we shouldn't get here.
-          toast.error("This coach hasn't set a session rate yet.");
+          toast.error(t("components.bookingModal.toasts.noRate"));
           onClose();
           return;
         }
 
         try {
-          toast.loading("Redirecting to payment...");
+          toast.loading(t("components.bookingModal.toasts.redirectingToPayment"));
           await redirectToStripeCheckout(
             amountInCents,
             `Coaching Session: ${topic}`,
@@ -271,7 +273,7 @@ export function BookingModal({
           );
           // Redirecting...
         } catch (paymentError) {
-          toast.error("Booking created but payment failed to initialize.");
+          toast.error(t("components.bookingModal.toasts.paymentInitFailed"));
           onClose();
         }
       } else {
@@ -279,7 +281,7 @@ export function BookingModal({
         onClose();
       }
     } catch (error) {
-      toast.error("Failed to book session. Please try again.");
+      toast.error(t("components.bookingModal.toasts.bookFailed"));
     } finally {
       setIsBooking(false);
     }
@@ -293,7 +295,7 @@ export function BookingModal({
         className="sm:max-w-[1000px] w-full p-0 overflow-hidden gap-0 bg-white text-gray-900 border-gray-200 shadow-2xl rounded-xl"
         aria-describedby={undefined}
       >
-        <DialogTitle className="sr-only">Book a Session</DialogTitle>
+        <DialogTitle className="sr-only">{t("components.bookingModal.title")}</DialogTitle>
         <div className="flex flex-col md:flex-row min-h-[550px]">
           {/* Column 1: Coach Info (Sidebar) */}
           <div className="w-full md:w-[280px] p-6 border-r border-gray-100 flex flex-col bg-white">
@@ -305,23 +307,23 @@ export function BookingModal({
                   onClick={() => setStep("date-time")}
                   className="mb-4 -ml-2 text-gray-500 hover:text-gray-900"
                 >
-                  <ChevronLeft className="h-4 w-4 mr-1" /> Back
+                  <ChevronLeft className="h-4 w-4 mr-1" /> {t("booking.back")}
                 </Button>
               )}
               <Avatar className="h-14 w-14 mb-4 border border-gray-100 shadow-sm">
                 <AvatarImage src={coach.image} alt={coach.name} />
                 <AvatarFallback>{coach.name.charAt(0)}</AvatarFallback>
               </Avatar>
-              <p className="text-gray-500 text-sm font-medium mb-1">Coach</p>
+              <p className="text-gray-500 text-sm font-medium mb-1">{t("components.bookingModal.coach")}</p>
               <h3 className="text-lg font-bold text-gray-900 mb-1">
                 {coach.name}
               </h3>
               <p className="text-gray-900 font-semibold text-xl mb-6">
                 {mode === "reschedule"
-                  ? "Reschedule Session"
+                  ? t("booking.rescheduleSession")
                   : slotsData?.price && slotsData.price.amount > 0
                     ? `${slotsData.price.currency} ${slotsData.price.amount}`
-                    : "1 Hour Session"}
+                    : t("components.bookingModal.oneHourSession")}
               </p>
 
               <div className="space-y-4 text-gray-600 text-sm">
@@ -329,8 +331,8 @@ export function BookingModal({
                   <Clock className="h-4 w-4 mr-3 text-gray-400" aria-hidden="true" />
                   <span className="font-medium">
                     {slotsData?.sessionDurationMinutes
-                      ? `${slotsData.sessionDurationMinutes} min`
-                      : "1 hour"}
+                      ? t("components.bookingModal.durationMinutes", { minutes: slotsData.sessionDurationMinutes })
+                      : t("components.bookingModal.oneHour")}
                   </span>
                 </div>
                 <div className="flex items-center">
@@ -366,12 +368,12 @@ export function BookingModal({
                         newMonth.setMonth(newMonth.getMonth() - 1);
                         setCurrentMonth(newMonth);
                       }}
-                      aria-label="Previous month"
+                      aria-label={t("components.bookingModal.previousMonth")}
                     >
                       <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                     </Button>
                     <span className="text-base font-semibold text-gray-900" id="calendar-month-label">
-                      {format(currentMonth, "MMMM yyyy")}
+                      {format(currentMonth, "MMMM yyyy", { locale: dateLocale })}
                     </span>
                     <Button
                       variant="ghost"
@@ -382,7 +384,7 @@ export function BookingModal({
                         newMonth.setMonth(newMonth.getMonth() + 1);
                         setCurrentMonth(newMonth);
                       }}
-                      aria-label="Next month"
+                      aria-label={t("components.bookingModal.nextMonth")}
                     >
                       <ChevronRight className="h-4 w-4" aria-hidden="true" />
                     </Button>
@@ -456,7 +458,7 @@ export function BookingModal({
                 <div className="w-full md:w-[260px] p-5 bg-gray-50/50 flex flex-col h-[550px]">
                   <div className="mb-4">
                     <h4 className="text-base font-semibold text-gray-900">
-                      {date ? format(date, "EEEE, MMM d") : t('booking.selectDate')}
+                      {date ? format(date, "EEEE, MMM d", { locale: dateLocale }) : t('booking.selectDate')}
                     </h4>
                     {isLoadingSlots ? (
                       <div className="flex items-center text-sm text-gray-500 mt-1" role="status">
@@ -509,11 +511,13 @@ export function BookingModal({
                               }
                             }}
                           >
-                            Jump to{" "}
-                            {format(
-                              parseYmdLocal(slotsData.nextAvailableDate),
-                              "MMM d"
-                            )}
+                            {t("booking.jumpTo", {
+                              date: format(
+                                parseYmdLocal(slotsData.nextAvailableDate),
+                                "MMM d",
+                                { locale: dateLocale }
+                              ),
+                            })}
                           </Button>
                         )}
                       </div>

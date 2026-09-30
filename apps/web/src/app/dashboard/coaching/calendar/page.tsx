@@ -12,7 +12,6 @@ import { useTranslation } from "react-i18next";
 function getDaysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate(); }
 function getFirstDayOfMonth(y: number, m: number) { return new Date(y, m, 1).getDay(); }
 
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   confirmed: { bg: "rgba(46,144,152,0.12)", text: "var(--admin-accent-blue)" },
@@ -23,7 +22,8 @@ const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 export default function CoachCalendarPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith("es") ? "es-CO" : "en-US";
   const [sessions, setSessions] = useState<Booking[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMonth, setViewMonth] = useState(new Date().getMonth());
@@ -98,7 +98,7 @@ export default function CoachCalendarPage() {
             <button onClick={prevMonth} style={{ width: 32, height: 32, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <ChevronLeft style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
             </button>
-            <span style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>{MONTHS[viewMonth]} {viewYear}</span>
+            <span style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>{new Date(viewYear, viewMonth, 1).toLocaleDateString(dateLocale, { month: "long", year: "numeric" })}</span>
             <button onClick={nextMonth} style={{ width: 32, height: 32, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <ChevronRight style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
             </button>
@@ -201,7 +201,7 @@ export default function CoachCalendarPage() {
             <CalendarDays style={{ width: 16, height: 16, color: "var(--admin-accent-blue)" }} />
             <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
               {selectedDay
-                ? new Date(selectedDay + "T12:00:00").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" })
+                ? new Date(selectedDay + "T12:00:00").toLocaleDateString(dateLocale, { weekday: "short", month: "short", day: "numeric" })
                 : t("coach:calendar.selectDay")}
             </span>
           </div>

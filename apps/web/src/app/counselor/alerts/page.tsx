@@ -72,7 +72,7 @@ export default function AlertsPage() {
   const handleDismiss = (alertId: string) => {
     updateAlert.mutate(
       { alertId, payload: { status: "dismissed" } },
-      { onSuccess: () => toast.success("Alert dismissed") }
+      { onSuccess: () => toast.success(t("ui.alerts.dismissed")) }
     );
   };
 
@@ -86,7 +86,7 @@ export default function AlertsPage() {
     if (selected.length === 0) return;
     bulk.mutate(
       { alertIds: selected, action: "dismiss" },
-      { onSuccess: (r) => { toast.success(`Dismissed ${r.affected} alerts`); setSelected([]); } }
+      { onSuccess: (r) => { toast.success(t("ui.alerts.dismissedCount", { count: r.affected })); setSelected([]); } }
     );
   };
 
@@ -227,13 +227,13 @@ export default function AlertsPage() {
                     <Badge className={priorityColors[a.priority]}>{a.priority}</Badge>
                   </TableCell>
                   <TableCell>
-                    <Badge variant={a.status === "active" ? "default" : "secondary"}>{a.status}</Badge>
+                    <Badge variant={a.status === "active" ? "default" : "secondary"}>{t(`ui.alerts.status.${a.status}`, { defaultValue: a.status })}</Badge>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">{new Date(a.createdAt).toLocaleDateString()}</TableCell>
                   <TableCell>
                     {a.status !== "dismissed" && (
                       <Button variant="ghost" size="sm" onClick={(e) => { e.stopPropagation(); handleDismiss(a.id); }}>
-                        <Eye className="h-3 w-3 mr-1" />Dismiss
+                        <Eye className="h-3 w-3 mr-1" />{t("ui.alerts.dismiss")}
                       </Button>
                     )}
                   </TableCell>

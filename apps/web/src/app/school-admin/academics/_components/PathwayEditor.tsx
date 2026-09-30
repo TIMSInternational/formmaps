@@ -8,6 +8,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Loader2, GitBranch, TriangleAlert, Search } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSchoolCourses } from "@/hooks/useCurriculumQueries";
 import { curriculumKeys } from "@/hooks/useCurriculumQueries";
@@ -48,6 +49,7 @@ interface PathwayEditorProps {
 }
 
 export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: PathwayEditorProps) {
+  const { t } = useTranslation("school_admin");
   const queryClient = useQueryClient();
   const { data: catalogData, isLoading, isError } = useSchoolCourses({ limit: 500 });
 
@@ -118,20 +120,20 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
     if (readOnly || !c.source || !c.target) return;
     const source = c.source, target = c.target;
     setEdges((eds) => {
-      if (source === target) { toast.error("A course can't be its own prerequisite"); return eds; }
+      if (source === target) { toast.error(t("ui.pathways.selfPrereq")); return eds; }
       if (eds.some((e) => e.source === source && e.target === target)) {
-        toast.error("That prerequisite already exists"); return eds;
+        toast.error(t("ui.pathways.prereqExists")); return eds;
       }
       const plain: PathwayEdge[] = eds.map((e) => ({ id: e.id, source: e.source, target: e.target }));
       if (wouldCreateCycle(plain, source, target)) {
-        const a = byId.get(source)?.code ?? "that course";
-        const b = byId.get(target)?.code ?? "this course";
-        toast.error(`${b} is already required (directly or indirectly) by ${a} — this would create a loop`);
+        const a = byId.get(source)?.code ?? t("ui.pathways.thatCourse");
+        const b = byId.get(target)?.code ?? t("ui.pathways.thisCourse");
+        toast.error(t("ui.pathways.cycle", { b, a }));
         return eds;
       }
       return [...eds, { id: edgeId(source, target), source, target, type: "prereq" }];
     });
-  }, [readOnly, byId]);
+  }, [readOnly, byId, t]);
 
   const handleDropCourse = useCallback((courseId: string, position: { x: number; y: number }) => {
     if (readOnly) return;
@@ -201,9 +203,9 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
   const dirty = pendingChanges.length > 0;
 
   const requestClose = useCallback(() => {
-    if (dirty && !window.confirm("Discard unsaved changes to your pathways?")) return;
+    if (dirty && !window.confirm(t("ui.pathways.discardConfirm"))) return;
     onClose?.();
-  }, [dirty, onClose]);
+  }, [dirty, onClose, t]);
 
   const handleSave = useCallback(async () => {
     if (!dirty || readOnly || saving) return;
@@ -234,12 +236,12 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
     setBaselineVersion((v) => v + 1);
 
     if (failedCodes.length === 0) {
-      toast.success(`Saved ${pendingChanges.length} ${pendingChanges.length === 1 ? "course" : "courses"}`);
+      toast.success(t("ui.pathways.savedCourses", { count: pendingChanges.length }));
       if (variant === "dialog") onClose?.();
     } else {
-      toast.error(`Couldn't save ${failedCodes.join(", ")} — left unchanged. Other changes were saved.`);
+      toast.error(t("ui.pathways.partialSaveFailed", { codes: failedCodes.join(", ") }));
     }
-  }, [dirty, readOnly, saving, pendingChanges, queryClient, onClose, byId, variant]);
+  }, [dirty, readOnly, saving, pendingChanges, queryClient, onClose, byId, variant, t]);
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -247,25 +249,25 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
       <div className="flex flex-row items-center gap-3 px-5 py-3" style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
         <div className="flex items-center gap-2 mr-auto" style={{ color: "var(--admin-font-primary)", fontSize: 15, fontWeight: 600 }}>
           <GitBranch style={{ width: 17, height: 17, color: "var(--admin-accent-blue)" }} />
-          {rootCourse ? `Pathway: ${rootCourse.code} · ${rootCourse.name}` : "Pathway editor"}
+          {rootCourse ? t("ui.pathways.pathwayTitle", { code: rootCourse.code, name: rootCourse.name }) : t("ui.pathways.editor")}
         </div>
-        <span className="sr-only">Drag between courses to set prerequisites. Pathways are derived from these edges.</span>
+        <span className="sr-only">{t("ui.pathways.srHelp")}</span>
 
         {!isLoading && !readOnly && departments.length > 0 && (
           <select
-            aria-label="Filter by department"
+            aria-label={t("ui.pathways.filterByDepartment")}
             value={deptFilter}
             onChange={(e) => setDeptFilter(e.target.value)}
             style={{ height: 32, borderRadius: 6, fontSize: 12, padding: "0 8px", background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)" }}
           >
-            <option value="all">All departments</option>
+            <option value="all">{t("ui.pathways.allDepartments")}</option>
             {departments.map((d) => <option key={d} value={d}>{d}</option>)}
           </select>
         )}
 
         {variant === "dialog" && (
           <button onClick={requestClose} style={{ height: 32, borderRadius: 6, padding: "0 14px", fontSize: 13, fontWeight: 500, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)", cursor: "pointer" }}>
-            {dirty ? "Cancel" : "Close"}
+            {dirty ? t("common.cancel") : t("common.close")}
           </button>
         )}
         <button
@@ -281,7 +283,7 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
           }}
         >
           {saving && <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />}
-          {dirty ? `Save ${pendingChanges.length}` : "Saved"}
+          {dirty ? t("ui.pathways.saveN", { count: pendingChanges.length }) : t("ui.pathways.saved")}
         </button>
       </div>
 
@@ -292,7 +294,7 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
         </div>
       ) : isError ? (
         <div className="flex-1 flex items-center justify-center">
-          <p style={{ fontSize: 13, color: "#dc2626" }}>Failed to load your catalog.</p>
+          <p style={{ fontSize: 13, color: "#dc2626" }}>{t("ui.pathways.loadFailed")}</p>
         </div>
       ) : (
         <div className="flex-1 flex min-h-0">
@@ -302,8 +304,8 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
               <div className="relative">
                 <Search style={{ width: 13, height: 13, position: "absolute", left: 8, top: 9, color: "var(--admin-font-tertiary)" }} />
                 <Input
-                  aria-label="Search courses to add"
-                  placeholder="Add a course…"
+                  aria-label={t("ui.pathways.searchToAdd")}
+                  placeholder={t("ui.pathways.addCourse")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   style={{ height: 30, paddingLeft: 26, fontSize: 12, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}
@@ -312,7 +314,7 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
             </div>
             <div className="flex-1 overflow-y-auto p-2 space-y-1">
               <p style={{ fontSize: 10, fontWeight: 600, color: "var(--admin-font-tertiary)", padding: "2px 4px" }}>
-                {readOnly ? "COURSES" : "DRAG ONTO CANVAS"}
+                {readOnly ? t("ui.pathways.coursesLabel") : t("ui.pathways.dragOntoCanvas")}
               </p>
               {paletteCourses.map((c) => (
                 <div
@@ -332,7 +334,7 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
               ))}
               {paletteCourses.length === 0 && (
                 <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", padding: "8px 4px" }}>
-                  {search ? "No matches" : "Every course is on the canvas"}
+                  {search ? t("ui.pathways.noMatches") : t("ui.pathways.allOnCanvas")}
                 </p>
               )}
             </div>
@@ -344,7 +346,7 @@ export function PathwayEditor({ rootCourseId, onClose, variant = "dialog" }: Pat
               <div className="flex items-center gap-2" style={{ padding: "8px 12px", background: "rgba(217,119,6,0.08)", borderBottom: "1px solid rgba(217,119,6,0.3)" }}>
                 <TriangleAlert style={{ width: 14, height: 14, color: "#d97706", flexShrink: 0 }} />
                 <span style={{ fontSize: 12, color: "#d97706" }}>
-                  Your catalog is too large to load fully — the editor is read-only to avoid wiping prerequisites.
+                  {t("ui.pathways.readOnlyWarning")}
                 </span>
               </div>
             )}

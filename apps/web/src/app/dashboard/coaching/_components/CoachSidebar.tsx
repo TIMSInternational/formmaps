@@ -357,7 +357,7 @@ export function CoachSidebar() {
           {!collapsed && <>
             <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
               <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name || "Coach"}</div>
-              <div style={{ fontSize: 10, color: C.fontTertiary }}>Coach</div>
+              <div style={{ fontSize: 10, color: C.fontTertiary }}>{t("coach.defaultName")}</div>
             </div>
             <ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} />
           </>}

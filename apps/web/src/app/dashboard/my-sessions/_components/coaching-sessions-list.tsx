@@ -207,7 +207,7 @@ export function CoachingSessionsList({
                           onClick={() => onReviewClick(session)}
                         >
                           <Star className="h-4 w-4 mr-1.5 text-[#FFD23F]" />
-                          {t("coach:mySessions.review")}
+                          {t("coach:mySessions.reviewButton")}
                         </Button>
                       ) : null}
 

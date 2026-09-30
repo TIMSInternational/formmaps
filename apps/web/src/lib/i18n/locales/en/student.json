@@ -41,7 +41,15 @@
     "scoreAdded": "Score added",
     "scoreDeleted": "Score deleted",
     "failedToSave": "Failed to save score",
-    "failedToDelete": "Failed to delete score"
+    "failedToDelete": "Failed to delete score",
+    "list": {
+      "emptyTitle": "No test scores yet",
+      "emptyBody": "Add your SAT, ACT, AP, or other exam results to build your academic profile.",
+      "addFirst": "Add your first score",
+      "apExams": "AP Exams",
+      "resultCount_one": "{{count}} result",
+      "resultCount_other": "{{count}} results"
+    }
   },
   "communityService": {
     "badge": "Graduation Requirement",
@@ -99,7 +107,19 @@
     "title": "Letters of Recommendation",
     "subtitle": "Request and track letters from your counselors and teachers.",
     "requestLetter": "Request Letter",
-    "failedToLoad": "Failed to load recommendation requests"
+    "failedToLoad": "Failed to load recommendation requests",
+    "list": {
+      "stepInProgress": "In progress",
+      "downloadFailed": "Could not download the letter. Please try again.",
+      "emptyTitle": "No requests yet",
+      "emptyBody": "Click \"Request Letter\" to ask a counselor or teacher for a recommendation.",
+      "unknownRecommender": "Unknown",
+      "due": "Due {{date}}",
+      "preparing": "Preparing…",
+      "downloadLetter": "Download letter",
+      "declinedWithReason": "Declined: {{reason}}. You can request another recommender.",
+      "declined": "Declined. You can request another recommender."
+    }
   },
   "university": {
     "failedToLoad": "Failed to load universities"
@@ -118,6 +138,11 @@
       "description": "Add your 4-letter personality type for even sharper career matches",
       "recommended": "Recommended",
       "completed": "Completed"
+    }
+  },
+  "ui": {
+    "recommendations": {
+      "myRequests": "My Requests"
     }
   }
 }

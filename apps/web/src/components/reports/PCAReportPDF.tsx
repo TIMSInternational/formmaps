@@ -16,6 +16,7 @@ import {
   InfoCard,
   SectionDivider,
 } from './PDFReportComponents';
+import { getPdfT, pdfLocale, PdfLanguageContext, type PdfLanguage } from './pdfI18n';
 
 // PCA Report specific styles
 const styles = StyleSheet.create({
@@ -239,11 +240,14 @@ const StarRating: React.FC<{ score: number; maxScore: number }> = ({ score, maxS
 // PCA Report PDF Document Component
 interface PCAReportPDFProps {
   data?: PCAReportData;
+  /** Language the report is rendered in (default: the current UI language). */
+  language?: PdfLanguage;
 }
 
-const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
+const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData, language }) => {
+  const t = getPdfT(language);
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
+    return new Date(dateString).toLocaleDateString(pdfLocale(language), {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -251,27 +255,28 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
   };
 
   return (
+    <PdfLanguageContext.Provider value={language}>
     <Document>
       {/* Page 1: DISC Profile */}
       <Page size="A4" style={sharedStyles.page}>
         {/* Header Banner */}
         <View style={styles.headerBanner}>
           <Text style={styles.headerLogo}>FormMaps</Text>
-          <Text style={styles.headerTitle}>PCA Personality Profile Report</Text>
-          <Text style={styles.headerSubtitle}>Personal Characteristics Assessment • PCA-Based Analysis</Text>
+          <Text style={styles.headerTitle}>{t('components.pcaReportPdf.title')}</Text>
+          <Text style={styles.headerSubtitle}>{t('components.pcaReportPdf.subtitle')}</Text>
         </View>
 
         {/* User Info */}
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
           <View>
-            <Text style={{ fontSize: 8, color: '#9ca3af', marginBottom: 2 }}>PREPARED FOR</Text>
+            <Text style={{ fontSize: 8, color: '#9ca3af', marginBottom: 2 }}>{t('components.pcaReportPdf.preparedFor')}</Text>
             <Text style={{ fontSize: 12, fontWeight: 600, color: '#1a1a2e' }}>{data.user.name}</Text>
             <Text style={{ fontSize: 9, color: '#6b7280' }}>{data.user.email}</Text>
           </View>
           <View style={{ alignItems: 'flex-end' }}>
-            <Text style={{ fontSize: 8, color: '#9ca3af', marginBottom: 2 }}>ASSESSMENT DATE</Text>
+            <Text style={{ fontSize: 8, color: '#9ca3af', marginBottom: 2 }}>{t('components.pcaReportPdf.assessmentDate')}</Text>
             <Text style={{ fontSize: 11, fontWeight: 500, color: '#1a1a2e' }}>{formatDate(data.completionDate)}</Text>
-            <Text style={{ fontSize: 8, color: '#9ca3af', marginTop: 4 }}>ID: {data.pcaCod}</Text>
+            <Text style={{ fontSize: 8, color: '#9ca3af', marginTop: 4 }}>{t('components.pcaReportPdf.id', { id: data.pcaCod })}</Text>
           </View>
         </View>
 
@@ -280,13 +285,13 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
           <View style={{ flexDirection: 'row' }}>
             {/* D Quadrant */}
             <View style={{ ...styles.discQuadrant, backgroundColor: chartColors.dominance, borderTopLeftRadius: 8 }}>
-              <Text style={styles.discLabel}>D - Dominance</Text>
+              <Text style={styles.discLabel}>{t('components.pcaReportPdf.discD')}</Text>
               <Text style={styles.discScore}>{data.discProfile.dominance.natural}%</Text>
               <Text style={styles.discDescription}>{data.discProfile.dominance.description}</Text>
             </View>
             {/* I Quadrant */}
             <View style={{ ...styles.discQuadrant, backgroundColor: chartColors.influence, borderTopRightRadius: 8 }}>
-              <Text style={styles.discLabel}>I - Influence</Text>
+              <Text style={styles.discLabel}>{t('components.pcaReportPdf.discI')}</Text>
               <Text style={styles.discScore}>{data.discProfile.influence.natural}%</Text>
               <Text style={styles.discDescription}>{data.discProfile.influence.description}</Text>
             </View>
@@ -294,24 +299,24 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
           <View style={{ flexDirection: 'row' }}>
             {/* S Quadrant */}
             <View style={{ ...styles.discQuadrant, backgroundColor: chartColors.steadiness, borderBottomLeftRadius: 8 }}>
-              <Text style={styles.discLabel}>S - Solidity</Text>
+              <Text style={styles.discLabel}>{t('components.pcaReportPdf.discS')}</Text>
               <Text style={styles.discScore}>{data.discProfile.steadiness.natural}%</Text>
               <Text style={styles.discDescription}>{data.discProfile.steadiness.description}</Text>
             </View>
             {/* C Quadrant */}
             <View style={{ ...styles.discQuadrant, backgroundColor: chartColors.conscientiousness, borderBottomRightRadius: 8 }}>
-              <Text style={styles.discLabel}>C - Control</Text>
+              <Text style={styles.discLabel}>{t('components.pcaReportPdf.discC')}</Text>
               <Text style={styles.discScore}>{data.discProfile.conscientiousness.natural}%</Text>
               <Text style={styles.discDescription}>{data.discProfile.conscientiousness.description}</Text>
             </View>
           </View>
           <View style={{ marginTop: 10, flexDirection: 'row', gap: 15 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 9, fontWeight: 600, color: '#374151' }}>Primary Style: </Text>
+              <Text style={{ fontSize: 9, fontWeight: 600, color: '#374151' }}>{t('components.pcaReportPdf.primaryStyle')}</Text>
               <Text style={{ fontSize: 9, color: chartColors.dominance, fontWeight: 700 }}>{data.primaryStyle}</Text>
             </View>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={{ fontSize: 9, fontWeight: 600, color: '#374151' }}>Secondary: </Text>
+              <Text style={{ fontSize: 9, fontWeight: 600, color: '#374151' }}>{t('components.pcaReportPdf.secondary')}</Text>
               <Text style={{ fontSize: 9, color: '#6b7280' }}>{data.secondaryStyle}</Text>
             </View>
           </View>
@@ -319,24 +324,24 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
 
         {/* DISC Bars */}
         <View style={{ backgroundColor: '#f9fafb', borderRadius: 8, padding: 15, marginBottom: 20 }}>
-          <Text style={{ fontSize: 10, fontWeight: 600, color: '#374151', marginBottom: 12 }}>Natural vs Adapted Profile</Text>
+          <Text style={{ fontSize: 10, fontWeight: 600, color: '#374151', marginBottom: 12 }}>{t('components.pcaReportPdf.naturalVsAdapted')}</Text>
           <View style={{ marginBottom: 10 }}>
-            <ProgressBar label="Dominance" value={data.discProfile.dominance.natural} color={chartColors.dominance} />
+            <ProgressBar label={t('pca.dominance')} value={data.discProfile.dominance.natural} color={chartColors.dominance} />
           </View>
           <View style={{ marginBottom: 10 }}>
-            <ProgressBar label="Influence" value={data.discProfile.influence.natural} color={chartColors.influence} />
+            <ProgressBar label={t('pca.influence')} value={data.discProfile.influence.natural} color={chartColors.influence} />
           </View>
           <View style={{ marginBottom: 10 }}>
-            <ProgressBar label="Solidity" value={data.discProfile.steadiness.natural} color={chartColors.steadiness} />
+            <ProgressBar label={t('pca.steadiness')} value={data.discProfile.steadiness.natural} color={chartColors.steadiness} />
           </View>
           <View>
-            <ProgressBar label="Control" value={data.discProfile.conscientiousness.natural} color={chartColors.conscientiousness} />
+            <ProgressBar label={t('pca.conscientiousness')} value={data.discProfile.conscientiousness.natural} color={chartColors.conscientiousness} />
           </View>
         </View>
 
         {/* Profile Summary */}
         <View style={{ marginBottom: 20 }}>
-          <Text style={{ fontSize: 12, fontWeight: 600, color: '#1a1a2e', marginBottom: 8 }}>Profile Summary</Text>
+          <Text style={{ fontSize: 12, fontWeight: 600, color: '#1a1a2e', marginBottom: 8 }}>{t('components.pcaReportPdf.profileSummary')}</Text>
           <Text style={{ fontSize: 10, color: '#374151', lineHeight: 1.6 }}>{data.profileSummary}</Text>
         </View>
 
@@ -347,16 +352,16 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
       <Page size="A4" style={sharedStyles.page}>
         <View style={{ marginBottom: 20 }}>
           <Text style={{ fontSize: 16, fontWeight: 700, color: '#1a1a2e', marginBottom: 5 }}>
-            Competencies & Career Alignment
+            {t('components.pcaReportPdf.competenciesTitle')}
           </Text>
           <Text style={{ fontSize: 10, color: '#6b7280' }}>
-            Your strengths and recommended career paths based on your personality profile
+            {t('components.pcaReportPdf.competenciesSubtitle')}
           </Text>
         </View>
 
         {/* Competencies Section */}
         <View style={{ marginBottom: 25 }}>
-          <Text style={sharedStyles.sectionTitle}>Core Competencies</Text>
+          <Text style={sharedStyles.sectionTitle}>{t('components.pcaReportPdf.coreCompetencies')}</Text>
           {data.competencies.map((comp, index) => (
             <View key={index} style={styles.competencyRow}>
               <View style={{ flex: 1 }}>
@@ -375,7 +380,7 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
 
         {/* Career Recommendations */}
         <View style={{ marginBottom: 25 }}>
-          <Text style={sharedStyles.sectionTitle}>Career Recommendations</Text>
+          <Text style={sharedStyles.sectionTitle}>{t('components.pcaReportPdf.careerRecommendations')}</Text>
           {data.careerRecommendations.map((career, index) => (
             <View key={index} style={styles.careerCard}>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
@@ -386,7 +391,7 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
                   paddingVertical: 3, 
                   borderRadius: 10 
                 }}>
-                  <Text style={{ fontSize: 9, fontWeight: 600, color: '#ffffff' }}>{career.matchScore}% Match</Text>
+                  <Text style={{ fontSize: 9, fontWeight: 600, color: '#ffffff' }}>{t('components.pcaReportPdf.match', { percent: career.matchScore })}</Text>
                 </View>
               </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 4 }}>
@@ -413,13 +418,13 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
         <View style={{ flexDirection: 'row', gap: 20 }}>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 11, fontWeight: 600, color: '#1a1a2e', marginBottom: 10 }}>
-              Communication Strengths
+              {t('components.pcaReportPdf.communicationStrengths')}
             </Text>
             {data.communicationStyle.strengths.map((strength, idx) => (
               <Text key={idx} style={{ fontSize: 9, color: '#16a34a', marginBottom: 4 }}>✓ {strength}</Text>
             ))}
             <Text style={{ fontSize: 11, fontWeight: 600, color: '#1a1a2e', marginTop: 12, marginBottom: 10 }}>
-              Areas to Develop
+              {t('components.pcaReportPdf.areasToDevelop')}
             </Text>
             {data.communicationStyle.challenges.map((challenge, idx) => (
               <Text key={idx} style={{ fontSize: 9, color: '#d97706', marginBottom: 4 }}>○ {challenge}</Text>
@@ -427,7 +432,7 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 11, fontWeight: 600, color: '#1a1a2e', marginBottom: 10 }}>
-              Ideal Work Environment
+              {t('components.pcaReportPdf.idealWorkEnvironment')}
             </Text>
             {data.workEnvironmentPreferences.map((pref, idx) => (
               <Text key={idx} style={{ fontSize: 9, color: '#374151', marginBottom: 4 }}>• {pref}</Text>
@@ -444,18 +449,17 @@ const PCAReportPDF: React.FC<PCAReportPDFProps> = ({ data = dummyPCAData }) => {
           marginBottom: 40,
         }}>
           <Text style={{ fontSize: 9, color: '#0d9488', fontWeight: 600, marginBottom: 5 }}>
-            About This Assessment
+            {t('components.pcaReportPdf.aboutTitle')}
           </Text>
           <Text style={{ fontSize: 8, color: '#14b8a6', lineHeight: 1.5 }}>
-            The PCA (Personal Characteristics Assessment) is based on the PCA behavioral model and
-            measures natural and adapted behavioral tendencies. This report provides insights into 
-            personality preferences and is intended for personal and professional development purposes.
+            {t('components.pcaReportPdf.aboutBody')}
           </Text>
         </View>
 
         <ReportFooter />
       </Page>
     </Document>
+    </PdfLanguageContext.Provider>
   );
 };
 

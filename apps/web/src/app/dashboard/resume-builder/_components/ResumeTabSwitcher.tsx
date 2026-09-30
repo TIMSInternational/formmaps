@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 export type EditorTab = "chat" | "style";
@@ -10,6 +11,7 @@ interface ResumeTabSwitcherProps {
 }
 
 export function ResumeTabSwitcher({ activeTab, setActiveTab }: ResumeTabSwitcherProps) {
+  const { t } = useTranslation();
   return (
     <div className="flex border-b border-border shrink-0 bg-secondary/30">
       {(["chat", "style"] as const).map((tab) => (
@@ -23,7 +25,9 @@ export function ResumeTabSwitcher({ activeTab, setActiveTab }: ResumeTabSwitcher
               : "text-muted-foreground hover:text-foreground"
           )}
         >
-          {tab === "chat" ? "AI Editor" : "Style"}
+          {tab === "chat"
+            ? t("resumeBuilder.resumeTabSwitcher.aiEditor", "AI Editor")
+            : t("resumeBuilder.resumeTabSwitcher.style", "Style")}
         </button>
       ))}
     </div>

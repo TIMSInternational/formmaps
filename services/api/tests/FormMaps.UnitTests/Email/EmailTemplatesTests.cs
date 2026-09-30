@@ -7,6 +7,8 @@ namespace FormMaps.UnitTests.Email;
 /// Byte-parity tests for the email templates ported from lib/email.ts. Pins the load-bearing bits: subjects
 /// (invite = RAW studentName; reminder = ESCAPED schoolName — matching the TS asymmetry), body escaping via the
 /// exact 5-char map, list items, and button URLs (reminder → frontend /dashboard/assessments).
+/// These pin the ENGLISH variant (language "en" passed explicitly — the default is now Spanish); the Spanish copy and
+/// the language rule are pinned in EmailTemplatesBilingualTests.
 /// </summary>
 public sealed class EmailTemplatesTests
 {
@@ -24,7 +26,7 @@ public sealed class EmailTemplatesTests
     public void EvaluationInvite_subject_is_raw_studentName_body_escapes_both_names()
     {
         var msg = Templates().BuildEvaluationInvite("Pat & <Parent>", "Ana \"A\"",
-            "https://app.formmaps.ai/evaluation/evaluator?token=abc123");
+            "https://app.formmaps.ai/evaluation/evaluator?token=abc123", "en");
 
         // Subject: studentName is RAW (matches TS `360° Evaluation Request for ${studentName}` — no escapeHtml).
         Assert.Equal("360° Evaluation Request for Ana \"A\"", msg.Subject);
@@ -34,7 +36,8 @@ public sealed class EmailTemplatesTests
         Assert.Contains("Ana &quot;A&quot;", msg.Html);
         Assert.Contains("https://app.formmaps.ai/evaluation/evaluator?token=abc123", msg.Html);
         Assert.Contains("Complete Evaluation", msg.Html);
-        Assert.Contains("This link expires in 7 days", msg.Html);
+        // Deliberate pin update: evaluator tokens live 48h, and the copy now says so (it promised 7 days).
+        Assert.Contains("This link expires in 48 hours", msg.Html);
         // Branded shell present.
         Assert.Contains("postal-addr", msg.Html);
     }
@@ -42,13 +45,15 @@ public sealed class EmailTemplatesTests
     [Fact]
     public void AssessmentReminder_subject_escapes_schoolName_and_lists_escaped_assessments()
     {
-        var msg = Templates().BuildAssessmentReminder("Ben", "Acme & Co", ["PCA", "MIL <x>"]);
+        var msg = Templates().BuildAssessmentReminder("Ben", "Acme & Co", ["PCA", "MIL <x>"], "en");
 
         // Subject: schoolName IS escaped here (unlike the invite's raw studentName).
         Assert.Equal("FormMaps — Assessment Reminder from Acme &amp; Co", msg.Subject);
 
         Assert.Contains("Hi Ben,", msg.Html);
-        Assert.Contains("<li>PCA</li>", msg.Html);
+        // Deliberate pin update: "PCA" is a known assessment code now and renders as its localised name; unknown
+        // free text ("MIL <x>") still passes through, escaped.
+        Assert.Contains("<li>PCA (Personal Competence Analysis)</li>", msg.Html);
         Assert.Contains("<li>MIL &lt;x&gt;</li>", msg.Html);
         Assert.Contains("https://app.formmaps.com/dashboard/assessments", msg.Html);
         Assert.Contains("Go to Assessments", msg.Html);
@@ -57,7 +62,7 @@ public sealed class EmailTemplatesTests
     [Fact]
     public void ReportEmail_subject_is_raw_studentName_body_escapes_name_and_links_to_dashboard()
     {
-        var msg = Templates().BuildReportEmail("Ana \"A\" & Co");
+        var msg = Templates().BuildReportEmail("Ana \"A\" & Co", "en");
 
         Assert.Equal("FormMaps — Student Report for Ana \"A\" & Co", msg.Subject);
         Assert.Contains("Student Report: Ana &quot;A&quot; &amp; Co", msg.Html);

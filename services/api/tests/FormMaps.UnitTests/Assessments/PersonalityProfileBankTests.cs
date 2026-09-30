@@ -36,7 +36,7 @@ public class PersonalityProfileBankTests
         Assert.Equal("ISTP", profile.Type);
         Assert.Equal("El Técnico Resolutivo", profile.Alias);
         Assert.Equal("Práctico, orientado a resultados, autónomo.", profile.Tagline);
-        Assert.StartsWith("“El nombre” es resolutivo", profile.Description);
+        Assert.StartsWith("El ISTP es resolutivo", profile.Description);
         Assert.NotEmpty(profile.Strengths);
         Assert.NotNull(profile.Potential.Social);
         Assert.NotNull(profile.Potential.Laboral);
@@ -50,7 +50,7 @@ public class PersonalityProfileBankTests
         var profile = PersonalityProfileBank.Localize(PersonalityProfileBank.GetByType("ISTP"), "en");
         Assert.Equal("The Resolute Technician", profile.Alias);
         Assert.Equal("Practical, results-oriented, autonomous.", profile.Tagline);
-        Assert.StartsWith("“The name” is resolute", profile.Description);
+        Assert.StartsWith("The ISTP is resolute", profile.Description);
     }
 
     [Fact]

@@ -221,6 +221,7 @@ public class VocationalReadEndpointTests
         var response = await Send(client, "/api/v1/vocational360/questionnaire?group=self");
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         Assert.Equal("self", reader.LastGroup);
+        Assert.Equal("es", reader.LastLang);                       // no ?lang → Spanish, as before
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal(1, doc.RootElement.GetProperty("data").GetArrayLength());
     }
@@ -289,6 +290,8 @@ public class VocationalReadEndpointTests
 
         public string? LastGroup { get; private set; }
 
+        public string? LastLang { get; private set; }
+
         public Task<VocationalScoreRead?> GetScoreAsync(RequestContext context, string evaluatedUserId, CancellationToken cancellationToken = default)
         {
             ScoreCalls++;
@@ -302,10 +305,12 @@ public class VocationalReadEndpointTests
         public Task<InstrumentDto?> GetInstrumentAsync(RequestContext context, CancellationToken cancellationToken = default) =>
             Task.FromResult(Instrument);
 
-        public Task<IReadOnlyList<QuestionnaireItem>> GetQuestionnaireAsync(RequestContext context, string group, CancellationToken cancellationToken = default)
+        public Task<IReadOnlyList<QuestionnaireItem>> GetQuestionnaireAsync(
+            RequestContext context, string group, string lang = VocationalLanguage.Spanish, CancellationToken cancellationToken = default)
         {
             QuestionnaireCalls++;
             LastGroup = group;
+            LastLang = lang;
             return Task.FromResult(Questionnaire);
         }
     }

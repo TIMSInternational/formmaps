@@ -2,13 +2,14 @@
 
 import { motion } from "motion/react";
 import { Search, Layers } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { MiniBar } from "./GapHelpers";
 import type { AcademicGapSummaryItem, StudentAcademicStatus } from "@/types/academicGap";
 
-const statusStyles: Record<StudentAcademicStatus, { color: string; bg: string; label: string }> = {
-  off_track: { color: "#ef4444", bg: "rgba(239,68,68,0.1)",  label: "Off Track" },
-  at_risk:   { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", label: "At Risk" },
-  on_track:  { color: "#10b981", bg: "rgba(16,185,129,0.1)", label: "On Track" },
+const statusStyles: Record<StudentAcademicStatus, { color: string; bg: string; labelKey: string }> = {
+  off_track: { color: "#ef4444", bg: "rgba(239,68,68,0.1)",  labelKey: "academicGaps.statusOffTrack" },
+  at_risk:   { color: "#f59e0b", bg: "rgba(245,158,11,0.1)", labelKey: "academicGaps.statusAtRisk" },
+  on_track:  { color: "#10b981", bg: "rgba(16,185,129,0.1)", labelKey: "academicGaps.statusOnTrack" },
 };
 
 export function StudentList({
@@ -26,6 +27,7 @@ export function StudentList({
   onSearchChange: (q: string) => void;
   totalStudents: number;
 }) {
+  const { t } = useTranslation("counselor");
   return (
     <div style={{
       background: "var(--admin-bg-card, #fff)",
@@ -42,12 +44,12 @@ export function StudentList({
       <div style={{ padding: "16px 16px 12px", borderBottom: "1px solid var(--admin-border-default, rgba(0,0,0,0.08))" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 10 }}>
           <Layers style={{ width: 14, height: 14, color: "var(--admin-accent-blue)" }} />
-          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>Needs Review</span>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "var(--admin-font-primary, #111)" }}>{t("academicGaps.needsReview")}</span>
           <span style={{
             fontSize: 10, fontWeight: 600, marginLeft: "auto",
             color: "var(--admin-font-tertiary, #888)",
           }}>
-            {students.length} students
+            {t("academicGaps.studentsCount", { n: students.length })}
           </span>
         </div>
         <div style={{ position: "relative" as const }}>
@@ -57,7 +59,7 @@ export function StudentList({
           }} />
           <input
             type="text"
-            placeholder="Search students..."
+            placeholder={t("academicGaps.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
             style={{
@@ -122,7 +124,7 @@ export function StudentList({
                     padding: "2px 6px", borderRadius: 4,
                     flexShrink: 0,
                   }}>
-                    {st.label}
+                    {t(st.labelKey)}
                   </span>
                 </div>
 
@@ -141,7 +143,7 @@ export function StudentList({
                       color: "var(--admin-font-tertiary, #888)",
                       flexShrink: 0,
                     }}>
-                      {s.missingRequiredCourses} gaps
+                      {t("academicGaps.gapsCount", { n: s.missingRequiredCourses })}
                     </span>
                   )}
                 </div>
@@ -151,8 +153,8 @@ export function StudentList({
         ) : (
           <div style={{ textAlign: "center", padding: "40px 16px" }}>
             <Search style={{ width: 20, height: 20, color: "var(--admin-font-tertiary, #888)", margin: "0 auto 8px", opacity: 0.4 }} />
-            <p style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary, #111)", margin: 0 }}>No students found</p>
-            <p style={{ fontSize: 11, color: "var(--admin-font-tertiary, #888)", margin: "4px 0 0" }}>Try adjusting your search.</p>
+            <p style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary, #111)", margin: 0 }}>{t("academicGaps.noStudents")}</p>
+            <p style={{ fontSize: 11, color: "var(--admin-font-tertiary, #888)", margin: "4px 0 0" }}>{t("academicGaps.adjustSearch")}</p>
           </div>
         )}
       </div>

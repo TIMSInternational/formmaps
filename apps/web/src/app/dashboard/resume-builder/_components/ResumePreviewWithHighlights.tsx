@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import type { Resume } from "@/services/resumeService";
 import type { TailoredResume } from "@/types/resume";
 
@@ -23,18 +24,24 @@ const HL_OFF = "bg-[#f8d7da] line-through opacity-50 cursor-pointer hover:bg-[#f
 function Hl({ original, tailored, accepted, onToggle, className = "" }: {
   original: string; tailored: string; accepted: boolean; onToggle: () => void; className?: string;
 }) {
+  const { t } = useTranslation();
   const changed = original.trim() !== tailored.trim();
   const text = accepted ? tailored : original;
   if (!changed) return <span className={className}>{text}</span>;
   return (
     <span className={`${accepted ? HL_ON : HL_OFF} ${className}`} onClick={onToggle}
-      title={accepted ? "Click to reject" : "Click to accept"}>{text}</span>
+      title={
+        accepted
+          ? t("resumeBuilder.previewHighlights.clickToReject", "Click to reject")
+          : t("resumeBuilder.previewHighlights.clickToAccept", "Click to accept")
+      }>{text}</span>
   );
 }
 
 export function ResumePreviewWithHighlights({
   originalResume, tailoredResume, decisions, onToggleDecision,
 }: ResumePreviewWithHighlightsProps) {
+  const { t } = useTranslation();
   const isAccepted = (section: string, index?: number) => {
     const d = decisions.find(d => d.section === section && d.index === index);
     return d ? d.accepted : true;
@@ -42,7 +49,7 @@ export function ResumePreviewWithHighlights({
 
   const getTailoredExp = (origCompany: string, origIndex: number) => {
     return tailoredResume.tailoredExperience?.find(
-      t => t.company.toLowerCase().includes(origCompany.toLowerCase().split(" ")[0])
+      te => te.company.toLowerCase().includes(origCompany.toLowerCase().split(" ")[0])
     ) || tailoredResume.tailoredExperience?.[origIndex] || null;
   };
 
@@ -67,15 +74,16 @@ export function ResumePreviewWithHighlights({
           const [cat, ...rest] = s.split(":");
           cats[cat.trim()] = rest.join(":").split(",").map(x => x.trim()).filter(Boolean);
         } else {
-          if (!cats["Other"]) cats["Other"] = [];
-          cats["Other"].push(s);
+          const other = t("resumeBuilder.previewHighlights.other", "Other");
+          if (!cats[other]) cats[other] = [];
+          cats[other].push(s);
         }
       });
       return cats;
     }
     // Return as flat
     return { "": skills };
-  }, [tailoredResume.tailoredSkills, originalSkills, skillsAccepted]);
+  }, [tailoredResume.tailoredSkills, originalSkills, skillsAccepted, t]);
 
   return (
     <div className="bg-white rounded-lg border border-border overflow-auto shadow-sm"
@@ -85,7 +93,7 @@ export function ResumePreviewWithHighlights({
         {/* NAME */}
         <div style={{ textAlign: "center", borderBottom: "1.5px solid #000", paddingBottom: 2, marginBottom: 1 }}>
           <div style={{ fontSize: 18, fontWeight: "bold", letterSpacing: "0.03em" }}>
-            {p?.fullName || "YOUR NAME"}
+            {p?.fullName || t("resumeBuilder.previewHighlights.yourName", "YOUR NAME")}
           </div>
         </div>
         <div style={{ textAlign: "center", fontSize: 8.5, marginTop: 1, marginBottom: 5 }}>
@@ -94,7 +102,7 @@ export function ResumePreviewWithHighlights({
 
         {/* SUMMARY */}
         {(originalResume.summary || tailoredResume.tailoredSummary) && (
-          <Section title="SUMMARY">
+          <Section title={t("resumeBuilder.previewHighlights.summary", "Summary")}>
             <div style={{ fontSize: 9, lineHeight: 1.3 }}>
               <Hl original={originalResume.summary || ""} tailored={tailoredResume.tailoredSummary || originalResume.summary || ""}
                 accepted={summaryAccepted} onToggle={() => onToggleDecision("summary")} />
@@ -104,7 +112,7 @@ export function ResumePreviewWithHighlights({
 
         {/* EDUCATION */}
         {originalResume.education?.length > 0 && (
-          <Section title="EDUCATION">
+          <Section title={t("resumeBuilder.previewHighlights.education", "Education")}>
             {originalResume.education.map((edu, i) => (
               <div key={i} style={{ marginBottom: 2 }}>
                 <div style={{ display: "flex", justifyContent: "space-between" }}>
@@ -123,7 +131,7 @@ export function ResumePreviewWithHighlights({
 
         {/* RELEVANT EXPERIENCE */}
         {originalResume.experience?.length > 0 && (
-          <Section title="RELEVANT EXPERIENCE">
+          <Section title={t("resumeBuilder.previewHighlights.relevantExperience", "Relevant Experience")}>
             {originalResume.experience.map((exp, i) => {
               const tailored = getTailoredExp(exp.company, i);
               const expAccepted = isAccepted("experience", i);
@@ -159,7 +167,7 @@ export function ResumePreviewWithHighlights({
 
         {/* TECHNICAL SKILLS */}
         {(originalSkills.length > 0 || tailoredResume.tailoredSkills?.length > 0) && (
-          <Section title="TECHNICAL SKILLS">
+          <Section title={t("resumeBuilder.previewHighlights.technicalSkills", "Technical Skills")}>
             <ul style={{ margin: 0, paddingLeft: 12, listStyleType: "disc" }}
               onClick={() => onToggleDecision("skills")}>
               {Object.entries(categorizedSkills).map(([cat, skills]) => (

@@ -62,13 +62,13 @@ public static class LiaPerformanceLevels
         new(Low, 10, 20,
             new LiaLevelText("Bajo", "Low"),
             new LiaLevelText(
-                "Capacidad de adaptación por debajo del promedio. Beneficiaría de entrenamiento cognitivo.",
+                "Capacidad de adaptación por debajo del promedio. Se beneficiaría de entrenamiento cognitivo.",
                 "Below-average adaptation capacity. Would benefit from cognitive training.")),
         new(Acceptable, 21, 57,
             new LiaLevelText("Adecuado", "Acceptable"),
             new LiaLevelText(
-                "Capacidad de adaptación dentro del rango normal. Adecuado para la mayoría de roles.",
-                "Adaptation capacity within normal range. Suitable for most roles.")),
+                "Capacidad de adaptación dentro del rango normal. Adecuada para la mayoría de los roles.",
+                "Adaptation capacity within the normal range. Suitable for most roles.")),
         new(High, 58, 74,
             new LiaLevelText("Excede", "Exceeds"),
             new LiaLevelText(

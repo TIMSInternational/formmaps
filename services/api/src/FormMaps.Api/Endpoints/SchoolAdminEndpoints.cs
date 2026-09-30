@@ -583,7 +583,7 @@ public static class SchoolAdminEndpoints
         var result = await emailWriter.Setup360Async(context, schoolId!, userId, studentIds, gradeLevel, cancellationToken);
         if (result is null)
         {
-            return Results.Json(new { success = false, message = "No students to setup" }, statusCode: StatusCodes.Status400BadRequest);
+            return Results.Json(new { success = false, message = "No students to set up" }, statusCode: StatusCodes.Status400BadRequest);
         }
 
         return Results.Ok(new

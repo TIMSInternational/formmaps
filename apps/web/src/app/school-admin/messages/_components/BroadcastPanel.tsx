@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslation, Trans } from "react-i18next";
 import { apiRequest } from "@/lib/api/apiClient";
 import { toast } from "sonner";
 import {
@@ -10,15 +11,16 @@ import {
 } from "lucide-react";
 
 const GROUPS = [
-  { key: "students", label: "All Students", icon: GraduationCap, color: "var(--admin-accent-blue)" },
-  { key: "parents", label: "All Parents", icon: Users, color: "#14b8a6" },
-  { key: "counselors", label: "All Counselors", icon: UserCheck, color: "#f59e0b" },
-  { key: "staff", label: "All Staff", icon: Briefcase, color: "#ef4444" },
+  { key: "students", labelKey: "ui.broadcast.groups.students", icon: GraduationCap, color: "var(--admin-accent-blue)" },
+  { key: "parents", labelKey: "ui.broadcast.groups.parents", icon: Users, color: "#14b8a6" },
+  { key: "counselors", labelKey: "ui.broadcast.groups.counselors", icon: UserCheck, color: "#f59e0b" },
+  { key: "staff", labelKey: "ui.broadcast.groups.staff", icon: Briefcase, color: "#ef4444" },
 ] as const;
 
 type RecipientGroup = (typeof GROUPS)[number]["key"];
 
 export default function BroadcastPanel() {
+  const { t } = useTranslation("school_admin");
   const [selectedGroup, setSelectedGroup] = useState<RecipientGroup | null>(null);
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
@@ -37,13 +39,14 @@ export default function BroadcastPanel() {
         data: { recipientGroup: selectedGroup, content: content.trim() },
       });
       const count = res?.data?.recipientCount ?? res?.recipientCount ?? 0;
-      const groupLabel = GROUPS.find((g) => g.key === selectedGroup)?.label ?? selectedGroup;
+      const groupKey = GROUPS.find((g) => g.key === selectedGroup)?.labelKey;
+      const groupLabel = groupKey ? t(groupKey) : (selectedGroup ?? "");
       setLastResult({ count, group: groupLabel });
       setContent("");
       setSelectedGroup(null);
-      toast.success(`Broadcast sent to ${count} recipients`);
+      toast.success(t("ui.broadcast.sentToast", { count }));
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to send broadcast");
+      toast.error(err?.response?.data?.message || t("ui.broadcast.sendFailed"));
     } finally {
       setSending(false);
     }
@@ -54,14 +57,14 @@ export default function BroadcastPanel() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}>
         <span style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-light)" }}>
-          Communication
+          {t("messages.label")}
         </span>
         <h1 style={{ fontSize: 28, fontWeight: 700, color: "var(--admin-font-primary)", marginTop: 4, letterSpacing: "-0.02em", display: "flex", alignItems: "center", gap: 10 }}>
           <Megaphone style={{ width: 24, height: 24, color: "var(--admin-accent-blue)" }} />
-          Broadcast Message
+          {t("ui.broadcast.title")}
         </h1>
         <p style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginTop: 4, maxWidth: 480 }}>
-          Send a message to an entire group in your school. Each recipient receives an individual conversation.
+          {t("ui.broadcast.subtitle")}
         </p>
       </motion.div>
 
@@ -80,13 +83,13 @@ export default function BroadcastPanel() {
           >
             <CheckCircle2 style={{ width: 18, height: 18, color: "#22c55e", flexShrink: 0 }} />
             <span style={{ fontSize: 13, color: "var(--admin-font-primary)" }}>
-              Broadcast sent to <strong>{lastResult.count}</strong> recipients ({lastResult.group}).
+              <Trans t={t} i18nKey="ui.broadcast.sentBanner" count={lastResult.count} values={{ count: lastResult.count, group: lastResult.group }} components={{ b: <strong /> }} />
             </span>
             <button
               onClick={() => setLastResult(null)}
               style={{ marginLeft: "auto", fontSize: 12, color: "var(--admin-font-tertiary)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
             >
-              Dismiss
+              {t("ui.broadcast.dismiss")}
             </button>
           </motion.div>
         )}
@@ -106,7 +109,7 @@ export default function BroadcastPanel() {
         {/* Recipient group selector */}
         <div>
           <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 10 }}>
-            Recipients
+            {t("ui.broadcast.recipients")}
           </label>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
             {GROUPS.map((group) => {
@@ -127,7 +130,7 @@ export default function BroadcastPanel() {
                 >
                   <group.icon style={{ width: 20, height: 20, color: active ? group.color : "var(--admin-font-tertiary)" }} />
                   <span style={{ fontSize: 12, fontWeight: active ? 600 : 500, color: active ? group.color : "var(--admin-font-secondary)" }}>
-                    {group.label}
+                    {t(group.labelKey)}
                   </span>
                 </button>
               );
@@ -138,12 +141,12 @@ export default function BroadcastPanel() {
         {/* Message body */}
         <div>
           <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", textTransform: "uppercase", letterSpacing: "0.05em", display: "block", marginBottom: 8 }}>
-            Message
+            {t("ui.alerts.message")}
           </label>
           <textarea
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="Type your broadcast message..."
+            placeholder={t("ui.broadcast.placeholder")}
             rows={12}
             maxLength={5000}
             style={{
@@ -178,7 +181,7 @@ export default function BroadcastPanel() {
                 }}
               >
                 <AlertTriangle style={{ width: 14, height: 14, color: "#f59e0b" }} />
-                <span>This will message every user in the selected group.</span>
+                <span>{t("ui.broadcast.confirmWarning")}</span>
                 <button
                   onClick={handleSend}
                   disabled={sending}
@@ -189,13 +192,13 @@ export default function BroadcastPanel() {
                   }}
                 >
                   {sending ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 12, height: 12 }} />}
-                  Confirm
+                  {t("ui.broadcast.confirm")}
                 </button>
                 <button
                   onClick={() => setShowConfirm(false)}
                   style={{ fontSize: 12, color: "var(--admin-font-tertiary)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
               </motion.div>
             )}
@@ -217,7 +220,7 @@ export default function BroadcastPanel() {
               }}
             >
               <Send style={{ width: 14, height: 14 }} />
-              Send Broadcast
+              {t("ui.broadcast.send")}
             </button>
           )}
         </div>

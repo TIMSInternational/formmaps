@@ -376,8 +376,8 @@ export function SchoolAdminSidebar() {
           }}>{user.name?.charAt(0)?.toUpperCase() || "S"}</div>
           {!collapsed && <>
             <div style={{ flex: 1, minWidth: 0, textAlign: "left" }}>
-              <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name || "School Admin"}</div>
-              <div style={{ fontSize: 10, color: C.fontTertiary }}>School Administrator</div>
+              <div style={{ fontSize: 12, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{user.name || t("school_admin:ui.sidebar.schoolAdmin")}</div>
+              <div style={{ fontSize: 10, color: C.fontTertiary }}>{t("school_admin:ui.sidebar.schoolAdministrator")}</div>
             </div>
             <ChevronDown style={{ width: 12, height: 12, color: C.fontLight }} />
           </>}

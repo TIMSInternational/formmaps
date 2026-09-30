@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import {
   FileSpreadsheet,
@@ -20,6 +21,7 @@ interface CompleteStepProps {
 }
 
 export function CompleteStep({ onboardResult, onReset, card }: CompleteStepProps) {
+  const { t } = useTranslation("school_admin");
   const [expandedResults, setExpandedResults] = useState(false);
 
   return (
@@ -54,7 +56,7 @@ export function CompleteStep({ onboardResult, onReset, card }: CompleteStepProps
           transition={{ delay: 0.2 }}
           style={{ fontSize: 26, fontWeight: 800, color: "var(--admin-font-primary)", letterSpacing: "-0.02em", marginBottom: 8 }}
         >
-          Onboarding Complete!
+          {t("ui.bulkOnboard.complete.title")}
         </motion.h2>
         <motion.p
           initial={{ opacity: 0, y: 8 }}
@@ -62,7 +64,7 @@ export function CompleteStep({ onboardResult, onReset, card }: CompleteStepProps
           transition={{ delay: 0.3 }}
           style={{ fontSize: 14, color: "var(--admin-font-tertiary)", marginBottom: 28 }}
         >
-          Invite emails have been sent to all new students.
+          {t("ui.bulkOnboard.complete.subtitle")}
         </motion.p>
 
         {/* Stats grid */}
@@ -73,10 +75,10 @@ export function CompleteStep({ onboardResult, onReset, card }: CompleteStepProps
           className="grid grid-cols-2 sm:grid-cols-4 gap-4 max-w-lg mx-auto"
         >
           {[
-            { label: "Created", value: onboardResult.created, color: "#10b981", bg: "rgba(16,185,129,0.1)" },
-            { label: "Linked", value: onboardResult.linked, color: "#14b8a6", bg: "rgba(20,184,166,0.1)" },
-            { label: "Updated", value: onboardResult.updated, color: "#0ea5e9", bg: "rgba(14,165,233,0.1)" },
-            { label: "Failed", value: onboardResult.failed, color: onboardResult.failed > 0 ? "#ef4444" : "var(--admin-font-tertiary)", bg: onboardResult.failed > 0 ? "rgba(239,68,68,0.1)" : "var(--admin-bg-hover)" },
+            { label: t("ui.bulkOnboard.status.created"), value: onboardResult.created, color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+            { label: t("ui.bulkOnboard.status.linked"), value: onboardResult.linked, color: "#14b8a6", bg: "rgba(20,184,166,0.1)" },
+            { label: t("ui.bulkOnboard.status.updated"), value: onboardResult.updated, color: "#0ea5e9", bg: "rgba(14,165,233,0.1)" },
+            { label: t("ui.bulkOnboard.status.failed"), value: onboardResult.failed, color: onboardResult.failed > 0 ? "#ef4444" : "var(--admin-font-tertiary)", bg: onboardResult.failed > 0 ? "rgba(239,68,68,0.1)" : "var(--admin-bg-hover)" },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -98,7 +100,7 @@ export function CompleteStep({ onboardResult, onReset, card }: CompleteStepProps
           >
             <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", display: "flex", alignItems: "center", gap: 8 }}>
               <FileSpreadsheet style={{ width: 15, height: 15, color: "#14b8a6" }} />
-              Per-student results ({onboardResult.results.length})
+              {t("ui.bulkOnboard.complete.perStudent", { count: onboardResult.results.length })}
             </span>
             {expandedResults ? (
               <ChevronUp style={{ width: 16, height: 16, color: "var(--admin-font-light)" }} />
@@ -120,7 +122,7 @@ export function CompleteStep({ onboardResult, onReset, card }: CompleteStepProps
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
                       <tr style={{ background: "var(--admin-bg-hover)", borderBottom: "1px solid var(--admin-border-default)" }}>
-                        {["Name", "Email", "Result"].map((h) => (
+                        {[t("ui.courses.name"), t("ui.gradeImport.email"), t("ui.bulkOnboard.complete.result")].map((h) => (
                           <th key={h} style={{ padding: "8px 12px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--admin-font-tertiary)", textAlign: "left" }}>
                             {h}
                           </th>
@@ -135,11 +137,11 @@ export function CompleteStep({ onboardResult, onReset, card }: CompleteStepProps
                           <td style={{ padding: "8px 12px" }}>
                             {r.status === "created" || r.status === "linked" || r.status === "updated" ? (
                               <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, background: "rgba(16,185,129,0.1)", color: "#10b981", fontWeight: 600, textTransform: "capitalize" }}>
-                                {r.status}
+                                {t(`ui.bulkOnboard.status.${r.status}`)}
                               </span>
                             ) : (
                               <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, background: "rgba(239,68,68,0.1)", color: "#ef4444", fontWeight: 600 }}>
-                                {r.error || "Failed"}
+                                {r.error || t("ui.bulkOnboard.status.failed")}
                               </span>
                             )}
                           </td>
@@ -167,7 +169,7 @@ export function CompleteStep({ onboardResult, onReset, card }: CompleteStepProps
           }}
         >
           <Users style={{ width: 16, height: 16 }} />
-          View Students
+          {t("ui.bulkOnboard.complete.viewStudents")}
         </Link>
         <button
           onClick={onReset}
@@ -179,7 +181,7 @@ export function CompleteStep({ onboardResult, onReset, card }: CompleteStepProps
           }}
         >
           <RotateCcw style={{ width: 15, height: 15 }} />
-          Onboard More Students
+          {t("ui.bulkOnboard.complete.onboardMore")}
         </button>
       </div>
     </motion.div>

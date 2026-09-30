@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { apiRequest } from "@/lib/api/apiClient";
 import { formatDate, formatTimeOfDay } from "@/lib/dateUtils";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useTranslation } from "react-i18next";
 import { motion, AnimatePresence } from "motion/react";
 import {
   FileText, Search, Filter, Calendar, User, Tag, ChevronDown, ChevronUp,
@@ -13,13 +14,13 @@ import {
 } from "lucide-react";
 
 const NOTE_TYPES = [
-  { value: "", label: "All Types" },
-  { value: "general", label: "General" },
-  { value: "meeting", label: "Meeting" },
-  { value: "follow_up", label: "Follow-up" },
-  { value: "academic", label: "Academic" },
-  { value: "career", label: "Career" },
-  { value: "personal", label: "Personal" },
+  { value: "", labelKey: "alerts.allTypes" },
+  { value: "general", labelKey: "notes.general" },
+  { value: "meeting", labelKey: "notes.meeting" },
+  { value: "follow_up", labelKey: "ui.notes.typeFollowUp" },
+  { value: "academic", labelKey: "notes.academic" },
+  { value: "career", labelKey: "notes.career" },
+  { value: "personal", labelKey: "notes.personal" },
 ];
 
 const TYPE_COLORS: Record<string, { bg: string; color: string }> = {
@@ -45,6 +46,7 @@ interface NoteData {
 }
 
 export default function CounselorNotesPage() {
+  const { t } = useTranslation("counselor");
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("");
@@ -74,6 +76,10 @@ export default function CounselorNotesPage() {
   const formatTime = formatTimeOfDay;
 
   const typeColor = (type: string) => TYPE_COLORS[type] ?? TYPE_COLORS.general;
+  const typeLabel = (type: string) => {
+    const nt = NOTE_TYPES.find((o) => o.value && o.value === type);
+    return nt ? t(nt.labelKey) : type.replace("_", " ");
+  };
 
   return (
     <div style={{ color: "var(--admin-font-primary)" }}>
@@ -84,10 +90,10 @@ export default function CounselorNotesPage() {
           color: "var(--admin-font-primary)", display: "flex", alignItems: "center", gap: 10,
         }}>
           <FileText style={{ width: 22, height: 22, color: "var(--admin-accent-blue)" }} />
-          Session Notes
+          {t("ui.notes.title")}
         </h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-          All your session notes across students
+          {t("ui.notes.subtitle")}
         </p>
       </div>
 
@@ -103,7 +109,7 @@ export default function CounselorNotesPage() {
           <Search style={{ width: 15, height: 15, color: "var(--admin-font-tertiary)", flexShrink: 0 }} />
           <input
             type="text"
-            placeholder="Search by student name or note content..."
+            placeholder={t("ui.notes.searchPlaceholder")}
             value={search}
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
             style={{
@@ -125,8 +131,8 @@ export default function CounselorNotesPage() {
               WebkitAppearance: "none",
             }}
           >
-            {NOTE_TYPES.map((t) => (
-              <option key={t.value} value={t.value}>{t.label}</option>
+            {NOTE_TYPES.map((nt) => (
+              <option key={nt.value} value={nt.value}>{t(nt.labelKey)}</option>
             ))}
           </select>
           <Filter style={{
@@ -144,9 +150,9 @@ export default function CounselorNotesPage() {
         {/* Group by toggle */}
         <div style={{ display: "flex", alignItems: "center", gap: 2, background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", borderRadius: 8, padding: 2 }}>
           {([
-            { value: "none", label: "Timeline" },
-            { value: "student", label: "By Student" },
-            { value: "type", label: "By Type" },
+            { value: "none", label: t("ui.notes.groupTimeline") },
+            { value: "student", label: t("ui.notes.groupByStudent") },
+            { value: "type", label: t("ui.notes.groupByType") },
           ] as const).map((opt) => (
             <button key={opt.value} onClick={() => setGroupBy(opt.value)}
               style={{
@@ -175,9 +181,9 @@ export default function CounselorNotesPage() {
           padding: 60, gap: 12, color: "var(--admin-font-tertiary)",
         }}>
           <FileText style={{ width: 40, height: 40, opacity: 0.3 }} />
-          <span style={{ fontSize: 15, fontWeight: 500 }}>No notes found</span>
+          <span style={{ fontSize: 15, fontWeight: 500 }}>{t("ui.notes.noNotes")}</span>
           <span style={{ fontSize: 13 }}>
-            {search || typeFilter ? "Try adjusting your search or filter" : "You haven't created any session notes yet"}
+            {search || typeFilter ? t("ui.notes.adjustFilter") : t("ui.notes.noNotesYet")}
           </span>
         </div>
       ) : (() => {
@@ -200,7 +206,7 @@ export default function CounselorNotesPage() {
             byType.get(n.type)!.push(n);
           }
           for (const [key, items] of byType) {
-            groups.push({ label: key.replace("_", " "), key, notes: items });
+            groups.push({ label: typeLabel(key), key, notes: items });
           }
         } else {
           groups.push({ label: "", key: "all", notes });
@@ -284,7 +290,7 @@ export default function CounselorNotesPage() {
                         fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
                         background: tc.bg, color: tc.color, textTransform: "capitalize",
                       }}>
-                        {note.type.replace("_", " ")}
+                        {typeLabel(note.type)}
                       </span>
 
                       {/* Date — pushed right */}
@@ -293,7 +299,7 @@ export default function CounselorNotesPage() {
                         display: "flex", alignItems: "center", gap: 4, flexShrink: 0,
                       }}>
                         <Calendar style={{ width: 12, height: 12 }} />
-                        {formatDate(note.createdDate)} at {formatTime(note.createdDate)}
+                        {t("ui.notes.dateAtTime", { date: formatDate(note.createdDate), time: formatTime(note.createdDate) })}
                       </span>
                     </div>
 
@@ -330,8 +336,8 @@ export default function CounselorNotesPage() {
                           color: note.followUpCompleted ? "#10b981" : "#f59e0b",
                         }}>
                           <Clock style={{ width: 12, height: 12 }} />
-                          Follow-up: {formatDate(note.followUpDate)}
-                          {note.followUpCompleted && " (completed)"}
+                          {t("notes.followUpLabel")} {formatDate(note.followUpDate)}
+                          {note.followUpCompleted && ` ${t("ui.notes.completedSuffix")}`}
                         </span>
                       )}
 
@@ -369,10 +375,10 @@ export default function CounselorNotesPage() {
               cursor: page <= 1 ? "not-allowed" : "pointer", fontFamily: "inherit",
             }}
           >
-            Previous
+            {t("ui.notes.previous")}
           </button>
           <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
-            Page {page} of {totalPages}
+            {t("ui.notes.pageOf", { page, total: totalPages })}
           </span>
           <button
             disabled={page >= totalPages}
@@ -384,7 +390,7 @@ export default function CounselorNotesPage() {
               cursor: page >= totalPages ? "not-allowed" : "pointer", fontFamily: "inherit",
             }}
           >
-            Next
+            {t("ui.notes.next")}
           </button>
         </div>
       )}

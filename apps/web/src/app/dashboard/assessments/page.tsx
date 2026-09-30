@@ -86,10 +86,10 @@ export default function AssessmentsPage() {
         invalidateSpecificAssessment(user?.id || "", "evaluation");
         router.push(selfEval.url);
       } else {
-        toast.error("Failed to create self evaluation. Please try again.");
+        toast.error(t("evaluation.page.startSelfFailed"));
       }
     } catch (error) {
-      toast.error("Failed to start evaluation. Please try again.");
+      toast.error(t("evaluation.page.startFailed"));
     } finally {
       setIsStartingEvaluation(false);
     }
@@ -135,7 +135,7 @@ export default function AssessmentsPage() {
       actionLabel: evaluationAssessment?.status === "completed"
         ? t("dashboard.viewResults")
         : evaluationAssessment?.status === "in_progress"
-        ? t("dashboard.continue360", "Continue Evaluation")
+        ? t("dashboard.continue360")
         : t("dashboard.inviteEvaluators"),
       isLink: true,
     },
@@ -197,7 +197,7 @@ export default function AssessmentsPage() {
           <div className="dash-card p-4">
             <div className="flex items-center justify-between mb-2.5">
               <span className="text-xs font-semibold text-foreground">
-                {t("dashboard.overallProgress", "Overall Progress")}
+                {t("dashboard.overallProgress")}
               </span>
               <span className="text-xs text-muted-foreground tabular-nums">
                 {completedCount}/{assessments.length} {t("dashboard.completed")}
@@ -286,11 +286,11 @@ export default function AssessmentsPage() {
           {/* Vocational 360 report link */}
           <div className="dash-card p-4 flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-foreground">Vocational 360 Report</p>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Your personalized vocational profile and recommendations</p>
+              <p className="text-sm font-semibold text-foreground">{t("evaluation.vocational.report.title")}</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">{t("evaluation.vocational.report.cardSubtitle")}</p>
             </div>
             <Link href="/dashboard/assessments/vocational" className="inline-flex items-center gap-2 text-sm font-medium" style={{ color: "var(--admin-accent-blue)" }}>
-              View my Vocational 360 report →
+              {t("evaluation.vocational.report.viewMine")}
             </Link>
           </div>
 
@@ -304,7 +304,7 @@ export default function AssessmentsPage() {
             return evaluationAssessment?.status !== "completed" && (
               <div className="dash-card p-4">
                 <p className="text-xs font-semibold text-foreground mb-3">
-                  {t("dashboard.evaluationTitle")} — {t("dashboard.quickActions", "Quick Actions")}
+                  {t("dashboard.evaluationTitle")} — {t("dashboard.quickActions")}
                 </p>
                 <div className="flex gap-2">
                   <Link
@@ -317,7 +317,7 @@ export default function AssessmentsPage() {
                   {selfCompleted ? (
                     <div className="flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
                       <CheckCircle2 className="w-3.5 h-3.5" />
-                      {t("dashboard.selfEvaluationCompleted", "Self-Evaluation Done")}
+                      {t("dashboard.selfEvaluationCompleted")}
                     </div>
                   ) : (
                     <button
@@ -335,7 +335,7 @@ export default function AssessmentsPage() {
                     >
                       <Activity className="w-3.5 h-3.5" />
                       {isStartingEvaluation || loadingGroups
-                        ? t("dashboard.loading")
+                        ? t("common.loading")
                         : t("dashboard.start360Evaluation")}
                     </button>
                   )}

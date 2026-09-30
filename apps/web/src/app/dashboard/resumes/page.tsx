@@ -33,7 +33,7 @@ export default function MyResumesPage() {
       const data = await getAllResumes();
       setResumes(data);
     } catch {
-      setError("Failed to load resumes. Please try again later.");
+      setError(t("resumeBuilder.resumesPage.loadFailedDetail", "Failed to load resumes. Please try again later."));
     } finally {
       setLoading(false);
     }
@@ -58,13 +58,13 @@ export default function MyResumesPage() {
         if (resumeId) {
           router.push(`/dashboard/resume-builder/${resumeId}`);
         } else {
-          alert("Failed to parse resume. Please try again.");
+          alert(t("resumeBuilder.resumesPage.parseFailed", "Failed to parse resume. Please try again."));
         }
       } else {
-        alert("Failed to parse resume. Please try again.");
+        alert(t("resumeBuilder.resumesPage.parseFailed", "Failed to parse resume. Please try again."));
       }
     } catch {
-      alert("Failed to upload resume");
+      alert(t("resumeBuilder.resumesPage.uploadFailed", "Failed to upload resume"));
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -76,10 +76,10 @@ export default function MyResumesPage() {
       const payload = {
         id: crypto.randomUUID().replace(/-/g, "").slice(0, 24),
         userId: "placeholder",
-        name: "New Resume",
+        name: t("resumeBuilder.resumesPage.newResume", "New Resume"),
         template: "classic",
         personalInfo: {
-          fullName: user?.name || "Your Name",
+          fullName: user?.name || t("resumeBuilder.resumesPage.yourName", "Your Name"),
           email: user?.email || "your@email.com",
           phone: "", location: "", linkedIn: "", website: "", gitHub: "", summary: "",
         },
@@ -91,7 +91,7 @@ export default function MyResumesPage() {
       const resumeId = resume.ID || resume._id || resume.id;
       if (resumeId) router.push(`/dashboard/resume-builder/${resumeId}`);
     } catch {
-      alert("Failed to create resume");
+      alert(t("resumeBuilder.newResumePage.createFailed", "Failed to create resume"));
     }
   };
 
@@ -99,13 +99,13 @@ export default function MyResumesPage() {
   const handleEditResume = (resumeId: string) => router.push(`/dashboard/resume-builder/${resumeId}`);
 
   const handleDeleteResume = async (resumeId: string) => {
-    if (confirm("Are you sure you want to delete this resume?")) {
+    if (confirm(t("resumeBuilder.resumesPage.confirmDelete", "Are you sure you want to delete this resume?"))) {
       try {
         await deleteResume(resumeId);
         setResumes(resumes.filter((r) => r._id !== resumeId));
         setShowMenu(null);
       } catch {
-        alert("Failed to delete resume. Please try again.");
+        alert(t("resumeBuilder.resumesPage.deleteFailed", "Failed to delete resume. Please try again."));
       }
     }
   };
@@ -120,7 +120,7 @@ export default function MyResumesPage() {
       await apiRequest("/api/resume", {
         method: "POST",
         data: {
-          name: `${resume.name} (Copy)`,
+          name: t("resumeBuilder.resumesPage.copyName", "{{name}} (Copy)", { name: resume.name }),
           template: raw.template ?? "classic",
           careerField: raw.careerField ?? "",
           personalInfo: raw.personalInfo ?? {},
@@ -134,7 +134,7 @@ export default function MyResumesPage() {
       });
       await fetchResumes();
     } catch {
-      alert("Failed to duplicate resume. Please try again.");
+      alert(t("resumeBuilder.resumesPage.duplicateFailed", "Failed to duplicate resume. Please try again."));
     }
   };
 
@@ -148,7 +148,7 @@ export default function MyResumesPage() {
         className="flex flex-col sm:flex-row sm:items-end justify-between gap-4"
       >
         <div>
-          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">Documents</p>
+          <p className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">{t("resumeBuilder.resumesPage.documents", "Documents")}</p>
           <h1 className="text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none mt-1">{t("dashboard.resumes.title")}</h1>
           <p className="text-sm text-muted-foreground mt-1.5">{t("dashboard.resumes.description")}</p>
         </div>
@@ -167,24 +167,24 @@ export default function MyResumesPage() {
                 className="w-full text-left px-4 py-3 text-sm text-foreground hover:bg-secondary transition-colors flex items-center gap-3 border-b border-border">
                 <FileText className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <div className="font-medium">From Scratch</div>
-                  <div className="text-[11px] text-muted-foreground">Build your base resume</div>
+                  <div className="font-medium">{t("resumeBuilder.resumesPage.fromScratch", "From Scratch")}</div>
+                  <div className="text-[11px] text-muted-foreground">{t("resumeBuilder.resumesPage.fromScratchDesc", "Build your base resume")}</div>
                 </div>
               </button>
               <button onClick={() => { setShowCreateMenu(false); fileInputRef.current?.click(); }}
                 className="w-full text-left px-4 py-3 text-sm text-foreground hover:bg-secondary transition-colors flex items-center gap-3 border-b border-border">
                 <Upload className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <div className="font-medium">Upload Resume (PDF)</div>
-                  <div className="text-[11px] text-muted-foreground">Import an existing resume</div>
+                  <div className="font-medium">{t("resumeBuilder.resumesPage.uploadPdf", "Upload Resume (PDF)")}</div>
+                  <div className="text-[11px] text-muted-foreground">{t("resumeBuilder.resumesPage.uploadPdfDesc", "Import an existing resume")}</div>
                 </div>
               </button>
               <button onClick={() => { setShowCreateMenu(false); handleTailorForJob(); }}
                 className="w-full text-left px-4 py-3 text-sm text-foreground hover:bg-secondary transition-colors flex items-center gap-3">
                 <Sparkles className="w-4 h-4 text-muted-foreground" />
                 <div>
-                  <div className="font-medium">AI Tailor for Job</div>
-                  <div className="text-[11px] text-muted-foreground">Optimize for a job posting</div>
+                  <div className="font-medium">{t("resumeBuilder.resumesPage.aiTailor", "AI Tailor for Job")}</div>
+                  <div className="text-[11px] text-muted-foreground">{t("resumeBuilder.resumesPage.aiTailorDesc", "Optimize for a job posting")}</div>
                 </div>
               </button>
             </div>
@@ -201,28 +201,28 @@ export default function MyResumesPage() {
         ) : error ? (
           <div className="dash-card p-5 text-center py-16">
             <FileText className="w-8 h-8 text-red-500 mx-auto mb-3" />
-            <h3 className="text-sm font-bold text-foreground mb-1">Failed to load resumes</h3>
+            <h3 className="text-sm font-bold text-foreground mb-1">{t("resumeBuilder.resumesPage.loadFailed", "Failed to load resumes")}</h3>
             <p className="text-xs text-muted-foreground mb-5">{error}</p>
             <button onClick={() => window.location.reload()} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#102B47] text-white hover:bg-[#0b1f33] rounded-xl text-sm font-medium transition-colors">
-              Try Again
+              {t("common.tryAgain", "Try Again")}
             </button>
           </div>
         ) : resumes.length === 0 ? (
           <div className="dash-card p-5 text-center py-16">
             <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
-            <h3 className="text-sm font-bold text-foreground mb-1">No resumes yet</h3>
+            <h3 className="text-sm font-bold text-foreground mb-1">{t("resumeBuilder.resumesPage.empty", "No resumes yet")}</h3>
             <p className="text-xs text-muted-foreground mb-5 max-w-sm mx-auto">
-              Upload your existing resume to get started, then use AI to tailor it for specific job postings
+              {t("resumeBuilder.resumesPage.emptyHint", "Upload your existing resume to get started, then use AI to tailor it for specific job postings")}
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <button onClick={() => fileInputRef.current?.click()} className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#102B47] text-white hover:bg-[#0b1f33] rounded-xl text-sm font-medium transition-colors">
-                <Upload className="w-4 h-4" /> Upload Resume (PDF)
+                <Upload className="w-4 h-4" /> {t("resumeBuilder.resumesPage.uploadPdf", "Upload Resume (PDF)")}
               </button>
               <button onClick={handleCreateFromScratch} className="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary text-foreground hover:bg-border rounded-xl text-sm font-medium transition-colors border border-border">
-                <Plus className="w-4 h-4" /> Create from Scratch
+                <Plus className="w-4 h-4" /> {t("resumeBuilder.resumesPage.createFromScratch", "Create from Scratch")}
               </button>
               <button onClick={handleTailorForJob} className="inline-flex items-center gap-2 px-5 py-2.5 bg-secondary text-foreground hover:bg-border rounded-xl text-sm font-medium transition-colors border border-border">
-                <Sparkles className="w-4 h-4" /> AI Tailor for Job
+                <Sparkles className="w-4 h-4" /> {t("resumeBuilder.resumesPage.aiTailor", "AI Tailor for Job")}
               </button>
             </div>
           </div>
@@ -255,8 +255,10 @@ export default function MyResumesPage() {
             <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
               className="dash-card p-8 text-center max-w-sm mx-4">
               <Loader2 className="w-8 h-8 text-foreground animate-spin mx-auto mb-4" />
-              <h3 className="text-sm font-bold text-foreground mb-1">Parsing your resume...</h3>
-              <p className="text-xs text-muted-foreground">Extracting information from your PDF. This may take a moment.</p>
+              <h3 className="text-sm font-bold text-foreground mb-1">{t("resumeBuilder.resumesPage.parsing", "Parsing your resume...")}</h3>
+              <p className="text-xs text-muted-foreground">
+                {t("resumeBuilder.resumesPage.parsingHint", "Extracting information from your PDF. This may take a moment.")}
+              </p>
             </motion.div>
           </motion.div>
         )}

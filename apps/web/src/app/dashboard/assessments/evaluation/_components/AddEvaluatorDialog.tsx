@@ -15,6 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 
 export interface NewEvaluatorForm {
   name: string;
@@ -65,6 +67,37 @@ function getRelationshipOptions(groupType: string): string[] {
   }
 }
 
+// Relationship option values are stored as-is (English) on the evaluation
+// group; only the label shown to the user is translated.
+const RELATIONSHIP_LABEL_KEYS: Record<string, string> = {
+  Mother: "evaluation.relationshipOptions.mother",
+  Father: "evaluation.relationshipOptions.father",
+  Guardian: "evaluation.relationshipOptions.guardian",
+  "Step-parent": "evaluation.relationshipOptions.stepParent",
+  Grandparent: "evaluation.relationshipOptions.grandparent",
+  "Other Family": "evaluation.relationshipOptions.otherFamily",
+  "Older Brother": "evaluation.relationshipOptions.olderBrother",
+  "Younger Brother": "evaluation.relationshipOptions.youngerBrother",
+  "Older Sister": "evaluation.relationshipOptions.olderSister",
+  "Younger Sister": "evaluation.relationshipOptions.youngerSister",
+  "Best Friend": "evaluation.relationshipOptions.bestFriend",
+  "Close Friend": "evaluation.relationshipOptions.closeFriend",
+  Classmate: "evaluation.relationshipOptions.classmate",
+  Neighbor: "evaluation.relationshipOptions.neighbor",
+  Colleague: "evaluation.relationshipOptions.colleague",
+  Mentor: "evaluation.relationshipOptions.mentor",
+  Supervisor: "evaluation.relationshipOptions.supervisor",
+  Other: "evaluation.relationshipOptions.other",
+  Teacher: "dashboard.teacher",
+  Self: "evaluation.groups.self",
+};
+
+/** Translated label for a stored relationship value; unknown values pass through. */
+export function relationshipLabel(t: TFunction, value: string): string {
+  const key = RELATIONSHIP_LABEL_KEYS[value];
+  return key ? t(key) : value;
+}
+
 function requiresRelationship(groupType: string): boolean {
   return groupType !== "teacher";
 }
@@ -83,6 +116,7 @@ export function AddEvaluatorDialog({
   onSubmit,
   onCancel,
 }: AddEvaluatorDialogProps) {
+  const { t } = useTranslation();
   const currentGroupType =
     evaluatorGroups.find((g) => g.id === selectedGroup)?.type || "";
 
@@ -91,7 +125,9 @@ export function AddEvaluatorDialog({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
-            {selectedEvaluator ? "Edit Evaluator" : "Add New Evaluator"}
+            {selectedEvaluator
+              ? t("evaluation.addDialog.editTitle")
+              : t("evaluation.addDialog.addTitle")}
           </DialogTitle>
         </DialogHeader>
 
@@ -105,7 +141,7 @@ export function AddEvaluatorDialog({
           {!selectedGroup && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Evaluator Group *
+                {t("evaluation.addDialog.groupLabel")}
               </label>
               <Select
                 value={selectedGroup}
@@ -114,7 +150,7 @@ export function AddEvaluatorDialog({
                 <SelectTrigger
                   className={errors.group ? "border-red-500" : ""}
                 >
-                  <SelectValue placeholder="Select a group" />
+                  <SelectValue placeholder={t("evaluation.addDialog.groupPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {evaluatorGroups.map((group) => (
@@ -137,7 +173,7 @@ export function AddEvaluatorDialog({
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">
-              Full Name *
+              {t("evaluation.evaluatorManagement.nameLabel")}
             </label>
             <input
               type="text"
@@ -148,7 +184,7 @@ export function AddEvaluatorDialog({
               className={`w-full px-3 py-2 border rounded-xl bg-card text-foreground focus:ring-2 focus:ring-foreground/20 focus:border-foreground ${
                 errors.name ? "border-red-500" : "border-border"
               }`}
-              placeholder="Enter evaluator's full name"
+              placeholder={t("evaluation.addDialog.namePlaceholder")}
             />
             {errors.name && (
               <p className="text-red-500 text-sm mt-1">{errors.name}</p>
@@ -157,7 +193,7 @@ export function AddEvaluatorDialog({
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">
-              Email Address *
+              {t("evaluation.evaluatorManagement.emailLabel")}
             </label>
             <input
               type="email"
@@ -168,7 +204,7 @@ export function AddEvaluatorDialog({
               className={`w-full px-3 py-2 border rounded-xl bg-card text-foreground focus:ring-2 focus:ring-foreground/20 focus:border-foreground ${
                 errors.email ? "border-red-500" : "border-border"
               }`}
-              placeholder="Enter evaluator's email"
+              placeholder={t("evaluation.addDialog.emailPlaceholder")}
             />
             {errors.email && (
               <p className="text-red-500 text-sm mt-1">{errors.email}</p>
@@ -177,7 +213,7 @@ export function AddEvaluatorDialog({
 
           <div>
             <label className="block text-sm font-medium text-foreground mb-1">
-              Phone Number with Country Code
+              {t("evaluation.addDialog.phoneLabel")}
             </label>
             <input
               type="tel"
@@ -188,20 +224,20 @@ export function AddEvaluatorDialog({
               className={`w-full px-3 py-2 border rounded-xl bg-card text-foreground focus:ring-2 focus:ring-foreground/20 focus:border-foreground ${
                 errors.phone ? "border-red-500" : "border-border"
               }`}
-              placeholder="e.g., +1234567890 (optional)"
+              placeholder={t("evaluation.addDialog.phonePlaceholder")}
             />
             {errors.phone && (
               <p className="text-red-500 text-sm mt-1">{errors.phone}</p>
             )}
             <p className="text-xs text-muted-foreground mt-1">
-              Optional: Include country code (e.g., +1 for US, +44 for UK)
+              {t("evaluation.addDialog.phoneHint")}
             </p>
           </div>
 
           {selectedGroup && requiresRelationship(currentGroupType) && (
             <div>
               <label className="block text-sm font-medium text-foreground mb-1">
-                Relationship *
+                {t("evaluation.evaluatorManagement.relationshipLabel")}
               </label>
               <Select
                 value={newEvaluator.relationship}
@@ -215,12 +251,12 @@ export function AddEvaluatorDialog({
                 <SelectTrigger
                   className={errors.relationship ? "border-red-500" : ""}
                 >
-                  <SelectValue placeholder="Select relationship" />
+                  <SelectValue placeholder={t("evaluation.addDialog.relationshipPlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
                   {getRelationshipOptions(currentGroupType).map((option) => (
                     <SelectItem key={option} value={option}>
-                      {option}
+                      {relationshipLabel(t, option)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -239,7 +275,7 @@ export function AddEvaluatorDialog({
             onClick={onCancel}
             className="flex-1 px-4 py-2.5 border border-border text-foreground rounded-xl hover:bg-secondary font-medium text-sm transition-colors"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={onSubmit}
@@ -249,12 +285,14 @@ export function AddEvaluatorDialog({
             {loading ? (
               <>
                 <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                {selectedEvaluator ? "Updating..." : "Adding..."}
+                {selectedEvaluator
+                  ? t("evaluation.addDialog.updating")
+                  : t("evaluation.addDialog.adding")}
               </>
             ) : selectedEvaluator ? (
-              "Update Evaluator"
+              t("evaluation.addDialog.update")
             ) : (
-              "Add Evaluator"
+              t("evaluation.evaluatorManagement.addEvaluator")
             )}
           </button>
         </div>

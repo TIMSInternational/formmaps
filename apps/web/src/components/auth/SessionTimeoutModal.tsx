@@ -50,12 +50,12 @@ export function SessionTimeoutModal() {
         setIsOpen(false);
       } else {
         // Refresh failed, force logout
-        forceLogout("Could not refresh your session. Please log in again.");
+        forceLogout(t("auth.sessionTimeout.refreshFailed"));
       }
     } finally {
       setIsRefreshing(false);
     }
-  }, []);
+  }, [t]);
 
   const handleSignOut = useCallback(() => {
     setIsOpen(false);
@@ -78,10 +78,7 @@ export function SessionTimeoutModal() {
             </DialogTitle>
           </div>
           <DialogDescription id="session-timeout-description" className="text-base">
-            {t("auth.sessionTimeout.message", {
-              minutes: minutesRemaining,
-              defaultValue: `Your session will expire in ${minutesRemaining} minute(s). Would you like to stay signed in?`
-            })}
+            {t("auth.sessionTimeout.message", { count: minutesRemaining })}
           </DialogDescription>
         </DialogHeader>
 

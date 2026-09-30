@@ -294,12 +294,12 @@ export default function CoachSchedulePage() {
                               {session.meetingLink && (
                                 <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 px-3 text-xs rounded-lg" asChild>
                                   <a href={session.meetingLink} target="_blank" rel="noopener noreferrer">
-                                    <Video className="h-3.5 w-3.5 mr-1" /> Join
+                                    <Video className="h-3.5 w-3.5 mr-1" /> {t("studentUi.coaching.schedule.join")}
                                   </a>
                                 </Button>
                               )}
                               <Button variant="outline" size="sm" className="h-8 px-3 text-xs rounded-lg" onClick={() => handleRescheduleClick(session)}>
-                                {t("coach:schedule.reschedule")}
+                                {t("coach:schedule.rescheduleButton")}
                               </Button>
                               <Button variant="outline" size="sm" className="h-8 px-3 text-xs rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50" onClick={() => handleCancelClick(session)}>
                                 {t("coach:schedule.cancel")}

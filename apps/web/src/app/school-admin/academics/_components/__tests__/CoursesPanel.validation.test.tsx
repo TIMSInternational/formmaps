@@ -24,7 +24,8 @@ import { useSchoolCourses, useCreateSchoolCourse, useDeleteSchoolCourse } from "
 import { toast } from "sonner";
 
 jest.mock("next/navigation", () => ({ useRouter: () => ({ push: jest.fn() }) }));
-jest.mock("react-i18next", () => ({ useTranslation: () => ({ t: (k: string) => k }) }));
+// Real i18next (English) so assertions read the rendered copy, not raw keys.
+import "@/lib/i18n";
 jest.mock("sonner", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 // CoursesPanel renders child dialogs (PrereqAnalysisDialog, the AI-import flow)
 // that call further hooks from this module, so the mock has to cover the whole

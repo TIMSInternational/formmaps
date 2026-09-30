@@ -3,7 +3,8 @@ import { VocationalQuestionCard, VocationalAnswerValue } from "../VocationalQues
 import type { VocationalQuestionItem } from "@/services/vocationalTakeService";
 
 // Resolve real English copy (with {{var}} interpolation) so aria-label/text
-// queries match what users see.
+// queries match what users see. The UI language is switchable per test.
+const mockI18n = { language: "en" };
 jest.mock("react-i18next", () => {
   const en = require("@/lib/i18n/locales/en/common.json");
   const get = (k: string) => k.split(".").reduce((o: unknown, p: string) => (o == null ? o : (o as Record<string, unknown>)[p]), en);
@@ -14,10 +15,11 @@ jest.mock("react-i18next", () => {
         if (typeof v !== "string") return k;
         return opts ? v.replace(/\{\{(\w+)\}\}/g, (_m, n) => String(opts[n] ?? `{{${n}}}`)) : v;
       },
-      i18n: { language: "en" },
+      i18n: mockI18n,
     }),
   };
 });
+beforeEach(() => { mockI18n.language = "en"; });
 
 const q = (over: Partial<VocationalQuestionItem>): VocationalQuestionItem => ({
   number: 1, block: "dimension", type: "likert", area: null, dimensionKey: "d", scaleAnchors: null, options: null, text: "Q?", ...over,
@@ -52,6 +54,47 @@ describe("VocationalQuestionCard", () => {
     render(<VocationalQuestionCard question={q({ type: "open" })} value={undefined} onChange={onChange} />);
     fireEvent.change(screen.getByRole("textbox"), { target: { value: "Hola" } });
     expect(calls.at(-1)).toEqual({ textValue: "Hola" });
+  });
+
+  it("renders the server-resolved option label (English) but emits the unchanged value", () => {
+    const { onChange, calls } = capture();
+    render(<VocationalQuestionCard question={q({ type: "single_select", options: [
+      { value: "analitico", labelEs: "Analítico", labelEn: "Analytical", label: "Analytical" },
+    ] })} value={undefined} onChange={onChange} />);
+    expect(screen.queryByText("Analítico")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByText("Analytical"));
+    expect(calls.at(-1)).toEqual({ textValue: "analitico" });
+  });
+
+  it("falls back per option: labelEn for an English UI, labelEs when there is no English", () => {
+    render(<VocationalQuestionCard question={q({ type: "multi_select", options: [
+      { value: "a", labelEs: "Banca", labelEn: "Banking" }, { value: "b", labelEs: "Salud" },
+    ] })} value={{ selectedValues: [] }} onChange={() => {}} />);
+    expect(screen.getByText("Banking")).toBeInTheDocument();
+    expect(screen.getByText("Salud")).toBeInTheDocument();
+  });
+
+  it("shows Spanish labels for a Spanish UI when the server sent no resolved label", () => {
+    mockI18n.language = "es";
+    render(<VocationalQuestionCard question={q({ type: "multi_select", options: [
+      { value: "a", labelEs: "Banca", labelEn: "Banking" },
+    ] })} value={{ selectedValues: [] }} onChange={() => {}} />);
+    expect(screen.getByText("Banca")).toBeInTheDocument();
+  });
+
+  it("ranking: uses resolved labels in rows and move buttons", () => {
+    const { onChange, calls } = capture();
+    render(<VocationalQuestionCard question={q({ type: "ranking", options: [
+      { value: "ingresos", labelEs: "Ingresos", label: "Income" }, { value: "libertad", labelEs: "Libertad", label: "Freedom" },
+    ] })} value={undefined} onChange={onChange} />);
+    expect(screen.getByText(/1\. Income/)).toBeInTheDocument();
+    fireEvent.click(screen.getByLabelText(/move Income down/i));
+    expect(calls.at(-1)).toEqual({ rankingOrder: [{ value: "libertad", rank: 1 }, { value: "ingresos", rank: 2 }] });
+  });
+
+  it("likert: renders the (already language-resolved) scale anchors", () => {
+    render(<VocationalQuestionCard question={q({ type: "likert", scaleAnchors: ["Never","Rarely","Sometimes","Often","Almost always"] })} value={undefined} onChange={() => {}} />);
+    expect(screen.getByText(/Almost always/)).toBeInTheDocument();
   });
 
   it("ranking: moving an item down produces sequential ranks", () => {

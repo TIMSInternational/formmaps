@@ -6,8 +6,10 @@ import Link from "next/link";
 import { FiLink, FiSettings, FiUsers, FiArrowRight } from "react-icons/fi";
 import { StudentInviteParentPanel } from "./StudentInviteParentPanel";
 import { CalendarIntegrationPanel } from "@/components/shared/CalendarIntegrationPanel";
+import { useTranslation } from "react-i18next";
 
 export function ProfileSettings() {
+  const { t } = useTranslation();
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -22,8 +24,8 @@ export function ProfileSettings() {
               <FiLink size={20} />
             </div>
             <div>
-              <CardTitle>Calendar Integration</CardTitle>
-              <CardDescription>Connect your calendar to sync sessions and bookings.</CardDescription>
+              <CardTitle>{t("components.ProfileSettings.calendarTitle")}</CardTitle>
+              <CardDescription>{t("components.ProfileSettings.calendarDescription")}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -39,8 +41,8 @@ export function ProfileSettings() {
               <FiUsers size={20} />
             </div>
             <div>
-              <CardTitle>Family Access</CardTitle>
-              <CardDescription>Invite a parent or guardian to follow your progress.</CardDescription>
+              <CardTitle>{t("components.ProfileSettings.familyTitle")}</CardTitle>
+              <CardDescription>{t("components.ProfileSettings.familyDescription")}</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -56,9 +58,9 @@ export function ProfileSettings() {
               <FiSettings size={20} />
             </div>
             <div>
-              <CardTitle>Notifications &amp; Privacy</CardTitle>
+              <CardTitle>{t("components.ProfileSettings.notificationsTitle")}</CardTitle>
               <CardDescription>
-                Email notifications, weekly digest, profile visibility, and more live in Settings.
+                {t("components.ProfileSettings.notificationsDescription")}
               </CardDescription>
             </div>
           </div>
@@ -68,7 +70,7 @@ export function ProfileSettings() {
             href="/dashboard/settings"
             className="inline-flex items-center gap-2 text-sm font-medium text-[var(--admin-accent-blue)] hover:text-[var(--admin-accent-blue)]/80 dark:text-[var(--admin-accent-blue)]"
           >
-            Open Settings
+            {t("components.ProfileSettings.openSettings")}
             <FiArrowRight size={16} />
           </Link>
         </CardContent>

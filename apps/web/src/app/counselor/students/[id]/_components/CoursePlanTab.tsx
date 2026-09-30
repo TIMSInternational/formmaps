@@ -91,7 +91,7 @@ export function CoursePlanTab({
                     </Badge>
                     <span className="font-medium truncate">{req.courseName}</span>
                     <span className="text-gray-400 text-xs">
-                      {req.courseCode} · {req.credits} cr · Gr.{req.gradeLevel} · {req.semester}
+                      {t("ui.students.coursePlanRequestMeta", { code: req.courseCode, credits: req.credits, grade: req.gradeLevel, semester: req.semester })}
                     </span>
                   </div>
                   {req.studentNote && (

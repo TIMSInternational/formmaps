@@ -1,6 +1,7 @@
 "use client";
 
 import { Trash2, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { SchoolCourse, PlanEnrollment } from "./types";
 
 interface MyClassesSectionProps {
@@ -16,23 +17,24 @@ export function MyClassesSection({
   onRemove,
   busyId,
 }: MyClassesSectionProps) {
+  const { t } = useTranslation();
   return (
     <section
       className="rounded-xl p-4"
       style={{ background: "var(--admin-bg-panel)", border: "1px solid var(--admin-border-default)" }}
     >
       <h2 className="text-sm font-semibold mb-3" style={{ color: "var(--admin-font-primary)" }}>
-        My Classes ({enrollments.length})
+        {t("studentUi.coursePlan.myClasses.title", { count: enrollments.length })}
       </h2>
       {enrollments.length === 0 ? (
         <p className="text-sm py-6 text-center" style={{ color: "var(--admin-font-tertiary)" }}>
-          No classes planned yet — add some from the catalog below.
+          {t("studentUi.coursePlan.myClasses.empty")}
         </p>
       ) : (
         <ul className="divide-y" style={{ borderColor: "var(--admin-border-light)" }}>
           {enrollments.map((e) => {
             const course = courseById.get(e.courseId);
-            const name = course?.name ?? "Unknown course";
+            const name = course?.name ?? t("studentUi.coursePlan.myClasses.unknownCourse");
             return (
               <li key={e.id} className="flex items-center justify-between py-2.5 gap-3">
                 <div className="min-w-0">
@@ -40,14 +42,15 @@ export function MyClassesSection({
                     {name}
                   </p>
                   <p className="text-xs" style={{ color: "var(--admin-font-tertiary)" }}>
-                    {course?.code ?? e.courseId} · {course?.credits ?? "—"} credits
-                    {e.term ? ` · ${e.term}` : ""} · {e.status}
+                    {course?.code ?? e.courseId} · {t("coursePlan.catalog.credits", { credits: course?.credits ?? "—" })}
+                    {e.term ? ` · ${t(`coursePlan.catalog.terms.${e.term}`, { defaultValue: e.term })}` : ""} ·{" "}
+                    {t(`studentUi.coursePlan.enrollmentStatus.${e.status}`, { defaultValue: e.status })}
                   </p>
                 </div>
                 {e.status === "planned" && (
                   <button
                     type="button"
-                    aria-label={`Remove ${name}`}
+                    aria-label={t("studentUi.coursePlan.myClasses.removeAria", { name })}
                     disabled={busyId === e.courseId}
                     onClick={() => onRemove(e, name)}
                     className="shrink-0 p-2 rounded-md transition-colors hover:bg-red-50"

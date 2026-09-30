@@ -13,6 +13,7 @@ import type { EvaluationQuestion, ApiQuestion, ApiEvaluatorData, ApiResponse, Ev
 import { DEFAULT_RESPONSE_SCALE } from "./_components/types";
 import { validateEvaluationToken, sendEvaluatorViolations } from "@/services/evaluationService";
 import { VocationalEvaluator } from "./_components/VocationalEvaluator";
+import { langFromQuery } from "./_components/vocationalLang";
 import { RequireChromium } from "@/components/proctoring/RequireChromium";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
 import { useProctoring } from "@/components/proctoring/useProctoring";
@@ -29,6 +30,28 @@ export default function EvaluatorPage() {
   // persisted store preference, so this matches the user's chosen language.
   const isSpanish = i18n.language?.startsWith("es") ?? false;
   const token = searchParams.get("token");
+
+  // Emailed invite links carry ?lang=es|en. Switch i18next to it BEFORE anything loads so the chrome and the
+  // questionnaire content (fetched with the i18next language) both open in the invite's language. The
+  // evaluator can still change language afterwards; the vocational form re-fetches when they do.
+  const langQuery = langFromQuery(searchParams.get("lang"));
+  const [langReady, setLangReady] = useState(
+    () => !langQuery || (i18n.language ?? "").toLowerCase().startsWith(langQuery),
+  );
+  useEffect(() => {
+    if (!langQuery || (i18n.language ?? "").toLowerCase().startsWith(langQuery)) {
+      setLangReady(true);
+      return;
+    }
+    let cancelled = false;
+    Promise.resolve()
+      .then(() => i18n.changeLanguage(langQuery))
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setLangReady(true); });
+    return () => { cancelled = true; };
+    // Only the link's lang matters here; later user-driven changes must not be reverted.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [langQuery]);
 
   const [instrument, setInstrument] = useState<string | null | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
@@ -106,6 +129,7 @@ export default function EvaluatorPage() {
   }, [violationsUrl, drainViolations, endProctoring, violationsRef]);
 
   useEffect(() => {
+    if (!langReady) return;
     if (!token) {
       setError(t("evaluation.evaluator.errNoToken"));
       setIsLoading(false);
@@ -124,7 +148,7 @@ export default function EvaluatorPage() {
       }
       loadEvaluationData();
     })();
-  }, [token]);
+  }, [token, langReady]);
 
   const loadEvaluationData = async () => {
     try {
@@ -293,7 +317,7 @@ export default function EvaluatorPage() {
   );
 
   // --- RENDER STATES ---
-  if (isLoading || isValidating) return <LoadingScreen />;
+  if (!langReady || isLoading || isValidating) return <LoadingScreen />;
   // instrument branch: early-return before generic 360 body
   if (instrument === undefined) return <LoadingScreen />;
   if (instrument === "vocational" && token) return proctored(<VocationalEvaluator token={token} />);

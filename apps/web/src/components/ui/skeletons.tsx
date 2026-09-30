@@ -1,12 +1,14 @@
 "use client";
 
 import React from "react";
+import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
  * Skeleton loader for chart components
  */
 export function ChartSkeleton({ className = "" }: { className?: string }) {
+  const { t } = useTranslation();
   return (
     <div className={`p-4 border rounded-xl space-y-4 ${className}`}>
       <Skeleton className="h-4 w-24" />
@@ -15,7 +17,7 @@ export function ChartSkeleton({ className = "" }: { className?: string }) {
           <Skeleton key={i} className="flex-1" style={{ height: `${h}%` }} />
         ))}
       </div>
-      <span className="sr-only">Loading chart data...</span>
+      <span className="sr-only">{t("components.skeletons.chart")}</span>
     </div>
   );
 }
@@ -24,6 +26,7 @@ export function ChartSkeleton({ className = "" }: { className?: string }) {
  * Skeleton loader for PDF/document components
  */
 export function DocumentSkeleton({ className = "" }: { className?: string }) {
+  const { t } = useTranslation();
   return (
     <div className={`space-y-4 ${className}`}>
       <Skeleton className="h-8 w-48" />
@@ -33,7 +36,7 @@ export function DocumentSkeleton({ className = "" }: { className?: string }) {
         <Skeleton className="h-4 w-4/6" />
       </div>
       <Skeleton className="h-40 w-full" />
-      <span className="sr-only">Loading document...</span>
+      <span className="sr-only">{t("components.skeletons.document")}</span>
     </div>
   );
 }
@@ -42,6 +45,7 @@ export function DocumentSkeleton({ className = "" }: { className?: string }) {
  * Skeleton loader for modal content
  */
 export function ModalSkeleton({ className = "" }: { className?: string }) {
+  const { t } = useTranslation();
   return (
     <div className={`space-y-6 p-6 ${className}`}>
       <Skeleton className="h-6 w-32" />
@@ -53,7 +57,7 @@ export function ModalSkeleton({ className = "" }: { className?: string }) {
         <Skeleton className="h-10 w-20" />
         <Skeleton className="h-10 w-24" />
       </div>
-      <span className="sr-only">Loading...</span>
+      <span className="sr-only">{t("common.loading")}</span>
     </div>
   );
 }
@@ -62,6 +66,7 @@ export function ModalSkeleton({ className = "" }: { className?: string }) {
  * Skeleton loader for cards
  */
 export function CardSkeleton({ className = "" }: { className?: string }) {
+  const { t } = useTranslation();
   return (
     <div className={`p-6 bg-white rounded-2xl border border-slate-100 space-y-4 ${className}`}>
       <div className="flex items-center gap-3 mb-4">
@@ -75,7 +80,7 @@ export function CardSkeleton({ className = "" }: { className?: string }) {
         <Skeleton className="h-3 w-full" />
         <Skeleton className="h-3 w-4/5" />
       </div>
-      <span className="sr-only">Loading card content...</span>
+      <span className="sr-only">{t("components.skeletons.card")}</span>
     </div>
   );
 }
@@ -84,6 +89,7 @@ export function CardSkeleton({ className = "" }: { className?: string }) {
  * Full page loading state
  */
 export function PageSkeleton() {
+  const { t } = useTranslation();
   return (
     <div className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-7xl mx-auto space-y-8">
@@ -102,7 +108,7 @@ export function PageSkeleton() {
           <CardSkeleton className="md:col-span-2" />
         </div>
       </div>
-      <span className="sr-only">Loading page content...</span>
+      <span className="sr-only">{t("components.skeletons.page")}</span>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Loader2 } from "lucide-react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 
 interface ScholarshipFormProps {
   onSubmit: (data: Record<string, unknown>) => void;
@@ -12,6 +13,7 @@ interface ScholarshipFormProps {
 }
 
 export function ScholarshipForm({ onSubmit, isPending, onCancel }: ScholarshipFormProps) {
+  const { t } = useTranslation("counselor");
   const [form, setForm] = useState({
     name: "", provider: "", amount: "", deadline: "", url: "", notes: "",
   });
@@ -23,7 +25,7 @@ export function ScholarshipForm({ onSubmit, isPending, onCancel }: ScholarshipFo
   } as const;
 
   const handleSubmit = () => {
-    if (!form.name.trim()) { toast.error("Name is required"); return; }
+    if (!form.name.trim()) { toast.error(t("ui.scholarships.form.nameRequired")); return; }
     onSubmit({
       name: form.name, provider: form.provider,
       amount: form.amount ? Number(form.amount) : 0,
@@ -37,28 +39,28 @@ export function ScholarshipForm({ onSubmit, isPending, onCancel }: ScholarshipFo
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
       style={{ padding: 16, borderRadius: 10, border: "1px solid rgba(16,185,129,0.2)", background: "rgba(16,185,129,0.03)" }}>
-      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 12 }}>Add Scholarship</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 12 }}>{t("ui.scholarships.add")}</div>
       <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <input placeholder="Scholarship name" value={form.name}
+          <input placeholder={t("ui.scholarships.form.name")} value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             style={{ ...inputStyle, flex: 2, minWidth: 200 }} />
-          <input placeholder="Provider" value={form.provider}
+          <input placeholder={t("ui.scholarships.form.provider")} value={form.provider}
             onChange={(e) => setForm({ ...form, provider: e.target.value })}
             style={{ ...inputStyle, flex: 1, minWidth: 160 }} />
         </div>
         <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-          <input placeholder="Amount ($)" type="number" value={form.amount}
+          <input placeholder={t("ui.scholarships.form.amount")} type="number" value={form.amount}
             onChange={(e) => setForm({ ...form, amount: e.target.value })}
             style={{ ...inputStyle, flex: 1, minWidth: 120 }} />
-          <input placeholder="Deadline" type="date" value={form.deadline}
+          <input placeholder={t("ui.scholarships.form.deadline")} type="date" value={form.deadline}
             onChange={(e) => setForm({ ...form, deadline: e.target.value })}
             style={{ ...inputStyle, flex: 1, minWidth: 140 }} />
-          <input placeholder="URL (optional)" value={form.url}
+          <input placeholder={t("ui.scholarships.form.url")} value={form.url}
             onChange={(e) => setForm({ ...form, url: e.target.value })}
             style={{ ...inputStyle, flex: 2, minWidth: 200 }} />
         </div>
-        <textarea placeholder="Notes (optional)" value={form.notes}
+        <textarea placeholder={t("ui.scholarships.form.notes")} value={form.notes}
           onChange={(e) => setForm({ ...form, notes: e.target.value })}
           rows={2}
           style={{
@@ -75,7 +77,7 @@ export function ScholarshipForm({ onSubmit, isPending, onCancel }: ScholarshipFo
               opacity: isPending ? 0.6 : 1,
             }}>
             {isPending && <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />}
-            Submit
+            {t("ui.scholarships.form.submit")}
           </button>
           <button onClick={onCancel}
             style={{
@@ -83,7 +85,7 @@ export function ScholarshipForm({ onSubmit, isPending, onCancel }: ScholarshipFo
               background: "transparent", color: "var(--admin-font-tertiary)",
               border: "1px solid var(--admin-border-default)", cursor: "pointer", fontFamily: "inherit",
             }}>
-            Cancel
+            {t("sessions.cancel")}
           </button>
         </div>
       </div>

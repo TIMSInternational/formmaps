@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { Send, Loader2, Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface AIChatInputProps {
   onSend: (instruction: string) => Promise<void>;
@@ -10,12 +11,13 @@ interface AIChatInputProps {
 }
 
 export function AIChatInput({ onSend, isLoading, suggestions }: AIChatInputProps) {
+  const { t } = useTranslation();
   const [input, setInput] = useState("");
 
   const defaultSuggestions = suggestions ?? [
-    "Use stronger action verbs",
-    "Shorten my summary",
-    "Add more metrics to bullets",
+    t("resumeBuilder.aiChat.suggestions.actionVerbs", "Use stronger action verbs"),
+    t("resumeBuilder.aiChat.suggestions.shortenSummary", "Shorten my summary"),
+    t("resumeBuilder.aiChat.suggestions.moreMetrics", "Add more metrics to bullets"),
   ];
 
   async function handleSubmit() {
@@ -50,7 +52,7 @@ export function AIChatInput({ onSend, isLoading, suggestions }: AIChatInputProps
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-          placeholder="Tell me how to tweak your resume..."
+          placeholder={t("resumeBuilder.aiChat.inputPlaceholder", "Tell me how to tweak your resume...")}
           disabled={isLoading}
           className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground outline-none disabled:opacity-50"
         />
@@ -58,6 +60,7 @@ export function AIChatInput({ onSend, isLoading, suggestions }: AIChatInputProps
           type="button"
           onClick={handleSubmit}
           disabled={!input.trim() || isLoading}
+          aria-label={t("resumeBuilder.aiChat.send", "Send")}
           className="flex items-center justify-center w-8 h-8 rounded-lg bg-foreground text-background hover:bg-foreground/90 disabled:opacity-30 disabled:cursor-not-allowed transition-colors shrink-0"
         >
           {isLoading ? (

@@ -38,7 +38,7 @@
         "en": "You balance steadiness with openness to change. You stay calm, but aren't afraid to adjust course when the data suggest it. You serve as a flexible anchor for those around you."
       },
       "low": {
-        "es": "Te mueves con agilidad y te adaptas rápido. Te energiza la variedad y el cambio, y respondes con rapidez ante nuevas situaciones. Tu flexibilidad es un activo en entornos dinámicos y cambiantes.",
+        "es": "Te mueves con agilidad y te adaptas rápido. Te energizan la variedad y el cambio, y respondes con rapidez ante nuevas situaciones. Tu flexibilidad es un activo en entornos dinámicos y cambiantes.",
         "en": "You are agile and adaptable. Variety and change energize you, and you respond quickly to new situations. Your flexibility is an asset in dynamic, fast-moving environments."
       }
     },
@@ -52,7 +52,7 @@
         "en": "You value quality without sacrificing speed. You apply criteria and structure where they add value, and can move forward without having all the data. You know when rigor is an asset and when it becomes a bottleneck."
       },
       "low": {
-        "es": "Prefieres actuar sobre analizar. Te mueves mejor en entornos donde la velocidad importa más que la perfección, y donde la experimentación está permitida. Delegas el detalle y te enfocas en el cuadro general.",
+        "es": "Prefieres actuar antes que analizar. Te mueves mejor en entornos donde la velocidad importa más que la perfección, y donde la experimentación está permitida. Delegas el detalle y te enfocas en el panorama general.",
         "en": "You prefer acting over analyzing. You feel more comfortable in environments where speed matters more than perfection, and where experimentation is welcome. You delegate detail and focus on the big picture."
       }
     }
@@ -116,12 +116,12 @@
     },
     "orientacion": {
       "high": {
-        "es": "Tu sentido de orientación espacial y seguimiento de reglas es sobresaliente. Navegas sistemas complejos con facilidad, sigues instrucciones multi-paso con precisión y mantienes el rumbo incluso en entornos cambiantes. Es una habilidad muy valiosa en roles técnicos y operativos.",
-        "en": "Your spatial orientation and rule-following is outstanding. You navigate complex systems with ease, follow multi-step instructions accurately, and stay on course even in changing environments. This is a highly valuable skill in technical and operational roles."
+        "es": "Tu sentido de orientación espacial y seguimiento de reglas es sobresaliente. Navegas sistemas complejos con facilidad, sigues instrucciones de varios pasos con precisión y mantienes el rumbo incluso en entornos cambiantes. Es una habilidad muy valiosa en roles técnicos y operativos.",
+        "en": "Your spatial orientation and rule-following are outstanding. You navigate complex systems with ease, follow multi-step instructions accurately, and stay on course even in changing environments. This is a highly valuable skill in technical and operational roles."
       },
       "med": {
-        "es": "Tu orientación espacial y capacidad de seguir procedimientos está en un nivel sólido. Puedes mantener el rumbo en la mayoría de las situaciones y seguir instrucciones estructuradas con eficacia. Con práctica, puedes agudizar aún más esta habilidad.",
-        "en": "Your spatial orientation and ability to follow procedures is at a solid level. You can stay on course in most situations and follow structured instructions effectively. With practice, you can sharpen this skill further."
+        "es": "Tu orientación espacial y tu capacidad de seguir procedimientos están en un nivel sólido. Puedes mantener el rumbo en la mayoría de las situaciones y seguir instrucciones estructuradas con eficacia. Con práctica, puedes agudizar aún más esta habilidad.",
+        "en": "Your spatial orientation and ability to follow procedures are at a solid level. You can stay on course in most situations and follow structured instructions effectively. With practice, you can sharpen this skill further."
       },
       "low": {
         "es": "La orientación espacial y el seguimiento de procedimientos complejos es un área para trabajar. Practicar tareas que requieran seguir secuencias de pasos y mantener el enfoque en múltiples instrucciones simultáneas puede fortalecer este dominio.",
@@ -149,7 +149,7 @@
   },
   "methodology": {
     "es": "Tus puntuaciones provienen directamente de tus evaluaciones, sin estimaciones. Las coincidencias de carrera combinan tu perfil de comportamiento (PCA) y tu capacidad cognitiva (MIL) con tus intereses y motivadores cuando están medidos, y después aplican la puerta competencial de cada familia; los instrumentos pendientes no aportan puntos ni se estiman. Las universidades se evalúan por ajuste académico, programa, preferencias, presupuesto y resultados. La interpretación personalizada se genera con inteligencia artificial sobre tus datos reales y se revisa contra reglas de calidad.",
-    "en": "Your scores come directly from your assessments, with no estimates. Career matches combine your behavioural profile (PCA) and cognitive ability (MIL) with your interests and motivators where these were measured, then apply each family's competency gate; pending instruments contribute no points and are never estimated. Universities are evaluated by academic fit, programme, preferences, budget and outcomes. Personalised interpretation is generated with artificial intelligence on your real data and reviewed against quality rules."
+    "en": "Your scores come directly from your assessments, with no estimates. Career matches combine your behavioral profile (PCA) and cognitive ability (MIL) with your interests and motivators where these were measured, then apply each family's competency gate; pending instruments contribute no points and are never estimated. Universities are evaluated by academic fit, program, preferences, budget and outcomes. Personalized interpretation is generated with artificial intelligence on your real data and reviewed against quality rules."
   },
   "glossary": {
     "es": [
@@ -195,7 +195,7 @@
       },
       {
         "term": "Convergencia",
-        "def": "Grado en que tus instrumentos apuntan a la misma familia de carreras. Con instrumentos pendientes queda en parcial o divergente."
+        "def": "Grado en que tus instrumentos apuntan a la misma familia de carreras. Con instrumentos pendientes, queda como parcial o divergente."
       }
     ],
     "en": [
@@ -237,11 +237,11 @@
       },
       {
         "term": "Competency gate",
-        "def": "A per-family filter: checks that your critical competencies reach the minimum level. It can be satisfied, conditioned or critical."
+        "def": "A per-family filter: checks that your critical competencies reach the minimum level. It can be satisfied, conditional or critical."
       },
       {
         "term": "Convergence",
-        "def": "How far your instruments point to the same career family. With instruments pending it stays partial or divergent."
+        "def": "The degree to which your instruments point to the same career family. With instruments pending, it stays partial or divergent."
       }
     ]
   }

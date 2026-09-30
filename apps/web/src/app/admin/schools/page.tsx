@@ -107,9 +107,13 @@ export default function SchoolsPage() {
     try {
       await toggleSchoolFeature(school.id, { videoCallsEnabled: newVal });
       setSchools((prev) => prev.map((s) => s.id === school.id ? { ...s, videoCallsEnabled: newVal } : s));
-      toast.success(`Video calls ${newVal ? "enabled" : "disabled"} for ${school.name}`);
+      toast.success(
+        newVal
+          ? t("pages.admin.schools.videoCallsEnabled", { name: school.name })
+          : t("pages.admin.schools.videoCallsDisabled", { name: school.name }),
+      );
     } catch {
-      toast.error("Failed to update video calls setting");
+      toast.error(t("pages.admin.schools.videoCallsFailed"));
     }
   };
 

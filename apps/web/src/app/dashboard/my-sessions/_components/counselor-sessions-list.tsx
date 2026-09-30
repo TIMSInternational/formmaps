@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { motion } from "motion/react";
 import { format } from "date-fns";
+import { es, enUS } from "date-fns/locale";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -19,6 +20,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { getCounselorStatusBadge } from "./session-status-badge";
 import type { CounselorSession } from "@/services/counselorSessionService";
 
@@ -41,25 +43,27 @@ export function CounselorSessionsList({
   pastCount,
   onCancelClick,
 }: CounselorSessionsListProps) {
+  const { t, i18n } = useTranslation();
+  const dateLocale = i18n.language?.startsWith("es") ? es : enUS;
   return (
     <div className="dash-card overflow-hidden">
       <div className="border-b border-border px-6 py-5">
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h2 className="text-xl font-bold text-foreground">Counselor Sessions</h2>
+          <h2 className="text-xl font-bold text-foreground">{t("studentUi.sessions.counselor.title")}</h2>
           <div className="flex items-center gap-3">
             <Button asChild size="sm" className="bg-foreground text-background hover:bg-foreground/90 rounded-xl">
               <Link href="/dashboard/book-counselor">
                 <User className="h-4 w-4 mr-1.5" />
-                Book New
+                {t("sessions.bookNew")}
               </Link>
             </Button>
             <Tabs value={subTab} onValueChange={onSubTabChange}>
               <TabsList className="bg-secondary p-1 rounded-xl">
                 <TabsTrigger value="upcoming" className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-card">
-                  Upcoming ({upcomingCount})
+                  {t("studentUi.sessions.counselor.upcomingTab", { count: upcomingCount })}
                 </TabsTrigger>
                 <TabsTrigger value="past" className="rounded-lg px-4 py-2 text-sm font-medium data-[state=active]:bg-card">
-                  Past ({pastCount})
+                  {t("studentUi.sessions.counselor.pastTab", { count: pastCount })}
                 </TabsTrigger>
               </TabsList>
             </Tabs>
@@ -74,13 +78,13 @@ export function CounselorSessionsList({
         ) : sessions.length > 0 ? (
           <div className="divide-y divide-border">
             {sessions.map((session, index) => {
-              let date = "TBD",
-                time = "TBD";
+              let date = t("studentUi.sessions.counselor.tbd"),
+                time = t("studentUi.sessions.counselor.tbd");
               try {
                 const s = new Date(session.startTime),
                   e = new Date(session.endTime);
-                date = format(s, "EEE, MMM d, yyyy");
-                time = `${format(s, "h:mm a")} - ${format(e, "h:mm a")}`;
+                date = format(s, "EEE, PP", { locale: dateLocale });
+                time = `${format(s, "p", { locale: dateLocale })} - ${format(e, "p", { locale: dateLocale })}`;
               } catch {
                 /* keep TBD */
               }
@@ -99,7 +103,7 @@ export function CounselorSessionsList({
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-semibold text-foreground text-lg truncate">
-                          {session.counselorName || "Counselor"}
+                          {session.counselorName || t("studentUi.sessions.counselor.counselorFallback")}
                         </h3>
                         <p className="text-sm text-muted-foreground truncate">{session.counselorEmail}</p>
                         <div className="flex items-center gap-2 mt-1.5">
@@ -107,9 +111,9 @@ export function CounselorSessionsList({
                             {session.topic}
                           </span>
                           <span className="text-[9px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider border border-emerald-200 bg-emerald-50 text-emerald-700">
-                            FREE
+                            {t("studentUi.sessions.counselor.free")}
                           </span>
-                          {getCounselorStatusBadge(session.status)}
+                          {getCounselorStatusBadge(session.status, t)}
                         </div>
                       </div>
                     </div>
@@ -134,7 +138,7 @@ export function CounselorSessionsList({
                             >
                               <a href={session.meetingLink} target="_blank" rel="noopener noreferrer">
                                 <Video className="h-4 w-4 mr-1.5" />
-                                Join
+                                {t("studentUi.sessions.counselor.join")}
                               </a>
                             </Button>
                           )}
@@ -150,7 +154,7 @@ export function CounselorSessionsList({
                                 onClick={() => onCancelClick(session)}
                               >
                                 <X className="h-4 w-4 mr-2" />
-                                Cancel Session
+                                {t("sessions.cancel")}
                               </DropdownMenuItem>
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -163,7 +167,7 @@ export function CounselorSessionsList({
                       {session.notes && (
                         <div className="pl-4 border-l-2 border-border">
                           <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-foreground">Your notes: </span>
+                            <span className="font-medium text-foreground">{t("studentUi.sessions.counselor.yourNotes")} </span>
                             {session.notes}
                           </p>
                         </div>
@@ -171,7 +175,7 @@ export function CounselorSessionsList({
                       {session.counselorNotes && (
                         <div className="pl-4 border-l-2 border-indigo-200">
                           <p className="text-sm text-muted-foreground">
-                            <span className="font-medium text-indigo-600">Counselor notes: </span>
+                            <span className="font-medium text-indigo-600">{t("studentUi.sessions.counselor.counselorNotes")} </span>
                             {session.counselorNotes}
                           </p>
                         </div>
@@ -188,16 +192,16 @@ export function CounselorSessionsList({
               <User className="h-10 w-10 text-muted-foreground" />
             </div>
             <h3 className="text-lg font-semibold text-foreground mb-2">
-              No {subTab} counselor sessions
+              {subTab === "past" ? t("studentUi.sessions.counselor.emptyPast") : t("studentUi.sessions.counselor.emptyUpcoming")}
             </h3>
             <p className="text-muted-foreground text-center max-w-sm mb-5 text-sm">
-              Book a FREE session with your assigned school counselor for guidance and support.
+              {t("studentUi.sessions.counselor.emptyBody")}
             </p>
             {subTab === "upcoming" && (
               <Button asChild className="bg-foreground text-background hover:bg-foreground/90 h-11 px-6 rounded-xl">
                 <Link href="/dashboard/book-counselor">
                   <User className="h-4 w-4 mr-2" />
-                  Book a Counselor Session
+                  {t("counselorBooking.title")}
                 </Link>
               </Button>
             )}

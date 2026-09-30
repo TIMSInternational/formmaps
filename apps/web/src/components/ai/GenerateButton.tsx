@@ -78,14 +78,17 @@ export function GenerateButton({
       "flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium transition-colors border border-primary text-primary hover:bg-primary/5",
   };
 
+  // `ai.fields.*` holds the modal's camelCase field names, so the button keeps its own flat
+  // `ai.buttonFields.<AIFieldType>` labels; the tooltip is one sentence around that label.
   const getFieldLabel = (field: string) => {
-    return t(`ai.fields.${field}.label`, {
+    return t(`ai.buttonFields.${field}`, {
       defaultValue: field.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
     });
   };
 
   const getFieldTooltip = (field: string) => {
-    return t(`ai.fields.${field}.tooltip`, {
+    return t("ai.generateButton.tooltip", {
+      field: getFieldLabel(field).toLowerCase(),
       defaultValue: `Generate ${field.replace(/_/g, ' ')} using AI`
     });
   };

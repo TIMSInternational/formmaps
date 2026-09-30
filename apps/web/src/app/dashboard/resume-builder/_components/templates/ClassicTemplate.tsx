@@ -1,5 +1,10 @@
 import React from "react";
+import i18n from "@/lib/i18n";
+import { translateProficiency } from "../../_lib/resume-constants";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+
+// Labels printed in the résumé document itself, resolved in the UI language at render time.
+const t = i18n.t.bind(i18n);
 
 // Classic template styles — single-page SWE resume, tight spacing
 const classicStyles = StyleSheet.create({
@@ -225,7 +230,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
         {/* Career Objective */}
         {personalInfo.careerObjective && (
           <View style={classicStyles.section}>
-            <Text style={classicStyles.sectionTitle}>Career Objective</Text>
+            <Text style={classicStyles.sectionTitle}>{t("resumeBuilder.doc.careerObjective", "Career Objective")}</Text>
             <Text style={classicStyles.bulletText}>
               {personalInfo.careerObjective}
             </Text>
@@ -235,7 +240,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
         {/* Summary */}
         {personalInfo.summary && (
           <View style={classicStyles.section}>
-            <Text style={classicStyles.sectionTitle}>Summary</Text>
+            <Text style={classicStyles.sectionTitle}>{t("resumeBuilder.doc.summary", "Summary")}</Text>
             <Text style={classicStyles.bulletText}>
               {personalInfo.summary}
             </Text>
@@ -245,7 +250,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
         {/* Education */}
         {data.education.length > 0 && (
           <View style={classicStyles.section}>
-            <Text style={classicStyles.sectionTitle}>Education</Text>
+            <Text style={classicStyles.sectionTitle}>{t("resumeBuilder.doc.education", "Education")}</Text>
             {data.education.map((edu) => (
               <View key={edu.id} style={classicStyles.entryItem}>
                 <View style={classicStyles.entryHeaderRow}>
@@ -266,7 +271,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                 </View>
                 {edu.gpa && (
                   <Text style={{ fontSize: 9.5, color: "#000000" }}>
-                    Overall GPA: {edu.gpa}
+                    {t("resumeBuilder.doc.overallGpa", { defaultValue: "Overall GPA: {{value}}", value: edu.gpa })}
                   </Text>
                 )}
               </View>
@@ -278,7 +283,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
         {data.experience.length > 0 && (
           <View style={classicStyles.section}>
             <Text style={classicStyles.sectionTitle}>
-              Relevant Experience
+              {t("resumeBuilder.doc.relevantExperience", "Relevant Experience")}
             </Text>
             {data.experience.map((exp) => (
               <View key={exp.id} style={classicStyles.entryItem}>
@@ -295,7 +300,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                     {exp.jobTitle}
                   </Text>
                   <Text style={classicStyles.entryItalicRight}>
-                    {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                    {exp.startDate} - {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate}
                   </Text>
                 </View>
                 {exp.description.map((desc, index) => (
@@ -359,7 +364,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                           </View>
                           {entry.technologies && (
                             <Text style={classicStyles.entryItalicLeft}>
-                              Technologies: {entry.technologies}
+                              {t("resumeBuilder.doc.technologies", { defaultValue: "Technologies: {{value}}", value: entry.technologies })}
                             </Text>
                           )}
                           {entry.description &&
@@ -377,7 +382,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                             ))}
                           {entry.link && (
                             <Text style={classicStyles.bulletText}>
-                              Link: {entry.link}
+                              {t("resumeBuilder.doc.link", { defaultValue: "Link: {{value}}", value: entry.link })}
                             </Text>
                           )}
                         </>
@@ -415,7 +420,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                           </Text>
                           {entry.proficiency && (
                             <Text style={classicStyles.entryItalicLeft}>
-                              Proficiency: {entry.proficiency}
+                              {t("resumeBuilder.doc.proficiency", { defaultValue: "Proficiency: {{value}}", value: translateProficiency(entry.proficiency) })}
                             </Text>
                           )}
                         </>
@@ -435,12 +440,12 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                           </View>
                           {entry.authors && (
                             <Text style={classicStyles.entryItalicLeft}>
-                              Authors: {entry.authors}
+                              {t("resumeBuilder.doc.authors", { defaultValue: "Authors: {{value}}", value: entry.authors })}
                             </Text>
                           )}
                           {entry.publisher && (
                             <Text style={classicStyles.entryItalicLeft}>
-                              Publisher: {entry.publisher}
+                              {t("resumeBuilder.doc.publisher", { defaultValue: "Publisher: {{value}}", value: entry.publisher })}
                             </Text>
                           )}
                           {entry.description && (
@@ -450,7 +455,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                           )}
                           {entry.link && (
                             <Text style={classicStyles.bulletText}>
-                              Link: {entry.link}
+                              {t("resumeBuilder.doc.link", { defaultValue: "Link: {{value}}", value: entry.link })}
                             </Text>
                           )}
                         </>
@@ -566,12 +571,12 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                           )}
                           {entry.email && (
                             <Text style={classicStyles.bulletText}>
-                              Email: {entry.email}
+                              {t("resumeBuilder.doc.email", { defaultValue: "Email: {{value}}", value: entry.email })}
                             </Text>
                           )}
                           {entry.phone && (
                             <Text style={classicStyles.bulletText}>
-                              Phone: {entry.phone}
+                              {t("resumeBuilder.doc.phone", { defaultValue: "Phone: {{value}}", value: entry.phone })}
                             </Text>
                           )}
                         </>
@@ -591,9 +596,9 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
                                 { marginTop: 4, fontStyle: "italic" },
                               ]}
                             >
-                              {entry.place && `Place: ${entry.place}`}
+                              {entry.place && t("resumeBuilder.doc.place", { defaultValue: "Place: {{value}}", value: entry.place })}
                               {entry.place && entry.date && " | "}
-                              {entry.date && `Date: ${entry.date}`}
+                              {entry.date && t("resumeBuilder.doc.date", { defaultValue: "Date: {{value}}", value: entry.date })}
                             </Text>
                           )}
                         </>
@@ -648,12 +653,12 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
         {/* Technical Skills - categorized with bullet labels */}
         {data.skills.length > 0 && (
           <View style={classicStyles.section}>
-            <Text style={classicStyles.sectionTitle}>Technical Skills</Text>
+            <Text style={classicStyles.sectionTitle}>{t("resumeBuilder.doc.technicalSkills", "Technical Skills")}</Text>
             {Object.entries(skillsByCategory).map(
               ([category, skills], index) => (
                 <Text key={index} style={classicStyles.skillLine}>
                   {"•"}{" "}
-                  <Text style={{ fontFamily: "Times-Bold" }}>{category}</Text>
+                  <Text style={{ fontFamily: "Times-Bold" }}>{t(`resumeBuilder.doc.skillCategory.${category}`, { defaultValue: category })}</Text>
                   {": "}
                   {skills.join(", ")}
                 </Text>
@@ -713,7 +718,7 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
       {personalInfo.summary && (
         <div className="mb-2">
           <h2 className="text-xs font-bold text-black mb-1 pb-0.5 border-b border-black uppercase">
-            Summary
+            {t("resumeBuilder.doc.summary", "Summary")}
           </h2>
           <p className="text-black text-[8px] leading-relaxed ml-2">
             {personalInfo.summary.substring(0, 200)}...
@@ -725,7 +730,7 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
       {personalInfo.careerObjective && (
         <div className="mb-2">
           <h2 className="text-xs font-bold text-black mb-1 pb-0.5 border-b border-black uppercase">
-            Career Objective
+            {t("resumeBuilder.doc.careerObjective", "Career Objective")}
           </h2>
           <p className="text-black text-[8px] leading-relaxed ml-2">
             {personalInfo.careerObjective.substring(0, 150)}...
@@ -737,7 +742,7 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
       {data.education.length > 0 && (
         <div className="mb-2">
           <h2 className="text-xs font-bold text-black mb-1 pb-0.5 border-b border-black uppercase">
-            Education
+            {t("resumeBuilder.doc.education", "Education")}
           </h2>
           {data.education.slice(0, 2).map((edu) => (
             <div key={edu.id} className="mb-1">
@@ -761,7 +766,7 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
               </div>
               {edu.gpa && (
                 <p className="text-black text-[8px] ml-3">
-                  {"•"} GPA: {edu.gpa}
+                  {"•"} {t("resumeBuilder.doc.gpa", { defaultValue: "GPA: {{value}}", value: edu.gpa })}
                 </p>
               )}
             </div>
@@ -773,7 +778,7 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
       {data.experience.length > 0 && (
         <div className="mb-2">
           <h2 className="text-xs font-bold text-black mb-1 pb-0.5 border-b border-black uppercase">
-            Relevant Experience
+            {t("resumeBuilder.doc.relevantExperience", "Relevant Experience")}
           </h2>
           {data.experience.slice(0, 2).map((exp) => (
             <div key={exp.id} className="mb-1">
@@ -782,7 +787,7 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                   {exp.company}
                 </span>
                 <span className="text-black text-[9px]">
-                  {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                  {exp.startDate} - {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -868,7 +873,7 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                         </div>
                         {entry.technologies && (
                           <p className="text-black text-[8px] italic">
-                            Technologies: {entry.technologies}
+                            {t("resumeBuilder.doc.technologies", { defaultValue: "Technologies: {{value}}", value: entry.technologies })}
                           </p>
                         )}
                         {entry.description && (
@@ -913,7 +918,7 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                         </span>
                         {entry.proficiency && (
                           <p className="text-black text-[8px] italic">
-                            Proficiency: {entry.proficiency}
+                            {t("resumeBuilder.doc.proficiency", { defaultValue: "Proficiency: {{value}}", value: translateProficiency(entry.proficiency) })}
                           </p>
                         )}
                       </>
@@ -932,12 +937,12 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                         </div>
                         {entry.authors && (
                           <p className="text-black text-[8px] italic">
-                            Authors: {entry.authors}
+                            {t("resumeBuilder.doc.authors", { defaultValue: "Authors: {{value}}", value: entry.authors })}
                           </p>
                         )}
                         {entry.publisher && (
                           <p className="text-black text-[8px] italic">
-                            Publisher: {entry.publisher}
+                            {t("resumeBuilder.doc.publisher", { defaultValue: "Publisher: {{value}}", value: entry.publisher })}
                           </p>
                         )}
                         {entry.description && (
@@ -1053,12 +1058,12 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                         )}
                         {entry.email && (
                           <p className="text-black text-[8px] ml-3">
-                            Email: {entry.email}
+                            {t("resumeBuilder.doc.email", { defaultValue: "Email: {{value}}", value: entry.email })}
                           </p>
                         )}
                         {entry.phone && (
                           <p className="text-black text-[8px] ml-3">
-                            Phone: {entry.phone}
+                            {t("resumeBuilder.doc.phone", { defaultValue: "Phone: {{value}}", value: entry.phone })}
                           </p>
                         )}
                       </>
@@ -1072,9 +1077,9 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
                         )}
                         {(entry.place || entry.date) && (
                           <p className="text-black text-[8px] italic mt-1 ml-2">
-                            {entry.place && `Place: ${entry.place}`}
+                            {entry.place && t("resumeBuilder.doc.place", { defaultValue: "Place: {{value}}", value: entry.place })}
                             {entry.place && entry.date && " | "}
-                            {entry.date && `Date: ${entry.date}`}
+                            {entry.date && t("resumeBuilder.doc.date", { defaultValue: "Date: {{value}}", value: entry.date })}
                           </p>
                         )}
                       </>
@@ -1119,13 +1124,13 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
       {data.skills.length > 0 && (
         <div className="mb-2">
           <h2 className="text-xs font-bold text-black mb-1 pb-0.5 border-b border-black uppercase">
-            Technical Skills
+            {t("resumeBuilder.doc.technicalSkills", "Technical Skills")}
           </h2>
           <div className="text-[8px] text-black">
             {Object.entries(skillsByCategory).map(
               ([category, skills], index) => (
                 <p key={index} className="mb-0.5">
-                  {"•"} <span className="font-bold">{category}</span>:{" "}
+                  {"•"} <span className="font-bold">{t(`resumeBuilder.doc.skillCategory.${category}`, { defaultValue: category })}</span>:{" "}
                   {skills.join(", ")}
                 </p>
               )

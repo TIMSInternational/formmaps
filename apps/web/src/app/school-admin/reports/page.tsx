@@ -148,7 +148,7 @@ export default function ReportsPage() {
       {/* Student Report Dialog */}
       <Dialog open={!!selectedStudent} onOpenChange={(open) => { if (!open) setSelectedStudent(null); }}>
         <DialogContent style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)", maxWidth: 560, padding: 0, overflow: "hidden" }}>
-          <DialogTitle className="sr-only">{selectedStudent?.name} Reports</DialogTitle>
+          <DialogTitle className="sr-only">{t("ui.reports.studentReportsTitle", { name: selectedStudent?.name })}</DialogTitle>
           {selectedStudent && <StudentReportPanel student={selectedStudent} type={activeTab} />}
         </DialogContent>
       </Dialog>

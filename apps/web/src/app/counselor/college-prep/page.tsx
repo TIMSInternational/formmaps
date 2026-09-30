@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from "next/navigation";
 import { GraduationCap, Building2, PenLine, FileCheck, Award, Trophy } from "lucide-react";
 import { CounselorTabBar } from "../_components/CounselorTabBar";
 import dynamic from "next/dynamic";
+import { useTranslation } from "react-i18next";
 
 const ApplicationsPanel = dynamic(() => import("../college-apps/page"), { ssr: false });
 const CollegeListPanel = dynamic(() => import("../college-list/page"), { ssr: false });
@@ -16,6 +17,7 @@ const ActivitiesPanel = dynamic(() => import("../activities/page"), { ssr: false
 const VALID_TABS = ["apps", "list", "essays", "documents", "scholarships", "activities"];
 
 export default function CollegePrepPage() {
+  const { t } = useTranslation("counselor");
   const searchParams = useSearchParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("apps");
@@ -34,19 +36,19 @@ export default function CollegePrepPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)" }}>College Prep</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("nav.collegePrep")}</h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-          Manage college applications, essays, documents, scholarships, and activities
+          {t("ui.collegePrep.subtitle")}
         </p>
       </div>
       <CounselorTabBar
         tabs={[
-          { key: "apps", label: "Applications", icon: GraduationCap },
-          { key: "list", label: "College List", icon: Building2 },
-          { key: "essays", label: "Essays", icon: PenLine },
-          { key: "documents", label: "Documents", icon: FileCheck },
-          { key: "scholarships", label: "Scholarships", icon: Award },
-          { key: "activities", label: "Activities", icon: Trophy },
+          { key: "apps", label: t("ui.collegePrep.tabs.applications"), icon: GraduationCap },
+          { key: "list", label: t("ui.collegePrep.tabs.collegeList"), icon: Building2 },
+          { key: "essays", label: t("ui.collegePrep.tabs.essays"), icon: PenLine },
+          { key: "documents", label: t("ui.collegePrep.tabs.documents"), icon: FileCheck },
+          { key: "scholarships", label: t("ui.collegePrep.tabs.scholarships"), icon: Award },
+          { key: "activities", label: t("ui.collegePrep.tabs.activities"), icon: Trophy },
         ]}
         activeTab={activeTab}
         onChange={handleTabChange}

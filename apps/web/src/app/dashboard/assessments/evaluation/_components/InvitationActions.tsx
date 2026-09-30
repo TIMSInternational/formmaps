@@ -41,7 +41,7 @@ export function InvitationActions({
       <div className="flex items-center flex-col sm:flex-row gap-3 justify-between">
         <div>
           <p className="text-xs font-semibold text-foreground">
-            {totalEvaluators} evaluators across {groupCount} groups
+            {t("evaluation.page.evaluatorsAcrossGroups", { count: totalEvaluators, groupCount })}
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -58,10 +58,10 @@ export function InvitationActions({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
               <DropdownMenuItem onClick={onSendAllEmails}>
-                Send to All
+                {t("evaluation.page.sendToAll")}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={onSendSpecificEmails}>
-                Send to Specific
+                {t("evaluation.page.sendToSpecific")}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

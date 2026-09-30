@@ -1,5 +1,7 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
+
 interface ScoreGaugeProps {
   score: number;
   maxScore?: number;
@@ -13,6 +15,7 @@ export function ScoreGauge({
   size = 120,
   label,
 }: ScoreGaugeProps) {
+  const { t } = useTranslation();
   const radius = (size - 12) / 2;
   const circumference = 2 * Math.PI * radius;
   const normalizedScore = Math.min(score, maxScore);
@@ -34,7 +37,11 @@ export function ScoreGauge({
 
   const statusLabel =
     label ??
-    (normalizedScore >= 7 ? "Good" : normalizedScore >= 4 ? "Fair" : "Poor");
+    (normalizedScore >= 7
+      ? t("resumeBuilder.scoreGauge.good", "Good")
+      : normalizedScore >= 4
+        ? t("resumeBuilder.scoreGauge.fair", "Fair")
+        : t("resumeBuilder.scoreGauge.poor", "Poor"));
 
   return (
     <div className="relative flex items-center justify-center" style={{ width: size, height: size }}>

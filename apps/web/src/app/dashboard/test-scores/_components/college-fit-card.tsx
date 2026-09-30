@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { GraduationCap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { CollegeFitResult, CollegeFit } from "@/services/testScoreService";
 
 interface CollegeFitCardProps {
@@ -12,12 +13,13 @@ const FIT_STYLE: Record<
   CollegeFit["fit"],
   { label: string; bg: string; text: string; border: string }
 > = {
-  reach:  { label: "Reach",  bg: "bg-red-50",    text: "text-red-700",    border: "border-red-200"    },
-  match:  { label: "Match",  bg: "bg-blue-50",   text: "text-blue-700",  border: "border-blue-200"   },
-  safety: { label: "Safety", bg: "bg-green-50",  text: "text-green-700", border: "border-green-200"  },
+  reach:  { label: "studentUi.testScores.collegeFit.reach", bg: "bg-red-50",    text: "text-red-700",    border: "border-red-200"    },
+  match:  { label: "studentUi.testScores.collegeFit.match", bg: "bg-blue-50",   text: "text-blue-700",  border: "border-blue-200"   },
+  safety: { label: "studentUi.testScores.collegeFit.safety", bg: "bg-green-50",  text: "text-green-700", border: "border-green-200"  },
 };
 
 export function CollegeFitCard({ result }: CollegeFitCardProps) {
+  const { t } = useTranslation();
   if (!result.superscore || result.colleges.length === 0) return null;
 
   return (
@@ -32,9 +34,9 @@ export function CollegeFitCard({ result }: CollegeFitCardProps) {
           <GraduationCap className="w-4 h-4 text-[var(--admin-accent-blue)]" />
         </div>
         <div>
-          <h3 className="font-semibold text-sm text-foreground">College Fit</h3>
+          <h3 className="font-semibold text-sm text-foreground">{t("studentUi.testScores.collegeFit.title")}</h3>
           <p className="text-xs text-muted-foreground">
-            Based on your SAT SuperScore of{" "}
+            {t("studentUi.testScores.collegeFit.basedOn")}{" "}
             <span className="font-semibold text-foreground">{result.superscore}</span>
           </p>
         </div>
@@ -56,13 +58,15 @@ export function CollegeFitCard({ result }: CollegeFitCardProps) {
                   {college.city}, {college.state}
                   {" · "}SAT {college.sat25}–{college.sat75}
                   {" · "}
-                  {college.acceptanceRate != null ? `${(college.acceptanceRate * 100).toFixed(0)}% admit` : "Admit rate N/A"}
+                  {college.acceptanceRate != null
+                    ? t("studentUi.testScores.collegeFit.admitRate", { rate: (college.acceptanceRate * 100).toFixed(0) })
+                    : t("studentUi.testScores.collegeFit.admitRateNA")}
                 </p>
               </div>
               <span
                 className={`ml-4 shrink-0 rounded-full px-2.5 py-0.5 text-xs font-semibold ${style.bg} ${style.text} border ${style.border}`}
               >
-                {style.label}
+                {t(style.label)}
               </span>
             </div>
           );

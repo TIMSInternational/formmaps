@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import type { LucideIcon } from "lucide-react";
 import { getPcaChartBlob } from "@/services/pcaImageService";
 
 export function PCAChartImage({ pcaCod }: { pcaCod?: string }) {
+  const { t } = useTranslation("school_admin");
   const [src, setSrc] = useState<string | null>(null);
   useEffect(() => {
     if (!pcaCod) return;
@@ -29,7 +31,7 @@ export function PCAChartImage({ pcaCod }: { pcaCod?: string }) {
   if (!src) return null;
   return (
     <div style={{ marginTop: 8 }}>
-      <img src={src} alt="PCA Chart" style={{ width: "100%", borderRadius: 6, border: "1px solid var(--admin-border-default)" }} />
+      <img src={src} alt={t("ui.studentDetail.pcaChartAlt")} style={{ width: "100%", borderRadius: 6, border: "1px solid var(--admin-border-default)" }} />
     </div>
   );
 }

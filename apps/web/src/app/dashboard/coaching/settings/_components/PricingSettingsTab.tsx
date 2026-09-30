@@ -136,7 +136,7 @@ export function PricingSettingsTab({
                 <Label htmlFor="currency" className="text-sm font-medium text-gray-700">{t("coach:settings.pricing.currency")}</Label>
                 <Select value="USD" disabled>
                   <SelectTrigger className="h-11 rounded-lg bg-gray-50/50 border-gray-200">
-                    <SelectValue placeholder="Select currency" />
+                    <SelectValue placeholder={t("studentUi.coaching.pricing.selectCurrency")} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="USD">USD ($)</SelectItem>

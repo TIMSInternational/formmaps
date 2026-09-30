@@ -30,7 +30,12 @@ jest.mock("@/store/useGlobalStore", () => ({
   useGlobalStore: () => ({ user: { id: "student-1" } }),
 }));
 jest.mock("react-i18next", () => ({
-  useTranslation: () => ({ t: (key: string) => key }),
+  useTranslation: () => ({
+    // booking.jumpTo is interpolated so the regression assertion below can read the date
+    t: (key: string, opts?: { date?: string }) =>
+      key === "booking.jumpTo" && opts?.date ? `Jump to ${opts.date}` : key,
+    i18n: { language: "en" },
+  }),
 }));
 jest.mock("sonner", () => ({
   toast: { error: jest.fn(), success: jest.fn(), loading: jest.fn() },

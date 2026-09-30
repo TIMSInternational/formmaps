@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
 import { Sparkles, Linkedin } from "lucide-react";
 import { careerFields } from "./resumeData";
+import { Trans, useTranslation } from "react-i18next";
 
 export function PersonalInfoStep() {
+  const { t } = useTranslation();
   const { resumeBuilder, updatePersonalInfo, populateWithDummyContent } =
     useGlobalStore();
   const { personalInfo, careerField } = resumeBuilder.data;
@@ -33,11 +35,13 @@ export function PersonalInfoStep() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-2">
-            Personal Information
+            {t("resumeBuilder.personalInfoStep.title", "Personal Information")}
           </h2>
           <p className="text-sm text-gray-600">
-            Start with your basic contact information and a professional
-            summary.
+            {t(
+              "resumeBuilder.personalInfoStep.subtitle",
+              "Start with your basic contact information and a professional summary."
+            )}
           </p>
         </div>
 
@@ -49,14 +53,14 @@ export function PersonalInfoStep() {
           disabled={!careerField}
         >
           <Sparkles size={16} />
-          Fill with Sample Data
+          {t("resumeBuilder.personalInfoStep.fillSample", "Fill with Sample Data")}
         </Button>
         {/* LinkedIn import removed in this flow — handled by other integration */}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
-          <Label htmlFor="fullName">Full Name *</Label>
+          <Label htmlFor="fullName">{t("resumeBuilder.personalInfoStep.fullName", "Full Name *")}</Label>
           <Input
             id="fullName"
             value={personalInfo.fullName}
@@ -67,7 +71,7 @@ export function PersonalInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="email">Email Address *</Label>
+          <Label htmlFor="email">{t("resumeBuilder.personalInfoStep.email", "Email Address *")}</Label>
           <Input
             id="email"
             type="email"
@@ -79,7 +83,7 @@ export function PersonalInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="phone">Phone Number</Label>
+          <Label htmlFor="phone">{t("resumeBuilder.personalInfoStep.phone", "Phone Number")}</Label>
           <Input
             id="phone"
             type="tel"
@@ -90,17 +94,17 @@ export function PersonalInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="location">Location</Label>
+          <Label htmlFor="location">{t("resumeBuilder.experienceStep.location", "Location")}</Label>
           <Input
             id="location"
             value={personalInfo.location}
             onChange={(e) => handleInputChange("location", e.target.value)}
-            placeholder="City, State"
+            placeholder={t("resumeBuilder.experienceEditor.locationPlaceholder", "City, State")}
           />
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="linkedin">LinkedIn Profile</Label>
+          <Label htmlFor="linkedin">{t("resumeBuilder.personalInfoStep.linkedin", "LinkedIn Profile")}</Label>
           <Input
             id="linkedin"
             value={personalInfo.linkedin}
@@ -110,7 +114,7 @@ export function PersonalInfoStep() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="website">Website/Portfolio</Label>
+          <Label htmlFor="website">{t("resumeBuilder.personalInfoStep.website", "Website/Portfolio")}</Label>
           <Input
             id="website"
             value={personalInfo.website}
@@ -121,23 +125,32 @@ export function PersonalInfoStep() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="summary">Professional Summary (Optional)</Label>
+        <Label htmlFor="summary">{t("resumeBuilder.personalInfoStep.summary", "Professional Summary (Optional)")}</Label>
         <textarea
           id="summary"
           value={personalInfo.summary}
           onChange={(e) => handleInputChange("summary", e.target.value)}
-          placeholder="A brief 2-3 sentence overview highlighting your key skills, education, and career goals. For freshers: mention your degree, relevant skills, and what type of role you're seeking..."
+          placeholder={t(
+            "resumeBuilder.personalInfoStep.summaryPlaceholder",
+            "A brief 2-3 sentence overview highlighting your key skills, education, and career goals. For students with little work experience: mention your degree, relevant skills, and what type of role you're seeking..."
+          )}
           rows={4}
           className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#2E9098] focus:border-[#2E9098]"
         />
         <div className="text-xs text-gray-500 space-y-1">
           <p>
-            <strong>Tip:</strong> Keep it concise and highlight your most
-            relevant skills.
+            <Trans
+              i18nKey="resumeBuilder.personalInfoStep.tip"
+              defaults="<0>Tip:</0> Keep it concise and highlight your most relevant skills."
+              components={[<strong key="0" />]}
+            />
           </p>
           <p>
-            <strong>For freshers:</strong> Focus on your education, skills,
-            projects, and career aspirations rather than work experience.
+            <Trans
+              i18nKey="resumeBuilder.personalInfoStep.freshers"
+              defaults="<0>No work experience yet?</0> Focus on your education, skills, projects, and career aspirations rather than work experience."
+              components={[<strong key="0" />]}
+            />
           </p>
         </div>
       </div>

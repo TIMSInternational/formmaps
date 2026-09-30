@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 import { Upload, Plug, Search, Plus, Pencil, Trash2, GraduationCap, Loader2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -23,6 +24,7 @@ function gradeColor(g: string | null): { bg: string; fg: string } {
 }
 
 export function GradebookTab() {
+  const { t } = useTranslation("school_admin");
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [importOpen, setImportOpen] = useState(false);
@@ -51,18 +53,18 @@ export function GradebookTab() {
       {/* Header */}
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, flexWrap: "wrap" }}>
         <div>
-          <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>Gradebook</h2>
-          <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>View and manage student grades. Grades feed GPA, class rankings, and graduation tracking.</p>
+          <h2 style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("academics.tabs.gradebook")}</h2>
+          <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("ui.gradebook.subtitle")}</p>
         </div>
         <div style={{ display: "flex", gap: 8 }}>
           <button onClick={() => setImportOpen(true)} style={{
             height: 36, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
             background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
-          }}><Upload style={{ width: 14, height: 14 }} /> Import CSV</button>
-          <button disabled title="iSAMS integration coming soon" style={{
+          }}><Upload style={{ width: 14, height: 14 }} /> {t("ui.gradebook.importCsv")}</button>
+          <button disabled title={t("ui.gradebook.isamsSoonTitle")} style={{
             height: 36, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
             background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", border: "1px solid var(--admin-border-default)", cursor: "not-allowed",
-          }}><Plug style={{ width: 14, height: 14 }} /> Connect iSAMS · soon</button>
+          }}><Plug style={{ width: 14, height: 14 }} /> {t("ui.gradebook.connectIsamsSoon")}</button>
         </div>
       </div>
 
@@ -71,7 +73,7 @@ export function GradebookTab() {
         <div style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
           <div style={{ padding: 10, borderBottom: "1px solid var(--admin-border-default)", position: "relative" }}>
             <Search style={{ position: "absolute", left: 18, top: 19, width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
-            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search students…" style={{
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder={t("academicGaps.search")} style={{
               width: "100%", height: 34, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)",
               color: "var(--admin-font-primary)", fontSize: 13, padding: "0 10px 0 30px",
             }} />
@@ -80,7 +82,7 @@ export function GradebookTab() {
             {studentsLoading ? (
               <div style={{ padding: 12 }}><Skeleton className="h-8 mb-2" style={{ background: "var(--admin-bg-hover)" }} /><Skeleton className="h-8 mb-2" style={{ background: "var(--admin-bg-hover)" }} /><Skeleton className="h-8" style={{ background: "var(--admin-bg-hover)" }} /></div>
             ) : students.length === 0 ? (
-              <div style={{ padding: 24, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No students found</div>
+              <div style={{ padding: 24, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("graduation.noStudents")}</div>
             ) : students.map((s) => {
               const active = s.id === selectedId;
               return (
@@ -90,7 +92,7 @@ export function GradebookTab() {
                   background: active ? "var(--admin-accent-blue)" : "transparent",
                 }}>
                   <div style={{ fontSize: 13, fontWeight: 500, color: active ? "#fff" : "var(--admin-font-primary)" }}>{s.name || s.email}</div>
-                  <div style={{ fontSize: 11, color: active ? "rgba(255,255,255,0.8)" : "var(--admin-font-tertiary)" }}>{s.gradeLevel ? `Grade ${s.gradeLevel} · ` : ""}{s.email}</div>
+                  <div style={{ fontSize: 11, color: active ? "rgba(255,255,255,0.8)" : "var(--admin-font-tertiary)" }}>{s.gradeLevel ? `${t("graduation.gradeLabel", { grade: s.gradeLevel })} · ` : ""}{s.email}</div>
                 </button>
               );
             })}
@@ -102,7 +104,7 @@ export function GradebookTab() {
           {!selectedId ? (
             <div style={{ textAlign: "center", padding: 64, borderRadius: 8, border: "1px dashed var(--admin-border-default)" }}>
               <GraduationCap style={{ width: 40, height: 40, color: "var(--admin-font-light)", margin: "0 auto 16px", opacity: 0.3 }} />
-              <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>Select a student to view and manage their grades.</p>
+              <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("ui.gradebook.selectStudent")}</p>
             </div>
           ) : gradesLoading ? (
             <Skeleton className="h-[300px]" style={{ background: "var(--admin-bg-hover)" }} />
@@ -113,25 +115,25 @@ export function GradebookTab() {
                 <div>
                   <div style={{ fontSize: 15, fontWeight: 600, color: "var(--admin-font-primary)" }}>{selected?.name || selected?.email}</div>
                   <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-                    GPA {gradebook?.gpaUnweighted?.toFixed(2) ?? "—"} · Weighted {gradebook?.gpaWeighted?.toFixed(2) ?? "—"} · {gradebook?.totalCredits ?? 0} credits
+                    {t("ui.gradebook.summary", { gpa: gradebook?.gpaUnweighted?.toFixed(2) ?? "—", weighted: gradebook?.gpaWeighted?.toFixed(2) ?? "—", credits: gradebook?.totalCredits ?? 0 })}
                   </div>
                 </div>
                 <button onClick={() => openAdd(years[0])} style={{
                   height: 34, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
                   background: "#FFD23F", color: "#111", border: "none", cursor: "pointer",
-                }}><Plus style={{ width: 14, height: 14 }} /> Add grade</button>
+                }}><Plus style={{ width: 14, height: 14 }} /> {t("ui.gradebook.addGrade")}</button>
               </div>
 
               {years.length === 0 ? (
                 <div style={{ textAlign: "center", padding: 48, borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
-                  <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>No grades yet. Add a grade or import a CSV.</p>
+                  <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("ui.gradebook.noGrades")}</p>
                 </div>
               ) : years.map((year) => (
                 <div key={year} style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
                   <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{year}</span>
                     <button onClick={() => openAdd(year)} style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-accent-blue)", background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 4 }}>
-                      <Plus style={{ width: 12, height: 12 }} /> Add
+                      <Plus style={{ width: 12, height: 12 }} /> {t("ui.gradebook.add")}
                     </button>
                   </div>
                   <div>
@@ -141,13 +143,13 @@ export function GradebookTab() {
                         <div key={g.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)" }}>
                           <span style={{ fontSize: 12, fontFamily: "monospace", color: "var(--admin-font-primary)", minWidth: 80 }}>{g.courseCode || "—"}</span>
                           <Badge style={{ fontSize: 11, background: c.bg, color: c.fg, border: "none" }}>{g.grade || "—"}</Badge>
-                          <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{Number(g.credits)} cr</span>
+                          <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.creditsAbbr", { count: Number(g.credits) })}</span>
                           {g.courseLevel && g.courseLevel !== "regular" && (
-                            <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", color: "#8b5cf6" }}>{g.courseLevel}</span>
+                            <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase", color: "#8b5cf6" }}>{t(`ui.gradebook.level.${g.courseLevel}`, { defaultValue: g.courseLevel })}</span>
                           )}
                           <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginLeft: "auto" }}>{g.semester || ""}</span>
-                          <button onClick={() => openEdit(g)} title="Edit" style={{ background: "none", border: "none", cursor: "pointer", color: "var(--admin-font-tertiary)" }}><Pencil style={{ width: 14, height: 14 }} /></button>
-                          <button onClick={() => { if (confirm("Delete this grade?")) deleteGrade.mutate(g.id); }} title="Delete" style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444" }}>
+                          <button onClick={() => openEdit(g)} title={t("common.edit")} style={{ background: "none", border: "none", cursor: "pointer", color: "var(--admin-font-tertiary)" }}><Pencil style={{ width: 14, height: 14 }} /></button>
+                          <button onClick={() => { if (confirm(t("ui.gradebook.confirmDelete"))) deleteGrade.mutate(g.id); }} title={t("common.delete")} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444" }}>
                             {deleteGrade.isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Trash2 style={{ width: 14, height: 14 }} />}
                           </button>
                         </div>
@@ -164,7 +166,7 @@ export function GradebookTab() {
       {/* Import CSV modal */}
       <Dialog open={importOpen} onOpenChange={(o) => { if (!o) setImportOpen(false); }}>
         <DialogContent style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", maxWidth: 720 }}>
-          <DialogHeader><DialogTitle style={{ color: "var(--admin-font-primary)" }}>Import grades from CSV</DialogTitle></DialogHeader>
+          <DialogHeader><DialogTitle style={{ color: "var(--admin-font-primary)" }}>{t("ui.gradebook.importFromCsv")}</DialogTitle></DialogHeader>
           <GradeImportPanel />
         </DialogContent>
       </Dialog>

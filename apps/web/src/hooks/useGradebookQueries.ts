@@ -1,5 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n";
 import {
   getStudentGradebook,
   createGrade,
@@ -123,8 +124,8 @@ export function useCreateGrade(studentId: string) {
         const year = yearKey(input.academicYear);
         return { ...current, byYear: { ...current.byYear, [year]: [...(current.byYear[year] ?? []), pending] } };
       }),
-    onError: (_err, _input, context) => { rollback(context); toast.error("Failed to add grade"); },
-    onSuccess: () => toast.success("Grade added"),
+    onError: (_err, _input, context) => { rollback(context); toast.error(i18n.t("components.hooks.gradebook.addFailed")); },
+    onSuccess: () => toast.success(i18n.t("components.hooks.gradebook.added")),
     // Reconciles the real id and the server-computed GPA either way.
     onSettled: () => invalidate(),
   });
@@ -142,8 +143,8 @@ export function useUpdateGrade(studentId: string) {
           rows.map((r) => (r.id === gradeId ? { ...r, ...input, credits: input.credits ?? r.credits } : r)),
         ),
       ),
-    onError: (_err, _vars, context) => { rollback(context); toast.error("Failed to update grade"); },
-    onSuccess: () => toast.success("Grade updated"),
+    onError: (_err, _vars, context) => { rollback(context); toast.error(i18n.t("components.hooks.gradebook.updateFailed")); },
+    onSuccess: () => toast.success(i18n.t("components.hooks.gradebook.updated")),
     onSettled: () => invalidate(),
   });
 }
@@ -156,8 +157,8 @@ export function useDeleteGrade(studentId: string) {
     mutationFn: (gradeId: string) => deleteGrade(gradeId),
     onMutate: (gradeId) =>
       optimistic((current) => patchCachedRows(current, (rows) => rows.filter((r) => r.id !== gradeId))),
-    onError: (_err, _gradeId, context) => { rollback(context); toast.error("Failed to delete grade"); },
-    onSuccess: () => toast.success("Grade deleted"),
+    onError: (_err, _gradeId, context) => { rollback(context); toast.error(i18n.t("components.hooks.gradebook.deleteFailed")); },
+    onSuccess: () => toast.success(i18n.t("components.hooks.gradebook.deleted")),
     onSettled: () => invalidate(),
   });
 }

@@ -22,7 +22,7 @@ public sealed class EmailTemplatesAuthTests
     {
         var msg = Templates().BuildPasswordReset(
             "<script>alert(1)</script>",
-            "https://app.formmaps.com/reset-password?token=abc123");
+            "https://app.formmaps.com/reset-password?token=abc123", "en");
 
         // Subject: exact legacy string (lib/email.ts:268 — em dash, "FormMaps — Password Reset").
         Assert.Equal("FormMaps — Password Reset", msg.Subject);
@@ -43,7 +43,7 @@ public sealed class EmailTemplatesAuthTests
     [Fact]
     public void AccountLocked_subject_matches_legacy_and_renders_forgotPasswordUrl_via_button()
     {
-        var msg = Templates().BuildAccountLocked("https://app.formmaps.com/forgot-password");
+        var msg = Templates().BuildAccountLocked("https://app.formmaps.com/forgot-password", "en");
 
         // Subject: exact legacy string (authService.ts:83 — "FormMaps — Account Locked").
         Assert.Equal("FormMaps — Account Locked", msg.Subject);
@@ -60,7 +60,7 @@ public sealed class EmailTemplatesAuthTests
     [Fact]
     public void PasswordChanged_subject_matches_legacy_and_escapes_userName_selfService()
     {
-        var msg = Templates().BuildPasswordChanged("<b>Pat</b> & Co", changedByAdmin: false);
+        var msg = Templates().BuildPasswordChanged("<b>Pat</b> & Co", changedByAdmin: false, language: "en");
 
         // Subject: exact legacy string (authService.ts:225 — "FormMaps — Password Changed").
         Assert.Equal("FormMaps — Password Changed", msg.Subject);
@@ -80,7 +80,7 @@ public sealed class EmailTemplatesAuthTests
     [Fact]
     public void PasswordChanged_admin_action_uses_admin_phrasing()
     {
-        var msg = Templates().BuildPasswordChanged("Pat", changedByAdmin: true);
+        var msg = Templates().BuildPasswordChanged("Pat", changedByAdmin: true, language: "en");
 
         Assert.Contains("changed by an administrator", msg.Html);
         Assert.DoesNotContain("successfully updated", msg.Html);

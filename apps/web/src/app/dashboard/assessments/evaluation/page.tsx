@@ -96,7 +96,7 @@ export default function EvaluatorsPage() {
           className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-6 transition-colors"
         >
           <ArrowLeft className="w-3 h-3" />
-          Assessments
+          {t("dashboard.assessments")}
         </Link>
 
         <motion.div
@@ -109,10 +109,10 @@ export default function EvaluatorsPage() {
           </div>
 
           <h1 className="text-xl font-bold text-foreground mb-2">
-            Complete Your Self-Evaluation First
+            {t("evaluation.page.gateTitle")}
           </h1>
           <p className="text-sm text-muted-foreground mb-6 leading-relaxed max-w-sm mx-auto">
-            Before inviting others to evaluate you, start by evaluating yourself. This helps establish a baseline for comparison.
+            {t("evaluation.page.gateBody")}
           </p>
 
           <button
@@ -121,7 +121,7 @@ export default function EvaluatorsPage() {
             className="w-full bg-[#102B47] text-white py-3 px-6 rounded-lg hover:bg-[#0b1f33] transition-colors font-medium flex items-center justify-center gap-2 disabled:opacity-60"
           >
             {starting ? (
-              <><Loader2 className="w-4 h-4 animate-spin" /> Starting...</>
+              <><Loader2 className="w-4 h-4 animate-spin" /> {t("evaluation.page.starting")}</>
             ) : (
               <>{t("evaluation.page.startSelf")} <ArrowRight className="w-4 h-4" /></>
             )}
@@ -138,7 +138,7 @@ export default function EvaluatorsPage() {
         className="text-xs font-medium text-muted-foreground hover:text-foreground flex items-center gap-1 mb-4 transition-colors"
       >
         <ArrowLeft className="w-3 h-3" />
-        Assessments
+        {t("dashboard.assessments")}
       </Link>
 
       <motion.div
@@ -148,7 +148,7 @@ export default function EvaluatorsPage() {
       >
         <div className="flex items-center gap-3 mb-1">
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            360° Evaluation
+            {t("dashboard.evaluationTitle")}
           </h1>
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200">
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
@@ -156,7 +156,7 @@ export default function EvaluatorsPage() {
           </div>
         </div>
         <p className="text-sm text-muted-foreground mt-1 max-w-md">
-          Now invite evaluators from different groups to get comprehensive feedback.
+          {t("evaluation.page.intro")}
         </p>
       </motion.div>
 
@@ -222,26 +222,26 @@ export default function EvaluatorsPage() {
         <InvitationSelectorDialog
           open={showEmailSelector}
           onOpenChange={setShowEmailSelector}
-          title="Select Evaluators for Email"
-          description="Choose which evaluators to send email invitations to:"
+          title={t("evaluation.page.emailSelectorTitle")}
+          description={t("evaluation.page.emailSelectorDescription")}
           apiEvaluators={apiEvaluators}
           selectedIds={selectedEvaluatorsForEmail}
           onSelectedIdsChange={setSelectedEvaluatorsForEmail}
           onSend={handleSendEmailInvitations}
-          sendLabel="Send Emails"
+          sendLabel={t("evaluation.page.sendEmails")}
           checkboxColor="blue"
         />
 
         <InvitationSelectorDialog
           open={showSMSSelector}
           onOpenChange={setShowSMSSelector}
-          title="Select Evaluators for SMS"
-          description="Choose which evaluators to send SMS invitations to:"
+          title={t("evaluation.page.smsSelectorTitle")}
+          description={t("evaluation.page.smsSelectorDescription")}
           apiEvaluators={apiEvaluators}
           selectedIds={selectedEvaluatorsForSMS}
           onSelectedIdsChange={setSelectedEvaluatorsForSMS}
           onSend={handleSendSMSInvitations}
-          sendLabel="Send SMS"
+          sendLabel={t("evaluation.page.sendSms")}
           checkboxColor="emerald"
         />
       </div>

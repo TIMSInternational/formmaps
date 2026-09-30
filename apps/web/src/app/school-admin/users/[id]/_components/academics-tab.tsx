@@ -1,5 +1,6 @@
 "use client";
 
+import { useTranslation } from "react-i18next";
 import {
   AlertCircle,
   AlertTriangle,
@@ -41,6 +42,7 @@ export function AcademicsTab({
   adminAdd,
   adminRemove,
 }: AcademicsTabProps) {
+  const { t } = useTranslation("school_admin");
   return (
     <div className="space-y-4">
       {/* Pending change requests */}
@@ -55,13 +57,13 @@ export function AcademicsTab({
           }}>
             <AlertCircle style={{ width: 16, height: 16, color: "#f59e0b" }} />
             <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-              Action Required: Course Requests
+              {t("ui.studentDetail.courseRequestsTitle")}
             </span>
             <span style={{
               fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
               background: "rgba(245,158,11,0.15)", color: "#f59e0b", marginLeft: 4,
             }}>
-              {pendingRequests.length} pending
+              {t("ui.studentDetail.pendingCount", { count: pendingRequests.length })}
             </span>
           </div>
           <div style={{ padding: 16 }} className="space-y-3">
@@ -79,13 +81,13 @@ export function AcademicsTab({
                       background: req.action === 'add' ? "rgba(16,185,129,0.1)" : "rgba(239,68,68,0.1)",
                       color: req.action === 'add' ? "#10b981" : "#ef4444",
                     }}>
-                      {req.action === "add" ? "Enrollment Request" : "Drop Request"}
+                      {req.action === "add" ? t("ui.studentDetail.enrollmentRequest") : t("ui.studentDetail.dropRequest")}
                     </span>
                     <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{req.courseName}</span>
                   </div>
                   <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
                     <span style={{ fontSize: 10, padding: "1px 4px", borderRadius: 3, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>{req.courseCode}</span>
-                    <span style={{ fontSize: 10, padding: "1px 4px", borderRadius: 3, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>Grade {req.gradeLevel}</span>
+                    <span style={{ fontSize: 10, padding: "1px 4px", borderRadius: 3, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>{t("graduation.gradeLabel", { grade: req.gradeLevel })}</span>
                     <span style={{ fontSize: 10, padding: "1px 4px", borderRadius: 3, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)" }}>{req.semester}</span>
                   </div>
                   {req.studentNote && (
@@ -109,7 +111,7 @@ export function AcademicsTab({
                     }}
                   >
                     <CheckCircle2 style={{ width: 12, height: 12 }} />
-                    Approve
+                    {t("ui.studentDetail.approve")}
                   </button>
                   <button
                     disabled={reviewRequest.isPending}
@@ -124,7 +126,7 @@ export function AcademicsTab({
                     }}
                   >
                     <XCircle style={{ width: 12, height: 12 }} />
-                    Deny
+                    {t("ui.studentDetail.deny")}
                   </button>
                 </div>
               </div>
@@ -136,13 +138,13 @@ export function AcademicsTab({
       {/* Academic Gaps */}
       {gapsData && gapsData.creditGaps && gapsData.creditGaps.length > 0 && (
         <Card>
-          <CardHeader icon={AlertTriangle} color="#ef4444" title="Academic Gaps" badge={
+          <CardHeader icon={AlertTriangle} color="#ef4444" title={t("academics.tabs.gaps")} badge={
             <span style={{ fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
               background: gapsData.overallStatus === "on_track" ? "rgba(16,185,129,0.1)" : gapsData.overallStatus === "at_risk" ? "rgba(245,158,11,0.1)" : "rgba(239,68,68,0.1)",
               color: gapsData.overallStatus === "on_track" ? "#10b981" : gapsData.overallStatus === "at_risk" ? "#f59e0b" : "#ef4444",
               marginLeft: 4, textTransform: "uppercase",
             }}>
-              {gapsData.overallStatus?.replace("_", " ")}
+              {gapsData.overallStatus === "on_track" ? t("academicGaps.stats.onTrack") : gapsData.overallStatus === "at_risk" ? t("academicGaps.stats.atRisk") : gapsData.overallStatus === "off_track" ? t("academicGaps.stats.offTrack") : gapsData.overallStatus?.replace("_", " ")}
             </span>
           } />
           <div style={{ padding: 16 }} className="space-y-2">
@@ -154,7 +156,7 @@ export function AcademicsTab({
                 <div>
                   <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{gap.category}</span>
                   <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginLeft: 8 }}>
-                    {gap.creditsEarned}/{gap.creditsRequired} credits
+                    {t("ui.studentDetail.creditsOf", { earned: gap.creditsEarned, required: gap.creditsRequired })}
                   </span>
                 </div>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -166,7 +168,7 @@ export function AcademicsTab({
                     background: gap.severity === "critical" ? "rgba(239,68,68,0.1)" : gap.severity === "warning" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
                     color: gap.severity === "critical" ? "#ef4444" : gap.severity === "warning" ? "#f59e0b" : "var(--admin-accent-blue)",
                   }}>
-                    {gap.severity}
+                    {t(`ui.studentDetail.severity.${gap.severity}`, { defaultValue: gap.severity })}
                   </span>
                 </div>
               </div>
@@ -178,11 +180,11 @@ export function AcademicsTab({
       {/* Course Recommendations */}
       {recsData && ((recsData.nextSemester?.length ?? 0) > 0 || (recsData.longTerm?.length ?? 0) > 0) && (
         <Card>
-          <CardHeader icon={Lightbulb} color="#f59e0b" title="Course Recommendations" />
+          <CardHeader icon={Lightbulb} color="#f59e0b" title={t("ui.studentDetail.courseRecs")} />
           <div style={{ padding: 16 }} className="space-y-4">
             {recsData.nextSemester && recsData.nextSemester.length > 0 && (
               <div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>Next Semester</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>{t("ui.studentDetail.nextSemester")}</div>
                 <div className="space-y-2">
                   {recsData.nextSemester.map((rec: any) => (
                     <div key={rec.courseId || rec.courseCode} style={{
@@ -195,13 +197,13 @@ export function AcademicsTab({
                         <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{rec.reason}</div>
                       </div>
                       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                        <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{rec.credits} cr</span>
+                        <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.creditsAbbr", { count: Number(rec.credits) })}</span>
                         <span style={{
                           fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, textTransform: "uppercase",
                           background: rec.priority === "high" ? "rgba(239,68,68,0.1)" : rec.priority === "medium" ? "rgba(245,158,11,0.1)" : "rgba(59,130,246,0.1)",
                           color: rec.priority === "high" ? "#ef4444" : rec.priority === "medium" ? "#f59e0b" : "var(--admin-accent-blue)",
                         }}>
-                          {rec.priority}
+                          {t(`ui.alerts.priority.${rec.priority}`, { defaultValue: rec.priority })}
                         </span>
                       </div>
                     </div>
@@ -211,7 +213,7 @@ export function AcademicsTab({
             )}
             {recsData.longTerm && recsData.longTerm.length > 0 && (
               <div>
-                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>Long-Term Plan</div>
+                <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>{t("ui.studentDetail.longTermPlan")}</div>
                 <div className="space-y-2">
                   {recsData.longTerm.map((rec: any) => (
                     <div key={rec.courseId || rec.courseCode} style={{
@@ -220,7 +222,7 @@ export function AcademicsTab({
                     }}>
                       <div>
                         <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{rec.courseName}</span>
-                        <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginLeft: 6 }}>{rec.courseCode} | {rec.credits} cr</span>
+                        <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginLeft: 6 }}>{rec.courseCode} | {t("ui.courses.creditsAbbr", { count: Number(rec.credits) })}</span>
                       </div>
                       <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", maxWidth: 200, textAlign: "right" }}>{rec.reason}</span>
                     </div>
@@ -235,7 +237,7 @@ export function AcademicsTab({
       {/* Transcript */}
       {transcriptData?.byYear && Object.keys(transcriptData.byYear).length > 0 && (
         <Card>
-          <CardHeader icon={FileText} color="var(--admin-accent-blue)" title="Transcript" />
+          <CardHeader icon={FileText} color="var(--admin-accent-blue)" title={t("ui.studentDetail.transcript")} />
           <div style={{ padding: 16 }} className="space-y-4">
             {Object.entries(transcriptData.byYear).sort(([a], [b]) => b.localeCompare(a)).map(([year, courses]) => (
               <div key={year}>
@@ -245,16 +247,16 @@ export function AcademicsTab({
                 <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto auto", gap: "4px 12px", fontSize: 11 }}>
                   {courses.map((c) => (
                     <div key={c.id} style={{ display: "contents" }}>
-                      <span style={{ color: "var(--admin-font-primary)", fontWeight: 500 }}>{c.courseCode || "N/A"}</span>
-                      <span style={{ color: "var(--admin-font-tertiary)" }}>{c.credits} cr</span>
-                      <span style={{ color: "var(--admin-font-tertiary)", textTransform: "capitalize" }}>{c.courseLevel || "regular"}</span>
+                      <span style={{ color: "var(--admin-font-primary)", fontWeight: 500 }}>{c.courseCode || t("ui.studentDetail.na")}</span>
+                      <span style={{ color: "var(--admin-font-tertiary)" }}>{t("ui.courses.creditsAbbr", { count: Number(c.credits) })}</span>
+                      <span style={{ color: "var(--admin-font-tertiary)", textTransform: "capitalize" }}>{t(`ui.gradebook.level.${c.courseLevel || "regular"}`, { defaultValue: c.courseLevel || "regular" })}</span>
                       <span style={{
                         fontWeight: 600,
                         color: c.grade === "A" || c.grade === "A+" || c.grade === "A-" ? "#10b981" :
                           c.grade === "B" || c.grade === "B+" || c.grade === "B-" ? "var(--admin-accent-blue)" :
                           c.grade === "F" ? "#ef4444" : "var(--admin-font-primary)",
                       }}>
-                        {c.grade || (c.status === "in_progress" ? "IP" : "\u2014")}
+                        {c.grade || (c.status === "in_progress" ? t("ui.studentDetail.inProgressAbbr") : "\u2014")}
                       </span>
                     </div>
                   ))}

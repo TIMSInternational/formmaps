@@ -5,6 +5,8 @@
  * and "No test scores yet" does NOT.
  * When they resolve with empty data → empty state renders and the error does NOT.
  */
+// Real i18next (English) so assertions read the rendered copy, not raw keys.
+import "@/lib/i18n";
 import React from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 

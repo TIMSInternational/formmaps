@@ -85,7 +85,7 @@ export function CoursesPanel() {
     // `description` is deliberately NOT required — 72 of those 128 have none, so it is
     // genuinely optional and demanding it would be inventing a rule the data disagrees with.
     if (!form.code.trim() || !form.name.trim() || !form.department.trim()) {
-      toast.error("Code, name and department are required");
+      toast.error(t("school_admin:ui.courses.requiredFields"));
       return;
     }
     const gradeLevels = form.gradeLevelsString.split(",").map(s => parseInt(s.trim(), 10)).filter(n => !isNaN(n) && n > 0);
@@ -93,8 +93,8 @@ export function CoursesPanel() {
     const corequisites = form.corequisitesString.split(",").map(s => s.trim()).filter(Boolean);
     const { prerequisitesString, corequisitesString, gradeLevelsString, ...payload } = form;
     createCourse.mutate({ ...payload, prerequisites, corequisites, gradeLevels: gradeLevels.length ? gradeLevels : [9] }, {
-      onSuccess: () => { toast.success("Course created"); setAddOpen(false); },
-      onError: () => toast.error("Failed"),
+      onSuccess: () => { toast.success(t("school_admin:ui.courses.created")); setAddOpen(false); },
+      onError: () => toast.error(t("school_admin:ui.courses.createFailed")),
     });
   };
 
@@ -104,7 +104,7 @@ export function CoursesPanel() {
     if (!file) return;
     const text = await file.text();
     const lines = text.split(/\r?\n/).filter(Boolean);
-    if (lines.length < 2) { toast.error("CSV has no data rows"); return; }
+    if (lines.length < 2) { toast.error(t("school_admin:ui.courses.csvNoRows")); return; }
     const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
     const col = (name: string) => headers.indexOf(name);
     let success = 0, failed = 0;
@@ -133,7 +133,7 @@ export function CoursesPanel() {
     }
     setCsvImporting(false);
     queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
-    toast.success(`Imported ${success}, failed ${failed}`);
+    toast.success(t("school_admin:ui.courses.csvImported", { success, failed }));
   };
 
   const handleAiImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -141,7 +141,7 @@ export function CoursesPanel() {
     if (aiFileRef.current) aiFileRef.current.value = "";
     if (!file) return;
     const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) { toast.error("File too large (max 5MB)"); return; }
+    if (file.size > maxSize) { toast.error(t("school_admin:ui.courses.fileTooLarge")); return; }
     setAiImporting(true);
     try {
       const { apiRequest } = await import("@/lib/api/apiClient");
@@ -153,12 +153,12 @@ export function CoursesPanel() {
       const result = res.data ?? res;
       if (result.courses?.length > 0) {
         setAiReview(result);
-        toast.success(`Found ${result.courses.length} courses`);
+        toast.success(t("school_admin:ui.courses.foundCourses", { count: result.courses.length }));
       } else {
-        toast.error("No courses found in the document");
+        toast.error(t("school_admin:ui.courses.noneInDocument"));
       }
     } catch (err: unknown) {
-      const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || "Failed to process document";
+      const message = (err as { response?: { data?: { message?: string } }; message?: string })?.response?.data?.message || (err as { message?: string })?.message || t("school_admin:ui.courses.processFailed");
       toast.error(message);
     } finally { setAiImporting(false); }
   };
@@ -182,7 +182,7 @@ export function CoursesPanel() {
             background: "var(--admin-bg-icon-box)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)", cursor: "pointer",
           }}>
             {csvImporting ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Upload style={{ width: 14, height: 14 }} />}
-            {csvImporting ? "Importing..." : "CSV Import"}
+            {csvImporting ? t("school_admin:ui.courses.importing") : t("school_admin:ui.courses.csvImport")}
           </button>
           <button onClick={() => aiFileRef.current?.click()} disabled={aiImporting} style={{
             height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
@@ -190,33 +190,33 @@ export function CoursesPanel() {
             opacity: aiImporting ? 0.7 : 1,
           }}>
             {aiImporting ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Sparkles style={{ width: 14, height: 14 }} />}
-            {aiImporting ? "Processing..." : "AI Import"}
+            {aiImporting ? t("school_admin:ui.courses.processing") : t("school_admin:ui.courses.aiImport")}
           </button>
           <button onClick={() => setPrereqDialogOpen(true)} style={{
             height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6,
             background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
           }}>
             <Network style={{ width: 14, height: 14 }} />
-            Analyze prerequisites
+            {t("school_admin:ui.courses.analyzePrereqs")}
           </button>
           <Dialog open={addOpen} onOpenChange={setAddOpen}>
             <DialogTrigger asChild>
               <button style={{ height: 32, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "var(--admin-accent-blue)", color: "#fff", border: "none", cursor: "pointer" }}>
-                <Plus style={{ width: 14, height: 14 }} /> Add Course
+                <Plus style={{ width: 14, height: 14 }} /> {t("school_admin:ui.courses.addCourse")}
               </button>
             </DialogTrigger>
             <DialogContent style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}>
-              <DialogHeader><DialogTitle style={{ color: "var(--admin-font-primary)" }}>Add Course</DialogTitle></DialogHeader>
+              <DialogHeader><DialogTitle style={{ color: "var(--admin-font-primary)" }}>{t("school_admin:ui.courses.addCourse")}</DialogTitle></DialogHeader>
               <div className="space-y-3 max-h-[60vh] overflow-y-auto py-2">
                 <div className="grid grid-cols-2 gap-3">
-                  <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Code *</Label><Input style={inputStyle} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="MATH-101" /></div>
-                  <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Credits</Label><Input type="number" min={0} style={inputStyle} value={form.credits} onChange={(e) => setForm({ ...form, credits: Number(e.target.value) })} /></div>
+                  <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.courses.codeRequired")}</Label><Input style={inputStyle} value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="MATH-101" /></div>
+                  <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.courses.credits")}</Label><Input type="number" min={0} style={inputStyle} value={form.credits} onChange={(e) => setForm({ ...form, credits: Number(e.target.value) })} /></div>
                 </div>
-                <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Name *</Label><Input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder="Introduction to Algebra" /></div>
+                <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.courses.nameRequired")}</Label><Input style={inputStyle} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} placeholder={t("school_admin:ui.courses.namePlaceholder")} /></div>
                 {/* Optional, and stays optional: 72 of 128 production courses have no
                     description. The placeholder is there so the field reads as "skippable",
                     not "blank because you forgot". */}
-                <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Description</Label><Input style={inputStyle} value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder="Optional — what the course covers" /></div>
+                <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.courses.description")}</Label><Input style={inputStyle} value={form.description || ""} onChange={(e) => setForm({ ...form, description: e.target.value })} placeholder={t("school_admin:ui.courses.descriptionOptional")} /></div>
                 <div className="grid grid-cols-2 gap-3">
                   {/* Required — NOT NULL in the schema, and a grouping key for the
                       Departments card, the department filter and the pathway views. The
@@ -224,23 +224,23 @@ export function CoursesPanel() {
                       get typed alongside "Mathematics" and quietly split one department in
                       two; it stays a free-text input because a school adding its first
                       department must still be able to. */}
-                  <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Department *</Label>
-                    <Input style={inputStyle} list="course-department-options" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder={depts[0] ? `e.g. ${depts[0]}` : "e.g. Mathematics"} />
+                  <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.courses.departmentRequired")}</Label>
+                    <Input style={inputStyle} list="course-department-options" value={form.department} onChange={(e) => setForm({ ...form, department: e.target.value })} placeholder={depts[0] ? t("school_admin:ui.courses.departmentExample", { example: depts[0] }) : t("school_admin:ui.courses.departmentExampleDefault")} />
                     <datalist id="course-department-options">{depts.map((d) => <option key={d} value={d} />)}</datalist>
                   </div>
-                  <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Grade Levels</Label><Input style={inputStyle} value={form.gradeLevelsString} onChange={(e) => setForm({ ...form, gradeLevelsString: e.target.value })} placeholder="9, 10, 11" /></div>
+                  <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.courses.gradeLevels")}</Label><Input style={inputStyle} value={form.gradeLevelsString} onChange={(e) => setForm({ ...form, gradeLevelsString: e.target.value })} placeholder="9, 10, 11" /></div>
                 </div>
-                <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Framework</Label>
+                <div className="space-y-1"><Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("school_admin:ui.courses.framework")}</Label>
                   <Select value={form.frameworkType || "NONE"} onValueChange={(v) => setForm({ ...form, frameworkType: v === "NONE" ? undefined : v as FrameworkType })}>
                     <SelectTrigger style={inputStyle}><SelectValue /></SelectTrigger>
-                    <SelectContent><SelectItem value="NONE">None</SelectItem><SelectItem value="AP">AP</SelectItem><SelectItem value="IB">IB</SelectItem><SelectItem value="NATIONAL">National</SelectItem><SelectItem value="CUSTOM">Custom</SelectItem></SelectContent>
+                    <SelectContent><SelectItem value="NONE">{t("school_admin:ui.courses.frameworkNone")}</SelectItem><SelectItem value="AP">AP</SelectItem><SelectItem value="IB">IB</SelectItem><SelectItem value="NATIONAL">{t("school_admin:ui.courses.frameworkNational")}</SelectItem><SelectItem value="CUSTOM">{t("school_admin:ui.courses.frameworkCustom")}</SelectItem></SelectContent>
                   </Select>
                 </div>
               </div>
               <DialogFooter>
-                <Button variant="outline" onClick={() => setAddOpen(false)} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>Cancel</Button>
+                <Button variant="outline" onClick={() => setAddOpen(false)} style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}>{t("school_admin:common.cancel")}</Button>
                 <button onClick={handleCreate} disabled={createCourse.isPending} style={{ height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600, background: "var(--admin-accent-blue)", color: "#fff", border: "none", cursor: "pointer" }}>
-                  {createCourse.isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : "Create"}
+                  {createCourse.isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : t("school_admin:ui.courses.create")}
                 </button>
               </DialogFooter>
             </DialogContent>
@@ -250,19 +250,19 @@ export function CoursesPanel() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-        <AdminStatCard label="Total Courses" value={String(data?.total || 0)} icon={BookOpen} sub="in catalog" trend={0} />
-        <AdminStatCard label="Departments" value={String(depts.length)} icon={BookOpen} sub="unique departments" trend={0} />
-        <AdminStatCard label="Page" value={`${page} / ${totalPages}`} icon={BookOpen} sub="current view" />
+        <AdminStatCard label={t("school_admin:ui.courses.totalCourses")} value={String(data?.total || 0)} icon={BookOpen} sub={t("school_admin:ui.courses.inCatalog")} trend={0} />
+        <AdminStatCard label={t("school_admin:ui.courses.departments")} value={String(depts.length)} icon={BookOpen} sub={t("school_admin:ui.courses.uniqueDepartments")} trend={0} />
+        <AdminStatCard label={t("school_admin:ui.courses.page")} value={`${page} / ${totalPages}`} icon={BookOpen} sub={t("school_admin:ui.courses.currentView")} />
       </div>
 
       {/* Filters */}
       <div className="flex gap-3">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4" style={{ color: "var(--admin-font-light)" }} />
-          <Input placeholder="Search courses..." className="pl-9 h-9 rounded-lg text-sm" style={inputStyle}
+          <Input placeholder={t("school_admin:ui.courses.searchCourses")} className="pl-9 h-9 rounded-lg text-sm" style={inputStyle}
             value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} />
         </div>
-        <Input placeholder="Filter department" className="w-[180px] h-9 rounded-lg text-sm" style={inputStyle}
+        <Input placeholder={t("school_admin:ui.courses.filterDepartment")} className="w-[180px] h-9 rounded-lg text-sm" style={inputStyle}
           value={department} onChange={(e) => { setDepartment(e.target.value); setPage(1); }} />
       </div>
 
@@ -271,7 +271,7 @@ export function CoursesPanel() {
         <Table>
           <TableHeader>
             <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
-              {["Code", "Name", "Department", "Credits", "Framework", "Status", ""].map((h) => (
+              {[t("school_admin:ui.courses.code"), t("school_admin:ui.courses.name"), t("school_admin:ui.courses.department"), t("school_admin:ui.courses.credits"), t("school_admin:ui.courses.framework"), t("school_admin:ui.courses.status.header"), ""].map((h) => (
                 <TableHead key={h} className="py-3 px-4" style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)" }}>{h}</TableHead>
               ))}
             </TableRow>
@@ -279,7 +279,7 @@ export function CoursesPanel() {
           <TableBody>
             {courses.length === 0 ? (
               <TableRow><TableCell colSpan={7} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
-                <BookOpen className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} /><p className="text-sm">No courses found</p>
+                <BookOpen className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} /><p className="text-sm">{t("courses.noCoursesFound")}</p>
               </TableCell></TableRow>
             ) : courses.map((c) => (
               <TableRow key={c.id} style={{ borderBottom: "1px solid var(--admin-border-default)", cursor: "pointer" }} className="transition-colors"
@@ -297,10 +297,10 @@ export function CoursesPanel() {
                   {c.frameworkType ? <Badge className="text-xs" style={{ background: "rgba(59,130,246,0.1)", color: "var(--admin-accent-blue)", border: "none" }}>{c.frameworkType}</Badge> : <span style={{ color: "var(--admin-font-tertiary)" }}>{"\u2014"}</span>}
                 </TableCell>
                 <TableCell className="py-3 px-4">
-                  <Badge className="text-xs font-medium shadow-none border-0" style={{ background: c.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(107,114,128,0.1)", color: c.status === "active" ? "#10b981" : "#6b7280" }}>{c.status || "active"}</Badge>
+                  <Badge className="text-xs font-medium shadow-none border-0" style={{ background: c.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(107,114,128,0.1)", color: c.status === "active" ? "#10b981" : "#6b7280" }}>{t(`school_admin:ui.courses.status.${c.status || "active"}`, { defaultValue: c.status || "active" })}</Badge>
                 </TableCell>
                 <TableCell className="py-3 px-4">
-                  <button onClick={(e) => { e.stopPropagation(); deleteCourse.mutate(c.id, { onSuccess: () => toast.success("Deleted") }); }} style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "1px solid var(--admin-border-default)", color: "#ef4444", cursor: "pointer" }}>
+                  <button onClick={(e) => { e.stopPropagation(); deleteCourse.mutate(c.id, { onSuccess: () => toast.success(t("school_admin:ui.courses.deleted")) }); }} style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "1px solid var(--admin-border-default)", color: "#ef4444", cursor: "pointer" }}>
                     <Trash2 style={{ width: 12, height: 12 }} />
                   </button>
                 </TableCell>
@@ -311,7 +311,7 @@ export function CoursesPanel() {
 
         {data && data.totalPages > 1 && (
           <div className="flex items-center justify-between p-3" style={{ borderTop: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)" }}>
-            <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>{((page-1)*20)+1}–{Math.min(page*20, data.total)} of {data.total}</p>
+            <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>{t("school_admin:ui.common.rangeOf", { from: ((page-1)*20)+1, to: Math.min(page*20, data.total), total: data.total })}</p>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md" disabled={page <= 1} onClick={() => setPage(p => p - 1)}
                 style={{ borderColor: "var(--admin-border-default)", color: "var(--admin-font-light)" }}><ChevronLeft className="h-4 w-4" /></Button>

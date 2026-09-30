@@ -38,20 +38,31 @@ public sealed record VocationalIntegratedRead(
     public string Status => "ready";
 }
 
-/// <summary>Instrument catalog dimension (legacy InstrumentDimensionDto). weight is a JSON number; scaleAnchors passes through.</summary>
+/// <summary>
+/// Instrument catalog dimension (legacy InstrumentDimensionDto). weight is a JSON number; scaleAnchors passes
+/// through; scaleAnchorsEn is the English set (same length/order) or JSON null when not translated.
+/// </summary>
 public sealed record InstrumentDimensionDto(
-    string Key, string NameEs, string? NameEn, double Weight, JsonElement ScaleAnchors, int Order);
+    string Key, string NameEs, string? NameEn, double Weight, JsonElement ScaleAnchors, JsonElement ScaleAnchorsEn, int Order);
 
-/// <summary>Active instrument catalog (legacy InstrumentDto) — groupWeights/integrationWeights/interpretationBands pass through as jsonb.</summary>
+/// <summary>
+/// Active instrument catalog (legacy InstrumentDto) — groupWeights/integrationWeights/interpretationBands pass
+/// through as jsonb; nameEn is the English instrument name (null when not translated).
+/// </summary>
 public sealed record InstrumentDto(
     string Version,
     string Name,
     JsonElement GroupWeights,
     JsonElement IntegrationWeights,
     JsonElement InterpretationBands,
-    IReadOnlyList<InstrumentDimensionDto> Dimensions);
+    IReadOnlyList<InstrumentDimensionDto> Dimensions,
+    string? NameEn = null);
 
-/// <summary>One rendered questionnaire item for a rater group (legacy QuestionnaireItem).</summary>
+/// <summary>
+/// One rendered questionnaire item for a rater group (legacy QuestionnaireItem), already resolved for the
+/// requested language (<see cref="VocationalLanguage"/>): Text and ScaleAnchors are English or Spanish, and
+/// each option keeps value/labelEs/labelEn plus a resolved <c>label</c>.
+/// </summary>
 public sealed record QuestionnaireItem(
     int Number,
     string Block,
@@ -76,6 +87,10 @@ public interface IVocationalReader
     /// <summary>Legacy getInstrument: the active instrument + its active dimensions (order asc); null when none active.</summary>
     Task<InstrumentDto?> GetInstrumentAsync(RequestContext context, CancellationToken cancellationToken = default);
 
-    /// <summary>Legacy getQuestionnaire: the active questions for a rater group (the group is validated by the caller).</summary>
-    Task<IReadOnlyList<QuestionnaireItem>> GetQuestionnaireAsync(RequestContext context, string group, CancellationToken cancellationToken = default);
+    /// <summary>
+    /// Legacy getQuestionnaire: the active questions for a rater group (the group is validated by the caller),
+    /// resolved for <paramref name="lang"/> ("es" | "en"; English falls back to Spanish per field).
+    /// </summary>
+    Task<IReadOnlyList<QuestionnaireItem>> GetQuestionnaireAsync(
+        RequestContext context, string group, string lang = VocationalLanguage.Spanish, CancellationToken cancellationToken = default);
 }

@@ -2,12 +2,14 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getRecommendations, type VocationalRecommendations } from "@/services/vocationalReportService";
 
 const CARD = "bg-white rounded-xl shadow-sm border border-gray-100 p-5";
 
 export function RecommendationsPanel({ evaluatedUserId }: { evaluatedUserId: string }) {
+  const { t } = useTranslation();
   const [data, setData] = useState<VocationalRecommendations | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -21,21 +23,21 @@ export function RecommendationsPanel({ evaluatedUserId }: { evaluatedUserId: str
   useEffect(() => { load(); }, [load]);
 
   if (loading) return <Skeleton className="h-48 rounded-xl" />;
-  if (error || !data) return <div className={CARD}><p className="text-sm text-gray-500">Couldn&apos;t load recommendations.</p></div>;
+  if (error || !data) return <div className={CARD}><p className="text-sm text-gray-500">{t("evaluation.vocational.report.recommendationsLoadError")}</p></div>;
   if (data.locked) {
-    return <div className={CARD}><p className="text-sm font-semibold text-gray-900 mb-1">Recommendations</p>
-      <p className="text-sm text-gray-500">Complete all three assessments (360, PCA, MIL) to see your career recommendations.</p></div>;
+    return <div className={CARD}><p className="text-sm font-semibold text-gray-900 mb-1">{t("evaluation.vocational.report.recommendations")}</p>
+      <p className="text-sm text-gray-500">{t("evaluation.vocational.report.recommendationsLocked")}</p></div>;
   }
 
   const { guidance, careerMatches, industries } = data;
   return (
     <div className={CARD}>
-      <p className="text-sm font-semibold text-gray-900 mb-3">Recommendations</p>
+      <p className="text-sm font-semibold text-gray-900 mb-3">{t("evaluation.vocational.report.recommendations")}</p>
       <p className="text-sm text-gray-700 mb-4">{guidance.summary}</p>
 
       {guidance.recommendedPaths.length > 0 && (
         <div className="mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Suggested directions</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{t("evaluation.vocational.report.suggestedDirections")}</p>
           <ul className="space-y-2">
             {guidance.recommendedPaths.map((p, i) => (
               <li key={i} className="text-sm text-gray-700"><span className="font-medium">{p.title}</span> — {p.why}</li>
@@ -46,18 +48,18 @@ export function RecommendationsPanel({ evaluatedUserId }: { evaluatedUserId: str
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Strengths</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{t("evaluation.vocational.report.strengths")}</p>
           <ul className="space-y-1">{guidance.strengths.map((s, i) => <li key={i} className="text-sm text-gray-700">{s}</li>)}{guidance.strengths.length === 0 && <li className="text-sm text-gray-400">—</li>}</ul>
         </div>
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Growth areas</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{t("evaluation.vocational.report.growthAreas")}</p>
           <ul className="space-y-1">{guidance.growthAreas.map((s, i) => <li key={i} className="text-sm text-gray-700">{s}</li>)}{guidance.growthAreas.length === 0 && <li className="text-sm text-gray-400">—</li>}</ul>
         </div>
       </div>
 
       {careerMatches.length > 0 && (
         <div className="mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Top career matches</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{t("evaluation.vocational.report.topCareerMatches")}</p>
           <ul className="space-y-1">
             {careerMatches.map((c) => (
               <li key={c.programId} className="flex items-center justify-between text-sm">
@@ -70,17 +72,17 @@ export function RecommendationsPanel({ evaluatedUserId }: { evaluatedUserId: str
       )}
 
       {industries.length > 0 && (
-        <p className="text-sm text-gray-700 mb-4"><span className="font-medium">Industries to explore:</span> {industries.slice(0, 5).map((i) => i.value).join(", ")}</p>
+        <p className="text-sm text-gray-700 mb-4"><span className="font-medium">{t("evaluation.vocational.report.industriesToExplore")}</span> {industries.slice(0, 5).map((i) => i.value).join(", ")}</p>
       )}
 
       {guidance.nextSteps.length > 0 && (
         <div className="mb-4">
-          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">Next steps</p>
+          <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 mb-2">{t("evaluation.vocational.report.nextSteps")}</p>
           <ul className="space-y-1 list-disc list-inside">{guidance.nextSteps.map((s, i) => <li key={i} className="text-sm text-gray-700">{s}</li>)}</ul>
         </div>
       )}
 
-      <Link href="/dashboard/university" className="text-sm font-medium" style={{ color: "var(--admin-accent-blue)" }}>Explore matching universities →</Link>
+      <Link href="/dashboard/university" className="text-sm font-medium" style={{ color: "var(--admin-accent-blue)" }}>{t("evaluation.vocational.report.exploreUniversities")}</Link>
     </div>
   );
 }

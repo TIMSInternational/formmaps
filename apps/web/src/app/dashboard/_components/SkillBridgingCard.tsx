@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { AlertTriangle, CheckCircle2, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface BridgingGap {
   skill: string;
@@ -24,6 +25,7 @@ function parseBridgingReason(reason: string): {
 }
 
 export function SkillBridgingCard({ className }: { className?: string }) {
+  const { t } = useTranslation();
   const { data: timsData, isLoading, hasAssessments } = useTimsCareerScoring();
 
   const gaps = useMemo<BridgingGap[]>(() => {
@@ -72,17 +74,17 @@ export function SkillBridgingCard({ className }: { className?: string }) {
   return (
     <Card className={cn("p-6 flex flex-col rounded-2xl border-border", className)}>
       <h2 className="text-lg font-semibold text-foreground mb-4">
-        Skills to Develop
+        {t("studentUi.dashboard.skillBridging.title")}
       </h2>
 
       {gaps.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center py-6">
           <CheckCircle2 className="w-10 h-10 text-emerald-500 mb-3" />
           <p className="text-sm font-medium text-emerald-700">
-            You&apos;re on track!
+            {t("studentUi.dashboard.skillBridging.onTrack")}
           </p>
           <p className="text-xs text-slate-500 mt-1">
-            No skill gaps detected in your top matches.
+            {t("studentUi.dashboard.skillBridging.noGaps")}
           </p>
         </div>
       ) : (
@@ -114,7 +116,7 @@ export function SkillBridgingCard({ className }: { className?: string }) {
           href="/dashboard/career-paths"
           className="inline-flex items-center gap-1 text-xs font-medium text-[var(--admin-accent-blue)] hover:text-[var(--admin-accent-blue)]/80 mt-4"
         >
-          See all <ArrowRight className="w-3 h-3" />
+          {t("studentUi.dashboard.skillBridging.seeAll")} <ArrowRight className="w-3 h-3" />
         </Link>
       )}
     </Card>

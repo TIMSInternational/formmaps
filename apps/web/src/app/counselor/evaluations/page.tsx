@@ -32,7 +32,7 @@ export default function CounselorEvaluationsPage() {
         const data = res?.data ?? [];
         setStudents(data);
       } catch {
-        toast.error("Failed to load evaluation data");
+        toast.error(t("ui.evaluations.loadFailed"));
       } finally {
         setLoading(false);
       }
@@ -186,16 +186,16 @@ export default function CounselorEvaluationsPage() {
                   {cfg.label}
                 </span>
                 <div style={{ display: "flex", gap: 4 }} onClick={(e) => e.stopPropagation()}>
-                  <button title="Resend invitation emails" onClick={async () => {
+                  <button title={t("ui.evaluations.resendInvitationEmails")} onClick={async () => {
                     try {
                       await apiRequest(`/evaluation/send-email-invitations/${s.studentId}`, { method: "POST" });
-                      toast.success(`Invitations resent for ${s.name}`);
-                    } catch { toast.error("Failed to resend"); }
+                      toast.success(t("ui.evaluations.invitationsResentFor", { name: s.name }));
+                    } catch { toast.error(t("ui.evaluations.resendFailed")); }
                   }}
                     style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Send style={{ width: 12, height: 12, color: "var(--admin-font-tertiary)" }} />
                   </button>
-                  <Link href={`/counselor/evaluations/${s.studentId}/report`} title="View vocational report"
+                  <Link href={`/counselor/evaluations/${s.studentId}/report`} title={t("ui.evaluations.viewVocationalReport")}
                     style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "transparent", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <FileText style={{ width: 12, height: 12, color: "var(--admin-font-tertiary)" }} />
                   </Link>

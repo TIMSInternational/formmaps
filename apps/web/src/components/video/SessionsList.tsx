@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { Video, Clock, CalendarClock, Trash2 } from "lucide-react";
 import { formatTime, formatScheduledTime, formatDuration, getInitials } from "./VideoHelpers";
 import type { VideoSession } from "@/services/videoService";
@@ -24,8 +25,9 @@ export function SessionsList({
   onJoinActive,
   onStartScheduled,
   onCancelScheduled,
-  emptyHint = 'Click "New Call" to start or schedule a 1:1 video call.',
+  emptyHint,
 }: SessionsListProps) {
+  const { t } = useTranslation();
   const activeSessions = sessions.filter((s) => s.status === "video_active");
   const scheduledSessions = sessions
     .filter((s) => s.status === "scheduled")
@@ -38,7 +40,7 @@ export function SessionsList({
       {scheduledSessions.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>
           <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)", marginBottom: 8 }}>
-            Upcoming Calls
+            {t("components.sessionsList.upcoming")}
           </div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {scheduledSessions.map((s) => {
@@ -60,19 +62,19 @@ export function SessionsList({
                     {isReady && onStartScheduled && (
                       <button onClick={() => onStartScheduled(s.id)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 6, background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "inherit" }}>
                         <Video style={{ width: 14, height: 14 }} />
-                        Start
+                        {t("common.start")}
                       </button>
                     )}
                     {isReady && !onStartScheduled && (
                       <button onClick={() => onJoinActive(s.id)} style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 6, background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", fontSize: 12, fontWeight: 600, border: "none", cursor: "pointer", fontFamily: "inherit" }}>
                         <Video style={{ width: 14, height: 14 }} />
-                        Join
+                        {t("components.sessionsList.join")}
                       </button>
                     )}
                     {onCancelScheduled && (
                       <button onClick={() => onCancelScheduled(s.id)} style={{ display: "flex", alignItems: "center", gap: 4, padding: "6px 10px", borderRadius: 6, background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)", fontSize: 12, fontWeight: 500, border: "1px solid var(--admin-border-default)", cursor: "pointer", fontFamily: "inherit" }}>
                         <Trash2 style={{ width: 12, height: 12 }} />
-                        Cancel
+                        {t("common.cancel")}
                       </button>
                     )}
                   </div>
@@ -86,7 +88,7 @@ export function SessionsList({
       {/* Active Sessions */}
       {activeSessions.length > 0 && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)", marginBottom: 8 }}>Active Now</div>
+          <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)", marginBottom: 8 }}>{t("components.sessionsList.activeNow")}</div>
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             {activeSessions.map((s) => {
               const other = s.caller?.id === userId ? s.participant : s.caller;
@@ -102,10 +104,10 @@ export function SessionsList({
                     <div style={{ fontSize: 14, fontWeight: 600 }}>{other?.name}</div>
                     <div style={{ fontSize: 12, color: "#22c55e", marginTop: 2, display: "flex", alignItems: "center", gap: 4 }}>
                       <span style={{ width: 6, height: 6, borderRadius: 3, background: "#22c55e", display: "inline-block" }} />
-                      In progress · {formatTime(s.startTime)}
+                      {t("components.sessionsList.inProgress")} · {formatTime(s.startTime)}
                     </div>
                   </div>
-                  <div style={{ padding: "6px 14px", borderRadius: 6, background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", fontSize: 12, fontWeight: 600 }}>Rejoin</div>
+                  <div style={{ padding: "6px 14px", borderRadius: 6, background: "linear-gradient(135deg, #22c55e, #16a34a)", color: "#fff", fontSize: 12, fontWeight: 600 }}>{t("components.sessionsList.rejoin")}</div>
                 </button>
               );
             })}
@@ -116,15 +118,15 @@ export function SessionsList({
       {/* Past Sessions */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
         <div style={{ fontSize: 12, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)", marginBottom: 8 }}>
-          {activeSessions.length > 0 || scheduledSessions.length > 0 ? "Recent Calls" : "Call History"}
+          {activeSessions.length > 0 || scheduledSessions.length > 0 ? t("components.sessionsList.recent") : t("components.sessionsList.history")}
         </div>
         {pastSessions.length === 0 && activeSessions.length === 0 && scheduledSessions.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: 48, gap: 12, borderRadius: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
             <div style={{ width: 56, height: 56, borderRadius: 28, background: "var(--admin-bg-hover)", display: "flex", alignItems: "center", justifyContent: "center" }}>
               <Video style={{ width: 24, height: 24, color: "var(--admin-font-light)" }} />
             </div>
-            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>No video calls yet</p>
-            <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", textAlign: "center" }}>{emptyHint}</p>
+            <p style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("components.sessionsList.emptyTitle")}</p>
+            <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", textAlign: "center" }}>{emptyHint ?? t("components.sessionsList.emptyHint")}</p>
           </div>
         ) : (
           <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>

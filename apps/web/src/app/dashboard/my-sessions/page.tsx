@@ -13,6 +13,7 @@ import {
   User,
 } from "lucide-react";
 import { format } from "date-fns";
+import { es, enUS } from "date-fns/locale";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -31,7 +32,7 @@ import {
 } from "./_components/session-modals";
 
 export default function MySessionsPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [sessions, setSessions] = useState<Session[]>([]);
   const [counselorSessions, setCounselorSessions] = useState<CounselorSession[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,18 +72,19 @@ export default function MySessionsPage() {
       const formattedSessions = rawSessions.map((session: RawSession) => {
         const startTime = session.startTime || session.slot?.start;
         const endTime = session.endTime || session.slot?.end;
-        let date = "TBD", time = "TBD", duration = "1 hour";
+        const dateLocale = i18n.language?.startsWith("es") ? es : enUS;
+        let date = t("studentUi.sessions.counselor.tbd"), time = t("studentUi.sessions.counselor.tbd"), duration = t("studentUi.sessions.oneHour");
 
         if (startTime) {
           try {
             const startDate = new Date(startTime);
-            date = format(startDate, "EEE, MMM d, yyyy");
-            time = format(startDate, "h:mm a");
+            date = format(startDate, "EEE, PP", { locale: dateLocale });
+            time = format(startDate, "p", { locale: dateLocale });
             if (endTime) {
               const endDate = new Date(endTime);
               const diff = (endDate.getTime() - startDate.getTime()) / (1000 * 60);
               duration = `${Math.round(diff)} min`;
-              time = `${time} - ${format(endDate, "h:mm a")}`;
+              time = `${time} - ${format(endDate, "p", { locale: dateLocale })}`;
             }
           } catch {
             // error handled silently
@@ -136,7 +138,7 @@ export default function MySessionsPage() {
       setRescheduleCoach(coachData);
       setBookingModalOpen(true);
     } catch {
-      toast.error("Failed to load coach information");
+      toast.error(t("studentUi.sessions.coachLoadError"));
     }
   };
 
@@ -191,11 +193,11 @@ export default function MySessionsPage() {
     if (!selectedCounselorSession) return;
     try {
       await cancelCounselorSession(selectedCounselorSession.id, counselorCancelReason);
-      toast.success("Session cancelled");
+      toast.success(t("sessions.messages.cancelSuccess"));
       setCancelCounselorOpen(false);
       fetchCounselorSessions();
     } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : "Failed to cancel session");
+      toast.error(e instanceof Error ? e.message : t("sessions.messages.failedToCancel"));
     }
   };
 

@@ -81,7 +81,7 @@ export function ActiveCoursePlan({ courseData }: ActiveCoursePlanProps) {
                 {t("dashboard.activeCourse")}
               </span>
             </div>
-            <Link href="/dashboard/learning" className="text-slate-400 hover:text-slate-900 transition-colors p-1" aria-label="Go to learning">
+            <Link href="/dashboard/learning" className="text-slate-400 hover:text-slate-900 transition-colors p-1" aria-label={t("studentUi.dashboard.goToLearning")}>
               <DotsThree weight="bold" className="w-5 h-5" />
             </Link>
           </div>

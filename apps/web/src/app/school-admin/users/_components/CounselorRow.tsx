@@ -22,6 +22,7 @@ import {
   ArrowRightLeft, ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAssignStudents, useUnassignStudents, useCounselorStudents } from "@/hooks/useSchoolProfileQueries";
 import { useStudents } from "@/hooks/useSchoolAdmin";
@@ -49,6 +50,7 @@ export function CounselorRow({
   globalAssignedIds,
   onReportAssigned,
 }: CounselorRowProps) {
+  const { t } = useTranslation("school_admin");
   const router = useRouter();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
@@ -96,13 +98,13 @@ export function CounselorRow({
       { counselorId: counselor.id, payload: { studentIds: Array.from(selected) } },
       {
         onSuccess: () => {
-          toast.success(`${selected.size} student(s) successfully assigned.`);
+          toast.success(t("ui.caseload.assigned", { count: selected.size }));
           setAssignOpen(false);
           setSelected(new Set());
           setSearch("");
           setGradeFilter("all");
         },
-        onError: () => toast.error("Failed to assign students. Please try again."),
+        onError: () => toast.error(t("ui.caseload.assignFailed")),
       }
     );
   };
@@ -111,8 +113,8 @@ export function CounselorRow({
     unassign.mutate(
       { counselorId: counselor.id, payload: { studentIds: [studentId] } },
       {
-        onSuccess: () => toast.success("Student removed from caseload."),
-        onError: () => toast.error("Failed to remove student."),
+        onSuccess: () => toast.success(t("ui.caseload.removed")),
+        onError: () => toast.error(t("ui.caseload.removeFailed")),
       }
     );
   };
@@ -167,14 +169,14 @@ export function CounselorRow({
             background: "rgba(99,102,241,0.1)", color: "var(--admin-accent-blue)",
             textTransform: "capitalize",
           }}>
-            {(counselor.role || "counselor").replace('_', ' ')}
+            {t(`ui.caseload.role.${counselor.role || "counselor"}`, { defaultValue: (counselor.role || "counselor").replace("_", " ") })}
           </span>
         </TableCell>
         <TableCell>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
             <Users style={{ width: 14, height: 14, color: "var(--admin-font-tertiary)" }} />
             <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{caseloadCount}</span>
-            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>students</span>
+            <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.caseload.studentsUnit", { count: caseloadCount })}</span>
           </div>
         </TableCell>
         <TableCell className="text-right pr-4" onClick={(e) => e.stopPropagation()}>
@@ -190,7 +192,7 @@ export function CounselorRow({
               cursor: "pointer",
             }}
           >
-            <Plus style={{ width: 12, height: 12 }} /> Manage Students
+            <Plus style={{ width: 12, height: 12 }} /> {t("ui.caseload.manageStudents")}
           </button>
         </TableCell>
       </TableRow>
@@ -202,7 +204,7 @@ export function CounselorRow({
             <div style={{ padding: "16px 16px 16px 56px" }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 10, display: "flex", alignItems: "center", gap: 6 }}>
                 <UserCheck style={{ width: 14, height: 14, color: "var(--admin-accent-blue)" }} />
-                Current Caseload ({caseloadCount} students)
+                {t("ui.caseload.currentCaseload", { count: caseloadCount })}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
                 {loadingAssigned ? (
@@ -232,14 +234,14 @@ export function CounselorRow({
                             <ExternalLink style={{ width: 10, height: 10, flexShrink: 0, opacity: 0 }} className="group-hover:opacity-100 transition-opacity" />
                           </div>
                           <div style={{ display: "flex", gap: 4, fontSize: 10, color: "var(--admin-font-tertiary)" }}>
-                            {s.gradeLevel && <span>Grade {s.gradeLevel}</span>}
+                            {s.gradeLevel && <span>{t("graduation.gradeLabel", { grade: s.gradeLevel })}</span>}
                             {s.status && (
                               <span style={{
                                 padding: "0 4px", borderRadius: 2,
                                 background: s.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(107,114,128,0.1)",
                                 color: s.status === "active" ? "#10b981" : "#6b7280",
                               }}>
-                                {s.status}
+                                {t(`users.status.${s.status}`, { defaultValue: s.status })}
                               </span>
                             )}
                           </div>
@@ -248,14 +250,14 @@ export function CounselorRow({
                       <div style={{ display: "flex", gap: 2, flexShrink: 0 }} className="opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => setReassignStudent(s)}
-                          title="Reassign to another counselor"
+                          title={t("ui.caseload.reassignTitle")}
                           style={{ width: 24, height: 24, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer" }}
                         >
                           <ArrowRightLeft style={{ width: 12, height: 12, color: "var(--admin-accent-blue)" }} />
                         </button>
                         <button
                           onClick={() => handleUnassign(s.id)}
-                          title="Remove from caseload"
+                          title={t("ui.caseload.removeTitle")}
                           style={{ width: 24, height: 24, borderRadius: 4, display: "flex", alignItems: "center", justifyContent: "center", background: "transparent", border: "none", cursor: "pointer" }}
                         >
                           <Trash2 style={{ width: 12, height: 12, color: "#ef4444" }} />
@@ -266,8 +268,8 @@ export function CounselorRow({
                 ) : (
                   <div className="col-span-full" style={{ textAlign: "center", padding: "24px 0" }}>
                     <Users style={{ width: 20, height: 20, color: "var(--admin-font-tertiary)", margin: "0 auto 6px", opacity: 0.4 }} />
-                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>No students assigned yet</div>
-                    <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>Click &quot;Manage Students&quot; to assign students.</div>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.caseload.noneAssigned")}</div>
+                    <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{t("ui.caseload.noneAssignedHelp")}</div>
                   </div>
                 )}
               </div>
@@ -283,10 +285,10 @@ export function CounselorRow({
             <DialogHeader>
               <DialogTitle style={{ fontSize: 16, fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
                 <UserCheck style={{ width: 18, height: 18, color: "var(--admin-accent-blue)" }} />
-                Assign Students to {counselor.name}
+                {t("ui.caseload.assignTo", { name: counselor.name })}
               </DialogTitle>
               <DialogDescription style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-                Filter and select multiple students to efficiently build the caseload.
+                {t("ui.caseload.assignHelp")}
               </DialogDescription>
             </DialogHeader>
           </div>
@@ -297,7 +299,7 @@ export function CounselorRow({
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: "var(--admin-font-tertiary)" }} />
                 <Input
-                  placeholder="Search available students by name..."
+                  placeholder={t("ui.caseload.searchAvailable")}
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-9 h-9 text-xs"
@@ -312,9 +314,9 @@ export function CounselorRow({
                   value={gradeFilter}
                   onChange={(e) => setGradeFilter(e.target.value)}
                 >
-                  <option value="all">All Grades</option>
+                  <option value="all">{t("ui.caseload.allGrades")}</option>
                   {uniqueGrades.map(g => (
-                    <option key={g} value={g}>Grade {g}</option>
+                    <option key={g} value={g}>{t("graduation.gradeLabel", { grade: g })}</option>
                   ))}
                 </select>
               </div>
@@ -328,13 +330,13 @@ export function CounselorRow({
                   className={`h-4 w-4 ${isSomeVisibleSelected && !isAllVisibleSelected ? "opacity-60" : ""}`}
                   onCheckedChange={(checked) => toggleSelectAll(checked === true)}
                 />
-                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Select All</span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.prereqAnalysis.selectAll")}</span>
               </label>
               <span style={{
                 fontSize: 11, fontWeight: 600, padding: "2px 8px", borderRadius: 4,
                 background: "rgba(59,130,246,0.1)", color: "var(--admin-accent-blue)",
               }}>
-                {selected.size} total selected
+                {t("ui.caseload.totalSelected", { count: selected.size })}
               </span>
             </div>
 
@@ -347,11 +349,11 @@ export function CounselorRow({
               {availableStudents.length === 0 ? (
                 <div style={{ textAlign: "center", padding: "40px 16px" }}>
                   <Search style={{ width: 24, height: 24, color: "var(--admin-font-tertiary)", margin: "0 auto 10px", opacity: 0.4 }} />
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>No students found</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("graduation.noStudents")}</div>
                   <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", maxWidth: 280, margin: "4px auto 0" }}>
                     {search || gradeFilter !== "all"
-                      ? "Try adjusting your search query or grade filters."
-                      : "All available students have already been assigned."}
+                      ? t("ui.caseload.adjustFilters")
+                      : t("ui.caseload.allAssigned")}
                   </div>
                 </div>
               ) : (
@@ -385,14 +387,14 @@ export function CounselorRow({
                     </div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{s.name}</div>
-                      <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{s.email || "No email provided"}</div>
+                      <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{s.email || t("ui.caseload.noEmail")}</div>
                     </div>
                     {s.gradeLevel && (
                       <span style={{
                         fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 3,
                         background: "var(--admin-bg-hover)", color: "var(--admin-font-tertiary)",
                       }}>
-                        Grade {s.gradeLevel}
+                        {t("graduation.gradeLabel", { grade: s.gradeLevel })}
                       </span>
                     )}
                   </label>
@@ -411,7 +413,7 @@ export function CounselorRow({
                 border: "1px solid var(--admin-border-default)", cursor: "pointer",
               }}
             >
-              Cancel
+              {t("common.cancel")}
             </button>
             <button
               onClick={handleAssign}
@@ -426,7 +428,7 @@ export function CounselorRow({
               }}
             >
               {assign.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              Confirm Assignments {selected.size > 0 ? `(${selected.size})` : ""}
+              {t("ui.caseload.confirmAssignments")} {selected.size > 0 ? `(${selected.size})` : ""}
             </button>
           </div>
         </DialogContent>

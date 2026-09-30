@@ -6,6 +6,8 @@ import { cn } from '@/lib/utils';
 import { Loader2, FileText, X } from 'lucide-react';
 import { LivePreviewPDF } from './LivePreviewPDF';
 import { TemplateRenderer } from './TemplateRenderer';
+import { useTranslation } from 'react-i18next';
+import i18n from '@/lib/i18n';
 
 // PDF Error Boundary Component for LivePreview
 class PDFErrorBoundary extends React.Component<
@@ -33,15 +35,15 @@ class PDFErrorBoundary extends React.Component<
             <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-3">
               <X size={24} className="text-red-600" />
             </div>
-            <h3 className="text-sm font-medium text-gray-900 mb-2">PDF Preview Error</h3>
+            <h3 className="text-sm font-medium text-gray-900 mb-2">{i18n.t("resumeBuilder.livePreview.errorTitle", "PDF Preview Error")}</h3>
             <p className="text-xs text-gray-600 mb-3">
-              There was an issue rendering the PDF preview. Your data is safe.
+              {i18n.t("resumeBuilder.livePreview.errorBody", "There was an issue rendering the PDF preview. Your data is safe.")}
             </p>
             <button
               onClick={() => this.setState({ hasError: false })}
               className="bg-[#2E9098] hover:bg-[#2E9098]/90 text-white px-3 py-1 rounded text-xs font-medium transition-colors"
             >
-              Try Again
+              {i18n.t("resumeBuilder.livePreview.tryAgain", "Try Again")}
             </button>
           </div>
         </div>
@@ -72,6 +74,7 @@ function useDebounce<T>(value: T, delay: number): T {
 type ReactPDFModule = Awaited<typeof import('@react-pdf/renderer')>;
 
 export function LivePreview() {
+  const { t } = useTranslation();
   const { resumeBuilder } = useGlobalStore();
   const { data } = resumeBuilder;
   
@@ -101,11 +104,11 @@ export function LivePreview() {
         setPdfComponents(reactPdf);
         setLoadingPDF(false);
       }).catch((error) => {
-        setPdfError('Failed to load PDF components. Please try again.');
+        setPdfError(t("resumeBuilder.livePreview.loadFailed", "Failed to load PDF components. Please try again."));
         setLoadingPDF(false);
       });
     }
-  }, [pdfComponents, isClient]);
+  }, [pdfComponents, isClient, t]);
 
   // Create PDF document based on selected template - memoized to prevent unnecessary re-renders
   const renderPDFTemplate = useMemo(() => {
@@ -247,7 +250,7 @@ export function LivePreview() {
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.name}>
-              {personalInfo.fullName || 'Your Name'}
+              {personalInfo.fullName || t("resumeBuilder.livePreview.yourName", "Your Name")}
             </Text>
             <Text style={styles.contact}>
               {personalInfo.phone && `${personalInfo.phone} | `}
@@ -262,7 +265,7 @@ export function LivePreview() {
           {/* Summary */}
           {personalInfo.summary && (
             <View>
-              <Text style={styles.sectionTitle}>Summary</Text>
+              <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.summary", "Summary")}</Text>
               <Text style={styles.text}>{personalInfo.summary}</Text>
             </View>
           )}
@@ -270,7 +273,7 @@ export function LivePreview() {
           {/* Experience */}
           {experience.length > 0 && (
             <View>
-              <Text style={styles.sectionTitle}>Experience</Text>
+              <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.experience", "Experience")}</Text>
               {experience.map((exp, index) => (
                 <View key={index} style={{ marginBottom: 8 }}>
                   <View style={styles.experienceHeader}>
@@ -280,7 +283,7 @@ export function LivePreview() {
                     </View>
                     <View>
                       <Text style={styles.date}>
-                        {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
+                        {exp.startDate} - {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate}
                       </Text>
                       <Text style={styles.location}>{exp.location}</Text>
                     </View>
@@ -298,7 +301,7 @@ export function LivePreview() {
           {/* Education */}
           {education.length > 0 && (
             <View>
-              <Text style={styles.sectionTitle}>Education</Text>
+              <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.education", "Education")}</Text>
               {education.map((edu, index) => (
                 <View key={index} style={{ marginBottom: 6 }}>
                   <View style={styles.educationHeader}>
@@ -312,7 +315,7 @@ export function LivePreview() {
                     </View>
                   </View>
                   {edu.gpa && (
-                    <Text style={styles.text}>GPA: {edu.gpa}</Text>
+                    <Text style={styles.text}>{t("resumeBuilder.doc.gpa", { defaultValue: "GPA: {{value}}", value: edu.gpa })}</Text>
                   )}
                 </View>
               ))}
@@ -322,7 +325,7 @@ export function LivePreview() {
           {/* Skills */}
           {skills && skills.length > 0 && (
             <View>
-              <Text style={styles.sectionTitle}>Skills</Text>
+              <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.skills", "Skills")}</Text>
               <View style={styles.skillsContainer}>
                 {skills.map((skill, index) => (
                   <Text key={skill.id || `skill-${index}`} style={styles.skill}>
@@ -338,7 +341,7 @@ export function LivePreview() {
     } catch (error) {
       return null;
     }
-  }, [pdfComponents, personalInfo, experience, education, skills]); // Dependencies for memoization
+  }, [pdfComponents, personalInfo, experience, education, skills, t]); // Dependencies for memoization
 
   return (
     <motion.div
@@ -359,7 +362,7 @@ export function LivePreview() {
           <div className="flex items-center justify-center h-96">
             <div className="text-center">
               <Loader2 size={48} className="animate-spin text-[#2E9098] mx-auto mb-4" />
-              <p className="text-gray-600">Loading preview...</p>
+              <p className="text-gray-600">{t("resumeBuilder.livePreview.loading", "Loading preview...")}</p>
             </div>
           </div>
         ) : (
@@ -374,7 +377,7 @@ export function LivePreview() {
               >
                 <div className="text-center">
                   <Loader2 size={32} className="animate-spin text-[#2E9098] mx-auto mb-2" />
-                  <p className="text-sm text-gray-600">Updating preview...</p>
+                  <p className="text-sm text-gray-600">{t("resumeBuilder.livePreview.updating", "Updating preview...")}</p>
                 </div>
               </motion.div>
             )}

@@ -34,6 +34,26 @@ public class VocationalTakeEndpointsTests
         Assert.False(data.GetProperty("isEvaluationCompleted").GetBoolean());
     }
 
+    [Theory]
+    [InlineData("", "es")]            // no ?lang → Spanish, exactly as before
+    [InlineData("?lang=es", "es")]
+    [InlineData("?lang=en", "en")]
+    [InlineData("?lang=EN-us", "en")]
+    [InlineData("?lang=fr", "es")]    // unknown → Spanish
+    public async Task GetForm_passes_the_normalized_lang_and_echoes_it(string query, string expected)
+    {
+        var fake = new FakeService
+        {
+            FormResult = new VocationalFormResult(VocationalFormStatus.Ok, "teacher", "v1", "Rater", "Stu", Array.Empty<QuestionnaireItem>()),
+        };
+        using var client = new Factory(fake).CreateClient();
+        var response = await client.GetAsync("/evaluation/vocational/tok" + query);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(expected, fake.LastLang);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal(expected, doc.RootElement.GetProperty("data").GetProperty("lang").GetString());
+    }
+
     [Fact]
     public async Task GetForm_completed_short_circuits()
     {
@@ -156,8 +176,14 @@ public class VocationalTakeEndpointsTests
 
         public ViolationsResult ViolationsResult { get; init; } = new(true, 1, 1);
 
-        public Task<VocationalFormResult> GetFormAsync(string token, CancellationToken cancellationToken = default) =>
-            Task.FromResult(FormResult);
+        public string? LastLang { get; private set; }
+
+        public Task<VocationalFormResult> GetFormAsync(
+            string token, string lang = VocationalLanguage.Spanish, CancellationToken cancellationToken = default)
+        {
+            LastLang = lang;
+            return Task.FromResult(FormResult with { Lang = FormResult.Status == VocationalFormStatus.Ok ? lang : null });
+        }
 
         public Task<VocationalSubmitResult> SubmitAsync(string token, IReadOnlyList<VocationalAnswerInput> answers, CancellationToken cancellationToken = default) =>
             Task.FromResult(SubmitResult);

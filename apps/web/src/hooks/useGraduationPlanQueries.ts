@@ -2,6 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n";
 import {
   getGraduationTarget,
   setGraduationTarget,
@@ -53,19 +54,20 @@ export const graduationPlanKeys = {
     [...graduationPlanKeys.all, "child", studentId] as const,
 };
 
+/** Error code → i18n key; resolved at call time so the toast follows the UI language. */
 const PLAN_ERROR_COPY: Record<string, string> = {
-  NO_TARGET: "Pick a graduation goal first.",
-  NO_SCHOOL: "Graduation plans need a school account.",
-  NO_CURRENT_YEAR: "Your school hasn't opened the current academic year yet.",
-  NO_RULESET: "Your school hasn't published its graduation requirements yet.",
-  NO_CATALOG: "Your school hasn't published its course catalog yet.",
-  PLAN_PROPOSED: "Your plan is already with your counselor — regenerating will replace it.",
-  NO_DRAFT: "There's no draft plan to act on.",
+  NO_TARGET: "components.hooks.graduationPlan.errors.noTarget",
+  NO_SCHOOL: "components.hooks.graduationPlan.errors.noSchool",
+  NO_CURRENT_YEAR: "components.hooks.graduationPlan.errors.noCurrentYear",
+  NO_RULESET: "components.hooks.graduationPlan.errors.noRuleset",
+  NO_CATALOG: "components.hooks.graduationPlan.errors.noCatalog",
+  PLAN_PROPOSED: "components.hooks.graduationPlan.errors.planProposed",
+  NO_DRAFT: "components.hooks.graduationPlan.errors.noDraft",
 };
 
 function planErrorMessage(err: unknown, fallback: string): string {
   const code = getPlanErrorCode(err);
-  return (code && PLAN_ERROR_COPY[code]) || fallback;
+  return (code && PLAN_ERROR_COPY[code] && i18n.t(PLAN_ERROR_COPY[code])) || fallback;
 }
 
 // ─── Student ─────────────────────────────────────────────────────────────────
@@ -125,10 +127,10 @@ export function useSetGraduationTarget() {
       qc.invalidateQueries({ queryKey: graduationPlanKeys.supplemental() });
     },
 
-    onSuccess: () => toast.success("Graduation goal saved"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.graduationPlan.goalSaved")),
     onError: (_err, _payload, context) => {
       optimistic.rollback(context);
-      toast.error("Failed to save your goal");
+      toast.error(i18n.t("components.hooks.graduationPlan.goalSaveFailed"));
     },
   });
 }
@@ -147,13 +149,13 @@ export function useGenerateGraduationPlan() {
     mutationFn: (opts?: { force?: boolean }) => generateGraduationPlan(opts),
     onSuccess: (result) => {
       if (isLockedResult(result)) {
-        toast.info("Complete your assessments to unlock plan generation");
+        toast.info(i18n.t("components.hooks.graduationPlan.completeAssessments"));
         return;
       }
       qc.invalidateQueries({ queryKey: graduationPlanKeys.all });
-      toast.success("Draft plan generated");
+      toast.success(i18n.t("components.hooks.graduationPlan.draftGenerated"));
     },
-    onError: (err) => toast.error(planErrorMessage(err, "Failed to generate a plan")),
+    onError: (err) => toast.error(planErrorMessage(err, i18n.t("components.hooks.graduationPlan.generateFailed"))),
   });
 }
 
@@ -188,10 +190,10 @@ export function useSubmitGraduationPlan() {
       qc.invalidateQueries({ queryKey: graduationPlanKeys.myPlan() });
     },
 
-    onSuccess: () => toast.success("Plan sent to your counselor for review"),
+    onSuccess: () => toast.success(i18n.t("coursePlan.toasts.planSubmitted")),
     onError: (err, _vars, context) => {
       optimistic.rollback(context);
-      toast.error(planErrorMessage(err, "Failed to submit your plan"));
+      toast.error(planErrorMessage(err, i18n.t("components.hooks.graduationPlan.submitFailed")));
     },
   });
 }
@@ -229,10 +231,10 @@ export function useDiscardGraduationDraft() {
       qc.invalidateQueries({ queryKey: graduationPlanKeys.myPlan() });
     },
 
-    onSuccess: () => toast.success("Draft discarded"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.graduationPlan.draftDiscarded")),
     onError: (_err, _vars, context) => {
       optimistic.rollback(context);
-      toast.error("Failed to discard the draft");
+      toast.error(i18n.t("components.hooks.graduationPlan.discardFailed"));
     },
   });
 }
@@ -266,9 +268,9 @@ export function useCounselorGeneratePlan(studentId: string) {
       counselorGenerateGraduationPlan(studentId, opts),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: graduationPlanKeys.studentPlan(studentId) });
-      toast.success("Draft plan generated for student");
+      toast.success(i18n.t("components.hooks.graduationPlan.draftGeneratedForStudent"));
     },
-    onError: (err) => toast.error(planErrorMessage(err, "Failed to generate a plan")),
+    onError: (err) => toast.error(planErrorMessage(err, i18n.t("components.hooks.graduationPlan.generateFailed"))),
   });
 }
 
@@ -307,7 +309,7 @@ export function useReviewGraduationPlan(studentId: string) {
     onSuccess: (_data, payload) => {
       // Approval materializes current-grade rows into the official course plan.
       qc.invalidateQueries({ queryKey: coursePlanKeys.studentPlan(studentId) });
-      toast.success(payload.status === "approved" ? "Plan approved" : "Plan rejected");
+      toast.success(payload.status === "approved" ? i18n.t("components.hooks.graduationPlan.planApproved") : i18n.t("components.hooks.graduationPlan.planRejected"));
     },
 
     // The server stamps the review and, on approval, rewrites what the plan points at,
@@ -318,7 +320,7 @@ export function useReviewGraduationPlan(studentId: string) {
 
     onError: (_err, _payload, context) => {
       optimistic.rollback(context);
-      toast.error("Failed to review the plan");
+      toast.error(i18n.t("components.hooks.graduationPlan.reviewFailed"));
     },
   });
 }

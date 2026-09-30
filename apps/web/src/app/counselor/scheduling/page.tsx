@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { CalendarDays, Calendar } from "lucide-react";
 import { CounselorTabBar } from "../_components/CounselorTabBar";
 import dynamic from "next/dynamic";
@@ -12,6 +13,7 @@ const CalendarPanel = dynamic(() => import("../calendar/page"), { ssr: false });
 const VALID_TABS = ["sessions", "calendar"];
 
 export default function SchedulingPage() {
+  const { t } = useTranslation("counselor");
   const searchParams = useSearchParams();
   const router = useRouter();
   const [activeTab, setActiveTab] = useState("sessions");
@@ -30,15 +32,15 @@ export default function SchedulingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)" }}>Scheduling</h1>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("nav.scheduling")}</h1>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-          Manage counseling sessions and view your calendar
+          {t("ui.scheduling.subtitle")}
         </p>
       </div>
       <CounselorTabBar
         tabs={[
-          { key: "sessions", label: "Sessions", icon: CalendarDays },
-          { key: "calendar", label: "Calendar", icon: Calendar },
+          { key: "sessions", label: t("ui.scheduling.tabSessions"), icon: CalendarDays },
+          { key: "calendar", label: t("ui.scheduling.tabCalendar"), icon: Calendar },
         ]}
         activeTab={activeTab}
         onChange={handleTabChange}

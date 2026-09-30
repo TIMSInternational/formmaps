@@ -84,18 +84,18 @@ export default function LIAResultsPage() {
         <div className="max-w-md w-full bg-white rounded-2xl shadow-sm p-8 text-center">
           <AlertTriangle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            {language === "es" ? "Sin Resultados" : "No Results"}
+            {language === "es" ? "Sin resultados" : "No Results"}
           </h1>
           <p className="text-gray-600 mb-6">
             {language === "es"
-              ? "Aún no has completado la evaluación MIL."
+              ? "Aún no has completado la evaluación LIA."
               : "You have not completed the LIA assessment yet."}
           </p>
           <button
             onClick={() => router.push("/dashboard/assessments/lia")}
             className="px-6 py-3 bg-[#102B47] hover:bg-[#0b1f33] text-white font-semibold rounded-xl"
           >
-            {language === "es" ? "Ir a la Evaluación" : "Go to Assessment"}
+            {language === "es" ? "Ir a la evaluación" : "Go to Assessment"}
           </button>
         </div>
       </div>
@@ -105,12 +105,13 @@ export default function LIAResultsPage() {
   // Feed the existing PDF with REAL percentiles from the parity engine.
   const liaReportData = buildLIAReportData({
     user: { id: user.id, name: user.name, email: user.email },
+    language,
     overallScore: Math.round(results.global_percentile),
     subtests: SUBTEST_ORDER.map((subtest) => {
       const counts = results.response_counts?.[subtest];
       const answered = (counts?.correct || 0) + (counts?.incorrect || 0);
       return {
-        name: SUBTEST_DESCRIPTIONS[subtest].name.en,
+        name: SUBTEST_DESCRIPTIONS[subtest].name[language],
         score: Math.round(results.percentiles?.[subtest] ?? 0),
         accuracy: answered > 0 ? Math.round(((counts?.correct || 0) / answered) * 100) : 0,
       };
@@ -178,7 +179,7 @@ function LegacyMilResults({
         </button>
         <div className="bg-white rounded-2xl shadow-sm p-8">
           <h1 className="text-2xl font-bold text-gray-900 mb-1">
-            {es ? "Resultados de la Evaluación LIA" : "LIA Assessment Results"}
+            {es ? "Resultados de la evaluación LIA" : "LIA Assessment Results"}
           </h1>
           <p className="text-sm text-gray-500 mb-6">
             {es

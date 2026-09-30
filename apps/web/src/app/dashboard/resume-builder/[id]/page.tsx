@@ -9,6 +9,7 @@ import type { ResumeData } from "@/store/useGlobalStore";
 import { ResumePreviewPanel } from "../_components/ResumePreviewPanel";
 import { ResumeTabSwitcher } from "../_components/ResumeTabSwitcher";
 import type { EditorTab } from "../_components/ResumeTabSwitcher";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { getResumeById, type Resume } from "@/services/resumeService";
 import { AIChatEditor } from "../_components/AIChatEditor";
@@ -87,6 +88,7 @@ function mapApiResumeToStore(apiData: Resume): ResumeData {
 }
 
 export default function ResumeBuilderPage() {
+  const { t } = useTranslation();
   const params = useParams();
   const {
     resumeBuilder,
@@ -183,14 +185,15 @@ export default function ResumeBuilderPage() {
       const link = document.createElement("a");
       link.href = url;
       link.download = `${
-        resumeBuilder.data.personalInfo.fullName || "resume"
+        resumeBuilder.data.personalInfo.fullName ||
+        t("resumeBuilder.resumePreview.fileName", "resume")
       }.pdf`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
     } catch (error) {
-      alert("Failed to download PDF. Please try again.");
+      alert(t("resumeBuilder.editorPage.downloadFailed", "Failed to download PDF. Please try again."));
     }
   };
 
@@ -218,7 +221,7 @@ export default function ResumeBuilderPage() {
             className="fixed top-4 left-1/2 -translate-x-1/2 z-[300] bg-[#102B47] text-white px-5 py-2.5 rounded-xl shadow-lg flex items-center gap-2 text-sm"
           >
             <Check className="w-4 h-4" />
-            Saved
+            {t("resumeBuilder.resumePreview.saved", "Saved")}
           </motion.div>
         )}
       </AnimatePresence>
@@ -253,7 +256,9 @@ export default function ResumeBuilderPage() {
             {/* Style Tab */}
             {editorTab === "style" && (
               <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">Template</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-1">
+                  {t("resumeBuilder.editorPage.template", "Template")}
+                </p>
                 <div className="grid grid-cols-2 gap-2">
                   {TEMPLATES.map((template) => (
                     <button
@@ -285,7 +290,7 @@ export default function ResumeBuilderPage() {
               className="w-full flex items-center justify-center gap-2 py-2.5 bg-[#102B47] text-white rounded-lg text-sm font-medium hover:bg-[#0b1f33] transition-colors shadow-sm"
             >
               <Download className="w-4 h-4" />
-              Download Resume
+              {t("resumeBuilder.wizardReview.download", "Download Resume")}
             </button>
           </div>
         </div>

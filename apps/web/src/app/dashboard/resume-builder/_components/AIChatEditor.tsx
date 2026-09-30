@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Sparkles } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { AIChatInput } from "./AIChatInput";
 import { aiEditResume, type Resume } from "@/services/resumeService";
 
@@ -17,19 +18,18 @@ interface AIChatEditorProps {
   onResumeUpdated: (resume: Resume) => void;
 }
 
-const SUGGESTIONS = [
-  "Make my summary more impactful",
-  "Add measurable metrics to my bullets",
-  "Tighten and fix grammar",
-  "Tailor for a software engineering role",
-  "Use stronger action verbs",
-];
-
-const GREETING = "Tell me how to improve your resume and I'll edit it live.";
-
 export function AIChatEditor({ resumeId, onResumeUpdated }: AIChatEditorProps) {
+  const { t } = useTranslation();
+  const suggestions = [
+    t("resumeBuilder.aiChat.suggestions.impactfulSummary", "Make my summary more impactful"),
+    t("resumeBuilder.aiChat.suggestions.measurableMetrics", "Add measurable metrics to my bullets"),
+    t("resumeBuilder.aiChat.suggestions.tightenGrammar", "Tighten and fix grammar"),
+    t("resumeBuilder.aiChat.suggestions.tailorSoftware", "Tailor for a software engineering role"),
+    t("resumeBuilder.aiChat.suggestions.actionVerbs", "Use stronger action verbs"),
+  ];
+  // The greeting is resolved at render time (see below) so it follows the UI language.
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: "greeting", role: "assistant", text: GREETING },
+    { id: "greeting", role: "assistant", text: "" },
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
@@ -58,7 +58,7 @@ export function AIChatEditor({ resumeId, onResumeUpdated }: AIChatEditorProps) {
           {
             id: crypto.randomUUID(),
             role: "assistant",
-            text: result.changeSummary || "Done — your resume has been updated.",
+            text: result.changeSummary || t("resumeBuilder.aiChat.updated", "Done — your resume has been updated."),
           },
         ]);
       } else {
@@ -67,7 +67,7 @@ export function AIChatEditor({ resumeId, onResumeUpdated }: AIChatEditorProps) {
           {
             id: crypto.randomUUID(),
             role: "assistant",
-            text: result.message || "I couldn't apply that — try rephrasing.",
+            text: result.message || t("resumeBuilder.aiChat.couldNotApply", "I couldn't apply that — try rephrasing."),
           },
         ]);
       }
@@ -77,7 +77,7 @@ export function AIChatEditor({ resumeId, onResumeUpdated }: AIChatEditorProps) {
         {
           id: crypto.randomUUID(),
           role: "assistant",
-          text: "Something went wrong applying that edit. Please try again.",
+          text: t("resumeBuilder.aiChat.editFailed", "Something went wrong applying that edit. Please try again."),
         },
       ]);
     } finally {
@@ -105,7 +105,9 @@ export function AIChatEditor({ resumeId, onResumeUpdated }: AIChatEditorProps) {
                     <Sparkles className="w-3.5 h-3.5 text-[#2E9098]" />
                   </div>
                   <div className="rounded-2xl rounded-tl-sm bg-secondary/60 border border-border px-3.5 py-2.5 text-sm text-foreground leading-relaxed">
-                    {msg.text}
+                    {msg.id === "greeting"
+                      ? t("resumeBuilder.aiChat.greeting", "Tell me how to improve your resume and I'll edit it live.")
+                      : msg.text}
                   </div>
                 </div>
               ) : (
@@ -123,7 +125,7 @@ export function AIChatEditor({ resumeId, onResumeUpdated }: AIChatEditorProps) {
               <Sparkles className="w-3.5 h-3.5 text-[#2E9098] animate-pulse" />
             </div>
             <div className="rounded-2xl rounded-tl-sm bg-secondary/60 border border-border px-3.5 py-2.5 text-sm text-muted-foreground">
-              Editing your resume…
+              {t("resumeBuilder.aiChat.editing", "Editing your resume…")}
             </div>
           </div>
         )}
@@ -135,7 +137,7 @@ export function AIChatEditor({ resumeId, onResumeUpdated }: AIChatEditorProps) {
         <AIChatInput
           onSend={handleSend}
           isLoading={isLoading}
-          suggestions={SUGGESTIONS}
+          suggestions={suggestions}
         />
       </div>
     </div>

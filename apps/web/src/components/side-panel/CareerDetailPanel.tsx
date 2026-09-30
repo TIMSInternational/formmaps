@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import Link from "next/link";
 import type { CareerRole } from "@/types/career";
+import { useTranslation } from "react-i18next";
 
 interface CareerDetailPanelProps {
   career: CareerRole;
@@ -31,6 +32,7 @@ export function CareerDetailPanel({
   bridgingReasons,
 }: CareerDetailPanelProps) {
   const { language } = useGlobalStore();
+  const { t } = useTranslation();
   const title = career.title[language === "spanish" ? "es" : "en"] || career.title.en || "";
   const description = career.shortDescription?.[language === "spanish" ? "es" : "en"] || career.shortDescription?.en || "";
 
@@ -53,7 +55,7 @@ export function CareerDetailPanel({
         </h3>
         <div className="flex items-center gap-2 mt-1.5 text-xs" style={{ color: "var(--admin-font-tertiary)" }}>
           <Briefcase className="h-3 w-3" />
-          <span>{(career as any).cluster?.replace(/_/g, " ") || (career.industries || [])[0] || "General"}</span>
+          <span>{(career as any).cluster?.replace(/_/g, " ") || (career.industries || [])[0] || t("components.CareerDetailPanel.general")}</span>
         </div>
       </div>
 
@@ -65,7 +67,7 @@ export function CareerDetailPanel({
           <div>
             <span className={cn("text-2xl font-bold", scoreColor)}>{matchScore}%</span>
             <span className="text-xs ml-2" style={{ color: "var(--admin-font-tertiary)" }}>
-              {confidence === "high" ? "Excellent Match" : confidence === "good" ? "Strong Match" : "Match Score"}
+              {confidence === "high" ? t("careers.details.matchExcellent") : confidence === "good" ? t("careers.details.matchStrong") : t("components.CareerDetailPanel.matchScore")}
             </span>
           </div>
         </div>
@@ -74,7 +76,7 @@ export function CareerDetailPanel({
       {/* AI Insight */}
       {aiInsight && (
         <div className="space-y-2">
-          <SectionLabel icon={Sparkles} label="AI Insight" accent />
+          <SectionLabel icon={Sparkles} label={t("components.CareerDetailPanel.aiInsight")} accent />
           <p className="text-sm leading-relaxed" style={{ color: "var(--admin-font-secondary)" }}>
             {aiInsight}
           </p>
@@ -84,7 +86,7 @@ export function CareerDetailPanel({
       {/* Description */}
       {description && (
         <div className="space-y-2">
-          <SectionLabel icon={BookOpen} label="About this Career" />
+          <SectionLabel icon={BookOpen} label={t("careers.details.aboutTitle")} />
           <p className="text-sm leading-relaxed" style={{ color: "var(--admin-font-tertiary)" }}>
             {description}
           </p>
@@ -93,29 +95,29 @@ export function CareerDetailPanel({
 
       {/* Key Stats */}
       <div className="space-y-2">
-        <SectionLabel icon={TrendingUp} label="Key Facts" />
+        <SectionLabel icon={TrendingUp} label={t("components.CareerDetailPanel.keyFacts")} />
         <div className="grid grid-cols-2 gap-2">
           {career.salaryRange?.median && (
             <StatBox
               icon={DollarSign}
-              label="Median Salary"
-              value={`$${(career.salaryRange.median / 1000).toFixed(0)}k/yr`}
+              label={t("components.CareerDetailPanel.medianSalary")}
+              value={t("components.CareerDetailPanel.salaryPerYear", { amount: (career.salaryRange.median / 1000).toFixed(0) })}
               accent="text-emerald-400"
             />
           )}
           {career.demandStats?.growthPercent != null && (
             <StatBox
               icon={TrendingUp}
-              label="Growth"
+              label={t("components.CareerDetailPanel.growth")}
               value={`${(career.demandStats.growthPercent * 100).toFixed(0)}%`}
               accent="text-blue-400"
             />
           )}
           {career.remoteEligible && (
-            <StatBox icon={Globe} label="Remote" value="Eligible" accent="text-purple-400" />
+            <StatBox icon={Globe} label={t("components.CareerDetailPanel.remote")} value={t("components.CareerDetailPanel.eligible")} accent="text-purple-400" />
           )}
           {career.industries && career.industries.length > 0 && (
-            <StatBox icon={Briefcase} label="Industries" value={String(career.industries.length)} accent="text-amber-400" />
+            <StatBox icon={Briefcase} label={t("components.CareerDetailPanel.industries")} value={String(career.industries.length)} accent="text-amber-400" />
           )}
         </div>
       </div>
@@ -123,7 +125,7 @@ export function CareerDetailPanel({
       {/* Bridging Gaps */}
       {bridgingReasons && bridgingReasons.length > 0 && (
         <div className="space-y-2">
-          <SectionLabel icon={AlertTriangle} label="Skills to Bridge" />
+          <SectionLabel icon={AlertTriangle} label={t("components.CareerDetailPanel.skillsToBridge")} />
           <div className="space-y-1.5">
             {bridgingReasons.map((r, idx) => (
               <div
@@ -145,7 +147,7 @@ export function CareerDetailPanel({
       {/* Skills */}
       {career.skills && career.skills.length > 0 && (
         <div className="space-y-2">
-          <SectionLabel icon={BookOpen} label="Key Skills" />
+          <SectionLabel icon={BookOpen} label={t("components.CareerDetailPanel.keySkills")} />
           <div className="flex flex-wrap gap-1.5">
             {career.skills.slice(0, 10).map((s: any, idx: number) => (
               <span
@@ -170,7 +172,7 @@ export function CareerDetailPanel({
         className="flex items-center justify-center gap-2 w-full px-4 py-2.5 rounded-xl text-sm font-medium transition-opacity hover:opacity-90"
         style={{ background: "var(--admin-accent-blue)", color: "#fff" }}
       >
-        View Full Details
+        {t("components.CareerDetailPanel.viewFullDetails")}
         <ArrowUpRight className="h-3.5 w-3.5" />
       </Link>
     </div>

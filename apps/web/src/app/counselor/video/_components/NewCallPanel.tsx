@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { Video, UserPlus, X, Calendar, CalendarClock } from "lucide-react";
 import { getInitials } from "@/lib/stringUtils";
+import { useTranslation } from "react-i18next";
 
 interface Contact {
   id: string;
@@ -61,6 +62,7 @@ export function NewCallPanel({
   onSchedule,
   minDatetime,
 }: NewCallPanelProps) {
+  const { t } = useTranslation("counselor");
   return (
     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: "auto" }} exit={{ opacity: 0, height: 0 }}
       style={{ borderRadius: 12, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
@@ -70,12 +72,12 @@ export function NewCallPanel({
           <button onClick={() => { onModeChange("call"); onClearParticipant(); }}
             style={{ flex: 1, padding: "7px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", background: mode === "call" ? "var(--admin-accent-blue)" : "transparent", color: mode === "call" ? "#fff" : "var(--admin-font-tertiary)", transition: "all 0.15s" }}>
             <Video style={{ width: 14, height: 14, display: "inline", verticalAlign: -2, marginRight: 6 }} />
-            Call Now
+            {t("ui.video.callNow")}
           </button>
           <button onClick={() => onModeChange("schedule")}
             style={{ flex: 1, padding: "7px 12px", borderRadius: 6, border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600, fontFamily: "inherit", background: mode === "schedule" ? "var(--admin-accent-blue)" : "transparent", color: mode === "schedule" ? "#fff" : "var(--admin-font-tertiary)", transition: "all 0.15s" }}>
             <Calendar style={{ width: 14, height: 14, display: "inline", verticalAlign: -2, marginRight: 6 }} />
-            Schedule
+            {t("ui.video.schedule")}
           </button>
         </div>
 
@@ -84,15 +86,15 @@ export function NewCallPanel({
           <>
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-accent-blue)", marginBottom: 12 }}>
               <UserPlus style={{ width: 16, height: 16, color: "var(--admin-accent-blue)", flexShrink: 0 }} />
-              <input placeholder={mode === "call" ? "Search by name or email to start a call..." : "Search for a student to schedule with..."}
+              <input placeholder={mode === "call" ? t("ui.video.searchCall") : t("ui.video.searchSchedule")}
                 value={contactSearch} onChange={(e) => onContactSearchChange(e.target.value)} autoFocus
                 style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 14, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
             </div>
             <div style={{ maxHeight: 240, overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
               {contactsLoading ? (
-                <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>Searching...</div>
+                <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("ui.video.searching")}</div>
               ) : contacts.length === 0 ? (
-                <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>No contacts found</div>
+                <div style={{ padding: 16, textAlign: "center", fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("ui.video.noContacts")}</div>
               ) : contacts.map((c) => (
                 <button key={c.id}
                   onClick={() => mode === "call" ? onStartCall(c.id) : onSelectParticipant({ id: c.id, name: c.name })}
@@ -109,7 +111,7 @@ export function NewCallPanel({
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "6px 12px", borderRadius: 6, background: mode === "call" ? "linear-gradient(135deg, #22c55e, #16a34a)" : "var(--admin-accent-blue)", color: "#fff", fontSize: 12, fontWeight: 600, flexShrink: 0 }}>
                     {mode === "call" ? <Video style={{ width: 14, height: 14 }} /> : <Calendar style={{ width: 14, height: 14 }} />}
-                    {mode === "call" ? "Call" : "Select"}
+                    {mode === "call" ? t("ui.video.call") : t("ui.video.select")}
                   </div>
                 </button>
               ))}
@@ -127,7 +129,7 @@ export function NewCallPanel({
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{scheduleParticipant.name}</div>
-                <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Scheduling video call</div>
+                <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("ui.video.schedulingCall")}</div>
               </div>
               <button onClick={onClearParticipant}
                 style={{ border: "none", background: "transparent", cursor: "pointer", color: "var(--admin-font-tertiary)", padding: 4 }}>
@@ -137,29 +139,29 @@ export function NewCallPanel({
 
             {/* Date/Time picker */}
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>Date & Time</label>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>{t("ui.video.dateTime")}</label>
               <input type="datetime-local" value={scheduleDate} onChange={(e) => onScheduleDateChange(e.target.value)} min={minDatetime}
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", fontSize: 14, fontFamily: "inherit", outline: "none", boxSizing: "border-box" }} />
             </div>
 
             {/* Duration */}
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>Duration</label>
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>{t("ui.video.duration")}</label>
               <select value={scheduleDuration} onChange={(e) => onScheduleDurationChange(Number(e.target.value))}
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", fontSize: 14, fontFamily: "inherit", outline: "none" }}>
-                <option value={15}>15 minutes</option>
-                <option value={30}>30 minutes</option>
-                <option value={45}>45 minutes</option>
-                <option value={60}>1 hour</option>
-                <option value={90}>1.5 hours</option>
-                <option value={120}>2 hours</option>
+                <option value={15}>{t("ui.video.minutes", { count: 15 })}</option>
+                <option value={30}>{t("ui.video.minutes", { count: 30 })}</option>
+                <option value={45}>{t("ui.video.minutes", { count: 45 })}</option>
+                <option value={60}>{t("ui.video.hours", { count: 1 })}</option>
+                <option value={90}>{t("ui.video.hoursDecimal", { n: 1.5 })}</option>
+                <option value={120}>{t("ui.video.hours", { count: 2 })}</option>
               </select>
             </div>
 
             {/* Notes */}
             <div>
-              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>Notes (optional)</label>
-              <textarea value={scheduleNotes} onChange={(e) => onScheduleNotesChange(e.target.value)} placeholder="Agenda or topics to discuss..."
+              <label style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4, display: "block" }}>{t("ui.video.notes")}</label>
+              <textarea value={scheduleNotes} onChange={(e) => onScheduleNotesChange(e.target.value)} placeholder={t("ui.video.notesPlaceholder")}
                 rows={2} maxLength={500}
                 style={{ width: "100%", padding: "10px 12px", borderRadius: 8, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", fontSize: 14, fontFamily: "inherit", outline: "none", resize: "vertical", boxSizing: "border-box" }} />
             </div>
@@ -168,7 +170,7 @@ export function NewCallPanel({
             <button onClick={onSchedule} disabled={!scheduleDate || scheduling}
               style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "12px 20px", borderRadius: 10, border: "none", background: !scheduleDate ? "var(--admin-bg-hover)" : "var(--admin-accent-blue)", color: !scheduleDate ? "var(--admin-font-tertiary)" : "#fff", cursor: !scheduleDate || scheduling ? "default" : "pointer", fontSize: 14, fontWeight: 600, fontFamily: "inherit", transition: "all 0.15s" }}>
               <CalendarClock style={{ width: 16, height: 16 }} />
-              {scheduling ? "Scheduling..." : "Schedule Call"}
+              {scheduling ? t("ui.video.scheduling") : t("ui.video.scheduleCall")}
             </button>
           </div>
         )}

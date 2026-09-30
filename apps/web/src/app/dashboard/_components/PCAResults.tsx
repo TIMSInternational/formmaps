@@ -67,25 +67,25 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
     // Map the PCA scores to competencies based on the API response structure
     const competencies = [
       {
-        name: "Dominance",
+        name: t("pca.dominance"),
         score: data.pcaD1 || 0,
         color: "bg-red-500",
         bg: "bg-red-50",
       },
       {
-        name: "Influence",
+        name: t("pca.influence"),
         score: data.pcaI1 || 0,
         color: "bg-yellow-500",
         bg: "bg-yellow-50",
       },
       {
-        name: "Solidity",
+        name: t("pca.steadiness"),
         score: data.pcaS1 || 0,
         color: "bg-green-500",
         bg: "bg-green-50",
       },
       {
-        name: "Control",
+        name: t("pca.conscientiousness"),
         score: data.pcaC1 || 0,
         color: "bg-blue-500",
         bg: "bg-blue-50",
@@ -180,7 +180,7 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
                 {t("dashboard.pcaAssessment")}
               </h3>
               <p className="text-sm text-slate-500">
-                Discover your professional DNA
+                {t("studentUi.dashboard.pca.discoverDna")}
               </p>
             </div>
           </div>
@@ -226,7 +226,7 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
                   {t("dashboard.pcaInProgress")}
                 </h3>
                 <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800 mt-1">
-                  In Progress
+                  {t("dashboard.statusInProgress")}
                 </span>
               </div>
             </div>
@@ -270,7 +270,7 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
               "w-full py-2.5 !bg-amber-600 hover:!bg-amber-700",
             )}
           >
-            <span>Continue</span>
+            <span>{t("common.continue")}</span>
             <ArrowRight className="w-4 h-4" />
           </a>
         </div>
@@ -304,7 +304,7 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
                 {t("dashboard.pcaAssessment")}
               </h3>
               <p className="text-sm text-slate-500 mt-1">
-                {hasRealScores ? "Analysis Complete" : "Results Pending"}
+                {hasRealScores ? t("dashboard.analysisComplete") : t("studentUi.dashboard.pca.resultsPending")}
               </p>
             </div>
           </div>
@@ -313,7 +313,7 @@ export function PCAResults({ className, pcaDataProp }: PCAResultsProps) {
               {hasRealScores ? `${overallScore}%` : "—"}
             </div>
             <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wider mt-1">
-              {hasRealScores ? t("dashboard.overallScore") : "Awaiting TIMS"}
+              {hasRealScores ? t("dashboard.overallScore") : t("studentUi.dashboard.pca.awaitingTims")}
             </div>
           </div>
         </div>

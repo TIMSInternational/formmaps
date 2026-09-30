@@ -28,6 +28,7 @@ import type {
   StudentCoursePlanResponse,
 } from "@/types/coursePlan";
 import { toast } from "sonner";
+import i18n from "@/lib/i18n";
 import {
   optimisticId,
   patchBy,
@@ -180,7 +181,7 @@ export function useAddCourseToPlan() {
       qc.invalidateQueries({ queryKey: coursePlanKeys.myPlan() });
     },
 
-    onSuccess: () => toast.success("Course added to plan"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.coursePlan.courseAdded")),
     onError: (err: Error, _payload, context) => {
       optimistic.rollback(context);
       toast.error(err.message);
@@ -219,7 +220,7 @@ export function useRemoveCourseFromPlan() {
       qc.invalidateQueries({ queryKey: coursePlanKeys.myPlan() });
     },
 
-    onSuccess: () => toast.success("Course removed from plan"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.coursePlan.courseRemoved")),
     onError: (err: Error, _courseId, context) => {
       optimistic.rollback(context);
       toast.error(err.message);
@@ -294,7 +295,7 @@ export function useCounselorAddCourse(studentId: string) {
       qc.invalidateQueries({ queryKey: coursePlanKeys.studentPlan(studentId) });
     },
 
-    onSuccess: () => toast.success("Course added to student's plan"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.coursePlan.courseAddedToStudent")),
     onError: (err: Error, _payload, context) => {
       optimistic.rollback(context);
       toast.error(err.message);
@@ -320,7 +321,7 @@ export function useCounselorRemoveCourse(studentId: string) {
       qc.invalidateQueries({ queryKey: coursePlanKeys.studentPlan(studentId) });
     },
 
-    onSuccess: () => toast.success("Course removed from student's plan"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.coursePlan.courseRemovedFromStudent")),
 
     // The endpoint 404s when the enrollment is not the named student's — worth the
     // rollback, since the plan now also renders completed grades, which have ids the
@@ -388,7 +389,7 @@ export function useSubmitChangeRequest() {
           data: upsertBy(current.data, (r) => r.id === context?.pendingId, request),
         }),
       );
-      toast.success("Change request submitted — awaiting counselor approval");
+      toast.success(i18n.t("coursePlan.toasts.changeRequestSubmitted"));
     },
 
     onError: (err: Error, _payload, context) => {
@@ -412,7 +413,7 @@ export function useCancelChangeRequest() {
         (current) => patchEnvelope(current, (rows) => removeBy(rows, (r) => r.id === requestId)),
       ),
 
-    onSuccess: () => toast.success("Change request cancelled"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.coursePlan.changeRequestCancelled")),
 
     // Worth the rollback: the endpoint refuses with 400 "Cannot cancel" for anything
     // no longer pending, and a request a counselor approved a moment ago still shows a
@@ -482,7 +483,7 @@ export function useReviewChangeRequest(studentId: string) {
       }
       // A cross-student aggregate; not worth reconstructing by hand.
       qc.invalidateQueries({ queryKey: ["counselor", "dashboard-change-requests"] });
-      toast.success(vars.payload.status === "approved" ? "Request approved" : "Request rejected");
+      toast.success(vars.payload.status === "approved" ? i18n.t("components.hooks.coursePlan.requestApproved") : i18n.t("components.hooks.coursePlan.requestRejected"));
     },
 
     onError: (err: Error, _vars, context) => {
@@ -520,7 +521,7 @@ export function useSchoolAdminAddCourse(studentId: string) {
       qc.invalidateQueries({ queryKey: coursePlanKeys.studentPlan(studentId) });
     },
 
-    onSuccess: () => toast.success("Course added to plan"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.coursePlan.courseAdded")),
     onError: (err: Error, _payload, context) => {
       optimistic.rollback(context);
       toast.error(err.message);
@@ -545,7 +546,7 @@ export function useSchoolAdminRemoveCourse(studentId: string) {
       qc.invalidateQueries({ queryKey: coursePlanKeys.studentPlan(studentId) });
     },
 
-    onSuccess: () => toast.success("Course removed from plan"),
+    onSuccess: () => toast.success(i18n.t("components.hooks.coursePlan.courseRemoved")),
 
     // 404s when the id is not a plan row belonging to this student — which includes
     // every completed-grade row the plan view also renders.
@@ -582,7 +583,7 @@ export function useSchoolAdminReviewChangeRequest(studentId: string) {
       if (vars.payload.status === "approved") {
         qc.invalidateQueries({ queryKey: coursePlanKeys.studentPlan(studentId) });
       }
-      toast.success(vars.payload.status === "approved" ? "Request approved" : "Request rejected");
+      toast.success(vars.payload.status === "approved" ? i18n.t("components.hooks.coursePlan.requestApproved") : i18n.t("components.hooks.coursePlan.requestRejected"));
     },
 
     onError: (err: Error, _vars, context) => {

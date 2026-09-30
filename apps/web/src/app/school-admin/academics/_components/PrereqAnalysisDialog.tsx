@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -54,19 +55,21 @@ function CenteredState({ icon, children }: { icon?: React.ReactNode; children: R
 
 // ── Confidence chip ────────────────────────────────────────────────────────────
 function ConfidenceChip({ level }: { level: PrereqSuggestion["confidence"] }) {
+  const { t } = useTranslation("school_admin");
   const map: Record<PrereqSuggestion["confidence"], React.CSSProperties> = {
     high:   { background: "rgba(5,150,105,0.12)", color: "#059669", border: "none" },
     medium: { background: "rgba(217,119,6,0.12)",  color: "#d97706", border: "none" },
     low:    { background: "rgba(107,114,128,0.12)", color: "#6b7280", border: "none" },
   };
-  return <span style={{ ...CHIP_BASE, ...map[level] }}>{level}</span>;
+  return <span style={{ ...CHIP_BASE, ...map[level] }}>{t(`ui.prereqAnalysis.confidence.${level}`)}</span>;
 }
 
 // ── Source chip ────────────────────────────────────────────────────────────────
 function SourceChip({ source }: { source: PrereqSuggestion["source"] }) {
+  const { t } = useTranslation("school_admin");
   return source === "pattern"
-    ? <span style={{ ...CHIP_BASE, border: "1px solid var(--admin-accent-blue)", color: "var(--admin-accent-blue)", background: "transparent" }}>Pattern</span>
-    : <span style={{ ...CHIP_BASE, background: "#FFD23F", color: "#102B47", border: "none" }}>AI</span>;
+    ? <span style={{ ...CHIP_BASE, border: "1px solid var(--admin-accent-blue)", color: "var(--admin-accent-blue)", background: "transparent" }}>{t("ui.prereqAnalysis.pattern")}</span>
+    : <span style={{ ...CHIP_BASE, background: "#FFD23F", color: "#102B47", border: "none" }}>{t("ui.prereqAnalysis.ai")}</span>;
 }
 
 // ── Main dialog ────────────────────────────────────────────────────────────────
@@ -76,6 +79,7 @@ interface PrereqAnalysisDialogProps {
 }
 
 export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialogProps) {
+  const { t } = useTranslation("school_admin");
   const analyze = useAnalyzePrerequisites();
   const apply   = useApplyPrereqSuggestions();
   const suggestions: PrereqSuggestion[] = analyze.data ?? [];
@@ -137,7 +141,7 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
     if (analyze.isPending) {
       return (
         <CenteredState icon={<Loader2 style={{ width: 28, height: 28, color: "var(--admin-accent-blue)", animation: "spin 1s linear infinite" }} />}>
-          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>Analyzing your catalog&hellip;</p>
+          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("ui.prereqAnalysis.analyzing")}</p>
         </CenteredState>
       );
     }
@@ -145,9 +149,9 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
     if (analyze.isError) {
       return (
         <CenteredState>
-          <p style={{ fontSize: 13, color: "#dc2626" }}>Analysis failed. Please try again.</p>
+          <p style={{ fontSize: 13, color: "#dc2626" }}>{t("ui.prereqAnalysis.failed")}</p>
           <button onClick={handleRunAgain} style={BTN_SECONDARY}>
-            <RefreshCw style={{ width: 12, height: 12 }} /> Run again
+            <RefreshCw style={{ width: 12, height: 12 }} /> {t("ui.prereqAnalysis.runAgain")}
           </button>
         </CenteredState>
       );
@@ -157,9 +161,9 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
       return (
         <CenteredState icon={<Network style={{ width: 32, height: 32, opacity: 0.25 }} />}>
           <p style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", textAlign: "center" }}>
-            No missing prerequisites found — your graph looks complete.
+            {t("ui.prereqAnalysis.noneMissing")}
           </p>
-          <button onClick={() => onOpenChange(false)} style={{ ...BTN_SECONDARY, fontWeight: 500 }}>Close</button>
+          <button onClick={() => onOpenChange(false)} style={{ ...BTN_SECONDARY, fontWeight: 500 }}>{t("common.close")}</button>
         </CenteredState>
       );
     }
@@ -170,12 +174,12 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
       <div className="space-y-3">
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button onClick={selectHighConfidence} style={{ ...BTN_BULK_GHOST, background: "rgba(5,150,105,0.1)", border: "1px solid #059669", color: "#059669" }}>
-            Select high confidence
+            {t("ui.prereqAnalysis.selectHigh")}
           </button>
-          <button onClick={selectAll}  style={BTN_BULK_GHOST}>Select all</button>
-          <button onClick={clearAll}   style={BTN_BULK_GHOST}>Clear</button>
+          <button onClick={selectAll}  style={BTN_BULK_GHOST}>{t("ui.prereqAnalysis.selectAll")}</button>
+          <button onClick={clearAll}   style={BTN_BULK_GHOST}>{t("ui.prereqAnalysis.clear")}</button>
           <span style={{ marginLeft: "auto", fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-            {selectedCount} of {suggestions.length} selected
+            {t("ui.prereqAnalysis.selectedOf", { selected: selectedCount, total: suggestions.length })}
           </span>
         </div>
 
@@ -184,11 +188,11 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
             <TableHeader>
               <TableRow style={{ background: "var(--admin-bg-hover)" }}>
                 <TableHead style={{ ...TH_STYLE, width: 36 }} />
-                <TableHead style={TH_STYLE}>Course (needs)</TableHead>
-                <TableHead style={TH_STYLE}>Prerequisite</TableHead>
-                <TableHead style={TH_STYLE}>Confidence</TableHead>
-                <TableHead style={TH_STYLE}>Source</TableHead>
-                <TableHead style={TH_STYLE}>Reason</TableHead>
+                <TableHead style={TH_STYLE}>{t("ui.prereqAnalysis.courseNeeds")}</TableHead>
+                <TableHead style={TH_STYLE}>{t("ui.prereqAnalysis.prerequisite")}</TableHead>
+                <TableHead style={TH_STYLE}>{t("ui.prereqAnalysis.confidenceHeader")}</TableHead>
+                <TableHead style={TH_STYLE}>{t("ui.prereqAnalysis.source")}</TableHead>
+                <TableHead style={TH_STYLE}>{t("ui.prereqAnalysis.reason")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -198,7 +202,7 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
                   <TableRow key={key} style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
                     <TableCell className="py-2 px-3">
                       <input type="checkbox" checked={checked.has(key)} onChange={() => toggleRow(key)}
-                        aria-label={`Toggle ${s.courseCode} needs ${s.prerequisiteCode}`}
+                        aria-label={t("ui.prereqAnalysis.toggleRow", { course: s.courseCode, prereq: s.prerequisiteCode })}
                         style={{ width: 14, height: 14, cursor: "pointer", accentColor: "#102B47" }} />
                     </TableCell>
                     <TableCell className="py-2 px-3">
@@ -229,7 +233,7 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ color: "var(--admin-font-primary)" }}>
             <Network style={{ width: 18, height: 18, color: "var(--admin-accent-blue)" }} />
-            Analyze Prerequisites
+            {t("ui.prereqAnalysis.title")}
           </DialogTitle>
         </DialogHeader>
 
@@ -237,7 +241,7 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
 
         {showFooter && (
           <DialogFooter className="gap-2">
-            <button onClick={() => onOpenChange(false)} style={BTN_GHOST}>Cancel</button>
+            <button onClick={() => onOpenChange(false)} style={BTN_GHOST}>{t("common.cancel")}</button>
             <button onClick={handleApply} disabled={selectedCount === 0 || apply.isPending}
               style={{
                 ...BTN_PRIMARY,
@@ -248,7 +252,7 @@ export function PrereqAnalysisDialog({ open, onOpenChange }: PrereqAnalysisDialo
                 opacity: apply.isPending ? 0.7 : 1,
               }}>
               {apply.isPending && <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />}
-              Apply {selectedCount} selected
+              {t("ui.prereqAnalysis.applySelected", { count: selectedCount })}
             </button>
           </DialogFooter>
         )}

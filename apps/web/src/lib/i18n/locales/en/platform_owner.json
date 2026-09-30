@@ -320,7 +320,7 @@
     "statusInactive": "Inactive",
     "toast": {
       "failedToLoad": "Failed to load subscription plans",
-      "validationError": "Please fill in valid name and price",
+      "validationError": "Please enter a valid name and price",
       "updatedSuccess": "Plan updated successfully",
       "createdSuccess": "Plan created successfully",
       "deletedSuccess": "Plan deleted successfully",
@@ -431,7 +431,7 @@
       "currency": "Currency",
       "payoutSchedule": "Payout Schedule",
       "scheduleWeekly": "Weekly",
-      "scheduleBiweekly": "Bi-Weekly",
+      "scheduleBiweekly": "Biweekly",
       "scheduleMonthly": "Monthly"
     },
     "security": {

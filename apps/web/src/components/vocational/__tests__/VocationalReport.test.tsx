@@ -2,9 +2,22 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { VocationalReport } from "../VocationalReport";
 import * as svc from "@/services/vocationalReportService";
 
+// Real i18next over the shipped common.json, so assertions check rendered copy.
+let mockLang: "en" | "es" = "en";
+jest.mock("react-i18next", () => {
+  const { createTestI18n } = require("@/test-utils/realI18n");
+  const insts = { en: createTestI18n("en"), es: createTestI18n("es") };
+  return {
+    initReactI18next: { type: "3rdParty", init: () => {} },
+    useTranslation: () => ({ t: insts[mockLang].t.bind(insts[mockLang]), i18n: insts[mockLang] }),
+  };
+});
+beforeEach(() => { mockLang = "en"; });
+
 jest.mock("@/services/vocationalReportService");
 const r360 = svc.recompute360 as jest.Mock;
 const rInt = svc.recomputeIntegrated as jest.Mock;
+const namesEn = svc.getDimensionNamesEn as jest.Mock;
 
 beforeEach(() => jest.clearAllMocks());
 
@@ -30,8 +43,44 @@ it("renders dimensions but no integrated headline when integration not_ready", a
   expect(screen.getAllByText(/unlock|complete/i).length).toBeGreaterThan(0);
 });
 
+it("shows English dimension names from the instrument catalog for an English UI", async () => {
+  r360.mockResolvedValue(readyScore);
+  rInt.mockResolvedValue({ status: "not_ready", missing: ["mil"] });
+  namesEn.mockResolvedValue({ d1: "Academic interests" });
+  render(<VocationalReport evaluatedUserId="stu1" />);
+  await waitFor(() => expect(screen.getByText("Academic interests")).toBeInTheDocument());
+});
+
+it("keeps Spanish dimension names for a Spanish UI (catalog not needed)", async () => {
+  mockLang = "es";
+  r360.mockResolvedValue(readyScore);
+  rInt.mockResolvedValue({ status: "not_ready", missing: ["mil"] });
+  render(<VocationalReport evaluatedUserId="stu1" />);
+  await waitFor(() => expect(screen.getByText("Intereses")).toBeInTheDocument());
+  expect(namesEn).not.toHaveBeenCalled();
+});
+
+it("keeps Spanish names when the catalog lookup fails", async () => {
+  r360.mockResolvedValue(readyScore);
+  rInt.mockResolvedValue({ status: "not_ready", missing: ["mil"] });
+  namesEn.mockRejectedValue(new Error("nope"));
+  render(<VocationalReport evaluatedUserId="stu1" />);
+  await waitFor(() => expect(screen.getByText("Intereses")).toBeInTheDocument());
+});
+
 it("shows an error state with retry when recompute throws", async () => {
   r360.mockRejectedValue(new Error("boom"));
   render(<VocationalReport evaluatedUserId="stu1" />);
   await waitFor(() => expect(screen.getAllByText(/couldn't load|error|try again/i).length).toBeGreaterThan(0));
+});
+
+it("renders the report chrome in Spanish", async () => {
+  mockLang = "es";
+  r360.mockResolvedValue(readyScore);
+  rInt.mockResolvedValue({ status: "not_ready", missing: ["mil"] });
+  render(<VocationalReport evaluatedUserId="stu1" selfView />);
+  await waitFor(() => expect(screen.getByText("Mi informe vocacional 360")).toBeInTheDocument());
+  expect(screen.getByText("Dimensiones")).toBeInTheDocument();
+  expect(screen.getByText(/Moderadamente alto/)).toBeInTheDocument();
+  expect(screen.queryByText(/Vocational 360 Report|Dimensions|moderateHigh/)).not.toBeInTheDocument();
 });

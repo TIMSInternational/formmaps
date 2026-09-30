@@ -100,7 +100,7 @@ export default function AdminPayoutsPage() {
       toast.success(t("admin.payouts.toast.approved", { defaultValue: "Payout approved" }));
       refetch();
     } catch (error: any) {
-      toast.error(error?.message || "Failed to approve payout");
+      toast.error(error?.message || t("pages.admin.payouts.approveFailed"));
     } finally {
       setActioningId(null);
     }
@@ -126,7 +126,7 @@ export default function AdminPayoutsPage() {
       toast.success(t("admin.payouts.toast.rejected", { defaultValue: "Payout rejected" }));
       refetch();
     } catch (error: any) {
-      toast.error(error?.message || "Failed to reject payout");
+      toast.error(error?.message || t("pages.admin.payouts.rejectFailed"));
     } finally {
       setActioningId(null);
       setRejectId(null);
@@ -349,7 +349,7 @@ export default function AdminPayoutsPage() {
                                 className="h-8 w-8 p-0 rounded-full text-red-500 hover:text-red-700 hover:bg-red-50"
                                 disabled={!payoutId || actioningId === payoutId}
                                 onClick={() => payoutId && openRejectDialog(payoutId)}
-                                title="Reject"
+                                title={t("admin.payouts.actions.reject")}
                               >
                                 {actioningId === payoutId ? <Loader2 className="h-4 w-4 animate-spin" /> : <XCircle className="w-4 h-4" />}
                               </Button>
@@ -359,7 +359,7 @@ export default function AdminPayoutsPage() {
                                 className="h-8 w-8 p-0 rounded-full text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                 disabled={!payoutId || actioningId === payoutId}
                                 onClick={() => payoutId && handleApprove(payoutId)}
-                                title="Approve"
+                                title={t("admin.payouts.actions.approve")}
                               >
                                 {actioningId === payoutId ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                               </Button>

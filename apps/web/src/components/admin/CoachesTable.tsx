@@ -286,14 +286,14 @@ export function CoachesTable({ onEdit }: CoachesTableProps) {
                         <Badge
                           className={`${contractStatus.color} border-0 px-2.5 py-0.5 rounded-md font-medium shadow-none`}
                           role="status"
-                          aria-label={`Contract status: ${contractStatus.label}`}
+                          aria-label={t("components.coachesTable.contractStatusAria", { status: contractStatus.label })}
                         >
                           {contractStatus.label}
                         </Badge>
                       ) : (
                         <span
                           className="text-sm text-gray-400"
-                          aria-label="No contract status"
+                          aria-label={t("components.coachesTable.noContractStatus")}
                         >
                           —
                         </span>

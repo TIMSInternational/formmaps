@@ -2,6 +2,16 @@
 
 import { useState, type ReactNode } from "react";
 import { BarChart3, GraduationCap, DollarSign } from "lucide-react";
+import { useTranslation } from "react-i18next";
+
+const CLASSIFICATION_KEYS: Record<string, string> = {
+  safety: "ui.collegePrep.fit.safety",
+  likely: "ui.collegeList.classification.likely",
+  match: "ui.collegePrep.fit.match",
+  competitive: "ui.collegeList.classification.competitive",
+  reach: "ui.collegePrep.fit.reach",
+  high_reach: "ui.collegePrep.fit.highReach",
+};
 
 interface BatchPrediction {
   collegeName: string;
@@ -25,6 +35,7 @@ const PREDICTION_COLORS: Record<string, { bg: string; text: string }> = {
 };
 
 function PredictionBadge({ prediction }: { prediction: BatchPrediction }) {
+  const { t } = useTranslation("counselor");
   const [showPopover, setShowPopover] = useState(false);
   const colors = PREDICTION_COLORS[prediction.classification] || PREDICTION_COLORS.match;
   return (
@@ -38,7 +49,7 @@ function PredictionBadge({ prediction }: { prediction: BatchPrediction }) {
           background: colors.bg, color: colors.text, whiteSpace: "nowrap",
         }}
       >
-        {prediction.percentageDisplay}% {prediction.classification === "high_reach" ? "High Reach" :
+        {prediction.percentageDisplay}% {CLASSIFICATION_KEYS[prediction.classification] ? t(CLASSIFICATION_KEYS[prediction.classification]) :
           prediction.classification.charAt(0).toUpperCase() + prediction.classification.slice(1)}
       </span>
       {showPopover && (prediction.strengths.length > 0 || prediction.weaknesses.length > 0) && (
@@ -50,13 +61,13 @@ function PredictionBadge({ prediction }: { prediction: BatchPrediction }) {
         }}>
           {prediction.strengths.length > 0 && (
             <div style={{ marginBottom: prediction.weaknesses.length > 0 ? 8 : 0 }}>
-              <div style={{ fontWeight: 700, color: "#10b981", marginBottom: 4 }}>Strengths</div>
+              <div style={{ fontWeight: 700, color: "#10b981", marginBottom: 4 }}>{t("ui.collegeList.strengths")}</div>
               {prediction.strengths.map((s, i) => <div key={i} style={{ marginBottom: 2 }}>+ {s}</div>)}
             </div>
           )}
           {prediction.weaknesses.length > 0 && (
             <div>
-              <div style={{ fontWeight: 700, color: "#ef4444", marginBottom: 4 }}>Weaknesses</div>
+              <div style={{ fontWeight: 700, color: "#ef4444", marginBottom: 4 }}>{t("ui.collegeList.weaknesses")}</div>
               {prediction.weaknesses.map((w, i) => <div key={i} style={{ marginBottom: 2 }}>- {w}</div>)}
             </div>
           )}
@@ -93,6 +104,7 @@ interface CollegeCardProps {
 }
 
 export function CollegeCard({ college, actions, prediction }: CollegeCardProps) {
+  const { t } = useTranslation("counselor");
   return (
     <div style={{
       padding: 14, borderRadius: 8,
@@ -117,7 +129,7 @@ export function CollegeCard({ college, actions, prediction }: CollegeCardProps) 
             {college.acceptanceRate != null && (
               <span style={{ fontSize: 11, color: "var(--admin-font-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
                 <BarChart3 style={{ width: 11, height: 11, color: "var(--admin-font-light)" }} />
-                {(college.acceptanceRate * 100).toFixed(0)}% acceptance
+                {t("ui.collegeList.acceptanceRate", { rate: (college.acceptanceRate * 100).toFixed(0) })}
               </span>
             )}
             {college.satRange && (
@@ -129,7 +141,7 @@ export function CollegeCard({ college, actions, prediction }: CollegeCardProps) 
             {college.tuition != null && (
               <span style={{ fontSize: 11, color: "var(--admin-font-secondary)", display: "flex", alignItems: "center", gap: 4 }}>
                 <DollarSign style={{ width: 11, height: 11, color: "var(--admin-font-light)" }} />
-                ${college.tuition.toLocaleString()}/yr
+                {t("ui.collegeList.tuitionPerYear", { amount: college.tuition.toLocaleString() })}
               </span>
             )}
           </div>

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Search, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
 import { useQuery } from "@tanstack/react-query";
+import { useTranslation } from "react-i18next";
 
 interface CollegeResult {
   id: string;
@@ -16,6 +17,7 @@ interface AddApplicationFormProps {
 }
 
 export function AddApplicationForm({ onSubmit, isPending }: AddApplicationFormProps) {
+  const { t } = useTranslation("counselor");
   const [collegeSearch, setCollegeSearch] = useState("");
   const [newApp, setNewApp] = useState({ collegeId: "", collegeName: "", fit: "match", deadlineType: "RD", deadlineDate: "" });
 
@@ -42,14 +44,14 @@ export function AddApplicationForm({ onSubmit, isPending }: AddApplicationFormPr
 
   return (
     <div style={{ padding: 16, borderRadius: 10, border: "1px solid rgba(99,102,241,0.3)", background: "rgba(99,102,241,0.03)", marginBottom: 12 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 12 }}>Add Application</div>
+      <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 12 }}>{t("ui.collegeApps.addApplication")}</div>
       <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "flex-end" }}>
         {/* College Search */}
         <div style={{ flex: "2 1 200px", position: "relative" }}>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", display: "block", marginBottom: 4 }}>College</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", display: "block", marginBottom: 4 }}>{t("ui.collegeApps.form.college")}</label>
           <div style={{ position: "relative" }}>
             <Search style={{ position: "absolute", left: 10, top: 10, width: 14, height: 14, color: "var(--admin-font-light)" }} />
-            <input placeholder="Search colleges..." value={collegeSearch}
+            <input placeholder={t("ui.collegeApps.form.searchColleges")} value={collegeSearch}
               onChange={(e) => { setCollegeSearch(e.target.value); setNewApp({ ...newApp, collegeId: "", collegeName: "" }); }}
               style={{ ...selectStyle, paddingLeft: 30 }} />
           </div>
@@ -75,28 +77,28 @@ export function AddApplicationForm({ onSubmit, isPending }: AddApplicationFormPr
 
         {/* Deadline Type */}
         <div style={{ flex: "1 1 100px" }}>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", display: "block", marginBottom: 4 }}>Deadline Type</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", display: "block", marginBottom: 4 }}>{t("ui.collegeApps.form.deadlineType")}</label>
           <select value={newApp.deadlineType} onChange={(e) => setNewApp({ ...newApp, deadlineType: e.target.value })} style={selectStyle}>
             <option value="ED">ED</option>
             <option value="EA">EA</option>
             <option value="RD">RD</option>
-            <option value="Rolling">Rolling</option>
+            <option value="Rolling">{t("ui.collegeApps.form.rolling")}</option>
           </select>
         </div>
 
         {/* Deadline Date */}
         <div style={{ flex: "1 1 140px" }}>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", display: "block", marginBottom: 4 }}>Deadline</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", display: "block", marginBottom: 4 }}>{t("ui.collegeApps.form.deadline")}</label>
           <input type="date" value={newApp.deadlineDate} onChange={(e) => setNewApp({ ...newApp, deadlineDate: e.target.value })} style={selectStyle} />
         </div>
 
         {/* Fit */}
         <div style={{ flex: "1 1 100px" }}>
-          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", display: "block", marginBottom: 4 }}>Fit</label>
+          <label style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", display: "block", marginBottom: 4 }}>{t("ui.collegeApps.form.fit")}</label>
           <select value={newApp.fit} onChange={(e) => setNewApp({ ...newApp, fit: e.target.value })} style={selectStyle}>
-            <option value="reach">Reach</option>
-            <option value="match">Match</option>
-            <option value="safety">Safety</option>
+            <option value="reach">{t("ui.collegePrep.fit.reach")}</option>
+            <option value="match">{t("ui.collegePrep.fit.match")}</option>
+            <option value="safety">{t("ui.collegePrep.fit.safety")}</option>
           </select>
         </div>
 
@@ -108,7 +110,7 @@ export function AddApplicationForm({ onSubmit, isPending }: AddApplicationFormPr
             background: "#102B47", color: "#fff", border: "none", cursor: "pointer",
             opacity: (isPending || !newApp.collegeName || !newApp.deadlineDate) ? 0.5 : 1,
           }}>
-          {isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : "Add"}
+          {isPending ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : t("ui.collegeApps.form.add")}
         </button>
       </div>
     </div>

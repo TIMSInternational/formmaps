@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
   Upload,
@@ -47,25 +48,26 @@ export function UploadStep({
   buildStudentList,
   card,
 }: UploadStepProps) {
+  const { t } = useTranslation("school_admin");
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileRead = useCallback((file: File) => {
     if (!file.name.endsWith(".csv")) {
-      toast.error("Please upload a .csv file");
+      toast.error(t("ui.bulkOnboard.upload.csvOnly"));
       return;
     }
     file.text().then((text) => {
       const parsed = parseCSV(text);
       if (parsed.length === 0) {
-        toast.error("No student rows found in CSV");
+        toast.error(t("ui.bulkOnboard.upload.noRows"));
         return;
       }
       setCsvStudents(parsed);
       setCsvFileName(file.name);
-      toast.success(`Parsed ${parsed.length} students from "${file.name}"`);
+      toast.success(t("ui.bulkOnboard.upload.parsed", { count: parsed.length, file: file.name }));
     });
-  }, [setCsvStudents, setCsvFileName]);
+  }, [setCsvStudents, setCsvFileName, t]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -97,7 +99,7 @@ export function UploadStep({
         <div className="flex items-center justify-between mb-4">
           <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--admin-font-primary)", display: "flex", alignItems: "center", gap: 8 }}>
             <FileSpreadsheet style={{ width: 16, height: 16, color: "#14b8a6" }} />
-            CSV Upload
+            {t("ui.bulkOnboard.upload.csvUpload")}
           </h2>
           <button
             onClick={downloadTemplate}
@@ -109,7 +111,7 @@ export function UploadStep({
             }}
           >
             <Download style={{ width: 13, height: 13 }} />
-            Download Template
+            {t("ui.bulkOnboard.upload.downloadTemplate")}
           </button>
         </div>
 
@@ -141,7 +143,7 @@ export function UploadStep({
               <div>
                 <p style={{ fontSize: 14, fontWeight: 600, color: "#10b981" }}>{csvFileName}</p>
                 <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-                  {csvStudents.length} students parsed &mdash; click to replace
+                  {t("ui.bulkOnboard.upload.parsedReplace", { count: csvStudents.length })}
                 </p>
               </div>
             </div>
@@ -161,16 +163,16 @@ export function UploadStep({
               </div>
               <div>
                 <p style={{ fontSize: 15, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                  {isDragging ? "Drop your CSV here" : "Drop your student roster CSV here"}
+                  {isDragging ? t("ui.bulkOnboard.upload.dropHere") : t("ui.bulkOnboard.upload.dropRoster")}
                 </p>
                 <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 3 }}>
-                  or{" "}
-                  <span style={{ color: "#14b8a6", fontWeight: 600 }}>click to browse</span>
-                  {" "}&mdash; .csv files only
+                  {t("ui.bulkOnboard.upload.or")}{" "}
+                  <span style={{ color: "#14b8a6", fontWeight: 600 }}>{t("ui.bulkOnboard.upload.clickToBrowse")}</span>
+                  {" "}&mdash; {t("ui.bulkOnboard.upload.csvFilesOnly")}
                 </p>
               </div>
               <p style={{ fontSize: 11, color: "var(--admin-font-light)", marginTop: 4 }}>
-                Columns: <code style={{ background: "var(--admin-bg-hover)", padding: "1px 5px", borderRadius: 3, fontFamily: "monospace" }}>name</code>,{" "}
+                {t("ui.bulkOnboard.upload.columns")} <code style={{ background: "var(--admin-bg-hover)", padding: "1px 5px", borderRadius: 3, fontFamily: "monospace" }}>name</code>,{" "}
                 <code style={{ background: "var(--admin-bg-hover)", padding: "1px 5px", borderRadius: 3, fontFamily: "monospace" }}>email</code>,{" "}
                 <code style={{ background: "var(--admin-bg-hover)", padding: "1px 5px", borderRadius: 3, fontFamily: "monospace" }}>classLevel</code>
               </p>
@@ -184,7 +186,7 @@ export function UploadStep({
         <div className="flex items-center justify-between mb-4">
           <h2 style={{ fontSize: 15, fontWeight: 600, color: "var(--admin-font-primary)", display: "flex", alignItems: "center", gap: 8 }}>
             <Users style={{ width: 16, height: 16, color: "#14b8a6" }} />
-            Manual Entry
+            {t("ui.bulkOnboard.upload.manualEntry")}
             {manualRows.filter((r) => r.name || r.email).length > 0 && (
               <span style={{ fontSize: 11, fontWeight: 600, padding: "1px 7px", borderRadius: 20, background: "rgba(20,184,166,0.12)", color: "#14b8a6" }}>
                 {manualRows.filter((r) => r.name || r.email).length}
@@ -200,7 +202,7 @@ export function UploadStep({
             }}
           >
             <Plus style={{ width: 13, height: 13 }} />
-            Add Row
+            {t("ui.bulkOnboard.upload.addRow")}
           </button>
         </div>
 
@@ -208,7 +210,7 @@ export function UploadStep({
           <table style={{ width: "100%", borderCollapse: "collapse" }}>
             <thead>
               <tr style={{ background: "var(--admin-bg-hover)", borderBottom: "1px solid var(--admin-border-default)" }}>
-                {["#", "Name", "Email", "Class Level", ""].map((h) => (
+                {["#", t("ui.courses.name"), t("ui.gradeImport.email"), t("ui.bulkOnboard.preview.classLevel"), ""].map((h) => (
                   <th key={h} style={{ padding: "8px 12px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--admin-font-tertiary)", textAlign: "left" }}>
                     {h}
                   </th>
@@ -248,7 +250,7 @@ export function UploadStep({
             e.currentTarget.style.color = "var(--admin-font-light)";
           }}
         >
-          <Plus style={{ width: 14, height: 14 }} /> Add another student
+          <Plus style={{ width: 14, height: 14 }} /> {t("ui.bulkOnboard.upload.addAnother")}
         </button>
       </div>
 
@@ -263,7 +265,7 @@ export function UploadStep({
             {csvStudents.length > 0 && (
               <div>
                 <span style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)" }}>{csvStudents.length}</span>
-                <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginLeft: 6 }}>from CSV</span>
+                <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginLeft: 6 }}>{t("ui.bulkOnboard.upload.fromCsv")}</span>
               </div>
             )}
             {manualRows.filter((r) => r.name || r.email).length > 0 && (
@@ -271,14 +273,14 @@ export function UploadStep({
                 <span style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)" }}>
                   {manualRows.filter((r) => r.name || r.email).length}
                 </span>
-                <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginLeft: 6 }}>manual entries</span>
+                <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginLeft: 6 }}>{t("ui.bulkOnboard.upload.manualEntries")}</span>
               </div>
             )}
             <div>
               <span style={{ fontSize: 22, fontWeight: 700, color: "#14b8a6" }}>
                 {buildStudentList().length}
               </span>
-              <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginLeft: 6 }}>total students</span>
+              <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginLeft: 6 }}>{t("ui.bulkOnboard.upload.totalStudents")}</span>
             </div>
           </div>
           <button
@@ -299,7 +301,7 @@ export function UploadStep({
             ) : (
               <Eye style={{ width: 16, height: 16 }} />
             )}
-            {isPreviewing ? "Validating\u2026" : "Preview & Validate"}
+            {isPreviewing ? t("ui.bulkOnboard.upload.validating") : t("ui.bulkOnboard.upload.previewValidate")}
             {!isPreviewing && <ArrowRight style={{ width: 15, height: 15 }} />}
           </button>
         </motion.div>

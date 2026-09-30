@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { getUserSettings, updateUserSettings } from "@/services/userService";
 import { apiRequest } from "@/lib/api/apiClient";
 import { useSetLanguage, applyLanguage } from "@/lib/i18n/useSetLanguage";
+import { useTranslation } from "react-i18next";
 
 /* ------------------------------------------------------------------ */
 /*  Section card wrapper                                               */
@@ -181,6 +182,7 @@ export default function StudentSettingsPage() {
   const user = useGlobalStore((s) => s.user);
   const { mode, setMode } = useAdminTheme();
   const setLanguage = useSetLanguage();
+  const { t } = useTranslation();
 
   const [isLoading, setIsLoading] = useState(true);
 
@@ -208,7 +210,7 @@ export default function StudentSettingsPage() {
 
   const handleChangePassword = async () => {
     if (newPassword !== confirmNewPassword) {
-      toast.error("Passwords do not match");
+      toast.error(t("auth.validation.passwordsMatch"));
       return;
     }
     setChangingPassword(true);
@@ -217,12 +219,12 @@ export default function StudentSettingsPage() {
         method: "PUT",
         data: { email: user.email, password: newPassword, oldPassword: currentPassword },
       });
-      toast.success("Password changed successfully");
+      toast.success(t("dashboard.settings.security.passwordChanged"));
       setCurrentPassword("");
       setNewPassword("");
       setConfirmNewPassword("");
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to change password");
+      toast.error(e instanceof Error ? e.message : t("dashboard.settings.security.passwordChangeFailed"));
     } finally {
       setChangingPassword(false);
     }
@@ -272,9 +274,9 @@ export default function StudentSettingsPage() {
         shareProgress,
         allowAnalytics,
       });
-      toast.success("Settings saved successfully");
+      toast.success(t("dashboard.settings.saved"));
     } catch {
-      toast.error("Failed to save settings");
+      toast.error(t("dashboard.settings.saveFailed"));
     } finally {
       setSaving(false);
     }
@@ -302,31 +304,31 @@ export default function StudentSettingsPage() {
         <div className="flex items-center gap-2">
           <Settings className="h-5 w-5" style={{ color: "var(--admin-accent-blue)" }} />
           <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em" }}>
-            Settings
+            {t("nav.settings")}
           </h1>
         </div>
         <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-          Manage your preferences and account settings.
+          {t("dashboard.settings.subtitle")}
         </p>
       </motion.div>
 
       {/* ---- Profile ---- */}
-      <SectionCard icon={User} title="Profile" subtitle="Your account information" delay={0.05}>
+      <SectionCard icon={User} title={t("nav.profile")} subtitle={t("dashboard.settings.profile.subtitle")} delay={0.05}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
-            <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Name</Label>
+            <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("dashboard.settings.profile.name")}</Label>
             <p style={{ fontSize: 14, fontWeight: 500, color: "var(--admin-font-primary)", marginTop: 2 }}>
-              {user.name || "Not set"}
+              {user.name || t("dashboard.settings.profile.notSet")}
             </p>
           </div>
           <div>
-            <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Email</Label>
+            <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("dashboard.settings.profile.email")}</Label>
             <p style={{ fontSize: 14, fontWeight: 500, color: "var(--admin-font-primary)", marginTop: 2 }}>
-              {user.email || "Not set"}
+              {user.email || t("dashboard.settings.profile.notSet")}
             </p>
           </div>
           <div>
-            <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Role</Label>
+            <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("dashboard.settings.profile.role")}</Label>
             <p
               style={{
                 fontSize: 12,
@@ -336,40 +338,42 @@ export default function StudentSettingsPage() {
                 textTransform: "capitalize",
               }}
             >
-              {user.role || "Student"}
+              {user.role
+                ? t(`dashboard.role.${user.role.toLowerCase().replace(/[\s_-]/g, "")}`, { defaultValue: user.role })
+                : t("dashboard.role.student")}
             </p>
           </div>
         </div>
       </SectionCard>
 
       {/* ---- Notifications ---- */}
-      <SectionCard icon={Bell} title="Notifications" subtitle="Choose how you want to be notified" delay={0.1}>
+      <SectionCard icon={Bell} title={t("nav.notifications")} subtitle={t("dashboard.settings.notifications.subtitle")} delay={0.1}>
         <div className="space-y-0">
           <ToggleRow
             id="email-notif"
-            label="Email Notifications"
-            description="Receive updates and alerts via email"
+            label={t("dashboard.settings.notifications.email.label")}
+            description={t("dashboard.settings.notifications.email.description")}
             checked={emailNotifications}
             onChange={setEmailNotifications}
           />
           <ToggleRow
             id="push-notif"
-            label="Push Notifications"
-            description="Get real-time notifications in your browser"
+            label={t("dashboard.settings.notifications.push.label")}
+            description={t("dashboard.settings.notifications.push.description")}
             checked={pushNotifications}
             onChange={setPushNotifications}
           />
           <ToggleRow
             id="session-reminders"
-            label="Session Reminders"
-            description="Reminders before upcoming counseling sessions"
+            label={t("dashboard.settings.notifications.sessionReminders.label")}
+            description={t("dashboard.settings.notifications.sessionReminders.description")}
             checked={sessionReminders}
             onChange={setSessionReminders}
           />
           <ToggleRow
             id="weekly-digest"
-            label="Weekly Digest"
-            description="A weekly summary of your activity and progress"
+            label={t("dashboard.settings.notifications.weeklyDigest.label")}
+            description={t("dashboard.settings.notifications.weeklyDigest.description")}
             checked={weeklyDigest}
             onChange={setWeeklyDigest}
           />
@@ -377,16 +381,16 @@ export default function StudentSettingsPage() {
       </SectionCard>
 
       {/* ---- Theme ---- */}
-      <SectionCard icon={Sun} title="Theme" subtitle="Select your preferred appearance" delay={0.15}>
+      <SectionCard icon={Sun} title={t("shell.theme")} subtitle={t("dashboard.settings.theme.subtitle")} delay={0.15}>
         <div className="flex gap-3">
-          <ThemeOption icon={Sun} label="Light" value="light" active={mode === "light"} onClick={() => setMode("light")} />
-          <ThemeOption icon={Moon} label="Dark" value="dark" active={mode === "dark"} onClick={() => setMode("dark")} />
-          <ThemeOption icon={Monitor} label="System" value="system" active={mode === "system"} onClick={() => setMode("system")} />
+          <ThemeOption icon={Sun} label={t("shell.themeLight")} value="light" active={mode === "light"} onClick={() => setMode("light")} />
+          <ThemeOption icon={Moon} label={t("shell.themeDark")} value="dark" active={mode === "dark"} onClick={() => setMode("dark")} />
+          <ThemeOption icon={Monitor} label={t("shell.themeSystem")} value="system" active={mode === "system"} onClick={() => setMode("system")} />
         </div>
       </SectionCard>
 
       {/* ---- Language ---- */}
-      <SectionCard icon={Globe} title="Language" subtitle="Choose your preferred language" delay={0.2}>
+      <SectionCard icon={Globe} title={t("dashboard.settings.language.title")} subtitle={t("dashboard.settings.language.subtitle")} delay={0.2}>
         <div className="flex flex-wrap gap-2">
           {([
             { value: "en", label: "English" },
@@ -422,26 +426,26 @@ export default function StudentSettingsPage() {
       </SectionCard>
 
       {/* ---- Privacy ---- */}
-      <SectionCard icon={Shield} title="Privacy" subtitle="Control your data and visibility" delay={0.25}>
+      <SectionCard icon={Shield} title={t("dashboard.settings.privacy.title")} subtitle={t("dashboard.settings.privacy.subtitle")} delay={0.25}>
         <div className="space-y-0">
           <ToggleRow
             id="profile-visible"
-            label="Profile Visibility"
-            description="Allow counselors and coaches to view your profile"
+            label={t("dashboard.settings.privacy.profileVisibility.label")}
+            description={t("dashboard.settings.privacy.profileVisibility.description")}
             checked={profileVisible}
             onChange={setProfileVisible}
           />
           <ToggleRow
             id="share-progress"
-            label="Share Progress"
-            description="Share your learning progress with your school"
+            label={t("dashboard.settings.privacy.shareProgress.label")}
+            description={t("dashboard.settings.privacy.shareProgress.description")}
             checked={shareProgress}
             onChange={setShareProgress}
           />
           <ToggleRow
             id="allow-analytics"
-            label="Usage Analytics"
-            description="Help us improve by sharing anonymous usage data"
+            label={t("dashboard.settings.privacy.usageAnalytics.label")}
+            description={t("dashboard.settings.privacy.usageAnalytics.description")}
             checked={allowAnalytics}
             onChange={setAllowAnalytics}
           />
@@ -449,10 +453,10 @@ export default function StudentSettingsPage() {
       </SectionCard>
 
       {/* ---- Security: change password ---- */}
-      <SectionCard icon={Lock} title="Security" subtitle="Change your password" delay={0.28}>
+      <SectionCard icon={Lock} title={t("dashboard.settings.security.title")} subtitle={t("dashboard.settings.security.subtitle")} delay={0.28}>
         <div className="space-y-4 max-w-md">
           <div className="space-y-1.5">
-            <Label htmlFor="current-password">Current password</Label>
+            <Label htmlFor="current-password">{t("dashboard.settings.security.currentPassword")}</Label>
             <input
               id="current-password"
               type="password"
@@ -464,7 +468,7 @@ export default function StudentSettingsPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="new-password">New password</Label>
+            <Label htmlFor="new-password">{t("dashboard.settings.security.newPassword")}</Label>
             <input
               id="new-password"
               type="password"
@@ -476,7 +480,7 @@ export default function StudentSettingsPage() {
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="confirm-new-password">Confirm new password</Label>
+            <Label htmlFor="confirm-new-password">{t("dashboard.settings.security.confirmNewPassword")}</Label>
             <input
               id="confirm-new-password"
               type="password"
@@ -504,7 +508,9 @@ export default function StudentSettingsPage() {
               opacity: changingPassword || !currentPassword || !newPassword || !confirmNewPassword ? 0.6 : 1,
             }}
           >
-            {changingPassword ? "Changing..." : "Change password"}
+            {changingPassword
+              ? t("dashboard.settings.security.changing")
+              : t("dashboard.settings.security.changePassword")}
           </button>
         </div>
       </SectionCard>
@@ -541,10 +547,10 @@ export default function StudentSettingsPage() {
           {saving ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
-              Saving...
+              {t("dashboard.settings.saving")}
             </>
           ) : (
-            "Save Settings"
+            t("dashboard.settings.save")
           )}
         </button>
       </motion.div>

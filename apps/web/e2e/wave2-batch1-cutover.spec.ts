@@ -68,7 +68,7 @@ test.describe("Wave 2 Batch 1 — LIA/MIL results served by .NET", () => {
     // "Sin Resultados"/"No Results" with a "Go to Assessment" CTA instead —
     // these are mutually exclusive per lia/results/page.tsx's own branching.
     await expect(page.getByText(/Volver|Back/).first()).toBeVisible({ timeout: 15000 });
-    await expect(page.getByText(/Sin Resultados|No Results/)).not.toBeVisible();
+    await expect(page.getByText(/Sin resultados|No Results/)).not.toBeVisible();
 
     await expect
       .poll(() => liaResultsCalls.length, { timeout: 15000 })

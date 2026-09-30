@@ -288,7 +288,7 @@ export default function AdminTransactionsPage() {
                       <div className="flex flex-col">
                         <span className="font-semibold text-gray-900">{trx.userName}</span>
                         <span className="text-xs text-gray-400">
-                          ID: {trx.userId?.substring(0, 8) || "—"}...
+                          {t("pages.admin.transactions.userIdShort", { id: trx.userId?.substring(0, 8) || "—" })}
                         </span>
                       </div>
                     </TableCell>

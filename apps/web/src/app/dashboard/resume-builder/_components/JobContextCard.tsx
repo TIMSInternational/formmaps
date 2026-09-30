@@ -2,12 +2,14 @@
 
 import type { ExtractedJobData } from "@/types/resume";
 import { Briefcase, MapPin } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 interface JobContextCardProps {
   extractedJob: ExtractedJobData;
 }
 
 export function JobContextCard({ extractedJob }: JobContextCardProps) {
+  const { t } = useTranslation();
   const allSkills = [
     ...extractedJob.requiredSkills,
     ...extractedJob.preferredSkills,
@@ -22,11 +24,15 @@ export function JobContextCard({ extractedJob }: JobContextCardProps) {
 
         <div className="min-w-0 flex-1">
           <p className="text-xs font-medium text-muted-foreground">
-            Tailored for
+            {t("resumeBuilder.jobContextCard.tailoredFor", "Tailored for")}
           </p>
           <p className="text-sm font-semibold text-foreground mt-0.5">
-            {extractedJob.jobTitle}
-            {extractedJob.company ? ` at ${extractedJob.company}` : ""}
+            {extractedJob.company
+              ? t("resumeBuilder.jobContextCard.jobAtCompany", "{{jobTitle}} at {{company}}", {
+                  jobTitle: extractedJob.jobTitle,
+                  company: extractedJob.company,
+                })
+              : extractedJob.jobTitle}
           </p>
 
           {(extractedJob.location || extractedJob.employmentType) && (
@@ -58,7 +64,7 @@ export function JobContextCard({ extractedJob }: JobContextCardProps) {
               ))}
               {allSkills.length > 8 && (
                 <span className="text-xs text-muted-foreground self-center">
-                  +{allSkills.length - 8} more
+                  {t("resumeBuilder.jobContextCard.moreSkills", "+{{count}} more", { count: allSkills.length - 8 })}
                 </span>
               )}
             </div>

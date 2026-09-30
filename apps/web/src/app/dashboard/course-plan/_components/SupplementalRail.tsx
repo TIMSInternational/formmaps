@@ -2,11 +2,13 @@
 
 import { Globe, Star } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { useSupplementalCourses } from "@/hooks/useGraduationPlanQueries";
 
 // Global (Coursera-style) courses recommended for the student's goal —
 // especially the categories the school catalog can't cover.
 export function SupplementalRail({ enabled }: { enabled: boolean }) {
+  const { t } = useTranslation();
   const { data: courses, isLoading } = useSupplementalCourses(enabled);
 
   if (!enabled || isLoading || !courses || courses.length === 0) return null;
@@ -20,14 +22,14 @@ export function SupplementalRail({ enabled }: { enabled: boolean }) {
         <div className="flex items-center gap-2">
           <Globe className="h-4 w-4 text-[var(--admin-accent-blue)]" />
           <h2 className="text-sm font-semibold text-[var(--admin-font-primary)]">
-            Go beyond your school
+            {t("studentUi.coursePlan.supplemental.title")}
           </h2>
         </div>
         <Link
           href="/dashboard/learning"
           className="text-xs font-medium text-[var(--admin-accent-blue)] hover:underline"
         >
-          Browse the Learning Hub →
+          {t("studentUi.coursePlan.supplemental.browseHub")}
         </Link>
       </div>
       <div className="flex gap-3 overflow-x-auto pb-1">
@@ -41,7 +43,7 @@ export function SupplementalRail({ enabled }: { enabled: boolean }) {
               {c.title}
             </p>
             <p className="text-[10px] mt-0.5 text-[var(--admin-font-tertiary)]">
-              {[c.provider, c.category].filter(Boolean).join(" · ") || "Online course"}
+              {[c.provider, c.category].filter(Boolean).join(" · ") || t("studentUi.coursePlan.supplemental.onlineCourse")}
               {c.rating != null && (
                 <span className="inline-flex items-center gap-0.5 ml-1">
                   <Star className="h-2.5 w-2.5 fill-current text-[#d97706]" />
@@ -51,7 +53,7 @@ export function SupplementalRail({ enabled }: { enabled: boolean }) {
             </p>
             {c.fillsGap && (
               <span className="inline-block mt-1.5 text-[9px] font-bold uppercase px-1.5 py-0.5 rounded bg-[#FFD23F] text-[#102B47]">
-                Fills: {c.fillsGap} gap
+                {t("studentUi.coursePlan.supplemental.fillsGap", { gap: c.fillsGap })}
               </span>
             )}
             <p className="text-[10px] mt-1.5 leading-snug text-[var(--admin-font-secondary)] line-clamp-2">

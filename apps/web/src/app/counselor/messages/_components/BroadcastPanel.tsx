@@ -7,8 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { apiRequest } from "@/lib/api/apiClient";
+import { useTranslation } from "react-i18next";
 
 export function BroadcastPanel() {
+  const { t } = useTranslation("counselor");
   const [content, setContent] = useState("");
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
@@ -16,7 +18,7 @@ export function BroadcastPanel() {
 
   const handleBroadcast = async () => {
     if (!content.trim()) {
-      toast.error("Please enter a message");
+      toast.error(t("ui.broadcast.enterMessage"));
       return;
     }
 
@@ -29,10 +31,10 @@ export function BroadcastPanel() {
       const count = res?.data?.recipientCount ?? 0;
       setRecipientCount(count);
       setSent(true);
-      toast.success(`Message sent to ${count} student${count !== 1 ? "s" : ""}`);
+      toast.success(t("ui.broadcast.sentToast", { count }));
       setContent("");
     } catch (e: any) {
-      toast.error(e.message || "Failed to send broadcast");
+      toast.error(e.message || t("ui.broadcast.failed"));
     } finally {
       setSending(false);
     }
@@ -46,16 +48,16 @@ export function BroadcastPanel() {
     >
       <div className="px-5 py-4 border-b border-[var(--border)] flex items-center gap-2">
         <Users className="h-4 w-4 text-indigo-500" />
-        <span className="text-sm font-semibold text-foreground">Broadcast to My Students</span>
+        <span className="text-sm font-semibold text-foreground">{t("ui.broadcast.title")}</span>
       </div>
 
       <div className="p-5 space-y-4">
         <p className="text-xs text-muted-foreground">
-          Send a message to all students assigned to you. Each student will receive the message as a direct conversation.
+          {t("ui.broadcast.description")}
         </p>
 
         <Textarea
-          placeholder="Type your message to all students..."
+          placeholder={t("ui.broadcast.placeholder")}
           value={content}
           onChange={(e) => { setContent(e.target.value); setSent(false); }}
           rows={4}
@@ -74,7 +76,7 @@ export function BroadcastPanel() {
             ) : (
               <Send className="h-4 w-4 mr-2" />
             )}
-            {sending ? "Sending..." : "Message All My Students"}
+            {sending ? t("ui.broadcast.sending") : t("ui.broadcast.send")}
           </Button>
 
           {sent && (
@@ -84,7 +86,7 @@ export function BroadcastPanel() {
               className="text-xs text-emerald-600 flex items-center gap-1"
             >
               <MessageSquare className="h-3 w-3" />
-              Sent to {recipientCount} student{recipientCount !== 1 ? "s" : ""}
+              {t("ui.broadcast.sentTo", { count: recipientCount })}
             </motion.span>
           )}
         </div>

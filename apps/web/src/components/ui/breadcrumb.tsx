@@ -1,6 +1,7 @@
 "use client";
 import Link from "next/link";
 import { ChevronRight, Home } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 export interface BreadcrumbItem {
@@ -16,12 +17,13 @@ interface BreadcrumbProps {
 }
 
 export function Breadcrumb({ items, className, showHome = true }: BreadcrumbProps) {
+  const { t } = useTranslation();
   const allItems = showHome
-    ? [{ label: "Dashboard", href: "/dashboard", icon: <Home className="w-4 h-4" /> }, ...items]
+    ? [{ label: t("nav.dashboard"), href: "/dashboard", icon: <Home className="w-4 h-4" /> }, ...items]
     : items;
 
   return (
-    <nav className={cn("flex mb-6", className)} aria-label="Breadcrumb">
+    <nav className={cn("flex mb-6", className)} aria-label={t("components.breadcrumb.ariaLabel")}>
       <ol className="inline-flex items-center space-x-1 md:space-x-2">
         {allItems.map((item, index) => {
           const isLast = index === allItems.length - 1;

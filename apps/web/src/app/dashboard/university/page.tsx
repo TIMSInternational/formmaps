@@ -161,10 +161,10 @@ export default function UniversityPage() {
     const evalStatus = assessmentProgress?.evaluationAssessment?.status || "not_started";
     const personalityStatus = assessmentProgress?.personalityAssessment?.status || "not_started";
     const gateAssessments = [
-      { name: "PCA Assessment", description: "Discover your DISC personality profile", status: pcaStatus, href: "/dashboard/assessments/pca" },
-      { name: "LIA Assessment", description: "Measure your cognitive abilities across 5 dimensions", status: milStatus, href: "/dashboard/assessments/lia" },
-      { name: "360° Evaluation", description: "Gather feedback from peers, parents, and teachers", status: evalStatus, href: "/dashboard/assessments/evaluation" },
-      { name: "Personality Assessment", description: "Resolve your 4-letter personality type", status: personalityStatus, href: "/dashboard/assessments/personality" },
+      { name: t("PCA Assessment", "Evaluación PCA"), description: t("Discover your DISC personality profile", "Descubre tu perfil de personalidad DISC"), status: pcaStatus, href: "/dashboard/assessments/pca" },
+      { name: t("LIA Assessment", "Evaluación LIA"), description: t("Measure your cognitive abilities across 5 dimensions", "Mide tus habilidades cognitivas en 5 dimensiones"), status: milStatus, href: "/dashboard/assessments/lia" },
+      { name: t("360° Evaluation", "Evaluación 360°"), description: t("Gather feedback from peers, parents, and teachers", "Recoge retroalimentación de compañeros, padres y profesores"), status: evalStatus, href: "/dashboard/assessments/evaluation" },
+      { name: t("Personality Assessment", "Evaluación de personalidad"), description: t("Discover your 4-letter personality type", "Descubre tu tipo de personalidad de 4 letras"), status: personalityStatus, href: "/dashboard/assessments/personality" },
     ];
     const completedCount = gateAssessments.filter((a) => a.status === "completed").length;
 
@@ -174,13 +174,16 @@ export default function UniversityPage() {
           <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200/30">
             <Lock className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Complete Your Assessments</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t("Complete Your Assessments", "Completa tus evaluaciones")}</h1>
           <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-            Finish all 4 assessments to unlock personalized university recommendations based on your profile, competencies, and preferences.
+            {t(
+              "Finish all 4 assessments to unlock personalized university recommendations based on your profile, competencies, and preferences.",
+              "Completa las 4 evaluaciones para desbloquear recomendaciones personalizadas de universidades basadas en tu perfil, competencias y preferencias."
+            )}
           </p>
         </div>
         <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground">
-          <span>{completedCount}/4 completed</span>
+          <span>{t(`${completedCount}/4 completed`, `${completedCount}/4 completadas`)}</span>
           <div className="flex gap-1.5">
             {[0, 1, 2, 3].map((i) => (
               <div key={i} className={`w-8 h-2 rounded-full transition-colors ${i < completedCount ? "bg-emerald-500" : "bg-muted"}`} />
@@ -202,7 +205,7 @@ export default function UniversityPage() {
                 <div className="flex-1 min-w-0">
                   <h3 className={`text-sm font-semibold ${isComplete ? "text-emerald-700" : "text-foreground"}`}>
                     {assessment.name}
-                    {isInProgress && <span className="ml-2 text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">In Progress</span>}
+                    {isInProgress && <span className="ml-2 text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">{t("In Progress", "En progreso")}</span>}
                   </h3>
                   <p className={`text-xs mt-0.5 ${isComplete ? "text-emerald-600/70" : "text-muted-foreground"}`}>{assessment.description}</p>
                 </div>
@@ -216,7 +219,7 @@ export default function UniversityPage() {
           return next ? (
             <div className="text-center pt-2">
               <Link href={next.href} className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm">
-                {next.status === "in_progress" ? "Continue Assessment" : "Start Next Assessment"}
+                {next.status === "in_progress" ? t("Continue Assessment", "Continuar evaluación") : t("Start Next Assessment", "Comenzar la siguiente evaluación")}
                 <ArrowRight className="w-4 h-4" />
               </Link>
             </div>
@@ -236,12 +239,12 @@ export default function UniversityPage() {
       >
         <div className="flex flex-col gap-2">
           <span className="text-[10px] uppercase tracking-[0.2em] font-bold text-muted-foreground">
-            {t("University Finder", "Buscador de Universidades")}
+            {t("University Finder", "Buscador de universidades")}
           </span>
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-foreground tracking-tight leading-none">
             {t(
               "Find Your Perfect Match",
-              "Encuentra tu Universidad Ideal"
+              "Encuentra tu universidad ideal"
             )}
           </h1>
           <p className="max-w-2xl text-base text-muted-foreground">
@@ -350,12 +353,12 @@ export default function UniversityPage() {
         {/* Active filter pills */}
         {(() => {
           const pills: FilterPill[] = [];
-          if (filters.search) pills.push({ key: "search", label: "Search", value: filters.search });
-          if (filters.countries?.length) pills.push({ key: "countries", label: "Countries", value: filters.countries.join(", ") });
-          if (filters.degrees?.length) pills.push({ key: "degrees", label: "Degrees", value: filters.degrees.join(", ") });
-          if (filters.fields?.length) pills.push({ key: "fields", label: "Fields", value: filters.fields.join(", ") });
-          if (filters.hasFinancialAid) pills.push({ key: "hasFinancialAid", label: "Financial Aid", value: "Yes" });
-          if (filters.hasHousing) pills.push({ key: "hasHousing", label: "Housing", value: "Yes" });
+          if (filters.search) pills.push({ key: "search", label: t("Search", "Búsqueda"), value: filters.search });
+          if (filters.countries?.length) pills.push({ key: "countries", label: t("Countries", "Países"), value: filters.countries.join(", ") });
+          if (filters.degrees?.length) pills.push({ key: "degrees", label: t("Degrees", "Títulos"), value: filters.degrees.join(", ") });
+          if (filters.fields?.length) pills.push({ key: "fields", label: t("Fields", "Áreas"), value: filters.fields.join(", ") });
+          if (filters.hasFinancialAid) pills.push({ key: "hasFinancialAid", label: t("Financial Aid", "Ayuda financiera"), value: t("Yes", "Sí") });
+          if (filters.hasHousing) pills.push({ key: "hasHousing", label: t("Housing", "Alojamiento"), value: t("Yes", "Sí") });
           return (
             <ActiveFilterPills
               pills={pills}
@@ -374,12 +377,12 @@ export default function UniversityPage() {
                 title={t("Complete your assessments first", "Completa tus evaluaciones primero")}
                 description={t(
                   "Take the PCA and MIL assessments to get personalized university recommendations based on your profile.",
-                  "Completa las evaluaciones PCA y MIL para obtener recomendaciones personalizadas."
+                  "Completa las evaluaciones PCA y MIL para obtener recomendaciones personalizadas de universidades según tu perfil."
                 )}
                 icon={GraduationCap}
-                actionLabel="Start Assessments"
+                actionLabel={t("Start Assessments", "Comenzar evaluaciones")}
                 actionHref="/dashboard/assessments"
-                secondaryLabel="Browse All Universities"
+                secondaryLabel={t("Browse All Universities", "Ver todas las universidades")}
                 onSecondary={() => setActiveTab("all")}
               />
             )}
@@ -445,7 +448,7 @@ export default function UniversityPage() {
                     "Intenta ajustar tus filtros para ver más resultados."
                   )}
                   icon={GraduationCap}
-                  actionLabel="Clear Filters"
+                  actionLabel={t("Clear Filters", "Limpiar filtros")}
                   onAction={() => setFilters({})}
                 />
               )}

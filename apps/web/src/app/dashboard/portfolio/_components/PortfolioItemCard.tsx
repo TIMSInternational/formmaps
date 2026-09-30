@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { Edit, Trash2, Calendar, Clock } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { typeConfig } from "./portfolioConfig";
 import type { PortfolioItem } from "@/types/portfolio";
@@ -14,6 +15,7 @@ interface PortfolioItemCardProps {
 }
 
 export function PortfolioItemCard({ item, index, onEdit, onDelete }: PortfolioItemCardProps) {
+  const { t } = useTranslation();
   const cfg = typeConfig[item.type] || typeConfig.extracurricular;
   const Icon = cfg.icon;
 
@@ -48,7 +50,7 @@ export function PortfolioItemCard({ item, index, onEdit, onDelete }: PortfolioIt
               <Button
                 size="icon"
                 variant="ghost"
-                aria-label={`Edit ${item.title}`}
+                aria-label={t("studentUi.portfolio.card.editAria", { title: item.title })}
                 className="h-7 w-7 text-muted-foreground hover:text-foreground focus-visible:opacity-100 focus-visible:ring-2"
                 onClick={() => onEdit(item)}
               >
@@ -57,10 +59,10 @@ export function PortfolioItemCard({ item, index, onEdit, onDelete }: PortfolioIt
               <Button
                 size="icon"
                 variant="ghost"
-                aria-label={`Delete ${item.title}`}
+                aria-label={t("studentUi.portfolio.card.deleteAria", { title: item.title })}
                 className="h-7 w-7 text-muted-foreground hover:text-rose-600 focus-visible:opacity-100 focus-visible:ring-2"
                 onClick={() => {
-                  if (window.confirm(`Delete "${item.title}"? This cannot be undone.`)) {
+                  if (window.confirm(t("studentUi.portfolio.card.deleteConfirm", { title: item.title }))) {
                     onDelete(item.id);
                   }
                 }}
@@ -87,13 +89,13 @@ export function PortfolioItemCard({ item, index, onEdit, onDelete }: PortfolioIt
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
                 {item.startDate}
-                {item.endDate ? ` - ${item.endDate}` : " - Present"}
+                {item.endDate ? ` - ${item.endDate}` : ` - ${t("studentUi.portfolio.card.present")}`}
               </span>
             )}
             {item.totalHours && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {item.totalHours} hrs
+                {t("studentUi.portfolio.card.hours", { count: item.totalHours })}
               </span>
             )}
           </div>
@@ -110,7 +112,7 @@ export function PortfolioItemCard({ item, index, onEdit, onDelete }: PortfolioIt
               ))}
               {item.achievements.length > 3 && (
                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-secondary text-muted-foreground">
-                  +{item.achievements.length - 3} more
+                  {t("studentUi.portfolio.card.more", { count: item.achievements.length - 3 })}
                 </span>
               )}
             </div>

@@ -10,6 +10,7 @@ import {
   Briefcase,
   CheckCircle,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { ExtractedJobData } from "@/types/resume";
 import { extractJobPosting } from "@/services/resumeService";
 
@@ -24,6 +25,7 @@ export function JobPostingInput({
   onSkip,
   purpose,
 }: JobPostingInputProps) {
+  const { t } = useTranslation();
   const [text, setText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,9 @@ export function JobPostingInput({
       setShowForm(false);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : "Failed to analyze job posting"
+        err instanceof Error
+          ? err.message
+          : t("resumeBuilder.jobPostingInput.analyzeFailed", "Failed to analyze job posting")
       );
     } finally {
       setIsLoading(false);
@@ -69,10 +73,10 @@ export function JobPostingInput({
         transition={{ duration: 0.3 }}
       >
         <h2 className="text-xl font-semibold text-foreground">
-          Paste the job posting
+          {t("resumeBuilder.jobPostingInput.title", "Paste the job posting")}
         </h2>
         <p className="text-sm text-muted-foreground mt-1">
-          We will extract the key requirements to tailor your resume
+          {t("resumeBuilder.jobPostingInput.subtitle", "We will extract the key requirements to tailor your resume")}
         </p>
       </motion.div>
 
@@ -90,7 +94,7 @@ export function JobPostingInput({
               <textarea
                 value={text}
                 onChange={(e) => setText(e.target.value)}
-                placeholder="Paste the job description here..."
+                placeholder={t("resumeBuilder.jobPostingInput.placeholder", "Paste the job description here...")}
                 className="w-full min-h-[200px] bg-transparent text-sm text-foreground placeholder:text-muted-foreground resize-y outline-none"
               />
             </div>
@@ -105,7 +109,7 @@ export function JobPostingInput({
                 className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
                 <ArrowLeft className="w-4 h-4" />
-                Back
+                {t("common.back", "Back")}
               </button>
 
               <button
@@ -116,10 +120,10 @@ export function JobPostingInput({
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Analyzing...
+                    {t("resumeBuilder.jobPostingInput.analyzing", "Analyzing...")}
                   </>
                 ) : (
-                  "Analyze"
+                  t("resumeBuilder.jobPostingInput.analyze", "Analyze")
                 )}
               </button>
             </div>
@@ -166,7 +170,7 @@ export function JobPostingInput({
                 {extracted.requiredSkills.length > 0 && (
                   <div>
                     <p className="text-xs font-medium text-muted-foreground mb-2">
-                      Required Skills
+                      {t("resumeBuilder.jobPostingInput.requiredSkills", "Required Skills")}
                     </p>
                     <div className="flex flex-wrap gap-1.5">
                       {extracted.requiredSkills.map((skill) => (
@@ -185,7 +189,7 @@ export function JobPostingInput({
                 {extracted.requiredQualifications.length > 0 && (
                   <div>
                     <p className="text-xs font-medium text-muted-foreground mb-2">
-                      Key Qualifications
+                      {t("resumeBuilder.jobPostingInput.keyQualifications", "Key Qualifications")}
                     </p>
                     <ul className="space-y-1">
                       {extracted.requiredQualifications.map((qual, i) => (
@@ -208,14 +212,14 @@ export function JobPostingInput({
                 onClick={handleEdit}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                Edit
+                {t("common.edit", "Edit")}
               </button>
 
               <button
                 onClick={handleContinue}
                 className="bg-foreground text-background hover:bg-foreground/90 rounded-xl px-5 py-2.5 text-sm font-medium transition-colors"
               >
-                Looks good — Continue
+                {t("resumeBuilder.jobPostingInput.looksGood", "Looks good — Continue")}
               </button>
             </div>
           </motion.div>

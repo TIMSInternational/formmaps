@@ -9,13 +9,14 @@ import {
   Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
 import type { PipelineStudent } from "@/services/assessmentCommandService";
+import { useTranslation } from "react-i18next";
 
 const GRADES = [9, 10, 11, 12];
-const GRADE_LABELS: Record<number, string> = { 9: "Freshman", 10: "Sophomore", 11: "Junior", 12: "Senior" };
 const EXAM_TYPES = ["PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation"];
+// Exam key -> i18n key for its short label.
 const EXAM_SHORT: Record<string, string> = {
-  PatternRecognition: "Pattern", VerbalReasoning: "Verbal",
-  WorkingMemory: "Memory", NumericVelocity: "Numeric", VisualRotation: "Rotation",
+  PatternRecognition: "counselor:pipeline.colPattern", VerbalReasoning: "counselor:pipeline.colVerbal",
+  WorkingMemory: "counselor:pipeline.colMemory", NumericVelocity: "counselor:pipeline.colNumeric", VisualRotation: "counselor:pipeline.colRotation",
 };
 
 const thStyle: React.CSSProperties = {
@@ -36,6 +37,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useTranslation("school_admin");
   if (!student) return null;
 
   const pcaEntries = Object.entries(student.pca);
@@ -43,7 +45,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
   const pcaTotal = pcaEntries.length;
 
   const statusColor = (s: string) => s === "done" ? "#10b981" : s === "in_progress" ? "#f59e0b" : "#6b7280";
-  const statusLabel = (s: string) => s === "done" ? "Completed" : s === "in_progress" ? "In Progress" : "Not Started";
+  const statusLabel = (s: string) => s === "done" ? t("counselor:assessments.statusCompleted") : s === "in_progress" ? t("counselor:assessments.statusInProgress") : t("counselor:assessments.statusNotStarted");
   const statusBg = (s: string) => s === "done" ? "rgba(16,185,129,0.1)" : s === "in_progress" ? "rgba(245,158,11,0.1)" : "rgba(107,114,128,0.1)";
 
   const overallDone = pcaDone + (student.mil === "done" ? 1 : 0) + student.eval360Detail.completed + (student.personality === "done" ? 1 : 0);
@@ -60,7 +62,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
               {student.name}
             </DialogTitle>
             <DialogDescription style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-              {student.email} {student.gradeLevel ? `| Grade ${student.gradeLevel}` : ""}
+              {student.email} {student.gradeLevel ? `| ${t("counselor:pipeline.grade", { n: student.gradeLevel })}` : ""}
             </DialogDescription>
           </DialogHeader>
         </div>
@@ -69,7 +71,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
           {/* Overall Progress */}
           <div style={{ padding: "12px 16px", borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>Overall Completion</span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("assessments.pipeline.overallCompletion")}</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: overallPct === 100 ? "#10b981" : "var(--admin-font-primary)" }}>{overallPct}%</span>
             </div>
             <div style={{ height: 6, borderRadius: 3, background: "var(--admin-bg-card)", overflow: "hidden" }}>
@@ -80,7 +82,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
           {/* PCA Exams */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-              PCA Assessment ({pcaDone}/{pcaTotal})
+              {t("counselor:assessments.pcaTitle")} ({pcaDone}/{pcaTotal})
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {pcaEntries.map(([name, status]) => (
@@ -89,7 +91,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
                   padding: "8px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
                 }}>
                   <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>
-                    {EXAM_SHORT[name] || name.replace(/([A-Z])/g, " $1").trim()}
+                    {EXAM_SHORT[name] ? t(EXAM_SHORT[name]) : name.replace(/([A-Z])/g, " $1").trim()}
                   </span>
                   <span style={{
                     fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
@@ -105,13 +107,13 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
           {/* MIL */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-              MIL / LIA Assessment
+              {t("counselor:assessments.milTitle")}
             </div>
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
             }}>
-              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>Multiple Intelligence Lens</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{t("pipeline.milName")}</span>
               <span style={{
                 fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
                 background: statusBg(student.mil), color: statusColor(student.mil), textTransform: "uppercase",
@@ -124,13 +126,13 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
           {/* 360 Evaluation */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-              360 Evaluation ({student.eval360Detail.completed}/{student.eval360Detail.total || "\u2014"})
+              {t("counselor:assessments.eval360Title")} ({student.eval360Detail.completed}/{student.eval360Detail.total || "\u2014"})
             </div>
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
             }}>
-              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>Evaluator Responses</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{t("assessments.pipeline.evaluatorResponses")}</span>
               <span style={{
                 fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
                 background: statusBg(student.eval360), color: statusColor(student.eval360), textTransform: "uppercase",
@@ -143,13 +145,13 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
           {/* Personality */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-              Personality Assessment
+              {t("counselor:assessments.personalityTitle")}
             </div>
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
             }}>
-              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>4-Letter Personality Type</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{t("assessments.pipeline.personalityType")}</span>
               <span style={{
                 fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
                 background: statusBg(student.personality), color: statusColor(student.personality), textTransform: "uppercase",
@@ -170,7 +172,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
               border: "1px solid var(--admin-border-default)", cursor: "pointer",
             }}
           >
-            Close
+            {t("common:common.close")}
           </button>
           <a
             href={`/school-admin/users/${student.id}`}
@@ -182,7 +184,7 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
               border: "none", cursor: "pointer", textDecoration: "none",
             }}
           >
-            View Full Profile
+            {t("assessments.pipeline.viewFullProfile")}
           </a>
         </div>
       </DialogContent>
@@ -197,6 +199,7 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
   isSendingReminders: boolean;
   isSettingUp360: boolean;
 }) {
+  const { t } = useTranslation("school_admin");
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [gradeFilter, setGradeFilter] = useState<number | null>(null);
   const [showIncomplete, setShowIncomplete] = useState(false);
@@ -235,10 +238,13 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
     const hasMilIncomplete = selectedStudents.some(s => s.mil !== "done");
     const has360Incomplete = selectedStudents.some(s => s.eval360 !== "done");
     const hasPersonalityIncomplete = selectedStudents.some(s => s.personality !== "done");
-    if (hasPcaIncomplete) pendingTypes.push("PCA (Personal Competence Analysis)");
-    if (hasMilIncomplete) pendingTypes.push("MIL (Multiple Intelligence Lens)");
-    if (has360Incomplete) pendingTypes.push("360 Evaluation");
-    if (hasPersonalityIncomplete) pendingTypes.push("Personality Assessment");
+    // Stable codes, not display text: both backends turn them into names in each STUDENT's
+    // language (the reminder email). They still accept the old English strings, for clients
+    // that have not reloaded this bundle.
+    if (hasPcaIncomplete) pendingTypes.push("pca");
+    if (hasMilIncomplete) pendingTypes.push("mil");
+    if (has360Incomplete) pendingTypes.push("eval360");
+    if (hasPersonalityIncomplete) pendingTypes.push("personality");
   }
 
   return (
@@ -254,10 +260,10 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Users style={{ width: 16, height: 16, color: "#10b981" }} />
           <span style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-            Assessment Pipeline
+            {t("counselor:pipeline.title")}
           </span>
           <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-            ({filtered.length} student{filtered.length !== 1 ? "s" : ""})
+            ({t("assessments.pipeline.studentCount", { count: filtered.length })})
           </span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap" }}>
@@ -271,8 +277,8 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
               border: "1px solid var(--admin-border-default)",
             }}
           >
-            <option value="">All Grades</option>
-            {GRADES.map(g => <option key={g} value={g}>{GRADE_LABELS[g]} ({g})</option>)}
+            <option value="">{t("counselor:pipeline.allGrades")}</option>
+            {GRADES.map(g => <option key={g} value={g}>{t(`analytics.gradeLabels.${g}`)} ({g})</option>)}
           </select>
 
           {/* Incomplete filter */}
@@ -288,7 +294,7 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
             }}
           >
             <Filter style={{ width: 12, height: 12 }} />
-            Incomplete Only
+            {t("counselor:pipeline.incompleteOnly")}
           </button>
 
           {/* Bulk actions */}
@@ -304,7 +310,7 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
                 }}
               >
                 {isSendingReminders ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : <Send style={{ width: 12, height: 12 }} />}
-                Remind ({selected.size})
+                {t("assessments.pipeline.remind", { count: selected.size })}
               </button>
               <button
                 onClick={() => onSetup360(selectedIds)}
@@ -316,7 +322,7 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
                 }}
               >
                 {isSettingUp360 ? <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} /> : <RotateCcw style={{ width: 12, height: 12 }} />}
-                Setup 360
+                {t("assessments.pipeline.setup360")}
               </button>
             </>
           )}
@@ -336,14 +342,14 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
                   style={{ accentColor: "#102B47" }}
                 />
               </th>
-              <th style={{ ...thStyle, textAlign: "left" }}>Student</th>
-              <th style={thStyle}>Grade</th>
-              {EXAM_TYPES.map(t => (
-                <th key={t} style={thStyle} title={t}>{EXAM_SHORT[t]}</th>
+              <th style={{ ...thStyle, textAlign: "left" }}>{t("counselor:pipeline.colStudent")}</th>
+              <th style={thStyle}>{t("counselor:pipeline.colGrade")}</th>
+              {EXAM_TYPES.map(ex => (
+                <th key={ex} style={thStyle} title={t(EXAM_SHORT[ex])}>{t(EXAM_SHORT[ex])}</th>
               ))}
-              <th style={thStyle}>MIL</th>
-              <th style={thStyle}>360</th>
-              <th style={thStyle}>Personality</th>
+              <th style={thStyle}>{t("counselor:pipeline.colMil")}</th>
+              <th style={thStyle}>{t("counselor:pipeline.col360")}</th>
+              <th style={thStyle}>{t("assessments.pipeline.colPersonality")}</th>
             </tr>
           </thead>
           <tbody>
@@ -370,9 +376,9 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
                 <td style={{ padding: "6px 10px", textAlign: "center", color: "var(--admin-font-secondary)" }}>
                   {s.gradeLevel || "\u2014"}
                 </td>
-                {EXAM_TYPES.map(t => (
-                  <td key={t} style={{ padding: "6px 10px", textAlign: "center" }}>
-                    <StatusIcon status={s.pca[t] || "not_started"} />
+                {EXAM_TYPES.map(ex => (
+                  <td key={ex} style={{ padding: "6px 10px", textAlign: "center" }}>
+                    <StatusIcon status={s.pca[ex] || "not_started"} />
                   </td>
                 ))}
                 <td style={{ padding: "6px 10px", textAlign: "center" }}>
@@ -396,7 +402,7 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
             {filtered.length === 0 && (
               <tr>
                 <td colSpan={11} style={{ padding: 24, textAlign: "center", color: "var(--admin-font-tertiary)", fontSize: 13 }}>
-                  No students found
+                  {t("reports.noStudents")}
                 </td>
               </tr>
             )}

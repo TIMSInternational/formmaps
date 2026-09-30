@@ -49,16 +49,16 @@ function CareerCardInner({ career, rank, isFavorite = false, onToggleFavorite, o
   const aiInsight = (career as any).aiInsight as string | undefined;
 
   let matchColorClass = "text-red-600 bg-red-50 border-red-100";
-  let matchLabel = t("career.match.low", "Low Match");
+  let matchLabel = t("career.matchLevel.low", "Low Match");
   if (confidence === "high" || matchScore > 80) {
     matchColorClass = "text-emerald-600 bg-emerald-50 border-emerald-100";
-    matchLabel = t("career.match.high", "Excellent Match");
+    matchLabel = t("career.matchLevel.high", "Excellent Match");
   } else if (confidence === "good" || matchScore > 65) {
     matchColorClass = "text-blue-600 bg-blue-50 border-blue-100";
-    matchLabel = t("career.match.good", "Strong Match");
+    matchLabel = t("career.matchLevel.good", "Strong Match");
   } else if (confidence === "moderate" || matchScore > 50) {
     matchColorClass = "text-amber-600 bg-amber-50 border-amber-100";
-    matchLabel = t("career.match.moderate", "Good Match");
+    matchLabel = t("career.matchLevel.moderate", "Good Match");
   }
 
   return (

@@ -142,18 +142,18 @@ export default function LIAAssessmentPage() {
       <div className="min-h-[60vh] flex items-center justify-center p-6">
         <div className="max-w-md w-full text-center bg-white rounded-2xl shadow-sm p-8">
           <h2 className="text-xl font-bold text-gray-900 mb-2">
-            {language === "es" ? "Evaluación Completada" : "Assessment Completed"}
+            {language === "es" ? "Evaluación completada" : "Assessment Completed"}
           </h2>
           <p className="text-gray-600 mb-6">
             {language === "es"
-              ? "Ya completaste la evaluación MIL. Puedes revisar tus resultados."
+              ? "Ya completaste la evaluación LIA. Puedes revisar tus resultados."
               : "You already completed the LIA assessment. You can review your results."}
           </p>
           <button
             onClick={() => router.push("/dashboard/assessments/lia/results")}
             className="w-full py-3 bg-[#102B47] text-white rounded-xl font-semibold hover:bg-[#0b1f33] transition-colors"
           >
-            {language === "es" ? "Ver Resultados" : "View Results"}
+            {language === "es" ? "Ver resultados" : "View Results"}
           </button>
         </div>
       </div>

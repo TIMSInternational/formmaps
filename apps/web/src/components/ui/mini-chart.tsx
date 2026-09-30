@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
 interface MiniChartDataPoint {
@@ -15,17 +16,24 @@ interface MiniChartProps {
   className?: string;
 }
 
-const defaultData: MiniChartDataPoint[] = [
-  { label: "Mon", value: 65 },
-  { label: "Tue", value: 85 },
-  { label: "Wed", value: 45 },
-  { label: "Thu", value: 95 },
-  { label: "Fri", value: 70 },
-  { label: "Sat", value: 55 },
-  { label: "Sun", value: 80 },
+// Placeholder series shown when no data is passed; labels are i18n keys (common:days.*).
+const defaultDataKeys: { labelKey: string; value: number }[] = [
+  { labelKey: "days.mon", value: 65 },
+  { labelKey: "days.tue", value: 85 },
+  { labelKey: "days.wed", value: 45 },
+  { labelKey: "days.thu", value: 95 },
+  { labelKey: "days.fri", value: 70 },
+  { labelKey: "days.sat", value: 55 },
+  { labelKey: "days.sun", value: 80 },
 ];
 
-export function MiniChart({ data = defaultData, title = "Activity", unit = "%", className }: MiniChartProps) {
+export function MiniChart({ data: dataProp, title: titleProp, unit = "%", className }: MiniChartProps) {
+  const { t } = useTranslation();
+  const data: MiniChartDataPoint[] = useMemo(
+    () => dataProp ?? defaultDataKeys.map((d) => ({ label: t(d.labelKey), value: d.value })),
+    [dataProp, t],
+  );
+  const title = titleProp ?? t("components.miniChart.activity");
   const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
   const [displayValue, setDisplayValue] = useState<number | null>(null);
   const [isHovering, setIsHovering] = useState(false);

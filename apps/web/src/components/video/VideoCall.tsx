@@ -4,6 +4,8 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Video, VideoOff, Mic, MicOff, PhoneOff, Users, Loader2, FileText, PenSquare, Maximize2, Minimize2, Mail, GraduationCap, Calendar, BookOpen, Lightbulb, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import type { TFunction } from "i18next";
+import { useTranslation } from "react-i18next";
 import { getVideoSession, getVideoSignature, endVideoSession, VideoSession } from "@/services/videoService";
 import { getStudentNotes, createNote } from "@/services/counselorNotesService";
 import type { CounselorNote } from "@/types/counselorNotes";
@@ -38,19 +40,20 @@ interface VideoCallProps {
 }
 
 
-function formatNoteDate(d: string): string {
+function formatNoteDate(d: string, t: TFunction, lang: string): string {
   const date = new Date(d);
   const now = new Date();
   const diff = now.getTime() - date.getTime();
   const mins = Math.floor(diff / 60000);
-  if (mins < 1) return "Just now";
-  if (mins < 60) return `${mins}m ago`;
+  if (mins < 1) return t("components.videoCall.justNow");
+  if (mins < 60) return t("components.videoCall.minutesAgo", { count: mins });
   const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs}h ago`;
-  return date.toLocaleDateString([], { month: "short", day: "numeric" });
+  if (hrs < 24) return t("components.videoCall.hoursAgo", { count: hrs });
+  return date.toLocaleDateString(lang, { month: "short", day: "numeric" });
 }
 
 export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
+  const { t, i18n } = useTranslation();
   const router = useRouter();
   const userId = useGlobalStore((s) => s.user.id);
   const userName = useGlobalStore((s) => s.user.name) || "User";
@@ -99,7 +102,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
         const s = await getVideoSession(sessionId);
         setSession(s);
       } catch {
-        setError("Failed to load session. It may have expired or you don't have access.");
+        setError(t("components.videoCall.errors.loadSession"));
       } finally {
         setLoadingSession(false);
       }
@@ -204,11 +207,11 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
       });
       callObject.on("participant-joined", () => { updateParticipants(); });
       callObject.on("participant-left", () => { updateParticipants(); });
-      callObject.on("error", (e) => { setError(`Connection error: ${(e as { errorMsg?: string })?.errorMsg || "Please try again."}`); });
+      callObject.on("error", (e) => { setError(t("components.videoCall.errors.connection", { detail: (e as { errorMsg?: string })?.errorMsg || t("components.videoCall.errors.pleaseTryAgain") })); });
       callObject.on("left-meeting", () => { setIsJoined(false); });
 
       setIsSDKInitialized(true);
-    } catch { setError("Failed to initialize video system. Please refresh the page."); }
+    } catch { setError(t("components.videoCall.errors.initFailed")); }
   };
 
   const updateParticipants = () => {
@@ -243,7 +246,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
       updateParticipants();
     } catch (err: unknown) {
       const e = err as Error;
-      setError(`Failed to join session. ${e.message || "Please try again."}`);
+      setError(t("components.videoCall.errors.joinFailed", { detail: e.message || t("components.videoCall.errors.pleaseTryAgain") }));
       joinAttemptedRef.current = false;
     } finally { setIsLoading(false); }
   };
@@ -271,7 +274,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
       } else if (selfVideoRef.current) {
         selfVideoRef.current.innerHTML = "";
       }
-    } catch (err: unknown) { setError(`Failed to ${isVideoOn ? "stop" : "start"} video: ${(err as Error).message}`); }
+    } catch (err: unknown) { setError(t(isVideoOn ? "components.videoCall.errors.stopVideo" : "components.videoCall.errors.startVideo", { detail: (err as Error).message })); }
     finally { setIsVideoStarting(false); }
   };
 
@@ -281,7 +284,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
     try {
       clientRef.current.setLocalAudio(!isAudioOn);
       setIsAudioOn(!isAudioOn);
-    } catch (err: unknown) { setError(`Failed to ${isAudioOn ? "mute" : "unmute"} audio: ${(err as Error).message}`); }
+    } catch (err: unknown) { setError(t(isAudioOn ? "components.videoCall.errors.mute" : "components.videoCall.errors.unmute", { detail: (err as Error).message })); }
     finally { setIsAudioStarting(false); }
   };
 
@@ -289,7 +292,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
     setIsLoading(true);
     try { await cleanup(); } catch {}
     try { await endVideoSession(sessionId); } catch {}
-    toast.success("Call ended");
+    toast.success(t("components.videoCall.callEnded"));
     router.push(returnPath);
   };
 
@@ -300,8 +303,8 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
       const note = await createNote({ studentId: otherPerson.id, type: "meeting", content: noteContent.trim(), isPrivate: false });
       setNotes((prev) => [note, ...prev]);
       setNoteContent("");
-      toast.success("Note saved");
-    } catch { toast.error("Failed to save note"); }
+      toast.success(t("components.videoCall.noteSaved"));
+    } catch { toast.error(t("components.videoCall.noteSaveFailed")); }
     finally { setSavingNote(false); }
   };
 
@@ -314,9 +317,9 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
   if (error && !session) {
     return <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "calc(100vh - 200px)", gap: 16 }}>
       <VideoOff style={{ width: 48, height: 48, color: "var(--admin-font-light)" }} />
-      <p style={{ fontSize: 16, color: "var(--admin-font-primary)", fontWeight: 600 }}>Unable to Join</p>
+      <p style={{ fontSize: 16, color: "var(--admin-font-primary)", fontWeight: 600 }}>{t("components.videoCall.unableToJoin")}</p>
       <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", maxWidth: 400, textAlign: "center" }}>{error}</p>
-      <button onClick={() => router.push(returnPath)} style={{ padding: "8px 20px", borderRadius: 8, background: "var(--admin-accent-blue)", color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Back to Messages</button>
+      <button onClick={() => router.push(returnPath)} style={{ padding: "8px 20px", borderRadius: 8, background: "var(--admin-accent-blue)", color: "#fff", border: "none", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>{t("components.videoCall.back")}</button>
     </div>;
   }
 
@@ -326,7 +329,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
       {/* SDK init status */}
       {!isSDKInitialized && session && (
         <div style={{ position: "absolute", top: 10, left: "50%", transform: "translateX(-50%)", zIndex: 10, backgroundColor: "#fbbf24", color: "#000", padding: "6px 16px", borderRadius: 6, fontSize: 13 }}>
-          Initializing video system...
+          {t("components.videoCall.initializingSystem")}
         </div>
       )}
 
@@ -338,8 +341,8 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
         color: "#888", fontSize: 13, overflow: "hidden", zIndex: 2,
       }}>
         <div ref={selfVideoRef} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} />
-        {!isVideoOn && isJoined && <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: 12 }}><VideoOff style={{ width: 24, height: 24, color: "#888", margin: "0 auto 6px" }} /><div>Your video is off</div></div>}
-        {!isJoined && <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>Your camera</div>}
+        {!isVideoOn && isJoined && <div style={{ position: "relative", zIndex: 1, textAlign: "center", padding: 12 }}><VideoOff style={{ width: 24, height: 24, color: "#888", margin: "0 auto 6px" }} /><div>{t("components.videoCall.videoOff")}</div></div>}
+        {!isJoined && <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>{t("components.videoCall.yourCamera")}</div>}
       </div>
 
       {/* ── Participant Info — top-center (OSF: ClientInfo style) ── */}
@@ -356,7 +359,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
         }}>
           {participantLoading ? (
             <div style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "100%", color: "var(--admin-font-tertiary)", fontSize: 13 }}>
-              <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite", marginRight: 8 }} />Loading...
+              <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite", marginRight: 8 }} />{t("common.loading")}
             </div>
           ) : participantInfo ? (
             <>
@@ -385,13 +388,13 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                   {participantInfo.gradeLevel && (
                     <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--admin-font-secondary)" }}>
                       <GraduationCap style={{ width: 13, height: 13, color: "var(--admin-font-tertiary)" }} />
-                      <span>Grade {participantInfo.gradeLevel}</span>
+                      <span>{t("coursePlan.page.grade", { grade: participantInfo.gradeLevel })}</span>
                     </div>
                   )}
                   {participantInfo.gpa !== null && participantInfo.gpa !== undefined && (
                     <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13, color: "var(--admin-font-secondary)" }}>
                       <Calendar style={{ width: 13, height: 13, color: "var(--admin-font-tertiary)" }} />
-                      <span>GPA: {participantInfo.gpa}</span>
+                      <span>{t("components.videoCall.gpa", { gpa: participantInfo.gpa })}</span>
                     </div>
                   )}
                 </div>
@@ -400,7 +403,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                   <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 8 }}>
                     {Object.entries(participantInfo.assessmentStatus).map(([key, val]) => (
                       <div key={key} style={{ padding: "3px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600, background: val === "completed" ? "#22c55e20" : val === "in_progress" ? "#f59e0b20" : "var(--admin-bg-card)", color: val === "completed" ? "#16a34a" : val === "in_progress" ? "#d97706" : "var(--admin-font-light)" }}>
-                        {key}: {val.replace("_", " ")}
+                        {key}: {t(`components.videoCall.assessmentStatus.${val}`, { defaultValue: val.replace("_", " ") })}
                       </div>
                     ))}
                   </div>
@@ -411,12 +414,12 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
               {participantInfo.creditProgress && (
                 <div style={{ textAlign: "right", alignSelf: "flex-start", flexShrink: 0 }}>
                   <p style={{ fontSize: 11, color: "var(--admin-font-light)", marginBottom: 4 }}>
-                    Credits: {participantInfo.creditProgress.earned}/{participantInfo.creditProgress.required ?? "\u2014"}
+                    {t("components.videoCall.credits", { earned: participantInfo.creditProgress.earned, required: participantInfo.creditProgress.required ?? "\u2014" })}
                   </p>
                   <p style={{ fontSize: 11, color: "var(--admin-font-light)" }}>
                     {participantInfo.creditProgress.percentage == null
-                      ? "Graduation requirement not set"
-                      : `Progress: ${participantInfo.creditProgress.percentage}%`}
+                      ? t("components.videoCall.graduationRequirementNotSet")
+                      : t("components.videoCall.progress", { percentage: participantInfo.creditProgress.percentage })}
                   </p>
                 </div>
               )}
@@ -453,17 +456,17 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
         opacity: showPastNotes ? 1 : 0, visibility: showPastNotes ? "visible" : "hidden",
       }}>
         <div style={{ height: "100%", backgroundColor: "var(--admin-bg-hover)", borderRadius: 8, border: "1px solid var(--admin-border-default)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
-          <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--admin-border-default)", fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Past Notes</div>
+          <div style={{ padding: "12px 14px", borderBottom: "1px solid var(--admin-border-default)", fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("components.videoCall.pastNotes")}</div>
           <div style={{ flex: 1, overflowY: "auto", padding: 6 }}>
             {notes.length === 0 ? (
-              <div style={{ padding: 16, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No notes yet</div>
+              <div style={{ padding: 16, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("components.videoCall.noNotes")}</div>
             ) : notes.map((n) => (
               <button key={n.id} onClick={() => { setSelectedNote(n); setNoteContent(n.content); }}
                 style={{ width: "100%", textAlign: "left", padding: "8px 10px", borderRadius: 6, border: "none", cursor: "pointer", fontFamily: "inherit", background: selectedNote?.id === n.id ? "var(--admin-bg-active)" : "transparent", color: "var(--admin-font-primary)", marginBottom: 2, transition: "background 0.1s" }}
                 onMouseEnter={(e) => { if (selectedNote?.id !== n.id) e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
                 onMouseLeave={(e) => { if (selectedNote?.id !== n.id) e.currentTarget.style.background = "transparent"; }}>
                 <div style={{ fontSize: 12, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{n.content.slice(0, 60)}{n.content.length > 60 ? "..." : ""}</div>
-                <div style={{ fontSize: 10, color: "var(--admin-font-light)", marginTop: 2 }}>{formatNoteDate(n.createdDate)} · {n.type}</div>
+                <div style={{ fontSize: 10, color: "var(--admin-font-light)", marginTop: 2 }}>{formatNoteDate(n.createdDate, t, i18n.language)} · {t(`components.videoCall.noteType.${n.type}`, { defaultValue: n.type })}</div>
               </button>
             ))}
           </div>
@@ -483,19 +486,19 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
           <div style={{ height: "100%", backgroundColor: "var(--admin-bg-hover)", borderRadius: 8, border: "1px solid var(--admin-border-default)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
             <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
               <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                {selectedNote ? "Edit Note" : "Session Notes"}
+                {selectedNote ? t("components.videoCall.editNote") : t("components.videoCall.sessionNotes")}
               </span>
               {selectedNote && (
                 <button onClick={() => { setSelectedNote(null); setNoteContent(""); }}
                   style={{ fontSize: 11, color: "var(--admin-accent-blue)", background: "none", border: "none", cursor: "pointer", fontFamily: "inherit" }}>
-                  + New Note
+                  + {t("components.videoCall.newNote")}
                 </button>
               )}
             </div>
             <textarea
               value={noteContent}
               onChange={(e) => setNoteContent(e.target.value)}
-              placeholder="Write session notes here..."
+              placeholder={t("components.videoCall.notesPlaceholder")}
               style={{
                 flex: 1, resize: "none", border: "none", background: "transparent", outline: "none",
                 padding: "12px 14px", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit",
@@ -510,7 +513,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                   color: noteContent.trim() ? "#fff" : "var(--admin-font-light)",
                   border: "none", cursor: noteContent.trim() ? "pointer" : "default",
                 }}>
-                {savingNote ? "Saving..." : "Save Note"}
+                {savingNote ? t("common.saving") : t("components.videoCall.saveNote")}
               </button>
             </div>
           </div>
@@ -530,20 +533,20 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
           <div style={{ height: "100%", backgroundColor: "var(--admin-bg-hover)", borderRadius: 8, border: "1px solid var(--admin-border-default)", display: "flex", flexDirection: "column", overflow: "hidden" }}>
             <div style={{ padding: "10px 14px", borderBottom: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", gap: 8 }}>
               <BookOpen style={{ width: 14, height: 14, color: "var(--admin-accent-blue)" }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Course Plan & Recommendations</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("components.videoCall.coursePlanTitle")}</span>
             </div>
             <div style={{ flex: 1, overflowY: "auto", padding: 12, display: "flex", flexDirection: "column", gap: 12 }}>
 
               {/* Enrolled Courses by Semester */}
               {coursePlanData?.plan?.enrollments && coursePlanData.plan.enrollments.length > 0 ? (
                 <div>
-                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)", marginBottom: 8 }}>Current Enrollments</div>
+                  <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)", marginBottom: 8 }}>{t("components.videoCall.currentEnrollments")}</div>
                   {[9, 10, 11, 12].map((grade) => {
                     const courses = coursePlanData.plan.enrollments.filter((e: any) => e.gradeLevel === grade);
                     if (courses.length === 0) return null;
                     return (
                       <div key={grade} style={{ marginBottom: 10 }}>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4 }}>Grade {grade}</div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-secondary)", marginBottom: 4 }}>{t("coursePlan.page.grade", { grade })}</div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
                           {courses.map((c: any) => (
                             <div key={c.id} style={{
@@ -560,7 +563,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                               </div>
                               <div style={{ display: "flex", alignItems: "center", gap: 6, flexShrink: 0, color: "var(--admin-font-tertiary)" }}>
                                 <span>{c.courseCode}</span>
-                                <span>{c.credits} cr</span>
+                                <span>{t("components.videoCall.creditsShort", { credits: c.credits })}</span>
                                 {c.grade && <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{c.grade}</span>}
                               </div>
                             </div>
@@ -571,16 +574,16 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                   })}
                 </div>
               ) : (
-                <div style={{ padding: 16, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>No course plan data</div>
+                <div style={{ padding: 16, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("components.videoCall.noCoursePlan")}</div>
               )}
 
               {/* Graduation Progress */}
               {coursePlanData?.plan?.graduationProgress && (
                 <div style={{ padding: "8px 10px", borderRadius: 6, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", fontSize: 11, marginBottom: 4 }}>
-                    <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>Graduation Progress</span>
+                    <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("components.videoCall.graduationProgress")}</span>
                     <span style={{ color: coursePlanData.plan.graduationProgress.isOnTrack ? "#10b981" : "#ef4444", fontWeight: 600 }}>
-                      {coursePlanData.plan.graduationProgress.isOnTrack ? "On Track" : "At Risk"}
+                      {coursePlanData.plan.graduationProgress.isOnTrack ? t("components.videoCall.onTrack") : t("components.videoCall.atRisk")}
                     </span>
                   </div>
                   <div style={{ width: "100%", height: 6, borderRadius: 3, background: "var(--admin-border-default)" }}>
@@ -591,7 +594,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                     }} />
                   </div>
                   <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginTop: 4 }}>
-                    {coursePlanData.plan.graduationProgress.totalCreditsEarned} / {coursePlanData.plan.graduationProgress.totalCreditsRequired} credits
+                    {t("components.videoCall.creditsOf", { earned: coursePlanData.plan.graduationProgress.totalCreditsEarned, required: coursePlanData.plan.graduationProgress.totalCreditsRequired })}
                   </div>
                 </div>
               )}
@@ -601,7 +604,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                 <div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
                     <Lightbulb style={{ width: 12, height: 12, color: "#f59e0b" }} />
-                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#f59e0b" }}>AI Recommendations</span>
+                    <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "#f59e0b" }}>{t("components.videoCall.aiRecommendations")}</span>
                   </div>
                   {recsData.nextSemester?.map((rec: any) => (
                     <div key={rec.courseId || rec.courseCode} style={{
@@ -614,9 +617,9 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                           fontSize: 9, fontWeight: 700, padding: "1px 5px", borderRadius: 3, textTransform: "uppercase",
                           background: rec.priority === "high" ? "rgba(239,68,68,0.1)" : "rgba(245,158,11,0.1)",
                           color: rec.priority === "high" ? "#ef4444" : "#f59e0b",
-                        }}>{rec.priority}</span>
+                        }}>{t(`components.videoCall.priority.${rec.priority}`, { defaultValue: rec.priority })}</span>
                       </div>
-                      <div style={{ color: "var(--admin-font-tertiary)", marginTop: 2 }}>{rec.courseCode} · {rec.credits} cr</div>
+                      <div style={{ color: "var(--admin-font-tertiary)", marginTop: 2 }}>{rec.courseCode} · {t("components.videoCall.creditsShort", { credits: rec.credits })}</div>
                       <div style={{ color: "var(--admin-font-light)", marginTop: 2, lineHeight: 1.4 }}>{rec.reason}</div>
                     </div>
                   ))}
@@ -627,7 +630,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                     }}>
                       <div style={{ display: "flex", justifyContent: "space-between" }}>
                         <span style={{ fontWeight: 500, color: "var(--admin-font-primary)" }}>{rec.courseName}</span>
-                        <span style={{ color: "var(--admin-font-tertiary)" }}>{rec.credits} cr</span>
+                        <span style={{ color: "var(--admin-font-tertiary)" }}>{t("components.videoCall.creditsShort", { credits: rec.credits })}</span>
                       </div>
                       <div style={{ color: "var(--admin-font-light)", marginTop: 2 }}>{rec.reason}</div>
                     </div>
@@ -653,7 +656,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
         {!isJoined && (
           <div style={{ textAlign: "center", position: "relative", zIndex: 1, maxWidth: 400, padding: 16 }}>
             {isLoading ? (
-              <><Loader2 style={{ width: 24, height: 24, color: "#888", animation: "spin 1s linear infinite", margin: "0 auto 12px" }} /><div>Connecting to session...</div></>
+              <><Loader2 style={{ width: 24, height: 24, color: "#888", animation: "spin 1s linear infinite", margin: "0 auto 12px" }} /><div>{t("components.videoCall.connecting")}</div></>
             ) : error ? (
               <>
                 <VideoOff style={{ width: 48, height: 48, color: "#ef4444", margin: "0 auto 8px" }} />
@@ -661,26 +664,26 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
                 <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
                   <button style={{ backgroundColor: "#10b981", color: "#fff", border: "none", padding: "10px 24px", borderRadius: 6, fontSize: 13, cursor: "pointer", fontWeight: 500 }}
                     onClick={() => { setError(null); joinSession(); }}>
-                    Retry
+                    {t("schoolAdmin.common.retry")}
                   </button>
                   <button style={{ backgroundColor: "#dc2626", color: "#fff", border: "none", padding: "10px 24px", borderRadius: 6, fontSize: 13, cursor: "pointer", fontWeight: 500 }}
                     onClick={leaveSession}>
-                    End &amp; Leave
+                    {t("components.videoCall.endAndLeave")}
                   </button>
                 </div>
               </>
             ) : (
               <>
                 <Video style={{ width: 48, height: 48, color: "#555", margin: "0 auto 8px" }} />
-                <div style={{ marginBottom: 12 }}>{otherPerson?.name}&rsquo;s video</div>
+                <div style={{ marginBottom: 12 }}>{t("components.videoCall.participantVideo", { name: otherPerson?.name })}</div>
                 <div style={{ display: "flex", gap: 10, justifyContent: "center" }}>
                   <button style={{ backgroundColor: isSDKInitialized ? "#10b981" : "#6b7280", color: "#fff", border: "none", padding: "10px 28px", borderRadius: 6, fontSize: 14, cursor: isSDKInitialized ? "pointer" : "not-allowed", fontWeight: 500, opacity: isSDKInitialized ? 1 : 0.7 }}
                     onClick={isSDKInitialized ? joinSession : undefined} disabled={!isSDKInitialized}>
-                    {isSDKInitialized ? "Start Session" : "Initializing..."}
+                    {isSDKInitialized ? t("components.videoCall.startSession") : t("components.videoCall.initializing")}
                   </button>
                   <button style={{ backgroundColor: "#333", color: "#fff", border: "1px solid #555", padding: "10px 20px", borderRadius: 6, fontSize: 13, cursor: "pointer", fontWeight: 500 }}
                     onClick={() => router.push(returnPath)}>
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                 </div>
               </>
@@ -691,7 +694,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
         {isJoined && participants.length === 0 && (
           <div style={{ position: "relative", zIndex: 1, textAlign: "center" }}>
             <Users style={{ width: 40, height: 40, color: "#555", margin: "0 auto 8px" }} />
-            Waiting for {otherPerson?.name} to join...
+            {t("components.videoCall.waitingFor", { name: otherPerson?.name })}
           </div>
         )}
 
@@ -700,7 +703,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
           onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#444"; }}
           onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#333"; }}
           onClick={() => setIsExpanded(!isExpanded)}
-          title={isExpanded ? "Exit Full Screen" : "Enter Full Screen"}>
+          title={isExpanded ? t("components.videoCall.exitFullScreen") : t("components.videoCall.enterFullScreen")}>
           {isExpanded ? <Minimize2 style={{ width: 16, height: 16, color: "#fff" }} /> : <Maximize2 style={{ width: 16, height: 16, color: "#fff" }} />}
         </button>
 
@@ -709,7 +712,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
           onMouseEnter={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = "#b91c1c"; }}
           onMouseLeave={(e) => { if (!isLoading) e.currentTarget.style.backgroundColor = "#dc2626"; }}
           onClick={!isLoading ? leaveSession : undefined} disabled={isLoading}>
-          <PhoneOff style={{ width: 14, height: 14 }} />{isLoading ? "Ending..." : "End Session"}
+          <PhoneOff style={{ width: 14, height: 14 }} />{isLoading ? t("components.videoCall.ending") : t("components.videoCall.endSession")}
         </button>
 
         {/* ── Control Toolbar (OSF-style) ── */}
@@ -724,7 +727,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
             <button style={{ width: 40, height: 40, borderRadius: 8, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background 0.2s", backgroundColor: showPastNotes ? "#2A9D8F" : "#333" }}
               onMouseEnter={(e) => { if (!showPastNotes) e.currentTarget.style.backgroundColor = "#444"; }}
               onMouseLeave={(e) => { if (!showPastNotes) e.currentTarget.style.backgroundColor = showPastNotes ? "#2A9D8F" : "#333"; }}
-              onClick={() => setShowPastNotes(!showPastNotes)} title="Past notes">
+              onClick={() => setShowPastNotes(!showPastNotes)} title={t("components.videoCall.pastNotesTitle")}>
               <FileText style={{ width: 18, height: 18, color: "#fff" }} />
             </button>
           )}
@@ -734,7 +737,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
             <button style={{ width: 40, height: 40, borderRadius: 8, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background 0.2s", backgroundColor: "#333" }}
               onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = "#444"; }}
               onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = "#333"; }}
-              onClick={() => { setShowCoursePlan(false); setSelectedNote(null); setNoteContent(""); if (isExpanded) setIsExpanded(false); }} title="New note">
+              onClick={() => { setShowCoursePlan(false); setSelectedNote(null); setNoteContent(""); if (isExpanded) setIsExpanded(false); }} title={t("components.videoCall.newNoteTitle")}>
               <PenSquare style={{ width: 18, height: 18, color: "#fff" }} />
             </button>
           )}
@@ -744,20 +747,20 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
             <button style={{ width: 40, height: 40, borderRadius: 8, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background 0.2s", backgroundColor: showCoursePlan ? "var(--admin-accent-blue)" : "#333" }}
               onMouseEnter={(e) => { if (!showCoursePlan) e.currentTarget.style.backgroundColor = "#444"; }}
               onMouseLeave={(e) => { if (!showCoursePlan) e.currentTarget.style.backgroundColor = showCoursePlan ? "var(--admin-accent-blue)" : "#333"; }}
-              onClick={() => { setShowCoursePlan(!showCoursePlan); if (isExpanded) setIsExpanded(false); }} title="Course plan & recommendations">
+              onClick={() => { setShowCoursePlan(!showCoursePlan); if (isExpanded) setIsExpanded(false); }} title={t("components.videoCall.coursePlanButton")}>
               <BookOpen style={{ width: 18, height: 18, color: "#fff" }} />
             </button>
           )}
 
           {/* Video */}
           <button style={{ width: 40, height: 40, borderRadius: 8, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: isJoined && !isVideoStarting ? "pointer" : "not-allowed", transition: "background 0.2s", backgroundColor: isJoined ? (isVideoOn ? "#10b981" : "#ef4444") : "#333", opacity: isJoined && !isVideoStarting ? 1 : 0.5 }}
-            onClick={isJoined && !isVideoStarting ? toggleVideo : undefined} disabled={!isJoined || isVideoStarting} title={isVideoOn ? "Turn off video" : "Turn on video"}>
+            onClick={isJoined && !isVideoStarting ? toggleVideo : undefined} disabled={!isJoined || isVideoStarting} title={isVideoOn ? t("components.videoCall.turnOffVideo") : t("components.videoCall.turnOnVideo")}>
             {isVideoStarting ? <Loader2 style={{ width: 18, height: 18, color: "#fff", animation: "spin 1s linear infinite" }} /> : isVideoOn ? <Video style={{ width: 18, height: 18, color: "#fff" }} /> : <VideoOff style={{ width: 18, height: 18, color: "#fff" }} />}
           </button>
 
           {/* Mic */}
           <button style={{ width: 40, height: 40, borderRadius: 8, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: isJoined && !isAudioStarting ? "pointer" : "not-allowed", transition: "background 0.2s", backgroundColor: isJoined ? (isAudioOn ? "#10b981" : "#ef4444") : "#333", opacity: isJoined && !isAudioStarting ? 1 : 0.5 }}
-            onClick={isJoined && !isAudioStarting ? toggleAudio : undefined} disabled={!isJoined || isAudioStarting} title={isAudioOn ? "Mute microphone" : "Unmute microphone"}>
+            onClick={isJoined && !isAudioStarting ? toggleAudio : undefined} disabled={!isJoined || isAudioStarting} title={isAudioOn ? t("components.videoCall.muteMic") : t("components.videoCall.unmuteMic")}>
             {isAudioStarting ? <Loader2 style={{ width: 18, height: 18, color: "#fff", animation: "spin 1s linear infinite" }} /> : isAudioOn ? <Mic style={{ width: 18, height: 18, color: "#fff" }} /> : <MicOff style={{ width: 18, height: 18, color: "#fff" }} />}
           </button>
         </div>
@@ -767,7 +770,7 @@ export default function VideoCall({ sessionId, returnPath }: VideoCallProps) {
       {error && isJoined && (
         <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", backgroundColor: "#dc2626", color: "#fff", padding: "12px 24px", borderRadius: 8, textAlign: "center", maxWidth: 400, zIndex: 100, fontSize: 13 }}>
           {error}
-          <button onClick={() => setError(null)} style={{ marginLeft: 12, background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: 16 }}>x</button>
+          <button onClick={() => setError(null)} style={{ marginLeft: 12, background: "none", border: "none", color: "#fff", cursor: "pointer", fontSize: 16 }} aria-label={t("components.videoCall.dismissError")}>x</button>
         </div>
       )}
 

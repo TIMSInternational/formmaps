@@ -34,7 +34,7 @@ const inputStyle: React.CSSProperties = {
 };
 
 export function GraduationPanel() {
-  const { t } = useTranslation();
+  const { t } = useTranslation("school_admin");
   const router = useRouter();
   const { data: rules, isLoading: rulesLoading } = useGraduationRules();
   const { data: coursesData } = useSchoolCourses({ limit: 200 });
@@ -96,13 +96,13 @@ export function GraduationPanel() {
     };
     if (rules?.id) {
       updateRules.mutate({ ruleSetId: rules.id, payload }, {
-        onSuccess: () => { toast.success("Rules saved"); setRuleDialogOpen(false); },
-        onError: () => toast.error("Failed to save"),
+        onSuccess: () => { toast.success(t("graduation.rulesSaved")); setRuleDialogOpen(false); },
+        onError: () => toast.error(t("graduation.rulesFailed")),
       });
     } else {
       createRules.mutate(payload, {
-        onSuccess: () => { toast.success("Rules created"); setRuleDialogOpen(false); },
-        onError: () => toast.error("Failed to create"),
+        onSuccess: () => { toast.success(t("graduation.rulesCreated")); setRuleDialogOpen(false); },
+        onError: () => toast.error(t("graduation.rulesCreateFailed")),
       });
     }
   };
@@ -134,11 +134,11 @@ export function GraduationPanel() {
       {/* Summary Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         {[
-          { label: "Total Students", value: totalStudents, icon: Users, color: "var(--admin-font-primary)" },
-          { label: "On Track", value: onTrack, icon: CheckCircle2, color: "#10b981" },
-          { label: "At Risk", value: atRisk, icon: AlertTriangle, color: "#f59e0b" },
-          { label: "Off Track", value: offTrack, icon: XCircle, color: "#ef4444" },
-          { label: "Avg Progress", value: `${avgProgress}%`, icon: TrendingUp, color: "var(--admin-accent-blue)" },
+          { label: t("graduation.stats.totalStudents"), value: totalStudents, icon: Users, color: "var(--admin-font-primary)" },
+          { label: t("graduation.stats.onTrack"), value: onTrack, icon: CheckCircle2, color: "#10b981" },
+          { label: t("graduation.stats.atRisk"), value: atRisk, icon: AlertTriangle, color: "#f59e0b" },
+          { label: t("graduation.stats.offTrack"), value: offTrack, icon: XCircle, color: "#ef4444" },
+          { label: t("graduation.stats.avgProgress"), value: `${avgProgress}%`, icon: TrendingUp, color: "var(--admin-accent-blue)" },
         ].map((stat) => (
           <div key={stat.label} style={{
             padding: 16, borderRadius: 8, border: "1px solid var(--admin-border-default)",
@@ -166,9 +166,9 @@ export function GraduationPanel() {
               <GraduationCap style={{ width: 16, height: 16, color: "var(--admin-accent-blue)" }} />
             </div>
             <div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Graduation Requirements</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.graduation.requirementsTitle")}</div>
               <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
-                {rules ? `${rules.totalCreditsRequired} total credits required` : "No rules configured — set up requirements to track progress"}
+                {rules ? t("graduation.creditsRequired", { total: rules.totalCreditsRequired }) : t("graduation.noRules")}
               </div>
             </div>
           </div>
@@ -179,7 +179,7 @@ export function GraduationPanel() {
             color: rules ? "var(--admin-font-primary)" : "#fff",
             border: rules ? "1px solid var(--admin-border-default)" : "none", cursor: "pointer",
           }}>
-            {rules ? "Edit Rules" : "Set Up Rules"}
+            {rules ? t("graduation.editRules") : t("graduation.setupRules")}
           </button>
         </div>
         {rules && (rules.categoryRequirements ?? []).length > 0 && (
@@ -191,10 +191,10 @@ export function GraduationPanel() {
                 }}>
                   <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 4 }}>{cat.category}</div>
                   <div style={{ fontSize: 22, fontWeight: 700, color: "var(--admin-font-primary)" }}>{cat.minCredits}</div>
-                  <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", textTransform: "uppercase" }}>credits required</div>
+                  <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)", textTransform: "uppercase" }}>{t("ui.graduation.creditsRequiredLabel")}</div>
                   {cat.electivesAllowed && (
                     <span style={{ fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3, background: "rgba(16,185,129,0.1)", color: "#10b981", marginTop: 6, display: "inline-block" }}>
-                      Electives OK
+                      {t("ui.graduation.electivesOk")}
                     </span>
                   )}
                 </div>
@@ -204,11 +204,11 @@ export function GraduationPanel() {
         )}
         {rules && (rules.specialRequirements ?? []).length > 0 && (
           <div style={{ padding: "0 16px 16px" }}>
-            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>Special Requirements</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", marginBottom: 8 }}>{t("ui.graduation.specialRequirements")}</div>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {(rules.specialRequirements ?? []).map((r, i) => (
                 <span key={i} title={r.description || undefined} style={{ fontSize: 12, padding: "6px 10px", borderRadius: 6, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)" }}>
-                  <strong style={{ color: "var(--admin-font-primary)" }}>{r.name || "Requirement"}</strong>{r.value ? ` — ${r.value} ${r.unit || ""}`.trimEnd() : ""}
+                  <strong style={{ color: "var(--admin-font-primary)" }}>{r.name || t("graduation.requirement")}</strong>{r.value ? ` — ${r.value} ${r.unit || ""}`.trimEnd() : ""}
                 </span>
               ))}
             </div>
@@ -223,13 +223,13 @@ export function GraduationPanel() {
           display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12, background: "var(--admin-bg-hover)",
         }}>
           <div>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Student Graduation Progress</div>
-            <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Track credit completion toward graduation</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.graduation.progressTitle")}</div>
+            <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.graduation.progressSubtitle")}</div>
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5" style={{ color: "var(--admin-font-light)" }} />
-              <Input placeholder="Search students..." className="pl-9 h-8 rounded-md text-xs w-48" style={inputStyle}
+              <Input placeholder={t("graduation.search")} className="pl-9 h-8 rounded-md text-xs w-48" style={inputStyle}
                 value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
             </div>
             <Select value={statusFilter} onValueChange={(v) => { setStatusFilter(v); setPage(1); }}>
@@ -237,10 +237,10 @@ export function GraduationPanel() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="on_track">On Track</SelectItem>
-                <SelectItem value="at_risk">At Risk</SelectItem>
-                <SelectItem value="off_track">Off Track</SelectItem>
+                <SelectItem value="all">{t("users.allStatus")}</SelectItem>
+                <SelectItem value="on_track">{t("graduation.stats.onTrack")}</SelectItem>
+                <SelectItem value="at_risk">{t("graduation.stats.atRisk")}</SelectItem>
+                <SelectItem value="off_track">{t("graduation.stats.offTrack")}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -254,7 +254,7 @@ export function GraduationPanel() {
           <Table>
             <TableHeader>
               <TableRow style={{ borderBottom: "1px solid var(--admin-border-default)" }}>
-                {["Student", "Grade", "Credits", "Progress", "Status"].map((h) => (
+                {[t("graduation.table.student"), t("graduation.table.grade"), t("graduation.table.credits"), t("graduation.table.progress"), t("graduation.table.status")].map((h) => (
                   <TableHead key={h} className="py-3 px-4" style={{
                     fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em",
                     color: "var(--admin-font-tertiary)", background: "var(--admin-bg-hover)",
@@ -267,7 +267,7 @@ export function GraduationPanel() {
                 <TableRow>
                   <TableCell colSpan={5} style={{ textAlign: "center", color: "var(--admin-font-tertiary)", padding: "48px 0", fontSize: 12 }}>
                     <GraduationCap style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.3 }} />
-                    {!rules ? "Set up graduation rules first to see student progress" : "No students found"}
+                    {!rules ? t("graduation.setupRulesFirst") : t("graduation.noStudents")}
                   </TableCell>
                 </TableRow>
               ) : filtered.map((s: any) => {
@@ -293,7 +293,7 @@ export function GraduationPanel() {
                       </div>
                     </TableCell>
                     <TableCell className="py-3 px-4" style={{ fontSize: 13, color: "var(--admin-font-light)" }}>
-                      {s.gradeLevel ? `Grade ${s.gradeLevel}` : "—"}
+                      {s.gradeLevel ? t("graduation.gradeLabel", { grade: s.gradeLevel }) : "—"}
                     </TableCell>
                     <TableCell className="py-3 px-4">
                       <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{s.creditsCompleted || 0}</span>
@@ -317,7 +317,7 @@ export function GraduationPanel() {
                         background: `${statusColor}15`, color: statusColor,
                       }}>
                         <StatusIcon style={{ width: 12, height: 12 }} />
-                        {s.status?.replace("_", " ")}
+                        {s.status === "on_track" ? t("graduation.stats.onTrack") : s.status === "at_risk" ? t("graduation.stats.atRisk") : s.status === "off_track" ? t("graduation.stats.offTrack") : s.status?.replace("_", " ")}
                       </span>
                     </TableCell>
                   </TableRow>
@@ -331,7 +331,7 @@ export function GraduationPanel() {
         {progress && (progress.totalPages || 1) > 1 && (
           <div className="flex items-center justify-between p-3" style={{ borderTop: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)" }}>
             <p className="text-xs" style={{ color: "var(--admin-font-light)" }}>
-              {((page - 1) * 20) + 1}–{Math.min(page * 20, progress.total)} of {progress.total}
+              {t("ui.common.rangeOf", { from: ((page - 1) * 20) + 1, to: Math.min(page * 20, progress.total), total: progress.total })}
             </p>
             <div className="flex gap-1">
               <Button variant="outline" size="sm" className="h-7 w-7 p-0 rounded-md" disabled={page <= 1}
@@ -353,23 +353,23 @@ export function GraduationPanel() {
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}>
           <DialogHeader>
             <DialogTitle style={{ color: "var(--admin-font-primary)" }}>
-              {rules ? "Edit Graduation Requirements" : "Set Up Graduation Requirements"}
+              {rules ? t("ui.graduation.editRequirements") : t("ui.graduation.setupRequirements")}
             </DialogTitle>
             <DialogDescription style={{ color: "var(--admin-font-tertiary)" }}>
-              Define credit requirements per department to track student graduation progress
+              {t("ui.graduation.dialogDescription")}
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-6">
             <div className="space-y-2">
-              <Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>Total Credits Required to Graduate</Label>
+              <Label style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("ui.graduation.totalCreditsToGraduate")}</Label>
               <Input type="number" min="1" style={inputStyle} value={totalCredits}
                 onChange={(e) => setTotalCredits(Math.max(1, Number(e.target.value)))} />
             </div>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Credit Categories</Label>
-                  <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>Define minimum credits per subject area</p>
+                  <Label style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.graduation.creditCategories")}</Label>
+                  <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{t("ui.graduation.creditCategoriesSubtitle")}</p>
                 </div>
                 <button onClick={addCategory} style={{
                   height: 30, borderRadius: 6, padding: "0 10px", fontSize: 11, fontWeight: 600,
@@ -377,7 +377,7 @@ export function GraduationPanel() {
                   background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)",
                   border: "1px solid var(--admin-border-default)", cursor: "pointer",
                 }}>
-                  <Plus className="h-3 w-3" /> Add Category
+                  <Plus className="h-3 w-3" /> {t("ui.graduation.addCategory")}
                 </button>
               </div>
               {categories.map((cat, i) => {
@@ -394,18 +394,18 @@ export function GraduationPanel() {
                       <div style={{ flex: 1 }}>
                         <Select value={cat.category || "__empty"} onValueChange={(v) => updateCategory(i, "category", v === "__empty" ? "" : v)}>
                           <SelectTrigger style={inputStyle}>
-                            <SelectValue placeholder="Select department..." />
+                            <SelectValue placeholder={t("ui.graduation.selectDepartment")} />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="__empty" disabled>Select department...</SelectItem>
+                            <SelectItem value="__empty" disabled>{t("ui.graduation.selectDepartment")}</SelectItem>
                             {availableDepts.map(d => (
                               <SelectItem key={d} value={d}>{d}</SelectItem>
                             ))}
                             {cat.category && !availableDepts.includes(cat.category) && cat.category !== "__empty" && (
                               <SelectItem value={cat.category}>{cat.category}</SelectItem>
                             )}
-                            <SelectItem value="Electives">Electives</SelectItem>
-                            <SelectItem value="Other">Other</SelectItem>
+                            <SelectItem value="Electives">{t("ui.graduation.electives")}</SelectItem>
+                            <SelectItem value="Other">{t("ui.graduation.other")}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -413,7 +413,7 @@ export function GraduationPanel() {
                         <Input type="number" style={inputStyle} value={cat.minCredits ?? 0}
                           onChange={(e) => updateCategory(i, "minCredits", Number(e.target.value))} />
                       </div>
-                      <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)", whiteSpace: "nowrap" }}>credits</span>
+                      <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)", whiteSpace: "nowrap" }}>{t("ui.graduation.creditsUnit")}</span>
                       <button onClick={() => removeCategory(i)} style={{
                         width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center",
                         background: "transparent", border: "none", cursor: "pointer", color: "#ef4444",
@@ -425,10 +425,10 @@ export function GraduationPanel() {
                       <label style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: "var(--admin-font-secondary)", cursor: "pointer", whiteSpace: "nowrap" }}>
                         <input type="checkbox" checked={cat.electivesAllowed ?? false} style={{ accentColor: "#102B47", width: 14, height: 14 }}
                           onChange={(e) => updateCategory(i, "electivesAllowed", e.target.checked)} />
-                        Electives count here
+                        {t("ui.graduation.electivesCountHere")}
                       </label>
                       <Input style={{ ...inputStyle, flex: 1, minWidth: 160 }}
-                        placeholder="Required course codes (comma-separated, e.g. ENG-9, ENG-10)"
+                        placeholder={t("ui.graduation.requiredCoursesPlaceholder")}
                         value={(cat.requiredCourses ?? []).join(", ")}
                         onChange={(e) => updateCategory(i, "requiredCourses", e.target.value.split(",").map(s => s.trim().toUpperCase()).filter(Boolean))} />
                     </div>
@@ -437,7 +437,7 @@ export function GraduationPanel() {
               })}
               {categories.length === 0 && (
                 <div style={{ textAlign: "center", padding: "20px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
-                  No categories yet. Add categories like Mathematics, English, Science, etc.
+                  {t("ui.graduation.noCategories")}
                 </div>
               )}
             </div>
@@ -446,8 +446,8 @@ export function GraduationPanel() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <Label style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>Special Requirements</Label>
-                  <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>Non-credit requirements (community service, capstone, exit exam…)</p>
+                  <Label style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.graduation.specialRequirements")}</Label>
+                  <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 2 }}>{t("ui.graduation.specialSubtitle")}</p>
                 </div>
                 <button onClick={addSpecialReq} style={{
                   height: 30, borderRadius: 6, padding: "0 10px", fontSize: 11, fontWeight: 600,
@@ -455,7 +455,7 @@ export function GraduationPanel() {
                   background: "var(--admin-bg-hover)", color: "var(--admin-font-primary)",
                   border: "1px solid var(--admin-border-default)", cursor: "pointer",
                 }}>
-                  <Plus className="h-3 w-3" /> Add Requirement
+                  <Plus className="h-3 w-3" /> {t("ui.graduation.addRequirement")}
                 </button>
               </div>
               {specialReqs.map((r, i) => (
@@ -464,25 +464,25 @@ export function GraduationPanel() {
                   border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-hover)",
                 }}>
                   <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-                    <Input style={{ ...inputStyle, flex: 1 }} placeholder="Name (e.g. Community Service)"
+                    <Input style={{ ...inputStyle, flex: 1 }} placeholder={t("ui.graduation.reqNamePlaceholder")}
                       value={r.name} onChange={(e) => updateSpecialReq(i, "name", e.target.value)} />
                     <div style={{ width: 130 }}>
                       <Select value={r.type} onValueChange={(v) => updateSpecialReq(i, "type", v)}>
                         <SelectTrigger style={inputStyle}><SelectValue /></SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="hours">Hours</SelectItem>
-                          <SelectItem value="completion">Completion</SelectItem>
-                          <SelectItem value="assessment">Assessment</SelectItem>
-                          <SelectItem value="custom">Custom</SelectItem>
+                          <SelectItem value="hours">{t("ui.graduation.reqType.hours")}</SelectItem>
+                          <SelectItem value="completion">{t("ui.graduation.reqType.completion")}</SelectItem>
+                          <SelectItem value="assessment">{t("ui.graduation.reqType.assessment")}</SelectItem>
+                          <SelectItem value="custom">{t("ui.graduation.reqType.custom")}</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
                     <div style={{ width: 80 }}>
-                      <Input type="number" style={inputStyle} placeholder="Value" value={r.value}
+                      <Input type="number" style={inputStyle} placeholder={t("ui.graduation.value")} value={r.value}
                         onChange={(e) => updateSpecialReq(i, "value", Number(e.target.value))} />
                     </div>
                     <div style={{ width: 80 }}>
-                      <Input style={inputStyle} placeholder="Unit" value={r.unit}
+                      <Input style={inputStyle} placeholder={t("ui.graduation.unit")} value={r.unit}
                         onChange={(e) => updateSpecialReq(i, "unit", e.target.value)} />
                     </div>
                     <button onClick={() => removeSpecialReq(i)} style={{
@@ -492,13 +492,13 @@ export function GraduationPanel() {
                       <Trash2 className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <Input style={inputStyle} placeholder="Description (optional)"
+                  <Input style={inputStyle} placeholder={t("ui.graduation.descriptionOptional")}
                     value={r.description} onChange={(e) => updateSpecialReq(i, "description", e.target.value)} />
                 </div>
               ))}
               {specialReqs.length === 0 && (
                 <div style={{ textAlign: "center", padding: "16px 0", color: "var(--admin-font-tertiary)", fontSize: 12 }}>
-                  No special requirements. Add things like service hours or a senior capstone.
+                  {t("ui.graduation.noSpecial")}
                 </div>
               )}
             </div>
@@ -508,7 +508,7 @@ export function GraduationPanel() {
               height: 36, borderRadius: 6, padding: "0 14px", fontSize: 13, fontWeight: 500,
               background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
               color: "var(--admin-font-secondary)", cursor: "pointer",
-            }}>Cancel</button>
+            }}>{t("common.cancel")}</button>
             <button onClick={handleSaveRules} disabled={createRules.isPending || updateRules.isPending} style={{
               height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600,
               display: "flex", alignItems: "center", gap: 6,
@@ -516,7 +516,7 @@ export function GraduationPanel() {
               opacity: (createRules.isPending || updateRules.isPending) ? 0.6 : 1,
             }}>
               {(createRules.isPending || updateRules.isPending) && <Loader2 className="h-4 w-4 animate-spin" />}
-              Save Requirements
+              {t("ui.graduation.saveRequirements")}
             </button>
           </DialogFooter>
         </DialogContent>

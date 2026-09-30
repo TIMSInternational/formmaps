@@ -2,6 +2,8 @@
 
 import { useMemo } from "react";
 import { Check, X, AlertTriangle, ArrowRight } from "lucide-react";
+import { Trans, useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import type { ExtractedJobData } from "@/types/resume";
 
 interface ResumeComparisonTableProps {
@@ -45,6 +47,7 @@ function StatusIcon({ status }: { status: MatchStatus }) {
 }
 
 function ScoreGauge({ score }: { score: number }) {
+  const { t } = useTranslation();
   const radius = 40;
   const circumference = 2 * Math.PI * radius;
   const filled = (score / 10) * circumference;
@@ -54,7 +57,12 @@ function ScoreGauge({ score }: { score: number }) {
       : score >= 4
         ? "text-amber-500"
         : "text-red-500";
-  const label = score >= 7 ? "Good" : score >= 4 ? "Fair" : "Poor";
+  const label =
+    score >= 7
+      ? t("resumeBuilder.scoreGauge.good", "Good")
+      : score >= 4
+        ? t("resumeBuilder.scoreGauge.fair", "Fair")
+        : t("resumeBuilder.scoreGauge.poor", "Poor");
 
   return (
     <div className="flex flex-col items-center gap-1">
@@ -92,7 +100,8 @@ function computeScore(
   extractedJob: ExtractedJobData,
   userSkills: string[],
   userTitle: string,
-  userExpYears: number
+  userExpYears: number,
+  t: TFunction
 ): { score: number; rows: ComparisonRow[] } {
   const rows: ComparisonRow[] = [];
   let totalPoints = 0;
@@ -110,9 +119,9 @@ function computeScore(
     titleRatio >= 0.6 ? "match" : titleRatio >= 0.3 ? "partial" : "mismatch";
   earnedPoints += titleRatio * weight1;
   rows.push({
-    category: "Job Title",
+    category: t("resumeBuilder.comparisonTable.jobTitle", "Job Title"),
     jobRequires: extractedJob.jobTitle,
-    yourResume: userTitle || "Not specified",
+    yourResume: userTitle || t("resumeBuilder.comparisonTable.notSpecified", "Not specified"),
     status: titleStatus,
   });
 
@@ -127,9 +136,17 @@ function computeScore(
   earnedPoints +=
     expStatus === "match" ? weight2 : expStatus === "partial" ? weight2 * 0.5 : 0;
   rows.push({
-    category: "Experience Level",
-    jobRequires: extractedJob.experienceLevel || "Not specified",
-    yourResume: userExpYears > 0 ? `${userExpYears}+ years` : "Not specified",
+    category: t("resumeBuilder.comparisonTable.experienceLevel", "Experience Level"),
+    jobRequires:
+      extractedJob.experienceLevel ||
+      t("resumeBuilder.comparisonTable.notSpecified", "Not specified"),
+    yourResume:
+      userExpYears > 0
+        ? t("resumeBuilder.comparisonTable.yearsPlus", {
+            count: userExpYears,
+            defaultValue: "{{count}}+ years",
+          })
+        : t("resumeBuilder.comparisonTable.notSpecified", "Not specified"),
     status: expStatus,
   });
 
@@ -157,9 +174,15 @@ function computeScore(
   }));
 
   rows.push({
-    category: "Keywords",
-    jobRequires: `${uniqueKeywords.length} keywords`,
-    yourResume: `${matchedKeywords.length}/${uniqueKeywords.length} matched`,
+    category: t("resumeBuilder.comparisonTable.keywords", "Keywords"),
+    jobRequires: t("resumeBuilder.comparisonTable.keywordCount", {
+      count: uniqueKeywords.length,
+      defaultValue: "{{count}} keywords",
+    }),
+    yourResume: t("resumeBuilder.comparisonTable.matchedCount", "{{matched}}/{{total}} matched", {
+      matched: matchedKeywords.length,
+      total: uniqueKeywords.length,
+    }),
     status: keywordStatus,
     tags: keywordTags,
   });
@@ -171,9 +194,11 @@ function computeScore(
   const summaryStatus: MatchStatus = hasSummary ? "partial" : "mismatch";
   earnedPoints += hasSummary ? weight4 * 0.5 : 0;
   rows.push({
-    category: "Summary",
-    jobRequires: "Aligned to role",
-    yourResume: hasSummary ? "Needs alignment" : "Missing",
+    category: t("resumeBuilder.comparisonTable.summary", "Summary"),
+    jobRequires: t("resumeBuilder.comparisonTable.alignedToRole", "Aligned to role"),
+    yourResume: hasSummary
+      ? t("resumeBuilder.comparisonTable.needsAlignment", "Needs alignment")
+      : t("resumeBuilder.comparisonTable.missing", "Missing"),
     status: summaryStatus,
   });
 
@@ -188,12 +213,18 @@ export function ResumeComparisonTable({
   userExpYears,
   onContinue,
 }: ResumeComparisonTableProps) {
+  const { t } = useTranslation();
   const { score, rows } = useMemo(
-    () => computeScore(extractedJob, userSkills, userTitle, userExpYears),
-    [extractedJob, userSkills, userTitle, userExpYears]
+    () => computeScore(extractedJob, userSkills, userTitle, userExpYears, t),
+    [extractedJob, userSkills, userTitle, userExpYears, t]
   );
 
-  const matchLabel = score >= 7 ? "Good" : score >= 4 ? "Medium" : "Low";
+  const matchLabel =
+    score >= 7
+      ? t("resumeBuilder.comparisonTable.matchGood", "Good")
+      : score >= 4
+        ? t("resumeBuilder.comparisonTable.matchMedium", "Medium")
+        : t("resumeBuilder.comparisonTable.matchLow", "Low");
 
   return (
     <div className="space-y-6">
@@ -202,24 +233,31 @@ export function ResumeComparisonTable({
         <div className="flex items-start justify-between gap-6">
           <div className="flex-1 space-y-3">
             <h2 className="text-lg font-semibold text-foreground">
-              Your Resume is a{" "}
-              <span
-                className={
-                  score >= 7
-                    ? "text-emerald-500"
-                    : score >= 4
-                      ? "text-amber-500"
-                      : "text-red-500"
-                }
-              >
-                {matchLabel}
-              </span>{" "}
-              Match
+              <Trans
+                i18nKey="resumeBuilder.comparisonTable.heading"
+                defaults="Your Resume is a <1>{{label}}</1> Match"
+                values={{ label: matchLabel }}
+                components={{
+                  1: (
+                    <span
+                      className={
+                        score >= 7
+                          ? "text-emerald-500"
+                          : score >= 4
+                            ? "text-amber-500"
+                            : "text-red-500"
+                      }
+                    />
+                  ),
+                }}
+              />
             </h2>
             {score < 6 && (
               <p className="text-sm text-muted-foreground">
-                Your resume could use some improvements to better match this
-                position. Let us help you align it.
+                {t(
+                  "resumeBuilder.comparisonTable.needsImprovement",
+                  "Your resume could use some improvements to better match this position. Let us help you align it."
+                )}
               </p>
             )}
           </div>
@@ -235,9 +273,9 @@ export function ResumeComparisonTable({
       <div className="dash-card overflow-hidden">
         {/* Table header */}
         <div className="grid grid-cols-[140px_1fr_1fr] border-b border-border bg-secondary/50 px-5 py-3 text-xs font-medium text-muted-foreground">
-          <span>Category</span>
-          <span>Job Requires</span>
-          <span>Your Resume</span>
+          <span>{t("resumeBuilder.comparisonTable.category", "Category")}</span>
+          <span>{t("resumeBuilder.comparisonTable.jobRequires", "Job Requires")}</span>
+          <span>{t("resumeBuilder.comparisonTable.yourResume", "Your Resume")}</span>
         </div>
 
         {/* Rows */}
@@ -259,19 +297,21 @@ export function ResumeComparisonTable({
               {row.tags ? (
                 <div className="flex flex-wrap gap-1.5">
                   {row.tags
-                    .filter((t) => !t.matched)
+                    .filter((tag) => !tag.matched)
                     .slice(0, 6)
-                    .map((t) => (
+                    .map((tag) => (
                       <span
-                        key={t.label}
+                        key={tag.label}
                         className="inline-flex items-center rounded-full border border-red-500/30 bg-red-500/5 px-2 py-0.5 text-xs text-red-500"
                       >
-                        {t.label}
+                        {tag.label}
                       </span>
                     ))}
-                  {row.tags.filter((t) => !t.matched).length > 6 && (
+                  {row.tags.filter((tag) => !tag.matched).length > 6 && (
                     <span className="text-xs text-muted-foreground">
-                      +{row.tags.filter((t) => !t.matched).length - 6} more
+                      {t("resumeBuilder.jobContextCard.moreSkills", "+{{count}} more", {
+                        count: row.tags.filter((tag) => !tag.matched).length - 6,
+                      })}
                     </span>
                   )}
                 </div>
@@ -285,17 +325,19 @@ export function ResumeComparisonTable({
               {row.tags ? (
                 <div className="flex flex-wrap gap-1.5">
                   {row.tags
-                    .filter((t) => t.matched)
-                    .map((t) => (
+                    .filter((tag) => tag.matched)
+                    .map((tag) => (
                       <span
-                        key={t.label}
+                        key={tag.label}
                         className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/5 px-2 py-0.5 text-xs text-emerald-500"
                       >
-                        {t.label}
+                        {tag.label}
                       </span>
                     ))}
-                  {row.tags.filter((t) => t.matched).length === 0 && (
-                    <span className="text-xs text-muted-foreground">None matched</span>
+                  {row.tags.filter((tag) => tag.matched).length === 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {t("resumeBuilder.comparisonTable.noneMatched", "None matched")}
+                    </span>
                   )}
                 </div>
               ) : (
@@ -312,7 +354,7 @@ export function ResumeComparisonTable({
           onClick={onContinue}
           className="inline-flex items-center gap-2 bg-foreground text-background hover:bg-foreground/90 rounded-xl px-6 py-2.5 text-sm font-medium transition-colors"
         >
-          Improve My Resume for This Job
+          {t("resumeBuilder.comparisonTable.improveCta", "Improve My Resume for This Job")}
           <ArrowRight className="w-4 h-4" />
         </button>
       </div>

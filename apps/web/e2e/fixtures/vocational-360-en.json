@@ -1,0 +1,1188 @@
+{
+  "self": {
+    "1": {
+      "text": "How much personal interest do I have in math, statistics, or numerical analysis?",
+      "labels": []
+    },
+    "2": {
+      "text": "How much personal interest do I have in technology, innovation, or digital tools?",
+      "labels": []
+    },
+    "3": {
+      "text": "How much personal interest do I have in biological sciences, health, or medicine?",
+      "labels": []
+    },
+    "4": {
+      "text": "How much personal interest do I have in social, economic, or political issues?",
+      "labels": []
+    },
+    "5": {
+      "text": "How much personal interest do I have in creative, artistic, visual, or design activities?",
+      "labels": []
+    },
+    "6": {
+      "text": "How would I rate my ability to understand mathematical, statistical, or numerical concepts?",
+      "labels": []
+    },
+    "7": {
+      "text": "How would I rate my ability to learn scientific, technical, or technological concepts?",
+      "labels": []
+    },
+    "8": {
+      "text": "How would I rate my ability to express myself clearly, both orally and in writing?",
+      "labels": []
+    },
+    "9": {
+      "text": "How would I rate my ability to analyze complex problems and propose effective solutions?",
+      "labels": []
+    },
+    "10": {
+      "text": "How would I rate my ability to combine knowledge from different areas to generate new ideas?",
+      "labels": []
+    },
+    "11": {
+      "text": "How often do I tend to learn best through hands-on experiences, projects, or real-world cases?",
+      "labels": []
+    },
+    "12": {
+      "text": "How often do I tend to look for additional information when a topic interests me?",
+      "labels": []
+    },
+    "13": {
+      "text": "How often do I tend to persevere when a topic or activity is difficult?",
+      "labels": []
+    },
+    "14": {
+      "text": "How often do I tend to quickly learn new tools, platforms, or methods?",
+      "labels": []
+    },
+    "15": {
+      "text": "How often do I tend to study or work without needing constant supervision?",
+      "labels": []
+    },
+    "16": {
+      "text": "How much am I motivated by achieving ambitious goals and overcoming challenges?",
+      "labels": []
+    },
+    "17": {
+      "text": "How much am I motivated by helping, guiding, or serving other people?",
+      "labels": []
+    },
+    "18": {
+      "text": "How much am I motivated by continuously learning and developing new skills?",
+      "labels": []
+    },
+    "19": {
+      "text": "How much am I motivated by gaining recognition for my achievements and contributions?",
+      "labels": []
+    },
+    "20": {
+      "text": "How much am I motivated by making a positive impact on society or a community?",
+      "labels": []
+    },
+    "21": {
+      "text": "How characteristic is it of me to connect with new people and build relationships?",
+      "labels": []
+    },
+    "22": {
+      "text": "How characteristic is it of me to persuade, convince, or influence others?",
+      "labels": []
+    },
+    "23": {
+      "text": "How characteristic is it of me to listen actively and understand different points of view?",
+      "labels": []
+    },
+    "24": {
+      "text": "How characteristic is it of me to work in a team and collaborate with others?",
+      "labels": []
+    },
+    "25": {
+      "text": "How characteristic is it of me to take the lead when the situation calls for it?",
+      "labels": []
+    },
+    "26": {
+      "text": "To what extent do I agree that I usually prefer structured, organized environments with clear rules?",
+      "labels": []
+    },
+    "27": {
+      "text": "To what extent do I agree that I usually adapt easily to change, uncertainty, or new challenges?",
+      "labels": []
+    },
+    "28": {
+      "text": "To what extent do I agree that I am usually careful about details and the quality of my work?",
+      "labels": []
+    },
+    "29": {
+      "text": "To what extent do I agree that I usually cope well with pressure, demanding deadlines, or workload?",
+      "labels": []
+    },
+    "30": {
+      "text": "To what extent do I agree that I usually meet commitments, responsibilities, and deadlines?",
+      "labels": []
+    },
+    "31": {
+      "text": "How much potential do I think I have to excel in analytical, technical, or data roles?",
+      "labels": []
+    },
+    "32": {
+      "text": "How much potential do I think I have to excel at leading teams, projects, or initiatives?",
+      "labels": []
+    },
+    "33": {
+      "text": "How much potential do I think I have to excel in commercial roles, sales, negotiation, or client relations?",
+      "labels": []
+    },
+    "34": {
+      "text": "How much potential do I think I have to excel in creative activities, design, communication, or content creation?",
+      "labels": []
+    },
+    "35": {
+      "text": "How much potential do I think I have to excel in research, knowledge creation, or solving complex problems?",
+      "labels": []
+    },
+    "36": {
+      "text": "In my view, how well developed is my understanding of the importance of building a professional career?",
+      "labels": []
+    },
+    "37": {
+      "text": "In my view, how well developed is my genuine interest in pursuing higher education or specializing?",
+      "labels": []
+    },
+    "38": {
+      "text": "In my view, how well developed is my search for information about majors, universities, scholarships, or career opportunities?",
+      "labels": []
+    },
+    "39": {
+      "text": "In my view, how well developed is my exploration of future options on my own initiative?",
+      "labels": []
+    },
+    "40": {
+      "text": "In my view, how well developed is my commitment to my academic and professional life plan?",
+      "labels": []
+    },
+    "41": {
+      "text": "Rank the academic and professional areas according to the affinity you recognize in yourself:",
+      "labels": [
+        "Engineering",
+        "Technology and IT",
+        "Mathematics and statistics",
+        "Health sciences",
+        "Psychology",
+        "Education",
+        "Business and management",
+        "Marketing and communications",
+        "Finance and economics",
+        "Law",
+        "Architecture",
+        "Design",
+        "Social sciences",
+        "International relations",
+        "Entrepreneurship",
+        "Biotechnology",
+        "Environmental sciences",
+        "Logistics and operations",
+        "Audiovisual production",
+        "Scientific research"
+      ]
+    },
+    "42": {
+      "text": "Select the industries where you think you would have the best chance of professional success:",
+      "labels": [
+        "Technology",
+        "Banking and finance",
+        "Consumer goods",
+        "Consulting",
+        "Health care",
+        "Education",
+        "Government",
+        "International organizations",
+        "Marketing and advertising",
+        "Entertainment",
+        "Sports",
+        "Energy",
+        "Construction",
+        "Manufacturing",
+        "E-commerce",
+        "Tourism",
+        "Logistics",
+        "Telecommunications",
+        "Research and development",
+        "Entrepreneurship"
+      ]
+    },
+    "43": {
+      "text": "Select the activities you enjoy most or think you could enjoy:",
+      "labels": [
+        "Solving complex problems",
+        "Leading people",
+        "Persuading or negotiating",
+        "Analyzing information",
+        "Researching",
+        "Designing",
+        "Creating content",
+        "Teaching",
+        "Helping others",
+        "Selling",
+        "Programming",
+        "Building",
+        "Organizing",
+        "Planning",
+        "Innovating"
+      ]
+    },
+    "44": {
+      "text": "Select the type of work you would probably enjoy most:",
+      "labels": [
+        "Analytical",
+        "Creative",
+        "Commercial",
+        "Technical",
+        "Scientific",
+        "Entrepreneurial",
+        "Social",
+        "Administrative",
+        "Strategic",
+        "Operational"
+      ]
+    },
+    "45": {
+      "text": "What do I consider my greatest talent, strength, or professional potential, and why?",
+      "labels": []
+    },
+    "46": {
+      "text": "How clear am I that I want to pursue a university or technical degree, and how committed am I to that decision?",
+      "labels": [
+        "Not at all clear / committed",
+        "Not very clear / committed",
+        "Moderately clear / committed",
+        "Quite clear / committed",
+        "Very clear / committed"
+      ]
+    },
+    "47": {
+      "text": "How sure do I feel about the career or professional field that currently interests me?",
+      "labels": [
+        "Not at all sure",
+        "Not very sure",
+        "Moderately sure",
+        "Quite sure",
+        "Completely sure"
+      ]
+    },
+    "48": {
+      "text": "What worries me most about my professional future?",
+      "labels": [
+        "Choosing the wrong major",
+        "Not finding a job",
+        "Not meeting family expectations",
+        "Not knowing what I like",
+        "Cost of education",
+        "Studying abroad",
+        "Academic pressure",
+        "Lack of experience",
+        "Other"
+      ]
+    },
+    "49": {
+      "text": "What kind of professional life do I imagine for myself 10 years from now, and why?",
+      "labels": []
+    },
+    "50": {
+      "text": "Rank the factors that most influence your professional fulfillment:",
+      "labels": [
+        "Income",
+        "Stability",
+        "Recognition",
+        "Helping others",
+        "Innovation",
+        "Freedom",
+        "Prestige",
+        "Continuous learning"
+      ]
+    }
+  },
+  "parent": {
+    "1": {
+      "text": "How much interest in math, statistics, or numerical analysis have you observed in your child?",
+      "labels": []
+    },
+    "2": {
+      "text": "How much interest in technology, innovation, or digital tools have you observed in your child?",
+      "labels": []
+    },
+    "3": {
+      "text": "How much interest in biological sciences, health, or medicine have you observed in your child?",
+      "labels": []
+    },
+    "4": {
+      "text": "How much interest in social, economic, or political issues have you observed in your child?",
+      "labels": []
+    },
+    "5": {
+      "text": "How much interest in creative, artistic, visual, or design activities have you observed in your child?",
+      "labels": []
+    },
+    "6": {
+      "text": "How would you rate your child's ability to understand mathematical, statistical, or numerical concepts?",
+      "labels": []
+    },
+    "7": {
+      "text": "How would you rate your child's ability to learn scientific, technical, or technological concepts?",
+      "labels": []
+    },
+    "8": {
+      "text": "How would you rate your child's ability to express themselves clearly, both orally and in writing?",
+      "labels": []
+    },
+    "9": {
+      "text": "How would you rate your child's ability to analyze complex problems and propose effective solutions?",
+      "labels": []
+    },
+    "10": {
+      "text": "How would you rate your child's ability to combine knowledge from different areas to generate new ideas?",
+      "labels": []
+    },
+    "11": {
+      "text": "How often do you notice that your child tends to learn best through hands-on experiences, projects, or real-world cases?",
+      "labels": []
+    },
+    "12": {
+      "text": "How often do you notice that your child tends to look for additional information when a topic interests them?",
+      "labels": []
+    },
+    "13": {
+      "text": "How often do you notice that your child tends to persevere when a topic or activity is difficult?",
+      "labels": []
+    },
+    "14": {
+      "text": "How often do you notice that your child tends to quickly learn new tools, platforms, or methods?",
+      "labels": []
+    },
+    "15": {
+      "text": "How often do you notice that your child tends to study or work without needing constant supervision?",
+      "labels": []
+    },
+    "16": {
+      "text": "How much do you think your child is motivated by achieving ambitious goals and overcoming challenges?",
+      "labels": []
+    },
+    "17": {
+      "text": "How much do you think your child is motivated by helping, guiding, or serving other people?",
+      "labels": []
+    },
+    "18": {
+      "text": "How much do you think your child is motivated by continuously learning and developing new skills?",
+      "labels": []
+    },
+    "19": {
+      "text": "How much do you think your child is motivated by gaining recognition for their achievements and contributions?",
+      "labels": []
+    },
+    "20": {
+      "text": "How much do you think your child is motivated by making a positive impact on society or a community?",
+      "labels": []
+    },
+    "21": {
+      "text": "How characteristic is it of your child to connect with new people and build relationships?",
+      "labels": []
+    },
+    "22": {
+      "text": "How characteristic is it of your child to persuade, convince, or influence others?",
+      "labels": []
+    },
+    "23": {
+      "text": "How characteristic is it of your child to listen actively and understand different points of view?",
+      "labels": []
+    },
+    "24": {
+      "text": "How characteristic is it of your child to work in a team and collaborate with others?",
+      "labels": []
+    },
+    "25": {
+      "text": "How characteristic is it of your child to take the lead when the situation calls for it?",
+      "labels": []
+    },
+    "26": {
+      "text": "To what extent do you agree that your child usually prefers structured, organized environments with clear rules?",
+      "labels": []
+    },
+    "27": {
+      "text": "To what extent do you agree that your child usually adapts easily to change, uncertainty, or new challenges?",
+      "labels": []
+    },
+    "28": {
+      "text": "To what extent do you agree that your child is usually careful about details and the quality of their work?",
+      "labels": []
+    },
+    "29": {
+      "text": "To what extent do you agree that your child usually copes well with pressure, demanding deadlines, or workload?",
+      "labels": []
+    },
+    "30": {
+      "text": "To what extent do you agree that your child usually meets commitments, responsibilities, and deadlines?",
+      "labels": []
+    },
+    "31": {
+      "text": "How much potential do you see in your child to excel in analytical, technical, or data roles?",
+      "labels": []
+    },
+    "32": {
+      "text": "How much potential do you see in your child to excel at leading teams, projects, or initiatives?",
+      "labels": []
+    },
+    "33": {
+      "text": "How much potential do you see in your child to excel in commercial roles, sales, negotiation, or client relations?",
+      "labels": []
+    },
+    "34": {
+      "text": "How much potential do you see in your child to excel in creative activities, design, communication, or content creation?",
+      "labels": []
+    },
+    "35": {
+      "text": "How much potential do you see in your child to excel in research, knowledge creation, or solving complex problems?",
+      "labels": []
+    },
+    "36": {
+      "text": "From what you observe, how well developed is your child's understanding of the importance of building a professional career?",
+      "labels": []
+    },
+    "37": {
+      "text": "From what you observe, how well developed is your child's genuine interest in pursuing higher education or specializing?",
+      "labels": []
+    },
+    "38": {
+      "text": "From what you observe, how well developed is your child's search for information about majors, universities, scholarships, or career opportunities?",
+      "labels": []
+    },
+    "39": {
+      "text": "From what you observe, how well developed is your child's exploration of future options on their own initiative?",
+      "labels": []
+    },
+    "40": {
+      "text": "From what you observe, how well developed is your child's commitment to their academic and professional life plan?",
+      "labels": []
+    },
+    "41": {
+      "text": "Rank the academic and professional areas according to the affinity you observe in your child:",
+      "labels": [
+        "Engineering",
+        "Technology and IT",
+        "Mathematics and statistics",
+        "Health sciences",
+        "Psychology",
+        "Education",
+        "Business and management",
+        "Marketing and communications",
+        "Finance and economics",
+        "Law",
+        "Architecture",
+        "Design",
+        "Social sciences",
+        "International relations",
+        "Entrepreneurship",
+        "Biotechnology",
+        "Environmental sciences",
+        "Logistics and operations",
+        "Audiovisual production",
+        "Scientific research"
+      ]
+    },
+    "42": {
+      "text": "Select the industries where you see the best chance of professional success for your child:",
+      "labels": [
+        "Technology",
+        "Banking and finance",
+        "Consumer goods",
+        "Consulting",
+        "Health care",
+        "Education",
+        "Government",
+        "International organizations",
+        "Marketing and advertising",
+        "Entertainment",
+        "Sports",
+        "Energy",
+        "Construction",
+        "Manufacturing",
+        "E-commerce",
+        "Tourism",
+        "Logistics",
+        "Telecommunications",
+        "Research and development",
+        "Entrepreneurship"
+      ]
+    },
+    "43": {
+      "text": "Select the activities you think your child enjoys most or could enjoy:",
+      "labels": [
+        "Solving complex problems",
+        "Leading people",
+        "Persuading or negotiating",
+        "Analyzing information",
+        "Researching",
+        "Designing",
+        "Creating content",
+        "Teaching",
+        "Helping others",
+        "Selling",
+        "Programming",
+        "Building",
+        "Organizing",
+        "Planning",
+        "Innovating"
+      ]
+    },
+    "44": {
+      "text": "Select the type of work your child would probably enjoy most:",
+      "labels": [
+        "Analytical",
+        "Creative",
+        "Commercial",
+        "Technical",
+        "Scientific",
+        "Entrepreneurial",
+        "Social",
+        "Administrative",
+        "Strategic",
+        "Operational"
+      ]
+    },
+    "45": {
+      "text": "What do you consider your child's greatest talent, strength, or professional potential, and why?",
+      "labels": []
+    },
+    "46": {
+      "text": "What activities, games, topics, or interests has your child spontaneously sought out since they were little?",
+      "labels": []
+    },
+    "47": {
+      "text": "How much potential have you observed in your child in the area where they stand out most (academic, social, creative, technical, athletic, artistic, commercial, or other)?",
+      "labels": [
+        "Very little potential",
+        "Limited potential",
+        "Moderate potential",
+        "High potential",
+        "Exceptional potential"
+      ]
+    },
+    "48": {
+      "text": "What career or professional field do you think would best allow your child to develop their potential, and why?",
+      "labels": []
+    },
+    "49": {
+      "text": "What strengths do you think set your child apart from other young people their age?",
+      "labels": []
+    },
+    "50": {
+      "text": "What are your main concerns about your child's professional future?",
+      "labels": [
+        "Lack of clarity",
+        "Low motivation",
+        "Outside pressure",
+        "Academic difficulty",
+        "Unrealistic choice",
+        "Lack of discipline",
+        "Employability",
+        "Adjusting to college",
+        "Other"
+      ]
+    }
+  },
+  "teacher": {
+    "1": {
+      "text": "Based on your teaching experience, how much academic interest does the student show in math, statistics, or numerical analysis?",
+      "labels": []
+    },
+    "2": {
+      "text": "Based on your teaching experience, how much academic interest does the student show in technology, innovation, or digital tools?",
+      "labels": []
+    },
+    "3": {
+      "text": "Based on your teaching experience, how much academic interest does the student show in biological sciences, health, or medicine?",
+      "labels": []
+    },
+    "4": {
+      "text": "Based on your teaching experience, how much academic interest does the student show in social, economic, or political issues?",
+      "labels": []
+    },
+    "5": {
+      "text": "Based on your teaching experience, how much academic interest does the student show in creative, artistic, visual, or design activities?",
+      "labels": []
+    },
+    "6": {
+      "text": "Based on your teaching experience, how would you rate the student's ability to understand mathematical, statistical, or numerical concepts?",
+      "labels": []
+    },
+    "7": {
+      "text": "Based on your teaching experience, how would you rate the student's ability to learn scientific, technical, or technological concepts?",
+      "labels": []
+    },
+    "8": {
+      "text": "Based on your teaching experience, how would you rate the student's ability to express themselves clearly, both orally and in writing?",
+      "labels": []
+    },
+    "9": {
+      "text": "Based on your teaching experience, how would you rate the student's ability to analyze complex problems and propose effective solutions?",
+      "labels": []
+    },
+    "10": {
+      "text": "Based on your teaching experience, how would you rate the student's ability to combine knowledge from different areas to generate new ideas?",
+      "labels": []
+    },
+    "11": {
+      "text": "In the academic setting, how often does the student tend to learn best through hands-on experiences, projects, or real-world cases?",
+      "labels": []
+    },
+    "12": {
+      "text": "In the academic setting, how often does the student tend to look for additional information when a topic interests them?",
+      "labels": []
+    },
+    "13": {
+      "text": "In the academic setting, how often does the student tend to persevere when a topic or activity is difficult?",
+      "labels": []
+    },
+    "14": {
+      "text": "In the academic setting, how often does the student tend to quickly learn new tools, platforms, or methods?",
+      "labels": []
+    },
+    "15": {
+      "text": "In the academic setting, how often does the student tend to study or work without needing constant supervision?",
+      "labels": []
+    },
+    "16": {
+      "text": "From your observation, how much does the student seem to be motivated by achieving ambitious goals and overcoming challenges?",
+      "labels": []
+    },
+    "17": {
+      "text": "From your observation, how much does the student seem to be motivated by helping, guiding, or serving other people?",
+      "labels": []
+    },
+    "18": {
+      "text": "From your observation, how much does the student seem to be motivated by continuously learning and developing new skills?",
+      "labels": []
+    },
+    "19": {
+      "text": "From your observation, how much does the student seem to be motivated by gaining recognition for their achievements and contributions?",
+      "labels": []
+    },
+    "20": {
+      "text": "From your observation, how much does the student seem to be motivated by making a positive impact on society or a community?",
+      "labels": []
+    },
+    "21": {
+      "text": "In the school environment, how characteristic is it of the student to connect with new people and build relationships?",
+      "labels": []
+    },
+    "22": {
+      "text": "In the school environment, how characteristic is it of the student to persuade, convince, or influence others?",
+      "labels": []
+    },
+    "23": {
+      "text": "In the school environment, how characteristic is it of the student to listen actively and understand different points of view?",
+      "labels": []
+    },
+    "24": {
+      "text": "In the school environment, how characteristic is it of the student to work in a team and collaborate with others?",
+      "labels": []
+    },
+    "25": {
+      "text": "In the school environment, how characteristic is it of the student to take the lead when the situation calls for it?",
+      "labels": []
+    },
+    "26": {
+      "text": "In assignments, projects, or classes, to what extent do you agree that the student usually prefers structured, organized environments with clear rules?",
+      "labels": []
+    },
+    "27": {
+      "text": "In assignments, projects, or classes, to what extent do you agree that the student usually adapts easily to change, uncertainty, or new challenges?",
+      "labels": []
+    },
+    "28": {
+      "text": "In assignments, projects, or classes, to what extent do you agree that the student is usually careful about details and the quality of their work?",
+      "labels": []
+    },
+    "29": {
+      "text": "In assignments, projects, or classes, to what extent do you agree that the student usually copes well with pressure, demanding deadlines, or workload?",
+      "labels": []
+    },
+    "30": {
+      "text": "In assignments, projects, or classes, to what extent do you agree that the student usually meets commitments, responsibilities, and deadlines?",
+      "labels": []
+    },
+    "31": {
+      "text": "In your academic judgment, how much potential do you see in the student to excel in analytical, technical, or data roles?",
+      "labels": []
+    },
+    "32": {
+      "text": "In your academic judgment, how much potential do you see in the student to excel at leading teams, projects, or initiatives?",
+      "labels": []
+    },
+    "33": {
+      "text": "In your academic judgment, how much potential do you see in the student to excel in commercial roles, sales, negotiation, or client relations?",
+      "labels": []
+    },
+    "34": {
+      "text": "In your academic judgment, how much potential do you see in the student to excel in creative activities, design, communication, or content creation?",
+      "labels": []
+    },
+    "35": {
+      "text": "In your academic judgment, how much potential do you see in the student to excel in research, knowledge creation, or solving complex problems?",
+      "labels": []
+    },
+    "36": {
+      "text": "From your observation, how well developed is the student's understanding of the importance of building a professional career?",
+      "labels": []
+    },
+    "37": {
+      "text": "From your observation, how well developed is the student's genuine interest in pursuing higher education or specializing?",
+      "labels": []
+    },
+    "38": {
+      "text": "From your observation, how well developed is the student's search for information about majors, universities, scholarships, or career opportunities?",
+      "labels": []
+    },
+    "39": {
+      "text": "From your observation, how well developed is the student's exploration of future options on their own initiative?",
+      "labels": []
+    },
+    "40": {
+      "text": "From your observation, how well developed is the student's commitment to their academic and professional life plan?",
+      "labels": []
+    },
+    "41": {
+      "text": "Rank the academic and professional areas according to the affinity you observe in the student in the academic setting:",
+      "labels": [
+        "Engineering",
+        "Technology and IT",
+        "Mathematics and statistics",
+        "Health sciences",
+        "Psychology",
+        "Education",
+        "Business and management",
+        "Marketing and communications",
+        "Finance and economics",
+        "Law",
+        "Architecture",
+        "Design",
+        "Social sciences",
+        "International relations",
+        "Entrepreneurship",
+        "Biotechnology",
+        "Environmental sciences",
+        "Logistics and operations",
+        "Audiovisual production",
+        "Scientific research"
+      ]
+    },
+    "42": {
+      "text": "Select the industries where you see the best chance of professional success for the student:",
+      "labels": [
+        "Technology",
+        "Banking and finance",
+        "Consumer goods",
+        "Consulting",
+        "Health care",
+        "Education",
+        "Government",
+        "International organizations",
+        "Marketing and advertising",
+        "Entertainment",
+        "Sports",
+        "Energy",
+        "Construction",
+        "Manufacturing",
+        "E-commerce",
+        "Tourism",
+        "Logistics",
+        "Telecommunications",
+        "Research and development",
+        "Entrepreneurship"
+      ]
+    },
+    "43": {
+      "text": "Select the activities you think the student enjoys most or could enjoy:",
+      "labels": [
+        "Solving complex problems",
+        "Leading people",
+        "Persuading or negotiating",
+        "Analyzing information",
+        "Researching",
+        "Designing",
+        "Creating content",
+        "Teaching",
+        "Helping others",
+        "Selling",
+        "Programming",
+        "Building",
+        "Organizing",
+        "Planning",
+        "Innovating"
+      ]
+    },
+    "44": {
+      "text": "Select the type of work the student would probably enjoy most:",
+      "labels": [
+        "Analytical",
+        "Creative",
+        "Commercial",
+        "Technical",
+        "Scientific",
+        "Entrepreneurial",
+        "Social",
+        "Administrative",
+        "Strategic",
+        "Operational"
+      ]
+    },
+    "45": {
+      "text": "What do you consider the student's greatest talent, strength, or professional potential, and why?",
+      "labels": []
+    },
+    "46": {
+      "text": "In which academic area do you observe the student's strongest performance?",
+      "labels": [
+        "Mathematics",
+        "Science",
+        "Communication",
+        "Social sciences",
+        "Art/design",
+        "Technology",
+        "Languages",
+        "Leadership/projects",
+        "Other"
+      ]
+    },
+    "47": {
+      "text": "What type of thinking is predominant in the student?",
+      "labels": [
+        "Logical-analytical",
+        "Creative",
+        "Practical",
+        "Social-communicative",
+        "Technical",
+        "Strategic",
+        "Reflective",
+        "Entrepreneurial"
+      ]
+    },
+    "48": {
+      "text": "What level of professional potential do you see in the student to excel in higher education and working life?",
+      "labels": [
+        "Very little potential",
+        "Limited potential",
+        "Moderate potential",
+        "High potential",
+        "Exceptional potential"
+      ]
+    },
+    "49": {
+      "text": "What major, academic area, or career cluster would you recommend that the student explore, and why?",
+      "labels": []
+    },
+    "50": {
+      "text": "Which skill do you consider most important for the student to strengthen to improve their success in college and in their career?",
+      "labels": []
+    }
+  },
+  "sibling_friend": {
+    "1": {
+      "text": "In everyday life, how much genuine interest in math, statistics, or numerical analysis do you see in the student?",
+      "labels": []
+    },
+    "2": {
+      "text": "In everyday life, how much genuine interest in technology, innovation, or digital tools do you see in the student?",
+      "labels": []
+    },
+    "3": {
+      "text": "In everyday life, how much genuine interest in biological sciences, health, or medicine do you see in the student?",
+      "labels": []
+    },
+    "4": {
+      "text": "In everyday life, how much genuine interest in social, economic, or political issues do you see in the student?",
+      "labels": []
+    },
+    "5": {
+      "text": "In everyday life, how much genuine interest in creative, artistic, visual, or design activities do you see in the student?",
+      "labels": []
+    },
+    "6": {
+      "text": "From what you know, how would you rate the student's ability to understand mathematical, statistical, or numerical concepts?",
+      "labels": []
+    },
+    "7": {
+      "text": "From what you know, how would you rate the student's ability to learn scientific, technical, or technological concepts?",
+      "labels": []
+    },
+    "8": {
+      "text": "From what you know, how would you rate the student's ability to express themselves clearly, both orally and in writing?",
+      "labels": []
+    },
+    "9": {
+      "text": "From what you know, how would you rate the student's ability to analyze complex problems and propose effective solutions?",
+      "labels": []
+    },
+    "10": {
+      "text": "From what you know, how would you rate the student's ability to combine knowledge from different areas to generate new ideas?",
+      "labels": []
+    },
+    "11": {
+      "text": "Outside the classroom or in everyday situations, how often do you notice that the student tends to learn best through hands-on experiences, projects, or real-world cases?",
+      "labels": []
+    },
+    "12": {
+      "text": "Outside the classroom or in everyday situations, how often do you notice that the student tends to look for additional information when a topic interests them?",
+      "labels": []
+    },
+    "13": {
+      "text": "Outside the classroom or in everyday situations, how often do you notice that the student tends to persevere when a topic or activity is difficult?",
+      "labels": []
+    },
+    "14": {
+      "text": "Outside the classroom or in everyday situations, how often do you notice that the student tends to quickly learn new tools, platforms, or methods?",
+      "labels": []
+    },
+    "15": {
+      "text": "Outside the classroom or in everyday situations, how often do you notice that the student tends to study or work without needing constant supervision?",
+      "labels": []
+    },
+    "16": {
+      "text": "Based on what you see day to day, how much is the student motivated by achieving ambitious goals and overcoming challenges?",
+      "labels": []
+    },
+    "17": {
+      "text": "Based on what you see day to day, how much is the student motivated by helping, guiding, or serving other people?",
+      "labels": []
+    },
+    "18": {
+      "text": "Based on what you see day to day, how much is the student motivated by continuously learning and developing new skills?",
+      "labels": []
+    },
+    "19": {
+      "text": "Based on what you see day to day, how much is the student motivated by gaining recognition for their achievements and contributions?",
+      "labels": []
+    },
+    "20": {
+      "text": "Based on what you see day to day, how much is the student motivated by making a positive impact on society or a community?",
+      "labels": []
+    },
+    "21": {
+      "text": "In the way they naturally relate to others, how characteristic is it of the student to connect with new people and build relationships?",
+      "labels": []
+    },
+    "22": {
+      "text": "In the way they naturally relate to others, how characteristic is it of the student to persuade, convince, or influence others?",
+      "labels": []
+    },
+    "23": {
+      "text": "In the way they naturally relate to others, how characteristic is it of the student to listen actively and understand different points of view?",
+      "labels": []
+    },
+    "24": {
+      "text": "In the way they naturally relate to others, how characteristic is it of the student to work in a team and collaborate with others?",
+      "labels": []
+    },
+    "25": {
+      "text": "In the way they naturally relate to others, how characteristic is it of the student to take the lead when the situation calls for it?",
+      "labels": []
+    },
+    "26": {
+      "text": "In everyday activities, commitments, or projects, to what extent do you agree that the student usually prefers structured, organized environments with clear rules?",
+      "labels": []
+    },
+    "27": {
+      "text": "In everyday activities, commitments, or projects, to what extent do you agree that the student usually adapts easily to change, uncertainty, or new challenges?",
+      "labels": []
+    },
+    "28": {
+      "text": "In everyday activities, commitments, or projects, to what extent do you agree that the student is usually careful about details and the quality of their work?",
+      "labels": []
+    },
+    "29": {
+      "text": "In everyday activities, commitments, or projects, to what extent do you agree that the student usually copes well with pressure, demanding deadlines, or workload?",
+      "labels": []
+    },
+    "30": {
+      "text": "In everyday activities, commitments, or projects, to what extent do you agree that the student usually meets commitments, responsibilities, and deadlines?",
+      "labels": []
+    },
+    "31": {
+      "text": "From your close perspective, how much potential do you think the student has to excel in analytical, technical, or data roles?",
+      "labels": []
+    },
+    "32": {
+      "text": "From your close perspective, how much potential do you think the student has to excel at leading teams, projects, or initiatives?",
+      "labels": []
+    },
+    "33": {
+      "text": "From your close perspective, how much potential do you think the student has to excel in commercial roles, sales, negotiation, or client relations?",
+      "labels": []
+    },
+    "34": {
+      "text": "From your close perspective, how much potential do you think the student has to excel in creative activities, design, communication, or content creation?",
+      "labels": []
+    },
+    "35": {
+      "text": "From your close perspective, how much potential do you think the student has to excel in research, knowledge creation, or solving complex problems?",
+      "labels": []
+    },
+    "36": {
+      "text": "Based on your close relationship, how well developed is the student's understanding of the importance of building a professional career?",
+      "labels": []
+    },
+    "37": {
+      "text": "Based on your close relationship, how well developed is the student's genuine interest in pursuing higher education or specializing?",
+      "labels": []
+    },
+    "38": {
+      "text": "Based on your close relationship, how well developed is the student's search for information about majors, universities, scholarships, or career opportunities?",
+      "labels": []
+    },
+    "39": {
+      "text": "Based on your close relationship, how well developed is the student's exploration of future options on their own initiative?",
+      "labels": []
+    },
+    "40": {
+      "text": "Based on your close relationship, how well developed is the student's commitment to their academic and professional life plan?",
+      "labels": []
+    },
+    "41": {
+      "text": "Rank the academic and professional areas according to the affinity you observe in the student through your close relationship:",
+      "labels": [
+        "Engineering",
+        "Technology and IT",
+        "Mathematics and statistics",
+        "Health sciences",
+        "Psychology",
+        "Education",
+        "Business and management",
+        "Marketing and communications",
+        "Finance and economics",
+        "Law",
+        "Architecture",
+        "Design",
+        "Social sciences",
+        "International relations",
+        "Entrepreneurship",
+        "Biotechnology",
+        "Environmental sciences",
+        "Logistics and operations",
+        "Audiovisual production",
+        "Scientific research"
+      ]
+    },
+    "42": {
+      "text": "Select the industries where you see the best chance of professional success for the student:",
+      "labels": [
+        "Technology",
+        "Banking and finance",
+        "Consumer goods",
+        "Consulting",
+        "Health care",
+        "Education",
+        "Government",
+        "International organizations",
+        "Marketing and advertising",
+        "Entertainment",
+        "Sports",
+        "Energy",
+        "Construction",
+        "Manufacturing",
+        "E-commerce",
+        "Tourism",
+        "Logistics",
+        "Telecommunications",
+        "Research and development",
+        "Entrepreneurship"
+      ]
+    },
+    "43": {
+      "text": "Select the activities you think the student enjoys most or could enjoy in real life:",
+      "labels": [
+        "Solving complex problems",
+        "Leading people",
+        "Persuading or negotiating",
+        "Analyzing information",
+        "Researching",
+        "Designing",
+        "Creating content",
+        "Teaching",
+        "Helping others",
+        "Selling",
+        "Programming",
+        "Building",
+        "Organizing",
+        "Planning",
+        "Innovating"
+      ]
+    },
+    "44": {
+      "text": "Select the type of work the student would probably enjoy most:",
+      "labels": [
+        "Analytical",
+        "Creative",
+        "Commercial",
+        "Technical",
+        "Scientific",
+        "Entrepreneurial",
+        "Social",
+        "Administrative",
+        "Strategic",
+        "Operational"
+      ]
+    },
+    "45": {
+      "text": "What do you consider the student's greatest talent, strength, or professional potential, and why?",
+      "labels": []
+    },
+    "46": {
+      "text": "What activities does the student do voluntarily in their free time when no one requires them to?",
+      "labels": []
+    },
+    "47": {
+      "text": "What topics is the student passionate about, or which ones do they talk about most enthusiastically?",
+      "labels": [
+        "Technology",
+        "Business",
+        "Sports",
+        "Fashion",
+        "Music",
+        "Art",
+        "Health",
+        "Psychology",
+        "Politics",
+        "Travel",
+        "Video games",
+        "Social media",
+        "Entrepreneurship",
+        "Science",
+        "Other"
+      ]
+    },
+    "48": {
+      "text": "In what type of work or industry do you imagine the student being most successful?",
+      "labels": [
+        "Technology",
+        "Banking",
+        "Marketing",
+        "Entertainment",
+        "Education",
+        "Health care",
+        "Entrepreneurship",
+        "Sports",
+        "Consulting",
+        "Design",
+        "Public sector",
+        "Tourism",
+        "Other"
+      ]
+    },
+    "49": {
+      "text": "What do you consider the student's main personal strength, and in what situations does it show?",
+      "labels": []
+    },
+    "50": {
+      "text": "What activity do you think would bring the student the greatest professional satisfaction and happiness?",
+      "labels": []
+    }
+  }
+}

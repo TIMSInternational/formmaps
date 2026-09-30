@@ -2,6 +2,7 @@
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 
 interface LoadingStateProps {
   className?: string;
@@ -92,10 +93,11 @@ interface ErrorStateProps {
 }
 
 export function ErrorState({
-  message = "Failed to load subscription plans",
+  message,
   onRetry,
   className,
 }: ErrorStateProps) {
+  const { t } = useTranslation();
   return (
     <div className={cn("text-center py-12", className)}>
       <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -114,15 +116,15 @@ export function ErrorState({
         </svg>
       </div>
       <h3 className="text-lg font-semibold text-gray-900 mb-2">
-        Something went wrong
+        {t("studentUi.subscriptions.somethingWrong")}
       </h3>
-      <p className="text-gray-600 mb-6">{message}</p>
+      <p className="text-gray-600 mb-6">{message ?? t("studentUi.subscriptions.loadPlansFailed")}</p>
       {onRetry && (
         <button
           onClick={onRetry}
           className="bg-[var(--admin-accent-blue)] text-white px-6 py-3 rounded-lg font-medium hover:bg-[var(--admin-accent-blue)]/90 transition-colors"
         >
-          Try Again
+          {t("common.tryAgain")}
         </button>
       )}
     </div>

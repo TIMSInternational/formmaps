@@ -1,3 +1,5 @@
+// Real i18next (English) so assertions read the rendered copy, not raw keys.
+import "@/lib/i18n";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import CoursePlanPage from "@/app/dashboard/course-plan/page";
@@ -135,7 +137,7 @@ describe("Student course plan page", () => {
 
   it("shows an empty-goal card inviting the student to choose a goal", async () => {
     renderPage();
-    expect(await screen.findByText(/where do you want to graduate to/i)).toBeInTheDocument();
+    expect(await screen.findByText(/where do you want to go after you graduate/i)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: /choose your goal/i })).toBeInTheDocument();
   });
 

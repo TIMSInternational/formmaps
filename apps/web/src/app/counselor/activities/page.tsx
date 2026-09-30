@@ -6,6 +6,7 @@ import { Trophy, Search, Plus, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { ActivityForm, ActivityFormData } from "./_components/ActivityForm";
 import { ActivityCard } from "./_components/ActivityCard";
 
@@ -30,13 +31,13 @@ interface Activity {
 }
 
 const CATEGORIES = [
-  { key: "all", label: "All" },
-  { key: "academic", label: "Academic" },
-  { key: "athletic", label: "Athletic" },
-  { key: "arts", label: "Arts" },
-  { key: "community_service", label: "Community Service" },
-  { key: "work", label: "Work" },
-  { key: "leadership", label: "Leadership" },
+  { key: "all", labelKey: "ui.activities.categories.all" },
+  { key: "academic", labelKey: "ui.activities.categories.academic" },
+  { key: "athletic", labelKey: "ui.activities.categories.athletic" },
+  { key: "arts", labelKey: "ui.activities.categories.arts" },
+  { key: "community_service", labelKey: "ui.activities.categories.communityService" },
+  { key: "work", labelKey: "ui.activities.categories.work" },
+  { key: "leadership", labelKey: "ui.activities.categories.leadership" },
 ];
 
 const INITIAL_FORM: ActivityFormData = {
@@ -46,6 +47,7 @@ const INITIAL_FORM: ActivityFormData = {
 };
 
 export default function CounselorActivitiesPage() {
+  const { t } = useTranslation("counselor");
   const queryClient = useQueryClient();
   const [studentSearch, setStudentSearch] = useState("");
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
@@ -80,11 +82,11 @@ export default function CounselorActivitiesPage() {
       return apiRequest(`/api/v1/college/students/${selectedStudent!.id}/activities`, { method: "POST", data });
     },
     onSuccess: () => {
-      toast.success("Activity added");
+      toast.success(t("ui.activities.toast.added"));
       queryClient.invalidateQueries({ queryKey: ["student-activities", selectedStudent?.id] });
       setShowForm(false); resetForm();
     },
-    onError: () => toast.error("Failed to add activity"),
+    onError: () => toast.error(t("ui.activities.toast.addFailed")),
   });
 
   const updateMutation = useMutation({
@@ -92,11 +94,11 @@ export default function CounselorActivitiesPage() {
       return apiRequest(`/api/v1/college/activities/${id}`, { method: "PUT", data });
     },
     onSuccess: () => {
-      toast.success("Activity updated");
+      toast.success(t("ui.activities.toast.updated"));
       queryClient.invalidateQueries({ queryKey: ["student-activities", selectedStudent?.id] });
       setShowForm(false); resetForm();
     },
-    onError: () => toast.error("Failed to update activity"),
+    onError: () => toast.error(t("ui.activities.toast.updateFailed")),
   });
 
   const deleteMutation = useMutation({
@@ -104,10 +106,10 @@ export default function CounselorActivitiesPage() {
       return apiRequest(`/api/v1/college/activities/${id}`, { method: "DELETE" });
     },
     onSuccess: () => {
-      toast.success("Activity removed");
+      toast.success(t("ui.activities.toast.removed"));
       queryClient.invalidateQueries({ queryKey: ["student-activities", selectedStudent?.id] });
     },
-    onError: () => toast.error("Failed to delete"),
+    onError: () => toast.error(t("ui.activities.toast.deleteFailed")),
   });
 
   const filteredStudents = (students as Student[]).filter(
@@ -119,8 +121,8 @@ export default function CounselorActivitiesPage() {
   const filtered = filterCategory === "all" ? acts : acts.filter((a) => a.category === filterCategory);
 
   const handleSubmit = () => {
-    if (!form.name.trim()) { toast.error("Activity name is required"); return; }
-    if (!form.startDate) { toast.error("Start date is required"); return; }
+    if (!form.name.trim()) { toast.error(t("ui.activities.toast.nameRequired")); return; }
+    if (!form.startDate) { toast.error(t("ui.activities.toast.startDateRequired")); return; }
     const payload: Record<string, unknown> = {
       name: form.name, category: form.category,
       organization: form.organization || undefined, role: form.role || undefined,
@@ -150,16 +152,16 @@ export default function CounselorActivitiesPage() {
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-tertiary)" }}>College Prep</p>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em", marginTop: 2 }}>Activities & Resume</h1>
-        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2, maxWidth: 600 }}>Track extracurriculars, work experience, and achievements for college applications.</p>
+        <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-tertiary)" }}>{t("nav.collegePrep")}</p>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em", marginTop: 2 }}>{t("ui.activities.title")}</h1>
+        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2, maxWidth: 600 }}>{t("ui.activities.subtitle")}</p>
       </motion.div>
 
       {/* Student Selector */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }} style={{ position: "relative" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", borderRadius: 8, background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", maxWidth: 400 }}>
           <Search style={{ width: 14, height: 14, color: "var(--admin-font-light)", flexShrink: 0 }} />
-          <input placeholder="Search and select a student..." value={selectedStudent ? selectedStudent.name : studentSearch}
+          <input placeholder={t("ui.activities.searchStudent")} value={selectedStudent ? selectedStudent.name : studentSearch}
             onChange={(e) => { setStudentSearch(e.target.value); setSelectedStudent(null); setShowStudentDropdown(true); }}
             onFocus={() => setShowStudentDropdown(true)}
             style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
@@ -175,7 +177,7 @@ export default function CounselorActivitiesPage() {
               {studentsLoading ? (
                 <div style={{ padding: 16, textAlign: "center" }}><Loader2 style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)", animation: "spin 1s linear infinite" }} /></div>
               ) : filteredStudents.length === 0 ? (
-                <div style={{ padding: 16, fontSize: 12, color: "var(--admin-font-tertiary)", textAlign: "center" }}>No students found</div>
+                <div style={{ padding: 16, fontSize: 12, color: "var(--admin-font-tertiary)", textAlign: "center" }}>{t("academicGaps.noStudents")}</div>
               ) : (
                 filteredStudents.map((s) => (
                   <div key={s.id} onClick={() => { setSelectedStudent(s); setShowStudentDropdown(false); setStudentSearch(""); }}
@@ -199,13 +201,13 @@ export default function CounselorActivitiesPage() {
             style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
             <button onClick={() => { setShowForm(!showForm); if (showForm) resetForm(); }}
               style={{ height: 36, borderRadius: 8, padding: "0 16px", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "#102B47", color: "#fff", border: "none", cursor: "pointer" }}>
-              <Plus style={{ width: 14, height: 14 }} /> Add Activity
+              <Plus style={{ width: 14, height: 14 }} /> {t("ui.activities.addActivity")}
             </button>
             <div style={{ display: "flex", gap: 4, flexWrap: "wrap", marginLeft: "auto" }}>
               {CATEGORIES.map((cat) => (
                 <button key={cat.key} onClick={() => setFilterCategory(cat.key)}
                   style={{ padding: "6px 14px", borderRadius: 6, fontSize: 12, fontWeight: 600, border: "1px solid var(--admin-border-default)", cursor: "pointer", fontFamily: "inherit", transition: "all 0.1s", background: filterCategory === cat.key ? "var(--admin-font-primary)" : "var(--admin-bg-card)", color: filterCategory === cat.key ? "var(--admin-bg-card)" : "var(--admin-font-secondary)" }}>
-                  {cat.label}
+                  {t(cat.labelKey)}
                 </button>
               ))}
             </div>
@@ -227,7 +229,7 @@ export default function CounselorActivitiesPage() {
               <div style={{ padding: 48, textAlign: "center", borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
                 <Trophy style={{ width: 32, height: 32, color: "var(--admin-font-light)", margin: "0 auto 12px" }} />
                 <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>
-                  {filterCategory !== "all" ? "No activities match this filter." : "No activities tracked yet. Click \"Add Activity\" to get started."}
+                  {filterCategory !== "all" ? t("ui.activities.emptyFiltered") : t("ui.activities.empty")}
                 </p>
               </div>
             ) : (

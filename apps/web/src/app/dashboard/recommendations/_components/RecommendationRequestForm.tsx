@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { X, Loader2, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { requestRecommendation } from "@/services/recommendationService";
@@ -17,6 +18,7 @@ export default function RecommendationRequestForm({
   onClose,
   onSuccess,
 }: RecommendationRequestFormProps) {
+  const { t } = useTranslation();
   const [selectedStaff, setSelectedStaff] = useState<StaffUser | null>(null);
   const [relationship, setRelationship] = useState("");
   const [message, setMessage] = useState("");
@@ -33,15 +35,15 @@ export default function RecommendationRequestForm({
 
   const handleSubmit = async () => {
     if (!selectedStaff) {
-      toast.error("Please select a staff member");
+      toast.error(t("studentUi.recommendations.form.selectStaff"));
       return;
     }
     if (!relationship.trim()) {
-      toast.error("Please describe your relationship");
+      toast.error(t("studentUi.recommendations.form.relationshipRequired"));
       return;
     }
     if (!message.trim()) {
-      toast.error("Please include a request message");
+      toast.error(t("studentUi.recommendations.form.messageRequired"));
       return;
     }
     setSubmitting(true);
@@ -52,13 +54,13 @@ export default function RecommendationRequestForm({
         requestMessage: message.trim(),
         dueDate: dueDate || undefined,
       });
-      toast.success("Recommendation request sent");
+      toast.success(t("studentUi.recommendations.form.sent"));
       resetForm();
       onSuccess();
     } catch (err: unknown) {
       const errObj = err as { response?: { data?: { message?: string } } };
       const msg =
-        errObj?.response?.data?.message ?? "Failed to send request";
+        errObj?.response?.data?.message ?? t("studentUi.recommendations.form.sendFailed");
       toast.error(msg);
     } finally {
       setSubmitting(false);
@@ -95,7 +97,7 @@ export default function RecommendationRequestForm({
             color: "var(--admin-font-primary)",
           }}
         >
-          New Recommendation Request
+          {t("studentUi.recommendations.form.title")}
         </span>
         <button
           onClick={resetForm}
@@ -133,7 +135,7 @@ export default function RecommendationRequestForm({
               marginBottom: 6,
             }}
           >
-            Staff Member *
+            {t("studentUi.recommendations.form.staffMember")}
           </label>
           <StaffSearch
             value={selectedStaff}
@@ -154,10 +156,10 @@ export default function RecommendationRequestForm({
               marginBottom: 6,
             }}
           >
-            Relationship *
+            {t("studentUi.recommendations.form.relationship")}
           </label>
           <Input
-            placeholder="e.g. Math teacher, Counselor"
+            placeholder={t("studentUi.recommendations.form.relationshipPlaceholder")}
             value={relationship}
             onChange={(e) => setRelationship(e.target.value)}
             className="h-9 text-sm"
@@ -182,7 +184,7 @@ export default function RecommendationRequestForm({
               marginBottom: 6,
             }}
           >
-            Due Date
+            {t("studentUi.recommendations.form.dueDate")}
           </label>
           <Input
             type="date"
@@ -210,10 +212,10 @@ export default function RecommendationRequestForm({
               marginBottom: 6,
             }}
           >
-            Request Message *
+            {t("studentUi.recommendations.form.message")}
           </label>
           <textarea
-            placeholder="Describe why you are requesting this letter and any relevant context..."
+            placeholder={t("studentUi.recommendations.form.messagePlaceholder")}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             rows={3}
@@ -256,7 +258,7 @@ export default function RecommendationRequestForm({
               cursor: "pointer",
             }}
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             onClick={handleSubmit}
@@ -285,7 +287,7 @@ export default function RecommendationRequestForm({
             ) : (
               <Send style={{ width: 13, height: 13 }} />
             )}
-            Send Request
+            {t("studentUi.recommendations.form.send")}
           </button>
         </div>
       </div>

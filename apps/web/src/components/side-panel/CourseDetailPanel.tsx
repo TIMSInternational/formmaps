@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Course, CourseEnrollment } from "@/types/course";
+import { useTranslation } from "react-i18next";
 
 interface CourseDetailPanelProps {
   course: Course;
@@ -28,6 +29,7 @@ export function CourseDetailPanel({
   onStartCourse,
   onMarkCompleted,
 }: CourseDetailPanelProps) {
+  const { t } = useTranslation();
   const difficultyColor =
     course.difficulty === "Beginner" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" :
     course.difficulty === "Intermediate" ? "bg-amber-500/10 text-amber-400 border-amber-500/20" :
@@ -56,40 +58,40 @@ export function CourseDetailPanel({
       {/* Status badges */}
       <div className="flex flex-wrap gap-1.5">
         <span className={cn("text-[11px] px-2 py-1 rounded-md border font-medium", difficultyColor)}>
-          {course.difficulty}
+          {t(`courses.difficulty.${course.difficulty.toLowerCase()}`, { defaultValue: course.difficulty })}
         </span>
         <span className="text-[11px] px-2 py-1 rounded-md font-medium" style={{ background: "var(--admin-accent-bg-blue)", color: "var(--admin-accent-blue)", border: "1px solid var(--admin-accent-border-blue)" }}>
           {course.category}
         </span>
         {course.certificate && (
           <span className="text-[11px] px-2 py-1 rounded-md font-medium flex items-center gap-1" style={{ background: "var(--admin-accent-bg-purple)", color: "var(--admin-accent-purple)", border: "1px solid var(--admin-accent-border-purple)" }}>
-            <Award className="h-3 w-3" /> Certificate
+            <Award className="h-3 w-3" /> {t("courses.certificate")}
           </span>
         )}
         {enrollment?.status === "completed" && (
           <span className="text-[11px] px-2 py-1 rounded-md font-medium flex items-center gap-1" style={{ background: "var(--admin-accent-bg-green)", color: "var(--admin-accent-green)", border: "1px solid var(--admin-accent-border-green)" }}>
-            <CheckCircle className="h-3 w-3" /> Completed
+            <CheckCircle className="h-3 w-3" /> {t("courses.completed")}
           </span>
         )}
         {enrollment && enrollment.status !== "completed" && (
           <span className="text-[11px] px-2 py-1 rounded-md font-medium" style={{ background: "var(--admin-accent-bg-amber)", color: "var(--admin-accent-amber)", border: "1px solid var(--admin-accent-border-amber)" }}>
-            In Progress
+            {t("courses.inProgress")}
           </span>
         )}
       </div>
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-2">
-        <StatBox icon={Star} label="Rating" value={`${(course.rating ?? 0).toFixed(1)} (${course.reviewCount ?? 0})`} accent="text-amber-400" />
-        <StatBox icon={Clock} label="Duration" value={`${course.duration ?? 0} weeks`} accent="text-blue-400" />
-        <StatBox icon={Users} label="Students" value={(course.enrollmentCount ?? 0).toLocaleString()} accent="text-emerald-400" />
-        <StatBox icon={Globe} label="Language" value={course.language} accent="text-purple-400" />
+        <StatBox icon={Star} label={t("components.CourseDetailPanel.rating")} value={`${(course.rating ?? 0).toFixed(1)} (${course.reviewCount ?? 0})`} accent="text-amber-400" />
+        <StatBox icon={Clock} label={t("components.CourseDetailPanel.duration")} value={t("components.CourseDetailPanel.durationWeeks", { count: course.duration ?? 0 })} accent="text-blue-400" />
+        <StatBox icon={Users} label={t("components.CourseDetailPanel.students")} value={(course.enrollmentCount ?? 0).toLocaleString()} accent="text-emerald-400" />
+        <StatBox icon={Globe} label={t("courses.language")} value={course.language} accent="text-purple-400" />
       </div>
 
       {/* Description */}
       {(course.fullDescription || course.shortDescription) && (
         <div className="space-y-2">
-          <SectionLabel icon={BookOpen} label="About" />
+          <SectionLabel icon={BookOpen} label={t("components.CourseDetailPanel.about")} />
           <p className="text-sm leading-relaxed" style={{ color: "var(--admin-font-tertiary)" }}>
             {course.fullDescription || course.shortDescription}
           </p>
@@ -99,7 +101,7 @@ export function CourseDetailPanel({
       {/* Skills */}
       {course.skills && course.skills.length > 0 && (
         <div className="space-y-2">
-          <SectionLabel icon={Target} label="Skills You'll Learn" />
+          <SectionLabel icon={Target} label={t("components.CourseDetailPanel.skillsYoullLearn")} />
           <div className="flex flex-wrap gap-1.5">
             {course.skills.map((s, i) => (
               <span key={i} className="text-xs px-2 py-1 rounded-md" style={{ background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)", border: "1px solid var(--admin-border-light)" }}>
@@ -113,17 +115,17 @@ export function CourseDetailPanel({
       {/* Syllabus */}
       {course.syllabus && course.syllabus.length > 0 && (
         <div className="space-y-2">
-          <SectionLabel icon={BookOpen} label={`Syllabus (${course.syllabus.length} modules)`} />
+          <SectionLabel icon={BookOpen} label={t("components.CourseDetailPanel.syllabus", { count: course.syllabus.length })} />
           <div className="space-y-1">
             {course.syllabus.slice(0, 8).map((mod, i) => (
               <div key={i} className="flex items-center gap-2 px-3 py-2 rounded-lg" style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-light)" }}>
                 <span className="text-[10px] font-bold w-5 text-center" style={{ color: "var(--admin-font-tertiary)" }}>{i + 1}</span>
-                <span className="text-xs" style={{ color: "var(--admin-font-secondary)" }}>{typeof mod === "string" ? mod : (mod as any).title || (mod as any).name || `Module ${i + 1}`}</span>
+                <span className="text-xs" style={{ color: "var(--admin-font-secondary)" }}>{typeof mod === "string" ? mod : (mod as any).title || (mod as any).name || t("components.CourseDetailPanel.module", { number: i + 1 })}</span>
               </div>
             ))}
             {course.syllabus.length > 8 && (
               <p className="text-[11px] text-center pt-1" style={{ color: "var(--admin-font-tertiary)" }}>
-                +{course.syllabus.length - 8} more modules
+                {t("components.CourseDetailPanel.moreModules", { count: course.syllabus.length - 8 })}
               </p>
             )}
           </div>
@@ -138,7 +140,7 @@ export function CourseDetailPanel({
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
             style={{ background: "var(--admin-accent-blue)" }}
           >
-            Start Learning
+            {t("components.CourseDetailPanel.startLearning")}
             <ArrowUpRight className="h-3.5 w-3.5" />
           </button>
         ) : enrollment.status === "completed" ? (
@@ -147,7 +149,7 @@ export function CourseDetailPanel({
             className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors"
             style={{ border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)" }}
           >
-            Review Course
+            {t("components.CourseDetailPanel.reviewCourse")}
             <ExternalLink className="h-3.5 w-3.5" />
           </button>
         ) : (
@@ -157,7 +159,7 @@ export function CourseDetailPanel({
               className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-medium text-white transition-opacity hover:opacity-90"
               style={{ background: "var(--admin-accent-blue)" }}
             >
-              Continue
+              {t("common.continue")}
               <ExternalLink className="h-3.5 w-3.5" />
             </button>
             {onMarkCompleted && (
@@ -167,7 +169,7 @@ export function CourseDetailPanel({
                 style={{ border: "1px solid var(--admin-accent-border-green)", color: "var(--admin-accent-green)", background: "var(--admin-accent-bg-green)" }}
               >
                 <CheckCircle className="h-3.5 w-3.5" />
-                Done
+                {t("components.CourseDetailPanel.done")}
               </button>
             )}
           </div>

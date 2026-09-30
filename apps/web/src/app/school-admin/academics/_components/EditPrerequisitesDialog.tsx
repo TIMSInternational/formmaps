@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
@@ -35,6 +36,7 @@ interface EditPrerequisitesDialogProps {
 }
 
 export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDialogProps) {
+  const { t } = useTranslation("school_admin");
   const { data: catalogData, isLoading: catalogLoading } = useSchoolCourses({ limit: 500 });
   const update = useUpdatePrerequisites();
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -94,8 +96,8 @@ export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDi
         },
       },
       {
-        onSuccess: () => { toast.success("Prerequisites updated"); onClose(); },
-        onError: () => toast.error("Failed to update prerequisites"),
+        onSuccess: () => { toast.success(t("ui.prereqs.updated")); onClose(); },
+        onError: () => toast.error(t("ui.prereqs.updateFailed")),
       },
     );
   }
@@ -105,10 +107,10 @@ export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDi
       <DialogContent className="max-w-lg" style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)" }}>
         <DialogHeader>
           <DialogTitle style={{ color: "var(--admin-font-primary)" }}>
-            Edit prerequisites — <span style={{ fontFamily: "monospace" }}>{course?.code}</span>
+            {t("ui.prereqs.editTitle")} — <span style={{ fontFamily: "monospace" }}>{course?.code}</span>
           </DialogTitle>
           <DialogDescription style={{ color: "var(--admin-font-tertiary)" }}>
-            {course?.name}. Pathways update automatically from prerequisite edges.
+            {t("ui.prereqs.editDescription", { name: course?.name })}
           </DialogDescription>
         </DialogHeader>
 
@@ -121,25 +123,25 @@ export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDi
             {/* Current prerequisites */}
             <div>
               <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", marginBottom: 6 }}>
-                PREREQUISITES ({selected.length})
+                {t("ui.prereqs.countLabel", { count: selected.length })}
               </div>
               <div className="flex flex-wrap gap-2">
                 {selected.map((c) => (
                   <span key={c.id} style={CHIP}>
                     {c.code}
-                    <button aria-label={`Remove ${c.code}`} onClick={() => setSelectedIds((prev) => prev.filter((id) => id !== c.id))}
+                    <button aria-label={t("ui.prereqs.remove", { code: c.code })} onClick={() => setSelectedIds((prev) => prev.filter((id) => id !== c.id))}
                       style={{ background: "none", border: "none", cursor: "pointer", color: "inherit", display: "flex", padding: 0 }}>
                       <X style={{ width: 12, height: 12 }} />
                     </button>
                   </span>
                 ))}
                 {selected.length === 0 && unresolvedCodes.length === 0 && (
-                  <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>None — add courses below</span>
+                  <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("ui.prereqs.noneAddBelow")}</span>
                 )}
               </div>
               {unresolvedCodes.length > 0 && (
                 <p style={{ fontSize: 11, color: "#d97706", marginTop: 6 }}>
-                  Not in catalog (removed on save): {unresolvedCodes.join(", ")}
+                  {t("ui.prereqs.notInCatalog", { codes: unresolvedCodes.join(", ") })}
                 </p>
               )}
             </div>
@@ -147,14 +149,14 @@ export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDi
             {!catalogLoading && (!target || catalogIncomplete) && (
               <p style={{ fontSize: 12, color: "#dc2626" }}>
                 {!target
-                  ? "This course was not found in the loaded catalog — saving is disabled to avoid wiping its prerequisites."
-                  : "Your catalog is too large to load fully — saving is disabled to avoid wiping prerequisites."}
+                  ? t("ui.prereqs.targetMissing")
+                  : t("ui.prereqs.catalogTooLarge")}
               </p>
             )}
 
             {/* School-catalog picker */}
             <div>
-              <Input aria-label="Search your school catalog" placeholder="Search your school catalog..." value={search} onChange={(e) => setSearch(e.target.value)}
+              <Input aria-label={t("ui.prereqs.searchCatalogAria")} placeholder={t("ui.prereqs.searchCatalog")} value={search} onChange={(e) => setSearch(e.target.value)}
                 style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", borderRadius: 6, color: "var(--admin-font-primary)", height: 36, fontSize: 13 }} />
               <div className="mt-2 overflow-y-auto" style={{ maxHeight: 220, borderRadius: 6, border: "1px solid var(--admin-border-default)" }}>
                 {candidates.map((c) => (
@@ -167,7 +169,7 @@ export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDi
                 ))}
                 {candidates.length === 0 && (
                   <div style={{ padding: "16px 12px", fontSize: 12, color: "var(--admin-font-tertiary)", textAlign: "center" }}>
-                    No matching courses
+                    {t("ui.prereqs.noMatches")}
                   </div>
                 )}
               </div>
@@ -176,11 +178,11 @@ export function EditPrerequisitesDialog({ course, onClose }: EditPrerequisitesDi
         )}
 
         <DialogFooter className="gap-2">
-          <button onClick={onClose} style={BTN_GHOST}>Cancel</button>
+          <button onClick={onClose} style={BTN_GHOST}>{t("common.cancel")}</button>
           <button onClick={handleSave} disabled={update.isPending || saveBlocked}
             style={{ ...BTN_PRIMARY, opacity: update.isPending || saveBlocked ? 0.7 : 1, cursor: update.isPending ? "wait" : saveBlocked ? "not-allowed" : "pointer" }}>
             {update.isPending && <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} />}
-            Save
+            {t("common.save")}
           </button>
         </DialogFooter>
       </DialogContent>

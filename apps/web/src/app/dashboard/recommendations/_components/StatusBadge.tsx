@@ -6,37 +6,39 @@ import {
   XCircle,
   Loader2,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 const STATUS_META: Record<
   string,
+  // label = i18n key
   { label: string; color: string; bg: string; icon: React.ElementType }
 > = {
   requested: {
-    label: "Requested",
+    label: "counselor:recommendations.statusRequested",
     color: "var(--admin-accent-blue)",
     bg: "var(--admin-accent-blue)10",
     icon: Clock,
   },
   accepted: {
-    label: "Accepted",
+    label: "counselor:recommendations.statusAccepted",
     color: "#f59e0b",
     bg: "#f59e0b10",
     icon: CheckCircle2,
   },
   in_progress: {
-    label: "In Progress",
+    label: "counselor:recommendations.statusInProgress",
     color: "#f97316",
     bg: "#f9731610",
     icon: Loader2,
   },
   submitted: {
-    label: "Submitted",
+    label: "counselor:recommendations.statusSubmitted",
     color: "#10b981",
     bg: "#10b98110",
     icon: CheckCircle2,
   },
   declined: {
-    label: "Declined",
+    label: "counselor:recommendations.statusDeclined",
     color: "#ef4444",
     bg: "#ef444410",
     icon: XCircle,
@@ -44,6 +46,7 @@ const STATUS_META: Record<
 };
 
 export default function StatusBadge({ status }: { status: string }) {
+  const { t } = useTranslation();
   const meta = STATUS_META[status] ?? {
     label: status,
     color: "var(--admin-font-tertiary)",
@@ -65,7 +68,7 @@ export default function StatusBadge({ status }: { status: string }) {
       }}
     >
       <meta.icon style={{ width: 11, height: 11 }} />
-      {meta.label}
+      {t(meta.label, { defaultValue: status })}
     </span>
   );
 }

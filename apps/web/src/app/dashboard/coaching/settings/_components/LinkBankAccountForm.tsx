@@ -11,6 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useTranslation } from "react-i18next";
 
 interface BankAccountFormData {
   accountNumber: string;
@@ -41,6 +42,7 @@ export function LinkBankAccountForm({
   onFrequencyChange,
   isSavingFrequency,
 }: LinkBankAccountFormProps) {
+  const { t } = useTranslation();
   const updateField = (field: keyof BankAccountFormData, value: string) => {
     onFormChange({ ...bankAccountForm, [field]: value });
   };
@@ -55,10 +57,10 @@ export function LinkBankAccountForm({
             </div>
             <div>
               <h3 className="text-lg font-bold text-gray-900">
-                Link Bank Account
+                {t("studentUi.coaching.bank.linkTitle")}
               </h3>
               <p className="text-sm text-gray-600 mt-1">
-                Enter your bank account details to receive coaching payments.
+                {t("studentUi.coaching.bank.linkDescription")}
               </p>
             </div>
           </div>
@@ -66,10 +68,10 @@ export function LinkBankAccountForm({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Bank Name <span className="text-red-500">*</span>
+                {t("studentUi.coaching.bank.bankName")} <span className="text-red-500">*</span>
               </label>
               <Input
-                placeholder="e.g., Chase Bank"
+                placeholder={t("studentUi.coaching.bank.bankNameExample")}
                 value={bankAccountForm.bankName}
                 onChange={(e) => updateField("bankName", e.target.value)}
               />
@@ -77,10 +79,10 @@ export function LinkBankAccountForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Account Holder Name <span className="text-red-500">*</span>
+                {t("studentUi.coaching.bank.accountHolderName")} <span className="text-red-500">*</span>
               </label>
               <Input
-                placeholder="Full name on account"
+                placeholder={t("studentUi.coaching.bank.fullNameOnAccount")}
                 value={bankAccountForm.accountHolderName}
                 onChange={(e) =>
                   updateField("accountHolderName", e.target.value)
@@ -90,11 +92,11 @@ export function LinkBankAccountForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Account Number <span className="text-red-500">*</span>
+                {t("studentUi.coaching.bank.accountNumber")} <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
-                placeholder="Account number"
+                placeholder={t("studentUi.coaching.bank.accountNumberPlaceholder")}
                 value={bankAccountForm.accountNumber}
                 onChange={(e) => updateField("accountNumber", e.target.value)}
                 disabled={isConnected}
@@ -102,19 +104,18 @@ export function LinkBankAccountForm({
               {isConnected &&
                 bankAccountForm.accountNumber.startsWith("****") && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Account ending in{" "}
-                    {bankAccountForm.accountNumber.slice(-4)}
+                    {t("studentUi.coaching.bank.accountEndingIn", { last4: bankAccountForm.accountNumber.slice(-4) })}
                   </p>
                 )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Routing Number <span className="text-red-500">*</span>
+                {t("studentUi.coaching.bank.routingNumber")} <span className="text-red-500">*</span>
               </label>
               <Input
                 type="text"
-                placeholder="9-digit routing number"
+                placeholder={t("studentUi.coaching.bank.routingNumberNineDigit")}
                 value={bankAccountForm.routingNumber}
                 onChange={(e) => updateField("routingNumber", e.target.value)}
                 disabled={isConnected}
@@ -122,15 +123,14 @@ export function LinkBankAccountForm({
               {isConnected &&
                 bankAccountForm.routingNumber.startsWith("****") && (
                   <p className="text-xs text-gray-500 mt-1">
-                    Routing ending in{" "}
-                    {bankAccountForm.routingNumber.slice(-4)}
+                    {t("studentUi.coaching.bank.routingEndingIn", { last4: bankAccountForm.routingNumber.slice(-4) })}
                   </p>
                 )}
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Account Type <span className="text-red-500">*</span>
+                {t("studentUi.coaching.bank.accountType")} <span className="text-red-500">*</span>
               </label>
               <Select
                 value={bankAccountForm.accountType}
@@ -142,8 +142,8 @@ export function LinkBankAccountForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="checking">Checking</SelectItem>
-                  <SelectItem value="savings">Savings</SelectItem>
+                  <SelectItem value="checking">{t("studentUi.coaching.bank.checking")}</SelectItem>
+                  <SelectItem value="savings">{t("studentUi.coaching.bank.savings")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -151,7 +151,7 @@ export function LinkBankAccountForm({
 
           <div className="border-t pt-4">
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Payout Frequency
+              {t("studentUi.coaching.bank.payoutFrequency")}
             </label>
             <Select
               value={payoutFrequency}
@@ -159,19 +159,19 @@ export function LinkBankAccountForm({
               disabled={isSavingFrequency}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Select frequency" />
+                <SelectValue placeholder={t("studentUi.coaching.bank.selectFrequency")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="biweekly">
-                  Bi-weekly (1st and 15th)
+                  {t("studentUi.coaching.bank.frequencyTwiceMonthly")}
                 </SelectItem>
                 <SelectItem value="monthly">
-                  Monthly (1st of month)
+                  {t("studentUi.coaching.bank.frequencyMonthly")}
                 </SelectItem>
               </SelectContent>
             </Select>
             <p className="text-xs text-gray-500 mt-1">
-              How often you want to receive payouts
+              {t("studentUi.coaching.bank.payoutFrequencyShortHint")}
             </p>
           </div>
 
@@ -184,12 +184,12 @@ export function LinkBankAccountForm({
               {isSaving ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Saving...
+                  {t("common.saving")}
                 </>
               ) : isConnected ? (
-                "Bank Account Saved"
+                t("studentUi.coaching.bank.accountSaved")
               ) : (
-                "Save Bank Account"
+                t("studentUi.coaching.bank.saveAccount")
               )}
             </Button>
           </div>

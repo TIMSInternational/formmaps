@@ -46,12 +46,12 @@ export default function TimelinePage() {
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
             {language === "spanish"
-              ? "Tu Progreso"
+              ? "Tu progreso"
               : "Your Progress"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {language === "spanish"
-              ? "Visualiza tus logros y camino de aprendizaje"
+              ? "Visualiza tus logros y tu camino de aprendizaje"
               : "Visualize your achievements and learning path"}
           </p>
         </div>
@@ -95,7 +95,7 @@ export default function TimelinePage() {
           <div className="p-4 border-b border-border flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <h2 className="text-sm font-bold text-foreground">
-                {language === "spanish" ? "Línea de Tiempo" : "Timeline"}
+                {language === "spanish" ? "Línea de tiempo" : "Timeline"}
               </h2>
               {summary && (
                 <span className="px-2 py-0.5 rounded-full bg-secondary text-[10px] font-bold text-muted-foreground tabular-nums">

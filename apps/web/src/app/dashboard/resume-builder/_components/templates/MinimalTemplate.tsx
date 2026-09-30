@@ -1,5 +1,7 @@
 "use client";
 import React from "react";
+import i18n from "@/lib/i18n";
+import { translateProficiency } from "../../_lib/resume-constants";
 import {
   Document,
   Page,
@@ -9,6 +11,9 @@ import {
   Font,
 } from "@react-pdf/renderer";
 import { Linkedin, Globe, Github, Twitter, FolderOpen } from "lucide-react";
+
+// Labels printed in the résumé document itself, resolved in the UI language at render time.
+const t = i18n.t.bind(i18n);
 
 // Register fonts for better typography
 Font.register({
@@ -329,7 +334,7 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
             <View style={styles.contactInfo}>
               {data.personalInfo.nationality && (
                 <Text style={[styles.contactItem, { fontSize: 9 }]}>
-                  Nationality: {data.personalInfo.nationality}
+                  {t("resumeBuilder.doc.nationality", { defaultValue: "Nationality: {{value}}", value: data.personalInfo.nationality })}
                 </Text>
               )}
               {data.personalInfo.dateOfBirth && (
@@ -338,7 +343,7 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
                     <Text style={[styles.contactItem, { fontSize: 9 }]}>•</Text>
                   )}
                   <Text style={[styles.contactItem, { fontSize: 9 }]}>
-                    DOB: {data.personalInfo.dateOfBirth}
+                    {t("resumeBuilder.doc.dob", { defaultValue: "DOB: {{value}}", value: data.personalInfo.dateOfBirth })}
                   </Text>
                 </>
               )}
@@ -367,7 +372,7 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
         {/* Languages */}
         {(data.personalInfo as any).languages && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Languages</Text>
+            <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.languages", "Languages")}</Text>
             <Text style={styles.description}>
               {(data.personalInfo as any).languages}
             </Text>
@@ -377,13 +382,13 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
         {/* Professional Experience */}
         {data.experience.length > 0 && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Experience</Text>
+            <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.experience", "Experience")}</Text>
             {data.experience.map((exp) => (
               <View key={exp.id} style={styles.experienceItem}>
                 <Text style={styles.jobTitle}>{exp.jobTitle}</Text>
                 <Text style={styles.company}>{exp.company}</Text>
                 <Text style={styles.jobDetails}>
-                  {exp.startDate} - {exp.current ? "Present" : exp.endDate} •{" "}
+                  {exp.startDate} - {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate} •{" "}
                   {exp.location}
                 </Text>
                 <View style={styles.descriptionContainer}>
@@ -403,7 +408,7 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
           <View style={styles.leftColumn}>
             {data.education.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Education</Text>
+                <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.education", "Education")}</Text>
                 {data.education.map((edu) => (
                   <View key={edu.id} style={styles.educationItem}>
                     <Text style={styles.degree}>{edu.degree}</Text>
@@ -412,7 +417,7 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
                     </Text>
                     <Text style={styles.graduationDate}>
                       {edu.graduationDate}
-                      {edu.gpa && ` • GPA: ${edu.gpa}`}
+                      {edu.gpa && ` • ${t("resumeBuilder.doc.gpa", { defaultValue: "GPA: {{value}}", value: edu.gpa })}`}
                     </Text>
                   </View>
                 ))}
@@ -426,7 +431,7 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
           <View style={styles.rightColumn}>
             {data.skills.length > 0 && (
               <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Skills</Text>
+                <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.skills", "Skills")}</Text>
                 <View style={styles.skillsContainer}>
                   {data.skills.map((skill) => (
                     <Text key={skill.id} style={styles.skillItem}>
@@ -443,7 +448,7 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
         {data.customFields &&
           data.customFields.filter((f) => f.enabled && f.value).length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Additional Information</Text>
+              <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.additionalInformation", "Additional Information")}</Text>
               {data.customFields
                 .filter((f) => f.enabled && f.value)
                 .map((field) => (
@@ -471,7 +476,7 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
                       </Text>
                       {entry.technologies && (
                         <Text style={styles.institution}>
-                          Technologies: {entry.technologies}
+                          {t("resumeBuilder.doc.technologies", { defaultValue: "Technologies: {{value}}", value: entry.technologies })}
                         </Text>
                       )}
                       {entry.description && (
@@ -481,7 +486,7 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
                       )}
                       {entry.link && (
                         <Text style={[styles.description, { fontSize: 9 }]}>
-                          Link: {entry.link}
+                          {t("resumeBuilder.doc.link", { defaultValue: "Link: {{value}}", value: entry.link })}
                         </Text>
                       )}
                     </>
@@ -493,7 +498,7 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
                       </Text>
                       {entry.issuer && (
                         <Text style={styles.institution}>
-                          Issued by: {entry.issuer}
+                          {t("resumeBuilder.doc.issuedBy", { defaultValue: "Issued by: {{value}}", value: entry.issuer })}
                         </Text>
                       )}
                       {entry.date && (
@@ -513,7 +518,7 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
                       </Text>
                       {entry.proficiency && (
                         <Text style={styles.description}>
-                          {entry.proficiency}
+                          {translateProficiency(entry.proficiency)}
                         </Text>
                       )}
                     </View>
@@ -525,12 +530,12 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
                       </Text>
                       {entry.authors && (
                         <Text style={styles.institution}>
-                          Authors: {entry.authors}
+                          {t("resumeBuilder.doc.authors", { defaultValue: "Authors: {{value}}", value: entry.authors })}
                         </Text>
                       )}
                       {entry.publisher && (
                         <Text style={styles.institution}>
-                          Publisher: {entry.publisher}
+                          {t("resumeBuilder.doc.publisher", { defaultValue: "Publisher: {{value}}", value: entry.publisher })}
                         </Text>
                       )}
                       {entry.description && (
@@ -540,7 +545,7 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
                       )}
                       {entry.link && (
                         <Text style={[styles.description, { fontSize: 9 }]}>
-                          Link: {entry.link}
+                          {t("resumeBuilder.doc.link", { defaultValue: "Link: {{value}}", value: entry.link })}
                         </Text>
                       )}
                       {entry.date && (
@@ -643,12 +648,12 @@ export function MinimalTemplatePreview({ data }: MinimalTemplatePDFProps) {
         {(data.personalInfo.nationality || data.personalInfo.dateOfBirth) && (
           <div className="flex justify-center items-center gap-2 text-gray-600 text-xs mb-2">
             {data.personalInfo.nationality && (
-              <span>Nationality: {data.personalInfo.nationality}</span>
+              <span>{t("resumeBuilder.doc.nationality", { defaultValue: "Nationality: {{value}}", value: data.personalInfo.nationality })}</span>
             )}
             {data.personalInfo.dateOfBirth && (
               <>
                 {data.personalInfo.nationality && <span>•</span>}
-                <span>DOB: {data.personalInfo.dateOfBirth}</span>
+                <span>{t("resumeBuilder.doc.dob", { defaultValue: "DOB: {{value}}", value: data.personalInfo.dateOfBirth })}</span>
               </>
             )}
           </div>
@@ -670,7 +675,7 @@ export function MinimalTemplatePreview({ data }: MinimalTemplatePDFProps) {
       {data.experience.length > 0 && (
         <div className="mb-6">
           <h2 className="text-sm font-bold text-gray-900 text-center mb-4 uppercase tracking-widest">
-            Experience
+            {t("resumeBuilder.doc.experience", "Experience")}
           </h2>
           {data.experience.slice(0, 2).map((exp) => (
             <div key={exp.id} className="mb-4 text-center">
@@ -679,7 +684,7 @@ export function MinimalTemplatePreview({ data }: MinimalTemplatePDFProps) {
               </h3>
               <p className="text-gray-600 text-xs mb-1">{exp.company}</p>
               <p className="text-gray-400 text-xs mb-2">
-                {exp.startDate} - {exp.current ? "Present" : exp.endDate} •{" "}
+                {exp.startDate} - {exp.current ? t("resumeBuilder.doc.present", "Present") : exp.endDate} •{" "}
                 {exp.location}
               </p>
               <div className="px-4 text-left">
@@ -699,7 +704,7 @@ export function MinimalTemplatePreview({ data }: MinimalTemplatePDFProps) {
         {/* Education */}
         <div>
           <h2 className="text-sm font-bold text-gray-900 text-center mb-3 uppercase tracking-widest">
-            Education
+            {t("resumeBuilder.doc.education", "Education")}
           </h2>
           {data.education.slice(0, 1).map((edu) => (
             <div key={edu.id} className="text-center">
@@ -717,7 +722,7 @@ export function MinimalTemplatePreview({ data }: MinimalTemplatePDFProps) {
         {/* Skills */}
         <div>
           <h2 className="text-sm font-bold text-gray-900 text-center mb-3 uppercase tracking-widest">
-            Skills
+            {t("resumeBuilder.doc.skills", "Skills")}
           </h2>
           <div className="flex flex-wrap justify-center gap-1">
             {data.skills.slice(0, 8).map((skill) => (
@@ -736,7 +741,7 @@ export function MinimalTemplatePreview({ data }: MinimalTemplatePDFProps) {
           data.customFields.filter((f) => f.enabled && f.value).length > 0 && (
             <div className="mb-4">
               <h2 className="text-sm font-bold text-gray-900 text-center mb-3 uppercase tracking-widest">
-                Additional Information
+                {t("resumeBuilder.doc.additionalInformation", "Additional Information")}
               </h2>
               {data.customFields
                 .filter((f) => f.enabled && f.value)
@@ -787,7 +792,7 @@ export function MinimalTemplatePreview({ data }: MinimalTemplatePDFProps) {
                       </span>
                       {entry.proficiency && (
                         <span className="text-xs text-gray-600">
-                          {entry.proficiency}
+                          {translateProficiency(entry.proficiency)}
                         </span>
                       )}
                     </div>
@@ -799,12 +804,12 @@ export function MinimalTemplatePreview({ data }: MinimalTemplatePDFProps) {
                       </h3>
                       {entry.authors && (
                         <p className="text-gray-600 text-xs">
-                          Authors: {entry.authors}
+                          {t("resumeBuilder.doc.authors", { defaultValue: "Authors: {{value}}", value: entry.authors })}
                         </p>
                       )}
                       {entry.publisher && (
                         <p className="text-gray-600 text-xs">
-                          Publisher: {entry.publisher}
+                          {t("resumeBuilder.doc.publisher", { defaultValue: "Publisher: {{value}}", value: entry.publisher })}
                         </p>
                       )}
                       {entry.description && (

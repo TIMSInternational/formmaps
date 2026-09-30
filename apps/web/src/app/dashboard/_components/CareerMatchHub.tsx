@@ -17,6 +17,7 @@ import { cn } from "@/lib/utils";
 import { ArrowRight, ChevronDown, ChevronUp, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { EmptyState } from "@/components/empty-state/EmptyState";
+import { useTranslation } from "react-i18next";
 
 function formatCluster(cluster: string): string {
   return cluster.replace(/_/g, " ").replace(/And/g, "&");
@@ -36,6 +37,7 @@ interface CareerMatchHubProps {
 }
 
 export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: CareerMatchHubProps) {
+  const { t } = useTranslation();
   const { data: timsData, isLoading, hasAssessments } = useTimsCareerScoring();
   const [selectedCareer, setSelectedCareer] = useState<ScoredCareer | null>(
     null,
@@ -68,10 +70,10 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
       <Card className="p-0 rounded-2xl border-border overflow-hidden">
         <EmptyState
           type="not_started"
-          title="Your Career Matches"
-          description="Complete your assessments to discover personalized career matches"
+          title={t("dashboard.careerMatchHub.title")}
+          description={t("dashboard.careerMatchHub.emptyDescription")}
           icon={Sparkles}
-          actionLabel="Start Assessments"
+          actionLabel={t("dashboard.careerMatchHub.startAssessments")}
           actionHref="/dashboard/assessments"
         />
       </Card>
@@ -86,17 +88,17 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
         <div className="flex items-center justify-between mb-1">
           <div>
             <h2 className="text-lg font-semibold text-foreground">
-              Your Career Matches
+              {t("dashboard.careerMatchHub.title")}
             </h2>
             <p className="text-xs text-muted-foreground mt-0.5">
-              Powered by your PCA + LIA assessment results
+              {t("dashboard.careerMatchHub.poweredBy")}
             </p>
           </div>
           <Link
             href="/dashboard/career-paths"
             className="text-xs font-medium text-primary hover:text-primary/80 flex items-center gap-1"
           >
-            View All <ArrowRight className="w-3.5 h-3.5" />
+            {t("studentUi.dashboard.careerMatchHub.viewAll")} <ArrowRight className="w-3.5 h-3.5" />
           </Link>
         </div>
 
@@ -152,7 +154,7 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
                     : "border-emerald-500/30 bg-emerald-500/10 text-emerald-400",
                 )}
               >
-                {career.needsBridging ? "Needs Bridging" : "Ready"}
+                {career.needsBridging ? t("studentUi.dashboard.careerMatchHub.needsBridging") : t("studentUi.dashboard.careerMatchHub.ready")}
               </Badge>
             </button>
           ))}
@@ -163,7 +165,7 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
               className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-border p-4 text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors"
             >
               <span className="text-2xl font-semibold">+{remaining}</span>
-              <span className="text-xs">more</span>
+              <span className="text-xs">{t("studentUi.dashboard.careerMatchHub.more")}</span>
             </Link>
           )}
         </div>
@@ -194,18 +196,18 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
                     {Math.round(selectedCareer.totalScore)}%
                   </div>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Overall Match Score
+                    {t("dashboard.careerMatchHub.overallMatchScore")}
                   </p>
                 </div>
 
                 {/* Score Breakdown */}
                 <div className="space-y-3">
                   <h3 className="text-sm font-semibold text-muted-foreground">
-                    Score Breakdown
+                    {t("studentUi.dashboard.careerMatchHub.scoreBreakdown")}
                   </h3>
                   {[
                     {
-                      label: "PCA Personality",
+                      label: t("studentUi.dashboard.careerMatchHub.pcaPersonality"),
                       value: selectedCareer.breakdown.discScore,
                     },
                     {
@@ -213,11 +215,11 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
                       value: selectedCareer.breakdown.milScore,
                     },
                     {
-                      label: "Interests",
+                      label: t("careers.details.interests"),
                       value: selectedCareer.breakdown.interestsScore,
                     },
                     {
-                      label: "Motivators",
+                      label: t("careers.details.motivators"),
                       value: selectedCareer.breakdown.motivatorsScore,
                     },
                   ].map((item) => (
@@ -238,7 +240,7 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
                   selectedCareer.bridgingReasons.length > 0 && (
                     <div className="space-y-2">
                       <h3 className="text-sm font-semibold text-amber-300">
-                        Skill Gaps
+                        {t("studentUi.dashboard.careerMatchHub.skillGaps")}
                       </h3>
                       {selectedCareer.bridgingReasons.map((reason, i) => {
                         const parsed = parseBridgingReason(reason);
@@ -270,7 +272,7 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
                 {selectedCareer.bridgingPaths && (
                   <div className="space-y-2">
                     <h3 className="text-sm font-semibold text-muted-foreground">
-                      Recommended Skills/Courses
+                      {t("studentUi.dashboard.careerMatchHub.recommendedSkills")}
                     </h3>
                     <div className="flex flex-wrap gap-2">
                       {selectedCareer.bridgingPaths
@@ -294,7 +296,7 @@ export const CareerMatchHub = React.memo(function CareerMatchHub({ aiSummary }: 
                   href="/dashboard/career-paths"
                   className="inline-flex items-center gap-2 text-sm font-medium text-[var(--admin-accent-blue)] hover:text-[var(--admin-accent-blue)]/80 mt-4"
                 >
-                  View in Career Explorer <ArrowRight className="w-4 h-4" />
+                  {t("studentUi.dashboard.careerMatchHub.viewInExplorer")} <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             </>

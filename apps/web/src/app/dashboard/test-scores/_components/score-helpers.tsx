@@ -1,5 +1,6 @@
 "use client";
 
+import type { TFunction } from "i18next";
 import type { TestScore } from "@/services/testScoreService";
 
 export type TestType = "SAT" | "ACT" | "AP" | "PSAT" | "TOEFL" | "IB";
@@ -34,13 +35,14 @@ export const emptyForm: FormState = {
   totalScore: "",
 };
 
+// label = i18n key (common namespace); translate at render time
 export const TEST_TYPES: { value: TestType; label: string }[] = [
-  { value: "SAT", label: "SAT" },
-  { value: "ACT", label: "ACT" },
-  { value: "AP", label: "AP Exam" },
-  { value: "PSAT", label: "PSAT" },
-  { value: "TOEFL", label: "TOEFL" },
-  { value: "IB", label: "IB Exam" },
+  { value: "SAT", label: "studentUi.testScores.testType.SAT" },
+  { value: "ACT", label: "studentUi.testScores.testType.ACT" },
+  { value: "AP", label: "studentUi.testScores.testType.AP" },
+  { value: "PSAT", label: "studentUi.testScores.testType.PSAT" },
+  { value: "TOEFL", label: "studentUi.testScores.testType.TOEFL" },
+  { value: "IB", label: "studentUi.testScores.testType.IB" },
 ];
 
 export const TYPE_COLOR: Record<string, { bg: string; text: string; border: string; icon: string }> = {
@@ -67,15 +69,15 @@ export function scoreLabel(score: TestScore): string {
   }
 }
 
-export function scoreSubLabel(score: TestScore): string | null {
+export function scoreSubLabel(score: TestScore, t: TFunction): string | null {
   switch (score.testType) {
     case "SAT":
       if (score.satMath && score.satReading)
-        return `Math ${score.satMath} \u00b7 Reading ${score.satReading}`;
+        return t("studentUi.testScores.sub.sat", { math: score.satMath, reading: score.satReading });
       return null;
     case "ACT":
       if (score.actEnglish && score.actMath && score.actReading && score.actScience)
-        return `Eng ${score.actEnglish} \u00b7 Math ${score.actMath} \u00b7 Read ${score.actReading} \u00b7 Sci ${score.actScience}`;
+        return t("studentUi.testScores.sub.act", { english: score.actEnglish, math: score.actMath, reading: score.actReading, science: score.actScience });
       return null;
     case "AP":
       return score.apSubject ?? null;

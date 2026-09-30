@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect, useMemo } from 'react';
 import { Loader2, FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 type ReactPDFModule = Awaited<typeof import('@react-pdf/renderer')>;
 
@@ -19,6 +20,7 @@ interface TemplatePreviewCardProps {
 }
 
 export function TemplatePreviewCard({ data, templateId, className = "" }: TemplatePreviewCardProps) {
+  const { t } = useTranslation();
   const [pdfComponents, setPdfComponents] = useState<ReactPDFModule | null>(null);
   const [isClient, setIsClient] = useState(false);
   const [loadingPDF, setLoadingPDF] = useState(false);
@@ -479,12 +481,12 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                       <Text style={styles.contact}>{sampleData.personalInfo.email}</Text>
                       <Text style={styles.contact}>{sampleData.personalInfo.location}</Text>
 
-                      <Text style={styles.sectionTitle}>Skills</Text>
+                      <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.skills", "Skills")}</Text>
                       {sampleData.skills.map((skill: { name: string }, index: number) => (
                         <Text key={index} style={styles.text}>• {skill.name}</Text>
                       ))}
 
-                      <Text style={styles.sectionTitle}>Education</Text>
+                      <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.education", "Education")}</Text>
                       {sampleData.education.map((edu: { degree: string; institution: string; graduationDate: string; location: string; gpa?: string }, index: number) => (
                         <View key={index} style={{ marginBottom: 3 }}>
                           <Text style={{...styles.text, fontWeight: 'bold'}}>{edu.degree}</Text>
@@ -493,7 +495,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                         </View>
                       ))}
 
-                      <Text style={styles.sectionTitle}>Certifications</Text>
+                      <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.certifications", "Certifications")}</Text>
                       {sampleData.certifications.map((cert: string, index: number) => (
                         <Text key={index} style={styles.text}>• {cert}</Text>
                       ))}
@@ -501,10 +503,10 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
 
                     {/* Main Content */}
                     <View style={styles.mainContent}>
-                      <Text style={styles.sectionTitleMain}>Professional Summary</Text>
+                      <Text style={styles.sectionTitleMain}>{t("resumeBuilder.doc.professionalSummary", "Professional Summary")}</Text>
                       <Text style={styles.textMain}>{sampleData.personalInfo.summary}</Text>
 
-                      <Text style={styles.sectionTitleMain}>Professional Experience</Text>
+                      <Text style={styles.sectionTitleMain}>{t("resumeBuilder.doc.professionalExperience", "Professional Experience")}</Text>
                       {sampleData.experience.map((exp: { jobTitle: string; company: string; startDate: string; endDate: string; location: string; description?: string[] }, index: number) => (
                         <View key={index} style={{ marginBottom: 4 }}>
                           <View style={styles.experienceHeader}>
@@ -517,7 +519,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                         </View>
                       ))}
 
-                      <Text style={styles.sectionTitleMain}>Key Achievements</Text>
+                      <Text style={styles.sectionTitleMain}>{t("resumeBuilder.doc.keyAchievements", "Key Achievements")}</Text>
                       {sampleData.achievements.map((achievement: string, index: number) => (
                         <Text key={index} style={{...styles.bulletPoint, color: '#374151'}}>• {achievement}</Text>
                       ))}
@@ -546,13 +548,13 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
 
                     {/* Professional Summary */}
                     <View style={{ marginBottom: templateId === 'executive' ? 4 : 8 }}>
-                      <Text style={styles.sectionTitle}>Professional Summary</Text>
+                      <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.professionalSummary", "Professional Summary")}</Text>
                       <Text style={styles.text}>{sampleData.personalInfo.summary}</Text>
                     </View>
 
                     {/* Professional Experience */}
                     <View style={{ marginBottom: templateId === 'executive' ? 4 : 8 }}>
-                      <Text style={styles.sectionTitle}>Professional Experience</Text>
+                      <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.professionalExperience", "Professional Experience")}</Text>
                       {sampleData.experience.map((exp: { jobTitle: string; company: string; startDate: string; endDate: string; location: string; description?: string[] }, index: number) => (
                         <View key={index} style={{ marginBottom: 4 }}>
                           <View style={styles.experienceHeader}>
@@ -573,7 +575,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
 
                     {/* Education */}
                     <View style={{ marginBottom: templateId === 'executive' ? 4 : 8 }}>
-                      <Text style={styles.sectionTitle}>Education</Text>
+                      <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.education", "Education")}</Text>
                       {sampleData.education.map((edu: { degree: string; institution: string; graduationDate: string; location: string; gpa?: string }, index: number) => (
                         <View key={index} style={{ marginBottom: templateId === 'executive' ? 2 : 4 }}>
                           <View style={styles.experienceHeader}>
@@ -585,14 +587,14 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                               <Text style={styles.date}>{edu.graduationDate}</Text>
                             </View>
                           </View>
-                          {edu.gpa && <Text style={styles.text}>GPA: {edu.gpa}</Text>}
+                          {edu.gpa && <Text style={styles.text}>{t("resumeBuilder.doc.gpa", { defaultValue: "GPA: {{value}}", value: edu.gpa })}</Text>}
                         </View>
                       ))}
                     </View>
 
                     {/* Skills */}
                     <View style={{ marginBottom: templateId === 'executive' ? 4 : 8 }}>
-                      <Text style={styles.sectionTitle}>Core Competencies</Text>
+                      <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.coreCompetencies", "Core Competencies")}</Text>
                       {templateId === 'tech' ? (
                         <View style={styles.skillsGrid}>
                           {sampleData.skills.map((skill: { name: string }, index: number) => (
@@ -612,7 +614,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
 
                     {/* Certifications */}
                     <View style={{ marginBottom: templateId === 'executive' ? 4 : 8 }}>
-                      <Text style={styles.sectionTitle}>Certifications</Text>
+                      <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.certifications", "Certifications")}</Text>
                       {sampleData.certifications.map((cert: string, index: number) => (
                         <Text key={index} style={styles.bulletPoint}>• {cert}</Text>
                       ))}
@@ -621,7 +623,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
                     {/* Key Achievements */}
                     {templateId === 'executive' && (
                       <View style={{ marginBottom: 4 }}>
-                        <Text style={styles.sectionTitle}>Key Achievements</Text>
+                        <Text style={styles.sectionTitle}>{t("resumeBuilder.doc.keyAchievements", "Key Achievements")}</Text>
                         {sampleData.achievements.map((achievement: string, index: number) => (
                           <Text key={index} style={styles.bulletPoint}>• {achievement}</Text>
                         ))}
@@ -637,14 +639,14 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
       } catch (error) {
         return null;
       }
-    }, [pdfComponents, data, templateId]);
+    }, [pdfComponents, data, templateId, t]);
 
   if (!isClient) {
     return (
       <div className={`w-full h-full flex items-center justify-center bg-gray-100 ${className}`}>
         <div className="text-center">
           <FileText size={24} className="text-gray-400 mx-auto mb-2" />
-          <p className="text-xs text-gray-600">Initializing...</p>
+          <p className="text-xs text-gray-600">{t("resumeBuilder.templatePreviewCard.initializing", "Initializing...")}</p>
         </div>
       </div>
     );
@@ -656,7 +658,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
         <div className="flex items-center justify-center h-full bg-gray-50">
           <div className="text-center">
             <Loader2 size={24} className="animate-spin text-[#2E9098] mx-auto mb-2" />
-            <p className="text-xs text-gray-600">Loading preview...</p>
+            <p className="text-xs text-gray-600">{t("resumeBuilder.livePreview.loading", "Loading preview...")}</p>
           </div>
         </div>
       ) : pdfComponents && renderPDFTemplate ? (
@@ -677,7 +679,7 @@ export function TemplatePreviewCard({ data, templateId, className = "" }: Templa
         <div className="flex items-center justify-center h-full bg-gray-50">
           <div className="text-center">
             <FileText size={24} className="text-gray-400 mx-auto mb-2" />
-            <p className="text-xs text-gray-600">Preview unavailable</p>
+            <p className="text-xs text-gray-600">{t("resumeBuilder.templatePreviewCard.unavailable", "Preview unavailable")}</p>
           </div>
         </div>
       )}

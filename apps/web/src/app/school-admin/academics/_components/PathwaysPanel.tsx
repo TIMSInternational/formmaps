@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslation } from "react-i18next";
 import { ArrowRight, GitBranch, RefreshCw, TriangleAlert, Workflow } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -29,20 +30,22 @@ const BTN_SECONDARY: React.CSSProperties = {
 };
 
 function CourseNode({ course, onClick }: { course: PathwayCourse; onClick: () => void }) {
+  const { t } = useTranslation("school_admin");
   return (
-    <button onClick={(e) => { e.stopPropagation(); onClick(); }} title={`${course.name} — click to edit prerequisites`} style={NODE_BTN}
+    <button onClick={(e) => { e.stopPropagation(); onClick(); }} title={t("ui.pathways.clickToEditPrereqs", { name: course.name })} style={NODE_BTN}
       onMouseEnter={(e) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue)"; }}
       onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}
       onFocus={(e) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue)"; }}
       onBlur={(e) => { e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}>
       <span style={{ fontFamily: "monospace", fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{course.code}</span>
       <span className="hidden md:inline" style={{ fontSize: 11, color: "var(--admin-font-tertiary)", maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{course.name}</span>
-      {course.isHonors && <Badge style={{ fontSize: 9, background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "none" }}>Honors</Badge>}
+      {course.isHonors && <Badge style={{ fontSize: 9, background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "none" }}>{t("ui.courses.honors")}</Badge>}
     </button>
   );
 }
 
 export function PathwaysPanel() {
+  const { t } = useTranslation("school_admin");
   const router = useRouter();
   const { data, isLoading, isError, refetch } = useCoursePathways();
   const [editCourse, setEditCourse] = useState<PathwayCourse | null>(null);
@@ -60,9 +63,9 @@ export function PathwaysPanel() {
   if (isError) {
     return (
       <div className="flex flex-col items-center gap-3 py-16">
-        <p style={{ fontSize: 13, color: "#dc2626" }}>Failed to load pathways.</p>
+        <p style={{ fontSize: 13, color: "#dc2626" }}>{t("ui.pathways.loadPathwaysFailed")}</p>
         <button onClick={() => refetch()} style={BTN_SECONDARY}>
-          <RefreshCw style={{ width: 12, height: 12 }} /> Retry
+          <RefreshCw style={{ width: 12, height: 12 }} /> {t("common.retry")}
         </button>
       </div>
     );
@@ -72,7 +75,7 @@ export function PathwaysPanel() {
 
   const editorButton = (
     <button onClick={() => setEditorOpen(true)} style={BTN_EDITOR}>
-      <Workflow style={{ width: 15, height: 15 }} /> Open visual editor
+      <Workflow style={{ width: 15, height: 15 }} /> {t("ui.pathways.openVisualEditor")}
     </button>
   );
   const editorDialog = editorOpen && (
@@ -83,10 +86,9 @@ export function PathwaysPanel() {
     return (
       <div className="py-16 text-center" style={{ borderRadius: 8, border: "1px dashed var(--admin-border-default)" }}>
         <GitBranch style={{ width: 32, height: 32, margin: "0 auto 12px", opacity: 0.3, color: "var(--admin-font-tertiary)" }} />
-        <div style={{ fontSize: 14, fontWeight: 500, color: "var(--admin-font-primary)", marginBottom: 4 }}>No pathways yet</div>
+        <div style={{ fontSize: 14, fontWeight: 500, color: "var(--admin-font-primary)", marginBottom: 4 }}>{t("ui.pathways.noPathways")}</div>
         <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", maxWidth: 420, margin: "0 auto 16px" }}>
-          Pathways are derived from course prerequisites. Open the visual editor to draw them,
-          add prerequisites to your courses, or run Analyze Prerequisites on the Courses tab.
+          {t("ui.pathways.noPathwaysHelp")}
         </div>
         {editorButton}
         {editorDialog}
@@ -98,7 +100,7 @@ export function PathwaysPanel() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)" }}>
-          Derived from your course prerequisites — click a pathway to open its editor, or click a course to edit its prerequisites.
+          {t("ui.pathways.derivedHelp")}
         </p>
         {editorButton}
       </div>
@@ -107,7 +109,7 @@ export function PathwaysPanel() {
         <div className="flex items-center gap-2" style={{ padding: "8px 12px", borderRadius: 6, background: "rgba(217,119,6,0.08)", border: "1px solid rgba(217,119,6,0.3)" }}>
           <TriangleAlert style={{ width: 14, height: 14, color: "#d97706", flexShrink: 0 }} />
           <span style={{ fontSize: 12, color: "#d97706" }}>
-            Your prerequisite graph is large — only the first 200 pathways are shown.
+            {t("ui.pathways.truncated")}
           </span>
         </div>
       )}
@@ -117,14 +119,14 @@ export function PathwaysPanel() {
           <h3 style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 8 }}>
             {group.department}
             <span style={{ fontSize: 11, fontWeight: 400, color: "var(--admin-font-tertiary)", marginLeft: 8 }}>
-              {group.chains.length} {group.chains.length === 1 ? "pathway" : "pathways"}
+              {t("ui.pathways.pathwayCount", { count: group.chains.length })}
             </span>
           </h3>
           <div className="space-y-2">
             {group.chains.map((chain) => (
               <div key={chain.map((c) => c.code).join("|")}
                 onClick={() => router.push(`/school-admin/academics/pathways/${chain[0].courseId}/editor`)}
-                title="Open this pathway's visual editor"
+                title={t("ui.pathways.openThisEditor")}
                 className="group flex flex-wrap items-center gap-2 cursor-pointer"
                 style={{ padding: "10px 12px", borderRadius: 8, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)" }}>
                 {chain.map((courseNode, i) => (
@@ -135,7 +137,7 @@ export function PathwaysPanel() {
                 ))}
                 <span className="ml-auto opacity-0 group-hover:opacity-100 flex items-center gap-1"
                   style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-accent-blue)", transition: "opacity 0.15s" }}>
-                  Open editor <ArrowRight style={{ width: 13, height: 13 }} />
+                  {t("ui.pathways.openEditor")} <ArrowRight style={{ width: 13, height: 13 }} />
                 </span>
               </div>
             ))}

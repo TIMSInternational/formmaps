@@ -2,6 +2,7 @@
 
 import { GraduationCap, Lock, Pencil, Sparkles, LoaderCircle, Target } from "lucide-react";
 import Link from "next/link";
+import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EVAL_REQUIRED_RULE } from "@/services/assessmentProgressService";
 import type {
@@ -10,11 +11,12 @@ import type {
   GraduationPlanStatus,
 } from "@/types/graduationPlan";
 
+// label = i18n key
 const STATUS_CHIP: Record<string, { label: string; className: string }> = {
-  draft: { label: "Draft plan", className: "bg-gray-100 text-gray-700" },
-  proposed: { label: "Awaiting counselor", className: "bg-[#FFD23F] text-[#102B47]" },
-  approved: { label: "Plan approved", className: "bg-emerald-100 text-emerald-700" },
-  rejected: { label: "Needs revision", className: "bg-red-100 text-red-700" },
+  draft: { label: "coursePlan.graduationTarget.status.draft", className: "bg-gray-100 text-gray-700" },
+  proposed: { label: "coursePlan.graduationTarget.status.proposed", className: "bg-[#FFD23F] text-[#102B47]" },
+  approved: { label: "coursePlan.graduationTarget.status.approved", className: "bg-emerald-100 text-emerald-700" },
+  rejected: { label: "coursePlan.graduationTarget.status.rejected", className: "bg-red-100 text-red-700" },
 };
 
 interface GraduationTargetCardProps {
@@ -42,6 +44,7 @@ export function GraduationTargetCard({
   onChooseGoal,
   onGenerate,
 }: GraduationTargetCardProps) {
+  const { t } = useTranslation();
   if (isLoading) {
     return <Skeleton className="h-28 w-full rounded-xl bg-[var(--admin-bg-hover)]" />;
   }
@@ -56,7 +59,7 @@ export function GraduationTargetCard({
       // added here, so a student who owed only Personality saw a lock with nothing
       // listed beside it. `=== false` on purpose: an older payload that omits the
       // field must not be read as "missing".
-      if (completion.personalityCompleted === false) parts.push("Personality");
+      if (completion.personalityCompleted === false) parts.push(t("coursePlan.graduationTarget.personality"));
       // Same threshold the server unlocks careers/course-plan with — a
       // student who finished min(evalTotal,3) evaluators is done, even if
       // more were invited (see EVAL_REQUIRED_RULE).
@@ -64,7 +67,7 @@ export function GraduationTargetCard({
       if (completion.evalTotal === 0) {
         // min(0,3) is 0, so this used to render "360° 0/0" — the one condition that
         // locks a student out until someone else acts, shown as a satisfied counter.
-        parts.push("360° (no evaluators invited yet)");
+        parts.push(t("coursePlan.graduationTarget.noEvaluators"));
       } else if (completion.evalCompleted < evalRequired) {
         parts.push(`360° ${completion.evalCompleted}/${evalRequired}`);
       }
@@ -76,17 +79,15 @@ export function GraduationTargetCard({
             <Lock className="h-5 w-5 mt-0.5 shrink-0 text-[#FFD23F]" />
             <div className="min-w-0">
               <h2 className="text-sm font-semibold text-white">
-                Unlock your personalized graduation plan
+                {t("coursePlan.graduationTarget.unlockTitle")}
               </h2>
               <p className="text-xs mt-1 text-white/80">
-                Complete your assessments and we&apos;ll draft a semester-by-semester
-                path to your dream school.
-                {parts.length > 0 ? ` Still needed: ${parts.join(", ")}.` : ""}
+                {t("coursePlan.graduationTarget.unlockBody")}
+                {parts.length > 0 ? ` ${t("coursePlan.graduationTarget.stillNeeded", { items: parts.join(", ") })}` : ""}
               </p>
               {target?.universityName || target?.major ? (
                 <p className="text-xs mt-1 text-white/80">
-                  Your goal: {target.universityName ?? "Any university"}
-                  {target.major ? ` · ${target.major}` : ""}
+                  {t("coursePlan.graduationTarget.yourGoal", { goal: [target.universityName ?? t("coursePlan.graduationTarget.anyUniversity"), target.major].filter(Boolean).join(" · ") })}
                 </p>
               ) : null}
             </div>
@@ -95,7 +96,7 @@ export function GraduationTargetCard({
             href="/dashboard/assessments"
             className="shrink-0 px-4 py-2 rounded-md text-xs font-bold bg-[#FFD23F] text-[#102B47] hover:opacity-90"
           >
-            Go to assessments
+            {t("coursePlan.graduationTarget.goToAssessments")}
           </Link>
         </div>
       </section>
@@ -111,12 +112,12 @@ export function GraduationTargetCard({
             <Target className="h-5 w-5 mt-0.5 shrink-0 text-[var(--admin-accent-blue)]" />
             <div className="min-w-0">
               <h2 className="text-sm font-semibold text-[var(--admin-font-primary)]">
-                Where do you want to graduate to?
+                {t("coursePlan.graduationTarget.chooseTitle")}
               </h2>
               <p className="text-xs mt-1 text-[var(--admin-font-secondary)]">
                 {target?.suggested && (target.universityName || target.major)
-                  ? `Based on your matches: ${[target.universityName, target.major].filter(Boolean).join(" · ")}. Confirm it or pick your own.`
-                  : "Pick a university and major and we'll draft a plan to get you there."}
+                  ? t("coursePlan.graduationTarget.suggestedBody", { match: [target.universityName, target.major].filter(Boolean).join(" · ") })
+                  : t("coursePlan.graduationTarget.chooseBody")}
               </p>
             </div>
           </div>
@@ -125,7 +126,7 @@ export function GraduationTargetCard({
             onClick={onChooseGoal}
             className="shrink-0 px-4 py-2 rounded-md text-xs font-semibold bg-[#102B47] text-white hover:opacity-90"
           >
-            Choose your goal
+            {t("coursePlan.graduationTarget.chooseGoal")}
           </button>
         </div>
       </section>
@@ -142,18 +143,18 @@ export function GraduationTargetCard({
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-sm font-semibold text-[var(--admin-font-primary)]">
-                {target.universityName ?? "Any university"}
+                {target.universityName ?? t("coursePlan.graduationTarget.anyUniversity")}
                 {target.major ? ` · ${target.major}` : ""}
               </h2>
               {chip && (
                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${chip.className}`}>
-                  {chip.label}
+                  {t(chip.label)}
                 </span>
               )}
             </div>
             {target.templateLabel && (
               <p className="text-xs mt-1 text-[var(--admin-font-tertiary)]">
-                Rigor profile: {target.templateLabel}
+                {t("coursePlan.graduationTarget.rigorProfile", { label: target.templateLabel })}
               </p>
             )}
           </div>
@@ -165,7 +166,7 @@ export function GraduationTargetCard({
             className="flex items-center gap-1 px-3 py-2 rounded-md text-xs font-medium border border-[var(--admin-border-default)] text-[var(--admin-font-secondary)] hover:bg-[var(--admin-bg-hover)]"
           >
             <Pencil className="h-3 w-3" />
-            Change goal
+            {t("coursePlan.graduationTarget.changeGoal")}
           </button>
           {canGenerate && (
             <button
@@ -179,7 +180,7 @@ export function GraduationTargetCard({
               ) : (
                 <Sparkles className="h-3.5 w-3.5" />
               )}
-              Generate my plan
+              {t("coursePlan.graduationTarget.generatePlan")}
             </button>
           )}
         </div>

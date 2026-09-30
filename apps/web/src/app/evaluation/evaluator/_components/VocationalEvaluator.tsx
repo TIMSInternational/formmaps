@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { getVocationalForm, submitVocationalAnswers, VocationalForm, VocationalQuestionItem, VocationalSubmitAnswer } from "@/services/vocationalTakeService";
 import { VocationalQuestionCard, VocationalAnswerValue } from "./VocationalQuestionCard";
+import { toVocationalLang } from "./vocationalLang";
 
 function toAnswer(q: VocationalQuestionItem, v: VocationalAnswerValue): VocationalSubmitAnswer | null {
   if (q.type === "likert") return typeof v.ratingValue === "number" ? { questionNumber: q.number, type: "likert", ratingValue: v.ratingValue } : null;
@@ -14,8 +15,14 @@ function toAnswer(q: VocationalQuestionItem, v: VocationalAnswerValue): Vocation
   return v.textValue?.trim() ? { questionNumber: q.number, type: "open", textValue: v.textValue } : null;
 }
 
-export function VocationalEvaluator({ token }: { token: string; language?: string }) {
-  const { t } = useTranslation();
+/**
+ * `language` (optional) overrides the UI language for the questionnaire content; otherwise the i18next
+ * language is used, and the form is re-fetched in the new language when it changes. Answers are keyed by
+ * question number and option value, so they survive a language switch untouched.
+ */
+export function VocationalEvaluator({ token, language }: { token: string; language?: string }) {
+  const { t, i18n } = useTranslation();
+  const lang = toVocationalLang(language ?? i18n?.language);
   const [form, setForm] = useState<VocationalForm | null>(null);
   const [responses, setResponses] = useState<Record<number, VocationalAnswerValue>>({});
   const [loading, setLoading] = useState(true);
@@ -24,24 +31,40 @@ export function VocationalEvaluator({ token }: { token: string; language?: strin
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
 
+  const hasFormRef = useRef(false);
+  const requestRef = useRef(0);
+  const tRef = useRef(t);
+  tRef.current = t;
   const load = useCallback(async () => {
-    setLoading(true); setError(false); setErrorReason(null);
+    const request = ++requestRef.current;
+    // A language switch re-fetches in place: keep the rendered form (and its answers) until the new copy lands.
+    if (!hasFormRef.current) setLoading(true);
+    setError(false); setErrorReason(null);
     try {
-      const f = await getVocationalForm(token);
+      const f = await getVocationalForm(token, lang);
+      if (request !== requestRef.current) return; // a newer language request superseded this one
       setForm(f);
-      // seed ranking defaults so an untouched ranking still submits in order
+      hasFormRef.current = true;
+      // seed ranking defaults so an untouched ranking still submits in order; answers already given
+      // (e.g. before a language switch) win over the seed.
       const seed: Record<number, VocationalAnswerValue> = {};
       for (const q of f.questions ?? []) {
         if (q.type === "ranking" && q.options?.length) {
           seed[q.number] = { rankingOrder: q.options.map((o, i) => ({ value: o.value, rank: i + 1 })) };
         }
       }
-      setResponses(seed);
+      setResponses((prev) => ({ ...seed, ...prev }));
     } catch (e) {
-      setError(true);
-      setErrorReason((e as { reason?: string })?.reason ?? null);
-    } finally { setLoading(false); }
-  }, [token]);
+      if (request !== requestRef.current) return;
+      if (hasFormRef.current) {
+        // Keep the form usable in its current language rather than wiping the evaluator's answers.
+        toast.error(tRef.current("evaluation.vocational.loadError"));
+      } else {
+        setError(true);
+        setErrorReason((e as { reason?: string })?.reason ?? null);
+      }
+    } finally { if (request === requestRef.current) setLoading(false); }
+  }, [token, lang]);
 
   useEffect(() => { load(); }, [load]);
 

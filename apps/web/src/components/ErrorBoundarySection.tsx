@@ -2,6 +2,7 @@
 
 import React, { Component, type ReactNode } from "react";
 import { AlertCircle, RefreshCw } from "lucide-react";
+import i18n from "@/lib/i18n";
 
 interface Props {
   children: ReactNode;
@@ -51,13 +52,13 @@ export class ErrorBoundarySection extends Component<Props, State> {
             className="text-sm font-semibold mb-1"
             style={{ color: "var(--admin-font-primary, var(--foreground))" }}
           >
-            {this.props.fallbackTitle || "Something went wrong"}
+            {this.props.fallbackTitle || i18n.t("error.somethingWentWrong")}
           </h3>
           <p
             className="text-xs mb-4 max-w-xs"
             style={{ color: "var(--admin-font-tertiary, var(--muted-foreground))" }}
           >
-            This section encountered an error. Try refreshing.
+            {i18n.t("components.errorBoundarySection.message")}
           </p>
           <button
             onClick={this.handleRetry}
@@ -69,7 +70,7 @@ export class ErrorBoundarySection extends Component<Props, State> {
             }}
           >
             <RefreshCw className="h-3 w-3" />
-            Try Again
+            {i18n.t("common.tryAgain")}
           </button>
         </div>
       );

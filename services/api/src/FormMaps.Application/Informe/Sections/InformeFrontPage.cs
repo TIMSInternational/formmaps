@@ -152,7 +152,7 @@ public static class InformeFrontPage
         var recTitle = L("Cómo se construyen tus recomendaciones", "How your recommendations are built");
         var recBody = L(
             "Tu perfil completo alimenta un motor de coincidencia que pondera personalidad (PCA), capacidad cognitiva (MIL), intereses y motivadores. Las carreras se puntúan de 0 a 100; las universidades se evalúan por ajuste académico, programa, preferencias, presupuesto y resultados. Una inteligencia artificial añade una interpretación personalizada a cada coincidencia.",
-            "Your complete profile feeds a matching engine that weights personality (PCA), cognitive ability (MIL), interests and motivators. Careers are scored 0–100; universities are evaluated by academic fit, programme, preferences, budget and outcomes. AI adds a personalised interpretation to each match.");
+            "Your complete profile feeds a matching engine that weights personality (PCA), cognitive ability (MIL), interests and motivators. Careers are scored 0–100; universities are evaluated by academic fit, program, preferences, budget and outcomes. AI adds a personalized interpretation to each match.");
 
         var recTitleStyle = InformeType.H2;
         var recBodyStyle = new InformeTextStyle("Poppins-Regular", 9, LineGap: 2.5);
@@ -172,7 +172,7 @@ public static class InformeFrontPage
         // data as a figure — the confusion the empty-state grammar exists to remove.
         var bullets = L(
             "Los porcentajes y las barras reflejan datos reales de tus evaluaciones.|Las tarjetas con borde punteado y el signo — marcan evaluaciones pendientes, no resultados de cero.|El informe se actualiza a medida que completas tus evaluaciones.",
-            "Percentages and bars reflect real data from your assessments.|Dashed cards and an — mark pending assessments, not results of zero.|The report updates as you complete your assessments.")
+            "Percentages and bars reflect real data from your assessments.|Dashed cards and a dash (—) mark pending assessments, not results of zero.|The report updates as you complete your assessments.")
             .Split('|');
 
         var bulletStyle = new InformeTextStyle("Poppins-Regular", 9, LineGap: 2);
@@ -194,18 +194,18 @@ public static class InformeFrontPage
             L("Personalidad", "Personality"),
             InformeColors.Teal,
             L("Mide tu estilo de comportamiento en 4 dimensiones (D·I·S·C) a través de 3 contextos: adaptación laboral, conducta bajo presión e imagen propia.",
-              "Measures your behavioural style in 4 dimensions (D·I·S·C) across 3 contexts: work adaptation, behaviour under pressure and self-image.")),
+              "Measures your behavioral style in 4 dimensions (D·I·S·C) across 3 contexts: work adaptation, behavior under pressure and self-image.")),
         new(
             "MIL",
             L("Inteligencia Laboral", "Labor Intelligence"),
             InformeColors.Navy,
-            L("Evalúa 5 dominios cognitivos — razonamiento, detección, capacidad numérica, memoria y orientación — con precisión y velocidad.",
+            L("Evalúa 5 dominios cognitivos — razonamiento, detección, capacidad numérica, memoria y orientación — según tu precisión y velocidad.",
               "Evaluates 5 cognitive domains — reasoning, detection, numerical ability, memory and orientation — by precision and speed.")),
         new(
             "360°",
             L("Cómo te ven", "How others see you"),
             InformeColors.TealDeep,
             L("Recoge la valoración de personas a tu alrededor en competencias clave, contrastando tu autopercepción con la de los demás.",
-              "Gathers ratings from people around you on key competences, contrasting your self-perception with theirs.")),
+              "Gathers ratings from people around you on key competencies, contrasting your self-perception with theirs.")),
     ];
 }

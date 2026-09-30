@@ -2,6 +2,7 @@
 import React from 'react';
 import { useGlobalStore } from '@/store/useGlobalStore';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 
 // Import all template preview components
 import { ModernTemplatePreview } from './templates/ModernTemplate';
@@ -18,6 +19,8 @@ interface TemplateRendererProps {
 }
 
 export function TemplateRenderer({ data, templateId, className = "" }: TemplateRendererProps) {
+  // Subscribes to language changes so the template labels (resolved via i18n.t) re-render.
+  useTranslation();
   const { resumeBuilder } = useGlobalStore();
   
   // Use provided data or fallback to store data

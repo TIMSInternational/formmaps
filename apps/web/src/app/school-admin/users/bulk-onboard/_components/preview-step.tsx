@@ -2,6 +2,7 @@
 
 import { useRef } from "react";
 import { motion } from "motion/react";
+import { Trans, useTranslation } from "react-i18next";
 import {
   CheckCircle,
   AlertTriangle,
@@ -35,6 +36,7 @@ export function PreviewStep({
   onBack,
   card,
 }: PreviewStepProps) {
+  const { t } = useTranslation("school_admin");
   const errorRowRef = useRef<HTMLTableRowElement>(null);
 
   const visibleStudents = previewResult.students.filter((s) => !excludedEmails.has(s.email));
@@ -60,13 +62,13 @@ export function PreviewStep({
         <div className="flex flex-wrap items-center gap-4">
           <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 8, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.2)" }}>
             <CheckCircle style={{ width: 16, height: 16, color: "#10b981" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#10b981" }}>{readyCount} new</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#10b981" }}>{t("ui.bulkOnboard.preview.newCount", { count: readyCount })}</span>
           </div>
           {existingCount > 0 && (
             <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", borderRadius: 8, background: "rgba(234,179,8,0.1)", border: "1px solid rgba(234,179,8,0.2)" }}>
               <AlertTriangle style={{ width: 16, height: 16, color: "#eab308" }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#eab308" }}>{existingCount} existing</span>
-              <span style={{ fontSize: 11, color: "#a16207" }}>will update grade</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#eab308" }}>{t("ui.bulkOnboard.preview.existingCount", { count: existingCount })}</span>
+              <span style={{ fontSize: 11, color: "#a16207" }}>{t("ui.bulkOnboard.preview.willUpdateGrade")}</span>
             </div>
           )}
           {errorCount > 0 && (
@@ -75,8 +77,8 @@ export function PreviewStep({
               onClick={scrollToErrors}
             >
               <XCircle style={{ width: 16, height: 16, color: "#ef4444" }} />
-              <span style={{ fontSize: 13, fontWeight: 600, color: "#ef4444" }}>{errorCount} errors</span>
-              <span style={{ fontSize: 11, color: "#b91c1c" }}>click to fix</span>
+              <span style={{ fontSize: 13, fontWeight: 600, color: "#ef4444" }}>{t("ui.bulkOnboard.preview.errorCount", { count: errorCount })}</span>
+              <span style={{ fontSize: 11, color: "#b91c1c" }}>{t("ui.bulkOnboard.preview.clickToFix")}</span>
             </div>
           )}
           <div style={{ marginLeft: "auto" }}>
@@ -85,7 +87,7 @@ export function PreviewStep({
               style={{ display: "flex", alignItems: "center", gap: 6, height: 30, padding: "0 12px", borderRadius: 6, fontSize: 12, cursor: "pointer", background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)", fontWeight: 500 }}
             >
               <RotateCcw style={{ width: 12, height: 12 }} />
-              Edit Upload
+              {t("ui.bulkOnboard.preview.editUpload")}
             </button>
           </div>
         </div>
@@ -96,9 +98,9 @@ export function PreviewStep({
         <div style={card}>
           <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
             <UserCheck style={{ width: 15, height: 15, color: "#14b8a6" }} />
-            Counselor Assignment Preview
+            {t("ui.bulkOnboard.preview.counselorTitle")}
             <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)", fontWeight: 400 }}>
-              — distributed across {previewResult.counselors.length} counselor{previewResult.counselors.length !== 1 ? "s" : ""}
+              — {t("ui.bulkOnboard.preview.distributedAcross", { count: previewResult.counselors.length })}
             </span>
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -109,7 +111,7 @@ export function PreviewStep({
               >
                 <p style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 6 }}>{c.name}</p>
                 <div className="flex items-center gap-2">
-                  <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Current:</span>
+                  <span style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.bulkOnboard.preview.current")}</span>
                   <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-secondary)" }}>{c.currentCount}</span>
                   <ArrowRight style={{ width: 12, height: 12, color: "var(--admin-font-light)" }} />
                   <span style={{ fontSize: 12, fontWeight: 700, color: "#14b8a6" }}>{c.currentCount + c.newCount}</span>
@@ -129,9 +131,9 @@ export function PreviewStep({
       <div style={card}>
         <h3 style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 12, display: "flex", alignItems: "center", gap: 8 }}>
           <Users style={{ width: 15, height: 15, color: "#14b8a6" }} />
-          Student Preview
+          {t("ui.bulkOnboard.preview.studentTitle")}
           <span style={{ fontSize: 12, color: "var(--admin-font-tertiary)", fontWeight: 400 }}>
-            — {previewResult.students.length} total
+            — {t("ui.bulkOnboard.preview.total", { count: previewResult.students.length })}
           </span>
         </h3>
         <div style={{ borderRadius: 8, border: "1px solid var(--admin-border-default)", overflow: "hidden" }}>
@@ -139,7 +141,7 @@ export function PreviewStep({
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
               <thead style={{ position: "sticky", top: 0, zIndex: 2 }}>
                 <tr style={{ background: "var(--admin-bg-hover)", borderBottom: "1px solid var(--admin-border-default)" }}>
-                  {["Status", "Name", "Email", "Class Level", "Counselor", ""].map((h) => (
+                  {[t("ui.bulkOnboard.preview.status"), t("ui.courses.name"), t("ui.gradeImport.email"), t("ui.bulkOnboard.preview.classLevel"), t("ui.bulkOnboard.preview.counselor"), ""].map((h) => (
                     <th key={h} style={{ padding: "8px 12px", fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.04em", color: "var(--admin-font-tertiary)", textAlign: "left", background: "var(--admin-bg-hover)" }}>
                       {h}
                     </th>
@@ -181,17 +183,17 @@ export function PreviewStep({
                         {isError ? (
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                             <XCircle style={{ width: 14, height: 14, color: "#ef4444", flexShrink: 0 }} />
-                            <span style={{ fontSize: 11, color: "#ef4444", fontWeight: 600 }}>Error</span>
+                            <span style={{ fontSize: 11, color: "#ef4444", fontWeight: 600 }}>{t("ui.bulkOnboard.preview.error")}</span>
                           </div>
                         ) : isExisting ? (
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                             <AlertTriangle style={{ width: 14, height: 14, color: "#eab308", flexShrink: 0 }} />
-                            <span style={{ fontSize: 11, color: "#eab308", fontWeight: 600 }}>Existing</span>
+                            <span style={{ fontSize: 11, color: "#eab308", fontWeight: 600 }}>{t("ui.bulkOnboard.preview.existing")}</span>
                           </div>
                         ) : (
                           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                             <CheckCircle style={{ width: 14, height: 14, color: "#10b981", flexShrink: 0 }} />
-                            <span style={{ fontSize: 11, color: "#10b981", fontWeight: 600 }}>New</span>
+                            <span style={{ fontSize: 11, color: "#10b981", fontWeight: 600 }}>{t("ui.bulkOnboard.preview.new")}</span>
                           </div>
                         )}
                       </td>
@@ -209,7 +211,7 @@ export function PreviewStep({
                       </td>
                       <td style={{ padding: "10px 12px" }}>
                         <span style={{ fontSize: 11, padding: "2px 8px", borderRadius: 12, background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-secondary)", fontWeight: 500 }}>
-                          {s.classLevel || "\u2014"}
+                          {s.classLevel ? t(`ui.bulkOnboard.levels.${s.classLevel}`, { defaultValue: s.classLevel }) : "\u2014"}
                         </span>
                       </td>
                       <td style={{ padding: "10px 12px", fontSize: 12, color: "var(--admin-font-tertiary)" }}>
@@ -225,7 +227,7 @@ export function PreviewStep({
                               return next;
                             })
                           }
-                          title={excluded ? "Include" : "Remove from import"}
+                          title={excluded ? t("ui.bulkOnboard.preview.include") : t("ui.bulkOnboard.preview.removeFromImport")}
                           style={{
                             width: 26, height: 26, borderRadius: 5, display: "flex", alignItems: "center", justifyContent: "center",
                             background: "transparent", border: "1px solid var(--admin-border-default)",
@@ -248,13 +250,12 @@ export function PreviewStep({
       <div style={{ ...card, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
         <div>
           <p style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-            Ready to onboard{" "}
-            <span style={{ color: "#14b8a6" }}>{readyCount + existingCount}</span> students
+            <Trans t={t} i18nKey="ui.bulkOnboard.preview.readyToOnboard" count={readyCount + existingCount} values={{ count: readyCount + existingCount }} components={{ n: <span style={{ color: "#14b8a6" }} /> }} />
           </p>
           <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
-            {readyCount} new accounts will be created
-            {existingCount > 0 ? `, ${existingCount} existing will be updated` : ""}
-            {errorCount > 0 ? `, ${errorCount} errors excluded` : ""}
+            {t("ui.bulkOnboard.preview.newAccounts", { count: readyCount })}
+            {existingCount > 0 ? t("ui.bulkOnboard.preview.existingUpdated", { count: existingCount }) : ""}
+            {errorCount > 0 ? t("ui.bulkOnboard.preview.errorsExcluded", { count: errorCount }) : ""}
           </p>
         </div>
         <button
@@ -275,12 +276,12 @@ export function PreviewStep({
           {isOnboarding ? (
             <>
               <Loader2 style={{ width: 18, height: 18, animation: "spin 1s linear infinite" }} />
-              Onboarding&hellip;
+              {t("ui.bulkOnboard.preview.onboarding")}
             </>
           ) : (
             <>
               <Users style={{ width: 18, height: 18 }} />
-              Onboard {readyCount + existingCount} Students
+              {t("ui.bulkOnboard.preview.onboardN", { count: readyCount + existingCount })}
             </>
           )}
         </button>

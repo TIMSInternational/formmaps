@@ -7,8 +7,10 @@ import { getCoachStudents } from "@/services/coachService";
 import { unwrapList } from "@/lib/unwrapList";
 import type { StudentSummary } from "@/types/coach";
 import { getInitials } from "@/lib/stringUtils";
+import { useTranslation } from "react-i18next";
 
 export default function CoachStudentsPage() {
+  const { t, i18n } = useTranslation();
   const [students, setStudents] = useState<StudentSummary[]>([]);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(true);
@@ -24,7 +26,7 @@ export default function CoachStudentsPage() {
         // grabbed the { students, total } object (not an array) → always empty.
         setStudents(unwrapList(res, "students") as StudentSummary[]);
       } catch {
-        setError("Failed to load students");
+        setError(t("studentUi.coaching.students.loadFailed"));
         setStudents([]);
       } finally {
         setLoading(false);
@@ -32,11 +34,11 @@ export default function CoachStudentsPage() {
     }
     const timeout = setTimeout(fetchStudents, 300);
     return () => clearTimeout(timeout);
-  }, [search]);
+  }, [search, t]);
 
   const formatDate = (dateStr: string | null) => {
-    if (!dateStr) return "No sessions yet";
-    return new Date(dateStr).toLocaleDateString("en-US", {
+    if (!dateStr) return t("studentUi.coaching.students.noSessionsYet");
+    return new Date(dateStr).toLocaleDateString(i18n.language?.startsWith("es") ? "es-CO" : "en-US", {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -70,7 +72,7 @@ export default function CoachStudentsPage() {
             fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
           }}
         >
-          Retry
+          {t("coaching.find.retry")}
         </button>
       </div>
     );
@@ -81,13 +83,13 @@ export default function CoachStudentsPage() {
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }}>
         <p style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.2em", color: "var(--admin-font-tertiary)", marginBottom: 4 }}>
-          Coaching
+          {t("coach.nav.coaching")}
         </p>
         <h1 style={{ fontSize: 24, fontWeight: 700, color: "var(--admin-font-primary)", margin: 0 }}>
-          My Students
+          {t("studentUi.coaching.students.title")}
         </h1>
         <p style={{ fontSize: 14, color: "var(--admin-font-secondary)", marginTop: 4 }}>
-          View and manage your coaching students.
+          {t("studentUi.coaching.students.subtitle")}
         </p>
       </motion.div>
 
@@ -97,7 +99,7 @@ export default function CoachStudentsPage() {
           <Search style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
           <input
             type="text"
-            placeholder="Search students..."
+            placeholder={t("studentUi.coaching.students.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
@@ -123,9 +125,9 @@ export default function CoachStudentsPage() {
           }}
         >
           <Users style={{ width: 40, height: 40, color: "var(--admin-font-tertiary)" }} />
-          <p style={{ fontSize: 15, fontWeight: 500, color: "var(--admin-font-primary)" }}>No students found</p>
+          <p style={{ fontSize: 15, fontWeight: 500, color: "var(--admin-font-primary)" }}>{t("studentUi.coaching.students.emptyTitle")}</p>
           <p style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
-            {search ? "Try a different search term." : "Students will appear here once they book sessions with you."}
+            {search ? t("studentUi.coaching.students.emptySearch") : t("studentUi.coaching.students.emptyHint")}
           </p>
         </motion.div>
       ) : (
@@ -177,13 +179,13 @@ export default function CoachStudentsPage() {
               {/* Stats row */}
               <div style={{ display: "flex", gap: 16 }}>
                 <div>
-                  <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", margin: 0 }}>Sessions</p>
+                  <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", margin: 0 }}>{t("coach.nav.sessions")}</p>
                   <p style={{ fontSize: 16, fontWeight: 600, color: "var(--admin-accent-blue)", margin: 0 }}>
                     {student.totalSessions ?? 0}
                   </p>
                 </div>
                 <div>
-                  <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", margin: 0 }}>Last Session</p>
+                  <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", margin: 0 }}>{t("studentUi.coaching.students.lastSession")}</p>
                   <p style={{ fontSize: 13, fontWeight: 500, color: "var(--admin-font-secondary)", margin: 0 }}>
                     {formatDate(student.lastSessionDate ?? null)}
                   </p>
@@ -204,7 +206,7 @@ export default function CoachStudentsPage() {
                   onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-panel)"; }}
                 >
                   <MessageCircle style={{ width: 14, height: 14 }} />
-                  Message
+                  {t("studentUi.coaching.students.message")}
                 </button>
                 <button
                   style={{
@@ -218,7 +220,7 @@ export default function CoachStudentsPage() {
                   onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
                 >
                   <CalendarPlus style={{ width: 14, height: 14 }} />
-                  Schedule Session
+                  {t("booking.scheduleEvent")}
                 </button>
               </div>
             </motion.div>

@@ -10,6 +10,7 @@ import {
   Star,
   TrendingUp,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import type { University, MatchBreakdown } from "@/types/university";
 
@@ -32,30 +33,31 @@ interface CompareRow {
 }
 
 export function ComparePanel({ items }: ComparePanelProps) {
+  const { t } = useTranslation();
   if (items.length < 2) return null;
 
   const rows: CompareRow[] = [
     {
-      label: "Match Score",
+      label: t("university.matchScore"),
       icon: TrendingUp,
       values: items.map((i) => i.matchScore ?? null),
       highlight: "highest",
       format: "percent",
     },
     {
-      label: "Global Rank",
+      label: t("components.comparePanel.rows.globalRank"),
       icon: Award,
       values: items.map((i) => i.university.ranking?.global ?? null),
       highlight: "lowest",
     },
     {
-      label: "Acceptance Rate",
+      label: t("components.comparePanel.rows.acceptanceRate"),
       icon: Users,
       values: items.map((i) => i.university.acceptanceRate ?? null),
       format: "percent",
     },
     {
-      label: "Tuition / Year",
+      label: t("components.comparePanel.rows.tuitionPerYear"),
       icon: DollarSign,
       values: items.map((i) =>
         i.university.tuition?.international ??
@@ -67,25 +69,25 @@ export function ComparePanel({ items }: ComparePanelProps) {
       format: "currency",
     },
     {
-      label: "Type",
+      label: t("components.comparePanel.rows.type"),
       icon: Building2,
       values: items.map((i) => i.university.type),
       format: "text",
     },
     {
-      label: "Setting",
+      label: t("components.comparePanel.rows.setting"),
       icon: MapPin,
       values: items.map((i) => i.university.setting ?? null),
       format: "text",
     },
     {
-      label: "Programs",
+      label: t("components.comparePanel.rows.programs"),
       icon: GraduationCap,
       values: items.map((i) => i.university.programs?.length ?? null),
       highlight: "highest",
     },
     {
-      label: "Graduation Rate",
+      label: t("components.comparePanel.rows.graduationRate"),
       icon: Star,
       values: items.map((i) => i.university.graduationRate ?? null),
       highlight: "highest",
@@ -109,7 +111,8 @@ export function ComparePanel({ items }: ComparePanelProps) {
     if (v === null || v === undefined) return "--";
     if (fmt === "currency" && typeof v === "number") return `$${(v / 1000).toFixed(0)}k`;
     if (fmt === "percent" && typeof v === "number") return `${v.toFixed(0)}%`;
-    if (fmt === "text" && typeof v === "string") return v.charAt(0).toUpperCase() + v.slice(1);
+    if (fmt === "text" && typeof v === "string")
+      return t(`components.comparePanel.values.${v}`, { defaultValue: v.charAt(0).toUpperCase() + v.slice(1) });
     if (typeof v === "number") return `#${v}`;
     return String(v);
   }

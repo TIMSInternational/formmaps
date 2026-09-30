@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { Radar, Users, CheckCircle2, Clock, AlertTriangle, Search, Send, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
 import { toast } from "sonner";
@@ -9,9 +10,9 @@ import { Student360Dialog } from "./Student360Dialog";
 import type { EvalStudent } from "./Student360Dialog";
 
 const statusConfig = {
-  completed: { label: "Completed", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
-  in_progress: { label: "In Progress", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
-  not_started: { label: "Not Started", color: "var(--admin-font-tertiary)", bg: "var(--admin-bg-hover)" },
+  completed: { labelKey: "ui.evaluations.status.completed", color: "#10b981", bg: "rgba(16,185,129,0.1)" },
+  in_progress: { labelKey: "ui.evaluations.status.in_progress", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
+  not_started: { labelKey: "ui.evaluations.status.not_started", color: "var(--admin-font-tertiary)", bg: "var(--admin-bg-hover)" },
 };
 
 interface StudentApiItem {
@@ -29,6 +30,7 @@ interface EvalOverviewItem {
 }
 
 export function EvaluationsPanel() {
+  const { t } = useTranslation("school_admin");
   const [students, setStudents] = useState<EvalStudent[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -59,7 +61,7 @@ export function EvaluationsPanel() {
 
         setStudents(mapped);
       } catch {
-        toast.error("Failed to load evaluation data");
+        toast.error(t("ui.evaluations.loadFailed"));
       } finally {
         setLoading(false);
       }
@@ -83,10 +85,10 @@ export function EvaluationsPanel() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
         {[
-          { label: "TOTAL STUDENTS", value: students.length, icon: Users, color: "var(--admin-font-primary)" },
-          { label: "COMPLETED", value: completedCount, icon: CheckCircle2, color: "#10b981" },
-          { label: "IN PROGRESS", value: inProgressCount, icon: Clock, color: "#f59e0b" },
-          { label: "NOT STARTED", value: notStartedCount, icon: AlertTriangle, color: "var(--admin-font-tertiary)" },
+          { label: t("ui.evaluations.totalStudents"), value: students.length, icon: Users, color: "var(--admin-font-primary)" },
+          { label: t("ui.evaluations.status.completed"), value: completedCount, icon: CheckCircle2, color: "#10b981" },
+          { label: t("ui.evaluations.status.in_progress"), value: inProgressCount, icon: Clock, color: "#f59e0b" },
+          { label: t("ui.evaluations.status.not_started"), value: notStartedCount, icon: AlertTriangle, color: "var(--admin-font-tertiary)" },
         ].map((stat) => (
           <div key={stat.label} style={{ padding: 16, borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
@@ -102,7 +104,7 @@ export function EvaluationsPanel() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
         style={{ padding: 16, borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Overall Completion</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("assessments.pipeline.overallCompletion")}</span>
           <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-tertiary)" }}>{completionRate}%</span>
         </div>
         <div style={{ height: 8, borderRadius: 4, background: "var(--admin-bg-hover)", overflow: "hidden" }}>
@@ -115,7 +117,7 @@ export function EvaluationsPanel() {
         style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", borderRadius: 8, background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)", flex: "1 1 240px", maxWidth: 360 }}>
           <Search style={{ width: 14, height: 14, color: "var(--admin-font-light)", flexShrink: 0 }} />
-          <input placeholder="Search students..." value={search} onChange={(e) => setSearch(e.target.value)}
+          <input placeholder={t("academicGaps.search")} value={search} onChange={(e) => setSearch(e.target.value)}
             style={{ flex: 1, border: "none", background: "transparent", outline: "none", fontSize: 13, color: "var(--admin-font-primary)", fontFamily: "inherit" }} />
         </div>
         <div style={{ display: "flex", gap: 4 }}>
@@ -127,7 +129,7 @@ export function EvaluationsPanel() {
                 background: filterStatus === f ? "var(--admin-font-primary)" : "var(--admin-bg-card)",
                 color: filterStatus === f ? "var(--admin-bg-card)" : "var(--admin-font-secondary)",
               }}>
-              {f === "all" ? "All" : f === "in_progress" ? "In Progress" : f === "not_started" ? "Not Started" : "Completed"}
+              {f === "all" ? t("ui.evaluations.all") : t(`ui.evaluations.status.${f}`)}
             </button>
           ))}
         </div>
@@ -137,7 +139,7 @@ export function EvaluationsPanel() {
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
         style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
         <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr 1fr 1fr", padding: "10px 16px", borderBottom: "1px solid var(--admin-border-light)", background: "var(--admin-bg-hover)" }}>
-          {["STUDENT", "GRADE", "EVALUATORS", "SELF", "STATUS", "ACTIONS"].map((h) => (
+          {[t("academicGaps.table.student"), t("academicGaps.table.grade"), t("ui.evaluations.evaluators"), t("ui.evaluations.self"), t("academicGaps.table.status"), t("ui.evaluations.actions")].map((h) => (
             <span key={h} style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)" }}>{h}</span>
           ))}
         </div>
@@ -149,7 +151,7 @@ export function EvaluationsPanel() {
         ) : filtered.length === 0 ? (
           <div style={{ padding: 48, textAlign: "center" }}>
             <Radar style={{ width: 32, height: 32, color: "var(--admin-font-light)", margin: "0 auto 12px" }} />
-            <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>No students match your filter.</p>
+            <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("ui.evaluations.noMatch")}</p>
           </div>
         ) : (
           filtered.map((s, i) => {
@@ -169,27 +171,27 @@ export function EvaluationsPanel() {
                   <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 1 }}>{s.email}</p>
                 </div>
                 <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
-                  {s.gradeLevel ? `Grade ${s.gradeLevel}` : "\u2014"}
+                  {s.gradeLevel ? t("graduation.gradeLabel", { grade: s.gradeLevel }) : "\u2014"}
                 </span>
                 <span style={{ fontSize: 13, color: "var(--admin-font-secondary)" }}>
                   {s.completedEvaluators}/{s.totalEvaluators}
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 600, color: s.selfCompleted ? "#10b981" : "var(--admin-font-light)" }}>
-                  {s.selfCompleted ? "Done" : "Pending"}
+                  {s.selfCompleted ? t("ui.evaluations.done") : t("ui.evaluations.pending")}
                 </span>
                 <span style={{
                   display: "inline-flex", alignItems: "center", gap: 4, fontSize: 11, fontWeight: 600,
                   padding: "3px 10px", borderRadius: 6, width: "fit-content",
                   background: cfg.bg, color: cfg.color,
                 }}>
-                  {cfg.label}
+                  {t(cfg.labelKey)}
                 </span>
                 <div style={{ display: "flex", gap: 4 }} onClick={(e) => e.stopPropagation()}>
-                  <button title="Resend invitation emails" onClick={async () => {
+                  <button title={t("ui.evaluations.resendTitle")} onClick={async () => {
                     try {
                       await apiRequest(`/evaluation/send-email-invitations/${s.id}`, { method: "POST" });
-                      toast.success(`Invitations resent for ${s.name}`);
-                    } catch { toast.error("Failed to resend"); }
+                      toast.success(t("ui.evaluations.resent", { name: s.name }));
+                    } catch { toast.error(t("ui.evaluations.resendFailed")); }
                   }}
                     style={{ width: 28, height: 28, borderRadius: 6, border: "1px solid var(--admin-border-default)", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Send style={{ width: 12, height: 12, color: "var(--admin-font-tertiary)" }} />

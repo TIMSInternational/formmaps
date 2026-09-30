@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Search, GraduationCap, CheckCircle2, LoaderCircle } from "lucide-react";
 import {
   Dialog,
@@ -37,6 +38,7 @@ export function TargetPickerDialog({
   onSave,
   isSaving,
 }: TargetPickerDialogProps) {
+  const { t } = useTranslation();
   const { user } = useGlobalStore();
   const [tab, setTab] = useState<"recommended" | "search">("recommended");
   const [selected, setSelected] = useState<SelectedUniversity | null>(null);
@@ -64,14 +66,14 @@ export function TargetPickerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Choose your graduation goal</DialogTitle>
+          <DialogTitle>{t("coursePlan.targetPicker.title")}</DialogTitle>
         </DialogHeader>
 
         {/* Tabs */}
         <div className="flex gap-1 rounded-lg bg-[var(--admin-bg-hover)] p-1">
           {([
-            ["recommended", "Recommended for you"],
-            ["search", "Search any university"],
+            ["recommended", "studentUi.coursePlan.targetPicker.tabRecommended"],
+            ["search", "studentUi.coursePlan.targetPicker.tabSearch"],
           ] as const).map(([key, label]) => (
             <button
               key={key}
@@ -84,7 +86,7 @@ export function TargetPickerDialog({
                   : "text-[var(--admin-font-secondary)] hover:bg-[var(--admin-bg-panel)]",
               )}
             >
-              {label}
+              {t(label)}
             </button>
           ))}
         </div>
@@ -94,12 +96,11 @@ export function TargetPickerDialog({
           <div className="max-h-[260px] overflow-y-auto border rounded-lg divide-y">
             {recoQuery.isLoading ? (
               <p className="text-xs text-gray-400 text-center py-6">
-                Loading your matches…
+                {t("studentUi.coursePlan.targetPicker.loadingMatches")}
               </p>
             ) : recommendations.length === 0 ? (
               <p className="text-xs text-gray-400 text-center py-6 px-4">
-                No university matches yet — complete your assessments, or search
-                any university instead.
+                {t("studentUi.coursePlan.targetPicker.noMatches")}
               </p>
             ) : (
               recommendations.slice(0, 10).map((rec) => {
@@ -120,7 +121,7 @@ export function TargetPickerDialog({
                             {rec.university.name}
                           </p>
                           <p className="text-[10px] text-[var(--admin-font-tertiary)]">
-                            {rec.matchScore}% match
+                            {t("studentUi.coursePlan.targetPicker.matchScore", { score: rec.matchScore })}
                           </p>
                         </div>
                       </div>
@@ -162,7 +163,7 @@ export function TargetPickerDialog({
               <Input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search universities…"
+                placeholder={t("studentUi.coursePlan.targetPicker.searchPlaceholder")}
                 className="pl-9"
               />
             </div>
@@ -170,8 +171,8 @@ export function TargetPickerDialog({
               {searchResults.length === 0 ? (
                 <p className="text-xs text-gray-400 text-center py-6 px-4">
                   {search.trim()
-                    ? "No universities found — you can still type your own below."
-                    : "Type to search universities."}
+                    ? t("studentUi.coursePlan.targetPicker.noResults")
+                    : t("studentUi.coursePlan.targetPicker.typeToSearch")}
                 </p>
               ) : (
                 searchResults.map((u) => (
@@ -195,13 +196,13 @@ export function TargetPickerDialog({
               )}
             </div>
             <div className="space-y-1.5">
-              <Label className="text-xs">Or type a university name</Label>
+              <Label className="text-xs">{t("studentUi.coursePlan.targetPicker.orTypeName")}</Label>
               <Input
                 value={selected?.id === null ? selected.name : ""}
                 onChange={(e) =>
                   setSelected(e.target.value ? { id: null, name: e.target.value } : null)
                 }
-                placeholder="e.g. Technical University of Munich"
+                placeholder={t("studentUi.coursePlan.targetPicker.universityPlaceholder")}
               />
             </div>
           </div>
@@ -209,16 +210,16 @@ export function TargetPickerDialog({
 
         {/* Major + selection summary */}
         <div className="space-y-1.5">
-          <Label className="text-xs">Intended major *</Label>
+          <Label className="text-xs">{t("studentUi.coursePlan.targetPicker.intendedMajor")}</Label>
           <Input
             value={major}
             onChange={(e) => setMajor(e.target.value)}
-            placeholder="e.g. Computer Science"
+            placeholder={t("studentUi.coursePlan.targetPicker.majorPlaceholder")}
             maxLength={200}
           />
           {selected && (
             <p className="text-[11px] text-[var(--admin-font-tertiary)]">
-              Goal: {selected.name}
+              {t("studentUi.coursePlan.targetPicker.goal", { name: selected.name })}
               {major.trim() ? ` · ${major.trim()}` : ""}
             </p>
           )}
@@ -226,7 +227,7 @@ export function TargetPickerDialog({
 
         <div className="flex justify-end gap-2 pt-1">
           <Button variant="outline" size="sm" onClick={() => onOpenChange(false)}>
-            Cancel
+            {t("common.cancel")}
           </Button>
           <Button
             size="sm"
@@ -235,7 +236,7 @@ export function TargetPickerDialog({
             className="bg-[#102B47] hover:bg-[#0b1f33] text-white gap-2"
           >
             {isSaving && <LoaderCircle className="h-3.5 w-3.5 animate-spin" />}
-            Set as my goal
+            {t("studentUi.coursePlan.targetPicker.setGoal")}
           </Button>
         </div>
       </DialogContent>

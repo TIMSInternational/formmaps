@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -34,6 +35,7 @@ interface AiImportReviewDialogProps {
 }
 
 export function AiImportReviewDialog({ data, onClose, onConfirmed }: AiImportReviewDialogProps) {
+  const { t } = useTranslation("school_admin");
   const queryClient = useQueryClient();
   const [confirming, setConfirming] = useState(false);
 
@@ -48,15 +50,15 @@ export function AiImportReviewDialog({ data, onClose, onConfirmed }: AiImportRev
       });
       const result = res.data ?? res;
       const parts: string[] = [];
-      if (result.coursesCreated) parts.push(`${result.coursesCreated} custom courses created`);
-      if (result.coursesLinked) parts.push(`${result.coursesLinked} linked to catalog`);
-      if (result.coursesSkipped) parts.push(`${result.coursesSkipped} skipped`);
-      toast.success(parts.join(", ") || "Import complete");
+      if (result.coursesCreated) parts.push(t("ui.aiImport.coursesCreated", { count: result.coursesCreated }));
+      if (result.coursesLinked) parts.push(t("ui.aiImport.coursesLinked", { count: result.coursesLinked }));
+      if (result.coursesSkipped) parts.push(t("ui.aiImport.coursesSkipped", { count: result.coursesSkipped }));
+      toast.success(parts.join(", ") || t("ui.aiImport.importComplete"));
       queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
       onClose();
       onConfirmed?.();
     } catch {
-      toast.error("Failed to create courses");
+      toast.error(t("ui.aiImport.createFailed"));
     } finally { setConfirming(false); }
   };
 
@@ -66,7 +68,7 @@ export function AiImportReviewDialog({ data, onClose, onConfirmed }: AiImportRev
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2" style={{ color: "var(--admin-font-primary)" }}>
             <Sparkles style={{ width: 18, height: 18, color: "#8b5cf6" }} />
-            AI Import Review
+            {t("ui.aiImport.title")}
           </DialogTitle>
         </DialogHeader>
 
@@ -76,19 +78,19 @@ export function AiImportReviewDialog({ data, onClose, onConfirmed }: AiImportRev
           <div>
             <h3 style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)", marginBottom: 8 }}>
               <FileText style={{ width: 14, height: 14, display: "inline", marginRight: 6 }} />
-              Courses ({data.courses.length})
+              {t("ui.aiImport.coursesCount", { count: data.courses.length })}
             </h3>
             <div style={{ maxHeight: 500, overflowY: "auto", borderRadius: 6, border: "1px solid var(--admin-border-default)" }}>
               <Table>
                 <TableHeader>
                   <TableRow style={{ background: "var(--admin-bg-hover)" }}>
-                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Code</TableHead>
-                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Name</TableHead>
-                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Description</TableHead>
-                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Dept</TableHead>
-                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Cr.</TableHead>
-                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Cap</TableHead>
-                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>Type</TableHead>
+                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.code")}</TableHead>
+                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.name")}</TableHead>
+                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.description")}</TableHead>
+                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.deptShort")}</TableHead>
+                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.creditsShort")}</TableHead>
+                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.capShort")}</TableHead>
+                    <TableHead style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("ui.courses.type")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -97,7 +99,7 @@ export function AiImportReviewDialog({ data, onClose, onConfirmed }: AiImportRev
                       <TableCell style={{ fontSize: 12, fontFamily: "monospace", color: "var(--admin-font-primary)" }}>{c.code}</TableCell>
                       <TableCell style={{ fontSize: 12, color: "var(--admin-font-primary)" }}>
                         <div>{c.name}</div>
-                        {c.isHonors && <Badge style={{ fontSize: 9, marginTop: 2, background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "none" }}>Honors</Badge>}
+                        {c.isHonors && <Badge style={{ fontSize: 9, marginTop: 2, background: "rgba(245,158,11,0.15)", color: "#f59e0b", border: "none" }}>{t("ui.courses.honors")}</Badge>}
                       </TableCell>
                       <TableCell style={{ fontSize: 11, color: "var(--admin-font-tertiary)", maxWidth: 220, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={c.description}>{c.description || "\u2014"}</TableCell>
                       <TableCell style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{c.department}</TableCell>
@@ -109,7 +111,7 @@ export function AiImportReviewDialog({ data, onClose, onConfirmed }: AiImportRev
                             {c.frameworkType}
                           </Badge>
                         ) : (
-                          <Badge variant="outline" style={{ fontSize: 10 }}>{c.difficulty || "custom"}</Badge>
+                          <Badge variant="outline" style={{ fontSize: 10 }}>{c.difficulty || t("ui.courses.custom")}</Badge>
                         )}
                       </TableCell>
                     </TableRow>
@@ -126,7 +128,7 @@ export function AiImportReviewDialog({ data, onClose, onConfirmed }: AiImportRev
             height: 36, borderRadius: 6, padding: "0 16px", fontSize: 13, fontWeight: 500,
             background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
             color: "var(--admin-font-secondary)", cursor: "pointer",
-          }}>Cancel</button>
+          }}>{t("common.cancel")}</button>
           <button onClick={handleConfirm} disabled={confirming} style={{
             height: 36, borderRadius: 6, padding: "0 20px", fontSize: 13, fontWeight: 600,
             display: "flex", alignItems: "center", gap: 8,
@@ -134,7 +136,7 @@ export function AiImportReviewDialog({ data, onClose, onConfirmed }: AiImportRev
             cursor: confirming ? "wait" : "pointer", opacity: confirming ? 0.7 : 1,
           }}>
             {confirming ? <Loader2 style={{ width: 14, height: 14, animation: "spin 1s linear infinite" }} /> : <Check style={{ width: 14, height: 14 }} />}
-            {confirming ? "Creating..." : `Create ${data.courses.length} Courses`}
+            {confirming ? t("ui.common.creating") : t("ui.aiImport.createCourses", { count: data.courses.length })}
           </button>
         </DialogFooter>
       </DialogContent>

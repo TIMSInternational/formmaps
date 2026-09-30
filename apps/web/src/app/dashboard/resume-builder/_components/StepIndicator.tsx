@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { motion } from "motion/react";
 import { validateAllSteps, getStepStatus } from "./validation";
 import { AlertTriangle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 // Simple Tooltip Component
 function Tooltip({
@@ -38,6 +39,7 @@ function Tooltip({
 }
 
 export function StepIndicator() {
+  const { t } = useTranslation();
   const { resumeBuilder, setResumeStep } = useGlobalStore();
   const currentStep = resumeBuilder.currentStep;
   const scrollContainerRef = useRef<HTMLDivElement>(null);
@@ -85,7 +87,7 @@ export function StepIndicator() {
   }, [currentStep]);
 
   return (
-    <nav aria-label="Progress" className="mb-4">
+    <nav aria-label={t("common.progress", "Progress")} className="mb-4">
       {/* Desktop View with Compact Horizontal Tabs */}
       <div className="hidden lg:block">
         <div className="relative">
@@ -114,10 +116,10 @@ export function StepIndicator() {
                       content={
                         stepValidation.isValid
                           ? step.description
-                          : `${
-                              step.description
-                            }\n\nMissing: ${stepValidation.missingFields.join(
-                              ", "
+                          : `${step.description}\n\n${t(
+                              "resumeBuilder.stepIndicator.missing",
+                              "Missing: {{fields}}",
+                              { fields: stepValidation.missingFields.join(", ") }
                             )}`
                       }
                     >
@@ -359,7 +361,7 @@ export function StepIndicator() {
                 d="M15 19l-7-7 7-7"
               />
             </svg>
-            <span>Previous</span>
+            <span>{t("common.previous", "Previous")}</span>
           </button>
 
           <button
@@ -374,7 +376,7 @@ export function StepIndicator() {
                 : "text-[#2E9098] hover:bg-[#2E9098]/10"
             )}
           >
-            <span>Next</span>
+            <span>{t("common.next", "Next")}</span>
             <svg
               className="w-3 h-3"
               fill="none"

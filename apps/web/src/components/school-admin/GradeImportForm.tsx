@@ -177,7 +177,7 @@ export default function GradeImportForm({ onClose }: Props) {
           <div className="flex justify-end gap-2">
             <Button variant="ghost" onClick={onClose}>{t("common.cancel", "Cancel")}</Button>
             <Button disabled={errors.length > 0 || rows.length === 0 || mutation.isPending} onClick={handleConfirm}>
-              {mutation.isPending ? "Uploading..." : t("schoolAdmin.gradeImport.confirmImport", "Start Import")}
+              {mutation.isPending ? t("components.gradeImportForm.uploading") : t("schoolAdmin.gradeImport.confirmImport", "Start Import")}
             </Button>
           </div>
         </div>

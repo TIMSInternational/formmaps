@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api/apiClient";
+import i18n from "@/lib/i18n";
 
 // Subscription Plan Interfaces
 export interface SubscriptionPlan {
@@ -37,24 +38,7 @@ export interface FeatureComparison {
 
 // User Subscription Interfaces
 // Default subscription data (fallback)
-const defaultSubscriptionData: SubscriptionData = {
-  subscription: {
-    name: "UNIV.365 Premium",
-    description: "Complete access to accelerate your career journey",
-    icon: "🎓",
-    features: [
-      "Complete Platform Access",
-      "Advanced Career Analytics",
-      "Priority Support",
-      "Career Mentorship Program",
-      "Unlimited Skill Assessments",
-      "Advanced Job Matching Algorithm",
-      "Resume Builder Pro",
-      "Interview Preparation Tools",
-      "Resource Library Access",
-      "Community & Networking",
-    ],
-  },
+const defaultSubscriptionData: Omit<SubscriptionData, "subscription"> = {
   billingOptions: [
     {
       id: "one-time",
@@ -170,6 +154,30 @@ const defaultSubscriptionData: SubscriptionData = {
   ],
 };
 
+/**
+ * Default subscription header shown on the plans page. Built at call time so the copy
+ * follows the UI language; the product name is a brand and stays as is.
+ */
+function getDefaultSubscription(): SubscriptionData["subscription"] {
+  return {
+    name: "FormMaps Premium",
+    description: i18n.t("components.subscriptionService.subscription.description"),
+    icon: "🎓",
+    features: [
+      i18n.t("components.subscriptionService.subscription.features.platformAccess"),
+      i18n.t("components.subscriptionService.subscription.features.careerAnalytics"),
+      i18n.t("components.subscriptionService.subscription.features.prioritySupport"),
+      i18n.t("components.subscriptionService.subscription.features.mentorship"),
+      i18n.t("components.subscriptionService.subscription.features.skillAssessments"),
+      i18n.t("components.subscriptionService.subscription.features.jobMatching"),
+      i18n.t("components.subscriptionService.subscription.features.resumeBuilder"),
+      i18n.t("components.subscriptionService.subscription.features.interviewPrep"),
+      i18n.t("components.subscriptionService.subscription.features.resourceLibrary"),
+      i18n.t("components.subscriptionService.subscription.features.community"),
+    ],
+  };
+}
+
 // Helper Functions
 
 /**
@@ -194,7 +202,7 @@ function enhancePlanWithUIFields(plan: RawPlan) {
   // Default enhancements
   let enhancements = {
     popular: false,
-    ctaText: "Subscribe",
+    ctaText: i18n.t("components.subscriptionService.cta.subscribe"),
     additionalInfo: "",
     discount: undefined as number | undefined,
     originalPrice: undefined as number | undefined,
@@ -205,31 +213,31 @@ function enhancePlanWithUIFields(plan: RawPlan) {
   if (interval === "one_time" || interval === "one-time") {
     enhancements = {
       popular: false,
-      ctaText: "Buy Now",
-      additionalInfo: "Single purchase",
+      ctaText: i18n.t("components.subscriptionService.cta.buyNow"),
+      additionalInfo: i18n.t("components.subscriptionService.info.singlePurchase"),
       discount: undefined,
       originalPrice: undefined,
-      description: "Download PDF Document, limited information",
+      description: i18n.t("components.subscriptionService.description.oneTime"),
     };
   } else if (interval === "month" || interval === "monthly") {
     enhancements = {
       popular: true,
-      ctaText: "Start Monthly",
-      additionalInfo: "7-day free trial",
+      ctaText: i18n.t("components.subscriptionService.cta.startMonthly"),
+      additionalInfo: i18n.t("components.subscriptionService.info.freeTrial"),
       discount: undefined,
       originalPrice: undefined,
-      description: "Complete access to the platform",
+      description: i18n.t("components.subscriptionService.description.monthly"),
     };
   } else if (interval === "year" || interval === "yearly") {
     // Calculate savings if price suggests yearly plan
     const monthlyEquivalent = Math.round((price / 12) * 1.2); // Assume 20% discount
     enhancements = {
       popular: false,
-      ctaText: "Start Yearly",
-      additionalInfo: `Save $${monthlyEquivalent * 12 - price} per year`,
+      ctaText: i18n.t("components.subscriptionService.cta.startYearly"),
+      additionalInfo: i18n.t("components.subscriptionService.info.savePerYear", { amount: monthlyEquivalent * 12 - price }),
       discount: 20,
       originalPrice: monthlyEquivalent * 12,
-      description: "Complete access with significant savings",
+      description: i18n.t("components.subscriptionService.description.yearly"),
     };
   }
 
@@ -301,7 +309,7 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionData> {
       if (plans.length > 0) {
 
         const transformedData: SubscriptionData = {
-          subscription: defaultSubscriptionData.subscription,
+          subscription: getDefaultSubscription(),
           billingOptions: plans.map((plan: RawPlan) => {
 
             // Enhance plan data with UI-specific fields based on interval
@@ -329,7 +337,7 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionData> {
         return transformedData;
       } else {
         return {
-          subscription: defaultSubscriptionData.subscription,
+          subscription: getDefaultSubscription(),
           billingOptions: [],
           features: defaultSubscriptionData.features,
         };
@@ -337,7 +345,7 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionData> {
     }
 
     return {
-      subscription: defaultSubscriptionData.subscription,
+      subscription: getDefaultSubscription(),
       billingOptions: [],
       features: defaultSubscriptionData.features,
     };

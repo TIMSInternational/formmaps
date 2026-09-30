@@ -22,27 +22,30 @@ import {
   TrackedApplication,
 } from "@/services/applicationService";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { QueryStateBoundary } from "@/components/QueryStateBoundary";
 
 type ColumnId = "researching" | "shortlisted" | "applying" | "applied" | "accepted";
 
 interface Column {
   id: ColumnId;
-  label: string;
+  /** i18n key (common namespace) */
+  labelKey: string;
   color: string;
   bgColor: string;
 }
 
 const COLUMNS: Column[] = [
-  { id: "researching", label: "Researching", color: "var(--admin-font-tertiary)", bgColor: "transparent" },
-  { id: "shortlisted", label: "Shortlisted", color: "var(--admin-accent-blue)", bgColor: "var(--admin-accent-bg-blue, rgba(59,130,246,0.1))" },
-  { id: "applying", label: "Applying", color: "var(--admin-accent-amber)", bgColor: "var(--admin-accent-bg-amber, rgba(245,158,11,0.1))" },
-  { id: "applied", label: "Applied", color: "var(--admin-accent-purple)", bgColor: "var(--admin-accent-bg-purple, rgba(139,92,246,0.1))" },
-  { id: "accepted", label: "Accepted", color: "var(--admin-accent-green)", bgColor: "var(--admin-accent-bg-green, rgba(16,185,129,0.1))" },
+  { id: "researching", labelKey: "components.applicationTracker.columns.researching", color: "var(--admin-font-tertiary)", bgColor: "transparent" },
+  { id: "shortlisted", labelKey: "components.applicationTracker.columns.shortlisted", color: "var(--admin-accent-blue)", bgColor: "var(--admin-accent-bg-blue, rgba(59,130,246,0.1))" },
+  { id: "applying", labelKey: "components.applicationTracker.columns.applying", color: "var(--admin-accent-amber)", bgColor: "var(--admin-accent-bg-amber, rgba(245,158,11,0.1))" },
+  { id: "applied", labelKey: "components.applicationTracker.columns.applied", color: "var(--admin-accent-purple)", bgColor: "var(--admin-accent-bg-purple, rgba(139,92,246,0.1))" },
+  { id: "accepted", labelKey: "components.applicationTracker.columns.accepted", color: "var(--admin-accent-green)", bgColor: "var(--admin-accent-bg-green, rgba(16,185,129,0.1))" },
 ];
 
 export function ApplicationTracker() {
   const router = useRouter();
+  const { t } = useTranslation();
   const [applications, setApplications] = useState<TrackedApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -64,7 +67,7 @@ export function ApplicationTracker() {
       setApplications(data);
     } catch {
       setIsError(true);
-      toast.error("Failed to load applications");
+      toast.error(t("components.applicationTracker.toasts.loadFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -86,9 +89,9 @@ export function ApplicationTracker() {
       setNewDeadline("");
       setAddingTo(null);
     } catch {
-      toast.error("Failed to add application");
+      toast.error(t("components.applicationTracker.toasts.addFailed"));
     }
-  }, [newName, newLocation, newDeadline]);
+  }, [newName, newLocation, newDeadline, t]);
 
   const moveApplication = useCallback(async (id: string, direction: "left" | "right") => {
     const colIds = COLUMNS.map((c) => c.id);
@@ -111,9 +114,9 @@ export function ApplicationTracker() {
       setApplications((prev) =>
         prev.map((a) => (a.id === id ? { ...a, column: app.column } : a))
       );
-      toast.error("Failed to move application");
+      toast.error(t("components.applicationTracker.toasts.moveFailed"));
     }
-  }, [applications]);
+  }, [applications, t]);
 
   const removeApplication = useCallback(async (id: string) => {
     const prev = applications;
@@ -124,9 +127,9 @@ export function ApplicationTracker() {
       await deleteApplication(id);
     } catch {
       setApplications(prev);
-      toast.error("Failed to delete application");
+      toast.error(t("components.applicationTracker.toasts.deleteFailed"));
     }
-  }, [applications]);
+  }, [applications, t]);
 
   return (
     <QueryStateBoundary isLoading={isLoading} isError={isError} onRetry={loadData}>
@@ -159,7 +162,7 @@ export function ApplicationTracker() {
                     className="text-[11px] font-bold uppercase tracking-wider"
                     style={{ color: "var(--admin-font-tertiary)" }}
                   >
-                    {col.label}
+                    {t(col.labelKey)}
                   </span>
                   <span
                     className="text-[10px] font-semibold px-1.5 py-0.5 rounded-md"
@@ -254,7 +257,7 @@ export function ApplicationTracker() {
                                   className="flex items-center gap-2 w-full px-3 py-2 text-[11px] transition-colors"
                                   style={{ color: "var(--admin-font-secondary)" }}
                                 >
-                                  <ArrowLeft className="h-3 w-3" /> Move Left
+                                  <ArrowLeft className="h-3 w-3" /> {t("components.applicationTracker.moveLeft")}
                                 </button>
                               )}
                               {col.id !== "accepted" && (
@@ -263,7 +266,7 @@ export function ApplicationTracker() {
                                   className="flex items-center gap-2 w-full px-3 py-2 text-[11px] transition-colors"
                                   style={{ color: "var(--admin-font-secondary)" }}
                                 >
-                                  <ArrowRight className="h-3 w-3" /> Move Right
+                                  <ArrowRight className="h-3 w-3" /> {t("components.applicationTracker.moveRight")}
                                 </button>
                               )}
                               <button
@@ -271,7 +274,7 @@ export function ApplicationTracker() {
                                 className="flex items-center gap-2 w-full px-3 py-2 text-[11px] transition-colors"
                                 style={{ color: "var(--admin-accent-red)" }}
                               >
-                                <Trash2 className="h-3 w-3" /> Remove
+                                <Trash2 className="h-3 w-3" /> {t("components.applicationTracker.remove")}
                               </button>
                             </div>
                           )}
@@ -295,7 +298,7 @@ export function ApplicationTracker() {
                   >
                     <input
                       autoFocus
-                      placeholder="University name..."
+                      placeholder={t("components.applicationTracker.universityNamePlaceholder")}
                       value={newName}
                       onChange={(e) => setNewName(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && addApplicationHandler(col.id)}
@@ -307,7 +310,7 @@ export function ApplicationTracker() {
                       }}
                     />
                     <input
-                      placeholder="Location (optional)"
+                      placeholder={t("components.applicationTracker.locationPlaceholder")}
                       value={newLocation}
                       onChange={(e) => setNewLocation(e.target.value)}
                       onKeyDown={(e) => e.key === "Enter" && addApplicationHandler(col.id)}
@@ -320,7 +323,7 @@ export function ApplicationTracker() {
                     />
                     <input
                       type="date"
-                      aria-label="Application deadline"
+                      aria-label={t("components.applicationTracker.deadlineAria")}
                       value={newDeadline}
                       onChange={(e) => setNewDeadline(e.target.value)}
                       className="w-full px-2 py-1.5 rounded text-xs outline-none"
@@ -337,14 +340,14 @@ export function ApplicationTracker() {
                         className="flex-1 px-2 py-1.5 rounded text-[11px] font-medium text-white disabled:opacity-40"
                         style={{ background: "var(--admin-accent-blue)" }}
                       >
-                        Add
+                        {t("coursePlan.catalog.add")}
                       </button>
                       <button
                         onClick={() => { setAddingTo(null); setNewName(""); setNewLocation(""); setNewDeadline(""); }}
                         className="px-2 py-1.5 rounded text-[11px]"
                         style={{ color: "var(--admin-font-tertiary)", border: "1px solid var(--admin-border-default)" }}
                       >
-                        Cancel
+                        {t("common.cancel")}
                       </button>
                     </div>
                   </motion.div>
@@ -360,7 +363,7 @@ export function ApplicationTracker() {
                       border: "1px dashed var(--admin-border-default)",
                     }}
                   >
-                    + Add application
+                    {t("components.applicationTracker.addApplication")}
                   </button>
                 )}
               </div>

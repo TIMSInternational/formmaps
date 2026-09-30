@@ -202,18 +202,18 @@ export function LIAPractice({
             <div className="text-center space-y-4 py-8">
               <CheckCircle className="w-16 h-16 text-green-500 mx-auto" />
               <h3 className="text-xl font-bold text-gray-900">
-                {language === 'es' ? '¡Práctica Completada!' : 'Practice Complete!'}
+                {language === 'es' ? '¡Práctica completada!' : 'Practice Complete!'}
               </h3>
               <p className="text-gray-600">
                 {language === 'es'
-                  ? 'Estás listo para comenzar la sección cronometrada.'
+                  ? 'Ya puedes comenzar la sección cronometrada.'
                   : "You're ready to start the timed section."}
               </p>
               <button
                 onClick={onComplete}
                 className="mt-4 py-3 px-8 bg-[#102B47] hover:bg-[#0b1f33] text-white font-medium rounded-lg flex items-center justify-center gap-2 mx-auto transition-colors"
               >
-                {language === 'es' ? 'Comenzar Sección' : 'Start Section'}
+                {language === 'es' ? 'Comenzar sección' : 'Start Section'}
                 <ArrowRight className="w-5 h-5" />
               </button>
             </div>

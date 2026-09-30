@@ -2,6 +2,7 @@
 
 import { motion } from "motion/react";
 import { Calendar, GraduationCap, X } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { TrackedApplication } from "@/services/applicationService";
 
 interface DotColor {
@@ -18,13 +19,8 @@ interface DeadlineDetailPanelProps {
   onClose: () => void;
 }
 
-const COLUMN_LABELS: Record<string, string> = {
-  researching: "Researching",
-  shortlisted: "Shortlisted",
-  applying: "Applying",
-  applied: "Applied",
-  accepted: "Accepted",
-};
+// Pipeline columns shown as a status chip; the column value itself is data and stays as is.
+const KNOWN_COLUMNS = new Set(["researching", "shortlisted", "applying", "applied", "accepted"]);
 
 export function DeadlineDetailPanel({
   selectedDay,
@@ -33,6 +29,7 @@ export function DeadlineDetailPanel({
   dotColors,
   onClose,
 }: DeadlineDetailPanelProps) {
+  const { t } = useTranslation();
   return (
     <motion.div
       key={selectedDay}
@@ -100,7 +97,7 @@ export function DeadlineDetailPanel({
                       color: "var(--admin-font-tertiary)",
                     }}
                   >
-                    {COLUMN_LABELS[app.column] ?? app.column}
+                    {KNOWN_COLUMNS.has(app.column) ? t(`studentUi.applications.column.${app.column}`) : app.column}
                   </span>
                 </div>
               </div>

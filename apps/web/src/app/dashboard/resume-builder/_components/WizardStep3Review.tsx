@@ -8,6 +8,7 @@ import {
   Check,
   Download,
 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ResumePreviewWithHighlights } from "./ResumePreviewWithHighlights";
 import { ScoreGauge } from "./ScoreGauge";
 import { AIChatInput } from "./AIChatInput";
@@ -51,6 +52,7 @@ export function WizardStep3Review({
   onCreateAndEdit,
   onBack,
 }: WizardStep3ReviewProps) {
+  const { t } = useTranslation();
   return (
     <motion.div
       key="step-3"
@@ -65,10 +67,10 @@ export function WizardStep3Review({
           <Loader2 className="w-8 h-8 animate-spin text-foreground" />
           <div className="text-center">
             <p className="text-sm font-semibold text-foreground">
-              Tailoring your resume...
+              {t("resumeBuilder.wizardReview.tailoring", "Tailoring your resume...")}
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Analyzing the job posting and optimizing your content
+              {t("resumeBuilder.wizardReview.tailoringHint", "Analyzing the job posting and optimizing your content")}
             </p>
           </div>
         </div>
@@ -80,10 +82,10 @@ export function WizardStep3Review({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="text-sm font-semibold text-foreground">
-                  Resume Preview
+                  {t("resumeBuilder.resumePreview.title", "Resume Preview")}
                 </h2>
                 <span className="text-[10px] text-muted-foreground">
-                  Click highlighted text to accept/reject changes
+                  {t("resumeBuilder.wizardReview.clickHint", "Click highlighted text to accept/reject changes")}
                 </span>
               </div>
               <ResumePreviewWithHighlights
@@ -102,13 +104,17 @@ export function WizardStep3Review({
                   <ScoreGauge score={tailoredScore} size={100} />
                   <div className="flex-1 space-y-1.5">
                     <p className="text-sm font-semibold text-foreground">
-                      Score: {originalScore.toFixed(1)} →{" "}
-                      {tailoredScore.toFixed(1)}
+                      {t("resumeBuilder.wizardReview.score", "Score: {{from}} → {{to}}", {
+                        from: originalScore.toFixed(1),
+                        to: tailoredScore.toFixed(1),
+                      })}
                     </p>
                     <p className="text-xs text-muted-foreground">
                       {tailoredScore > originalScore
-                        ? `Your score improved by ${(tailoredScore - originalScore).toFixed(1)} points`
-                        : "Your resume has been optimized for this role"}
+                        ? t("resumeBuilder.wizardReview.improvedBy", "Your score improved by {{points}} points", {
+                            points: (tailoredScore - originalScore).toFixed(1),
+                          })
+                        : t("resumeBuilder.wizardReview.optimized", "Your resume has been optimized for this role")}
                     </p>
                   </div>
                 </div>
@@ -117,7 +123,7 @@ export function WizardStep3Review({
               {/* Changes list */}
               <div className="dash-card p-5 space-y-3">
                 <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  What Changed
+                  {t("resumeBuilder.wizardReview.whatChanged", "What Changed")}
                 </h3>
                 <ul className="space-y-2">
                   {tailoredResume.changes.map((change, i) => (
@@ -153,7 +159,7 @@ export function WizardStep3Review({
               className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back
+              {t("common.back", "Back")}
             </button>
             <div className="flex items-center gap-3">
               <button
@@ -161,7 +167,7 @@ export function WizardStep3Review({
                 className="inline-flex items-center gap-2 bg-secondary text-foreground hover:bg-border rounded-xl px-5 py-2.5 text-sm font-medium border border-border transition-colors"
               >
                 <Download className="w-4 h-4" />
-                Download Resume
+                {t("resumeBuilder.wizardReview.download", "Download Resume")}
               </button>
               <button
                 onClick={onCreateAndEdit}
@@ -171,11 +177,11 @@ export function WizardStep3Review({
                 {creating ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Creating...
+                    {t("resumeBuilder.wizardReview.creating", "Creating...")}
                   </>
                 ) : (
                   <>
-                    Create & Edit
+                    {t("resumeBuilder.wizardReview.createEdit", "Create & Edit")}
                     <ArrowRight className="w-4 h-4" />
                   </>
                 )}
@@ -198,11 +204,15 @@ function DecisionSummary({
   decisions: ChangeDecision[];
   onToggleDecision: (section: string, index?: number) => void;
 }) {
+  const { t } = useTranslation();
   const items = [
-    { label: "Summary", section: "summary" },
-    { label: "Skills", section: "skills" },
+    { label: t("resumeBuilder.wizardReview.summary", "Summary"), section: "summary" },
+    { label: t("resumeBuilder.wizardReview.skills", "Skills"), section: "skills" },
     ...(baseResume?.experience || []).map((exp, i) => ({
-      label: `${exp.title} at ${exp.company}`,
+      label: t("resumeBuilder.jobContextCard.jobAtCompany", "{{jobTitle}} at {{company}}", {
+        jobTitle: exp.title,
+        company: exp.company,
+      }),
       section: "experience",
       index: i,
     })),
@@ -211,7 +221,7 @@ function DecisionSummary({
   return (
     <div className="dash-card p-5 space-y-2">
       <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-        Your Decisions
+        {t("resumeBuilder.wizardReview.yourDecisions", "Your Decisions")}
       </h3>
       <div className="space-y-1.5">
         {items.map((item) => {
@@ -245,7 +255,9 @@ function DecisionSummary({
               )}
               <span className="truncate text-left">{item.label}</span>
               <span className="ml-auto text-[10px] opacity-70">
-                {accepted ? "Accepted" : "Rejected"}
+                {accepted
+                  ? t("resumeBuilder.wizardReview.accepted", "Accepted")
+                  : t("resumeBuilder.wizardReview.rejected", "Rejected")}
               </span>
             </button>
           );

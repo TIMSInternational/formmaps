@@ -1,3 +1,5 @@
+// Real i18next (English) so assertions read the rendered copy, not raw keys.
+import "@/lib/i18n";
 import { render, screen, fireEvent, waitFor, act } from "@testing-library/react";
 import StaffSearch from "../StaffSearch";
 

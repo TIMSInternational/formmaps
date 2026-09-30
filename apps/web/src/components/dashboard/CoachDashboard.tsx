@@ -327,10 +327,10 @@ export function CoachDashboard() {
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="p-1 rounded-xl">
                 <TabsTrigger value="upcoming" className="rounded-lg px-3 py-1.5 text-sm font-medium">
-                  Upcoming ({upcomingSessions.length})
+                  {t("components.CoachDashboard.upcomingTab", { count: upcomingSessions.length })}
                 </TabsTrigger>
                 <TabsTrigger value="past" className="rounded-lg px-3 py-1.5 text-sm font-medium">
-                  Past ({pastSessions.length})
+                  {t("components.CoachDashboard.pastTab", { count: pastSessions.length })}
                 </TabsTrigger>
               </TabsList>
             </Tabs>

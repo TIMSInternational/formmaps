@@ -1,6 +1,7 @@
 "use client";
 
 import { AlertTriangle } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import type { GraduationPlanGap } from "@/types/graduationPlan";
 
 interface GapReportPanelProps {
@@ -13,13 +14,14 @@ interface GapReportPanelProps {
 // Honesty surface: what the school catalog can't cover. Never hidden, never
 // padded with invented courses.
 export function GapReportPanel({ gaps, warnings = [], linkToSupplemental }: GapReportPanelProps) {
+  const { t } = useTranslation();
   if (gaps.length === 0 && warnings.length === 0) return null;
   return (
     <section className="rounded-xl p-4 border border-amber-300 bg-amber-50">
       <div className="flex items-center gap-2 mb-2">
         <AlertTriangle className="h-4 w-4 text-[#d97706]" />
         <h2 className="text-sm font-semibold text-gray-900">
-          What your school can&apos;t cover
+          {t("components.gapReportPanel.title")}
         </h2>
       </div>
       {gaps.length > 0 && (
@@ -29,7 +31,7 @@ export function GapReportPanel({ gaps, warnings = [], linkToSupplemental }: GapR
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-semibold text-gray-900">{gap.category}</span>
                 <span className="text-[10px] font-medium text-[#d97706]">
-                  {gap.missingCredits} cr missing
+                  {t("components.gapReportPanel.creditsMissing", { count: gap.missingCredits })}
                 </span>
               </div>
               <p className="text-[11px] text-gray-500 mt-0.5">{gap.reason}</p>
@@ -52,7 +54,7 @@ export function GapReportPanel({ gaps, warnings = [], linkToSupplemental }: GapR
           href="#supplemental-rail"
           className="inline-block mt-3 text-xs font-semibold text-[var(--admin-accent-blue)] hover:underline"
         >
-          See online courses that fill these gaps ↓
+          {t("components.gapReportPanel.seeOnlineCourses")}
         </a>
       )}
     </section>

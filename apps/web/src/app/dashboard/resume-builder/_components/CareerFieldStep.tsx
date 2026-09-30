@@ -5,8 +5,10 @@ import { careerFields } from './resumeData';
 import { motion } from 'motion/react';
 import { cn } from '@/lib/utils';
 import { Check } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 export function CareerFieldStep() {
+  const { t } = useTranslation();
   const { resumeBuilder, setCareerField, populateWithDummyContent } = useGlobalStore();
   const [selectedField, setSelectedField] = useState(resumeBuilder.data.careerField);
 
@@ -24,10 +26,12 @@ export function CareerFieldStep() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h2 className="text-3xl font-bold text-gray-900">Choose Your Career Field</h2>
+          <h2 className="text-3xl font-bold text-gray-900">{t("resumeBuilder.careerFieldStep.title", "Choose Your Career Field")}</h2>
           <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Select your career field to get personalized resume templates and content suggestions 
-            tailored to your industry.
+            {t(
+              "resumeBuilder.careerFieldStep.subtitle",
+              "Select your career field to get personalized resume templates and content suggestions tailored to your industry."
+            )}
           </p>
         </motion.div>
       </div>
@@ -130,7 +134,11 @@ export function CareerFieldStep() {
         transition={{ duration: 0.5, delay: 0.8 }}
       >
         <p className="text-sm text-gray-500">
-          Don't see your field? Choose "General / Other" for versatile templates that work across industries.
+          {t(
+            "resumeBuilder.careerFieldStep.help",
+            'Don\'t see your field? Choose "{{general}}" for versatile templates that work across industries.',
+            { general: careerFields.find((f) => f.id === "general")?.name ?? "General / Other" }
+          )}
         </p>
       </motion.div>
     </div>

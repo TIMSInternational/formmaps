@@ -6,6 +6,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { GraduationCap, Users, CheckCircle2, Clock, Send, Plus, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { ApplicationRow } from "./_components/ApplicationRow";
 import { AddApplicationForm } from "./_components/AddApplicationForm";
 
@@ -26,6 +27,7 @@ interface BatchPrediction {
 }
 
 export default function CollegeAppsPage() {
+  const { t } = useTranslation("counselor");
   const queryClient = useQueryClient();
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -84,14 +86,14 @@ export default function CollegeAppsPage() {
       }
       return result;
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["student-applications", selectedStudentId] }); toast.success("Status updated"); },
-    onError: () => toast.error("Failed to update status"),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["student-applications", selectedStudentId] }); toast.success(t("ui.collegePrep.statusUpdated")); },
+    onError: () => toast.error(t("ui.collegePrep.statusUpdateFailed")),
   });
 
   const deleteApp = useMutation({
     mutationFn: async (appId: string) => apiRequest(`/api/v1/college/applications/${appId}`, { method: "DELETE" }),
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["student-applications", selectedStudentId] }); toast.success("Application removed"); },
-    onError: () => toast.error("Failed to delete application"),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["student-applications", selectedStudentId] }); toast.success(t("ui.collegeApps.toast.removed")); },
+    onError: () => toast.error(t("ui.collegeApps.toast.deleteFailed")),
   });
 
   const addApp = useMutation({
@@ -101,8 +103,8 @@ export default function CollegeAppsPage() {
         data: { universityId: data.collegeId || undefined, collegeName: data.collegeName, fitClassification: data.fit, deadlineType: data.deadlineType, deadlineDate: data.deadlineDate },
       });
     },
-    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["student-applications", selectedStudentId] }); toast.success("Application added"); setShowAddForm(false); },
-    onError: () => toast.error("Failed to add application"),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["student-applications", selectedStudentId] }); toast.success(t("ui.collegeApps.toast.added")); setShowAddForm(false); },
+    onError: () => toast.error(t("ui.collegeApps.toast.addFailed")),
   });
 
   const totalApps = applications.length;
@@ -114,19 +116,19 @@ export default function CollegeAppsPage() {
     <div className="space-y-6">
       {/* Header */}
       <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}>
-        <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-tertiary)" }}>College Prep</p>
-        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em", marginTop: 2 }}>College Applications</h1>
-        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2, maxWidth: 600 }}>Track and manage college applications for your students. Monitor deadlines, statuses, and outcomes.</p>
+        <p style={{ fontSize: 10, textTransform: "uppercase", letterSpacing: "0.2em", fontWeight: 700, color: "var(--admin-font-tertiary)" }}>{t("nav.collegePrep")}</p>
+        <h1 style={{ fontSize: 20, fontWeight: 600, color: "var(--admin-font-primary)", letterSpacing: "-0.01em", marginTop: 2 }}>{t("ui.collegeApps.title")}</h1>
+        <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2, maxWidth: 600 }}>{t("ui.collegeApps.subtitle")}</p>
       </motion.div>
 
       {/* Stats */}
       <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
         style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12 }}>
         {[
-          { label: "TOTAL APPLICATIONS", value: totalApps, icon: GraduationCap, color: "var(--admin-font-primary)" },
-          { label: "SUBMITTED", value: submittedCount, icon: Send, color: "var(--admin-accent-blue)" },
-          { label: "ACCEPTED", value: acceptedCount, icon: CheckCircle2, color: "#10b981" },
-          { label: "PENDING", value: pendingCount, icon: Clock, color: "#f59e0b" },
+          { label: t("ui.collegeApps.stats.total"), value: totalApps, icon: GraduationCap, color: "var(--admin-font-primary)" },
+          { label: t("ui.collegeApps.stats.submitted"), value: submittedCount, icon: Send, color: "var(--admin-accent-blue)" },
+          { label: t("ui.collegeApps.stats.accepted"), value: acceptedCount, icon: CheckCircle2, color: "#10b981" },
+          { label: t("ui.collegeApps.stats.pending"), value: pendingCount, icon: Clock, color: "#f59e0b" },
         ].map((stat) => (
           <div key={stat.label} style={{ padding: 16, borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
@@ -143,11 +145,11 @@ export default function CollegeAppsPage() {
         style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Users style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)" }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>Student:</span>
+          <span style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>{t("ui.collegePrep.studentLabel")}</span>
         </div>
         <select value={selectedStudentId} onChange={(e) => { setSelectedStudentId(e.target.value); setShowAddForm(false); }}
           style={{ height: 36, borderRadius: 8, padding: "0 12px", fontSize: 13, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", color: "var(--admin-font-primary)", outline: "none", minWidth: 240, fontFamily: "inherit" }}>
-          <option value="">Select a student...</option>
+          <option value="">{t("ui.collegePrep.selectStudent")}</option>
           {students.map((s) => <option key={s.id} value={s.id}>{s.name}</option>)}
         </select>
         {studentsLoading && <Loader2 style={{ width: 16, height: 16, color: "var(--admin-font-tertiary)", animation: "spin 1s linear infinite" }} />}
@@ -159,7 +161,7 @@ export default function CollegeAppsPage() {
           <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 12 }}>
             <button onClick={() => setShowAddForm(!showAddForm)}
               style={{ height: 34, borderRadius: 6, padding: "0 14px", fontSize: 12, fontWeight: 600, display: "flex", alignItems: "center", gap: 6, background: "#102B47", color: "#fff", border: "none", cursor: "pointer" }}>
-              <Plus style={{ width: 14, height: 14 }} /> Add Application
+              <Plus style={{ width: 14, height: 14 }} /> {t("ui.collegeApps.addApplication")}
             </button>
           </div>
 
@@ -167,7 +169,15 @@ export default function CollegeAppsPage() {
 
           <div style={{ borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)", overflow: "hidden" }}>
             <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1fr 0.8fr 0.8fr 1fr 1fr 0.6fr", padding: "10px 16px", borderBottom: "1px solid var(--admin-border-light)", background: "var(--admin-bg-hover)" }}>
-              {["COLLEGE", "CHANCES", "FIT", "DEADLINE TYPE", "DEADLINE DATE", "STATUS", "ACTIONS"].map((h) => (
+              {[
+                t("ui.collegeApps.columns.college"),
+                t("ui.collegeApps.columns.chances"),
+                t("ui.collegeApps.columns.fit"),
+                t("ui.collegeApps.columns.deadlineType"),
+                t("ui.collegeApps.columns.deadlineDate"),
+                t("ui.collegeApps.columns.status"),
+                t("ui.collegeApps.columns.actions"),
+              ].map((h) => (
                 <span key={h} style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-light)" }}>{h}</span>
               ))}
             </div>
@@ -178,7 +188,7 @@ export default function CollegeAppsPage() {
             ) : applications.length === 0 ? (
               <div style={{ padding: 48, textAlign: "center" }}>
                 <GraduationCap style={{ width: 32, height: 32, color: "var(--admin-font-light)", margin: "0 auto 12px" }} />
-                <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>No applications yet. Click &quot;Add Application&quot; to get started.</p>
+                <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("ui.collegeApps.empty")}</p>
               </div>
             ) : (
               applications.map((app, i) => (
@@ -196,7 +206,7 @@ export default function CollegeAppsPage() {
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.15 }}
           style={{ padding: 48, textAlign: "center", borderRadius: 10, border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
           <Users style={{ width: 32, height: 32, color: "var(--admin-font-light)", margin: "0 auto 12px" }} />
-          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>Select a student above to view and manage their college applications.</p>
+          <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>{t("ui.collegeApps.selectStudentHint")}</p>
         </motion.div>
       )}
     </div>

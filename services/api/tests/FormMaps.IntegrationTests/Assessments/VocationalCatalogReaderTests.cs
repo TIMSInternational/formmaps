@@ -97,6 +97,75 @@ public sealed class VocationalCatalogReaderTests : IClassFixture<VocationalWrite
         Assert.Equal("Pregunta 3 parent", parent[2].Text);       // q3: parent variant
     }
 
+    [Fact]
+    public async Task GetQuestionnaire_resolves_english_per_field_with_spanish_fallback()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var instrumentId = await SeedInstrumentAsync(conn, "v1");
+        var d1 = await SeedDimensionAsync(conn, instrumentId, "d1", "Dim1", weight: 1, order: 0,
+            scaleAnchors: """["nunca","siempre"]""", scaleAnchorsEn: """["never","always"]""");
+        var d2 = await SeedDimensionAsync(conn, instrumentId, "d2", "Dim2", weight: 1, order: 1,
+            scaleAnchors: """["bajo","alto"]""");                                    // no English anchors
+        // q1: inherits d1 (translated). q2: inherits d2 (untranslated). q3: own Spanish scale, no own English —
+        // must NOT borrow d1's English. q4: own scale + own English. q5: options, one label untranslated.
+        var q1 = await SeedQuestionAsync(conn, instrumentId, 1, "dimension", "likert", 0, d1, null, null);
+        await SeedVariantAsync(conn, q1, "self", "¿Pregunta 1?", "Question 1?");
+        var q2 = await SeedQuestionAsync(conn, instrumentId, 2, "dimension", "likert", 1, d2, null, null);
+        await SeedVariantAsync(conn, q2, "self", "¿Pregunta 2?");                        // no English text
+        var q3 = await SeedQuestionAsync(conn, instrumentId, 3, "group_specific", "likert", 2, d1, null, """["poco","mucho"]""");
+        await SeedVariantAsync(conn, q3, "self", "¿Pregunta 3?", "   ");                 // blank English → Spanish
+        var q4 = await SeedQuestionAsync(conn, instrumentId, 4, "group_specific", "likert", 3, null, null,
+            """["poco","mucho"]""", scaleAnchorsEn: """["a little","a lot"]""");
+        await SeedVariantAsync(conn, q4, "self", "¿Pregunta 4?", "Question 4?");
+        var q5 = await SeedQuestionAsync(conn, instrumentId, 5, "prioritization", "multi_select", 4, null, null, null,
+            options: """[{"value":"a","labelEs":"Uno","labelEn":"One"},{"value":"b","labelEs":"Dos"}]""");
+        await SeedVariantAsync(conn, q5, "self", "Selecciona:", "Select:");
+
+        var reader = MakeReader();
+        var en = await reader.GetQuestionnaireAsync(Ctx(), "self", "en");
+        var es = await reader.GetQuestionnaireAsync(Ctx(), "self");
+
+        Assert.Equal(new[] { "Question 1?", "¿Pregunta 2?", "¿Pregunta 3?", "Question 4?", "Select:" }, en.Select(i => i.Text));
+        Assert.Equal(new[] { "¿Pregunta 1?", "¿Pregunta 2?", "¿Pregunta 3?", "¿Pregunta 4?", "Selecciona:" }, es.Select(i => i.Text));
+        Assert.Equal(new[] { "never", "always" }, Strings(en[0].ScaleAnchors));
+        Assert.Equal(new[] { "bajo", "alto" }, Strings(en[1].ScaleAnchors));
+        Assert.Equal(new[] { "poco", "mucho" }, Strings(en[2].ScaleAnchors));   // own Spanish, never d1's English
+        Assert.Equal(new[] { "a little", "a lot" }, Strings(en[3].ScaleAnchors));
+        Assert.Equal(new[] { "nunca", "siempre" }, Strings(es[0].ScaleAnchors));
+        Assert.Equal(new[] { "poco", "mucho" }, Strings(es[3].ScaleAnchors));
+
+        // Options keep value/labelEs/labelEn and gain a resolved label; values and order are untouched.
+        Assert.Equal(new[] { "a", "b" }, en[4].Options.EnumerateArray().Select(o => o.GetProperty("value").GetString()));
+        Assert.Equal(new[] { "One", "Dos" }, en[4].Options.EnumerateArray().Select(o => o.GetProperty("label").GetString()));
+        Assert.Equal(new[] { "Uno", "Dos" }, es[4].Options.EnumerateArray().Select(o => o.GetProperty("label").GetString()));
+        Assert.Equal("Uno", en[4].Options[0].GetProperty("labelEs").GetString());
+        Assert.Equal("One", es[4].Options[0].GetProperty("labelEn").GetString());
+    }
+
+    [Fact]
+    public async Task GetInstrument_carries_english_name_and_dimension_anchors()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var instrumentId = await SeedInstrumentAsync(conn, "v1");
+        await using (var cmd = new NpgsqlCommand("""UPDATE "vocational_instruments" SET "nameEn" = 'Test EN' WHERE "id" = @id""", conn))
+        {
+            cmd.Parameters.AddWithValue("id", instrumentId);
+            await cmd.ExecuteNonQueryAsync();
+        }
+
+        await SeedDimensionAsync(conn, instrumentId, "d1", "Dim1", 1, 0, """["a1","a2"]""", scaleAnchorsEn: """["e1","e2"]""");
+        await SeedDimensionAsync(conn, instrumentId, "d2", "Dim2", 1, 1, """["b1","b2"]""");
+
+        var dto = await MakeReader().GetInstrumentAsync(Ctx());
+
+        Assert.Equal("Test EN", dto!.NameEn);
+        Assert.Equal("Dim EN", dto.Dimensions[0].NameEn);
+        Assert.Equal(new[] { "e1", "e2" }, Strings(dto.Dimensions[0].ScaleAnchorsEn));
+        Assert.Equal(JsonValueKind.Null, dto.Dimensions[1].ScaleAnchorsEn.ValueKind);
+    }
+
+    private static string?[] Strings(JsonElement array) => array.EnumerateArray().Select(e => e.GetString()).ToArray();
+
     // ========================================================================= helpers
 
     private VocationalReader MakeReader() =>
@@ -124,14 +193,16 @@ public sealed class VocationalCatalogReaderTests : IClassFixture<VocationalWrite
     }
 
     private static async Task<string> SeedDimensionAsync(
-        NpgsqlConnection conn, string instrumentId, string key, string nameEs, int weight, int order, string scaleAnchors)
+        NpgsqlConnection conn, string instrumentId, string key, string nameEs, int weight, int order, string scaleAnchors,
+        string? scaleAnchorsEn = null)
     {
         var id = "vd-" + Guid.NewGuid().ToString("N");
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "vocational_dimensions" ("id","instrumentId","key","nameEs","nameEn","weight","scaleAnchors","order")
-            VALUES (@id, @inst, @key, @nameEs, 'Dim EN', @weight, @scale::jsonb, @order)
+            INSERT INTO "vocational_dimensions" ("id","instrumentId","key","nameEs","nameEn","weight","scaleAnchors","scaleAnchorsEn","order")
+            VALUES (@id, @inst, @key, @nameEs, 'Dim EN', @weight, @scale::jsonb, @scaleEn::jsonb, @order)
             """, conn);
+        cmd.Parameters.AddWithValue("scaleEn", (object?)scaleAnchorsEn ?? DBNull.Value);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("inst", instrumentId);
         cmd.Parameters.AddWithValue("key", key);
@@ -145,15 +216,17 @@ public sealed class VocationalCatalogReaderTests : IClassFixture<VocationalWrite
 
     private static async Task<string> SeedQuestionAsync(
         NpgsqlConnection conn, string instrumentId, int number, string block, string type, int order,
-        string? dimensionId, string? group, string? scaleAnchors, string? area = null, string? options = null)
+        string? dimensionId, string? group, string? scaleAnchors, string? area = null, string? options = null,
+        string? scaleAnchorsEn = null)
     {
         var id = "vq-" + Guid.NewGuid().ToString("N");
         await using var cmd = new NpgsqlCommand(
             """
             INSERT INTO "vocational_questions"
-                ("id","instrumentId","dimensionId","block","number","type","area","scaleAnchors","options","group","order")
-            VALUES (@id, @inst, @dim, @block, @number, @type, @area, @scale::jsonb, @options::jsonb, @group, @order)
+                ("id","instrumentId","dimensionId","block","number","type","area","scaleAnchors","scaleAnchorsEn","options","group","order")
+            VALUES (@id, @inst, @dim, @block, @number, @type, @area, @scale::jsonb, @scaleEn::jsonb, @options::jsonb, @group, @order)
             """, conn);
+        cmd.Parameters.AddWithValue("scaleEn", (object?)scaleAnchorsEn ?? DBNull.Value);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("inst", instrumentId);
         cmd.Parameters.AddWithValue("dim", (object?)dimensionId ?? DBNull.Value);
@@ -169,13 +242,14 @@ public sealed class VocationalCatalogReaderTests : IClassFixture<VocationalWrite
         return id;
     }
 
-    private static async Task SeedVariantAsync(NpgsqlConnection conn, string questionId, string group, string textEs)
+    private static async Task SeedVariantAsync(NpgsqlConnection conn, string questionId, string group, string textEs, string? textEn = null)
     {
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "vocational_question_variants" ("id","questionId","group","textEs","isActive")
-            VALUES (@id, @qid, @group, @textEs, true)
+            INSERT INTO "vocational_question_variants" ("id","questionId","group","textEs","textEn","isActive")
+            VALUES (@id, @qid, @group, @textEs, @textEn, true)
             """, conn);
+        cmd.Parameters.AddWithValue("textEn", (object?)textEn ?? DBNull.Value);
         cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
         cmd.Parameters.AddWithValue("qid", questionId);
         cmd.Parameters.AddWithValue("group", group);

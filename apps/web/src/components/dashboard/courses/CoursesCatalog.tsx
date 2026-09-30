@@ -160,9 +160,9 @@ export function CoursesCatalog() {
         [courseId]: { ...prev[courseId], status: "completed" },
       }));
     } catch {
-      toast.error("Failed to mark course as completed");
+      toast.error(t("components.CoursesCatalog.markCompletedError"));
     }
-  }, []);
+  }, [t]);
 
   const handleClearFilters = useCallback(() => {
     setFilters({});
@@ -186,12 +186,12 @@ export function CoursesCatalog() {
       {/* Active filter pills */}
       {(() => {
         const pills: FilterPill[] = [];
-        if (filters.search) pills.push({ key: "search", label: "Search", value: filters.search });
-        if (filters.category?.length) pills.push({ key: "category", label: "Category", value: filters.category.join(", ") });
-        if (filters.language?.length) pills.push({ key: "language", label: "Language", value: filters.language.join(", ") });
-        if (filters.difficulty?.length) pills.push({ key: "difficulty", label: "Level", value: filters.difficulty.join(", ") });
-        if (filters.country?.length) pills.push({ key: "country", label: "Country", value: filters.country.join(", ") });
-        if (sortBy !== "recommended") pills.push({ key: "sortBy", label: "Sort", value: sortBy });
+        if (filters.search) pills.push({ key: "search", label: t("components.CoursesCatalog.pills.search"), value: filters.search });
+        if (filters.category?.length) pills.push({ key: "category", label: t("courses.category"), value: filters.category.join(", ") });
+        if (filters.language?.length) pills.push({ key: "language", label: t("courses.language"), value: filters.language.join(", ") });
+        if (filters.difficulty?.length) pills.push({ key: "difficulty", label: t("components.CoursesCatalog.pills.level"), value: filters.difficulty.join(", ") });
+        if (filters.country?.length) pills.push({ key: "country", label: t("courses.country"), value: filters.country.join(", ") });
+        if (sortBy !== "recommended") pills.push({ key: "sortBy", label: t("components.CoursesCatalog.pills.sort"), value: sortBy });
         return (
           <ActiveFilterPills
             pills={pills}

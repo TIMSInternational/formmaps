@@ -11,6 +11,7 @@ import {
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useTranslation } from "react-i18next";
 import { ChecklistItem, CATEGORY_LABELS, CATEGORY_ORDER } from "./types";
 import { FormInput, LoadingRow, EmptyState } from "./shared";
 
@@ -41,6 +42,7 @@ export function ChecklistTab({
   onSetNewItem,
   onAddItem,
 }: ChecklistTabProps) {
+  const { t } = useTranslation();
   return (
     <motion.div
       key="checklist"
@@ -52,7 +54,7 @@ export function ChecklistTab({
       {/* Action bar */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <span className="text-xs font-semibold" style={{ color: "var(--admin-font-secondary)" }}>
-          {checklist.filter((c) => c.isCompleted).length}/{checklist.length} completed
+          {t("studentUi.applications.checklist.completedCount", { done: checklist.filter((c) => c.isCompleted).length, total: checklist.length })}
         </span>
         <div className="flex gap-2">
           <button
@@ -66,7 +68,7 @@ export function ChecklistTab({
             }}
           >
             {generatingChecklist ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
-            Generate Checklist
+            {t("studentUi.applications.checklist.generate")}
           </button>
           <button
             onClick={() => onSetShowAddItem(true)}
@@ -74,7 +76,7 @@ export function ChecklistTab({
             style={{ background: "var(--admin-accent-blue)" }}
           >
             <Plus className="h-3.5 w-3.5" />
-            Add Item
+            {t("studentUi.applications.checklist.addItem")}
           </button>
         </div>
       </div>
@@ -94,7 +96,7 @@ export function ChecklistTab({
             >
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold" style={{ color: "var(--admin-font-primary)" }}>
-                  New Item
+                  {t("studentUi.applications.checklist.newItem")}
                 </span>
                 <button onClick={() => onSetShowAddItem(false)}>
                   <X className="h-4 w-4" style={{ color: "var(--admin-font-tertiary)" }} />
@@ -102,7 +104,7 @@ export function ChecklistTab({
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <FormInput
-                  placeholder="Item name *"
+                  placeholder={t("studentUi.applications.checklist.itemNamePlaceholder")}
                   value={newItem.name}
                   onChange={(v) => onSetNewItem((p) => ({ ...p, name: v }))}
                 />
@@ -118,18 +120,18 @@ export function ChecklistTab({
                     }}
                   >
                     {CATEGORY_ORDER.map((c) => (
-                      <option key={c} value={c}>{CATEGORY_LABELS[c]}</option>
+                      <option key={c} value={c}>{t(CATEGORY_LABELS[c])}</option>
                     ))}
                   </select>
                 </div>
                 <FormInput
-                  placeholder="Due date"
+                  placeholder={t("studentUi.applications.dueDatePlaceholder")}
                   type="date"
                   value={newItem.dueDate}
                   onChange={(v) => onSetNewItem((p) => ({ ...p, dueDate: v }))}
                 />
                 <FormInput
-                  placeholder="Notes (optional)"
+                  placeholder={t("studentUi.applications.checklist.notesPlaceholder")}
                   value={newItem.notes}
                   onChange={(v) => onSetNewItem((p) => ({ ...p, notes: v }))}
                 />
@@ -141,14 +143,14 @@ export function ChecklistTab({
                   className="px-4 py-1.5 rounded-lg text-xs font-medium text-white disabled:opacity-40"
                   style={{ background: "var(--admin-accent-blue)" }}
                 >
-                  Add
+                  {t("studentUi.applications.add")}
                 </button>
                 <button
                   onClick={() => onSetShowAddItem(false)}
                   className="px-4 py-1.5 rounded-lg text-xs"
                   style={{ color: "var(--admin-font-tertiary)", border: "1px solid var(--admin-border-default)" }}
                 >
-                  Cancel
+                  {t("common.cancel")}
                 </button>
               </div>
             </div>
@@ -162,7 +164,7 @@ export function ChecklistTab({
       ) : checklist.length === 0 ? (
         <EmptyState
           icon={<CheckSquare className="h-8 w-8" />}
-          message="No checklist items yet. Generate an AI checklist or add items manually."
+          message={t("studentUi.applications.checklist.empty")}
         />
       ) : (
         <div className="space-y-4">
@@ -176,7 +178,7 @@ export function ChecklistTab({
                     className="text-[10px] uppercase tracking-wider font-bold"
                     style={{ color: "var(--admin-font-tertiary)" }}
                   >
-                    {CATEGORY_LABELS[cat]}
+                    {t(CATEGORY_LABELS[cat])}
                   </span>
                   <span className="text-[10px]" style={{ color: "var(--admin-font-light)" }}>
                     {done}/{items.length}

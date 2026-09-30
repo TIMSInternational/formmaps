@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "motion/react";
+import { useTranslation } from "react-i18next";
 import { Save, Loader2 } from "lucide-react";
 import { TrackedApplication } from "@/services/applicationService";
 import { InfoRow } from "./shared";
@@ -16,6 +17,7 @@ interface OverviewTabProps {
 }
 
 export function OverviewTab({ app, notes, notesDirty, savingNotes, onNotesChange, onSaveNotes }: OverviewTabProps) {
+  const { t } = useTranslation();
   const fit = fitBadge(app.matchScore);
 
   return (
@@ -31,22 +33,22 @@ export function OverviewTab({ app, notes, notesDirty, savingNotes, onNotesChange
         className="rounded-xl p-5 grid grid-cols-2 sm:grid-cols-3 gap-5"
         style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)" }}
       >
-        <InfoRow label="Name" value={app.name} />
-        <InfoRow label="Type" value={app.type ?? "—"} />
-        <InfoRow label="Location" value={app.location ?? "—"} />
-        <InfoRow label="Status" value={COLUMN_LABELS[app.column] ?? app.column} />
-        <InfoRow label="Deadline" value={app.deadline ?? "—"} />
-        {app.matchScore && <InfoRow label="Match Score" value={`${app.matchScore}%`} />}
+        <InfoRow label={t("studentUi.applications.overview.name")} value={app.name} />
+        <InfoRow label={t("studentUi.applications.overview.type")} value={app.type ?? "—"} />
+        <InfoRow label={t("studentUi.applications.overview.location")} value={app.location ?? "—"} />
+        <InfoRow label={t("studentUi.applications.overview.status")} value={COLUMN_LABELS[app.column] ? t(COLUMN_LABELS[app.column]) : app.column} />
+        <InfoRow label={t("studentUi.applications.overview.deadline")} value={app.deadline ?? "—"} />
+        {app.matchScore && <InfoRow label={t("studentUi.applications.overview.matchScore")} value={`${app.matchScore}%`} />}
         {fit && (
           <div className="flex flex-col gap-1">
             <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--admin-font-tertiary)" }}>
-              Fit
+              {t("studentUi.applications.overview.fit")}
             </span>
             <span
               className="text-xs font-semibold px-2 py-0.5 rounded-full w-fit"
               style={{ background: fit.bg, color: fit.color }}
             >
-              {fit.label}
+              {t(fit.label)}
             </span>
           </div>
         )}
@@ -59,7 +61,7 @@ export function OverviewTab({ app, notes, notesDirty, savingNotes, onNotesChange
       >
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold" style={{ color: "var(--admin-font-primary)" }}>
-            Notes
+            {t("studentUi.applications.overview.notes")}
           </span>
           {notesDirty && (
             <button
@@ -69,13 +71,13 @@ export function OverviewTab({ app, notes, notesDirty, savingNotes, onNotesChange
               style={{ background: "var(--admin-accent-blue)" }}
             >
               {savingNotes ? <Loader2 className="h-3 w-3 animate-spin" /> : <Save className="h-3 w-3" />}
-              Save
+              {t("common.save")}
             </button>
           )}
         </div>
         <textarea
           rows={5}
-          placeholder="Add notes about this application..."
+          placeholder={t("studentUi.applications.overview.notesPlaceholder")}
           value={notes}
           onChange={(e) => onNotesChange(e.target.value)}
           className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-none"

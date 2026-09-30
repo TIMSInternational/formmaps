@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { Trans, useTranslation } from "react-i18next";
 
 interface ExperienceForm {
   jobTitle: string;
@@ -28,6 +29,7 @@ const initialExperienceForm: ExperienceForm = {
 };
 
 export function ExperienceStep() {
+  const { t } = useTranslation();
   const { resumeBuilder, addExperience, updateExperience, removeExperience } =
     useGlobalStore();
   const { experience } = resumeBuilder.data;
@@ -101,11 +103,13 @@ export function ExperienceStep() {
     >
       <div>
         <h2 className="text-xl font-semibold text-gray-900 mb-2">
-          Work Experience
+          {t("resumeBuilder.experienceStep.title", "Work Experience")}
         </h2>
         <p className="text-sm text-gray-600">
-          Add your professional experience, starting with your most recent
-          position.
+          {t(
+            "resumeBuilder.experienceStep.subtitle",
+            "Add your professional experience, starting with your most recent position."
+          )}
         </p>
       </div>
 
@@ -134,46 +138,73 @@ export function ExperienceStep() {
             </div>
             <div className="flex-1">
               <h4 className="font-medium text-blue-900 mb-2">
-                New to the workforce? No problem!
+                {t("resumeBuilder.experienceStep.fresherTitle", "New to the workforce? No problem!")}
               </h4>
               <p className="text-sm text-blue-700 mb-3">
-                Work experience is optional. You can include any of these
-                instead:
+                {t(
+                  "resumeBuilder.experienceStep.fresherIntro",
+                  "Work experience is optional. You can include any of these instead:"
+                )}
               </p>
               <ul className="text-sm text-blue-700 space-y-1 mb-3">
                 <li>
-                  • <strong>Internships</strong> - Paid or unpaid work
-                  experience
+                  •{" "}
+                  <Trans
+                    i18nKey="resumeBuilder.experienceStep.tips.internships"
+                    defaults="<0>Internships</0> - Paid or unpaid work experience"
+                    components={[<strong key="0" />]}
+                  />
                 </li>
                 <li>
-                  • <strong>Part-time jobs</strong> - Retail, food service,
-                  tutoring, etc.
+                  •{" "}
+                  <Trans
+                    i18nKey="resumeBuilder.experienceStep.tips.partTime"
+                    defaults="<0>Part-time jobs</0> - Retail, food service, tutoring, etc."
+                    components={[<strong key="0" />]}
+                  />
                 </li>
                 <li>
-                  • <strong>Freelance work</strong> - Any project-based work
+                  •{" "}
+                  <Trans
+                    i18nKey="resumeBuilder.experienceStep.tips.freelance"
+                    defaults="<0>Freelance work</0> - Any project-based work"
+                    components={[<strong key="0" />]}
+                  />
                 </li>
                 <li>
-                  • <strong>Volunteer work</strong> - Community service or NGO
-                  work
+                  •{" "}
+                  <Trans
+                    i18nKey="resumeBuilder.experienceStep.tips.volunteer"
+                    defaults="<0>Volunteer work</0> - Community service or NGO work"
+                    components={[<strong key="0" />]}
+                  />
                 </li>
                 <li>
-                  • <strong>Personal projects</strong> - Websites, apps, or
-                  other creations
+                  •{" "}
+                  <Trans
+                    i18nKey="resumeBuilder.experienceStep.tips.personalProjects"
+                    defaults="<0>Personal projects</0> - Websites, apps, or other creations"
+                    components={[<strong key="0" />]}
+                  />
                 </li>
                 <li>
-                  • <strong>Leadership roles</strong> - Club president, team
-                  captain, etc.
+                  •{" "}
+                  <Trans
+                    i18nKey="resumeBuilder.experienceStep.tips.leadership"
+                    defaults="<0>Leadership roles</0> - Club president, team captain, etc."
+                    components={[<strong key="0" />]}
+                  />
                 </li>
               </ul>
               <div className="flex items-center justify-between">
                 <p className="text-xs text-blue-600">
-                  Focus on transferable skills and achievements!
+                  {t("resumeBuilder.experienceStep.fresherFocus", "Focus on transferable skills and achievements!")}
                 </p>
                 <button
                   onClick={() => setShowFresherTips(false)}
                   className="text-xs text-blue-600 hover:text-blue-800 underline"
                 >
-                  Got it, hide this
+                  {t("resumeBuilder.experienceStep.hideTips", "Got it, hide this")}
                 </button>
               </div>
             </div>
@@ -195,7 +226,10 @@ export function ExperienceStep() {
                     {exp.company} • {exp.location}
                   </p>
                   <p className="text-xs text-gray-500">
-                    {exp.startDate} - {exp.current ? "Present" : exp.endDate}
+                    {exp.startDate} -{" "}
+                    {exp.current
+                      ? t("resumeBuilder.experienceStep.present", "Present")
+                      : exp.endDate}
                   </p>
                 </div>
                 <div className="flex space-x-2">
@@ -204,7 +238,7 @@ export function ExperienceStep() {
                     variant="outline"
                     onClick={() => handleEdit(exp)}
                   >
-                    Edit
+                    {t("common.edit", "Edit")}
                   </Button>
                   <Button
                     size="sm"
@@ -212,7 +246,7 @@ export function ExperienceStep() {
                     onClick={() => removeExperience(exp.id)}
                     className="text-red-600 hover:text-red-700"
                   >
-                    Remove
+                    {t("resumeBuilder.experienceStep.remove", "Remove")}
                   </Button>
                 </div>
               </div>
@@ -225,44 +259,46 @@ export function ExperienceStep() {
       {isAdding ? (
         <div className="border border-gray-200 rounded-lg p-4 space-y-4">
           <h3 className="font-semibold text-gray-900">
-            {editingId ? "Edit Experience" : "Add New Experience"}
+            {editingId
+              ? t("resumeBuilder.experienceStep.editExperience", "Edit Experience")
+              : t("resumeBuilder.experienceStep.addNewExperience", "Add New Experience")}
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label htmlFor="jobTitle">Position/Role *</Label>
+              <Label htmlFor="jobTitle">{t("resumeBuilder.experienceStep.position", "Position/Role *")}</Label>
               <Input
                 id="jobTitle"
                 value={formData.jobTitle}
                 onChange={(e) => handleInputChange("jobTitle", e.target.value)}
-                placeholder="e.g., Software Intern, Sales Associate, Volunteer Coordinator"
+                placeholder={t("resumeBuilder.experienceStep.positionPlaceholder", "e.g., Software Intern, Sales Associate, Volunteer Coordinator")}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="company">Organization *</Label>
+              <Label htmlFor="company">{t("resumeBuilder.experienceStep.organization", "Organization *")}</Label>
               <Input
                 id="company"
                 value={formData.company}
                 onChange={(e) => handleInputChange("company", e.target.value)}
-                placeholder="e.g., Tech Corp, Local NGO, Freelance Client"
+                placeholder={t("resumeBuilder.experienceStep.organizationPlaceholder", "e.g., Tech Corp, Local NGO, Freelance Client")}
                 required
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="location">Location</Label>
+              <Label htmlFor="location">{t("resumeBuilder.experienceStep.location", "Location")}</Label>
               <Input
                 id="location"
                 value={formData.location}
                 onChange={(e) => handleInputChange("location", e.target.value)}
-                placeholder="San Francisco, CA"
+                placeholder={t("resumeBuilder.experienceStep.locationPlaceholder", "San Francisco, CA")}
               />
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="startDate">Start Date</Label>
+              <Label htmlFor="startDate">{t("resumeBuilder.experienceStep.startDate", "Start Date")}</Label>
               <Input
                 id="startDate"
                 type="month"
@@ -272,7 +308,7 @@ export function ExperienceStep() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="current">Current Position</Label>
+              <Label htmlFor="current">{t("resumeBuilder.experienceStep.currentPosition", "Current Position")}</Label>
               <div className="flex items-center space-x-2">
                 <input
                   type="checkbox"
@@ -284,14 +320,14 @@ export function ExperienceStep() {
                   className="rounded border-gray-300"
                 />
                 <label htmlFor="current" className="text-sm text-gray-700">
-                  I currently work here
+                  {t("resumeBuilder.experienceStep.currentlyWorkHere", "I currently work here")}
                 </label>
               </div>
             </div>
 
             {!formData.current && (
               <div className="space-y-2">
-                <Label htmlFor="endDate">End Date</Label>
+                <Label htmlFor="endDate">{t("resumeBuilder.experienceStep.endDate", "End Date")}</Label>
                 <Input
                   id="endDate"
                   type="month"
@@ -303,7 +339,7 @@ export function ExperienceStep() {
           </div>
 
           <div className="space-y-2">
-            <Label>Job Description & Achievements</Label>
+            <Label>{t("resumeBuilder.experienceStep.descriptionLabel", "Job Description & Achievements")}</Label>
             {formData.description.map((desc, index) => (
               <div key={index} className="flex space-x-2">
                 <textarea
@@ -311,7 +347,7 @@ export function ExperienceStep() {
                   onChange={(e) =>
                     handleDescriptionChange(index, e.target.value)
                   }
-                  placeholder="• Describe your responsibilities and achievements..."
+                  placeholder={t("resumeBuilder.experienceStep.descriptionPlaceholder", "• Describe your responsibilities and achievements...")}
                   rows={2}
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-[#2E9098]"
                 />
@@ -320,6 +356,7 @@ export function ExperienceStep() {
                     size="sm"
                     variant="outline"
                     onClick={() => removeDescriptionBullet(index)}
+                    aria-label={t("resumeBuilder.experienceStep.removeBullet", "Remove bullet")}
                     className="text-red-600"
                   >
                     ✕
@@ -334,22 +371,24 @@ export function ExperienceStep() {
               onClick={addDescriptionBullet}
               className="mt-2"
             >
-              + Add Achievement
+              {t("resumeBuilder.experienceStep.addAchievement", "+ Add Achievement")}
             </Button>
           </div>
 
           <div className="flex space-x-2">
             <Button onClick={handleSubmit}>
-              {editingId ? "Update Experience" : "Add Experience"}
+              {editingId
+                ? t("resumeBuilder.experienceStep.updateExperience", "Update Experience")
+                : t("resumeBuilder.experienceStep.addExperience", "Add Experience")}
             </Button>
             <Button variant="outline" onClick={handleCancel}>
-              Cancel
+              {t("common.cancel", "Cancel")}
             </Button>
           </div>
         </div>
       ) : (
         <Button onClick={() => setIsAdding(true)} className="w-full">
-          + Add Work Experience
+          {t("resumeBuilder.experienceStep.addWorkExperience", "+ Add Work Experience")}
         </Button>
       )}
     </motion.div>

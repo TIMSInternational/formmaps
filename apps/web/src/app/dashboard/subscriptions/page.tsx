@@ -97,7 +97,7 @@ export default function SubscriptionsPage() {
       if (!url) throw new Error("No portal URL");
       window.location.href = url;
     } catch {
-      toast.error("Could not open the billing portal. Please try again.");
+      toast.error(t("studentUi.subscriptions.portalFailed"));
       setPortalLoading(false);
     }
   };

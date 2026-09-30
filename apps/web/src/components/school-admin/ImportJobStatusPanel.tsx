@@ -4,6 +4,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, CheckCircle2, Clock, Download, Loader2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useImportJobPolling, triggerFailureDownload } from "@/hooks/useImportJobPolling";
 
 type ImportType = "grades" | "courses";
@@ -15,6 +16,7 @@ interface Props {
 }
 
 export default function ImportJobStatusPanel({ type, jobId, onDone }: Props) {
+  const { t } = useTranslation();
   const { data, isLoading, isError } = useImportJobPolling(type, jobId);
 
   const status = data?.status ?? "pending";
@@ -45,7 +47,7 @@ export default function ImportJobStatusPanel({ type, jobId, onDone }: Props) {
         <div className="flex items-center gap-2">
           <StatusIcon />
           <span className="text-sm font-medium text-gray-700">
-            Import Job{" "}
+            {t("components.importJobStatusPanel.title")}{" "}
             <span className="font-mono text-xs text-gray-400">#{jobId.slice(-8)}</span>
           </span>
         </div>
@@ -59,7 +61,7 @@ export default function ImportJobStatusPanel({ type, jobId, onDone }: Props) {
                 : "bg-yellow-100 text-yellow-700"
             }`}
         >
-          {status.replace("_", " ")}
+          {t(`components.importJobStatusPanel.status.${status}`, { defaultValue: status.replace("_", " ") })}
         </Badge>
       </div>
 
@@ -74,10 +76,10 @@ export default function ImportJobStatusPanel({ type, jobId, onDone }: Props) {
       {/* Counts */}
       {totalRows > 0 && (
         <div className="flex items-center gap-4 text-xs text-gray-600">
-          <span>Total rows: <strong>{totalRows}</strong></span>
-          <span className="text-green-600">✓ {successCount} imported</span>
+          <span>{t("components.importJobStatusPanel.totalRows")} <strong>{totalRows}</strong></span>
+          <span className="text-green-600">✓ {t("components.importJobStatusPanel.imported", { count: successCount })}</span>
           {failureCount > 0 && (
-            <span className="text-red-600">✗ {failureCount} failed</span>
+            <span className="text-red-600">✗ {t("components.importJobStatusPanel.failed", { count: failureCount })}</span>
           )}
         </div>
       )}
@@ -87,7 +89,7 @@ export default function ImportJobStatusPanel({ type, jobId, onDone }: Props) {
       )}
 
       {isError && (
-        <p className="text-xs text-red-500">Failed to fetch job status. The server may not support polling yet.</p>
+        <p className="text-xs text-red-500">{t("components.importJobStatusPanel.fetchFailed")}</p>
       )}
 
       {/* Actions */}
@@ -101,12 +103,12 @@ export default function ImportJobStatusPanel({ type, jobId, onDone }: Props) {
               onClick={() => triggerFailureDownload(type, jobId)}
             >
               <Download className="h-3 w-3 mr-1.5" />
-              Download Failures CSV
+              {t("components.importJobStatusPanel.downloadFailures")}
             </Button>
           )}
           {onDone && (
             <Button size="sm" variant="outline" className="text-xs h-7" onClick={onDone}>
-              Dismiss
+              {t("components.importJobStatusPanel.dismiss")}
             </Button>
           )}
         </div>

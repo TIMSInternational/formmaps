@@ -1,4 +1,5 @@
 import { ResumeData } from '@/store/useGlobalStore';
+import i18n from '@/lib/i18n';
 
 export interface ValidationResult {
   isValid: boolean;
@@ -47,7 +48,7 @@ export function validateCareerField(careerField: string): ValidationResult {
   const missing: string[] = [];
 
   if (!careerField || careerField.trim() === '') {
-    missing.push('career field');
+    missing.push(i18n.t('resumeBuilder.validation.careerField', 'career field'));
   }
 
   return {
@@ -61,7 +62,7 @@ export function validateTemplate(template: string): ValidationResult {
   const missing: string[] = [];
 
   if (!template || template.trim() === '') {
-    missing.push('template selection');
+    missing.push(i18n.t('resumeBuilder.validation.templateSelection', 'template selection'));
   }
 
   return {
@@ -77,13 +78,13 @@ export function validatePersonalInfo(personalInfo: any): ValidationResult {
 
   required.forEach(field => {
     if (!personalInfo[field] || personalInfo[field].trim() === '') {
-      missing.push(field);
+      missing.push(i18n.t(`resumeBuilder.validation.personalFields.${field}`, field));
     }
   });
 
   // Email validation
   if (personalInfo.email && !isValidEmail(personalInfo.email)) {
-    missing.push('valid email');
+    missing.push(i18n.t('resumeBuilder.validation.validEmail', 'valid email'));
   }
 
   const totalFields = required.length + requiredFields[3].optional.length; // Fixed: Use step 3
@@ -106,16 +107,16 @@ export function validateExperience(experience: any[]): ValidationResult {
     // Check if each experience has required fields
     experience.forEach((exp, index) => {
       if (!exp.jobTitle || exp.jobTitle.trim() === '') {
-        missing.push(`job title for experience ${index + 1}`);
+        missing.push(i18n.t('resumeBuilder.validation.experienceJobTitle', 'job title for experience {{number}}', { number: index + 1 }));
       }
       if (!exp.company || exp.company.trim() === '') {
-        missing.push(`company for experience ${index + 1}`);
+        missing.push(i18n.t('resumeBuilder.validation.experienceCompany', 'company for experience {{number}}', { number: index + 1 }));
       }
       if (!exp.startDate || exp.startDate.trim() === '') {
-        missing.push(`start date for experience ${index + 1}`);
+        missing.push(i18n.t('resumeBuilder.validation.experienceStartDate', 'start date for experience {{number}}', { number: index + 1 }));
       }
       if (!exp.description || exp.description.length === 0) {
-        missing.push(`description for experience ${index + 1}`);
+        missing.push(i18n.t('resumeBuilder.validation.experienceDescription', 'description for experience {{number}}', { number: index + 1 }));
       }
     });
   }
@@ -135,17 +136,17 @@ export function validateEducation(education: any[]): ValidationResult {
   const missing: string[] = [];
   
   if (!education || education.length === 0) {
-    missing.push('at least one education entry');
+    missing.push(i18n.t('resumeBuilder.validation.atLeastOneEducation', 'at least one education entry'));
   } else {
     education.forEach((edu, index) => {
       if (!edu.degree || edu.degree.trim() === '') {
-        missing.push(`degree for education ${index + 1}`);
+        missing.push(i18n.t('resumeBuilder.validation.educationDegree', 'degree for education {{number}}', { number: index + 1 }));
       }
       if (!edu.institution || edu.institution.trim() === '') {
-        missing.push(`institution for education ${index + 1}`);
+        missing.push(i18n.t('resumeBuilder.validation.educationInstitution', 'institution for education {{number}}', { number: index + 1 }));
       }
       if (!edu.graduationDate || edu.graduationDate.trim() === '') {
-        missing.push(`graduation date for education ${index + 1}`);
+        missing.push(i18n.t('resumeBuilder.validation.educationGraduationDate', 'graduation date for education {{number}}', { number: index + 1 }));
       }
     });
   }
@@ -164,7 +165,12 @@ export function validateSkills(skills: any[]): ValidationResult {
   const missing: string[] = [];
   
   if (!skills || skills.length < requiredFields[6].minItems) {
-    missing.push(`at least ${requiredFields[6].minItems} skills`);
+    missing.push(
+      i18n.t('resumeBuilder.validation.minSkills', {
+        count: requiredFields[6].minItems,
+        defaultValue: 'at least {{count}} skills',
+      })
+    );
   }
 
   const completionPercentage = skills.length >= requiredFields[6].minItems ? 100 :

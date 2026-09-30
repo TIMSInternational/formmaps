@@ -3,6 +3,7 @@
 import { pdf } from '@react-pdf/renderer';
 import LIAReportPDF, { LIAReportData } from './LIAReportPDF';
 import PCAReportPDF, { PCAReportData, dummyPCAData } from './PCAReportPDF';
+import type { PdfLanguage } from './pdfI18n';
 
 // Report types
 export type ReportType = 'lia' | 'pca' | 'evaluation' | 'timeline' | 'coaching' | 'benchmark';
@@ -42,23 +43,23 @@ const fetchBackendReport = async (endpoint: string, filename: string): Promise<v
 // REQUIRES real assessment data — there is no dummy fallback. If a caller
 // fails to pass data we fail safe (log + no-op) rather than emitting a fake
 // "Alex Johnson" report.
-export const generateLIAReport = async (data?: LIAReportData): Promise<void> => {
+export const generateLIAReport = async (data?: LIAReportData, language?: PdfLanguage): Promise<void> => {
   if (!data) {
     console.error('generateLIAReport called without data — refusing to emit a placeholder report.');
     return;
   }
   const fileName = `LIA_Assessment_Report_${data.user.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
-  const blob = await pdf(<LIAReportPDF data={data} />).toBlob();
+  const blob = await pdf(<LIAReportPDF data={data} language={language} />).toBlob();
   downloadBlob(blob, fileName);
 };
 
 // Generate and download PCA Report
-export const generatePCAReport = async (data?: PCAReportData): Promise<void> => {
+export const generatePCAReport = async (data?: PCAReportData, language?: PdfLanguage): Promise<void> => {
   const reportData = data || dummyPCAData;
   const fileName = `PCA_Personality_Report_${reportData.user.name.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
 
   try {
-    const blob = await pdf(<PCAReportPDF data={reportData} />).toBlob();
+    const blob = await pdf(<PCAReportPDF data={reportData} language={language} />).toBlob();
     downloadBlob(blob, fileName);
   } catch (error) {
     throw error;
@@ -108,15 +109,15 @@ export const generateBenchmarkReport = async (userId?: string): Promise<void> =>
 };
 
 // Get preview URL for LIA Report (for iframe display). Requires real data.
-export const getLIAReportPreviewUrl = async (data: LIAReportData): Promise<string> => {
-  const blob = await pdf(<LIAReportPDF data={data} />).toBlob();
+export const getLIAReportPreviewUrl = async (data: LIAReportData, language?: PdfLanguage): Promise<string> => {
+  const blob = await pdf(<LIAReportPDF data={data} language={language} />).toBlob();
   return URL.createObjectURL(blob);
 };
 
 // Get preview URL for PCA Report (for iframe display)
-export const getPCAReportPreviewUrl = async (data?: PCAReportData): Promise<string> => {
+export const getPCAReportPreviewUrl = async (data?: PCAReportData, language?: PdfLanguage): Promise<string> => {
   const reportData = data || dummyPCAData;
-  const blob = await pdf(<PCAReportPDF data={reportData} />).toBlob();
+  const blob = await pdf(<PCAReportPDF data={reportData} language={language} />).toBlob();
   return URL.createObjectURL(blob);
 };
 
@@ -127,13 +128,15 @@ export const generateReport = async (
     liaData?: LIAReportData;
     pcaData?: PCAReportData;
     userId?: string;
+    /** Language for client-rendered PDFs (default: the current UI language). */
+    language?: PdfLanguage;
   }
 ): Promise<void> => {
   switch (type) {
     case 'lia':
-      return generateLIAReport(options?.liaData);
+      return generateLIAReport(options?.liaData, options?.language);
     case 'pca':
-      return generatePCAReport(options?.pcaData);
+      return generatePCAReport(options?.pcaData, options?.language);
     case 'evaluation':
       return generateEvaluationReport(options?.userId);
     case 'timeline':
