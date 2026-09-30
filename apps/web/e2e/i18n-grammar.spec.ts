@@ -129,6 +129,11 @@ const PAGE_CONTENT: Record<string, string[]> = {
   "/dashboard/book-coach": ["Financial Aid", "Career Planning", "Interview Prep"],
 };
 
+// Platform-admin catalog tables list catalog RECORDS (course categories, career titles) exactly as
+// stored — data in its source language, not UI copy. Only the other-language-copy check is skipped
+// there; raw keys, {{vars}}, regressions and English-sentence detection still apply.
+const DATA_TABLE_PAGES = new Set(["/admin/careers", "/admin/courses"]);
+
 function looksEnglish(line: string) {
   if (USER_CONTENT.some((u) => line.includes(u))) return false;
   const words = line.toLowerCase().match(/[a-z']+/g) ?? [];
@@ -205,7 +210,7 @@ function check(lines: string[], lang: Lang, pageName: string): Issue[] {
     if (keyPaths.has(line) || /^(common|student|parent|counselor|teacher|school_admin|coach|platform_owner):[\w.]+$/.test(line)) {
       add("raw-i18n-key", line);
     }
-    if (other.has(line)) add("other-language-copy", line);
+    if (other.has(line) && !DATA_TABLE_PAGES.has(pageName)) add("other-language-copy", line);
     if (bad.has(line)) add("known-grammar-regression", line);
     if (lang === "es" && looksEnglish(line)) add("english-sentence-in-es", line);
   }
