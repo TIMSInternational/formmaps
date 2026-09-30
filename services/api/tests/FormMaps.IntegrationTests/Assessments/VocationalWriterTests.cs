@@ -165,6 +165,33 @@ public sealed class VocationalWriterTests : IClassFixture<VocationalWriteDatabas
     }
 
     [Fact]
+    public async Task Recompute_scores_groups_stored_with_the_casing_the_web_app_writes()
+    {
+        // The web's create-group stores groupType as "Self" / "Parent" / "Teacher" / "SiblingFriend". The
+        // loader used to compare the raw value against the lowercase canonical names and dropped all of
+        // them, so a real student's 360 stayed not_ready. Mixed conventions must score like the legacy
+        // service (normalizeGroupType).
+        var userId = UserId();
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        var instrumentId = await SeedInstrumentAsync(conn, "v1");
+        await SeedDimensionAsync(conn, instrumentId, "d1", "Dim1", weight: 1);
+        await SeedQuestionAsync(conn, instrumentId, number: 1, type: "likert");
+        var self = await SeedGroupAsync(conn, userId, "Self");
+        await SeedLikertAsync(conn, self, "v1", "self", 1, "d1", rating: 5);
+        var parent = await SeedGroupAsync(conn, userId, "Parent");
+        await SeedLikertAsync(conn, parent, "v1", "parent", 1, "d1", rating: 4);
+        var friend = await SeedGroupAsync(conn, userId, "SiblingFriend");
+        await SeedLikertAsync(conn, friend, "v1", "sibling_friend", 1, "d1", rating: 2);
+
+        var (writer, _) = MakeWriter();
+        var outcome = await writer.RecomputeScoreAsync(Ctx(userId), userId);
+
+        Assert.Equal(VocationalRecomputeStatus.Ready, outcome.Status);
+        Assert.Equal(3, outcome.Ready!.RespondentCount);
+        Assert.Equal(new[] { "self", "parent", "sibling_friend" }, outcome.Ready!.GroupsIncluded);
+    }
+
+    [Fact]
     public async Task Recompute_counts_a_completed_group_with_no_active_responses()
     {
         // Legacy include returns a completed group even with zero responses → it still counts as present
