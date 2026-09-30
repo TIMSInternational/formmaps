@@ -2,7 +2,10 @@
 // flash 2-3 unrelated designs (indigo gradient → dark "Verifying access..." →
 // student-shaped skeleton); every full-screen wait now shows this brand frame.
 "use client";
+import { useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
+
+const noopSubscribe = () => () => {};
 
 export function LoadingSpinner({
   overlay = false,
@@ -11,7 +14,12 @@ export function LoadingSpinner({
   overlay?: boolean;
   label?: string;
 } = {}) {
-  const { t } = useTranslation();
+  const { t: tDetected, i18n } = useTranslation();
+  // The root layout server-renders this spinner, where i18next has no localStorage/navigator and
+  // resolves to English; the browser's first render already has the detected language (e.g. "es").
+  // Render the hydration pass in English so it matches the server HTML, then switch.
+  const hydrated = useSyncExternalStore(noopSubscribe, () => true, () => false);
+  const t = hydrated ? tDetected : i18n.getFixedT("en");
   return (
     <div
       className={`${overlay ? "fixed inset-0 z-[9999]" : "min-h-screen"} flex items-center justify-center bg-white`}
