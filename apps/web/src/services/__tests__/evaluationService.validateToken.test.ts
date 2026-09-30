@@ -1,4 +1,4 @@
-import { validateEvaluationToken } from "@/services/evaluationService";
+import { validateEvaluationToken, VALIDATE_TOKEN_REASONS } from "@/services/evaluationService";
 import { apiRequest } from "@/lib/api/apiClient";
 
 jest.mock("@/lib/api/apiClient", () => ({ apiRequest: jest.fn() }));
@@ -49,5 +49,19 @@ describe("validateEvaluationToken — instrument extraction from apiRequest enve
 
     expect(result.isValid).toBe(true);
     expect(result.instrument).toBeNull();
+  });
+
+  it.each([
+    VALIDATE_TOKEN_REASONS.used,
+    VALIDATE_TOKEN_REASONS.expired,
+    VALIDATE_TOKEN_REASONS.notFound,
+  ])("reports valid:false from the API as invalid, with its reason (%s)", async (reason) => {
+    mockApiRequest.mockResolvedValueOnce({ success: true, data: { valid: false, reason } });
+
+    const result = await validateEvaluationToken("spent-token");
+
+    expect(result.isValid).toBe(false);
+    expect(result.reason).toBe(reason);
+    expect(result.instrument).toBeUndefined();
   });
 });
