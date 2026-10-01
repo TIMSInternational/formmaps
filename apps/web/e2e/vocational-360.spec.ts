@@ -244,6 +244,24 @@ test.describe.serial("Vocational 360 — full functionality", () => {
     await page.getByRole("button", { name: L(lang, "evaluation.page.startSelf") }).click();
     await page.waitForURL(/\/evaluation\/evaluator\?token=/, { timeout: 60_000 });
     await openQuestionnaire(page, lang);
+    const firstToken = new URL(page.url()).searchParams.get("token");
+
+    // Leaving half-way and coming back must reopen the SAME self-evaluation — in prod this
+    // returned 409 on every later click and left the student stuck (fixed by the self-reopen
+    // hotfix). Also after the 48h link window lapses: reopening an unfinished one extends it.
+    await page.locator('div[id^="voc-q-"]').first().locator("#q1-s3").click();
+    for (const lapsed of [false, true]) {
+      if (lapsed) sql(`UPDATE evaluation_groups SET "tokenExpiryDate" = now() - interval '1 hour' WHERE "invitationToken" = ${q(firstToken!)}`);
+      await page.goto("/dashboard/assessments/evaluation");
+      await expect(page.getByText(L(lang, "evaluation.page.gateTitle"))).toBeVisible({ timeout: 60_000 });
+      const reopened = page.waitForResponse((r) => r.url().includes("/evaluation/create-group"));
+      await page.getByRole("button", { name: L(lang, "evaluation.page.startSelf") }).click();
+      expect((await reopened).status(), `reopen ${lapsed ? "after the link lapsed" : "while valid"}`).toBeLessThan(300);
+      await page.waitForURL(/\/evaluation\/evaluator\?token=/, { timeout: 60_000 });
+      expect(new URL(page.url()).searchParams.get("token"), "the same self-evaluation, not a new one").toBe(firstToken);
+      await openQuestionnaire(page, lang);
+    }
+    expect(Number(sql(`SELECT count(*) FROM evaluation_groups WHERE "evaluatedUserId" = ${q(studentId)} AND lower("groupType") = 'self'`)), "one self group").toBe(1);
 
     // Submitting with nothing answered is refused.
     await page.getByRole("button", { name: L(lang, "evaluation.vocational.submit"), exact: true }).click();
