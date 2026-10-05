@@ -161,8 +161,34 @@ export function useProctoring(opts: UseProctoringOptions = {}): Proctoring {
       if (document.hidden) { setFocusLost(true); recordViolation("tab_switch"); }
       else { setFocusLost(false); recheckDisplays(); }
     };
-    const onBlur = () => { setFocusLost(true); recordViolation("window_blur"); };
-    const onFocus = () => { setFocusLost(false); recheckDisplays(); };
+    // Clicking into an embedded iframe (PCA's cross-origin survey) blurs this
+    // window although the student never left the page; `hasFocus()` stays true
+    // because focus is inside our own document tree. Ignore that blur. Focus
+    // moving between the frame and other apps sends this window no further
+    // blur/focus events, so a poll catches leaving from inside the frame and
+    // coming back into it.
+    let windowAway = false;
+    const setWindowAway = (away: boolean) => {
+      if (away === windowAway) return;
+      windowAway = away;
+      setFocusLost(away);
+      if (away) recordViolation("window_blur");
+      else recheckDisplays();
+    };
+    const focusInEmbeddedFrame = () => document.activeElement instanceof HTMLIFrameElement;
+    let blurCheck: ReturnType<typeof setTimeout> | undefined;
+    const onBlur = () => {
+      clearTimeout(blurCheck);
+      // activeElement only settles after the blur event; check on the next tick.
+      blurCheck = setTimeout(() => {
+        if (!(focusInEmbeddedFrame() && document.hasFocus())) setWindowAway(true);
+      }, 0);
+    };
+    const onFocus = () => { windowAway = false; setFocusLost(false); recheckDisplays(); };
+    const framePoll = setInterval(() => {
+      if (windowAway) { if (document.hasFocus()) setWindowAway(false); }
+      else if (focusInEmbeddedFrame() && !document.hasFocus()) setWindowAway(true);
+    }, 1000);
     const onCopy = (e: ClipboardEvent) => {
       e.preventDefault();
       recordViolation("copy_attempt");
@@ -199,6 +225,8 @@ export function useProctoring(opts: UseProctoringOptions = {}): Proctoring {
     document.addEventListener("keydown", onKeyDown, true);
     return () => {
       clearInterval(displayPoll);
+      clearInterval(framePoll);
+      clearTimeout(blurCheck);
       document.removeEventListener("visibilitychange", onVisibility);
       window.removeEventListener("blur", onBlur);
       window.removeEventListener("focus", onFocus);
