@@ -16,6 +16,7 @@ import {
   EvaluationGroupWithId,
 } from "@/services/evaluationService";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { toStoreLanguage, useContentLanguage } from "@/lib/i18n/contentLanguage";
 
 export interface EvaluationProgress {
   totalSessions: number;
@@ -27,7 +28,8 @@ export interface EvaluationProgress {
 }
 
 export function useEvaluationData() {
-  const { language, user } = useGlobalStore();
+  const { user } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
   const [sessions, setSessions] = useState<EvaluationSession[]>([]);
   const [currentSession, setCurrentSession] =
     useState<EvaluationSession | null>(null);

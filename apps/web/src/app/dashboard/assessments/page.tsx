@@ -27,9 +27,11 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toStoreLanguage, useContentLanguage } from "@/lib/i18n/contentLanguage";
 
 export default function AssessmentsPage() {
-  const { user, language } = useGlobalStore();
+  const { user } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
   const { t } = useTranslation();
   const router = useRouter();
   const { hasPCA, isCompleted } = usePCAData();

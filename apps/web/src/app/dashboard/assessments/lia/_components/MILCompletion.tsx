@@ -8,6 +8,7 @@ import { useGlobalStore } from "@/store/useGlobalStore";
 import { getSelfEvaluationUrl } from "@/services/evaluationService";
 import { toast } from "sonner";
 import { Trans, useTranslation } from "react-i18next";
+import { toStoreLanguage, useContentLanguage } from "@/lib/i18n/contentLanguage";
 
 interface MILCompletionProps {
   onViewResults: () => void;
@@ -19,7 +20,8 @@ export default function MILCompletion({
 }: MILCompletionProps) {
   const { t } = useTranslation();
   const router = useRouter();
-  const { user, language } = useGlobalStore();
+  const { user } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
   const [starting, setStarting] = useState(false);
 
   const handleStart360 = async () => {

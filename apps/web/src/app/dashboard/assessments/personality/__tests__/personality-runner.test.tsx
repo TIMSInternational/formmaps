@@ -5,6 +5,8 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import PersonalityAssessmentPage from "@/app/dashboard/assessments/personality/page";
 import { personalityApi } from "@/services/personalityService";
 
+let mockUiLanguage = "en";
+
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));
@@ -13,7 +15,7 @@ jest.mock("react-i18next", () => ({
   useTranslation: () => ({
     t: (k: string, opts?: Record<string, unknown>) =>
       opts && typeof opts === "object" ? `${k} ${JSON.stringify(opts)}` : k,
-    i18n: { language: "en" },
+    i18n: { language: mockUiLanguage },
   }),
 }));
 
@@ -109,5 +111,12 @@ describe("PersonalityAssessmentPage runner", () => {
 
     await waitFor(() => expect(mockAnswer).toHaveBeenCalledWith("sess-1", 1, "A"));
     await waitFor(() => expect(screen.getByText("Second prompt")).toBeInTheDocument());
+  });
+
+  it("starts the session in the UI language even when the persisted store disagrees", async () => {
+    mockUiLanguage = "es"; // the store above says "english"
+    render(<PersonalityAssessmentPage />);
+    await waitFor(() => expect(mockStart).toHaveBeenCalledWith({ language: "es" }));
+    mockUiLanguage = "en";
   });
 });

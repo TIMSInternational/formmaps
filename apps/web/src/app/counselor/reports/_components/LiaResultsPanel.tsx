@@ -7,14 +7,13 @@
  * the student sees, violations included.
  */
 import { useEffect, useState } from "react";
-import { useGlobalStore } from "@/store/useGlobalStore";
+import { useContentLanguage } from "@/lib/i18n/contentLanguage";
 import { liaAssessmentApi, type LIAResults } from "@/services/liaService";
 import { ResultsReport } from "@/app/dashboard/assessments/lia/_tims/ResultsReport";
 import { Skeleton } from "@/components/ui/skeleton";
 
 export function LiaResultsPanel({ studentId }: { studentId: string }) {
-  const { language: storeLanguage } = useGlobalStore();
-  const language: "es" | "en" = storeLanguage === "english" ? "en" : "es";
+  const language = useContentLanguage();
 
   const [results, setResults] = useState<LIAResults | null>(null);
   const [loading, setLoading] = useState(true);

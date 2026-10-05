@@ -12,6 +12,7 @@ import {
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { normalizeRole } from "@/lib/roleUtils";
 import { Roles } from "@/lib/permissions";
+import { toStoreLanguage, useContentLanguage } from "@/lib/i18n/contentLanguage";
 
 export interface MILProgress {
   completedExams: string[];
@@ -65,7 +66,8 @@ function toEnhancedData(data: MILResultsData): EnhancedUserExamHistory {
 }
 
 export function useMILData() {
-  const { language, user: storeUser } = useGlobalStore();
+  const { user: storeUser } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
   const [exams, setExams] = useState<MILExamMetadata[]>([]);
   const [progress, setProgress] = useState<MILProgress | null>(null);
   const [loading, setLoading] = useState(true);
