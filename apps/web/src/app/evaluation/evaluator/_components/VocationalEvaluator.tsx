@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { getVocationalForm, submitVocationalAnswers, VocationalForm, VocationalQuestionItem, VocationalSubmitAnswer } from "@/services/vocationalTakeService";
 import { VocationalQuestionCard, VocationalAnswerValue } from "./VocationalQuestionCard";
 import { toVocationalLang } from "./vocationalLang";
+import { useAssessmentCompleted } from "@/hooks/useAssessmentCompleted";
 
 function toAnswer(q: VocationalQuestionItem, v: VocationalAnswerValue): VocationalSubmitAnswer | null {
   if (q.type === "likert") return typeof v.ratingValue === "number" ? { questionNumber: q.number, type: "likert", ratingValue: v.ratingValue } : null;
@@ -29,6 +30,7 @@ export function VocationalEvaluator({ token, language }: { token: string; langua
   const [error, setError] = useState(false);
   const [errorReason, setErrorReason] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const assessmentCompleted = useAssessmentCompleted();
   const [done, setDone] = useState(false);
 
   const hasFormRef = useRef(false);
@@ -82,7 +84,7 @@ export function VocationalEvaluator({ token, language }: { token: string; langua
       </div>
     );
   }
-  if (form?.completed || done) return <div className="p-8 text-center"><h2 className="text-lg font-bold text-foreground">{t("evaluation.vocational.alreadyTitle")}</h2><p className="text-sm text-muted-foreground">{t("evaluation.vocational.alreadyBody")}</p></div>;
+  if (form?.completed || done) return <div className="p-8 text-center"><h2 className="text-lg font-bold text-foreground">{t(done ? "evaluation.vocational.doneTitle" : "evaluation.vocational.alreadyTitle")}</h2><p className="text-sm text-muted-foreground">{t("evaluation.vocational.alreadyBody")}</p></div>;
 
   const questions = form?.questions ?? [];
   const setResp = (n: number, v: VocationalAnswerValue) => setResponses((p) => ({ ...p, [n]: v }));
@@ -106,6 +108,7 @@ export function VocationalEvaluator({ token, language }: { token: string; langua
     try {
       await submitVocationalAnswers(token, answers);
       setDone(true);
+      void assessmentCompleted();
       toast.success(t("evaluation.vocational.submitted"));
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : t("evaluation.vocational.submitFailed"));

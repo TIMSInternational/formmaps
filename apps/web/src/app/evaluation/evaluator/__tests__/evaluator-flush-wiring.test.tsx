@@ -9,6 +9,9 @@
 import { render, screen, waitFor, act } from "@testing-library/react";
 import EvaluatorPage from "../page";
 
+const mockAssessmentCompleted = jest.fn(() => Promise.resolve());
+jest.mock("@/hooks/useAssessmentCompleted", () => ({ useAssessmentCompleted: () => mockAssessmentCompleted }));
+
 let mockToken: string | null = "tok-abc";
 
 jest.mock("next/navigation", () => ({

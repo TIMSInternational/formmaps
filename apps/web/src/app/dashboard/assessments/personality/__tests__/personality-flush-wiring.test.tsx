@@ -10,6 +10,9 @@ import { render, screen, waitFor, act } from "@testing-library/react";
 import PersonalityAssessmentPage from "../page";
 import { personalityApi } from "@/services/personalityService";
 
+const mockAssessmentCompleted = jest.fn(() => Promise.resolve());
+jest.mock("@/hooks/useAssessmentCompleted", () => ({ useAssessmentCompleted: () => mockAssessmentCompleted }));
+
 jest.mock("next/navigation", () => ({
   useRouter: () => ({ push: jest.fn() }),
 }));

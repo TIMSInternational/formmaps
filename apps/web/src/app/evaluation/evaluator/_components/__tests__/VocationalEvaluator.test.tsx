@@ -2,6 +2,9 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import { VocationalEvaluator } from "../VocationalEvaluator";
 import * as svc from "@/services/vocationalTakeService";
 
+const mockAssessmentCompleted = jest.fn(() => Promise.resolve());
+jest.mock("@/hooks/useAssessmentCompleted", () => ({ useAssessmentCompleted: () => mockAssessmentCompleted }));
+
 // Resolve real English copy so text/role-name queries match what users see.
 jest.mock("react-i18next", () => {
   const en = require("@/lib/i18n/locales/en/common.json");
@@ -94,4 +97,23 @@ it("submits answered questions as typed answers", async () => {
   fireEvent.change(screen.getByRole("textbox"), { target: { value: "Respuesta" } });
   fireEvent.click(screen.getByRole("button", { name: /submit|enviar|finish/i }));
   await waitFor(() => expect(submit).toHaveBeenCalledWith("tok", [{ questionNumber: 1, type: "open", textValue: "Respuesta" }]));
+});
+
+it("a successful submit says it's done and refreshes every completion reader; a failed one does not", async () => {
+  getForm.mockResolvedValue({ group: "self", questions: [
+    { number: 1, type: "open", scaleAnchors: null, options: null, text: "Q1", block: "open", area: null, dimensionKey: null },
+  ] });
+  submit.mockRejectedValueOnce(new Error("network down")).mockResolvedValueOnce({});
+  render(<VocationalEvaluator token="tok" language="english" />);
+  await waitFor(() => screen.getByText("Q1"));
+  fireEvent.change(screen.getByRole("textbox"), { target: { value: "my answer" } });
+
+  fireEvent.click(screen.getByRole("button", { name: /submit|enviar|finish/i }));
+  await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
+  expect(mockAssessmentCompleted).not.toHaveBeenCalled();
+
+  fireEvent.click(screen.getByRole("button", { name: /submit|enviar|finish/i }));
+  await waitFor(() => expect(mockAssessmentCompleted).toHaveBeenCalledTimes(1));
+  // Just finished: says so — not the "Already submitted" a returning visitor sees.
+  expect(await screen.findByRole("heading", { name: "Evaluation completed" })).toBeInTheDocument();
 });

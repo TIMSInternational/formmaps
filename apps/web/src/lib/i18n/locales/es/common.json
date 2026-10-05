@@ -227,6 +227,7 @@
       "expiredTitle": "Este enlace de evaluación ha expirado",
       "expiredBody": "Pídele al estudiante un nuevo enlace de invitación.",
       "alreadyTitle": "Ya enviada",
+      "doneTitle": "Evaluación completada",
       "alreadyBody": "Gracias; esta evaluación está completa.",
       "label": "Vocacional 360",
       "title": "Evaluación de orientación vocacional",

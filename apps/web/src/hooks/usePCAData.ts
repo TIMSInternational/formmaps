@@ -45,8 +45,9 @@ type Language = "english" | "spanish";
 // Shared with checkPCAStatus, which reads this key as its own fast path.
 const cacheKey = (userId: string) => `pcaData_${userId}`;
 
+export const pcaDataKeyPrefix = ["pca", "data"] as const;
 export const pcaDataQueryKey = (userId: string, language: Language) =>
-  ["pca", "data", userId, language] as const;
+  [...pcaDataKeyPrefix, userId, language] as const;
 
 function readCache(userId: string): PCAData | null {
   try {
