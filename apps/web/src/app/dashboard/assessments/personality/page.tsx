@@ -13,6 +13,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Loader2, AlertTriangle } from "luc
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { useContentLanguage } from "@/lib/i18n/contentLanguage";
 import {
   personalityApi,
   type BinaryChoice,
@@ -30,8 +31,8 @@ type Phase = "loading" | "error" | "already-completed" | "running" | "completing
 export default function PersonalityAssessmentPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { language: storeLanguage, setAssessmentActive, user } = useGlobalStore();
-  const language: "es" | "en" = storeLanguage === "english" ? "en" : "es";
+  const { setAssessmentActive, user } = useGlobalStore();
+  const language = useContentLanguage();
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [sessionId, setSessionId] = useState<string | null>(null);

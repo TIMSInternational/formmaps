@@ -6,6 +6,7 @@ import {
   getPCACompetencesByUserId,
 } from "@/services/pcaService";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { toStoreLanguage, useContentLanguage } from "@/lib/i18n/contentLanguage";
 import { normalizeRole } from "@/lib/roleUtils";
 import { Roles } from "@/lib/permissions";
 
@@ -125,7 +126,8 @@ export async function fetchPCAData(userId: string, language: Language): Promise<
  * the query (stale on arrival, so it is refreshed in the background exactly as before).
  */
 export function usePCAData() {
-  const { user, language } = useGlobalStore();
+  const { user } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
   const queryClient = useQueryClient();
   const userId = user?.id || "";
   const enabled = !!userId && normalizeRole(user.role) === Roles.STUDENT;

@@ -10,7 +10,7 @@ import {
   getUserExamHistory,
 } from "@/services/milService";
 import { getUserEvaluationGroups } from "@/services/evaluationService";
-import { useGlobalStore } from "@/store/useGlobalStore";
+import { toStoreLanguage, useContentLanguage } from "@/lib/i18n/contentLanguage";
 
 // Query Keys
 export const assessmentKeys = {
@@ -30,7 +30,7 @@ export const assessmentKeys = {
 
 // Assessment Progress Hook
 export function useAssessmentProgress(userId: string) {
-  const { language } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
   return useQuery({
     queryKey: assessmentKeys.progress(userId),
     queryFn: () => getUserAssessmentProgress(userId, language),
@@ -43,7 +43,7 @@ export function useAssessmentProgress(userId: string) {
 
 // Dashboard Assessment Summary Hook
 export function useDashboardAssessmentSummary(userId: string) {
-  const { language } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
   return useQuery({
     queryKey: assessmentKeys.dashboardSummary(userId),
     queryFn: () => getDashboardAssessmentSummary(userId, language),
@@ -56,7 +56,7 @@ export function useDashboardAssessmentSummary(userId: string) {
 
 // MIL History Hook
 export function useMILHistory(userId: string) {
-  const { language } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
   return useQuery({
     queryKey: assessmentKeys.milHistory(userId),
     queryFn: () => getUserExamHistory(userId, language),
@@ -67,7 +67,7 @@ export function useMILHistory(userId: string) {
 
 // Evaluation Groups Hook
 export function useEvaluationGroups(userId: string) {
-  const { language } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
   return useQuery({
     queryKey: assessmentKeys.evaluationGroups(userId),
     queryFn: () => getUserEvaluationGroups(userId, language),
@@ -78,7 +78,7 @@ export function useEvaluationGroups(userId: string) {
 
 // Enhanced LIA Data Hook
 export function useEnhancedLIAData(userId: string) {
-  const { language } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
   return useQuery({
     queryKey: assessmentKeys.enhancedLIA(userId),
     queryFn: () => getUserExamHistory(userId, language),
@@ -164,7 +164,7 @@ export function useInvalidateAssessments() {
 // Prefetch helpers
 export function usePrefetchAssessments() {
   const queryClient = useQueryClient();
-  const { language } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
 
   return {
     prefetchProgress: (userId: string) =>

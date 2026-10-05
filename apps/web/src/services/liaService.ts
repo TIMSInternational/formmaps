@@ -5,6 +5,7 @@
  * here so callers get the tims-shaped payloads).
  */
 import { apiRequest } from "@/lib/api/apiClient";
+import { toContentLanguage } from "@/lib/i18n/contentLanguage";
 
 // ============================================
 // TYPES (tims-suite parity)
@@ -265,8 +266,7 @@ export const liaAssessmentApi = {
  * (which defaults to English) let the session start in the wrong language.
  */
 export function resolveContentLanguage(i18nLanguage: string | undefined): "es" | "en" {
-  const l = (i18nLanguage ?? "").toLowerCase();
-  return l.startsWith("es") || l === "spanish" ? "es" : "en";
+  return toContentLanguage(i18nLanguage);
 }
 
 export const SUBTEST_ORDER: LIASubtest[] = [

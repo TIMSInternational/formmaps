@@ -17,9 +17,11 @@ import {
   EvaluationGroupWithId,
 } from "@/services/evaluationService";
 import { NewEvaluatorForm } from "./AddEvaluatorDialog";
+import { toStoreLanguage, useContentLanguage } from "@/lib/i18n/contentLanguage";
 
 export function useEvaluatorManagement() {
-  const { user, language } = useGlobalStore();
+  const { user } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
   const { t } = useTranslation();
   const { isLoading, currentSession } = useEvaluationData();
 

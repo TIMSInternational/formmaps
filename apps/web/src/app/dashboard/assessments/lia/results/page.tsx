@@ -9,6 +9,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { useContentLanguage } from "@/lib/i18n/contentLanguage";
 import { liaAssessmentApi, SUBTEST_ORDER, type LIAResults } from "@/services/liaService";
 import { getMILResults, type MILResultsData } from "@/services/milService";
 import { SUBTEST_DESCRIPTIONS } from "@/data/liaReportContent";
@@ -20,8 +21,8 @@ const ExportReportButton = dynamic(() => import("@/components/reports/ExportRepo
 
 export default function LIAResultsPage() {
   const router = useRouter();
-  const { language: storeLanguage, user } = useGlobalStore();
-  const language: "es" | "en" = storeLanguage === "english" ? "en" : "es";
+  const { user } = useGlobalStore();
+  const language = useContentLanguage();
 
   const [results, setResults] = useState<LIAResults | null>(null);
   // A student whose cognitive assessment predates the tims-parity LIA engine has no

@@ -15,10 +15,12 @@ import { useEvaluationGroups } from "@/hooks/useAssessmentQueries";
 import { getSelfEvaluationUrl } from "@/services/evaluationService";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { toStoreLanguage, useContentLanguage } from "@/lib/i18n/contentLanguage";
 
 export default function EvaluatorsPage() {
   const { t } = useTranslation();
-  const { user, language } = useGlobalStore();
+  const { user } = useGlobalStore();
+  const language = toStoreLanguage(useContentLanguage());
   const router = useRouter();
   const [starting, setStarting] = useState(false);
 

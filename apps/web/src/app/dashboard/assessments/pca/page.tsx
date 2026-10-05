@@ -11,6 +11,8 @@ import {
 } from "@/services/pcaService";
 import PCAResultsPanel from "../_components/PCAResultsPanel";
 import { useSearchParams } from "next/navigation";
+import { toStoreLanguage, useContentLanguage } from "@/lib/i18n/contentLanguage";
+import { useSetLanguage } from "@/lib/i18n/useSetLanguage";
 import { toast } from "sonner";
 import { RequireChromium } from "@/components/proctoring/RequireChromium";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
@@ -36,9 +38,10 @@ export default function PCAAssessmentPage() {
 
   const searchParams = useSearchParams();
 
-  const [selectedLanguage, setSelectedLanguage] = useState<
-    "spanish" | "english"
-  >("spanish");
+  // One language for the instructions AND the TIMS survey: the app's. The picker below switches
+  // the whole app, so the page can never show English instructions over a Spanish survey.
+  const contentLanguage = useContentLanguage();
+  const setAppLanguage = useSetLanguage();
   const [selectedJCA, setSelectedJCA] = useState<JCACode>("GTCML");
   const [selectedGender, setSelectedGender] = useState<"M" | "F">("M");
   const [isCreating, setIsCreating] = useState(false);
@@ -94,7 +97,7 @@ export default function PCAAssessmentPage() {
       const result = await addPCAEvaluation(
         user.id,
         userData,
-        selectedLanguage
+        toStoreLanguage(contentLanguage)
       );
 
       if (result.success && result.assessmentUrl) {
@@ -246,15 +249,16 @@ export default function PCAAssessmentPage() {
 
             <div className="grid grid-cols-2 gap-3">
               {[
-                { key: "spanish" as const, flag: "\u{1F1EA}\u{1F1F8}", label: t("language.spanish"), sub: t("dashboard.spanishAssessment") },
-                { key: "english" as const, flag: "\u{1F1FA}\u{1F1F8}", label: t("language.english"), sub: t("dashboard.englishAssessment") },
+                { key: "es" as const, flag: "\u{1F1EA}\u{1F1F8}", label: t("language.spanish"), sub: t("dashboard.spanishAssessment") },
+                { key: "en" as const, flag: "\u{1F1FA}\u{1F1F8}", label: t("language.english"), sub: t("dashboard.englishAssessment") },
               ].map((lang) => (
                 <button
                   key={lang.key}
-                  onClick={() => setSelectedLanguage(lang.key)}
+                  onClick={() => void setAppLanguage(lang.key)}
+                  aria-pressed={contentLanguage === lang.key}
                   className={cn(
                     "p-3 rounded-xl border-2 transition-all text-center",
-                    selectedLanguage === lang.key
+                    contentLanguage === lang.key
                       ? "border-foreground bg-secondary"
                       : "border-border hover:border-foreground/20"
                   )}

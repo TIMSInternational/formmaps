@@ -1,3 +1,4 @@
+import { toContentLanguage } from "@/lib/i18n/contentLanguage";
 import type { VocationalLang, VocationalOption } from "@/services/vocationalTakeService";
 
 /**
@@ -5,8 +6,7 @@ import type { VocationalLang, VocationalOption } from "@/services/vocationalTake
  * questionnaire language the API serves. Spanish only for Spanish; everything else is English.
  */
 export function toVocationalLang(language: string | null | undefined): VocationalLang {
-  const value = (language ?? "").trim().toLowerCase();
-  return value.startsWith("es") || value.startsWith("sp") ? "es" : "en";
+  return toContentLanguage(language);
 }
 
 /**

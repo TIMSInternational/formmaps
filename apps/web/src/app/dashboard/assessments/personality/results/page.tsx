@@ -11,6 +11,7 @@ import { motion } from "motion/react";
 import { ArrowLeft, Printer, AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { useContentLanguage } from "@/lib/i18n/contentLanguage";
 import { personalityApi, type PersonalityResults } from "@/services/personalityService";
 import { PersonalityRadar } from "./_components/PersonalityRadar";
 import { PersonalityIntensityBars } from "./_components/PersonalityIntensityBars";
@@ -19,8 +20,8 @@ import { PersonalityNarrative } from "./_components/PersonalityNarrative";
 export default function PersonalityResultsPage() {
   const router = useRouter();
   const { t } = useTranslation();
-  const { language: storeLanguage, user } = useGlobalStore();
-  const language: "es" | "en" = storeLanguage === "english" ? "en" : "es";
+  const { user } = useGlobalStore();
+  const language = useContentLanguage();
 
   const [results, setResults] = useState<PersonalityResults | null>(null);
   const [loading, setLoading] = useState(true);
