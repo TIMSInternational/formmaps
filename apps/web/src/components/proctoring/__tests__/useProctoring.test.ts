@@ -52,6 +52,101 @@ describe("useProctoring", () => {
     expect(result.current.violations.current).toHaveLength(0);
   });
 
+  describe("window blur vs an embedded iframe (PCA survey)", () => {
+    let iframe: HTMLIFrameElement;
+    beforeEach(() => {
+      jest.useFakeTimers();
+      iframe = document.createElement("iframe");
+      document.body.appendChild(iframe);
+    });
+    afterEach(() => {
+      iframe.remove();
+      jest.restoreAllMocks();
+      jest.useRealTimers();
+    });
+
+    const blurs = (v: LockdownViolation[]) => v.filter((x) => x.type === "window_blur").length;
+
+    it("does NOT warn or record when a click moves focus into an iframe on the page", () => {
+      const { result } = renderHook(() => useProctoring());
+      act(() => result.current.begin());
+      jest.spyOn(document, "activeElement", "get").mockReturnValue(iframe);
+      jest.spyOn(document, "hasFocus").mockReturnValue(true);
+      act(() => {
+        window.dispatchEvent(new Event("blur"));
+        jest.advanceTimersByTime(3000);
+      });
+      expect(result.current.focusLost).toBe(false);
+      expect(blurs(result.current.violations.current)).toBe(0);
+    });
+
+    it("still warns and records when the window really loses focus", () => {
+      const { result } = renderHook(() => useProctoring());
+      act(() => result.current.begin());
+      jest.spyOn(document, "hasFocus").mockReturnValue(false);
+      act(() => {
+        window.dispatchEvent(new Event("blur"));
+        jest.advanceTimersByTime(1);
+      });
+      expect(result.current.focusLost).toBe(true);
+      expect(blurs(result.current.violations.current)).toBe(1);
+      act(() => {
+        window.dispatchEvent(new Event("focus"));
+      });
+      expect(result.current.focusLost).toBe(false);
+    });
+
+    it("clears a blur warning when the student comes back straight into the iframe (no window focus event)", () => {
+      const { result } = renderHook(() => useProctoring());
+      act(() => result.current.begin());
+      const hasFocus = jest.spyOn(document, "hasFocus").mockReturnValue(false);
+      act(() => {
+        window.dispatchEvent(new Event("blur")); // alt-tab away from the page itself
+        jest.advanceTimersByTime(1);
+      });
+      expect(result.current.focusLost).toBe(true);
+
+      jest.spyOn(document, "activeElement", "get").mockReturnValue(iframe);
+      hasFocus.mockReturnValue(true); // back, clicking straight into the survey
+      act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+      expect(result.current.focusLost).toBe(false);
+    });
+
+    it("catches leaving from INSIDE the iframe (no second blur fires) and clears on return", () => {
+      const flushed: LockdownViolation[] = [];
+      const { result } = renderHook(() => useProctoring({ onFlush: (v) => flushed.push(...v) }));
+      const all = () => [...flushed, ...result.current.violations.current];
+      act(() => result.current.begin());
+      jest.spyOn(document, "activeElement", "get").mockReturnValue(iframe);
+      const hasFocus = jest.spyOn(document, "hasFocus").mockReturnValue(true);
+      act(() => {
+        window.dispatchEvent(new Event("blur"));
+        jest.advanceTimersByTime(1000);
+      });
+      expect(result.current.focusLost).toBe(false);
+
+      hasFocus.mockReturnValue(false); // alt-tab away while answering in the survey
+      act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+      expect(result.current.focusLost).toBe(true);
+      expect(blurs(all())).toBe(1);
+
+      act(() => {
+        jest.advanceTimersByTime(3000); // still away: no duplicate violations
+      });
+      expect(blurs(all())).toBe(1);
+
+      hasFocus.mockReturnValue(true); // back, focus restored into the survey
+      act(() => {
+        jest.advanceTimersByTime(1000);
+      });
+      expect(result.current.focusLost).toBe(false);
+    });
+  });
+
   describe("debounced per-event flush", () => {
     beforeEach(() => jest.useFakeTimers());
     afterEach(() => jest.useRealTimers());

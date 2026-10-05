@@ -17,7 +17,7 @@ function BlockingOverlay({ title, body }: { title: string; body: string }) {
   return (
     <div className="fixed inset-0 z-[60] bg-[#0F172A] text-white flex items-center justify-center p-8 text-center">
       <div className="max-w-md">
-        <h2 className="text-2xl font-bold mb-2">{title}</h2>
+        <h2 className="text-2xl font-bold mb-2 text-white">{title}</h2>
         <p className="text-white/80">{body}</p>
       </div>
     </div>
