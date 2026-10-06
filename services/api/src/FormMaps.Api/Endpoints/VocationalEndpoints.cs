@@ -1,3 +1,4 @@
+using FormMaps.Api.Auth;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 
@@ -18,10 +19,10 @@ public static class VocationalEndpoints
         var group = app.MapGroup("/api/v1/vocational360")
             .WithTags("Vocational");
 
-        group.MapPost("/score/{evaluatedUserId}/recompute", RecomputeScoreAsync);
-        group.MapPost("/integrated/{evaluatedUserId}/recompute", RecomputeIntegratedAsync);
-        group.MapGet("/score/{evaluatedUserId}", GetScoreAsync);
-        group.MapGet("/integrated/{evaluatedUserId}", GetIntegratedAsync);
+        group.MapPost("/score/{evaluatedUserId}/recompute", RecomputeScoreAsync).RequirePaidResults();
+        group.MapPost("/integrated/{evaluatedUserId}/recompute", RecomputeIntegratedAsync).RequirePaidResults();
+        group.MapGet("/score/{evaluatedUserId}", GetScoreAsync).RequirePaidResults();
+        group.MapGet("/integrated/{evaluatedUserId}", GetIntegratedAsync).RequirePaidResults();
         group.MapGet("/instrument", GetInstrumentAsync);
         group.MapGet("/questionnaire", GetQuestionnaireAsync);
 

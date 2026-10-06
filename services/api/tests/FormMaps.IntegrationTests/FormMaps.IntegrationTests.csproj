@@ -235,6 +235,8 @@
                       Link="CareerFit\Data\careerfit-shadow-tables.sql" />
     <!-- Schema-only DDL mirroring the live Node/Prisma auth tables (users/roles/refresh_tokens/login_attempts/password_reset_tokens/user_settings + touched-column schools subset) for the Testcontainers IAuthRepository harness (Domain 10, Task 5). -->
     <EmbeddedResource Include="Auth\Data\auth-schema.sql" />
+    <!-- RLS-enabled DDL for the StudentAccessReader harness (formmaps#240: student session reads its own school contract + plan interval). -->
+    <EmbeddedResource Include="Auth\Data\student-access-schema.sql" />
     <!-- Schema-only DDL for the Testcontainers letters-of-recommendation harness (formmaps#59). -->
     <EmbeddedResource Include="Recommendations\Data\recommendations-schema.sql" />
     <!-- RLS-enabled DDL for the teacher onboarding + teacher portal harness (formmaps#62, routes/teacher.ts).

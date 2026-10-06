@@ -15,7 +15,8 @@ namespace FormMaps.Infrastructure.Auth;
 public sealed class SubscriptionGuard(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     ILogger<SubscriptionGuard> logger,
-    int graceDays) : ISubscriptionGuard
+    int graceDays,
+    Func<bool>? isStudentPaywallEnabled = null) : ISubscriptionGuard
 {
     private static readonly string[] StudentRoles = ["student", "Student"];
 
@@ -36,6 +37,15 @@ public sealed class SubscriptionGuard(
         RequestContext context,
         CancellationToken cancellationToken = default)
     {
+        // D4 (TIMSInternational/formmaps#240, legacy requireSubscription since formmaps-platform#440): with
+        // INDEPENDENT_STUDENT_PAYWALL on, the global StudentPaywallMiddleware is the single authority — it
+        // lets unpaid / trialing students TAKE assessments, which this coarse check would block, and it gates
+        // results and the rest of the platform itself. Flag OFF: unchanged below.
+        if (isStudentPaywallEnabled?.Invoke() == true)
+        {
+            return GuardDecision.Allow();
+        }
+
         var userId = context.Actor?.UserId;
         if (string.IsNullOrWhiteSpace(userId))
         {

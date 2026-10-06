@@ -43,6 +43,9 @@ app.UseResponseCompression();
 
 app.UseFormMapsApiSecurity();
 app.UseMiddleware<RequestContextMiddleware>();
+// Independent-student paywall (TIMSInternational/formmaps#240): deny-by-default for students, behind
+// INDEPENDENT_STUDENT_PAYWALL (default OFF = no-op). Needs the request context, so it goes right after it.
+app.UseStudentPaywall();
 
 app.MapGet("/", () => Results.Redirect("/health"));
 

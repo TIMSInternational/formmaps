@@ -1,3 +1,4 @@
+using FormMaps.Api.Auth;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 
@@ -16,7 +17,7 @@ public static class MilEndpoints
         var group = app.MapGroup("/api/v1/mil")
             .WithTags("Mil");
 
-        group.MapGet("/results/{userId}", GetResultsAsync);
+        group.MapGet("/results/{userId}", GetResultsAsync).RequirePaidResults();
 
         return app;
     }

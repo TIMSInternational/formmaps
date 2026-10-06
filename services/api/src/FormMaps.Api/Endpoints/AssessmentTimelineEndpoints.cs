@@ -1,3 +1,4 @@
+using FormMaps.Api.Auth;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 
@@ -23,8 +24,8 @@ public static class AssessmentTimelineEndpoints
         var group = app.MapGroup("/api/v1/assessments")
             .WithTags("AssessmentTimeline");
 
-        group.MapGet("/me/timeline", GetTimelineAsync);
-        group.MapGet("/me/timeline/stats", GetTimelineStatsAsync);
+        group.MapGet("/me/timeline", GetTimelineAsync).RequirePaidResults();
+        group.MapGet("/me/timeline/stats", GetTimelineStatsAsync).RequirePaidResults();
 
         return app;
     }

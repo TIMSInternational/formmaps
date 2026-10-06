@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using FormMaps.Api.Auth;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 
@@ -18,16 +19,16 @@ public static class ExamEndpoints
             .WithTags("PcaExam");
 
         group.MapGet("/session/{sessionId}", GetSessionAsync);
-        group.MapGet("/completed-exams/{userId}", GetCompletedExamsAsync);
+        group.MapGet("/completed-exams/{userId}", GetCompletedExamsAsync).RequirePaidResults();
         group.MapGet("/exams", GetExamsAsync);
         group.MapGet("/exams/{examId}", GetExamWithQuestionsAsync);
         group.MapGet("/exams/{examId}/instructions", GetInstructionsAsync);
         group.MapGet("/exam-config/{examId}", GetExamConfigAsync);
         group.MapGet("/statistics/{examId}", GetStatisticsAsync);
-        group.MapGet("/history/{userId}", GetHistoryAsync);
-        group.MapGet("/all-results", GetAllResultsAsync);
+        group.MapGet("/history/{userId}", GetHistoryAsync).RequirePaidResults();
+        group.MapGet("/all-results", GetAllResultsAsync).RequirePaidResults();
         group.MapPost("/exams/{examId}/start", StartExamAsync);
-        group.MapPost("/submit", SubmitExamAsync);
+        group.MapPost("/submit", SubmitExamAsync).RedactScoresWithoutPaidResults();
 
         return app;
     }

@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using FormMaps.Api.Auth;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 
@@ -24,8 +25,8 @@ public static class LiaEndpoints
         var group = app.MapGroup("/api/v1/lia")
             .WithTags("Lia");
 
-        group.MapGet("/session/{sessionId}/results", GetSessionResultsAsync);
-        group.MapGet("/user/{userId}/results", GetUserResultsAsync);
+        group.MapGet("/session/{sessionId}/results", GetSessionResultsAsync).RequirePaidResults();
+        group.MapGet("/user/{userId}/results", GetUserResultsAsync).RequirePaidResults();
         group.MapGet("/access", GetAccessAsync);
         group.MapPost("/start", StartAsync);
         group.MapGet("/session/{sessionId}", GetSessionAsync);
@@ -35,7 +36,7 @@ public static class LiaEndpoints
         group.MapPost("/session/{sessionId}/answer", SubmitAnswerAsync);
         group.MapPost("/session/{sessionId}/timeout", HandleTimeoutAsync);
         group.MapPost("/session/{sessionId}/violations", SaveViolationsAsync);
-        group.MapPost("/session/{sessionId}/complete", CompleteSessionAsync);
+        group.MapPost("/session/{sessionId}/complete", CompleteSessionAsync).RedactScoresWithoutPaidResults();
 
         return app;
     }
