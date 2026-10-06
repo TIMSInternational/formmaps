@@ -470,7 +470,9 @@ public static class DependencyInjection
             new SubscriptionGuard(
                 sp.GetRequiredService<IFormMapsDatabaseSessionFactory>(),
                 sp.GetRequiredService<ILogger<SubscriptionGuard>>(),
-                graceDays));
+                graceDays,
+                () => StudentAccessRules.IsPaywallEnabled(
+                    sp.GetRequiredService<IConfiguration>()[StudentAccessRules.FlagKey])));
 
         // Independent-student results paywall (TIMSInternational/formmaps#240). Only consulted by the
         // API's RequirePaidResults / RedactScoresWithoutPaidResults filters while

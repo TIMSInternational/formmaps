@@ -3,13 +3,17 @@ using System.Text.Json;
 using FormMaps.Api.Auth;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
+using FormMaps.Application.Resumes;
 using FormMaps.Domain.Auth;
+using FormMaps.Infrastructure.Auth;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace FormMaps.IntegrationTests.Assessments;
 
@@ -229,7 +233,132 @@ public class StudentPaywallEndpointsTests
         Assert.Equal("Not found", document.RootElement.GetProperty("message").GetString());
     }
 
+    // ---- flag ON: platform gate (StudentPaywallMiddleware) + D4 ----
+
+    private const string ResumePath = "/api/resume";
+    private const string LiaStartPath = "/api/v1/lia/start";
+
+    [Fact]
+    public async Task Unpaid_student_may_start_LIA_through_the_real_subscription_guard()
+    {
+        // D4: the REAL SubscriptionGuard class runs here (no DB behind it); with the flag on it defers to the
+        // global gate instead of answering 403 SUBSCRIPTION_REQUIRED, so the start reaches the writer.
+        using var factory = new PaywallApiFactory("true", new FakeStudentAccessReader(Unpaid), realSubscriptionGuard: true);
+        using var client = factory.CreateClient();
+
+        var response = await client.SendAsync(Build(HttpMethod.Post, LiaStartPath, FormMapsRoles.Student));
+
+        Assert.Equal(HttpStatusCode.Conflict, response.StatusCode); // the fake writer's AlreadyCompleted
+        Assert.Equal(1, factory.Writer.StartCalls);
+    }
+
+    [Fact]
+    public async Task Unpaid_student_gets_402_payment_required_on_the_platform()
+    {
+        using var factory = new PaywallApiFactory("true", new FakeStudentAccessReader(Unpaid), realSubscriptionGuard: true);
+        using var client = factory.CreateClient();
+
+        var response = await client.SendAsync(Build(HttpMethod.Get, ResumePath, FormMapsRoles.Student));
+
+        Assert.Equal(HttpStatusCode.PaymentRequired, response.StatusCode);
+        Assert.Equal(0, factory.Resumes.ListCalls);
+        await AssertDenial(response, "PAYMENT_REQUIRED", "Complete your purchase to access FormMaps");
+    }
+
+    [Fact]
+    public async Task Trialing_student_uses_the_platform_but_results_stay_locked()
+    {
+        using var factory = new PaywallApiFactory("true", new FakeStudentAccessReader(Trialing), realSubscriptionGuard: true);
+        using var client = factory.CreateClient();
+
+        var resume = await client.SendAsync(Build(HttpMethod.Get, ResumePath, FormMapsRoles.Student));
+        var results = await client.SendAsync(Build(HttpMethod.Get, ResultsPath, FormMapsRoles.Student));
+
+        Assert.Equal(HttpStatusCode.OK, resume.StatusCode);
+        Assert.Equal(1, factory.Resumes.ListCalls);
+        Assert.Equal(HttpStatusCode.PaymentRequired, results.StatusCode);
+        await AssertPaidResultsRequired(results);
+    }
+
+    [Fact]
+    public async Task One_time_purchaser_sees_results_but_not_the_platform()
+    {
+        using var factory = new PaywallApiFactory("true", new FakeStudentAccessReader(OneTime), realSubscriptionGuard: true);
+        using var client = factory.CreateClient();
+
+        var results = await client.SendAsync(Build(HttpMethod.Get, ResultsPath, FormMapsRoles.Student));
+        var resume = await client.SendAsync(Build(HttpMethod.Get, ResumePath, FormMapsRoles.Student));
+
+        Assert.Equal(HttpStatusCode.OK, results.StatusCode);
+        Assert.Equal(HttpStatusCode.PaymentRequired, resume.StatusCode);
+        Assert.Equal(0, factory.Resumes.ListCalls);
+        await AssertDenial(resume, "FULL_PLATFORM_REQUIRED", "This feature is part of a FormMaps subscription");
+    }
+
+    [Fact]
+    public async Task Paid_results_request_reads_access_once_for_middleware_and_filter()
+    {
+        var access = new FakeStudentAccessReader(Charged);
+        using var factory = new PaywallApiFactory("true", access);
+        using var client = factory.CreateClient();
+
+        var response = await client.SendAsync(Build(HttpMethod.Get, ResultsPath, FormMapsRoles.Student));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(1, access.CallCount);
+    }
+
+    [Fact]
+    public async Task Open_routes_are_never_checked()
+    {
+        var access = new FakeStudentAccessReader(Unpaid);
+        using var factory = new PaywallApiFactory("true", access);
+        using var client = factory.CreateClient();
+
+        var response = await client.SendAsync(Build(HttpMethod.Get, "/health", FormMapsRoles.Student));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(0, access.CallCount);
+    }
+
+    [Fact]
+    public async Task Flag_off_leaves_the_platform_untouched()
+    {
+        var access = new FakeStudentAccessReader(Unpaid);
+        using var factory = new PaywallApiFactory(null, access);
+        using var client = factory.CreateClient();
+
+        var response = await client.SendAsync(Build(HttpMethod.Get, ResumePath, FormMapsRoles.Student));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(0, access.CallCount);
+        Assert.Equal(1, factory.Subscription.CallCount); // today's requireSubscription still runs
+    }
+
+    [Fact]
+    public async Task Non_student_is_untouched_on_the_platform()
+    {
+        var access = new FakeStudentAccessReader(Unpaid);
+        using var factory = new PaywallApiFactory("true", access, realSubscriptionGuard: true);
+        using var client = factory.CreateClient();
+
+        var response = await client.SendAsync(Build(HttpMethod.Get, ResumePath, FormMapsRoles.Counselor, "school-1"));
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(0, access.CallCount);
+    }
+
     // ---- helpers ----
+
+    private static async Task AssertDenial(HttpResponseMessage response, string code, string message)
+    {
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var root = document.RootElement;
+        Assert.False(root.GetProperty("success").GetBoolean());
+        Assert.Equal(message, root.GetProperty("message").GetString());
+        Assert.Equal(code, root.GetProperty("code").GetString());
+        Assert.Equal(3, root.EnumerateObject().Count());
+    }
 
     private static async Task AssertPaidResultsRequired(HttpResponseMessage response)
     {
@@ -270,9 +399,12 @@ public class StudentPaywallEndpointsTests
     private sealed class PaywallApiFactory(
         string? flag,
         FakeStudentAccessReader access,
-        LiaCompleteStatus completeStatus = LiaCompleteStatus.Completed) : WebApplicationFactory<Program>
+        LiaCompleteStatus completeStatus = LiaCompleteStatus.Completed,
+        bool realSubscriptionGuard = false) : WebApplicationFactory<Program>
     {
         public FakeSubscriptionGuard Subscription { get; } = new();
+
+        public FakeResumeRepository Resumes { get; } = new();
 
         public FakeLiaResultReader Reader { get; } = new();
 
@@ -287,7 +419,24 @@ public class StudentPaywallEndpointsTests
                 services.RemoveAll<IStudentAccessReader>();
                 services.AddSingleton<IStudentAccessReader>(access);
                 services.RemoveAll<ISubscriptionGuard>();
-                services.AddSingleton<ISubscriptionGuard>(Subscription);
+                if (realSubscriptionGuard)
+                {
+                    // The REAL SubscriptionGuard with production's flag wiring. Its session factory is null on
+                    // purpose: this harness has no database, so any DB read would throw — with the flag on the
+                    // guard must defer before touching it (D4).
+                    services.AddScoped<ISubscriptionGuard>(sp => new SubscriptionGuard(
+                        null!,
+                        NullLogger<SubscriptionGuard>.Instance,
+                        SubscriptionAccess.DefaultGraceDays,
+                        () => StudentAccessRules.IsPaywallEnabled(sp.GetRequiredService<IConfiguration>()[StudentAccessRules.FlagKey])));
+                }
+                else
+                {
+                    services.AddSingleton<ISubscriptionGuard>(Subscription);
+                }
+
+                services.RemoveAll<IResumeRepository>();
+                services.AddSingleton<IResumeRepository>(Resumes);
                 services.RemoveAll<IUserAccessGuard>();
                 services.AddSingleton<IUserAccessGuard>(new AllowUserAccessGuard());
                 services.RemoveAll<ILiaResultReader>();
@@ -376,9 +525,15 @@ public class StudentPaywallEndpointsTests
     {
         public int CompleteCalls { get; private set; }
 
+        public int StartCalls { get; private set; }
+
         public Task<LiaStartOutcome> StartAsync(
             RequestContext context, string userId, string language, LiaDeviceInfo? deviceInfo = null,
-            CancellationToken cancellationToken = default) => throw new NotImplementedException();
+            CancellationToken cancellationToken = default)
+        {
+            StartCalls++;
+            return Task.FromResult(new LiaStartOutcome(LiaStartStatus.AlreadyCompleted, null));
+        }
 
         public Task<LiaSubtestStartOutcome> StartSubtestAsync(
             RequestContext context, string sessionId, string ownerUserId, string subtest, CancellationToken cancellationToken = default) =>
@@ -411,5 +566,31 @@ public class StudentPaywallEndpointsTests
             var payload = status == LiaCompleteStatus.Completed ? SampleCompletion() : null;
             return Task.FromResult(new LiaCompleteOutcome(status, payload));
         }
+    }
+
+    private sealed class FakeResumeRepository : IResumeRepository
+    {
+        public int ListCalls { get; private set; }
+
+        public Task<IReadOnlyList<ResumeRow>> ListAsync(RequestContext context, CancellationToken cancellationToken = default)
+        {
+            ListCalls++;
+            return Task.FromResult<IReadOnlyList<ResumeRow>>([]);
+        }
+
+        public Task<ResumeCreateOutcome> CreateAsync(RequestContext context, JsonElement body, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<ResumeRow?> FindActiveByIdAsync(string resumeId, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<ResumeRow?> FindMostRecentActiveByUserIdAsync(string userId, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<ResumeUpdateOutcome> UpdateAsync(RequestContext context, string resumeId, JsonElement body, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
+
+        public Task<bool> SoftDeleteAsync(RequestContext context, string resumeId, CancellationToken cancellationToken = default) =>
+            throw new NotImplementedException();
     }
 }
