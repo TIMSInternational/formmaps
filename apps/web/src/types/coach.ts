@@ -230,7 +230,10 @@ export interface CoachSlotsParams {
 
 export interface CoachSlotsResponse {
   date: string;
+  /** Echo of the requested (student) timezone. */
   timezone: string;
+  /** The coach's own IANA timezone (slots are UTC instants; this is for the hint only). */
+  coachTimezone?: string;
   coachId: string;
   sessionDurationMinutes: number;
   price: {

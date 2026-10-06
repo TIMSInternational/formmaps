@@ -3,11 +3,21 @@
 import { useState } from "react";
 import { motion } from "motion/react";
 import { toast } from "sonner";
+import { z } from "zod";
 import { useTranslation } from "react-i18next";
 import { X, Loader2, Send } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { requestRecommendation } from "@/services/recommendationService";
 import StaffSearch, { StaffUser } from "./StaffSearch";
+
+// Mirrors the API's createRequestSchema: a staff member must be SELECTED (not
+// just typed into the search) and the required text fields non-blank
+// (formmaps-platform#412).
+const requestSchema = z.object({
+  recommenderId: z.string().trim().min(1),
+  relationship: z.string().trim().min(1).max(100),
+  requestMessage: z.string().trim().min(1).max(2000),
+});
 
 interface RecommendationRequestFormProps {
   onClose: () => void;
@@ -24,6 +34,13 @@ export default function RecommendationRequestForm({
   const [message, setMessage] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [submitting, setSubmitting] = useState(false);
+
+  const isValid = requestSchema.safeParse({
+    recommenderId: selectedStaff?.id ?? "",
+    relationship,
+    requestMessage: message,
+  }).success;
+  const canSubmit = isValid && !submitting;
 
   const resetForm = () => {
     setSelectedStaff(null);
@@ -262,7 +279,7 @@ export default function RecommendationRequestForm({
           </button>
           <button
             onClick={handleSubmit}
-            disabled={submitting}
+            disabled={!canSubmit}
             style={{
               height: 34,
               borderRadius: 6,
@@ -275,8 +292,8 @@ export default function RecommendationRequestForm({
               background: "var(--admin-accent-blue)",
               color: "#fff",
               border: "none",
-              cursor: submitting ? "not-allowed" : "pointer",
-              opacity: submitting ? 0.7 : 1,
+              cursor: canSubmit ? "pointer" : "not-allowed",
+              opacity: canSubmit ? 1 : 0.5,
             }}
           >
             {submitting ? (

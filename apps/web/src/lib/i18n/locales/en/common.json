@@ -2671,7 +2671,12 @@
     "coachNotAvailable": "Coach is not available on this day.",
     "jumpTo": "Jump to {{date}}",
     "continue": "Continue",
-    "back": "Back"
+    "back": "Back",
+    "sessionMinutes": "{{count}}-minute session",
+    "sessionHour": "1-hour session",
+    "sessionHours": "{{count}}-hour session",
+    "coachTimeHint": "Coach's time: {{time}}",
+    "coachTimezone": "Coach's time zone: {{timezone}}"
   },
   "testPCA": {
     "title": "PCA API Testing",
@@ -3515,6 +3520,21 @@
       "greetingNoName": "Hi there!",
       "help": "How can I help you today?",
       "tryAsking": "Try asking"
+    },
+    "suggestions": {
+      "student": {
+        "careerRank": "Why was my #1 career ranked highest?",
+        "skills": "What skills should I develop next?",
+        "universities": "Compare my top 3 university matches",
+        "courses": "What courses would help me bridge gaps?",
+        "objective": "Help me write a career objective"
+      },
+      "studentOnboarding": {
+        "measure": "What does each assessment measure?",
+        "duration": "How long do the assessments take?",
+        "startWith": "Which assessment should I start with?",
+        "explore": "Help me explore careers that fit my interests"
+      }
     }
   },
   "recommendations": {
@@ -5769,7 +5789,11 @@
       "staffSearch": {
         "placeholder": "Search counselors and staff...",
         "failed": "Search failed. Please try again.",
-        "noResults": "No counselors or staff found at your school."
+        "noResults": "No counselors or staff found at your school.",
+        "noStaff": "No counselors or teachers available yet",
+        "noMatches": "No matches for “{{query}}”",
+        "minChars": "Type at least 2 characters to search",
+        "clearSelection": "Clear selected staff member"
       }
     },
     "subscriptions": {

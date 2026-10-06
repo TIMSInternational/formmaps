@@ -2671,7 +2671,12 @@
     "coachNotAvailable": "El coach no está disponible este día.",
     "jumpTo": "Ir a {{date}}",
     "continue": "Continuar",
-    "back": "Volver"
+    "back": "Volver",
+    "sessionMinutes": "Sesión de {{count}} minutos",
+    "sessionHour": "Sesión de 1 hora",
+    "sessionHours": "Sesión de {{count}} horas",
+    "coachTimeHint": "Hora del coach: {{time}}",
+    "coachTimezone": "Zona horaria del coach: {{timezone}}"
   },
   "testPCA": {
     "title": "Pruebas de la API PCA",
@@ -3515,6 +3520,21 @@
       "greetingNoName": "¡Hola!",
       "help": "¿En qué te puedo ayudar hoy?",
       "tryAsking": "Intenta preguntar"
+    },
+    "suggestions": {
+      "student": {
+        "careerRank": "¿Por qué mi carrera #1 quedó en primer lugar?",
+        "skills": "¿Qué habilidades debería desarrollar ahora?",
+        "universities": "Compara mis 3 mejores universidades recomendadas",
+        "courses": "¿Qué cursos me ayudarían a cerrar brechas?",
+        "objective": "Ayúdame a redactar un objetivo profesional"
+      },
+      "studentOnboarding": {
+        "measure": "¿Qué mide cada evaluación?",
+        "duration": "¿Cuánto tiempo toman las evaluaciones?",
+        "startWith": "¿Con qué evaluación debería empezar?",
+        "explore": "Ayúdame a explorar carreras que encajen con mis intereses"
+      }
     }
   },
   "recommendations": {
@@ -5769,7 +5789,11 @@
       "staffSearch": {
         "placeholder": "Buscar orientadores y personal...",
         "failed": "La búsqueda falló. Inténtalo de nuevo.",
-        "noResults": "No se encontraron orientadores ni personal en tu colegio."
+        "noResults": "No se encontraron orientadores ni personal en tu colegio.",
+        "noStaff": "Aún no hay consejeros ni profesores disponibles",
+        "noMatches": "Sin coincidencias para “{{query}}”",
+        "minChars": "Escribe al menos 2 caracteres para buscar",
+        "clearSelection": "Quitar el miembro del personal seleccionado"
       }
     },
     "subscriptions": {
