@@ -42,9 +42,9 @@ it("renders the application name and location verbatim (no capitalize transform)
   expect(screen.getByText("San José de la Montaña").className).not.toMatch(/\bcapitalize\b/);
 });
 
-it("still capitalizes the lower-case enum Type value", () => {
+it("translates the Type enum value (#405) and keeps it capitalized", () => {
   renderOverview();
-  expect(screen.getByText("university").className).toMatch(/\bcapitalize\b/);
+  expect(screen.getByText("University").className).toMatch(/\bcapitalize\b/);
 });
 
 it("formats the deadline as a calendar date with no day shift", () => {
