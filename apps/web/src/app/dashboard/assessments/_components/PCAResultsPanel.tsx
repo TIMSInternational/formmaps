@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ModalSkeleton } from "@/components/ui/skeletons";
 import { getPcaChartBlob, getPcaReportBlob, type PcaReportType } from "@/services/pcaImageService";
 import { getCareerInformeBlob } from "@/services/careerInformeService";
+import { trackReportDownloaded } from "@/services/reportEventsService";
 import { toast } from "sonner";
 
 interface PCAResultsPanelProps {
@@ -101,6 +102,7 @@ export default function PCAResultsPanel({
       const a = document.createElement("a"); a.href = url;
       a.download = `${slug}.pdf`; a.click();
       URL.revokeObjectURL(url);
+      void trackReportDownloaded("pca-report-pdf"); // best-effort, never awaited
       toast.success(t("pca.reports.downloaded"));
     } catch { toast.error(t("pca.reports.downloadFailed")); }
     setReportLoading(null);
@@ -116,6 +118,7 @@ export default function PCAResultsPanel({
       const a = document.createElement("a"); a.href = url;
       a.download = `Informe-Orientacion-${userId}.pdf`; a.click();
       URL.revokeObjectURL(url);
+      void trackReportDownloaded("career-informe-pdf"); // best-effort, never awaited
       toast.success(t("informe.downloaded"));
     } catch (err) {
       // 409 is the assembler refusing an EMPTY profile (below both PCA and MIL there
