@@ -7,6 +7,7 @@ import { getCoachSessions } from "@/services/coachService";
 import { unwrapList } from "@/lib/unwrapList";
 import { Booking } from "@/types/coach";
 import { formatTimeOfDay } from "@/lib/dateUtils";
+import { localDayKey } from "@/lib/dates";
 import { useTranslation } from "react-i18next";
 
 function getDaysInMonth(y: number, m: number) { return new Date(y, m + 1, 0).getDate(); }
@@ -44,14 +45,17 @@ export default function CoachCalendarPage() {
 
   const daysInMonth = getDaysInMonth(viewYear, viewMonth);
   const firstDay = getFirstDayOfMonth(viewYear, viewMonth);
-  const today = new Date().toISOString().slice(0, 10);
+  // Sessions are real moments: bucket by the viewer's LOCAL day (the grid's
+  // days), not the UTC day — an evening session west of UTC was landing on
+  // the next day.
+  const today = localDayKey(new Date());
 
   // Group sessions by date
   const sessionsByDate = new Map<string, Booking[]>();
   for (const s of sessions) {
     const time = s.startTime || s.slot?.start;
     if (!time) continue;
-    const key = new Date(time).toISOString().slice(0, 10);
+    const key = localDayKey(new Date(time));
     if (!sessionsByDate.has(key)) sessionsByDate.set(key, []);
     sessionsByDate.get(key)!.push(s);
   }
@@ -125,6 +129,7 @@ export default function CoachCalendarPage() {
               return (
                 <div
                   key={day}
+                  data-day={dateStr}
                   onClick={() => setSelectedDay(dateStr)}
                   style={{
                     minHeight: 90, padding: "4px 6px", cursor: "pointer",

@@ -1,14 +1,20 @@
 "use client";
 
 import { Loader2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 
-export function InfoRow({ label, value }: { label: string; value: string }) {
+/**
+ * Values render verbatim — user-entered proper names ("Universidad de Costa
+ * Rica") must never be title-cased (#409). `capitalize` is opt-in for
+ * lower-case enum values only.
+ */
+export function InfoRow({ label, value, capitalize = false }: { label: string; value: string; capitalize?: boolean }) {
   return (
     <div className="flex flex-col gap-1">
       <span className="text-[10px] uppercase tracking-wider font-semibold" style={{ color: "var(--admin-font-tertiary)" }}>
         {label}
       </span>
-      <span className="text-sm font-medium capitalize" style={{ color: "var(--admin-font-primary)" }}>
+      <span className={cn("text-sm font-medium", capitalize && "capitalize")} style={{ color: "var(--admin-font-primary)" }}>
         {value}
       </span>
     </div>

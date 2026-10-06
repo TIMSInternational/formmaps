@@ -12,7 +12,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import type { TestScore } from "@/services/testScoreService";
-import { formatDateOnly } from "@/lib/dateUtils";
+import { useDateFormat } from "@/hooks/useDateFormat";
 import { useTranslation } from "react-i18next";
 import { TYPE_COLOR, scoreLabel, scoreSubLabel } from "./score-helpers";
 
@@ -26,6 +26,7 @@ interface ScoreCardProps {
 
 export function ScoreCard({ score, index, onEdit, onDelete, deleting }: ScoreCardProps) {
   const { t } = useTranslation();
+  const { formatDate } = useDateFormat();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const colors = TYPE_COLOR[score.testType] ?? TYPE_COLOR["SAT"];
   const main = scoreLabel(score);
@@ -56,7 +57,7 @@ export function ScoreCard({ score, index, onEdit, onDelete, deleting }: ScoreCar
           {score.testDate && (
             <span className="inline-flex items-center gap-1 text-xs text-muted-foreground bg-secondary px-2 py-0.5 rounded-md">
               <Calendar className="h-3 w-3" />
-              {formatDateOnly(score.testDate)}
+              {formatDate(score.testDate)}
             </span>
           )}
         </div>
