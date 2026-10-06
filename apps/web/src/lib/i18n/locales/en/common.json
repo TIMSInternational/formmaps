@@ -1648,7 +1648,12 @@
         "name": "Name",
         "email": "Email",
         "role": "Role",
-        "notSet": "Not set"
+        "notSet": "Not set",
+        "saveName": "Save name",
+        "saving": "Saving...",
+        "nameSaved": "Name updated",
+        "nameFailed": "Could not update your name",
+        "nameRequired": "Name is required"
       },
       "notifications": {
         "subtitle": "Choose how you want to be notified",
@@ -1678,18 +1683,18 @@
       },
       "privacy": {
         "title": "Privacy",
-        "subtitle": "Control your data and visibility",
+        "subtitle": "Each option is off until you turn it on. You can change them at any time.",
         "profileVisibility": {
           "label": "Profile Visibility",
-          "description": "Allow counselors and coaches to view your profile"
+          "description": "Let counselors and coaches see your profile details (name, photo, bio and interests)."
         },
         "shareProgress": {
           "label": "Share Progress",
-          "description": "Share your learning progress with your school"
+          "description": "Share your assessment results and learning progress with your school."
         },
         "usageAnalytics": {
           "label": "Usage Analytics",
-          "description": "Help us improve by sharing anonymous usage data"
+          "description": "Send anonymous usage data (pages visited, features used) to help us improve FormMaps. Nothing is collected while this is off."
         }
       },
       "security": {

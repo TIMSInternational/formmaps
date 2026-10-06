@@ -1,6 +1,8 @@
 export interface UserProfile {
   id: string;
   fullName: string;
+  /** Account display name (User.name); PUT /api/v1/user/profile accepts it, 1-100 chars. */
+  name?: string;
   email: string;
   headline?: string;
   bio?: string;

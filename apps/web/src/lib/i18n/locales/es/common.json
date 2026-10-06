@@ -1000,7 +1000,12 @@
         "name": "Nombre",
         "email": "Correo electrónico",
         "role": "Rol",
-        "notSet": "Sin definir"
+        "notSet": "Sin definir",
+        "saveName": "Guardar nombre",
+        "saving": "Guardando...",
+        "nameSaved": "Nombre actualizado",
+        "nameFailed": "No pudimos actualizar tu nombre",
+        "nameRequired": "El nombre es obligatorio"
       },
       "notifications": {
         "subtitle": "Elige cómo quieres recibir notificaciones",
@@ -1030,18 +1035,18 @@
       },
       "privacy": {
         "title": "Privacidad",
-        "subtitle": "Controla tus datos y tu visibilidad",
+        "subtitle": "Cada opción está desactivada hasta que la actives. Puedes cambiarlas cuando quieras.",
         "profileVisibility": {
           "label": "Visibilidad del perfil",
-          "description": "Permite que orientadores y coaches vean tu perfil"
+          "description": "Permite que orientadores y coaches vean los datos de tu perfil (nombre, foto, biografía e intereses)."
         },
         "shareProgress": {
           "label": "Compartir progreso",
-          "description": "Comparte tu progreso de aprendizaje con tu colegio"
+          "description": "Comparte los resultados de tus evaluaciones y tu progreso de aprendizaje con tu colegio."
         },
         "usageAnalytics": {
           "label": "Análisis de uso",
-          "description": "Ayúdanos a mejorar compartiendo datos de uso anónimos"
+          "description": "Envía datos de uso anónimos (páginas visitadas, funciones usadas) para ayudarnos a mejorar FormMaps. No se recopila nada mientras esté desactivado."
         }
       },
       "security": {
