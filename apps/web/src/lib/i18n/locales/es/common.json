@@ -156,6 +156,22 @@
       "goToDashboard": "Ir al panel"
     }
   },
+  "independentStudent": {
+    "schoolOnly": {
+      "title": "Esta función viene con una cuenta de colegio",
+      "description": "El expediente académico, las videollamadas del colegio, las citas con el orientador y las cartas de recomendación requieren un colegio en FormMaps: tu colegio ingresa tus notas, organiza las llamadas y aporta los orientadores y el personal que escribe las cartas. Todo lo demás en FormMaps está disponible para ti.",
+      "action": "Volver a mi panel"
+    },
+    "completePurchase": {
+      "title": "Completa tu compra",
+      "body": "Tu cuenta de FormMaps está lista. Para comenzar tus evaluaciones y ver tus carreras recomendadas, completa tu compra.",
+      "minors": "¿Eres menor de 18 años? Tu madre, padre o tutor puede completar la compra por ti.",
+      "choosePlan": "Elegir un plan",
+      "alreadyPaid": "Ya pagué — verificar de nuevo",
+      "checking": "Verificando…",
+      "signOut": "Cerrar sesión"
+    }
+  },
   "payments": {
     "orderSummary": "Resumen del pedido",
     "cardInformation": "Información de la tarjeta",

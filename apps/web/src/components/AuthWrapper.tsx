@@ -13,6 +13,12 @@ import { roleHomeMap } from "@/lib/roleUtils";
 import { findRouteRule, resolveRedirect } from "@/lib/routePermissions";
 import { nextSessionKey, type SessionKeyState } from "@/lib/auth/sessionKey";
 import { initSentry } from "@/lib/sentry";
+import {
+  COMPLETE_PURCHASE_ROUTE,
+  PAYWALLED_STUDENT_AREAS,
+  isStudentPaywallEnabled,
+  unentitledStudentRedirect,
+} from "@/lib/independentStudent";
 import { reportWebVitals } from "@/lib/webVitals";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -21,7 +27,9 @@ interface AuthWrapperProps {
   children: React.ReactNode;
 }
 
-const protectedRoutes = ["/dashboard", "/admin", "/subscribe", "/school-admin", "/parent", "/counselor", "/teacher"];
+const protectedRoutes = ["/dashboard", "/admin", "/subscribe", COMPLETE_PURCHASE_ROUTE, "/school-admin", "/parent", "/counselor", "/teacher"];
+// Independent-student paywall (formmaps-platform#399), default OFF.
+const paywallEnabled = isStudentPaywallEnabled();
 const publicOnboardingRoutes = ["/parent/onboarding", "/counselor/onboarding", "/teacher/onboarding"];
 const authRoutes = ["/login", "/signup"];
 
@@ -71,19 +79,22 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
 
   // Subscription check for students
   const isProtectedRoute = protectedRoutes.some((r) => pathname.startsWith(r));
+  // Paywall ON: student areas outside the protected list are gated too.
+  const isPaywalledArea = paywallEnabled && PAYWALLED_STUDENT_AREAS.some((r) => pathname.startsWith(r));
   const isPublicOnboarding = publicOnboardingRoutes.some((p) => pathname.startsWith(p));
   const isSubscriptionPage =
     pathname.startsWith("/dashboard/subscriptions") ||
     pathname.startsWith("/admin/plans") ||
     pathname.startsWith("/payment-success") ||
     pathname.startsWith("/payment-cancelled") ||
-    pathname.startsWith("/subscribe");
+    pathname.startsWith("/subscribe") ||
+    pathname.startsWith(COMPLETE_PURCHASE_ROUTE);
   const isOnboardingPage = pathname.startsWith("/onboarding");
 
   // School students don't need subscriptions — their school pays
   const isSchoolStudent = isStudent && !!user.schoolId;
   const shouldCheckSubscription =
-    user.isAuthenticated && isProtectedRoute && isStudent && !isSchoolStudent && !isSubscriptionPage && !isOnboardingPage;
+    user.isAuthenticated && (isProtectedRoute || isPaywalledArea) && isStudent && !isSchoolStudent && !isSubscriptionPage && !isOnboardingPage;
 
   const { data: subscriptionStatus, isLoading: statusLoading, isError: statusError, isFetching: statusFetching } = useSubscriptionStatus({
     enabled: !!shouldCheckSubscription,
@@ -133,7 +144,7 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       subscriptionStatus !== undefined
     ) {
       if (!subscriptionStatus.hasActiveSubscription) {
-        return "/subscribe";
+        return unentitledStudentRedirect(paywallEnabled);
       }
     }
 

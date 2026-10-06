@@ -11,6 +11,8 @@ import { useSidePanel } from "@/components/side-panel/SidePanel";
 import { AIChatSidePanel } from "@/components/ai-chat/AIChatPanel";
 import { groupThreadsByDate, formatThreadTime } from "@/components/ai-chat/useChatThreads";
 import { useIsSchoolStudent } from "@/hooks/useSubscription";
+import { useIsIndependentStudent } from "@/hooks/useIsIndependentStudent";
+import { isSchoolOnlyRoute } from "@/lib/independentStudent";
 import {
   LayoutDashboard,
   FileText,
@@ -141,6 +143,22 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
+/**
+ * Students with no school don't get the school-only entries (Transcript, Video,
+ * Book Counselor, Recommendations — #399): items and sub-items are dropped, and
+ * a section left empty disappears. School students keep everything.
+ */
+export function withoutSchoolOnlyNav(sections: NavSection[]): NavSection[] {
+  return sections
+    .map((section) => ({
+      ...section,
+      items: section.items
+        .filter((item) => !isSchoolOnlyRoute(item.href))
+        .map((item) => (item.sub ? { ...item, sub: item.sub.filter((s) => !isSchoolOnlyRoute(s.href)) } : item)),
+    }))
+    .filter((section) => section.items.length > 0);
+}
+
 // ── Twenty-style Breadcrumb line for sub-items ──
 function SubItemBreadcrumb({ isLast, isActive }: { isLast: boolean; isActive: boolean }) {
   const lineColor = "var(--admin-border-default)";
@@ -218,6 +236,8 @@ export function StudentSidebar() {
   const { mode, setMode, colors: themeColors } = useAdminTheme();
   const { threads, currentThreadId, createThread, selectThread } = useChat();
   const isSchoolStudent = useIsSchoolStudent();
+  const isIndependentStudent = useIsIndependentStudent();
+  const navSections = isIndependentStudent ? withoutSchoolOnlyNav(NAV_SECTIONS) : NAV_SECTIONS;
   const { openPanel } = useSidePanel();
 
   const [collapsed, setCollapsed] = useState(false);
@@ -389,7 +409,7 @@ export function StudentSidebar() {
           flex: 1, overflowY: "auto",
           padding: collapsed ? "4px 6px 8px 6px" : "4px 8px 8px 8px",
         }}>
-          {NAV_SECTIONS.filter(s => !(s.label === "nav.account" && isSchoolStudent)).map((section) => (
+          {navSections.filter(s => !(s.label === "nav.account" && isSchoolStudent)).map((section) => (
             <div key={section.label} style={{ marginBottom: 8 }}>
               {!collapsed && (
                 <div style={{

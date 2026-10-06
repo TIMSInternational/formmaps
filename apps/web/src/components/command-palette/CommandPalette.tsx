@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
 import { motion, AnimatePresence } from "motion/react";
 import { useTranslation } from "react-i18next";
+import { useIsIndependentStudent } from "@/hooks/useIsIndependentStudent";
+import { isSchoolOnlyRoute } from "@/lib/independentStudent";
 import {
   LayoutDashboard,
   FileText,
@@ -59,6 +61,10 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const { t } = useTranslation();
+  // Never offer a school-only page to a student with no school (#399).
+  const isIndependentStudent = useIsIndependentStudent();
+  const visible = (items: CommandItem[]) =>
+    isIndependentStudent ? items.filter((item) => !isSchoolOnlyRoute(item.href)) : items;
 
   useEffect(() => {
     function onKeyDown(e: KeyboardEvent) {
@@ -144,7 +150,7 @@ export function CommandPalette() {
                 </Command.Empty>
 
                 <Command.Group heading={t("components.commandPalette.groups.pages")}>
-                  {PAGES.map((item) => (
+                  {visible(PAGES).map((item) => (
                     <CommandItem key={item.id} item={item} onSelect={runCommand} />
                   ))}
                 </Command.Group>
@@ -152,7 +158,7 @@ export function CommandPalette() {
                 <Command.Separator className="my-1 h-px" style={{ background: "var(--admin-border-default, #2a2a2a)" }} />
 
                 <Command.Group heading={t("components.commandPalette.groups.actions")}>
-                  {ACTIONS.map((item) => (
+                  {visible(ACTIONS).map((item) => (
                     <CommandItem key={item.id} item={item} onSelect={runCommand} />
                   ))}
                 </Command.Group>

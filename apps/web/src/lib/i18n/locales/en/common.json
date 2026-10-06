@@ -156,6 +156,22 @@
       "goToDashboard": "Go to Dashboard"
     }
   },
+  "independentStudent": {
+    "schoolOnly": {
+      "title": "This feature comes with a school account",
+      "description": "Transcripts, school video calls, counselor booking and recommendation letters need a school on FormMaps — your school enters your grades, runs the calls and provides the counselors and staff who write letters. Everything else in FormMaps is yours to use.",
+      "action": "Back to my dashboard"
+    },
+    "completePurchase": {
+      "title": "Complete your purchase",
+      "body": "Your FormMaps account is ready. To start your assessments and see your career matches, complete your purchase.",
+      "minors": "Under 18? A parent or guardian can complete the purchase for you.",
+      "choosePlan": "Choose a plan",
+      "alreadyPaid": "I already paid — check again",
+      "checking": "Checking…",
+      "signOut": "Sign out"
+    }
+  },
   "payments": {
     "orderSummary": "Order Summary",
     "cardInformation": "Card Information",
