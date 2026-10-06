@@ -41,6 +41,6 @@ it("shows the locked state in Spanish", async () => {
   mockLang = "es";
   getRecs.mockResolvedValue({ locked: true });
   render(<RecommendationsPanel evaluatedUserId="stu1" />);
-  await waitFor(() => expect(screen.getByText("Completa las tres evaluaciones (360, PCA, MIL) para ver tus recomendaciones de carrera.")).toBeInTheDocument());
+  await waitFor(() => expect(screen.getByText("Completa 360°, PCA y LIA para ver tus recomendaciones de carrera.")).toBeInTheDocument());
   expect(screen.getByText("Recomendaciones")).toBeInTheDocument();
 });

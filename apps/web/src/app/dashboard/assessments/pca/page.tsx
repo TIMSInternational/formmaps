@@ -17,6 +17,7 @@ import { useAssessmentCompleted } from "@/hooks/useAssessmentCompleted";
 import { toast } from "sonner";
 import { RequireChromium } from "@/components/proctoring/RequireChromium";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
+import { PROCTORING_MODE_BY_INSTRUMENT } from "@/components/proctoring/proctoringModes";
 import { useProctoring } from "@/components/proctoring/useProctoring";
 import {
   Brain,
@@ -69,7 +70,7 @@ export default function PCAAssessmentPage() {
   // only fullscreen, tab-switch (visibility), window blur, and second-monitor
   // detection apply. The external survey exposes no local PCAExamSession id, so
   // there is no session to flush violations to from this page (documented).
-  const proctoring = useProctoring();
+  const proctoring = useProctoring({ mode: PROCTORING_MODE_BY_INSTRUMENT.pca });
   // Depend on the individually-stable callbacks (not the whole `proctoring`
   // object, which changes reference every render as its elapsed clock ticks) so
   // this effect fires only when the assessment actually starts/stops.

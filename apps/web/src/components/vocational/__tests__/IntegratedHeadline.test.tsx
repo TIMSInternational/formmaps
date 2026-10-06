@@ -18,10 +18,12 @@ it("renders the composite + component bars when ready", () => {
   expect(screen.getByText(/84.1/)).toBeInTheDocument();
   expect(screen.getByText(/strong/i)).toBeInTheDocument();
   expect(screen.getByText(/360/)).toBeInTheDocument();
+  expect(screen.getByText("LIA (30%)")).toBeInTheDocument();
+  expect(screen.queryByText(/MIL/)).toBeNull();
 });
 
 it("renders an unlock note when not ready", () => {
   render(<IntegratedHeadline integrated={{ status: "not_ready", missing: ["mil"] }} />);
-  expect(screen.getByText(/unlock|complete/i)).toBeInTheDocument();
+  expect(screen.getByText("Complete 360°, PCA, and LIA to unlock your integrated score.")).toBeInTheDocument();
   expect(screen.queryByText(/84.1/)).not.toBeInTheDocument();
 });

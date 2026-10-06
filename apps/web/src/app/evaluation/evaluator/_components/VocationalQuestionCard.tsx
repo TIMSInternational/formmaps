@@ -101,18 +101,28 @@ export function VocationalQuestionCard({
     [next[idx], next[ni]] = [next[ni], next[idx]];
     onChange({ rankingOrder: next.map((v, i) => ({ value: v, rank: i + 1 })) });
   };
+  // Only an interaction (a move or an explicit confirm) makes this an answer.
+  const confirmed = !!value?.rankingOrder?.length;
   return (
-    <ol className="space-y-2">
-      {order.map((v, idx) => (
-        <li key={v} className="flex items-center justify-between rounded-lg border p-3" style={ROW_STYLE}>
-          <span className="text-sm text-foreground">{idx + 1}. {labelOf(v)}</span>
-          <div className="flex gap-1">
-            <button type="button" aria-label={t("evaluation.vocational.moveUp", { label: labelOf(v) })} disabled={idx === 0} onClick={() => move(idx, -1)} className="disabled:opacity-30 p-1"><ChevronUp className="h-4 w-4" /></button>
-            <button type="button" aria-label={t("evaluation.vocational.moveDown", { label: labelOf(v) })} disabled={idx === order.length - 1} onClick={() => move(idx, 1)} className="disabled:opacity-30 p-1"><ChevronDown className="h-4 w-4" /></button>
-          </div>
-        </li>
-      ))}
-    </ol>
+    <div className="space-y-2">
+      <ol className="space-y-2">
+        {order.map((v, idx) => (
+          <li key={v} className="flex items-center justify-between rounded-lg border p-3" style={ROW_STYLE}>
+            <span className="text-sm text-foreground">{idx + 1}. {labelOf(v)}</span>
+            <div className="flex gap-1">
+              <button type="button" aria-label={t("evaluation.vocational.moveUp", { label: labelOf(v) })} disabled={idx === 0} onClick={() => move(idx, -1)} className="disabled:opacity-30 p-1"><ChevronUp className="h-4 w-4" /></button>
+              <button type="button" aria-label={t("evaluation.vocational.moveDown", { label: labelOf(v) })} disabled={idx === order.length - 1} onClick={() => move(idx, 1)} className="disabled:opacity-30 p-1"><ChevronDown className="h-4 w-4" /></button>
+            </div>
+          </li>
+        ))}
+      </ol>
+      {!confirmed && (
+        <button type="button" onClick={() => onChange({ rankingOrder: order.map((v, i) => ({ value: v, rank: i + 1 })) })}
+          className="text-sm font-medium text-[#065292] underline-offset-2 hover:underline">
+          {t("evaluation.vocational.keepOrder")}
+        </button>
+      )}
+    </div>
   );
 }
 

@@ -5,11 +5,12 @@ import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getRecommendations, type VocationalRecommendations } from "@/services/vocationalReportService";
+import { VOCATIONAL_INTEGRATED_IDS, formatAssessmentList } from "@/lib/assessments";
 
 const CARD = "bg-white rounded-xl shadow-sm border border-gray-100 p-5";
 
 export function RecommendationsPanel({ evaluatedUserId }: { evaluatedUserId: string }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [data, setData] = useState<VocationalRecommendations | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -26,7 +27,7 @@ export function RecommendationsPanel({ evaluatedUserId }: { evaluatedUserId: str
   if (error || !data) return <div className={CARD}><p className="text-sm text-gray-500">{t("evaluation.vocational.report.recommendationsLoadError")}</p></div>;
   if (data.locked) {
     return <div className={CARD}><p className="text-sm font-semibold text-gray-900 mb-1">{t("evaluation.vocational.report.recommendations")}</p>
-      <p className="text-sm text-gray-500">{t("evaluation.vocational.report.recommendationsLocked")}</p></div>;
+      <p className="text-sm text-gray-500">{t("evaluation.vocational.report.recommendationsLocked", { list: formatAssessmentList(t, i18n.language, VOCATIONAL_INTEGRATED_IDS) })}</p></div>;
   }
 
   const { guidance, careerMatches, industries } = data;

@@ -9,7 +9,9 @@ import { useCareerList } from "@/hooks/useCareerQueries";
 import { useTimsCareerScoring } from "@/hooks/useTimsQueries";
 import { useFavorites } from "@/hooks/useFavorites";
 import { motion } from "motion/react";
-import { Compass, SearchX, Lock, CheckCircle2, Circle, ArrowRight, Sparkles } from "lucide-react";
+import { Compass, SearchX, Sparkles } from "lucide-react";
+import { AssessmentGate } from "@/components/assessments/AssessmentGate";
+import { formatAssessmentList } from "@/lib/assessments";
 import { EmptyState } from "@/components/empty-state/EmptyState";
 import { ActiveFilterPills, type FilterPill } from "@/components/filters/ActiveFilterPills";
 import { useSidePanel } from "@/components/side-panel/SidePanel";
@@ -22,7 +24,7 @@ import Link from "next/link";
 const MAX_CAREERS = 10;
 
 export default function CareerExplorer() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useGlobalStore();
   const { data: assessmentProgress, isLoading: assessmentLoading } = useAssessmentProgress(user?.id || "");
   // percentageComplete (not a raw completedAssessments/totalAssessments compare) is
@@ -135,132 +137,7 @@ export default function CareerExplorer() {
   }, [listData, timsCareerList, filters.sort, isLoading]);
 
   if (!assessmentLoading && !allAssessmentsComplete) {
-    const pcaStatus = assessmentProgress?.pcaAssessment?.status || "not_started";
-    const milStatus = assessmentProgress?.milAssessment?.status || "not_started";
-    const evalStatus = assessmentProgress?.evaluationAssessment?.status || "not_started";
-    const personalityGateStatus = assessmentProgress?.personalityAssessment?.status || "not_started";
-
-    const assessments = [
-      {
-        name: t("career.gate.pca", "PCA Assessment"),
-        description: t("career.gate.pcaDesc", "Discover your DISC personality profile"),
-        status: pcaStatus,
-        href: "/dashboard/assessments/pca",
-      },
-      {
-        name: t("career.gate.lia", "LIA Assessment"),
-        description: t("career.gate.liaDesc", "Measure your cognitive abilities across 5 dimensions"),
-        status: milStatus,
-        href: "/dashboard/assessments/lia",
-      },
-      {
-        name: t("career.gate.eval", "360° Evaluation"),
-        description: t("career.gate.evalDesc", "Gather feedback from peers, parents, and teachers"),
-        status: evalStatus,
-        href: "/dashboard/assessments/evaluation",
-      },
-      {
-        name: t("career.gate.personality", "Personality Assessment"),
-        description: t("career.gate.personalityDesc", "Resolve your 4-letter personality type"),
-        status: personalityGateStatus,
-        href: "/dashboard/assessments/personality",
-      },
-    ];
-
-    const completedCount = assessments.filter((a) => a.status === "completed").length;
-
-    return (
-      <div className="space-y-6 max-w-4xl mx-auto py-8">
-        <div className="text-center space-y-3">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200/30">
-            <Lock className="w-7 h-7 text-white" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">
-            {t("career.gate.title", "Complete Your Assessments")}
-          </h1>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-            {t("career.gate.subtitle", "Finish all 4 assessments to unlock personalized career matches tailored to your unique profile.")}
-          </p>
-        </div>
-
-        {/* Progress indicator */}
-        <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground">
-          <span>{completedCount}/4 {t("career.gate.completed", "completed")}</span>
-          <div className="flex gap-1.5">
-            {[0, 1, 2, 3].map((i) => (
-              <div
-                key={i}
-                className={`w-8 h-2 rounded-full transition-colors ${
-                  i < completedCount ? "bg-emerald-500" : "bg-muted"
-                }`}
-              />
-            ))}
-          </div>
-        </div>
-
-        {/* Assessment checklist */}
-        <div className="space-y-3">
-          {assessments.map((assessment) => {
-            const isComplete = assessment.status === "completed";
-            const isInProgress = assessment.status === "in_progress";
-
-            return (
-              <Link
-                key={assessment.name}
-                href={assessment.href}
-                className={`flex items-center gap-4 p-5 rounded-2xl border transition-all duration-200 ${
-                  isComplete
-                    ? "bg-emerald-50/50 border-emerald-200/60"
-                    : "bg-card border-border hover:border-primary/30 hover:shadow-sm"
-                }`}
-              >
-                <div className="shrink-0">
-                  {isComplete ? (
-                    <CheckCircle2 className="w-6 h-6 text-emerald-500" />
-                  ) : (
-                    <Circle className={`w-6 h-6 ${isInProgress ? "text-amber-400" : "text-muted-foreground/30"}`} />
-                  )}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-semibold ${isComplete ? "text-emerald-700" : "text-foreground"}`}>
-                    {assessment.name}
-                    {isInProgress && (
-                      <span className="ml-2 text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">
-                        {t("career.gate.inProgress", "In Progress")}
-                      </span>
-                    )}
-                  </h3>
-                  <p className={`text-xs mt-0.5 ${isComplete ? "text-emerald-600/70" : "text-muted-foreground"}`}>
-                    {assessment.description}
-                  </p>
-                </div>
-                {!isComplete && (
-                  <ArrowRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />
-                )}
-              </Link>
-            );
-          })}
-        </div>
-
-        {/* CTA */}
-        {completedCount < 4 && (() => {
-          const next = assessments.find((a) => a.status !== "completed");
-          return next ? (
-            <div className="text-center pt-2">
-              <Link
-                href={next.href}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
-              >
-                {next.status === "in_progress"
-                  ? t("career.gate.continue", "Continue Assessment")
-                  : t("career.gate.startNext", "Start Next Assessment")}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          ) : null;
-        })()}
-      </div>
-    );
+    return <AssessmentGate progress={assessmentProgress} unlocks="careers" />;
   }
 
   return (
@@ -335,7 +212,7 @@ export default function CareerExplorer() {
           <EmptyState
             type="not_started"
             title={t("career.explorer.noResults", "No careers found")}
-            description={t("career.explorer.noResultsDesc", "Complete your PCA and MIL assessments to receive personalized career recommendations.")}
+            description={t("career.explorer.noResultsDesc", { list: formatAssessmentList(t, i18n.language) })}
             actionLabel="Start Assessments"
             actionHref="/dashboard/assessments"
           />

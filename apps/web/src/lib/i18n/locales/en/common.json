@@ -242,6 +242,7 @@
       "answerPlaceholder": "Write your answer…",
       "moveUp": "move {{label}} up",
       "moveDown": "move {{label}} down",
+      "keepOrder": "Keep this order",
       "report": {
         "title": "Vocational 360 Report",
         "titleMine": "My Vocational 360 Report",
@@ -264,7 +265,7 @@
           "sibling_friend": "Sibling/Friend"
         },
         "integratedTitle": "Integrated vocational score",
-        "integratedLocked": "Complete all three assessments (360, PCA, MIL) to unlock your integrated score.",
+        "integratedLocked": "Complete {{list}} to unlock your integrated score.",
         "interestsTitle": "Interests & preferences",
         "topInterests": "Top interest areas",
         "topIndustries": "Top industries",
@@ -272,23 +273,21 @@
         "workType": "Preferred work type:",
         "inTheirWords": "In their words",
         "readinessTitle": "Assessment readiness",
-        "row360": "360 Evaluation",
         "row360Hint": "Needs the student plus at least one other evaluator (parent, teacher, or peer).",
-        "rowPca": "PCA (Personal Competence Analysis)",
         "rowPcaHint": "Complete the PCA assessment.",
-        "rowMilHint": "Complete the MIL cognitive exams.",
         "rowReady": "{{label}} ready",
         "rowPending": "{{label}} pending",
         "recommendations": "Recommendations",
         "recommendationsLoadError": "Couldn't load recommendations.",
-        "recommendationsLocked": "Complete all three assessments (360, PCA, MIL) to see your career recommendations.",
+        "recommendationsLocked": "Complete {{list}} to see your career recommendations.",
         "suggestedDirections": "Suggested directions",
         "strengths": "Strengths",
         "growthAreas": "Growth areas",
         "topCareerMatches": "Top career matches",
         "industriesToExplore": "Industries to explore:",
         "nextSteps": "Next steps",
-        "exploreUniversities": "Explore matching universities →"
+        "exploreUniversities": "Explore matching universities →",
+        "rowLiaHint": "Complete the LIA cognitive exams."
       }
     },
     "noReportData": "Report data not available",
@@ -1159,7 +1158,7 @@
     "journey": {
       "title": "Your Journey",
       "assessmentsTitle": "Complete Assessments",
-      "assessmentsDesc": "Take PCA and MIL evaluations to discover your strengths",
+      "assessmentsDesc": "Take your assessments ({{list}}) to discover your strengths",
       "careersTitle": "Explore Career Paths",
       "careersDesc": "Browse careers matched to your profile and interests",
       "learningTitle": "Start Learning",
@@ -1172,12 +1171,12 @@
     "studentPortal": "Student Portal",
     "monitorProgress": "Monitor your progress, accelerate your skills, and master your career path with precision.",
     "recommendationsLocked": "Recommendations Locked",
-    "completeAllAssessments": "Complete all 4 assessments (PCA, LIA, 360° Evaluation, and Personality) to unlock your personalized career matches and recommendations.",
+    "completeAllAssessments": "Complete all {{count}} assessments ({{list}}) to unlock your personalized career matches and recommendations.",
     "goToAssessments": "Go to Assessments",
     "universityMatchesLocked": "Complete all assessments to see university matches",
     "analysisComplete": "Analysis Complete",
     "match": "Match",
-    "cognitiveMatrix": "MIL Matrix",
+    "cognitiveMatrix": "LIA Matrix",
     "aiSuggested": "AI Suggested",
     "role": {
       "student": "Student",
@@ -1326,7 +1325,7 @@
     "startLIA": "Start LIA Assessment",
     "measureCognitiveAbilities": "Measure your cognitive abilities through various intelligence tasks",
     "liaResults": "LIA Results",
-    "liaResultsTitle": "MIL Assessment Results",
+    "liaResultsTitle": "LIA Assessment Results",
     "liaResultsComplete": "All cognitive modules completed successfully",
     "liaResultsInProgress": "Continue completing your cognitive modules",
     "laborIntelligenceAssessment": "Labor Intelligence Assessment",
@@ -1379,13 +1378,13 @@
     "competences": "Competences",
     "jcaAnalysis": "JCA Analysis",
     "outstanding": "Outstanding!",
-    "exceptionalPerformance": "Exceptional MIL performance",
+    "exceptionalPerformance": "Exceptional LIA performance",
     "excellent": "Excellent!",
-    "strongAbilities": "Strong MIL abilities",
+    "strongAbilities": "Strong LIA abilities",
     "goodWork": "Good Work!",
-    "solidPerformance": "Solid MIL performance",
+    "solidPerformance": "Solid LIA performance",
     "wellDone": "Well Done!",
-    "developingSkills": "Developing MIL skills",
+    "developingSkills": "Developing LIA skills",
     "milComplete": "Complete!",
     "assessmentFinished": "Assessment finished",
     "welcomeBack": "Welcome back, {{name}}!",
@@ -1421,7 +1420,7 @@
     "pcaLanguages": "Available in Spanish/English",
     "pcaResults": "Results on dashboard",
     "liaAssessmentTitle": "LIA Assessment",
-    "liaSubtests": "5 MIL subtests",
+    "liaSubtests": "5 LIA subtests",
     "liaSkills": "Pattern recognition & reasoning",
     "liaDuration": "15-20 minutes total",
     "liaAvailable": "Available now",
@@ -1439,7 +1438,7 @@
     "totalQuestions": "Total Questions",
     "subtestPerformance": "Subtest Performance",
     "percentileSuffix": "th percentile",
-    "cognitiveProfile": "MIL Profile",
+    "cognitiveProfile": "LIA Profile",
     "logicalReasoning": "Logical Reasoning",
     "logicalReasoningDesc": "Strong pattern recognition and analytical thinking",
     "verbalProcessing": "Verbal Processing",
@@ -2169,7 +2168,7 @@
         "description": "Begin your career journey",
         "ctaText": "Get Started",
         "features": [
-          "PCA & MIL Assessments",
+          "PCA & LIA Assessments",
           "Career matching (top 10)",
           "Basic resume builder",
           "Course catalog access",
@@ -2238,29 +2237,13 @@
     "highDemand": "High Demand",
     "bridgingAvailable": "Bridging Available",
     "viewDetails": "View details for {{title}}",
-    "gate": {
-      "pca": "PCA Assessment",
-      "pcaDesc": "Discover your DISC personality profile",
-      "lia": "LIA Assessment",
-      "liaDesc": "Measure your cognitive abilities across 5 dimensions",
-      "eval": "360° Evaluation",
-      "evalDesc": "Gather feedback from peers, parents, and teachers",
-      "personality": "Personality Assessment",
-      "personalityDesc": "Resolve your 4-letter personality type",
-      "title": "Complete Your Assessments",
-      "subtitle": "Finish all 4 assessments to unlock personalized career matches tailored to your unique profile.",
-      "completed": "completed",
-      "inProgress": "In Progress",
-      "continue": "Continue Assessment",
-      "startNext": "Start Next Assessment"
-    },
     "explorer": {
       "title": "Career Explorer",
       "subtitle": "Your top 10 career matches based on cognitive abilities, personality, and interests.",
       "disclaimer": "These match estimates are based on your assessment data and are for informational guidance only — not a guarantee of employment and not a substitute for professional career counseling.",
       "noResults": "No careers found",
       "noResultsFilterDesc": "Try adjusting your search or filter criteria to see more results.",
-      "noResultsDesc": "Complete your PCA and MIL assessments to receive personalized career recommendations."
+      "noResultsDesc": "Complete your assessments ({{list}}) to receive personalized career recommendations."
     },
     "search_placeholder": "Search for careers, skills, or keywords...",
     "all_industries": "All Industries",
@@ -2292,7 +2275,7 @@
       "matchStrong": "Strong Match",
       "matchGood": "Good Match",
       "barPersonality": "Personality",
-      "barCognitive": "MIL",
+      "barCognitive": "LIA",
       "barInterests": "Interests",
       "barMotivators": "Motivators",
       "whyFits": "Why this fits you",
@@ -3416,7 +3399,9 @@
   },
   "proctoring": {
     "multiDisplayTitle": "Disconnect additional displays",
-    "multiDisplayBody": "A second monitor was detected. Disconnect it to continue the assessment.",
+    "multiDisplayBody": "A second monitor was detected. Disconnect it to continue — on a docked laptop, close the lid or mirror your displays. You can also save and exit and come back later.",
+    "saveAndExit": "Save and exit",
+    "fullscreenUnavailableBanner": "Fullscreen isn't available in this browser. You can continue the assessment; this was noted.",
     "fullscreenTitle": "Return to fullscreen",
     "fullscreenBody": "To ensure assessment integrity, you must stay in fullscreen mode.",
     "fullscreenButton": "Enter fullscreen",
@@ -5267,7 +5252,7 @@
       },
       "mil": {
         "readyToDiscover": "Ready to discover your cognitive strengths?",
-        "assessment": "MIL Assessment",
+        "assessment": "LIA Assessment",
         "status": "Status",
         "complete": "Complete",
         "duration": "Duration",
@@ -6240,7 +6225,7 @@
       "coverLine3": "ANALYSIS",
       "reportContents": "Report Contents",
       "toc1": "Executive Summary & Strategy",
-      "toc2": "MIL Dimensions",
+      "toc2": "LIA Dimensions",
       "toc3": "Behavioral Patterns",
       "toc4": "Career Alignment",
       "candidate": "Candidate",
@@ -6263,9 +6248,9 @@
       "executiveHighlights": "Executive Highlights",
       "strategicAnalysis": "Strategic Analysis",
       "growthAreas": "Growth Areas",
-      "milProfile": "MIL Profile",
+      "milProfile": "LIA Profile",
       "profileShape": "PROFILE SHAPE",
-      "milSynergy": "MIL Synergy",
+      "milSynergy": "LIA Synergy",
       "dimensions": "Dimensions",
       "peakPercentile": "Peak %",
       "detailedDimensions": "Detailed Dimensions",
@@ -6549,63 +6534,6 @@
       "durationMinutes": "{{minutes}} min",
       "previousMonth": "Previous month",
       "nextMonth": "Next month"
-    },
-    "commandPalette": {
-      "items": {
-        "dashboard": {
-          "description": "Overview & career matches"
-        },
-        "assessments": {
-          "description": "PCA, MIL & evaluation"
-        },
-        "careerPaths": {
-          "description": "Top 10 career matches"
-        },
-        "university": {
-          "label": "University Finder",
-          "description": "Personalized recommendations"
-        },
-        "courses": {
-          "description": "Browse & enroll in courses"
-        },
-        "resumes": {
-          "description": "Create & manage resumes"
-        },
-        "portfolio": {
-          "description": "Showcase your work"
-        },
-        "coursePlan": {
-          "description": "Plan your curriculum"
-        },
-        "sessions": {
-          "description": "Counseling & coaching"
-        },
-        "applications": {
-          "description": "Track university applications"
-        },
-        "aiCoach": {
-          "label": "AI Coach",
-          "description": "Career guidance assistant"
-        },
-        "startPca": {
-          "label": "Start PCA Assessment",
-          "description": "Personality assessment"
-        },
-        "startMil": {
-          "label": "Start MIL Assessment",
-          "description": "Labor intelligence assessment"
-        },
-        "browseUniversities": {
-          "label": "Browse Universities",
-          "description": "Find your match"
-        }
-      },
-      "searchPlaceholder": "Search pages, actions...",
-      "noResults": "No results found.",
-      "groups": {
-        "pages": "Pages",
-        "actions": "Actions"
-      }
     },
     "compareBar": {
       "panelTitle_one": "Comparing {{count}} University",
@@ -7126,5 +7054,104 @@
       "unmuteMic": "Unmute microphone",
       "dismissError": "Dismiss error"
     }
+  },
+  "instruments": {
+    "pca": {
+      "name": "PCA",
+      "fullName": "PCA Assessment",
+      "description": "Discover your DISC personality profile"
+    },
+    "lia": {
+      "name": "LIA",
+      "fullName": "LIA Assessment",
+      "description": "Measure your cognitive abilities across 5 dimensions"
+    },
+    "evaluation": {
+      "name": "360°",
+      "fullName": "360° Evaluation",
+      "description": "Gather feedback from peers, parents, and teachers"
+    },
+    "personality": {
+      "name": "Personality",
+      "fullName": "Personality Assessment",
+      "description": "Resolve your 4-letter personality type"
+    },
+    "gate": {
+      "title": "Complete Your Assessments",
+      "careersSubtitle": "Finish all {{count}} assessments ({{list}}) to unlock personalized career matches tailored to your unique profile.",
+      "universitiesSubtitle": "Finish all {{count}} assessments ({{list}}) to unlock personalized university recommendations based on your profile, competencies, and preferences.",
+      "progress": "{{completed}}/{{total}} completed",
+      "inProgress": "In Progress",
+      "continue": "Continue Assessment",
+      "startNext": "Start Next Assessment",
+      "universityRecoEmpty": "Complete your assessments ({{list}}) to get personalized university recommendations based on your profile."
+    }
+  },
+  "commandPalette": {
+    "placeholder": "Search pages, applications, careers, courses…",
+    "empty": "No results found.",
+    "searching": "Searching…",
+    "groups": {
+      "pages": "Pages",
+      "actions": "Actions",
+      "applications": "Your applications",
+      "careers": "Careers",
+      "courses": "Courses"
+    },
+    "pages": {
+      "dashboard": {
+        "label": "Dashboard",
+        "description": "Overview of your progress"
+      },
+      "assessments": {
+        "label": "Assessments",
+        "description": "{{list}}"
+      },
+      "careerPaths": {
+        "label": "Career Explorer",
+        "description": "Your career matches"
+      },
+      "university": {
+        "label": "University Finder",
+        "description": "Universities for your profile"
+      },
+      "courses": {
+        "label": "Courses",
+        "description": "Browse & enroll in courses"
+      },
+      "resumes": {
+        "label": "Resume Builder",
+        "description": "Create & manage resumes"
+      },
+      "portfolio": {
+        "label": "Portfolio",
+        "description": "Showcase your work"
+      },
+      "coursePlan": {
+        "label": "Course Plan",
+        "description": "Plan your curriculum"
+      },
+      "sessions": {
+        "label": "My Sessions",
+        "description": "Counseling & coaching"
+      },
+      "applications": {
+        "label": "Applications",
+        "description": "Track university applications"
+      },
+      "aiCoach": {
+        "label": "AI Coach",
+        "description": "Career guidance assistant"
+      }
+    },
+    "actions": {
+      "start": "Start {{name}}",
+      "browseUniversities": {
+        "label": "Browse Universities",
+        "description": "Find universities for you"
+      }
+    },
+    "savedCareer": "Saved career",
+    "matchedCareer": "Career match"
   }
 }

@@ -431,7 +431,7 @@ test.describe.serial("Vocational 360 — full functionality", () => {
     await expect(page.getByText(L(lang, "evaluation.vocational.report.dimensions")).first()).toBeVisible({ timeout: 60_000 });
     await expect(page.getByText(L(lang, "evaluation.vocational.report.notReady360"))).toHaveCount(0);
     // The readiness checklist marks each row with an icon whose accessible name carries the state.
-    await expect(page.getByLabel(L(lang, "evaluation.vocational.report.rowReady", { label: L(lang, "evaluation.vocational.report.row360") }), { exact: true })).toBeVisible();
+    await expect(page.getByLabel(L(lang, "evaluation.vocational.report.rowReady", { label: L(lang, "instruments.evaluation.fullName") }), { exact: true })).toBeVisible();
     // Rankings are stored as option values; the report must show the labels evaluators saw.
     await expect(page.getByText(L(lang, "evaluation.vocational.report.topInterests")).first()).toBeVisible();
     const reportText = await page.locator("body").innerText();

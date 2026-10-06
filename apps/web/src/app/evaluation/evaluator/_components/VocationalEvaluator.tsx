@@ -47,15 +47,9 @@ export function VocationalEvaluator({ token, language, onCompleted }: { token: s
       if (request !== requestRef.current) return; // a newer language request superseded this one
       setForm(f);
       hasFormRef.current = true;
-      // seed ranking defaults so an untouched ranking still submits in order; answers already given
-      // (e.g. before a language switch) win over the seed.
-      const seed: Record<number, VocationalAnswerValue> = {};
-      for (const q of f.questions ?? []) {
-        if (q.type === "ranking" && q.options?.length) {
-          seed[q.number] = { rankingOrder: q.options.map((o, i) => ({ value: o.value, rank: i + 1 })) };
-        }
-      }
-      setResponses((prev) => ({ ...seed, ...prev }));
+      // No ranking defaults: an untouched ranking is NOT an answer (#410). The card shows the default
+      // order with a "Keep this order" confirm instead. Answers already given (e.g. before a language
+      // switch) are kept as-is.
     } catch (e) {
       if (request !== requestRef.current) return;
       if (hasFormRef.current) {

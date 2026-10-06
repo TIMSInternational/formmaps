@@ -61,4 +61,28 @@ describe("RequireChromium", () => {
     expect(screen.queryByTestId("runner")).not.toBeInTheDocument();
     expect(screen.getByText(/Chrome or Edge required/i)).toBeInTheDocument();
   });
+
+  // Record-only instruments (#392) enforce nothing the Chromium-only
+  // `screen.isExtended` check is needed for, so they must stay reachable on
+  // Safari / iPhone (#391).
+  it("lets an unsupported browser through in record mode", () => {
+    const IOS_SAFARI = "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
+    setUA(IOS_SAFARI);
+    render(
+      <RequireChromium mode="record">
+        <div data-testid="runner">exam</div>
+      </RequireChromium>,
+    );
+    expect(screen.getByTestId("runner")).toBeInTheDocument();
+  });
+
+  it("still gates an unsupported browser in enforce mode", () => {
+    setUA(SAFARI);
+    render(
+      <RequireChromium mode="enforce">
+        <div data-testid="runner">exam</div>
+      </RequireChromium>,
+    );
+    expect(screen.queryByTestId("runner")).not.toBeInTheDocument();
+  });
 });

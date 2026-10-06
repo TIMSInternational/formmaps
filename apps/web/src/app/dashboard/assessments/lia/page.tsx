@@ -36,6 +36,7 @@ import { useLiaFlow } from "./_tims/useLiaFlow";
 import { useLockdown } from "./_tims/useLockdown";
 import { ErrorScreen, ProgressHeader, OverviewCard } from "./_tims/FlowScreens";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
+import { PROCTORING_MODE_BY_INSTRUMENT } from "@/components/proctoring/proctoringModes";
 import { RequireChromium } from "@/components/proctoring/RequireChromium";
 import { installViolationFlush, postViolations } from "@/components/proctoring/flushViolations";
 import type { LockdownViolation } from "@/components/proctoring/types";
@@ -57,6 +58,7 @@ export default function LIAAssessmentPage() {
   // without re-creating the proctoring hook every time it changes.
   const sessionIdRef = useRef<string | null>(null);
   const lockdown = useLockdown({
+    mode: PROCTORING_MODE_BY_INSTRUMENT.lia,
     onFlush: (v) => {
       const sid = sessionIdRef.current;
       if (!sid) return;
