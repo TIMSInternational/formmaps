@@ -6,7 +6,7 @@ import remarkGfm from "remark-gfm";
 /**
  * AI essay feedback arrives as Markdown (formmaps#402 showed it as one block of literal
  * `# … ## … **…**`). react-markdown builds React elements and ignores raw HTML by
- * default, so model output cannot inject markup — no dangerouslySetInnerHTML.
+ * default, so model output cannot inject markup — no raw HTML injection.
  */
 export function EssayReviewFeedback({ markdown }: { markdown: string }) {
   return (
