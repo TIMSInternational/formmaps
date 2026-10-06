@@ -464,17 +464,24 @@ public sealed class VocationalWriterTests : IClassFixture<VocationalWriteDatabas
         await cmd.ExecuteNonQueryAsync();
     }
 
+    // The loader orders groups by ("createdDate", "id"). Groups seeded back to back can share a
+    // millisecond, and the tie then falls to the random id — which made GroupsIncluded flaky. Real
+    // groups are created minutes or days apart, so give each seeded group a strictly later createdDate.
+    private static long _groupSeq;
+
     private static async Task<string> SeedGroupAsync(NpgsqlConnection conn, string evaluatedUserId, string groupType)
     {
         var id = "eg-" + Guid.NewGuid().ToString("N");
+        var createdDate = DateTime.UtcNow.AddSeconds(Interlocked.Increment(ref _groupSeq));
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "evaluation_groups" ("id","groupType","evaluatedUserId","instrument","isEvaluationCompleted","isActive")
-            VALUES (@id, @gt, @uid, 'vocational', true, true)
+            INSERT INTO "evaluation_groups" ("id","groupType","evaluatedUserId","instrument","isEvaluationCompleted","isActive","createdDate")
+            VALUES (@id, @gt, @uid, 'vocational', true, true, @created)
             """, conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("gt", groupType);
         cmd.Parameters.AddWithValue("uid", evaluatedUserId);
+        cmd.Parameters.AddWithValue("created", createdDate);
         await cmd.ExecuteNonQueryAsync();
         return id;
     }
