@@ -9,6 +9,7 @@ const NS = [
   "school_admin",
   "coach",
   "platform_owner",
+  "legal",
 ];
 
 test("all namespaces registered for en and es", () => {
