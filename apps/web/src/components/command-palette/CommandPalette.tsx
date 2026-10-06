@@ -31,6 +31,8 @@ import { ASSESSMENTS, formatAssessmentList, type AssessmentId } from "@/lib/asse
 import { OPEN_COMMAND_PALETTE_EVENT, CLOSE_POPOVERS_EVENT } from "./events";
 import { paletteFilter } from "./search";
 import { usePaletteContent, type ContentGroup } from "./usePaletteContent";
+import { useIsIndependentStudent } from "@/hooks/useIsIndependentStudent";
+import { isSchoolOnlyRoute } from "@/lib/independentStudent";
 
 export { OPEN_COMMAND_PALETTE_EVENT } from "./events";
 
@@ -80,6 +82,8 @@ export function CommandPalette() {
   const { t, i18n } = useTranslation();
   const { user } = useGlobalStore();
   const isStudent = normalizeRole(user?.role) === Roles.STUDENT;
+  // Never offer a school-only page to a student with no school (#399).
+  const isIndependentStudent = useIsIndependentStudent();
   const language = i18n.language?.toLowerCase().startsWith("es") ? "es" : "en";
 
   const { results, isSearching } = usePaletteContent({
@@ -142,8 +146,8 @@ export function CommandPalette() {
         description: t(`commandPalette.pages.${p.key}.description`, {
           list: formatAssessmentList(t, i18n.language),
         }),
-      })),
-    [t, i18n.language],
+      })).filter((p) => !(isIndependentStudent && isSchoolOnlyRoute(p.href))),
+    [t, i18n.language, isIndependentStudent],
   );
 
   const actions = useMemo<CommandItem[]>(
@@ -162,12 +166,15 @@ export function CommandPalette() {
         label: t("commandPalette.actions.browseUniversities.label"),
         description: t("commandPalette.actions.browseUniversities.description"),
       },
-    ],
-    [t],
+    ].filter((a) => !(isIndependentStudent && isSchoolOnlyRoute(a.href))),
+    [t, isIndependentStudent],
   );
 
   const contentGroups = (["applications", "careers", "courses"] as const)
-    .map((group) => ({ group, items: results.filter((r) => r.group === group) }))
+    .map((group) => ({
+      group,
+      items: results.filter((r) => r.group === group && !(isIndependentStudent && isSchoolOnlyRoute(r.href))),
+    }))
     .filter((g) => g.items.length > 0);
 
   return (

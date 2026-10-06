@@ -4,6 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import { Check, CheckCircle2, X, Sparkles, Zap, Crown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { OneTimeReportCard } from "@/components/independent-student/OneTimeReportCard";
+import { CheckoutConsent } from "@/components/independent-student/CheckoutConsent";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
@@ -35,6 +37,8 @@ export default function SubscribePage() {
   const searchParams = useSearchParams();
   const [showSuccess, setShowSuccess] = useState(false);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
+  // Checkout consent (#243) — monthly plans stay disabled until it is given.
+  const [subscriptionConsent, setSubscriptionConsent] = useState(false);
   const { data: subStatus, refetch: refetchSub } = useSubscriptionStatus({
     staleTime: 0, // Always refetch on the subscribe page — never trust cached "no subscription"
   });
@@ -43,7 +47,8 @@ export default function SubscribePage() {
 
   // If user already has an active subscription, redirect to dashboard
   useEffect(() => {
-    if (subStatus?.hasActiveSubscription) {
+    // A one-time purchase (#429) is not the full platform — let them upgrade here.
+    if (subStatus && (subStatus.hasFullPlatform ?? subStatus.hasActiveSubscription)) {
       router.push("/dashboard");
     }
   }, [subStatus, router]);
@@ -165,6 +170,9 @@ export default function SubscribePage() {
         </motion.div>
 
         {/* Plans */}
+        <div className="max-w-xl mx-auto mb-5">
+          <CheckoutConsent variant="checkout-subscription" onValidityChange={setSubscriptionConsent} />
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6 items-start">
           {plans.map((plan, i) => {
             const Icon = plan.icon;
@@ -220,7 +228,7 @@ export default function SubscribePage() {
                       alert(t("pages.subscribe.paymentFailed", { error }));
                       setProcessingPlan(null);
                     }}
-                    disabled={processingPlan !== null}
+                    disabled={processingPlan !== null || !subscriptionConsent}
                     className="w-full mb-5"
                   >
                     <Button
@@ -230,7 +238,7 @@ export default function SubscribePage() {
                           ? { background: "#102B47", color: "#fff" }
                           : { background: "#fff", color: "var(--admin-accent-blue)", border: "1px solid var(--admin-accent-blue)" }
                       }
-                      disabled={processingPlan !== null}
+                      disabled={processingPlan !== null || !subscriptionConsent}
                     >
                       {processingPlan === plan.id ? (
                         <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("subscribe.processing")}</>
@@ -255,6 +263,19 @@ export default function SubscribePage() {
               </motion.div>
             );
           })}
+        </div>
+
+        {/* One-time $150 report (D1/D2, #243) */}
+        <div className="mt-6">
+          <OneTimeReportCard
+            userId={userId}
+            disabled={processingPlan !== null}
+            onStart={() => setProcessingPlan("one_time")}
+            onError={(error: string) => {
+              alert(t("pages.subscribe.paymentFailed", { error }));
+              setProcessingPlan(null);
+            }}
+          />
         </div>
 
         {/* Bottom note */}

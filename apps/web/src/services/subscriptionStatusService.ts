@@ -8,6 +8,24 @@ export interface SubscriptionStatus {
   /** Cancelled but access retained until expiryDate ("Cancels on" vs "Renews on"). */
   cancelAtPeriodEnd?: boolean;
   isSchoolStudent?: boolean;
+  /** Whole platform (any subscription, incl. trial) — #429. */
+  hasFullPlatform?: boolean;
+  /** Full results / reports / downloads — only after a real charge (D4). */
+  hasPaidAccess?: boolean;
+  scope?: "full_platform" | "assessments_and_reports" | null;
+}
+
+export interface ResultsPreview {
+  personalityType: string | null;
+  topCareerFamilies: string[];
+  completed: { pca: boolean; lia: boolean; personality: boolean; vocational360: boolean };
+  resultsLocked: boolean;
+}
+
+/** The free results preview (type, top-3 family names, completed ✓ — no scores). */
+export async function getResultsPreview(): Promise<ResultsPreview> {
+  const response = await apiRequest("/api/v1/entitlement/results-preview", { method: "GET" });
+  return response.data || response;
 }
 
 export interface SubscriptionPlan {

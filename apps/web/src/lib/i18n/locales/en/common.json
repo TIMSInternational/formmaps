@@ -156,6 +156,56 @@
       "goToDashboard": "Go to Dashboard"
     }
   },
+  "independentStudent": {
+    "schoolOnly": {
+      "title": "This feature comes with a school account",
+      "description": "Transcripts, school video calls, counselor booking and recommendation letters need a school on FormMaps — your school enters your grades, runs the calls and provides the counselors and staff who write letters. Everything else in FormMaps is yours to use.",
+      "action": "Back to my dashboard"
+    },
+    "completePurchase": {
+      "title": "Complete your purchase",
+      "body": "Your FormMaps account is ready. You can take all your assessments now — your full results, reports and downloads unlock with a plan or the one-time report.",
+      "minors": "Under 18? A parent or guardian can complete the purchase for you.",
+      "choosePlan": "Choose a plan",
+      "alreadyPaid": "I already paid — check again",
+      "checking": "Checking…",
+      "signOut": "Sign out",
+      "upgradeTitle": "Part of a FormMaps subscription",
+      "upgradeBody": "Your one-time report includes your assessments, full results and downloads. Resume builder, applications, coaching, courses and AI chat come with a subscription.",
+      "takeAssessments": "Take my assessments",
+      "goToResults": "Go to my assessments and results"
+    },
+    "preview": {
+      "title": "Your results preview",
+      "personality": "Personality type:",
+      "families": "Top career families:",
+      "completed": {
+        "pca": "PCA completed",
+        "lia": "LIA completed",
+        "personality": "Personality completed",
+        "vocational360": "360 evaluation started"
+      },
+      "locked": "Scores, full career matches, reports and downloads unlock after your first payment.",
+      "unlock": "Unlock my full results"
+    },
+    "oneTime": {
+      "name": "One-time report",
+      "description": "Take all the FormMaps assessments, see your complete results and download your reports — pay once, keep them.",
+      "features": [
+        "All assessments: PCA, LIA, personality and the 360",
+        "Your complete results and career matches",
+        "Downloadable reports (PDF)",
+        "No expiry — your results stay available"
+      ],
+      "notIncluded": "Not included: resume builder, applications, coaching, courses and AI chat (those come with a subscription).",
+      "period": "one-time",
+      "cta": "Buy the one-time report"
+    },
+    "consent": {
+      "subscription": "I agree to the Terms of Service and Privacy Policy. I understand my 7-day free trial converts to a paid monthly subscription unless I cancel. If I am under 18, my parent or guardian agrees and is paying.",
+      "oneTime": "I agree to the Terms of Service and Privacy Policy for this one-time purchase. If I am under 18, my parent or guardian agrees and is paying."
+    }
+  },
   "payments": {
     "orderSummary": "Order Summary",
     "cardInformation": "Card Information",

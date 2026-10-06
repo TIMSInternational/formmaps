@@ -10,9 +10,16 @@ import { KeyboardShortcuts } from "@/components/keyboard/KeyboardShortcuts";
 import { usePageViewTracking } from "@/hooks/usePageViewTracking";
 import { usePathname } from "next/navigation";
 import { AppShell } from "@/components/layout/AppShell";
+import { useIsIndependentStudent } from "@/hooks/useIsIndependentStudent";
+import { isSchoolOnlyRoute } from "@/lib/independentStudent";
+import { SchoolOnlyFeatureNotice } from "@/components/independent-student/SchoolOnlyFeatureNotice";
 
 function StudentShell({ children }: { children: React.ReactNode }) {
   usePageViewTracking();
+  const pathname = usePathname();
+  // Direct URL to a school-only page by a student with no school → explain it
+  // instead of rendering the dead end (#399). Nav + Cmd+K already hide them.
+  const blockSchoolOnly = useIsIndependentStudent() && isSchoolOnlyRoute(pathname);
 
   return (
     <AppShell
@@ -27,7 +34,7 @@ function StudentShell({ children }: { children: React.ReactNode }) {
         </>
       }
     >
-      {children}
+      {blockSchoolOnly ? <SchoolOnlyFeatureNotice /> : children}
     </AppShell>
   );
 }
