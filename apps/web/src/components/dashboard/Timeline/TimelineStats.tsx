@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock,
   Brain,
+  Fingerprint,
   Users,
   ClipboardCheck,
   BookOpen,
@@ -15,6 +16,14 @@ import { cn } from "@/lib/utils";
 import { TimelineStats as TimelineStatsType } from "@/types/timeline";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { formatDistanceToNow } from "date-fns";
+import { useTranslation } from "react-i18next";
+import { useAssessmentProgress } from "@/hooks/useAssessmentQueries";
+import {
+  REQUIRED_FOR_MATCHES,
+  countCompletedRequired,
+  getAssessmentStatuses,
+  type AssessmentId,
+} from "@/lib/assessments";
 import { es, enUS } from "date-fns/locale";
 
 interface TimelineStatsProps {
@@ -23,8 +32,13 @@ interface TimelineStatsProps {
 }
 
 export function TimelineStats({ stats, isLoading }: TimelineStatsProps) {
-  const { language } = useGlobalStore();
+  const { language, user } = useGlobalStore();
+  const { t } = useTranslation();
   const locale = language === "spanish" ? es : enUS;
+  // Completion and per-instrument status come from the SAME progress source the
+  // Dashboard gate reads (#398) — the timeline report (possibly .NET-served)
+  // only counted 3 instruments and had no Personality.
+  const { data: progress } = useAssessmentProgress(user?.id || "");
 
   if (isLoading) {
     return (
@@ -45,27 +59,28 @@ export function TimelineStats({ stats, isLoading }: TimelineStatsProps) {
     ? "Sin actividad"
     : "No activity";
 
-  const pct = stats.overallCompletion.percentage;
+  const statuses = getAssessmentStatuses(progress);
+  const { completed, total } = countCompletedRequired(statuses);
+  const pct = progress?.overallCompletion?.percentageComplete ?? Math.round((completed / total) * 100);
+
+  const ICONS: Record<AssessmentId, React.ElementType> = {
+    pca: ClipboardCheck,
+    lia: Brain,
+    evaluation: Users,
+    personality: Fingerprint,
+  };
+  const DETAILS: Partial<Record<AssessmentId, string>> = {
+    lia: `${stats.assessmentBreakdown.mil.completedSubtests}/${stats.assessmentBreakdown.mil.totalSubtests}`,
+    evaluation: `${stats.assessmentBreakdown.evaluation.completedEvaluations}/${stats.assessmentBreakdown.evaluation.totalEvaluators}`,
+  };
 
   const assessments = [
-    {
-      icon: ClipboardCheck,
-      label: "PCA",
-      status: stats.assessmentBreakdown.pca.status,
-      detail: null,
-    },
-    {
-      icon: Brain,
-      label: "LIA",
-      status: stats.assessmentBreakdown.mil.status,
-      detail: `${stats.assessmentBreakdown.mil.completedSubtests}/${stats.assessmentBreakdown.mil.totalSubtests}`,
-    },
-    {
-      icon: Users,
-      label: "360°",
-      status: stats.assessmentBreakdown.evaluation.status,
-      detail: `${stats.assessmentBreakdown.evaluation.completedEvaluations}/${stats.assessmentBreakdown.evaluation.totalEvaluators}`,
-    },
+    ...REQUIRED_FOR_MATCHES.map((a) => ({
+      icon: ICONS[a.id],
+      label: t(`${a.i18nKey}.name`),
+      status: statuses[a.id],
+      detail: DETAILS[a.id] ?? null,
+    })),
     {
       icon: BookOpen,
       label: language === "spanish" ? "Cursos" : "Courses",
@@ -111,7 +126,7 @@ export function TimelineStats({ stats, isLoading }: TimelineStatsProps) {
                 {language === "spanish" ? "Completado" : "Completed"}
               </p>
               <p className="text-sm font-bold text-foreground tabular-nums">
-                {stats.overallCompletion.completedAssessments}/{stats.overallCompletion.totalAssessments}
+                {completed}/{total}
               </p>
             </div>
             <div>

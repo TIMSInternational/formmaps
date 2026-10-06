@@ -1,6 +1,9 @@
 import { CheckCircle2, Circle } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { VocationalScoreOutcome, IntegratedOutcome } from "@/services/vocationalReportService";
+import { ASSESSMENTS, type AssessmentId } from "@/lib/assessments";
+
+const fullName = (t: (k: string) => string, id: AssessmentId) => t(`${ASSESSMENTS.find((a) => a.id === id)!.i18nKey}.fullName`);
 
 const CARD = "bg-white rounded-xl shadow-sm border border-gray-100 p-5";
 
@@ -26,14 +29,15 @@ export function ReadinessChecklist({ score, integrated }: { score: VocationalSco
   const allReady = integrated.status === "ready";
   const knownNotReady = integrated.status === "not_ready";
   const pcaReady = allReady || (knownNotReady && !integrated.missing.includes("pca"));
-  const milReady = allReady || (knownNotReady && !integrated.missing.includes("mil"));
+  // The API still calls LIA by its legacy TIMS name ("mil"); students only ever see "LIA".
+  const liaReady = allReady || (knownNotReady && !integrated.missing.includes("mil"));
   return (
     <div className={CARD}>
       <p className="text-sm font-semibold text-gray-900 mb-3">{t("evaluation.vocational.report.readinessTitle")}</p>
       <ul className="space-y-3">
-        <Row label={t("evaluation.vocational.report.row360")} ready={ready360} hint={t("evaluation.vocational.report.row360Hint")} />
-        <Row label={t("evaluation.vocational.report.rowPca")} ready={pcaReady} hint={t("evaluation.vocational.report.rowPcaHint")} />
-        <Row label="MIL" ready={milReady} hint={t("evaluation.vocational.report.rowMilHint")} />
+        <Row label={fullName(t, "evaluation")} ready={ready360} hint={t("evaluation.vocational.report.row360Hint")} />
+        <Row label={fullName(t, "pca")} ready={pcaReady} hint={t("evaluation.vocational.report.rowPcaHint")} />
+        <Row label={fullName(t, "lia")} ready={liaReady} hint={t("evaluation.vocational.report.rowLiaHint")} />
       </ul>
     </div>
   );

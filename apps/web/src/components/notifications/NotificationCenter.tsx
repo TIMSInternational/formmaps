@@ -20,6 +20,7 @@ import { normalizeRole } from "@/lib/roleUtils";
 import { Roles } from "@/lib/permissions";
 import { useDashboardAssessmentSummary } from "@/hooks/useAssessmentQueries";
 import { buildSeedNotifications, type SeedNotification } from "./notificationSeeds";
+import { CLOSE_POPOVERS_EVENT } from "@/components/command-palette/events";
 
 type Notification = SeedNotification;
 
@@ -49,6 +50,7 @@ export function NotificationCenter() {
   const [open, setOpen] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
+  const bellRef = useRef<HTMLButtonElement>(null);
 
   const isStudent = normalizeRole(user.role) === Roles.STUDENT;
   // Only students have assessments; the query stays disabled for other roles.
@@ -100,11 +102,34 @@ export function NotificationCenter() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [open]);
 
+  // Esc closes the popover and hands focus back to the bell (#407)
+  useEffect(() => {
+    if (!open) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        bellRef.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open]);
+
+  // Another modal surface (Cmd+K) is opening — get out of its way (#407)
+  useEffect(() => {
+    const close = () => setOpen(false);
+    window.addEventListener(CLOSE_POPOVERS_EVENT, close);
+    return () => window.removeEventListener(CLOSE_POPOVERS_EVENT, close);
+  }, []);
+
   return (
     <div className="relative" ref={panelRef}>
       {/* Bell trigger */}
       <button
+        ref={bellRef}
         onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        aria-haspopup="dialog"
         className="relative flex items-center justify-center rounded-md p-1.5 transition-colors"
         style={{ color: "var(--shell-icon, var(--admin-font-tertiary))" }}
         aria-label={`${t("shell.notifications")}${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
@@ -124,6 +149,8 @@ export function NotificationCenter() {
       <AnimatePresence>
         {open && (
           <motion.div
+            role="dialog"
+            aria-label={t("shell.notifications")}
             initial={{ opacity: 0, y: -4, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -4, scale: 0.97 }}

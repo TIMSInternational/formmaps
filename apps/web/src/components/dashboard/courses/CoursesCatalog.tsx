@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CourseCard } from "./CourseCard";
 import { CourseFilters } from "./CourseFilters";
 import { SkeletonCourseCard } from "./SkeletonCourseCard";
@@ -126,6 +126,20 @@ export function CoursesCatalog() {
     },
     [openPanel, enrollments]
   );
+
+  // Cmd+K course results link here with ?course=<id> (#407): open that
+  // course's panel once the catalog has loaded. Read from window.location
+  // rather than useSearchParams so the page needs no Suspense boundary.
+  const deepLinkHandled = useRef(false);
+  useEffect(() => {
+    if (deepLinkHandled.current || courses.length === 0) return;
+    const id = new URLSearchParams(window.location.search).get("course");
+    if (!id) return;
+    const target = courses.find((c: Course) => c.id === id);
+    if (!target) return;
+    deepLinkHandled.current = true;
+    handleViewDetails(target);
+  }, [courses, handleViewDetails]);
 
   const handleStartCourse = useCallback(
     async (course: Course) => {

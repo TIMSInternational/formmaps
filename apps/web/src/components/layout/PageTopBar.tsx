@@ -2,7 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { NotificationCenter } from "@/components/notifications/NotificationCenter";
-import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/command-palette/CommandPalette";
+import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/command-palette/events";
 import { Search } from "lucide-react";
 
 // Twenty PageHeader: min-height 32px, padding 12px vertical, 16px left, 12px right

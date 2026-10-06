@@ -28,13 +28,11 @@ import {
   Star,
   GraduationCap,
   Filter,
-  Lock,
-  CheckCircle2,
-  Circle,
-  ArrowRight,
 } from "lucide-react";
 import { useAssessmentProgress } from "@/hooks/useAssessmentQueries";
-import Link from "next/link";
+import { AssessmentGate } from "@/components/assessments/AssessmentGate";
+import { useTranslation } from "react-i18next";
+import { formatAssessmentList } from "@/lib/assessments";
 import { EmptyState } from "@/components/empty-state/EmptyState";
 import { ActiveFilterPills, type FilterPill } from "@/components/filters/ActiveFilterPills";
 import { CompareBar } from "@/components/compare/CompareBar";
@@ -107,6 +105,7 @@ export default function UniversityPage() {
   };
 
   const t = (en: string, es: string) => (language === "spanish" ? es : en);
+  const { t: i18nT, i18n } = useTranslation();
 
   const hasRecommendations = !!(
     recoQuery.data?.recommendations?.length || recoQuery.data?.universities?.length
@@ -156,77 +155,7 @@ export default function UniversityPage() {
 
   // Assessment gate — show lock screen if not all assessments complete
   if (!assessmentLoading && !allAssessmentsComplete) {
-    const pcaStatus = assessmentProgress?.pcaAssessment?.status || "not_started";
-    const milStatus = assessmentProgress?.milAssessment?.status || "not_started";
-    const evalStatus = assessmentProgress?.evaluationAssessment?.status || "not_started";
-    const personalityStatus = assessmentProgress?.personalityAssessment?.status || "not_started";
-    const gateAssessments = [
-      { name: t("PCA Assessment", "Evaluación PCA"), description: t("Discover your DISC personality profile", "Descubre tu perfil de personalidad DISC"), status: pcaStatus, href: "/dashboard/assessments/pca" },
-      { name: t("LIA Assessment", "Evaluación LIA"), description: t("Measure your cognitive abilities across 5 dimensions", "Mide tus habilidades cognitivas en 5 dimensiones"), status: milStatus, href: "/dashboard/assessments/lia" },
-      { name: t("360° Evaluation", "Evaluación 360°"), description: t("Gather feedback from peers, parents, and teachers", "Recoge retroalimentación de compañeros, padres y profesores"), status: evalStatus, href: "/dashboard/assessments/evaluation" },
-      { name: t("Personality Assessment", "Evaluación de personalidad"), description: t("Discover your 4-letter personality type", "Descubre tu tipo de personalidad de 4 letras"), status: personalityStatus, href: "/dashboard/assessments/personality" },
-    ];
-    const completedCount = gateAssessments.filter((a) => a.status === "completed").length;
-
-    return (
-      <div className="space-y-6 max-w-4xl mx-auto py-8">
-        <div className="text-center space-y-3">
-          <div className="mx-auto w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-200/30">
-            <Lock className="w-7 h-7 text-white" />
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">{t("Complete Your Assessments", "Completa tus evaluaciones")}</h1>
-          <p className="text-muted-foreground text-sm sm:text-base max-w-md mx-auto leading-relaxed">
-            {t(
-              "Finish all 4 assessments to unlock personalized university recommendations based on your profile, competencies, and preferences.",
-              "Completa las 4 evaluaciones para desbloquear recomendaciones personalizadas de universidades basadas en tu perfil, competencias y preferencias."
-            )}
-          </p>
-        </div>
-        <div className="flex items-center justify-center gap-2 text-sm font-medium text-muted-foreground">
-          <span>{t(`${completedCount}/4 completed`, `${completedCount}/4 completadas`)}</span>
-          <div className="flex gap-1.5">
-            {[0, 1, 2, 3].map((i) => (
-              <div key={i} className={`w-8 h-2 rounded-full transition-colors ${i < completedCount ? "bg-emerald-500" : "bg-muted"}`} />
-            ))}
-          </div>
-        </div>
-        <div className="space-y-3">
-          {gateAssessments.map((assessment) => {
-            const isComplete = assessment.status === "completed";
-            const isInProgress = assessment.status === "in_progress";
-            return (
-              <Link key={assessment.name} href={assessment.href}
-                className={`flex items-center gap-4 p-5 rounded-2xl border transition-all duration-200 ${
-                  isComplete ? "bg-emerald-50/50 border-emerald-200/60" : "bg-card border-border hover:border-primary/30 hover:shadow-sm"
-                }`}>
-                <div className="shrink-0">
-                  {isComplete ? <CheckCircle2 className="w-6 h-6 text-emerald-500" /> : <Circle className={`w-6 h-6 ${isInProgress ? "text-amber-400" : "text-muted-foreground/30"}`} />}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className={`text-sm font-semibold ${isComplete ? "text-emerald-700" : "text-foreground"}`}>
-                    {assessment.name}
-                    {isInProgress && <span className="ml-2 text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full">{t("In Progress", "En progreso")}</span>}
-                  </h3>
-                  <p className={`text-xs mt-0.5 ${isComplete ? "text-emerald-600/70" : "text-muted-foreground"}`}>{assessment.description}</p>
-                </div>
-                {!isComplete && <ArrowRight className="w-4 h-4 text-muted-foreground/50 shrink-0" />}
-              </Link>
-            );
-          })}
-        </div>
-        {completedCount < 4 && (() => {
-          const next = gateAssessments.find((a) => a.status !== "completed");
-          return next ? (
-            <div className="text-center pt-2">
-              <Link href={next.href} className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm">
-                {next.status === "in_progress" ? t("Continue Assessment", "Continuar evaluación") : t("Start Next Assessment", "Comenzar la siguiente evaluación")}
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          ) : null;
-        })()}
-      </div>
-    );
+    return <AssessmentGate progress={assessmentProgress} unlocks="universities" />;
   }
 
   return (
@@ -375,10 +304,9 @@ export default function UniversityPage() {
               <EmptyState
                 type="not_started"
                 title={t("Complete your assessments first", "Completa tus evaluaciones primero")}
-                description={t(
-                  "Take the PCA and MIL assessments to get personalized university recommendations based on your profile.",
-                  "Completa las evaluaciones PCA y MIL para obtener recomendaciones personalizadas de universidades según tu perfil."
-                )}
+                description={i18nT("instruments.gate.universityRecoEmpty", {
+                  list: formatAssessmentList(i18nT, i18n.language),
+                })}
                 icon={GraduationCap}
                 actionLabel={t("Start Assessments", "Comenzar evaluaciones")}
                 actionHref="/dashboard/assessments"
