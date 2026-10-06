@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff, ArrowLeft, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { PASSWORD_RULES, passwordRuleLabelKey } from "@/lib/auth/passwordPolicy";
 
 interface SchoolAdminPasswordStepProps {
   value: string;
@@ -22,24 +23,11 @@ export function SchoolAdminPasswordStep({
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const passwordRequirements = [
-    {
-      label: t("onboarding.password.req.length", "At least 8 characters"),
-      valid: password.length >= 8,
-    },
-    {
-      label: t("onboarding.password.req.uppercase", "One uppercase letter"),
-      valid: /[A-Z]/.test(password),
-    },
-    {
-      label: t("onboarding.password.req.lowercase", "One lowercase letter"),
-      valid: /[a-z]/.test(password),
-    },
-    {
-      label: t("onboarding.password.req.number", "One number"),
-      valid: /\d/.test(password),
-    },
-  ];
+  // The server's full rule (passwordPolicy.ts), including the special character it requires.
+  const passwordRequirements = PASSWORD_RULES.map(({ rule, test }) => ({
+    label: t(passwordRuleLabelKey(rule)),
+    valid: test(password),
+  }));
 
   const isPasswordValid = passwordRequirements.every((req) => req.valid);
 

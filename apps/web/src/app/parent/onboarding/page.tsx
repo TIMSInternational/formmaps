@@ -30,6 +30,7 @@ import {
 import { toast } from "sonner";
 import { useVerifyParentToken, useCompleteParentOnboarding } from "@/hooks/useParentPortalQueries";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { firstPasswordProblem, passwordProblemKey } from "@/lib/auth/passwordPolicy";
 
 const RELATIONSHIP_LABELS: Record<string, string> = {
   mother: "Mother",
@@ -69,8 +70,10 @@ function ParentOnboardingContent() {
       toast.error(t("onboarding.validation.nameRequired"));
       return;
     }
-    if (password.length < 8) {
-      toast.error(t("onboarding.validation.passwordTooShort"));
+    // The server's full rule (passwordPolicy.ts) — checked here so it never rejects after submit.
+    const broken = firstPasswordProblem(password);
+    if (broken) {
+      toast.error(t(passwordProblemKey(broken)));
       return;
     }
     if (password !== confirmPassword) {

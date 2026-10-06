@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { firstPasswordProblem, passwordProblemKey } from "@/lib/auth/passwordPolicy";
 
 /**
  * Builds the signup schema with translated validation messages.
@@ -24,7 +25,9 @@ export function makeSignupSchema(t: (key: string) => string) {
         .min(8, t("auth.validation.passwordMin"))
         .regex(/[A-Z]/, t("auth.validation.passwordUpper"))
         .regex(/[a-z]/, t("auth.validation.passwordLower"))
-        .regex(/[0-9]/, t("auth.validation.passwordNumber")),
+        .regex(/[0-9]/, t("auth.validation.passwordNumber"))
+        // The server also requires a special character (passwordPolicy.ts).
+        .refine((p) => firstPasswordProblem(p) !== "special", t(passwordProblemKey("special"))),
       confirmPassword: z.string().min(1, t("auth.validation.confirmRequired")),
       dateOfBirth: z
         .string()

@@ -1456,6 +1456,22 @@
       "refreshFailed": "No se pudo renovar tu sesión. Vuelve a iniciar sesión.",
       "expiresToast_one": "Tu sesión vence en {{count}} minuto. Guarda tu trabajo.",
       "expiresToast_other": "Tu sesión vence en {{count}} minutos. Guarda tu trabajo."
+    },
+    "passwordRules": {
+      "label": {
+        "min8": "8 caracteres o más",
+        "upper": "Una letra mayúscula",
+        "lower": "Una letra minúscula",
+        "digit": "Un número",
+        "special": "Un carácter especial (! @ # $ …)"
+      },
+      "problem": {
+        "min8": "La contraseña debe tener al menos 8 caracteres.",
+        "upper": "La contraseña debe incluir una letra mayúscula.",
+        "lower": "La contraseña debe incluir una letra minúscula.",
+        "digit": "La contraseña debe incluir un número.",
+        "special": "La contraseña debe incluir un carácter especial, como ! @ # $ o %."
+      }
     }
   },
   "transactions": {
@@ -2317,6 +2333,9 @@
       "idNotFound": "No se encontró el ID del estudiante. Actualiza la página.",
       "activatedRedirect": "¡Cuenta activada con éxito!",
       "activatedLogin": "¡Cuenta activada! Inicia sesión.",
+      "activatedTitle": "Tu cuenta está lista",
+      "activatedTakingYou": "Te estamos llevando a FormMaps…",
+      "activatedContinue": "Continuar",
       "activationFailed": "La activación falló",
       "activationError": "No se pudo activar la cuenta",
       "invalidHeading": "Invitación no válida",

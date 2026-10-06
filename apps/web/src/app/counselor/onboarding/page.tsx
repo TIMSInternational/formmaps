@@ -16,6 +16,7 @@ import { useTranslation } from "react-i18next";
 import { useVerifyCounselorToken, useCompleteCounselorOnboarding } from "@/hooks/useCounselorOnboarding";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { CalendarStep } from "./_components/CalendarStep";
+import { firstPasswordProblem, passwordProblemKey } from "@/lib/auth/passwordPolicy";
 
 const TIMEZONES = [
   "America/Costa_Rica", "America/New_York", "America/Chicago", "America/Denver",
@@ -48,7 +49,9 @@ function OnboardingContent() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) { toast.error(t("ui.onboarding.nameRequired")); return; }
-    if (password.length < 8) { toast.error(t("ui.onboarding.passwordMin")); return; }
+    // The server's full rule (passwordPolicy.ts) — checked here so it never rejects after submit.
+    const broken = firstPasswordProblem(password);
+    if (broken) { toast.error(t(passwordProblemKey(broken))); return; }
     if (password !== confirmPassword) { toast.error(t("ui.onboarding.passwordsMismatch")); return; }
 
     complete.mutate(

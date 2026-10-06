@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { firstPasswordProblem, passwordProblemKey } from "@/lib/auth/passwordPolicy";
 
 interface PasswordStepProps {
   value: string;
@@ -19,8 +20,10 @@ export function PasswordStep({ value, onNext, onBack }: PasswordStepProps) {
     e.preventDefault();
     setError("");
 
-    if (password.length < 8) {
-      setError(t("onboarding.password.minLength", "Password must be at least 8 characters long"));
+    // The server's full rule (passwordPolicy.ts) — checked here so it never rejects after submit.
+    const broken = firstPasswordProblem(password);
+    if (broken) {
+      setError(t(passwordProblemKey(broken)));
       return;
     }
 
