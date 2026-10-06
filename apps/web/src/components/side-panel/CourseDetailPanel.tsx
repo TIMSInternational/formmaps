@@ -83,7 +83,10 @@ export function CourseDetailPanel({
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-2">
         <StatBox icon={Star} label={t("components.CourseDetailPanel.rating")} value={`${(course.rating ?? 0).toFixed(1)} (${course.reviewCount ?? 0})`} accent="text-amber-400" />
-        <StatBox icon={Clock} label={t("components.CourseDetailPanel.duration")} value={t("components.CourseDetailPanel.durationWeeks", { count: course.duration ?? 0 })} accent="text-blue-400" />
+        {/* #397: most catalog courses have no duration — hide the box instead of "0 weeks" */}
+        {(course.duration ?? 0) > 0 && (
+          <StatBox icon={Clock} label={t("components.CourseDetailPanel.duration")} value={t("components.CourseDetailPanel.durationWeeks", { count: course.duration })} accent="text-blue-400" />
+        )}
         <StatBox icon={Users} label={t("components.CourseDetailPanel.students")} value={(course.enrollmentCount ?? 0).toLocaleString()} accent="text-emerald-400" />
         <StatBox icon={Globe} label={t("courses.language")} value={course.language} accent="text-purple-400" />
       </div>

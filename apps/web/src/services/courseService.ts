@@ -58,14 +58,16 @@ export async function getUserEnrollments(): Promise<CourseEnrollment[]> {
 }
 
 // --- Course listing & admin ---
-export async function listCourses() {
-  const response = await apiRequest("/api/course", { method: "GET" });
+// `lang` = the UI language: the API then returns only courses in that language
+// + English (#397). limit=100 is the API's max page size.
+export async function listCourses(lang?: "en" | "es") {
+  const response = await apiRequest(`/api/course?limit=100${lang ? `&lang=${lang}` : ""}`, { method: "GET" });
   const data = response?.data ?? response;
   return data;
 }
 
-export async function getRecommendedCourses() {
-  const response = await apiRequest("/api/course/recommended", { method: "GET" });
+export async function getRecommendedCourses(lang?: "en" | "es") {
+  const response = await apiRequest(`/api/course/recommended${lang ? `?lang=${lang}` : ""}`, { method: "GET" });
   const data = response?.data ?? response;
   return data;
 }

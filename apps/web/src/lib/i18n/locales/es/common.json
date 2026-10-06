@@ -999,7 +999,12 @@
         "name": "Nombre",
         "email": "Correo electrónico",
         "role": "Rol",
-        "notSet": "Sin definir"
+        "notSet": "Sin definir",
+        "saveName": "Guardar nombre",
+        "saving": "Guardando...",
+        "nameSaved": "Nombre actualizado",
+        "nameFailed": "No pudimos actualizar tu nombre",
+        "nameRequired": "El nombre es obligatorio"
       },
       "notifications": {
         "subtitle": "Elige cómo quieres recibir notificaciones",
@@ -1029,18 +1034,18 @@
       },
       "privacy": {
         "title": "Privacidad",
-        "subtitle": "Controla tus datos y tu visibilidad",
+        "subtitle": "Cada opción está desactivada hasta que la actives. Puedes cambiarlas cuando quieras.",
         "profileVisibility": {
           "label": "Visibilidad del perfil",
-          "description": "Permite que orientadores y coaches vean tu perfil"
+          "description": "Permite que orientadores y coaches vean los datos de tu perfil (nombre, foto, biografía e intereses)."
         },
         "shareProgress": {
           "label": "Compartir progreso",
-          "description": "Comparte tu progreso de aprendizaje con tu colegio"
+          "description": "Comparte los resultados de tus evaluaciones y tu progreso de aprendizaje con tu colegio."
         },
         "usageAnalytics": {
           "label": "Análisis de uso",
-          "description": "Ayúdanos a mejorar compartiendo datos de uso anónimos"
+          "description": "Envía datos de uso anónimos (páginas visitadas, funciones usadas) para ayudarnos a mejorar FormMaps. No se recopila nada mientras esté desactivado."
         }
       },
       "security": {
@@ -2576,6 +2581,8 @@
     "reviewOnCoursera": "Revisar en Coursera",
     "week": "semana",
     "weeks": "semanas",
+    "recommendationsLocked": "Completa tus evaluaciones para obtener recomendaciones de cursos",
+    "goToAssessments": "Ir a evaluaciones",
     "hours": "horas",
     "by": "por",
     "learningObjectives": "Objetivos de aprendizaje",
@@ -5863,7 +5870,16 @@
         "testType": "Tipo de examen",
         "testDate": "Fecha del examen",
         "status": "Estado",
-        "officialScore": "Puntaje oficial"
+        "officialScore": "Puntaje oficial",
+        "paaScore": "Puntaje PAA (200–800)",
+        "saberScore": "Puntaje global Saber 11 (0–500)",
+        "ieltsBand": "Banda general IELTS (0–9)",
+        "delfLevel": "Nivel (A1–C2)",
+        "selectLevel": "Selecciona el nivel",
+        "delfScore": "Puntaje (0–100)",
+        "examName": "Nombre del examen",
+        "examNamePlaceholder": "p. ej. DELE B2, Cambridge C1 Advanced",
+        "otherScore": "Puntaje"
       },
       "testType": {
         "SAT": "SAT",
@@ -5871,7 +5887,12 @@
         "AP": "Examen AP",
         "PSAT": "PSAT",
         "TOEFL": "TOEFL",
-        "IB": "Examen IB"
+        "IB": "Examen IB",
+        "PAA": "PAA (UCR/UNA/TEC)",
+        "SABER11": "Saber 11 (ICFES)",
+        "IELTS": "IELTS",
+        "DELF_DALF": "DELF/DALF",
+        "OTHER": "Otro examen"
       },
       "sub": {
         "sat": "Matemáticas {{math}} · Lectura {{reading}}",

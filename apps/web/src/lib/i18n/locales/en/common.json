@@ -1647,7 +1647,12 @@
         "name": "Name",
         "email": "Email",
         "role": "Role",
-        "notSet": "Not set"
+        "notSet": "Not set",
+        "saveName": "Save name",
+        "saving": "Saving...",
+        "nameSaved": "Name updated",
+        "nameFailed": "Could not update your name",
+        "nameRequired": "Name is required"
       },
       "notifications": {
         "subtitle": "Choose how you want to be notified",
@@ -1677,18 +1682,18 @@
       },
       "privacy": {
         "title": "Privacy",
-        "subtitle": "Control your data and visibility",
+        "subtitle": "Each option is off until you turn it on. You can change them at any time.",
         "profileVisibility": {
           "label": "Profile Visibility",
-          "description": "Allow counselors and coaches to view your profile"
+          "description": "Let counselors and coaches see your profile details (name, photo, bio and interests)."
         },
         "shareProgress": {
           "label": "Share Progress",
-          "description": "Share your learning progress with your school"
+          "description": "Share your assessment results and learning progress with your school."
         },
         "usageAnalytics": {
           "label": "Usage Analytics",
-          "description": "Help us improve by sharing anonymous usage data"
+          "description": "Send anonymous usage data (pages visited, features used) to help us improve FormMaps. Nothing is collected while this is off."
         }
       },
       "security": {
@@ -2576,6 +2581,8 @@
     "reviewOnCoursera": "Review on Coursera",
     "week": "week",
     "weeks": "weeks",
+    "recommendationsLocked": "Complete your assessments to get course recommendations",
+    "goToAssessments": "Go to assessments",
     "hours": "hours",
     "by": "by",
     "learningObjectives": "Learning Objectives",
@@ -5863,7 +5870,16 @@
         "testType": "Test Type",
         "testDate": "Test Date",
         "status": "Status",
-        "officialScore": "Official score"
+        "officialScore": "Official score",
+        "paaScore": "PAA score (200–800)",
+        "saberScore": "Saber 11 global score (0–500)",
+        "ieltsBand": "IELTS overall band (0–9)",
+        "delfLevel": "Level (A1–C2)",
+        "selectLevel": "Select level",
+        "delfScore": "Score (0–100)",
+        "examName": "Exam name",
+        "examNamePlaceholder": "e.g. DELE B2, Cambridge C1 Advanced",
+        "otherScore": "Score"
       },
       "testType": {
         "SAT": "SAT",
@@ -5871,7 +5887,12 @@
         "AP": "AP Exam",
         "PSAT": "PSAT",
         "TOEFL": "TOEFL",
-        "IB": "IB Exam"
+        "IB": "IB Exam",
+        "PAA": "PAA (UCR/UNA/TEC)",
+        "SABER11": "Saber 11 (ICFES)",
+        "IELTS": "IELTS",
+        "DELF_DALF": "DELF/DALF",
+        "OTHER": "Other exam"
       },
       "sub": {
         "sat": "Math {{math}} · Reading {{reading}}",

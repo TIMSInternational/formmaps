@@ -49,6 +49,15 @@
       "apExams": "AP Exams",
       "resultCount_one": "{{count}} result",
       "resultCount_other": "{{count}} results"
+    },
+    "errors": {
+      "paaRange": "PAA score must be a whole number between 200 and 800",
+      "saberRange": "Saber 11 score must be a whole number between 0 and 500",
+      "ieltsRange": "IELTS band must be between 0 and 9, in 0.5 steps",
+      "delfLevel": "Choose a DELF/DALF level (A1–C2)",
+      "delfRange": "DELF/DALF score must be a whole number between 0 and 100",
+      "examName": "Enter the exam name (up to 80 characters)",
+      "otherScore": "Enter a score between 0 and 10,000"
     }
   },
   "communityService": {

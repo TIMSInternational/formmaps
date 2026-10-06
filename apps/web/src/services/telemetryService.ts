@@ -85,6 +85,10 @@ class TelemetryService {
   private flushTimer: ReturnType<typeof setInterval> | null = null;
   private isInitialized = false;
   private disabledForSession = false;
+  // The account's "Usage Analytics" setting (user_settings.allowAnalytics). Opt-in: off until
+  // the signed-in account's saved setting says otherwise (#401). Cookie consent (init) alone
+  // is not enough — both gates must be open before anything is collected.
+  private accountAllowsAnalytics = false;
 
   constructor(config: Partial<TelemetryConfig> = {}) {
     this.config = { ...defaultConfig, ...config };
@@ -149,6 +153,16 @@ class TelemetryService {
       this.flushTimer = null;
     }
     this.isInitialized = false;
+    this.eventQueue = [];
+  }
+
+  /**
+   * Apply the signed-in account's "Usage Analytics" preference. Turning it off drops
+   * anything already queued.
+   */
+  setAccountAnalytics(allowed: boolean): void {
+    this.accountAllowsAnalytics = allowed;
+    if (!allowed) this.eventQueue = [];
   }
 
   /**
@@ -211,7 +225,8 @@ class TelemetryService {
    * Track a single event
    */
   track(type: TelemetryEventType, properties?: Record<string, unknown>): void {
-    if (!this.config.enabled || this.disabledForSession || !this.hasAuthSignal()) return;
+    if (!this.config.enabled || !this.isInitialized || !this.accountAllowsAnalytics) return;
+    if (this.disabledForSession || !this.hasAuthSignal()) return;
 
     const event: TelemetryEvent = {
       type,

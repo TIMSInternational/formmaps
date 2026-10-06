@@ -24,6 +24,8 @@ import { getUserSettings, updateUserSettings } from "@/services/userService";
 import { apiRequest } from "@/lib/api/apiClient";
 import { useSetLanguage, applyLanguage } from "@/lib/i18n/useSetLanguage";
 import { useTranslation } from "react-i18next";
+import { telemetry } from "@/services/telemetryService";
+import { DisplayNameField } from "./_components/DisplayNameField";
 
 /* ------------------------------------------------------------------ */
 /*  Section card wrapper                                               */
@@ -195,10 +197,10 @@ export default function StudentSettingsPage() {
   // Language preference (local display state only — actual changes go via setLanguage hook)
   const [language, setLocalLanguage] = useState<"en" | "es">("en");
 
-  // Privacy settings
-  const [profileVisible, setProfileVisible] = useState(true);
-  const [shareProgress, setShareProgress] = useState(true);
-  const [allowAnalytics, setAllowAnalytics] = useState(true);
+  // Privacy settings — opt-in (#401): off unless the saved row says otherwise.
+  const [profileVisible, setProfileVisible] = useState(false);
+  const [shareProgress, setShareProgress] = useState(false);
+  const [allowAnalytics, setAllowAnalytics] = useState(false);
 
   const [saving, setSaving] = useState(false);
 
@@ -248,9 +250,9 @@ export default function StudentSettingsPage() {
         setLocalLanguage(lang);
         // Hydrate i18next + global store (skip PUT — value came FROM the DB).
         applyLanguage(lang);
-        setProfileVisible(settings.profileVisible);
-        setShareProgress(settings.shareProgress);
-        setAllowAnalytics(settings.allowAnalytics);
+        setProfileVisible(settings.profileVisible === true);
+        setShareProgress(settings.shareProgress === true);
+        setAllowAnalytics(settings.allowAnalytics === true);
       })
       .catch(() => {}) // keep defaults on error
       .finally(() => {
@@ -274,6 +276,9 @@ export default function StudentSettingsPage() {
         shareProgress,
         allowAnalytics,
       });
+      // The account opt-in is the second telemetry gate (with cookie consent) — apply it now,
+      // not on the next page load (tafurfede/formmaps-platform#401).
+      telemetry.setAccountAnalytics(allowAnalytics);
       toast.success(t("dashboard.settings.saved"));
     } catch {
       toast.error(t("dashboard.settings.saveFailed"));
@@ -315,11 +320,8 @@ export default function StudentSettingsPage() {
       {/* ---- Profile ---- */}
       <SectionCard icon={User} title={t("nav.profile")} subtitle={t("dashboard.settings.profile.subtitle")} delay={0.05}>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("dashboard.settings.profile.name")}</Label>
-            <p style={{ fontSize: 14, fontWeight: 500, color: "var(--admin-font-primary)", marginTop: 2 }}>
-              {user.name || t("dashboard.settings.profile.notSet")}
-            </p>
+          <div className="sm:col-span-2">
+            <DisplayNameField />
           </div>
           <div>
             <Label style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("dashboard.settings.profile.email")}</Label>
