@@ -87,7 +87,8 @@
     "serviceLog": {
       "title": "Registro de servicio",
       "history": "Historial de tu trabajo voluntario",
-      "entries": "entradas"
+      "entryCount_one": "{{count}} registro",
+      "entryCount_other": "{{count}} registros"
     }
   },
   "portfolio": {

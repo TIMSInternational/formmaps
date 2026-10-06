@@ -152,3 +152,33 @@ describe("PortfolioPage — error state", () => {
     expect(screen.queryByText(/couldn.?t load/i)).toBeNull();
   });
 });
+
+describe("PortfolioPage — Volunteer Hours stat (#403)", () => {
+  afterEach(() => jest.resetAllMocks());
+
+  it("counts Hours/Week × Weeks/Year for a volunteer item with no typed total", async () => {
+    setupMutationDefaults();
+    mockUsePortfolioSummary.mockReturnValue({
+      data: { totalItems: 2, byType: { volunteer: 1, award: 1 }, totalVolunteerHours: 0, recentItems: [] },
+    });
+    mockUsePortfolioItems.mockReturnValue({
+      data: {
+        data: [
+          { id: "v1", type: "volunteer", title: "Cruz Roja", description: "", startDate: "2024-02-01", isCurrent: true, totalHours: 0, hoursPerWeek: 4, weeksPerYear: 40, attachments: [] },
+          { id: "v2", type: "volunteer", title: "Food Bank", description: "", startDate: "2024-03-01", isCurrent: false, totalHours: 10, hoursPerWeek: 1, weeksPerYear: 1, attachments: [] },
+          { id: "a1", type: "award", title: "Prize", description: "", startDate: "2024-01-01", isCurrent: false, totalHours: 99, attachments: [] },
+        ],
+      },
+      isLoading: false,
+      isError: false,
+      refetch: jest.fn(),
+    });
+
+    render(<PortfolioPage />);
+
+    const label = await screen.findByText("Volunteer Hours");
+    const card = label.closest(".dash-card") as HTMLElement;
+    // 4×40 (derived) + 10 (typed total wins) — the award's 99 is excluded.
+    expect(card.textContent).toContain("170");
+  });
+});

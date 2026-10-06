@@ -16,7 +16,7 @@ import {
   useDeletePortfolioItem,
 } from "@/hooks/usePortfolioQueries";
 import type { PortfolioItemPayload, PortfolioItemType, PortfolioItem } from "@/types/portfolio";
-import { typeConfig, emptyPayload } from "./_components/portfolioConfig";
+import { typeConfig, emptyPayload, sumVolunteerHours } from "./_components/portfolioConfig";
 import { PortfolioItemCard } from "./_components/PortfolioItemCard";
 import { PortfolioFormDialog } from "./_components/PortfolioFormDialog";
 
@@ -30,11 +30,20 @@ export default function PortfolioPage() {
   const typeFilter = activeType === "all" ? undefined : (activeType as PortfolioItemType);
   const { data: portfolioData, isLoading, isError, refetch } = usePortfolioItems({ type: typeFilter });
   const { data: summary } = usePortfolioSummary();
+  // Unfiltered list (same cache entry as the "all" tab) — the Volunteer Hours
+  // stat must not depend on the active filter.
+  const { data: allPortfolioData } = usePortfolioItems({ type: undefined });
   const createItem = useCreatePortfolioItem();
   const updateItem = useUpdatePortfolioItem();
   const deleteItem = useDeletePortfolioItem();
 
   const items = portfolioData?.data || [];
+  // The API sums only typed totals; an item with Hours/Week × Weeks/Year and no
+  // total counted as 0 (#403). Derive client-side and never show less than the API.
+  const volunteerHours = Math.max(
+    summary?.totalVolunteerHours || 0,
+    sumVolunteerHours(allPortfolioData?.data || []),
+  );
 
   const openCreateForm = () => {
     setEditingItem(null);
@@ -54,6 +63,9 @@ export default function PortfolioPage() {
       isCurrent: item.isCurrent,
       role: item.role || "",
       totalHours: item.totalHours,
+      hoursPerWeek: item.hoursPerWeek,
+      weeksPerYear: item.weeksPerYear,
+      activityCategory: item.activityCategory,
       achievements: item.achievements || [],
     });
     setShowForm(true);
@@ -101,7 +113,7 @@ export default function PortfolioPage() {
           className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {[
             { icon: FolderOpen, bg: "bg-indigo-100", color: "text-indigo-600", label: t("student:portfolio.totalItems", "Total Items"), value: summary.totalItems },
-            { icon: Heart, bg: "bg-rose-100", color: "text-rose-600", label: t("student:portfolio.totalHours", "Volunteer Hours"), value: `${summary.totalVolunteerHours || 0}`, suffix: t("studentUi.portfolio.hoursSuffix") },
+            { icon: Heart, bg: "bg-rose-100", color: "text-rose-600", label: t("student:portfolio.totalHours", "Volunteer Hours"), value: `${volunteerHours}`, suffix: t("studentUi.portfolio.hoursSuffix") },
             { icon: Trophy, bg: "bg-amber-100", color: "text-amber-600", label: t("student:portfolio.awards", "Awards Won"), value: summary.byType?.award || 0 },
             { icon: Star, bg: "bg-purple-100", color: "text-purple-600", label: t("student:portfolio.categories", "Categories"), value: summary.byType ? Object.keys(summary.byType).length : 0 },
           ].map((stat, i) => (
