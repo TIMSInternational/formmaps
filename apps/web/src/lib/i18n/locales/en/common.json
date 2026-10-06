@@ -200,10 +200,6 @@
       "notIncluded": "Not included: resume builder, applications, coaching, courses and AI chat (those come with a subscription).",
       "period": "one-time",
       "cta": "Buy the one-time report"
-    },
-    "consent": {
-      "subscription": "I agree to the Terms of Service and Privacy Policy. I understand my 7-day free trial converts to a paid monthly subscription unless I cancel. If I am under 18, my parent or guardian agrees and is paying.",
-      "oneTime": "I agree to the Terms of Service and Privacy Policy for this one-time purchase. If I am under 18, my parent or guardian agrees and is paying."
     }
   },
   "payments": {

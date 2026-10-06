@@ -5,7 +5,13 @@ import { useTranslation } from "react-i18next";
 import { FileText, Loader2 } from "lucide-react";
 import StripeCheckout from "@/components/StripeCheckout";
 import { Button } from "@/components/ui/button";
-import { CheckoutConsent } from "./CheckoutConsent";
+import { LegalConsent } from "@/components/legal/LegalConsent";
+import {
+  EMPTY_LEGAL_CONSENT,
+  buildLegalConsentPayload,
+  isLegalConsentValid,
+  type LegalConsentValues,
+} from "@/lib/legal/consent";
 
 /** Catalog key the API maps to the $150 USD one-time purchase (formmaps-platform#440). */
 export const ONE_TIME_PLAN_ID = "one_time";
@@ -23,7 +29,8 @@ export function OneTimeReportCard({ userId, disabled, onStart, onError }: {
   onError?: (error: string) => void;
 }) {
   const { t } = useTranslation();
-  const [consented, setConsented] = useState(false);
+  const [consent, setConsent] = useState<LegalConsentValues>(EMPTY_LEGAL_CONSENT);
+  const consented = isLegalConsentValid("checkout-one-time", consent);
   const [processing, setProcessing] = useState(false);
   const features = t("independentStudent.oneTime.features", { returnObjects: true });
   const list = Array.isArray(features) ? (features as string[]) : [];
@@ -47,12 +54,13 @@ export function OneTimeReportCard({ userId, disabled, onStart, onError }: {
           <span className="text-3xl font-bold" style={{ color: "#102B47" }}>${ONE_TIME_PRICE_USD}</span>
           <span className="text-gray-400 font-medium">{t("independentStudent.oneTime.period")}</span>
         </div>
-        <CheckoutConsent variant="checkout-one-time" onValidityChange={setConsented} />
+        <LegalConsent variant="checkout-one-time" values={consent} onChange={setConsent} />
         <StripeCheckout
           amount={ONE_TIME_PRICE_USD * 100}
           userId={userId}
           planId={ONE_TIME_PLAN_ID}
           productName={t("independentStudent.oneTime.name")}
+          legalConsent={buildLegalConsentPayload("checkout-one-time", consent)}
           onStart={() => { setProcessing(true); onStart?.(); }}
           onError={(e: string) => { setProcessing(false); onError?.(e); }}
           disabled={blocked}

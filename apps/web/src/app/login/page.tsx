@@ -1,6 +1,7 @@
 "use client";
 import { useState, useMemo } from "react";
 import Link from "next/link";
+import { LegalFooter } from "@/components/legal/LegalFooter";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -250,6 +251,7 @@ export default function LoginPage() {
               {t("auth.login.signUp")}
             </Link>
           </p>
+          <LegalFooter className="mt-6" />
         </motion.div>
       </div>
     </div>

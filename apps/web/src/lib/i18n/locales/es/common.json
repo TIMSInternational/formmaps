@@ -200,10 +200,6 @@
       "notIncluded": "No incluye: creador de currículum, postulaciones, coaching, cursos ni chat con IA (vienen con una suscripción).",
       "period": "pago único",
       "cta": "Comprar el informe de pago único"
-    },
-    "consent": {
-      "subscription": "Acepto los Términos del Servicio y la Política de Privacidad. Entiendo que mi prueba gratuita de 7 días se convierte en una suscripción mensual de pago si no la cancelo. Si soy menor de 18 años, mi madre, padre o tutor lo acepta y realiza el pago.",
-      "oneTime": "Acepto los Términos del Servicio y la Política de Privacidad para esta compra única. Si soy menor de 18 años, mi madre, padre o tutor lo acepta y realiza el pago."
     }
   },
   "payments": {

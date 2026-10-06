@@ -1,0 +1,32 @@
+{
+  "layout": {
+    "tableOfContents": "Contenido",
+    "effective": "Última actualización / Vigente desde: {{date}}",
+    "version": "Versión {{version}}",
+    "backHome": "Inicio de FormMaps",
+    "languageLabel": "Idioma",
+    "english": "English",
+    "spanish": "Español",
+    "contactPrompt": "¿Preguntas? Escríbenos a {{email}}."
+  },
+  "footer": {
+    "navLabel": "Legal",
+    "terms": "Términos de Servicio",
+    "privacy": "Política de Privacidad",
+    "refunds": "Política de Reembolsos y Cancelación",
+    "cookies": "Aviso de Cookies",
+    "parentalConsent": "Consentimiento Parental",
+    "copyright": "© {{year}} NEXA DEV LLC · FormMaps"
+  },
+  "consent": {
+    "groupLabel": "Acuerdos legales",
+    "signupTerms": "Acepto los <terms>Términos de Servicio</terms> y la <privacy>Política de Privacidad</privacy>.",
+    "parent": "Soy el padre, la madre o el tutor legal, o tengo el permiso de mi padre, madre o tutor (ver <parental>Consentimiento Parental</parental>).",
+    "subscriptionAck": "Entiendo que mi suscripción se renueva automáticamente cada mes a {{price}} hasta que la cancele, que la prueba gratis de 7 días se convierte en una suscripción pagada si no la cancelo antes de que termine, y acepto los <terms>Términos de Servicio</terms> y la <refunds>Política de Reembolsos y Cancelación</refunds>.",
+    "subscriptionPriceAny": "el precio mensual del plan que elija",
+    "oneTimeRefund": "Acepto los <terms>Términos de Servicio</terms> y la <refunds>Política de Reembolsos y Cancelación</refunds> para esta compra única.",
+    "oneTimeDelivery": "Doy mi consentimiento para la entrega inmediata del contenido digital y entiendo que el plazo de reembolso termina cuando se entregan mis resultados completos.",
+    "opensInNewTab": "(se abre en una pestaña nueva)",
+    "incomplete": "Marca las casillas obligatorias para continuar."
+  }
+}

@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { LegalDocumentView } from "@/components/legal/LegalDocumentView";
 
 export const metadata: Metadata = {
-  title: "Terms of Service",
-  description: "FormMaps Terms of Service — the agreement for using FormMaps, including payment terms.",
+  title: "Parental Consent",
+  description: "What a parent or guardian authorizes when a student aged 13 to 17 uses FormMaps.",
 };
 
 export default function Page() {
-  return <LegalDocumentView docKey="terms" />;
+  return <LegalDocumentView docKey="parental-consent" />;
 }

@@ -5,12 +5,19 @@ import { motion, AnimatePresence } from "motion/react";
 import { Check, CheckCircle2, X, Sparkles, Zap, Crown, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { OneTimeReportCard } from "@/components/independent-student/OneTimeReportCard";
-import { CheckoutConsent } from "@/components/independent-student/CheckoutConsent";
 import { Badge } from "@/components/ui/badge";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import StripeCheckout from "@/components/StripeCheckout";
 import { useSubscriptionStatus } from "@/hooks/useSubscription";
+import { LegalConsent } from "@/components/legal/LegalConsent";
+import { LegalFooter } from "@/components/legal/LegalFooter";
+import {
+  EMPTY_LEGAL_CONSENT,
+  buildLegalConsentPayload,
+  isLegalConsentValid,
+  type LegalConsentValues,
+} from "@/lib/legal/consent";
 
 interface PlanFeature {
   text: string;
@@ -37,13 +44,16 @@ export default function SubscribePage() {
   const searchParams = useSearchParams();
   const [showSuccess, setShowSuccess] = useState(false);
   const [processingPlan, setProcessingPlan] = useState<string | null>(null);
-  // Checkout consent (#243) — monthly plans stay disabled until it is given.
-  const [subscriptionConsent, setSubscriptionConsent] = useState(false);
   const { data: subStatus, refetch: refetchSub } = useSubscriptionStatus({
     staleTime: 0, // Always refetch on the subscribe page — never trust cached "no subscription"
   });
 
   const userId = user.id || "";
+  // Auto-renewal / trial / refund acknowledgement — required before any plan's checkout starts.
+  // The store has no DOB here, so the parent box is not shown on this page: minors already confirmed
+  // parent/guardian permission at signup. Pass isMinor / isParentPurchaser once the paid-entry flow knows them.
+  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>(EMPTY_LEGAL_CONSENT);
+  const consentValid = isLegalConsentValid("checkout-subscription", legalConsent);
 
   // If user already has an active subscription, redirect to dashboard
   useEffect(() => {
@@ -169,10 +179,16 @@ export default function SubscribePage() {
           </p>
         </motion.div>
 
-        {/* Plans */}
-        <div className="max-w-xl mx-auto mb-5">
-          <CheckoutConsent variant="checkout-subscription" onValidityChange={setSubscriptionConsent} />
+        {/* Required legal acknowledgement (covers every plan below) */}
+        <div className="max-w-2xl mx-auto mb-8 rounded-xl border border-gray-200 bg-white p-4" data-testid="subscribe-legal-consent">
+          <LegalConsent
+            variant="checkout-subscription"
+            values={legalConsent}
+            onChange={setLegalConsent}
+          />
         </div>
+
+        {/* Plans */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 lg:gap-6 items-start">
           {plans.map((plan, i) => {
             const Icon = plan.icon;
@@ -222,13 +238,14 @@ export default function SubscribePage() {
                     userId={userId}
                     planId={plan.id}
                     productName={`${plan.name} Plan`}
+                    legalConsent={buildLegalConsentPayload("checkout-subscription", legalConsent)}
                     onStart={() => setProcessingPlan(plan.id)}
                     onSuccess={() => window.location.reload()}
                     onError={(error: string) => {
                       alert(t("pages.subscribe.paymentFailed", { error }));
                       setProcessingPlan(null);
                     }}
-                    disabled={processingPlan !== null || !subscriptionConsent}
+                    disabled={processingPlan !== null || !consentValid}
                     className="w-full mb-5"
                   >
                     <Button
@@ -238,7 +255,7 @@ export default function SubscribePage() {
                           ? { background: "#102B47", color: "#fff" }
                           : { background: "#fff", color: "var(--admin-accent-blue)", border: "1px solid var(--admin-accent-blue)" }
                       }
-                      disabled={processingPlan !== null || !subscriptionConsent}
+                      disabled={processingPlan !== null || !consentValid}
                     >
                       {processingPlan === plan.id ? (
                         <><Loader2 className="w-4 h-4 mr-2 animate-spin" /> {t("subscribe.processing")}</>
@@ -287,6 +304,7 @@ export default function SubscribePage() {
         >
           {t("subscribe.bottomNote")}
         </motion.p>
+        <LegalFooter className="mt-6" />
       </div>
     </div>
   );

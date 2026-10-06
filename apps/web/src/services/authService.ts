@@ -2,6 +2,7 @@
 import { storeTokens, clearTokens } from "@/services/tokenRefreshService";
 import { applyLanguage } from "@/lib/i18n/useSetLanguage";
 import { authApiErrorFrom } from "@/lib/auth/authErrors";
+import type { SignupLegalConsentPayload } from "@/lib/legal/consent";
 
 const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL || "";
 
@@ -108,13 +109,15 @@ export async function signUp(
   password: string,
   roleId?: string,
   dateOfBirth?: string,
-  acceptMarketing?: boolean
+  acceptMarketing?: boolean,
+  /** Versioned record of the legal documents accepted at signup (see @/lib/legal/consent). */
+  legalConsent?: SignupLegalConsentPayload
 ): Promise<LoginResponse> {
   const response = await fetch(`${API_BASE}/authapi/signup`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     credentials: "include",
-    body: JSON.stringify({ name, email, password, roleId, dateOfBirth, acceptMarketing }),
+    body: JSON.stringify({ name, email, password, roleId, dateOfBirth, acceptMarketing, legalConsent }),
   });
 
   if (!response.ok) {

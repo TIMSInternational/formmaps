@@ -7,7 +7,13 @@ import { LoadingState } from "./LoadingState";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import StripeCheckout from "@/components/StripeCheckout";
 import { OneTimeReportCard } from "@/components/independent-student/OneTimeReportCard";
-import { CheckoutConsent } from "@/components/independent-student/CheckoutConsent";
+import { LegalConsent } from "@/components/legal/LegalConsent";
+import {
+  EMPTY_LEGAL_CONSENT,
+  buildLegalConsentPayload,
+  isLegalConsentValid,
+  type LegalConsentValues,
+} from "@/lib/legal/consent";
 import * as subscriptionService from "@/services/subscriptionService";
 import { useSubscriptionStatus } from "@/hooks/useSubscription";
 import type {
@@ -41,7 +47,8 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
     useSubscriptionStatus();
 
   const [loading, setLoading] = useState(true);
-  const [subscriptionConsent, setSubscriptionConsent] = useState(false);
+  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>(EMPTY_LEGAL_CONSENT);
+  const subscriptionConsent = isLegalConsentValid("checkout-subscription", legalConsent);
   const [error, setError] = useState<string | null>(null);
   const [processingPayment, setProcessingPayment] = useState<string | null>(
     null
@@ -177,7 +184,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
 
       {/* Checkout consent (#243) — subscription checkout stays disabled until given */}
       <div className="max-w-xl mx-auto mb-6">
-        <CheckoutConsent variant="checkout-subscription" onValidityChange={setSubscriptionConsent} />
+        <LegalConsent variant="checkout-subscription" values={legalConsent} onChange={setLegalConsent} />
       </div>
 
       {/* Billing Options Grid */}
@@ -261,6 +268,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                     amount={option.price * 100}
                     userId={userId}
                     planId={option.id}
+                    legalConsent={buildLegalConsentPayload("checkout-subscription", legalConsent)}
                     productName={`${option.name} - ${option.description}`}
                     onStart={() => setProcessingPayment(option.id)}
                     onSuccess={() => {

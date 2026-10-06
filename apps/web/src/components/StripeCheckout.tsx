@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { createCheckoutSession } from "@/services/subscriptionService";
+import type { CheckoutLegalConsentPayload } from "@/lib/legal/consent";
 
 interface StripeCheckoutProps {
   amount: number; // in cents
@@ -14,6 +15,8 @@ interface StripeCheckoutProps {
   children?: React.ReactNode;
   className?: string;
   disabled?: boolean;
+  /** From buildLegalConsentPayload(); sent as `legalConsent` on create-checkout-session. */
+  legalConsent?: CheckoutLegalConsentPayload;
 }
 
 export default function StripeCheckout({
@@ -27,6 +30,7 @@ export default function StripeCheckout({
   children,
   className = "",
   disabled = false,
+  legalConsent,
 }: StripeCheckoutProps) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
@@ -50,6 +54,7 @@ export default function StripeCheckout({
         productName,
         successUrl,
         cancelUrl,
+        ...(legalConsent ? { legalConsent } : {}),
       });
 
       if (data.sessionUrl) {

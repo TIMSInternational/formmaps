@@ -1,5 +1,6 @@
 import { apiRequest } from "@/lib/api/apiClient";
 import i18n from "@/lib/i18n";
+import type { CheckoutLegalConsentPayload } from "@/lib/legal/consent";
 
 // Subscription Plan Interfaces
 export interface SubscriptionPlan {
@@ -257,6 +258,8 @@ export interface CheckoutSessionPayload {
   productName: string;
   successUrl: string;
   cancelUrl: string;
+  /** Versioned legal acknowledgements from <LegalConsent> (see @/lib/legal/consent). */
+  legalConsent?: CheckoutLegalConsentPayload;
 }
 
 export interface CheckoutSessionResponse {

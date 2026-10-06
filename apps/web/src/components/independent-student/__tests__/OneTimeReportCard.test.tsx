@@ -26,10 +26,12 @@ describe("OneTimeReportCard (#243)", () => {
     expect(last.amount).toBe(15000);
   });
 
-  it("stays disabled until checkout consent is given", () => {
+  it("stays disabled until every one-time legal box is ticked, then sends the consent payload", () => {
     render(<OneTimeReportCard userId="u1" />);
     expect(checkoutProps[checkoutProps.length - 1].disabled).toBe(true);
-    fireEvent.click(screen.getByTestId("checkout-consent-checkout-one-time"));
-    expect(checkoutProps[checkoutProps.length - 1].disabled).toBe(false);
+    for (const box of screen.getAllByRole("checkbox")) fireEvent.click(box);
+    const last = checkoutProps[checkoutProps.length - 1];
+    expect(last.disabled).toBe(false);
+    expect(last.legalConsent).toBeTruthy();
   });
 });
