@@ -6,12 +6,15 @@ import { useTranslation } from "react-i18next";
 /**
  * Import seam for checkout consent (#243).
  *
- * TODO(legal): replace the body with the legal workstream's
- * `@/components/legal/LegalConsent` (props: variant "signup" |
- * "checkout-subscription" | "checkout-one-time", onValidityChange(valid),
- * values) once it is on main — callers already pass the same props, so the
- * swap is one import. Until then this is a minimal REQUIRED checkbox: checkout
- * stays disabled until it is ticked. Placeholder copy, not legal-reviewed.
+ * TODO(legal): LegalConsent lives in TIMSInternational/formmaps#247 (not on
+ * main yet). Once it merges, replace this body with — callers don't change:
+ *   const [values, setValues] = useState(EMPTY_LEGAL_CONSENT);
+ *   return <LegalConsent variant={variant} price={price} values={values}
+ *            onChange={setValues} onValidityChange={onValidityChange} />;
+ * (LegalConsent is controlled: values + onChange; "checkout-one-time" adds the
+ * refund / immediate-delivery boxes.) Until then this is a minimal REQUIRED
+ * checkbox: checkout stays disabled until it is ticked. Placeholder copy, not
+ * legal-reviewed.
  */
 export type CheckoutConsentVariant = "checkout-subscription" | "checkout-one-time";
 
