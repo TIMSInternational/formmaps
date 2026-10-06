@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import i18n from "@/lib/i18n";
+import { prepareResumeForRender } from "../../_lib/resume-render";
 import { translateProficiency } from "../../_lib/resume-constants";
 import {
   Document,
@@ -273,7 +274,8 @@ interface TechTemplatePDFProps {
   data: ResumeData;
 }
 
-export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
+export function TechTemplatePDF({ data: rawData }: TechTemplatePDFProps) {
+  const data = prepareResumeForRender(rawData);
   // Group skills by category
   const skillsByCategory = data.skills.reduce((acc, skill) => {
     if (!acc[skill.category]) {
@@ -603,7 +605,8 @@ export function TechTemplatePDF({ data }: TechTemplatePDFProps) {
 }
 
 // Preview component for the template selector
-export function TechTemplatePreview({ data }: TechTemplatePDFProps) {
+export function TechTemplatePreview({ data: rawData }: TechTemplatePDFProps) {
+  const data = prepareResumeForRender(rawData);
   return (
     <div className="w-full h-full bg-white p-6 text-xs overflow-hidden">
       {/* Header */}

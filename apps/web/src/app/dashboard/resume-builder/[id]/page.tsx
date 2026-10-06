@@ -103,6 +103,9 @@ export default function ResumeBuilderPage() {
   const [hasOriginalState, setHasOriginalState] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [editorTab, setEditorTab] = useState<EditorTab>("chat");
+  // Below lg the two panels are tabs — stacked, the preview and the editor each
+  // got a sliver of a phone screen (formmaps-platform#406).
+  const [mobilePane, setMobilePane] = useState<"preview" | "editor">("preview");
 
   const resumeDataRef = useRef(resumeBuilder.data);
   const initializationRef = useRef(false);
@@ -227,8 +230,32 @@ export default function ResumeBuilderPage() {
       </AnimatePresence>
 
       {/* Main Content — Jobright-style: Preview Left, Editor Right */}
-      <div className="grid lg:grid-cols-[1fr_380px] h-[calc(100dvh-4rem)]">
+      <div className="grid grid-rows-[auto_minmax(0,1fr)] lg:grid-rows-1 lg:grid-cols-[1fr_380px] h-[calc(100dvh-4rem)]">
+        {/* Mobile pane tabs */}
+        <div role="tablist" className="lg:hidden flex border-b border-border bg-card shrink-0">
+          {(["preview", "editor"] as const).map((pane) => (
+            <button
+              key={pane}
+              role="tab"
+              aria-selected={mobilePane === pane}
+              onClick={() => setMobilePane(pane)}
+              className={cn(
+                "flex-1 py-2.5 text-sm font-medium transition-colors",
+                mobilePane === pane
+                  ? "text-[#2E9098] font-semibold border-b-2 border-[#2E9098]"
+                  : "text-muted-foreground"
+              )}
+            >
+              {t(`resumeBuilder.editorPage.mobileTabs.${pane}`)}
+            </button>
+          ))}
+        </div>
+
         {/* Left Panel - Live Resume Preview */}
+        <div
+          data-pane="preview"
+          className={cn("min-h-0 flex-col overflow-y-auto lg:flex", mobilePane === "preview" ? "flex" : "hidden")}
+        >
         <ResumePreviewPanel
           fullName={resumeBuilder.data.personalInfo?.fullName || ""}
           template={resumeBuilder.data.template}
@@ -237,9 +264,16 @@ export default function ResumeBuilderPage() {
           resumeId={currentResumeId ?? ""}
           hasOriginal={hasOriginalState}
         />
+        </div>
 
         {/* Right Panel — Tabs: AI Editor / Style */}
-        <div className="border-l border-border flex flex-col h-full bg-white dark:bg-card overflow-hidden">
+        <div
+          data-pane="editor"
+          className={cn(
+            "lg:border-l border-border flex-col min-h-0 h-full bg-white dark:bg-card overflow-hidden lg:flex",
+            mobilePane === "editor" ? "flex" : "hidden"
+          )}
+        >
           {/* Tab switcher */}
           <ResumeTabSwitcher activeTab={editorTab} setActiveTab={setEditorTab} />
 

@@ -6,11 +6,47 @@ import { Sparkles } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AIChatInput } from "./AIChatInput";
 import { aiEditResume, type Resume } from "@/services/resumeService";
+import { useTimsCareerScoring } from "@/hooks/useTimsQueries";
 
 interface ChatMessage {
   id: string;
   role: "user" | "assistant";
   text: string;
+}
+
+const STORAGE_PREFIX = "formmaps.resumeAiChat.";
+const MAX_STORED_MESSAGES = 50;
+const GREETING: ChatMessage = { id: "greeting", role: "assistant", text: "" };
+
+// The conversation lives only in the browser (no API stores it) — persisted per
+// resume so a reload doesn't wipe it (formmaps-platform#406). Storage can throw (private mode,
+// blocked site data), so every access is guarded.
+function loadConversation(resumeId: string): ChatMessage[] {
+  if (!resumeId) return [GREETING];
+  try {
+    const raw = window.localStorage.getItem(STORAGE_PREFIX + resumeId);
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    const saved = Array.isArray(parsed)
+      ? parsed.filter(
+          (m): m is ChatMessage =>
+            !!m && typeof m.id === "string" && typeof m.text === "string" &&
+            (m.role === "user" || m.role === "assistant")
+        )
+      : [];
+    return [GREETING, ...saved];
+  } catch {
+    return [GREETING];
+  }
+}
+
+function saveConversation(resumeId: string, messages: ChatMessage[]) {
+  if (!resumeId) return;
+  try {
+    const toStore = messages.filter((m) => m.id !== GREETING.id).slice(-MAX_STORED_MESSAGES);
+    window.localStorage.setItem(STORAGE_PREFIX + resumeId, JSON.stringify(toStore));
+  } catch {
+    // Best-effort only.
+  }
 }
 
 interface AIChatEditorProps {
@@ -20,17 +56,33 @@ interface AIChatEditorProps {
 
 export function AIChatEditor({ resumeId, onResumeUpdated }: AIChatEditorProps) {
   const { t } = useTranslation();
+  // The tailoring chip follows the student's own top career match (it used to
+  // say "software engineering" to everyone). Locked = no real matches yet.
+  const { data: scoring } = useTimsCareerScoring();
+  const topCareer = scoring?.data?.locked ? undefined : scoring?.data?.careers?.[0]?.programTitle;
   const suggestions = [
     t("resumeBuilder.aiChat.suggestions.impactfulSummary", "Make my summary more impactful"),
     t("resumeBuilder.aiChat.suggestions.measurableMetrics", "Add measurable metrics to my bullets"),
     t("resumeBuilder.aiChat.suggestions.tightenGrammar", "Tighten and fix grammar"),
-    t("resumeBuilder.aiChat.suggestions.tailorSoftware", "Tailor for a software engineering role"),
+    topCareer
+      ? t("resumeBuilder.aiChat.suggestions.tailorCareer", { career: topCareer, defaultValue: "Tailor for a {{career}} role" })
+      : t("resumeBuilder.aiChat.suggestions.tailorTarget", "Tailor for my target career"),
     t("resumeBuilder.aiChat.suggestions.actionVerbs", "Use stronger action verbs"),
   ];
   // The greeting is resolved at render time (see below) so it follows the UI language.
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    { id: "greeting", role: "assistant", text: "" },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => loadConversation(resumeId));
+  const loadedFor = useRef(resumeId);
+
+  // resumeId arrives after mount (route param → store); reload that resume's thread.
+  useEffect(() => {
+    if (loadedFor.current === resumeId) return;
+    loadedFor.current = resumeId;
+    setMessages(loadConversation(resumeId));
+  }, [resumeId]);
+
+  useEffect(() => {
+    if (loadedFor.current === resumeId) saveConversation(resumeId, messages);
+  }, [resumeId, messages]);
   const [isLoading, setIsLoading] = useState(false);
   const threadEndRef = useRef<HTMLDivElement>(null);
 

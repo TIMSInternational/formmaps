@@ -1754,7 +1754,12 @@
       "volunteerHours_other": "{{count}} volunteer hours",
       "addToPortfolio": "Add to Portfolio"
     },
-    "pcaViewResultsDesc": "See your PCA personality profile and competency breakdown"
+    "pcaViewResultsDesc": "See your PCA personality profile and competency breakdown",
+    "portfolioItems_one": "item",
+    "portfolioItems_other": "items",
+    "volunteerHours": "{{count}} vol hrs",
+    "coursesEnrolled": "enrolled",
+    "topMatch": "Top: {{score}}%"
   },
   "coaching": {
     "featuredCoaches": "Featured Coaches",
@@ -4600,7 +4605,8 @@
       "skillCategory": {
         "technical": "Technical",
         "soft": "Soft",
-        "language": "Language"
+        "language": "Language",
+        "Key Skills": "Key Skills"
       }
     },
     "livePreview": {
@@ -4790,7 +4796,11 @@
     },
     "editorPage": {
       "downloadFailed": "Failed to download PDF. Please try again.",
-      "template": "Template"
+      "template": "Template",
+      "mobileTabs": {
+        "preview": "Preview",
+        "editor": "AI editor"
+      }
     },
     "newResumePage": {
       "tailorFailed": "Tailoring failed. Please try again.",
@@ -5056,10 +5066,11 @@
         "impactfulSummary": "Make my summary more impactful",
         "measurableMetrics": "Add measurable metrics to my bullets",
         "tightenGrammar": "Tighten and fix grammar",
-        "tailorSoftware": "Tailor for a software engineering role",
         "actionVerbs": "Use stronger action verbs",
         "shortenSummary": "Shorten my summary",
-        "moreMetrics": "Add more metrics to bullets"
+        "moreMetrics": "Add more metrics to bullets",
+        "tailorCareer": "Tailor for a {{career}} role",
+        "tailorTarget": "Tailor for my target career"
       },
       "updated": "Done — your resume has been updated.",
       "couldNotApply": "I couldn't apply that — try rephrasing.",
@@ -5376,7 +5387,11 @@
         "matchScore": "Match Score",
         "fit": "Fit",
         "notes": "Notes",
-        "notesPlaceholder": "Add notes about this application..."
+        "notesPlaceholder": "Add notes about this application...",
+        "types": {
+          "university": "University",
+          "career": "Career"
+        }
       },
       "checklist": {
         "completedCount": "{{done}}/{{total}} completed",
@@ -7198,5 +7213,8 @@
     },
     "savedCareer": "Saved career",
     "matchedCareer": "Career match"
+  },
+  "meta": {
+    "defaultTitle": "FormMaps - Find your path. Shape your future."
   }
 }

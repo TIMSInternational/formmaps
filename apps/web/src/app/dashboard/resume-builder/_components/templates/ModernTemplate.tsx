@@ -1,5 +1,6 @@
 import React from "react";
 import i18n from "@/lib/i18n";
+import { prepareResumeForRender } from "../../_lib/resume-render";
 import { translateProficiency } from "../../_lib/resume-constants";
 import {
   Document,
@@ -176,8 +177,10 @@ interface ModernTemplatePDFProps {
 }
 
 export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
-  data,
-}) => (
+  data: rawData,
+}) => {
+  const data = prepareResumeForRender(rawData);
+  return (
   <Document>
     <Page size="A4" style={modernStyles.page}>
       {/* Header */}
@@ -550,10 +553,12 @@ export const ModernTemplatePDF: React.FC<ModernTemplatePDFProps> = ({
         ))}
     </Page>
   </Document>
-);
+  );
+};
 
 // Preview component for the template selector
-export function ModernTemplatePreview({ data }: ModernTemplatePDFProps) {
+export function ModernTemplatePreview({ data: rawData }: ModernTemplatePDFProps) {
+  const data = prepareResumeForRender(rawData);
   return (
     <div className="w-full h-full bg-white p-6 text-xs overflow-hidden">
       {/* Header */}

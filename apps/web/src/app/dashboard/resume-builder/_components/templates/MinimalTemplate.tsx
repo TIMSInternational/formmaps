@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import i18n from "@/lib/i18n";
+import { prepareResumeForRender } from "../../_lib/resume-render";
 import { translateProficiency } from "../../_lib/resume-constants";
 import {
   Document,
@@ -243,7 +244,8 @@ interface MinimalTemplatePDFProps {
   data: ResumeData;
 }
 
-export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
+export function MinimalTemplatePDF({ data: rawData }: MinimalTemplatePDFProps) {
+  const data = prepareResumeForRender(rawData);
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -583,7 +585,8 @@ export function MinimalTemplatePDF({ data }: MinimalTemplatePDFProps) {
 }
 
 // Preview component for the template selector
-export function MinimalTemplatePreview({ data }: MinimalTemplatePDFProps) {
+export function MinimalTemplatePreview({ data: rawData }: MinimalTemplatePDFProps) {
+  const data = prepareResumeForRender(rawData);
   return (
     <div className="w-full h-full bg-white p-8 text-xs overflow-hidden">
       {/* Header */}

@@ -1,5 +1,6 @@
 import React from "react";
 import i18n from "@/lib/i18n";
+import { prepareResumeForRender, skillsHeadingKey } from "../../_lib/resume-render";
 import { translateProficiency } from "../../_lib/resume-constants";
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
 
@@ -179,8 +180,9 @@ interface ClassicTemplatePDFProps {
 }
 
 export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
-  data,
+  data: rawData,
 }) => {
+  const data = prepareResumeForRender(rawData);
   // Group skills by category
   const skillsByCategory = data.skills.reduce((acc, skill) => {
     if (!acc[skill.category]) {
@@ -653,7 +655,7 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
         {/* Technical Skills - categorized with bullet labels */}
         {data.skills.length > 0 && (
           <View style={classicStyles.section}>
-            <Text style={classicStyles.sectionTitle}>{t("resumeBuilder.doc.technicalSkills", "Technical Skills")}</Text>
+            <Text style={classicStyles.sectionTitle}>{t(skillsHeadingKey(data.skills))}</Text>
             {Object.entries(skillsByCategory).map(
               ([category, skills], index) => (
                 <Text key={index} style={classicStyles.skillLine}>
@@ -672,7 +674,8 @@ export const ClassicTemplatePDF: React.FC<ClassicTemplatePDFProps> = ({
 };
 
 // Preview component for the template selector
-export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
+export function ClassicTemplatePreview({ data: rawData }: ClassicTemplatePDFProps) {
+  const data = prepareResumeForRender(rawData);
   // Group skills by category
   const skillsByCategory = data.skills.reduce((acc, skill) => {
     if (!acc[skill.category]) {
@@ -1124,7 +1127,7 @@ export function ClassicTemplatePreview({ data }: ClassicTemplatePDFProps) {
       {data.skills.length > 0 && (
         <div className="mb-2">
           <h2 className="text-xs font-bold text-black mb-1 pb-0.5 border-b border-black uppercase">
-            {t("resumeBuilder.doc.technicalSkills", "Technical Skills")}
+            {t(skillsHeadingKey(data.skills))}
           </h2>
           <div className="text-[8px] text-black">
             {Object.entries(skillsByCategory).map(
