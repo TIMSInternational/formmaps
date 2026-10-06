@@ -59,7 +59,7 @@ export function MobileNav() {
             className="absolute left-0 top-0 bottom-0 w-[260px] animate-in slide-in-from-left duration-200"
             style={{ background: "var(--admin-frame-ground)" }}
           >
-            <StudentSidebar />
+            <StudentSidebar onOpenChat={() => setMenuOpen(false)} />
           </div>
         </div>
       )}

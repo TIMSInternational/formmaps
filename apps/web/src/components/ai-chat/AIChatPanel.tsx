@@ -12,7 +12,10 @@ import { askAi } from "@/services/aiChatService";
 import type { ChatMessage } from "./useChatThreads";
 import { AnimatedAIInput } from "@/components/ui/animated-ai-input";
 import { ShiningText } from "@/components/ui/shining-text";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { getOwnAssessmentCompletion } from "@/services/assessmentCompletionService";
+import { Roles } from "@/lib/permissions";
 
 const REQUEST_TIMEOUT_MS = 45_000;
 
@@ -28,7 +31,16 @@ export function AIChatSidePanel() {
   const { user } = useGlobalStore();
   const firstName = user?.name?.split(" ")[0];
   const { role } = usePermission();
-  const suggestions = getChatSuggestions(role);
+  // Career matches exist only once the server's completion gate says allDone
+  // (scoreCareers returns [] otherwise) — until then, offer onboarding prompts.
+  const { data: completion } = useQuery({
+    queryKey: ["assessment-completion", user?.id],
+    queryFn: getOwnAssessmentCompletion,
+    enabled: role === Roles.STUDENT && !!user?.id,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+  const suggestions = getChatSuggestions(role, t, { hasCareerMatches: completion?.allDone === true });
 
   const messages = currentThread?.messages ?? [];
 

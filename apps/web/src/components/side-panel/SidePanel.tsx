@@ -7,6 +7,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { motion, AnimatePresence } from "motion/react";
@@ -19,6 +20,24 @@ const STORAGE_KEY = "formmaps_side_panel_width";
 const MIN_WIDTH = 320;
 const MAX_WIDTH = 600;
 const DEFAULT_WIDTH = 400;
+// Below Tailwind's `md` breakpoint an inline 320-600px panel squeezes the page into a
+// ~60px column (formmaps#411) — render it as a full-screen sheet instead.
+const NARROW_QUERY = "(max-width: 767px)";
+
+function subscribeNarrow(onChange: () => void) {
+  if (typeof window === "undefined" || !window.matchMedia) return () => {};
+  const mql = window.matchMedia(NARROW_QUERY);
+  mql.addEventListener("change", onChange);
+  return () => mql.removeEventListener("change", onChange);
+}
+
+export function useIsNarrowViewport(): boolean {
+  return useSyncExternalStore(
+    subscribeNarrow,
+    () => typeof window !== "undefined" && !!window.matchMedia && window.matchMedia(NARROW_QUERY).matches,
+    () => false,
+  );
+}
 
 // ── Types ──
 interface SidePanelState {
@@ -103,6 +122,7 @@ const SidePanelStateContext = createContext<SidePanelState>({
 export function SidePanelRenderer() {
   const state = useContext(SidePanelStateContext);
   const { closePanel } = useSidePanel();
+  const isNarrow = useIsNarrowViewport();
   const [isResizing, setIsResizing] = useState(false);
   const widthRef = useRef(DEFAULT_WIDTH);
 
@@ -140,7 +160,7 @@ export function SidePanelRenderer() {
   return (
     <>
       {/* Resize gap */}
-      {state.isOpen && (
+      {state.isOpen && !isNarrow && (
         <div
           onPointerDown={startResize}
           style={{
@@ -160,12 +180,22 @@ export function SidePanelRenderer() {
         </div>
       )}
 
-      {/* Side Panel */}
-      <div style={{
-        flexShrink: 0, minWidth: 0, overflow: "hidden",
-        transition: isResizing ? "none" : "width 0.3s ease",
-        width: state.isOpen ? `var(${SIDE_PANEL_WIDTH_VAR}, ${DEFAULT_WIDTH}px)` : "0px",
-      }}>
+      {/* Side Panel — inline column on desktop, full-screen sheet on narrow viewports */}
+      <div
+        data-testid="side-panel"
+        data-layout={isNarrow ? "sheet" : "inline"}
+        role={isNarrow && state.isOpen ? "dialog" : undefined}
+        aria-modal={isNarrow && state.isOpen ? true : undefined}
+        style={isNarrow ? {
+          position: "fixed", inset: 0, zIndex: 60, overflow: "hidden",
+          display: state.isOpen ? "block" : "none",
+          background: "var(--admin-bg-panel, #171717)",
+        } : {
+          flexShrink: 0, minWidth: 0, overflow: "hidden",
+          transition: isResizing ? "none" : "width 0.3s ease",
+          width: state.isOpen ? `var(${SIDE_PANEL_WIDTH_VAR}, ${DEFAULT_WIDTH}px)` : "0px",
+        }}
+      >
         <AnimatePresence>
           {state.isOpen && state.content && (
             <motion.aside
@@ -178,7 +208,7 @@ export function SidePanelRenderer() {
                 overflow: "hidden",
                 background: "var(--admin-bg-panel, #171717)",
                 border: "1px solid var(--admin-border-panel, #282828)",
-                borderRadius: 8,
+                borderRadius: isNarrow ? 0 : 8,
               }}
             >
               {/* Header */}

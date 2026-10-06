@@ -103,19 +103,26 @@ BOUNDARIES: You only have access to the linked student's data. You cannot access
   }
 }
 
+const STUDENT_RESULT_KEYS = ["careerRank", "skills", "universities", "courses", "objective"];
+const STUDENT_ONBOARDING_KEYS = ["measure", "duration", "startWith", "explore"];
+
 /**
  * Role-specific suggestion prompts shown in the empty chat state.
+ *
+ * Students without career matches yet (fewer than 4 assessments done) get onboarding
+ * prompts — results questions like "Why was my #1 career ranked highest?" have no
+ * answer for them (formmaps#393).
  */
-export function getChatSuggestions(role: RoleName): string[] {
+export function getChatSuggestions(
+  role: RoleName,
+  t: (key: string) => string,
+  opts: { hasCareerMatches?: boolean } = {},
+): string[] {
   switch (role) {
     case Roles.STUDENT:
-      return [
-        "Why was my #1 career ranked highest?",
-        "What skills should I develop next?",
-        "Compare my top 3 university matches",
-        "What courses would help me bridge gaps?",
-        "Help me write a career objective",
-      ];
+      return opts.hasCareerMatches
+        ? STUDENT_RESULT_KEYS.map((k) => t(`aiChat.suggestions.student.${k}`))
+        : STUDENT_ONBOARDING_KEYS.map((k) => t(`aiChat.suggestions.studentOnboarding.${k}`));
     case Roles.SUPER_ADMIN:
       return [
         "How is user growth trending this month?",

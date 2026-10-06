@@ -16,7 +16,7 @@
  * `/dashboard/resume-builder/new`.
  */
 import React from "react";
-import { render, screen } from "@testing-library/react";
+import { render, screen, fireEvent } from "@testing-library/react";
 
 jest.mock("next/navigation", () => ({
   usePathname: () => "/dashboard",
@@ -61,7 +61,7 @@ jest.mock("@/components/ai-chat/ChatContext", () => ({
   useChat: () => ({
     threads: [],
     currentThreadId: null,
-    createThread: jest.fn(),
+    createThread: () => ({ id: "t-1" }),
     selectThread: jest.fn(),
   }),
 }));
@@ -124,5 +124,14 @@ describe("StudentSidebar — Tools nav restructure (Task 10)", () => {
     const allLinks = screen.getAllByRole("link");
     const hrefs = allLinks.map((l) => l.getAttribute("href"));
     expect(hrefs.some((h) => h?.includes("applications/calendar"))).toBe(false);
+  });
+});
+
+describe("StudentSidebar — onOpenChat (formmaps#411)", () => {
+  it("notifies the host (mobile drawer) when a new chat is opened", () => {
+    const onOpenChat = jest.fn();
+    render(<StudentSidebar onOpenChat={onOpenChat} />);
+    fireEvent.click(screen.getAllByText("shell.newChat")[0].closest("button")!);
+    expect(onOpenChat).toHaveBeenCalledTimes(1);
   });
 });
