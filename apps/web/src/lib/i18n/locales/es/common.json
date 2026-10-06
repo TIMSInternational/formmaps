@@ -4593,7 +4593,8 @@
       "skillCategory": {
         "technical": "Técnicas",
         "soft": "Blandas",
-        "language": "Idiomas"
+        "language": "Idiomas",
+        "Key Skills": "Habilidades clave"
       }
     },
     "livePreview": {

@@ -41,7 +41,7 @@ describe("OverviewTab type value i18n", () => {
 
   it("falls back to the raw value for an unknown type", () => {
     render(
-      <OverviewTab app={{ ...app, type: "bootcamp" }} notes="" notesDirty={false} savingNotes={false} onNotesChange={jest.fn()} onSaveNotes={jest.fn()} />
+      <OverviewTab app={{ ...app, type: "bootcamp" } as unknown as typeof app} notes="" notesDirty={false} savingNotes={false} onNotesChange={jest.fn()} onSaveNotes={jest.fn()} />
     );
     expect(screen.getByText("bootcamp")).toBeInTheDocument();
   });

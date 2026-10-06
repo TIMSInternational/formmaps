@@ -4593,7 +4593,8 @@
       "skillCategory": {
         "technical": "Technical",
         "soft": "Soft",
-        "language": "Language"
+        "language": "Language",
+        "Key Skills": "Key Skills"
       }
     },
     "livePreview": {
