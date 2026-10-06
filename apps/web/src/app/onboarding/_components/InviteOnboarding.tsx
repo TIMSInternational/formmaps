@@ -25,17 +25,19 @@ import { Loader2, CheckCircle2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { Illustration } from "@/components/illustration/Illustration";
 import { classifyInviteError, type InviteProblem } from "@/lib/auth/authErrors";
+import { normalizeRole, roleHomeMap } from "@/lib/roleUtils";
+import { PASSWORD_RULES, firstPasswordProblem, passwordProblemKey, passwordRuleLabelKey } from "@/lib/auth/passwordPolicy";
 import { InviteProblemPanel } from "./InviteProblemPanel";
 
 const makePasswordSchema = (t: TFunction) =>
   z
     .object({
-      password: z
-        .string()
-        .min(8, t("onboarding.student.validation.passwordMin"))
-        .regex(/[A-Z]/, t("onboarding.student.validation.passwordUpper"))
-        .regex(/[a-z]/, t("onboarding.student.validation.passwordLower"))
-        .regex(/[0-9]/, t("onboarding.student.validation.passwordNumber")),
+      // The server's exact rule (passwordPolicy.ts), so the form never accepts a password the
+      // server then rejects after "Activate" — the special character used to be missing here.
+      password: z.string().superRefine((value, ctx) => {
+        const broken = firstPasswordProblem(value);
+        if (broken) ctx.addIssue({ code: "custom", message: t(passwordProblemKey(broken)) });
+      }),
       confirmPassword: z.string(),
     })
     .refine((data) => data.password === data.confirmPassword, {
@@ -44,6 +46,20 @@ const makePasswordSchema = (t: TFunction) =>
     });
 
 type PasswordFormData = z.infer<ReturnType<typeof makePasswordSchema>>;
+
+/**
+ * Accepting an invite consumes its token on the server, so checking the token again afterwards
+ * says "not valid". Remember, for this browser session, that THIS person just accepted it: if the
+ * page mounts again (Back button, a reload before the redirect lands) it shows the activated state
+ * and moves on instead of a dead-link error.
+ */
+const acceptedKey = (token: string) => `invite-accepted:${token}`;
+function readAccepted(token: string): string | null {
+  try { return window.sessionStorage.getItem(acceptedKey(token)); } catch { return null; }
+}
+function rememberAccepted(token: string, home: string) {
+  try { window.sessionStorage.setItem(acceptedKey(token), home); } catch { /* private mode: best effort */ }
+}
 
 /**
  * The invite onboarding flow, shared by two routes.
@@ -70,6 +86,8 @@ export function InviteOnboarding({ token }: { token: string }) {
   const [inviteSchool, setInviteSchool] = useState<string | null>(null);
   const [problem, setProblem] = useState<InviteProblem>("invalid");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Set once the server accepted the invite: where we are taking them (their role's home).
+  const [activatedHome, setActivatedHome] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -80,6 +98,15 @@ export function InviteOnboarding({ token }: { token: string }) {
   const { handleSubmit, control, formState: { errors } } = form;
 
   useEffect(() => {
+    const acceptedHome = readAccepted(token);
+    if (acceptedHome) {
+      // Accepted in this session already — never re-check a token we consumed ourselves; just
+      // finish the trip to their home.
+      setActivatedHome(acceptedHome);
+      setIsLoading(false);
+      router.replace(acceptedHome);
+      return;
+    }
     const checkToken = async () => {
       try {
         setIsLoading(true);
@@ -112,19 +139,26 @@ export function InviteOnboarding({ token }: { token: string }) {
       const result = await completeStudentOnboarding(token, data.password, data.confirmPassword, userId);
       if (result.success) {
         if (result.token) {
+          const role = result.user.role?.name || result.user.roleName;
+          // Straight to their own home — a counselor or school admin sent to /dashboard only
+          // bounced through another redirect.
+          const home = roleHomeMap[normalizeRole(role)] ?? "/dashboard";
+          rememberAccepted(token, home);
+          setActivatedHome(home);
           setUser({
             id: result.user.id,
             name: result.user.name,
             email: result.user.email,
-            role: result.user.role?.name || result.user.roleName,
+            role,
             accessToken: result.token,
             isAuthenticated: true,
           });
-          toast.success(t("onboarding.student.activatedRedirect"));
-          setTimeout(() => { router.push("/dashboard"); }, 1500);
+          router.replace(home);
         } else {
+          rememberAccepted(token, "/login");
+          setActivatedHome("/login");
           toast.success(t("onboarding.student.activatedLogin"));
-          setTimeout(() => { router.push("/login"); }, 2000);
+          router.replace("/login");
         }
       } else {
         throw new Error(result.message || t("onboarding.student.activationFailed"));
@@ -163,6 +197,33 @@ export function InviteOnboarding({ token }: { token: string }) {
             <Skeleton className="h-11 w-full rounded-lg" />
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // Accepted: say so while their home loads — never fall back to the form or a link error.
+  if (activatedHome) {
+    return (
+      <div className="min-h-screen flex items-center justify-center p-6" style={{ background: "#FFFFFF" }}>
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-sm text-center"
+          role="status"
+          aria-live="polite"
+        >
+          <CheckCircle2 className="w-12 h-12 mx-auto mb-4" style={{ color: "#10B981" }} />
+          <h1 className="text-2xl font-semibold mb-2" style={{ color: "#102B47" }}>
+            {t("onboarding.student.activatedTitle")}
+          </h1>
+          <p className="text-sm flex items-center justify-center gap-2" style={{ color: "#666" }}>
+            <Loader2 className="w-4 h-4 animate-spin" />
+            {activatedHome === "/login" ? t("onboarding.student.activatedLogin") : t("onboarding.student.activatedTakingYou")}
+          </p>
+          <a href={activatedHome} className="inline-block mt-6 text-sm font-medium" style={{ color: "var(--admin-accent-blue)" }}>
+            {t("onboarding.student.activatedContinue")}
+          </a>
+        </motion.div>
       </div>
     );
   }
@@ -331,10 +392,9 @@ export function InviteOnboarding({ token }: { token: string }) {
               <div className="text-[11px] space-y-1" style={{ color: "#999" }}>
                 <p>{t("onboarding.student.requirements")}</p>
                 <div className="flex flex-wrap gap-x-4 gap-y-0.5">
-                  <span>• {t("onboarding.student.req8")}</span>
-                  <span>• {t("onboarding.student.reqUpper")}</span>
-                  <span>• {t("onboarding.student.reqLower")}</span>
-                  <span>• {t("onboarding.student.reqNumber")}</span>
+                  {PASSWORD_RULES.map(({ rule }) => (
+                    <span key={rule}>• {t(passwordRuleLabelKey(rule))}</span>
+                  ))}
                 </div>
               </div>
 

@@ -11,6 +11,7 @@ import { useUserPermissions } from "@/hooks/useUserPermissions";
 import { Roles } from "@/lib/permissions";
 import { roleHomeMap } from "@/lib/roleUtils";
 import { findRouteRule, resolveRedirect } from "@/lib/routePermissions";
+import { nextSessionKey, type SessionKeyState } from "@/lib/auth/sessionKey";
 import { initSentry } from "@/lib/sentry";
 import { reportWebVitals } from "@/lib/webVitals";
 import { toast } from "sonner";
@@ -183,6 +184,12 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     }
   }, [redirectTarget, router]);
 
+  // Remount the subtree when a signed-in identity ends or changes — not when someone signs in from
+  // anonymous (see sessionKey.ts). Derived during render so the remount lands in the same commit
+  // as the user change; idempotent, so a repeated render (StrictMode) cannot bump it twice.
+  const sessionKeyRef = useRef<SessionKeyState>({ id: user.id ?? null, generation: 0 });
+  sessionKeyRef.current = nextSessionKey(sessionKeyRef.current, user.id);
+
   // Show spinner while initializing OR while waiting for a redirect
   // Use overlay approach instead of replacing children to avoid DOM reconciliation errors
   // with cookie banners and browser extensions that inject nodes
@@ -193,11 +200,10 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
   return (
     <>
       {redirectTarget && <LoadingSpinner overlay />}
-      {/* Key the authenticated subtree by user id: when the signed-in user
-          changes (login / signup / logout), React remounts everything below,
-          discarding any in-memory state (e.g. a prior student's assessment
-          scores held in useState) that would otherwise leak across accounts. */}
-      <Fragment key={user.id ?? "anon"}>
+      {/* Remounts everything below on logout or an account switch, discarding in-memory state
+          (e.g. a prior student's assessment scores held in useState) that would otherwise leak
+          across accounts. Signing in from anonymous keeps it (see sessionKey.ts). */}
+      <Fragment key={sessionKeyRef.current.generation}>
         {children}
         {/* Idle + 12h sign-out. Here, in the root layout's wrapper, so it covers every
             signed-in route (shells, assessment runner, evaluator, onboarding), and it is

@@ -2104,6 +2104,22 @@
       "refreshFailed": "Could not refresh your session. Please log in again.",
       "expiresToast_one": "Your session expires in {{count}} minute. Save your work.",
       "expiresToast_other": "Your session expires in {{count}} minutes. Save your work."
+    },
+    "passwordRules": {
+      "label": {
+        "min8": "8+ characters",
+        "upper": "An uppercase letter",
+        "lower": "A lowercase letter",
+        "digit": "A number",
+        "special": "A special character (! @ # $ …)"
+      },
+      "problem": {
+        "min8": "Password must be at least 8 characters.",
+        "upper": "Password must contain an uppercase letter.",
+        "lower": "Password must contain a lowercase letter.",
+        "digit": "Password must contain a number.",
+        "special": "Password must contain a special character, such as ! @ # $ or %."
+      }
     }
   },
   "transactions": {
@@ -2317,6 +2333,9 @@
       "idNotFound": "Student ID not found. Please refresh the page.",
       "activatedRedirect": "Account activated successfully!",
       "activatedLogin": "Account activated! Please log in.",
+      "activatedTitle": "Your account is ready",
+      "activatedTakingYou": "Taking you to FormMaps…",
+      "activatedContinue": "Continue",
       "activationFailed": "Activation failed",
       "activationError": "Failed to activate account",
       "invalidHeading": "Invalid Invitation",
