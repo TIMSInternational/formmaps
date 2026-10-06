@@ -15,7 +15,10 @@ import {
 } from "lucide-react";
 import { Essay, ESSAY_STATUS_CONFIG, wordCount } from "./types";
 import { FormInput, LoadingRow, EmptyState } from "./shared";
+import { useDateFormat } from "@/hooks/useDateFormat";
 import { QueryStateBoundary } from "@/components/QueryStateBoundary";
+import { AutoGrowTextarea } from "./auto-grow-textarea";
+import { EssayReviewFeedback } from "./essay-review-feedback";
 
 interface EssaysTabProps {
   essays: Essay[];
@@ -59,6 +62,7 @@ export function EssaysTab({
   onAddEssay,
 }: EssaysTabProps) {
   const { t } = useTranslation();
+  const { formatDate } = useDateFormat();
   return (
     <motion.div
       key="essays"
@@ -187,7 +191,7 @@ export function EssaysTab({
                       {essay.dueDate && (
                         <div className="flex items-center gap-1 text-[11px] mt-0.5" style={{ color: "var(--admin-font-tertiary)" }}>
                           <Calendar className="h-3 w-3" />
-                          {t("studentUi.applications.essays.due", { date: essay.dueDate })}
+                          {t("studentUi.applications.essays.due", { date: formatDate(essay.dueDate) })}
                         </div>
                       )}
                     </div>
@@ -249,8 +253,8 @@ export function EssaysTab({
                               )}
                             </div>
                           </div>
-                          <textarea
-                            rows={8}
+                          <AutoGrowTextarea
+                            minRows={8}
                             placeholder={t("studentUi.applications.essays.draftPlaceholder")}
                             value={draft}
                             onChange={(e) => onSetEssayDraft(essay.id, e.target.value)}
@@ -317,9 +321,7 @@ export function EssaysTab({
                                   {t("studentUi.applications.essays.aiFeedback")}
                                 </span>
                               </div>
-                              <p className="text-xs leading-relaxed" style={{ color: "var(--admin-font-secondary)" }}>
-                                {review}
-                              </p>
+                              <EssayReviewFeedback markdown={review} />
                             </motion.div>
                           )}
                         </AnimatePresence>

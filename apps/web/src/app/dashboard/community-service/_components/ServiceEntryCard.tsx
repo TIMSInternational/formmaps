@@ -4,7 +4,7 @@ import { motion } from "motion/react";
 import { Clock, CheckCircle2, XCircle, Calendar, User, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { CommunityServiceEntry, CommunityServiceStatus } from "@/types/communityService";
-import { formatDateOnly } from "@/lib/dateUtils";
+import { useDateFormat } from "@/hooks/useDateFormat";
 import { useTranslation } from "react-i18next";
 
 const statusConfig: Record<
@@ -41,6 +41,7 @@ export interface ServiceEntryCardProps {
 
 export function ServiceEntryCard({ entry, index, onEdit, onDelete, deletingId }: ServiceEntryCardProps) {
   const { t } = useTranslation();
+  const { formatDate } = useDateFormat();
   const sc = statusConfig[entry.status];
   const Icon = sc.icon;
   return (
@@ -76,7 +77,7 @@ export function ServiceEntryCard({ entry, index, onEdit, onDelete, deletingId }:
         <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-1 bg-secondary px-2 py-0.5 rounded-md">
             <Calendar className="h-3 w-3" />
-            {formatDateOnly(entry.date)}
+            {formatDate(entry.date)}
           </span>
           <span className="flex items-center gap-1 bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded-md">
             <Clock className="h-3 w-3" />

@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { ArrowLeft, MapPin, Calendar } from "lucide-react";
 import { TrackedApplication } from "@/services/applicationService";
 import { COLUMN_LABELS, fitBadge } from "./types";
+import { useDateFormat } from "@/hooks/useDateFormat";
 
 interface ApplicationHeaderProps {
   app: TrackedApplication;
@@ -13,6 +14,7 @@ interface ApplicationHeaderProps {
 
 export function ApplicationHeader({ app, onBack }: ApplicationHeaderProps) {
   const { t } = useTranslation();
+  const { formatDate } = useDateFormat();
   const fit = fitBadge(app.matchScore);
 
   return (
@@ -44,7 +46,7 @@ export function ApplicationHeader({ app, onBack }: ApplicationHeaderProps) {
             {app.deadline && (
               <span className="flex items-center gap-1 text-xs" style={{ color: "var(--admin-accent-amber)" }}>
                 <Calendar className="h-3 w-3" />
-                {app.deadline}
+                {formatDate(app.deadline)}
               </span>
             )}
             <span

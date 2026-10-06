@@ -4,7 +4,8 @@ import { motion } from "motion/react";
 import { Edit, Trash2, Calendar, Clock } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { typeConfig } from "./portfolioConfig";
+import { typeConfig, effectiveHours } from "./portfolioConfig";
+import { useDateFormat } from "@/hooks/useDateFormat";
 import type { PortfolioItem } from "@/types/portfolio";
 
 interface PortfolioItemCardProps {
@@ -16,6 +17,8 @@ interface PortfolioItemCardProps {
 
 export function PortfolioItemCard({ item, index, onEdit, onDelete }: PortfolioItemCardProps) {
   const { t } = useTranslation();
+  const { formatMonthYear } = useDateFormat();
+  const hours = effectiveHours(item);
   const cfg = typeConfig[item.type] || typeConfig.extracurricular;
   const Icon = cfg.icon;
 
@@ -88,14 +91,15 @@ export function PortfolioItemCard({ item, index, onEdit, onDelete }: PortfolioIt
             {item.startDate && (
               <span className="flex items-center gap-1">
                 <Calendar className="h-3 w-3" />
-                {item.startDate}
-                {item.endDate ? ` - ${item.endDate}` : ` - ${t("studentUi.portfolio.card.present")}`}
+                {formatMonthYear(item.startDate)}
+                {" – "}
+                {item.endDate ? formatMonthYear(item.endDate) : t("studentUi.portfolio.card.present")}
               </span>
             )}
-            {item.totalHours && (
+            {hours > 0 && (
               <span className="flex items-center gap-1">
                 <Clock className="h-3 w-3" />
-                {t("studentUi.portfolio.card.hours", { count: item.totalHours })}
+                {t("studentUi.portfolio.card.hours", { count: hours })}
               </span>
             )}
           </div>

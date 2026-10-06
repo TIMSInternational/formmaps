@@ -3,6 +3,7 @@
 import { motion } from "motion/react";
 import { Calendar, GraduationCap, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useDateFormat } from "@/hooks/useDateFormat";
 import { TrackedApplication } from "@/services/applicationService";
 
 interface DotColor {
@@ -30,6 +31,7 @@ export function DeadlineDetailPanel({
   onClose,
 }: DeadlineDetailPanelProps) {
   const { t } = useTranslation();
+  const { formatDate } = useDateFormat();
   return (
     <motion.div
       key={selectedDay}
@@ -43,21 +45,18 @@ export function DeadlineDetailPanel({
         <div className="flex items-center gap-2">
           <Calendar className="h-4 w-4" style={{ color: "var(--admin-accent-blue)" }} />
           <span className="text-sm font-semibold" style={{ color: "var(--admin-font-primary)" }}>
-            {(() => {
-              const [y, m, d] = selectedDay.split("-").map(Number);
-              return new Date(y, m - 1, d).toLocaleDateString("en-US", {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                year: "numeric",
-              });
-            })()}
+            {formatDate(selectedDay, {
+              weekday: "long",
+              month: "long",
+              day: "numeric",
+              year: "numeric",
+            })}
           </span>
           <span
             className="text-[11px] font-semibold px-2 py-0.5 rounded-full"
             style={{ background: "rgba(59,130,246,0.1)", color: "var(--admin-accent-blue)" }}
           >
-            {selectedApps.length} deadline{selectedApps.length !== 1 ? "s" : ""}
+            {t("studentUi.applications.calendar.deadlineCount", { count: selectedApps.length })}
           </span>
         </div>
         <button onClick={onClose}>

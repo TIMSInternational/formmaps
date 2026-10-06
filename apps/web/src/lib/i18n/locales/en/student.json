@@ -87,7 +87,8 @@
     "serviceLog": {
       "title": "Service Log",
       "history": "History of your volunteer work",
-      "entries": "entries"
+      "entryCount_one": "{{count}} entry",
+      "entryCount_other": "{{count}} entries"
     }
   },
   "portfolio": {

@@ -8,7 +8,7 @@ import {
   RecommendationRequest,
   getRecommendationLetterUrl,
 } from "@/services/recommendationService";
-import { formatDateOnly } from "@/lib/dateUtils";
+import { useDateFormat } from "@/hooks/useDateFormat";
 import StatusBadge from "./StatusBadge";
 import { useTranslation } from "react-i18next";
 import { relationshipLabel } from "@/components/recommendations/relationshipLabel";
@@ -88,6 +88,7 @@ function StatusTimeline({ status }: { status: string }) {
 
 export default function RecommendationList({ requests }: RecommendationListProps) {
   const { t } = useTranslation("student");
+  const { formatDate } = useDateFormat();
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   async function handleDownload(id: string) {
@@ -254,7 +255,7 @@ export default function RecommendationList({ requests }: RecommendationListProps
                       }}
                     >
                       <Calendar style={{ width: 11, height: 11 }} />
-                      {t("recommendations.list.due", { date: formatDateOnly(req.dueDate) })}
+                      {t("recommendations.list.due", { date: formatDate(req.dueDate) })}
                     </div>
                   )}
                   {canDownload && (
