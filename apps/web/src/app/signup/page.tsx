@@ -22,6 +22,15 @@ import { makeSignupSchema, type SignupFormData } from "./_components/signupSchem
 import { PasswordInput } from "./_components/PasswordInput";
 import { AuthBrandingPanel } from "@/components/auth/AuthBrandingPanel";
 import { isEmailUnavailable } from "@/lib/auth/authErrors";
+import { LegalConsent } from "@/components/legal/LegalConsent";
+import { LegalFooter } from "@/components/legal/LegalFooter";
+import {
+  EMPTY_LEGAL_CONSENT,
+  buildLegalConsentPayload,
+  isLegalConsentValid,
+  isMinorByDob,
+  type LegalConsentValues,
+} from "@/lib/legal/consent";
 
 const inputStyle = { background: "#F8F9FA", borderColor: "#E0E0E0", color: "#111" } as const;
 const focusOn = (e: React.FocusEvent<HTMLInputElement>) => { e.currentTarget.style.borderColor = "var(--admin-accent-blue)"; };
@@ -39,7 +48,6 @@ export default function SignupPage() {
       password: "",
       confirmPassword: "",
       dateOfBirth: "",
-      acceptTerms: false,
       acceptMarketing: false,
     },
   });
@@ -56,8 +64,13 @@ export default function SignupPage() {
   } = form;
   const router = useRouter();
   const password = watch("password");
+  // 13–17 (from the DOB already collected) → the parent/guardian box becomes required.
+  const isMinor = isMinorByDob(watch("dateOfBirth"));
+  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>(EMPTY_LEGAL_CONSENT);
+  const consentValid = isLegalConsentValid("signup", legalConsent, { isMinor });
 
   const handleSubmitForm = async (data: SignupFormData) => {
+    if (!consentValid) return;
     setIsLoading(true);
     setEmailUnavailable(false);
 
@@ -70,7 +83,8 @@ export default function SignupPage() {
         data.password,
         undefined,
         data.dateOfBirth,
-        data.acceptMarketing
+        data.acceptMarketing,
+        buildLegalConsentPayload("signup", legalConsent, { isMinor: isMinorByDob(data.dateOfBirth) })
       );
 
       const loginRes = await loginApi(data.email, data.password);
@@ -260,21 +274,14 @@ export default function SignupPage() {
               <PasswordInput control={control} name="confirmPassword" label={t("auth.signup.confirmPasswordLabel")}
                 placeholder={t("auth.signup.confirmPasswordPlaceholder")} />
 
-              {/* Terms */}
+              {/* Legal consent (required) + marketing opt-in (optional) */}
               <div className="flex flex-col gap-3">
-                <div className="flex items-start gap-2">
-                  <input id="terms" type="checkbox" {...form.register("acceptTerms")}
-                    className="w-3.5 h-3.5 mt-0.5" style={{ accentColor: "#102B47" }} />
-                  <label htmlFor="terms" className="text-xs leading-5" style={{ color: "#666" }}>
-                    {t("auth.signup.agreePrefix")}{" "}
-                    <Link href="/terms" className="font-medium no-underline" style={{ color: "var(--admin-accent-blue)" }}>{t("auth.signup.termsOfService")}</Link>{" "}
-                    {t("auth.signup.and")}{" "}
-                    <Link href="/privacy" className="font-medium no-underline" style={{ color: "var(--admin-accent-blue)" }}>{t("auth.signup.privacyPolicy")}</Link>
-                  </label>
-                </div>
-                {errors.acceptTerms && (
-                  <p className="text-xs text-red-500 ml-6">{errors.acceptTerms.message}</p>
-                )}
+                <LegalConsent
+                  variant="signup"
+                  values={legalConsent}
+                  onChange={setLegalConsent}
+                  isMinor={isMinor}
+                />
                 <div className="flex items-start gap-2">
                   <input id="marketing" type="checkbox" {...form.register("acceptMarketing")}
                     className="w-3.5 h-3.5 mt-0.5" style={{ accentColor: "#102B47" }} />
@@ -286,9 +293,10 @@ export default function SignupPage() {
 
               <button
                 type="submit"
-                disabled={isLoading}
+                disabled={isLoading || !consentValid}
+                aria-disabled={isLoading || !consentValid}
                 className="h-11 rounded-lg border-none text-sm font-semibold cursor-pointer transition-all"
-                style={{ background: "#102B47", color: "#FFFFFF", opacity: isLoading ? 0.6 : 1 }}
+                style={{ background: "#102B47", color: "#FFFFFF", opacity: isLoading || !consentValid ? 0.6 : 1, cursor: isLoading || !consentValid ? "not-allowed" : "pointer" }}
               >
                 {isLoading ? (
                   <span className="flex items-center justify-center gap-2">
@@ -308,6 +316,7 @@ export default function SignupPage() {
               {t("auth.signup.signIn")}
             </Link>
           </p>
+          <LegalFooter className="mt-6" />
         </motion.div>
       </div>
     </div>

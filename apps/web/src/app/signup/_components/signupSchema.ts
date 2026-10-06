@@ -39,9 +39,6 @@ export function makeSignupSchema(t: (key: string) => string) {
           thirteenAgo.setFullYear(thirteenAgo.getFullYear() - 13);
           return d <= thirteenAgo;
         }, t("auth.validation.dobAge")),
-      acceptTerms: z
-        .boolean()
-        .refine((val) => val === true, t("auth.validation.acceptTerms")),
       acceptMarketing: z.boolean().optional(),
     })
     .refine((data) => data.password === data.confirmPassword, {
