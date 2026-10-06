@@ -1750,7 +1750,12 @@
       "volunteerHours_other": "{{count}} volunteer hours",
       "addToPortfolio": "Add to Portfolio"
     },
-    "pcaViewResultsDesc": "See your PCA personality profile and competency breakdown"
+    "pcaViewResultsDesc": "See your PCA personality profile and competency breakdown",
+    "portfolioItems_one": "item",
+    "portfolioItems_other": "items",
+    "volunteerHours": "{{count}} vol hrs",
+    "coursesEnrolled": "enrolled",
+    "topMatch": "Top: {{score}}%"
   },
   "coaching": {
     "featuredCoaches": "Featured Coaches",
@@ -5362,7 +5367,11 @@
         "matchScore": "Match Score",
         "fit": "Fit",
         "notes": "Notes",
-        "notesPlaceholder": "Add notes about this application..."
+        "notesPlaceholder": "Add notes about this application...",
+        "types": {
+          "university": "University",
+          "career": "Career"
+        }
       },
       "checklist": {
         "completedCount": "{{done}}/{{total}} completed",

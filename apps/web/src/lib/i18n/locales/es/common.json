@@ -1102,7 +1102,12 @@
       "volunteerHours_other": "{{count}} horas de voluntariado",
       "addToPortfolio": "Agregar al portafolio"
     },
-    "pcaViewResultsDesc": "Consulta tu perfil de personalidad PCA y el desglose de tus competencias"
+    "pcaViewResultsDesc": "Consulta tu perfil de personalidad PCA y el desglose de tus competencias",
+    "portfolioItems_one": "elemento",
+    "portfolioItems_other": "elementos",
+    "volunteerHours": "{{count}} h de voluntariado",
+    "coursesEnrolled": "inscritos",
+    "topMatch": "Mejor: {{score}}%"
   },
   "coaching": {
     "featuredCoaches": "Coaches destacados",
@@ -5362,7 +5367,11 @@
         "matchScore": "Puntaje de compatibilidad",
         "fit": "Afinidad",
         "notes": "Notas",
-        "notesPlaceholder": "Agrega notas sobre esta solicitud..."
+        "notesPlaceholder": "Agrega notas sobre esta solicitud...",
+        "types": {
+          "university": "Universidad",
+          "career": "Carrera"
+        }
       },
       "checklist": {
         "completedCount": "{{done}}/{{total}} completados",

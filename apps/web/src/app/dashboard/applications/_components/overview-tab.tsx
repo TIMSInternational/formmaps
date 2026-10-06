@@ -34,7 +34,7 @@ export function OverviewTab({ app, notes, notesDirty, savingNotes, onNotesChange
         style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)" }}
       >
         <InfoRow label={t("studentUi.applications.overview.name")} value={app.name} />
-        <InfoRow label={t("studentUi.applications.overview.type")} value={app.type ?? "—"} />
+        <InfoRow label={t("studentUi.applications.overview.type")} value={app.type ? t(`studentUi.applications.overview.types.${app.type}`, { defaultValue: app.type }) : "—"} />
         <InfoRow label={t("studentUi.applications.overview.location")} value={app.location ?? "—"} />
         <InfoRow label={t("studentUi.applications.overview.status")} value={COLUMN_LABELS[app.column] ? t(COLUMN_LABELS[app.column]) : app.column} />
         <InfoRow label={t("studentUi.applications.overview.deadline")} value={app.deadline ?? "—"} />
