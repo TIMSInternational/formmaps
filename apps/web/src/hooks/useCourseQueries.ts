@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { useContentLanguage } from "@/lib/i18n/contentLanguage";
 import { listCourses, getCourseById, getRecommendedCourses, getUserEnrollments } from "@/services/courseService";
 
 export const courseKeys = {
@@ -16,17 +17,21 @@ export const courseKeys = {
 };
 
 export function useCourseList() {
+  // The UI language: the course endpoints return that language + English (#397).
+  const lang = useContentLanguage();
   return useQuery({
-    queryKey: courseKeys.list(),
-    queryFn: () => listCourses(),
+    queryKey: [...courseKeys.list(), lang],
+    queryFn: () => listCourses(lang),
     staleTime: 2 * 60 * 1000,
   });
 }
 
 export function useRecommendedCourses() {
+  // The UI language: the course endpoints return that language + English (#397).
+  const lang = useContentLanguage();
   return useQuery({
-    queryKey: courseKeys.recommended(),
-    queryFn: () => getRecommendedCourses(),
+    queryKey: [...courseKeys.recommended(), lang],
+    queryFn: () => getRecommendedCourses(lang),
     staleTime: 10 * 60 * 1000,
   });
 }

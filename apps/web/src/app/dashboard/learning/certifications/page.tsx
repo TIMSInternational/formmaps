@@ -196,7 +196,8 @@ export default function CertificationsPage() {
                       {course.provider}
                     </p>
                     <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
-                      {course.duration && (
+                      {/* #397: no duration (0/null) → no chip, never a bare "0" */}
+                      {(course.duration ?? 0) > 0 && (
                         <span className="flex items-center gap-0.5">
                           <Clock className="w-3 h-3" /> {t("studentUi.learning.certifications.durationWeeks", { count: course.duration })}
                         </span>
