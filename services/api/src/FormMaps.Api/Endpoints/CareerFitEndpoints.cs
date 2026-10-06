@@ -1,3 +1,4 @@
+using FormMaps.Api.Auth;
 using FormMaps.Api.Contracts.CareerFit;
 using FormMaps.Application.Auth;
 using FormMaps.Application.CareerFit;
@@ -89,13 +90,13 @@ public static class CareerFitEndpoints
         // Per-student: the sub-paths precede nothing ambiguous (all three are distinct literals under
         // /results/{userId}), and the write is the only POST in the group.
         group.MapPost("/evaluate/{userId}", EvaluateAsync);
-        group.MapGet("/results/{userId}/explanation", GetLatestExplanationAsync);
-        group.MapGet("/results/{userId}/runs", GetRunHistoryAsync);
-        group.MapGet("/results/{userId}", GetLatestResultsAsync);
+        group.MapGet("/results/{userId}/explanation", GetLatestExplanationAsync).RequirePaidResults();
+        group.MapGet("/results/{userId}/runs", GetRunHistoryAsync).RequirePaidResults();
+        group.MapGet("/results/{userId}", GetLatestResultsAsync).RequirePaidResults();
 
         // Per-run: /runs/{runId}/explanation before /runs/{runId} for the same first-match reason.
-        group.MapGet("/runs/{runId}/explanation", GetRunExplanationAsync);
-        group.MapGet("/runs/{runId}", GetRunAsync);
+        group.MapGet("/runs/{runId}/explanation", GetRunExplanationAsync).RequirePaidResults();
+        group.MapGet("/runs/{runId}", GetRunAsync).RequirePaidResults();
 
         return app;
     }

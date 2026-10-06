@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.Json;
+using FormMaps.Api.Auth;
 using FormMaps.Application.Assessments;
 using FormMaps.Application.Auth;
 
@@ -25,11 +26,11 @@ public static class PersonalityEndpoints
 
         group.MapGet("/access", GetAccessAsync);
         group.MapGet("/session/{sessionId}", GetSessionAsync);
-        group.MapGet("/session/{sessionId}/results", GetSessionResultsAsync);
-        group.MapGet("/user/{userId}/results", GetUserResultsAsync);
+        group.MapGet("/session/{sessionId}/results", GetSessionResultsAsync).RequirePaidResults();
+        group.MapGet("/user/{userId}/results", GetUserResultsAsync).RequirePaidResults();
         group.MapPost("/start", StartAsync);
         group.MapPost("/session/{sessionId}/answer", AnswerAsync);
-        group.MapPost("/session/{sessionId}/complete", CompleteAsync);
+        group.MapPost("/session/{sessionId}/complete", CompleteAsync).RedactScoresWithoutPaidResults();
 
         return app;
     }

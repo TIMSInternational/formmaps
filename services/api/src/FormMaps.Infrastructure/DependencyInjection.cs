@@ -472,6 +472,18 @@ public static class DependencyInjection
                 sp.GetRequiredService<ILogger<SubscriptionGuard>>(),
                 graceDays));
 
+        // Independent-student results paywall (TIMSInternational/formmaps#240). Only consulted by the
+        // API's RequirePaidResults / RedactScoresWithoutPaidResults filters while
+        // INDEPENDENT_STUDENT_PAYWALL is ON; registered unconditionally so the flag can flip without a
+        // rebuild. Same grace window as the subscription gate.
+        services.AddSingleton<SchoolContractCache>();
+        services.AddScoped<IStudentAccessReader>(sp =>
+            new StudentAccessReader(
+                sp.GetRequiredService<IFormMapsDatabaseSessionFactory>(),
+                sp.GetRequiredService<SchoolContractCache>(),
+                sp.GetRequiredService<TimeProvider>(),
+                graceDays));
+
         return services;
     }
 
