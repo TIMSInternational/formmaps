@@ -7124,5 +7124,8 @@
       "unmuteMic": "Unmute microphone",
       "dismissError": "Dismiss error"
     }
+  },
+  "meta": {
+    "defaultTitle": "FormMaps - Find your path. Shape your future."
   }
 }
