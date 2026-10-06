@@ -5854,7 +5854,16 @@
         "testType": "Test Type",
         "testDate": "Test Date",
         "status": "Status",
-        "officialScore": "Official score"
+        "officialScore": "Official score",
+        "paaScore": "PAA score (200–800)",
+        "saberScore": "Saber 11 global score (0–500)",
+        "ieltsBand": "IELTS overall band (0–9)",
+        "delfLevel": "Level (A1–C2)",
+        "selectLevel": "Select level",
+        "delfScore": "Score (0–100)",
+        "examName": "Exam name",
+        "examNamePlaceholder": "e.g. DELE B2, Cambridge C1 Advanced",
+        "otherScore": "Score"
       },
       "testType": {
         "SAT": "SAT",
@@ -5862,7 +5871,12 @@
         "AP": "AP Exam",
         "PSAT": "PSAT",
         "TOEFL": "TOEFL",
-        "IB": "IB Exam"
+        "IB": "IB Exam",
+        "PAA": "PAA (UCR/UNA/TEC)",
+        "SABER11": "Saber 11 (ICFES)",
+        "IELTS": "IELTS",
+        "DELF_DALF": "DELF/DALF",
+        "OTHER": "Other exam"
       },
       "sub": {
         "sat": "Math {{math}} · Reading {{reading}}",

@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useTranslation } from "react-i18next";
-import { type FormState, type TestType, TEST_TYPES } from "./score-helpers";
+import { type FormState, type TestType, TEST_TYPES, CEFR_LEVELS, EXAM_NAME_MAX } from "./score-helpers";
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
@@ -22,10 +22,10 @@ function FieldRow({ children }: { children: React.ReactNode }) {
   return <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">{children}</div>;
 }
 
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
+function Field({ label, htmlFor, children }: { label: string; htmlFor?: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1.5">
-      <Label className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+      <Label htmlFor={htmlFor} className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
         {label}
       </Label>
       {children}
@@ -137,6 +137,63 @@ export function DynamicFields({
                 ))}
               </SelectContent>
             </Select>
+          </Field>
+        </FieldRow>
+      );
+
+    // tafurfede/formmaps-platform#400 — CR/CO launch types (ported from formmaps-platform#419).
+    case "PAA":
+      return (
+        <Field label={t("studentUi.testScores.form.paaScore")} htmlFor="ts-paa-score">
+          <Input id="ts-paa-score" type="number" min={200} max={800} step={1} placeholder="650" className="h-10 bg-secondary border-border" value={form.totalScore} onChange={(e) => onChange({ totalScore: e.target.value })} />
+        </Field>
+      );
+
+    case "SABER11":
+      return (
+        <Field label={t("studentUi.testScores.form.saberScore")} htmlFor="ts-saber-score">
+          <Input id="ts-saber-score" type="number" min={0} max={500} step={1} placeholder="320" className="h-10 bg-secondary border-border" value={form.totalScore} onChange={(e) => onChange({ totalScore: e.target.value })} />
+        </Field>
+      );
+
+    case "IELTS":
+      return (
+        <Field label={t("studentUi.testScores.form.ieltsBand")} htmlFor="ts-ielts-band">
+          <Input id="ts-ielts-band" type="number" min={0} max={9} step={0.5} placeholder="7.0" className="h-10 bg-secondary border-border" value={form.ieltsBand} onChange={(e) => onChange({ ieltsBand: e.target.value })} />
+        </Field>
+      );
+
+    case "DELF_DALF":
+      return (
+        <FieldRow>
+          <Field label={t("studentUi.testScores.form.delfLevel")}>
+            <Select value={form.delfLevel} onValueChange={(v) => onChange({ delfLevel: v })}>
+              <SelectTrigger className="h-10 bg-secondary border-border">
+                <SelectValue placeholder={t("studentUi.testScores.form.selectLevel")} />
+              </SelectTrigger>
+              <SelectContent>
+                {CEFR_LEVELS.map((level) => (
+                  <SelectItem key={level} value={level}>
+                    {`${level} \u00b7 ${level.startsWith("C") ? "DALF" : "DELF"}`}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </Field>
+          <Field label={t("studentUi.testScores.form.delfScore")} htmlFor="ts-delf-score">
+            <Input id="ts-delf-score" type="number" min={0} max={100} step={1} placeholder="78" className="h-10 bg-secondary border-border" value={form.totalScore} onChange={(e) => onChange({ totalScore: e.target.value })} />
+          </Field>
+        </FieldRow>
+      );
+
+    case "OTHER":
+      return (
+        <FieldRow>
+          <Field label={t("studentUi.testScores.form.examName")} htmlFor="ts-other-name">
+            <Input id="ts-other-name" maxLength={EXAM_NAME_MAX} placeholder={t("studentUi.testScores.form.examNamePlaceholder")} className="h-10 bg-secondary border-border" value={form.examName} onChange={(e) => onChange({ examName: e.target.value })} />
+          </Field>
+          <Field label={t("studentUi.testScores.form.otherScore")} htmlFor="ts-other-score">
+            <Input id="ts-other-score" type="number" min={0} max={10000} step="any" placeholder={t("studentUi.testScores.form.scorePlaceholder")} className="h-10 bg-secondary border-border" value={form.otherScore} onChange={(e) => onChange({ otherScore: e.target.value })} />
           </Field>
         </FieldRow>
       );

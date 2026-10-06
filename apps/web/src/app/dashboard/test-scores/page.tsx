@@ -24,6 +24,8 @@ import {
   emptyForm,
   buildPayload,
   scoreFromRecord,
+  validateForm,
+  TEST_TYPE_ORDER,
 } from "./_components/score-helpers";
 import { ScoreEntryForm } from "./_components/score-entry-form";
 import { SuperScoreBanner } from "./_components/super-score-banner";
@@ -79,7 +81,7 @@ export default function TestScoresPage() {
     return map;
   }, [scores]);
 
-  const typeOrder: string[] = ["SAT", "ACT", "AP", "PSAT", "TOEFL", "IB"];
+  const typeOrder = TEST_TYPE_ORDER;
   const groupKeys = [
     ...typeOrder.filter((k) => grouped[k]),
     ...Object.keys(grouped).filter((k) => !typeOrder.includes(k)),
@@ -109,6 +111,12 @@ export default function TestScoresPage() {
   }
 
   async function handleSave() {
+    // Same ranges the API enforces for the CR/CO types — say what is wrong before the round-trip.
+    const invalid = validateForm(form);
+    if (invalid) {
+      toast.error(t(invalid));
+      return;
+    }
     const payload = buildPayload(form);
     setSaving(true);
     try {
