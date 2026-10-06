@@ -19,7 +19,7 @@ const MAX_STORED_MESSAGES = 50;
 const GREETING: ChatMessage = { id: "greeting", role: "assistant", text: "" };
 
 // The conversation lives only in the browser (no API stores it) — persisted per
-// resume so a reload doesn't wipe it (#406). Storage can throw (private mode,
+// resume so a reload doesn't wipe it (formmaps-platform#406). Storage can throw (private mode,
 // blocked site data), so every access is guarded.
 function loadConversation(resumeId: string): ChatMessage[] {
   if (!resumeId) return [GREETING];

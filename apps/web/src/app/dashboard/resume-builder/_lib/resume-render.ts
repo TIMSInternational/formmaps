@@ -8,7 +8,7 @@ import i18n from "@/lib/i18n";
  * languages and certifications as `sections` with fixed English titles
  * ("Summary", "Projects", …). Templates printed those titles verbatim in the
  * dynamic-section loop — so a Spanish resume read EDUCACIÓN … SUMMARY /
- * PROJECTS / LANGUAGES, with SUMMARY after EXPERIENCE (#405/#406).
+ * PROJECTS / LANGUAGES, with SUMMARY after EXPERIENCE (tafurfede/formmaps-platform#405, #406).
  *
  * Render-only: the stored data keeps its shape (the Node ai-edit route reads
  * the summary back from the "Summary" section).

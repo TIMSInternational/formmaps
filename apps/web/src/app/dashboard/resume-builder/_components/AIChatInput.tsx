@@ -30,7 +30,7 @@ export function AIChatInput({ onSend, isLoading, suggestions }: AIChatInputProps
   return (
     <div className="space-y-3">
       {/* Suggestion chips — one scrollable row on phones so they don't push the
-          thread (and its greeting) out of view (#406); wrapped from md up. */}
+          thread (and its greeting) out of view (formmaps-platform#406); wrapped from md up. */}
       <div className="flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible -mx-1 px-1 pb-1 md:pb-0">
         {defaultSuggestions.map((s) => (
           <button

@@ -17,7 +17,7 @@ const SUPPORTED_LANGUAGES = ["en", "es"] as const;
  *
  * It also localizes the default browser-tab title: Next's static `metadata`
  * in app/layout.tsx is English-only, so in Spanish the tab kept reading
- * "FormMaps - Find your path. Shape your future." (#405). Page-specific
+ * "FormMaps - Find your path. Shape your future." (formmaps-platform#405). Page-specific
  * titles are left untouched.
  */
 export function LanguageSync() {

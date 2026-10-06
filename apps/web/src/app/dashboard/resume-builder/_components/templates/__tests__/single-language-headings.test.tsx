@@ -1,5 +1,5 @@
 /**
- * tafurfede/formmaps-platform#405/#406 — every template's HTML preview must print
+ * tafurfede/formmaps-platform#405 and #406 — every template's HTML preview must print
  * section headings in the UI language only, with the stored "Summary" section
  * shown as the summary (not as an English body section).
  */

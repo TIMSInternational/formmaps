@@ -76,7 +76,7 @@ interface LivePreviewPDFProps {
  * old implementation used react-pdf's <PDFViewer> keyed on section counts and
  * the UI language, plus a template-loader effect keyed on `t` — every key or
  * language change destroyed the iframe and Chrome re-initialised its PDF plugin
- * (a dark empty frame for seconds, longest in Spanish). See #406.
+ * (a dark empty frame for seconds, longest in Spanish). See formmaps-platform#406.
  */
 export function LivePreviewPDF({ className = "" }: LivePreviewPDFProps = {}) {
   const { t, i18n: i18nInstance } = useTranslation();

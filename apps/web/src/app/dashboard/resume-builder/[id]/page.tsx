@@ -104,7 +104,7 @@ export default function ResumeBuilderPage() {
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [editorTab, setEditorTab] = useState<EditorTab>("chat");
   // Below lg the two panels are tabs — stacked, the preview and the editor each
-  // got a sliver of a phone screen (#406).
+  // got a sliver of a phone screen (formmaps-platform#406).
   const [mobilePane, setMobilePane] = useState<"preview" | "editor">("preview");
 
   const resumeDataRef = useRef(resumeBuilder.data);

@@ -1,5 +1,5 @@
 /**
- * #406 root cause: I18nProvider rendered `<>{children}</>` before i18n was
+ * formmaps-platform#406 root cause: I18nProvider rendered `<>{children}</>` before i18n was
  * "loaded" and `<><SkipLink/><LanguageSync/>{children}</>` after. The child's
  * position in the fragment changed (index 0 → 2), so React unmounted and
  * re-mounted the WHOLE app once the /user/settings fetch resolved — every

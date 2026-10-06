@@ -1,5 +1,5 @@
 /**
- * #405: the browser tab title stayed English ("FormMaps - Find your path.
+ * formmaps-platform#405: the browser tab title stayed English ("FormMaps - Find your path.
  * Shape your future.") in Spanish — Next's static metadata is English-only,
  * so LanguageSync localizes the default title client-side.
  */

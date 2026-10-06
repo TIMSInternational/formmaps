@@ -1,5 +1,5 @@
 /**
- * #405: the Portfolio card read "1items" in Spanish — the sub-labels were
+ * formmaps-platform#405: the Portfolio card read "1items" in Spanish — the sub-labels were
  * hard-coded English and not plural-aware.
  */
 import { render, screen, act } from "@testing-library/react";

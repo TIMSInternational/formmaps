@@ -1,5 +1,5 @@
 /**
- * tafurfede/formmaps-platform#405/#406 — the resume preview mixed languages
+ * tafurfede/formmaps-platform#405 and #406 — the resume preview mixed languages
  * (EDUCACIÓN … but SUMMARY / PROJECTS / LANGUAGES) and put SUMMARY after
  * EXPERIENCE. The API stores the summary, projects and languages as sections
  * with fixed English titles ("Summary", "Projects", "Languages"), which the
