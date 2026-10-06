@@ -7,6 +7,9 @@
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useLiaFlow } from "../useLiaFlow";
 
+const mockAssessmentCompleted = jest.fn(() => Promise.resolve());
+jest.mock("@/hooks/useAssessmentCompleted", () => ({ useAssessmentCompleted: () => mockAssessmentCompleted }));
+
 const api = {
   checkAccess: jest.fn(),
   start: jest.fn(),
@@ -158,6 +161,28 @@ describe("useLiaFlow", () => {
     await act(() => result.current.startAssessment());
     await act(() => result.current.submitAssessmentAnswer("3"));
     expect(api.handleTimeout).toHaveBeenCalled();
+  });
+
+  it("finishing shows the completed phase and refreshes every completion reader (no reload needed)", async () => {
+    api.start.mockResolvedValue({ session_id: "s1", current_subtest: "visual_rotation", practice_questions: [] });
+    api.startSubtest.mockResolvedValue({
+      session_id: "s1",
+      subtest: "visual_rotation",
+      questions: [Q("z1", "visual_rotation")],
+      time_limit_seconds: 180,
+      started_at: new Date().toISOString(),
+    });
+    api.submitAnswer.mockResolvedValue({ subtest_complete: true, assessment_complete: true, items_completed: 1 });
+    api.getPracticeQuestions.mockResolvedValue([]);
+    const { result } = renderHook(() => useLiaFlow(makeCallbacks()));
+    await waitFor(() => expect(result.current.phase).toBe("overview"));
+    await act(() => result.current.begin());
+    await act(() => result.current.startAssessment());
+    expect(mockAssessmentCompleted).not.toHaveBeenCalled();
+    await act(() => result.current.submitAssessmentAnswer("2"));
+    expect(api.complete).toHaveBeenCalledWith("s1");
+    expect(result.current.phase).toBe("completed");
+    expect(mockAssessmentCompleted).toHaveBeenCalledTimes(1);
   });
 
   it("ignores a concurrent duplicate submit for the same question (in-flight guard)", async () => {

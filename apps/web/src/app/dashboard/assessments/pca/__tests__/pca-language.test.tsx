@@ -7,6 +7,9 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import PCAAssessmentPage from "@/app/dashboard/assessments/pca/page";
 import { addPCAEvaluation } from "@/services/pcaService";
 
+const mockAssessmentCompleted = jest.fn(() => Promise.resolve());
+jest.mock("@/hooks/useAssessmentCompleted", () => ({ useAssessmentCompleted: () => mockAssessmentCompleted }));
+
 let mockUiLanguage = "en";
 const mockSetAppLanguage = jest.fn(() => Promise.resolve());
 

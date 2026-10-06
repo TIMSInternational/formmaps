@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
@@ -13,6 +13,7 @@ import PCAResultsPanel from "../_components/PCAResultsPanel";
 import { useSearchParams } from "next/navigation";
 import { toStoreLanguage, useContentLanguage } from "@/lib/i18n/contentLanguage";
 import { useSetLanguage } from "@/lib/i18n/useSetLanguage";
+import { useAssessmentCompleted } from "@/hooks/useAssessmentCompleted";
 import { toast } from "sonner";
 import { RequireChromium } from "@/components/proctoring/RequireChromium";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
@@ -29,6 +30,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+
+const PCA_STATUS_POLL_MS = 15_000;
 
 export default function PCAAssessmentPage() {
   const { user, setAssessmentActive } = useGlobalStore();
@@ -75,6 +78,30 @@ export default function PCAAssessmentPage() {
     if (assessmentUrl) beginProctoring();
     else endProctoring();
   }, [assessmentUrl, beginProctoring, endProctoring]);
+
+  // The survey runs on TIMS, so this page cannot see it finish. While it is open, re-check
+  // PCA status every 15s; a ref, because refreshPCAData changes identity on every render and
+  // the proctoring clock re-renders this page every second.
+  const assessmentCompleted = useAssessmentCompleted();
+  const refreshRef = useRef(refreshPCAData);
+  refreshRef.current = refreshPCAData;
+  useEffect(() => {
+    if (!assessmentUrl) return;
+    const id = setInterval(() => void refreshRef.current(), PCA_STATUS_POLL_MS);
+    return () => clearInterval(id);
+  }, [assessmentUrl]);
+
+  // Finished inside the survey: leave secure mode, say so, and refresh every screen that shows
+  // completion (dashboard, assessments list) so none of them needs a reload.
+  const wasCompleted = useRef(isCompleted);
+  useEffect(() => {
+    if (assessmentUrl && isCompleted && !wasCompleted.current) {
+      setAssessmentUrl(null);
+      toast.success(t("dashboard.assessmentCompleted"));
+      void assessmentCompleted();
+    }
+    wasCompleted.current = isCompleted;
+  }, [assessmentUrl, isCompleted, assessmentCompleted, t]);
 
   const handleStartAssessment = async () => {
     if (!user?.id || !user?.name || !user?.email) {
@@ -138,7 +165,7 @@ export default function PCAAssessmentPage() {
               <div className="max-w-7xl mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <button
-                    onClick={() => { setAssessmentUrl(null); refreshPCAData(); }}
+                    onClick={() => { setAssessmentUrl(null); void assessmentCompleted(); }}
                     className="flex items-center gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
                   >
                     <ArrowLeft className="w-4 h-4" />

@@ -9,6 +9,9 @@
 import { render, screen, waitFor, act } from "@testing-library/react";
 import LIAAssessmentPage from "../page";
 
+const mockAssessmentCompleted = jest.fn(() => Promise.resolve());
+jest.mock("@/hooks/useAssessmentCompleted", () => ({ useAssessmentCompleted: () => mockAssessmentCompleted }));
+
 const api = {
   checkAccess: jest.fn(),
   start: jest.fn(),

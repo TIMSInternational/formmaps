@@ -227,6 +227,7 @@
       "expiredTitle": "This evaluation link has expired",
       "expiredBody": "Please ask the student for a new invitation link.",
       "alreadyTitle": "Already submitted",
+      "doneTitle": "Evaluation completed",
       "alreadyBody": "Thank you — this evaluation is complete.",
       "label": "Vocational 360",
       "title": "Vocational Guidance Evaluation",

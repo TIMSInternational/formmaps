@@ -5,6 +5,9 @@ import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import PersonalityAssessmentPage from "@/app/dashboard/assessments/personality/page";
 import { personalityApi } from "@/services/personalityService";
 
+const mockAssessmentCompleted = jest.fn(() => Promise.resolve());
+jest.mock("@/hooks/useAssessmentCompleted", () => ({ useAssessmentCompleted: () => mockAssessmentCompleted }));
+
 let mockUiLanguage = "en";
 
 jest.mock("next/navigation", () => ({
@@ -118,5 +121,29 @@ describe("PersonalityAssessmentPage runner", () => {
     render(<PersonalityAssessmentPage />);
     await waitFor(() => expect(mockStart).toHaveBeenCalledWith({ language: "es" }));
     mockUiLanguage = "en";
+  });
+
+  it("finishing refreshes every completion reader; a failed finish does not", async () => {
+    const mockComplete = personalityApi.complete as jest.Mock;
+    mockStart.mockResolvedValue({
+      session_id: "sess-1", status: "in_progress", variant: "estudiantil", language: "en",
+      answered_item_numbers: [1, 2],
+      items: [
+        { n: 1, dimension: "EI", prompt: "First prompt", optionA: "One A", optionB: "One B" },
+        { n: 2, dimension: "SN", prompt: "Second prompt", optionA: "Two A", optionB: "Two B" },
+      ],
+    });
+
+    mockComplete.mockRejectedValueOnce(new Error("coverage gap"));
+    const { unmount } = render(<PersonalityAssessmentPage />);
+    fireEvent.click(await screen.findByText("personality.finish"));
+    await waitFor(() => expect(mockComplete).toHaveBeenCalledTimes(1));
+    expect(mockAssessmentCompleted).not.toHaveBeenCalled();
+    unmount();
+
+    mockComplete.mockResolvedValueOnce({});
+    render(<PersonalityAssessmentPage />);
+    fireEvent.click(await screen.findByText("personality.finish"));
+    await waitFor(() => expect(mockAssessmentCompleted).toHaveBeenCalledTimes(1));
   });
 });

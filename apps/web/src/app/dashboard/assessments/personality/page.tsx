@@ -25,6 +25,7 @@ import { useProctoring } from "@/components/proctoring/useProctoring";
 import { installViolationFlush, postViolations } from "@/components/proctoring/flushViolations";
 import type { LockdownViolation } from "@/components/proctoring/types";
 import { PersonalityItemCard } from "./_components/PersonalityItemCard";
+import { useAssessmentCompleted } from "@/hooks/useAssessmentCompleted";
 
 type Phase = "loading" | "error" | "already-completed" | "running" | "completing";
 
@@ -33,6 +34,7 @@ export default function PersonalityAssessmentPage() {
   const { t } = useTranslation();
   const { setAssessmentActive, user } = useGlobalStore();
   const language = useContentLanguage();
+  const assessmentCompleted = useAssessmentCompleted();
 
   const [phase, setPhase] = useState<Phase>("loading");
   const [sessionId, setSessionId] = useState<string | null>(null);
@@ -172,6 +174,7 @@ export default function PersonalityAssessmentPage() {
     try {
       await personalityApi.complete(sessionId);
       end();
+      void assessmentCompleted();
       router.push("/dashboard/assessments/personality/results");
     } catch {
       // Complete failed (most likely a coverage gap from an answer that never
@@ -190,7 +193,7 @@ export default function PersonalityAssessmentPage() {
       }
       setPhase("running");
     }
-  }, [sessionId, allAnswered, end, router, language, t]);
+  }, [sessionId, allAnswered, end, router, language, t, assessmentCompleted]);
 
   const progressPct = useMemo(() => (total > 0 ? Math.round((answeredCount / total) * 100) : 0), [answeredCount, total]);
 

@@ -6,6 +6,9 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import EvaluatorPage from "../page";
 
+const mockAssessmentCompleted = jest.fn(() => Promise.resolve());
+jest.mock("@/hooks/useAssessmentCompleted", () => ({ useAssessmentCompleted: () => mockAssessmentCompleted }));
+
 let mockParams: Record<string, string | null> = {};
 jest.mock("next/navigation", () => ({
   useSearchParams: () => ({ get: (key: string) => mockParams[key] ?? null }),

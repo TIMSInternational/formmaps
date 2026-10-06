@@ -19,6 +19,7 @@ import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
 import { useProctoring } from "@/components/proctoring/useProctoring";
 import { installViolationFlush, flushViolations, postViolations } from "@/components/proctoring/flushViolations";
 import type { LockdownViolation } from "@/components/proctoring/types";
+import { useAssessmentCompleted } from "@/hooks/useAssessmentCompleted";
 
 export default function EvaluatorPage() {
   const searchParams = useSearchParams();
@@ -29,6 +30,7 @@ export default function EvaluatorPage() {
   // so they can never diverge. I18nProvider keeps i18next in sync with the
   // persisted store preference, so this matches the user's chosen language.
   const isSpanish = i18n.language?.startsWith("es") ?? false;
+  const assessmentCompleted = useAssessmentCompleted();
   const token = searchParams.get("token");
 
   // Emailed invite links carry ?lang=es|en. Switch i18next to it BEFORE anything loads so the chrome and the
@@ -308,6 +310,7 @@ export default function EvaluatorPage() {
       }
 
       setSuccess(true);
+      void assessmentCompleted();
       // Flush any recorded proctoring violations on successful submission.
       const drained = proctoring.drainViolations();
       if (token && drained.length) void sendEvaluatorViolations(token, drained);

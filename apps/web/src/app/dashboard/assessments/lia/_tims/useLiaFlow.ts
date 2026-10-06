@@ -15,6 +15,7 @@ import {
   type LIASubtest,
   type LockdownViolation,
 } from "@/services/liaService";
+import { useAssessmentCompleted } from "@/hooks/useAssessmentCompleted";
 
 export type LiaPhase =
   | "loading"
@@ -62,6 +63,7 @@ interface FlowCallbacks {
 
 export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViolations }: FlowCallbacks): LiaFlow {
   const [phase, setPhase] = useState<LiaPhase>("loading");
+  const assessmentCompleted = useAssessmentCompleted();
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [hasResumableSession, setHasResumableSession] = useState(false);
   const [sessionError, setSessionError] = useState<string | null>(null);
@@ -186,7 +188,8 @@ export function useLiaFlow({ language, onLockdownBegin, onLockdownEnd, drainViol
     await liaAssessmentApi.complete(sessionId).catch(() => {});
     onLockdownEnd();
     setPhase("completed");
-  }, [sessionId, drainViolations, onLockdownEnd]);
+    void assessmentCompleted();
+  }, [sessionId, drainViolations, onLockdownEnd, assessmentCompleted]);
 
   const advanceToNextSubtest = useCallback(
     async (nextSubtest: LIASubtest) => {
