@@ -101,14 +101,14 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
     };
   }, [i18n, language, setLanguage]);
 
-  if (!isLoaded) {
-    return <>{children}</>;
-  }
-
+  // Keep `children` at a stable position in the fragment. Returning
+  // `<>{children}</>` before load and `<><SkipLink/><LanguageSync/>{children}</>`
+  // after moved children from index 0 to 2, so React re-mounted the whole app
+  // when the settings fetch resolved (#406 — the resume preview restarted).
   return (
     <>
-      <SkipLink />
-      <LanguageSync />
+      {isLoaded && <SkipLink />}
+      {isLoaded && <LanguageSync />}
       {children}
     </>
   );
