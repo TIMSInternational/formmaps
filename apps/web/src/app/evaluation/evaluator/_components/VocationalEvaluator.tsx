@@ -21,7 +21,7 @@ function toAnswer(q: VocationalQuestionItem, v: VocationalAnswerValue): Vocation
  * language is used, and the form is re-fetched in the new language when it changes. Answers are keyed by
  * question number and option value, so they survive a language switch untouched.
  */
-export function VocationalEvaluator({ token, language }: { token: string; language?: string }) {
+export function VocationalEvaluator({ token, language, onCompleted }: { token: string; language?: string; onCompleted?: () => void }) {
   const { t, i18n } = useTranslation();
   const lang = toVocationalLang(language ?? i18n?.language);
   const [form, setForm] = useState<VocationalForm | null>(null);
@@ -109,6 +109,7 @@ export function VocationalEvaluator({ token, language }: { token: string; langua
       await submitVocationalAnswers(token, answers);
       setDone(true);
       void assessmentCompleted();
+      onCompleted?.();
       toast.success(t("evaluation.vocational.submitted"));
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : t("evaluation.vocational.submitFailed"));

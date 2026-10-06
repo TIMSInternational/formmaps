@@ -104,16 +104,19 @@ it("a successful submit says it's done and refreshes every completion reader; a 
     { number: 1, type: "open", scaleAnchors: null, options: null, text: "Q1", block: "open", area: null, dimensionKey: null },
   ] });
   submit.mockRejectedValueOnce(new Error("network down")).mockResolvedValueOnce({});
-  render(<VocationalEvaluator token="tok" language="english" />);
+  const onCompleted = jest.fn(); // the page uses this to leave secure mode and return to the app
+  render(<VocationalEvaluator token="tok" language="english" onCompleted={onCompleted} />);
   await waitFor(() => screen.getByText("Q1"));
   fireEvent.change(screen.getByRole("textbox"), { target: { value: "my answer" } });
 
   fireEvent.click(screen.getByRole("button", { name: /submit|enviar|finish/i }));
   await waitFor(() => expect(submit).toHaveBeenCalledTimes(1));
   expect(mockAssessmentCompleted).not.toHaveBeenCalled();
+  expect(onCompleted).not.toHaveBeenCalled();
 
   fireEvent.click(screen.getByRole("button", { name: /submit|enviar|finish/i }));
   await waitFor(() => expect(mockAssessmentCompleted).toHaveBeenCalledTimes(1));
+  expect(onCompleted).toHaveBeenCalledTimes(1);
   // Just finished: says so — not the "Already submitted" a returning visitor sees.
   expect(await screen.findByRole("heading", { name: "Evaluation completed" })).toBeInTheDocument();
 });

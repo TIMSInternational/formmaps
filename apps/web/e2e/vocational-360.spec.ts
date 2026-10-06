@@ -122,8 +122,9 @@ async function signedIn(browser: Browser, email: string, lang: Lang) {
   return { page, context };
 }
 async function setLanguage(page: Page, lang: Lang) {
-  const res = await page.request.put("/api/v1/user/settings", { data: { language: lang } });
-  expect(res.ok(), `PUT /api/v1/user/settings → ${res.status()}`).toBeTruthy();
+  // The DB setting is served by the legacy Node API only (404 on a .NET-only local stack); the store and
+  // i18nextLng below drive i18next either way, so the write is best-effort.
+  await page.request.put("/api/v1/user/settings", { data: { language: lang } }).catch(() => null);
   await page.evaluate((l) => {
     const raw = window.localStorage.getItem("timcare-global-store");
     const store = raw ? JSON.parse(raw) : { state: {} };
@@ -180,10 +181,24 @@ async function answerAll(page: Page, lang: Lang, rating: number, who: string) {
   await expect(page.getByText(L(lang, "evaluation.vocational.progress", { done: total, total }))).toBeVisible();
   return total;
 }
-async function submitQuestionnaire(page: Page, lang: Lang) {
+/**
+ * Submits, then checks what finishing must do: say thank you, leave secure mode (no Secure Mode bar,
+ * no fullscreen), and — for a signed-in person — return them to the app on its own (`returnTo`, the
+ * list they started from). A signed-out evaluator (emailed link) stays on the thank-you, with no way in.
+ */
+async function submitQuestionnaire(page: Page, lang: Lang, returnTo?: string) {
   await dismissFullscreenPrompt(page, lang);
   await page.getByRole("button", { name: L(lang, "evaluation.vocational.submit"), exact: true }).click();
-  await expect(page.getByText(L(lang, "evaluation.vocational.alreadyTitle"))).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(L(lang, "evaluation.evaluator.thankYou"))).toBeVisible({ timeout: 60_000 });
+  await expect(page.getByText(L(lang, "proctoring.timerLabel")), "secure mode ended").toHaveCount(0);
+  await expect.poll(() => page.evaluate(() => !!document.fullscreenElement), { message: "fullscreen exited", timeout: 5_000 }).toBe(false);
+  if (returnTo) {
+    await page.waitForURL((u) => u.pathname === returnTo, { timeout: 15_000 });
+  } else {
+    await expect(page.getByRole("link", { name: L(lang, "evaluation.evaluator.returnDashboard") })).toHaveCount(0);
+    await page.waitForTimeout(5_000);
+    expect(new URL(page.url()).pathname, "a signed-out evaluator is never routed into the app").toBe("/evaluation/evaluator");
+  }
 }
 
 // ---------------------------------------------------------------- expectations
@@ -269,7 +284,7 @@ test.describe.serial("Vocational 360 — full functionality", () => {
 
     questionCount = await answerAll(page, lang, 5, "self");
     expect(questionCount, "self questionnaire: 45 common + 5 group-specific").toBe(50);
-    await submitQuestionnaire(page, lang);
+    await submitQuestionnaire(page, lang, "/dashboard/assessments/evaluation");
 
     const self = group(studentId, "Self");
     expect(self.instrument).toBe("vocational");
@@ -362,7 +377,7 @@ test.describe.serial("Vocational 360 — full functionality", () => {
     await page.waitForURL(/\/evaluation\/evaluator\?token=/, { timeout: 60_000 });
     await openQuestionnaire(page, lang);
     expect(await answerAll(page, lang, 4, "parent")).toBe(50);
-    await submitQuestionnaire(page, lang);
+    await submitQuestionnaire(page, lang, "/parent/evaluations");
 
     expect(group(studentId, "Parent").completed).toBeTruthy();
     const s = storedScore(studentId)!;
@@ -382,7 +397,7 @@ test.describe.serial("Vocational 360 — full functionality", () => {
     await page.waitForURL(/\/evaluation\/evaluator\?token=/, { timeout: 60_000 });
     await openQuestionnaire(page, lang);
     expect(await answerAll(page, lang, 3, "teacher")).toBe(50);
-    await submitQuestionnaire(page, lang);
+    await submitQuestionnaire(page, lang, "/teacher/evaluations");
 
     expect(group(studentId, "Teacher").completed).toBeTruthy();
     const s = storedScore(studentId)!;

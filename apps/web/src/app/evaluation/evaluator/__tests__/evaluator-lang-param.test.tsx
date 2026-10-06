@@ -12,6 +12,7 @@ jest.mock("@/hooks/useAssessmentCompleted", () => ({ useAssessmentCompleted: () 
 let mockParams: Record<string, string | null> = {};
 jest.mock("next/navigation", () => ({
   useSearchParams: () => ({ get: (key: string) => mockParams[key] ?? null }),
+  useRouter: () => ({ replace: jest.fn(), push: jest.fn() }),
 }));
 
 const mockI18n = { language: "en", changeLanguage: jest.fn() };
