@@ -211,6 +211,7 @@
       "thankYou": "¡Gracias!",
       "successBody": "Tu evaluación se envió con éxito. Gracias por tu participación; ya puedes cerrar esta ventana.",
       "returnDashboard": "Volver al panel",
+      "returningIn": "Volviendo a FormMaps en {{seconds}} s…",
       "alreadySubmitted": "Ya enviada",
       "alreadyBody": "Esta evaluación ya se completó. ¡Gracias por tu participación!",
       "errNoToken": "No se proporcionó un token de evaluación.",

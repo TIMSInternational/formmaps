@@ -211,6 +211,7 @@
       "thankYou": "Thank You!",
       "successBody": "Your evaluation has been submitted successfully. Thank you for your participation — you may now close this window.",
       "returnDashboard": "Return to dashboard",
+      "returningIn": "Returning you to FormMaps in {{seconds}}s…",
       "alreadySubmitted": "Already Submitted",
       "alreadyBody": "This evaluation has already been completed. Thank you for your participation!",
       "errNoToken": "No evaluation token provided.",

@@ -1,9 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { Loader2 } from "lucide-react";
 import { Illustration } from "@/components/illustration/Illustration";
+import { AUTO_RETURN_SECONDS } from "./returnHref";
 
 export function LoadingScreen() {
   const { t } = useTranslation();
@@ -37,6 +41,21 @@ export function ErrorScreen({ error }: ErrorScreenProps) {
 
 export function SuccessScreen({ returnHref }: { returnHref?: string }) {
   const { t } = useTranslation();
+  const router = useRouter();
+  const [seconds, setSeconds] = useState(AUTO_RETURN_SECONDS);
+
+  // Signed-in evaluators (a student's own self-evaluation, a parent or teacher from their portal)
+  // are taken back to the app automatically; secure mode has already ended by the time this renders.
+  useEffect(() => {
+    if (!returnHref) return;
+    if (seconds <= 0) {
+      router.replace(returnHref);
+      return;
+    }
+    const id = setTimeout(() => setSeconds((s) => s - 1), 1000);
+    return () => clearTimeout(id);
+  }, [returnHref, seconds, router]);
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <motion.div
@@ -49,17 +68,21 @@ export function SuccessScreen({ returnHref }: { returnHref?: string }) {
         <p className="text-sm text-muted-foreground">
           {t("evaluation.evaluator.successBody")}
         </p>
-        {/* Only authenticated users (e.g. a student finishing their own
-            self-evaluation) get a way back into the app. External evaluators
-            reach this page via a token link with no session and must never be
-            routed into the student's dashboard. */}
+        {/* Only authenticated users get a way back into the app. External evaluators reach this
+            page via a token link with no session and must never be routed into the app. */}
         {returnHref && (
-          <a
-            href={returnHref}
-            className="inline-block mt-5 px-5 py-2.5 rounded-lg bg-[#102B47] text-white text-sm font-medium hover:bg-[#0b1f33] transition-colors"
-          >
-            {t("evaluation.evaluator.returnDashboard")}
-          </a>
+          <>
+            <p className="mt-4 text-xs text-muted-foreground" role="status" aria-live="polite">
+              {t("evaluation.evaluator.returningIn", { seconds: Math.max(seconds, 0) })}
+            </p>
+            <Link
+              href={returnHref}
+              replace
+              className="inline-block mt-3 px-5 py-2.5 rounded-lg bg-[#102B47] text-white text-sm font-medium hover:bg-[#0b1f33] transition-colors"
+            >
+              {t("evaluation.evaluator.returnDashboard")}
+            </Link>
+          </>
         )}
       </motion.div>
     </div>

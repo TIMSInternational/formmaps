@@ -14,6 +14,7 @@ import { DEFAULT_RESPONSE_SCALE } from "./_components/types";
 import { validateEvaluationToken, sendEvaluatorViolations, VALIDATE_TOKEN_REASONS } from "@/services/evaluationService";
 import { VocationalEvaluator } from "./_components/VocationalEvaluator";
 import { langFromQuery } from "./_components/vocationalLang";
+import { evaluatorReturnHref } from "./_components/returnHref";
 import { RequireChromium } from "@/components/proctoring/RequireChromium";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
 import { useProctoring } from "@/components/proctoring/useProctoring";
@@ -66,6 +67,8 @@ export default function EvaluatorPage() {
   const [direction, setDirection] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  // The vocational questionnaire (the 360 self-evaluation) submits inside its own component.
+  const [vocationalDone, setVocationalDone] = useState(false);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
   const [showEvaluationDetails, setShowEvaluationDetails] = useState(false);
   const [invitationToken, setInvitationToken] = useState<string>("");
@@ -101,7 +104,7 @@ export default function EvaluatorPage() {
   // Begin proctoring once the interactive runner is reachable; end on
   // completion or unmount.
   const interactive =
-    (instrument === "vocational" && !!token) ||
+    (instrument === "vocational" && !!token && !vocationalDone) ||
     (!!evaluationData && !alreadySubmitted && !success);
   useEffect(() => {
     if (interactive && !startedRef.current) {
@@ -109,9 +112,11 @@ export default function EvaluatorPage() {
       beginProctoring();
     }
   }, [interactive, beginProctoring]);
+  // Finished (either runner) or already done: leave secure mode — exit fullscreen, drop the
+  // Secure Mode bar and the violation listeners — before the completion screen shows.
   useEffect(() => {
-    if (success || alreadySubmitted) endProctoring();
-  }, [success, alreadySubmitted, endProctoring]);
+    if (success || alreadySubmitted || vocationalDone) endProctoring();
+  }, [success, alreadySubmitted, vocationalDone, endProctoring]);
 
   // Incremental flush that survives a killed tab; flush + cleanup on unmount.
   useEffect(() => {
@@ -336,13 +341,16 @@ export default function EvaluatorPage() {
   if (!langReady || isLoading || isValidating) return <LoadingScreen />;
   // instrument branch: early-return before generic 360 body
   if (instrument === undefined) return <LoadingScreen />;
-  if (instrument === "vocational" && token) return proctored(<VocationalEvaluator token={token} />);
+  if (instrument === "vocational" && token) {
+    if (vocationalDone) return <SuccessScreen returnHref={evaluatorReturnHref(user)} />;
+    return proctored(<VocationalEvaluator token={token} onCompleted={() => setVocationalDone(true)} />);
+  }
   if (error && !evaluationData) return <ErrorScreen error={error} />;
 
   if (success) {
     // NEVER auto-route a token-link evaluator into the app. Only an authenticated
     // user (a student finishing their own self-evaluation) is offered a way back.
-    return <SuccessScreen returnHref={user?.isAuthenticated ? "/dashboard/assessments" : undefined} />;
+    return <SuccessScreen returnHref={evaluatorReturnHref(user)} />;
   }
 
   if (alreadySubmitted) return <AlreadySubmittedScreen />;
