@@ -4784,7 +4784,11 @@
     },
     "editorPage": {
       "downloadFailed": "No se pudo descargar el PDF. Inténtalo de nuevo.",
-      "template": "Plantilla"
+      "template": "Plantilla",
+      "mobileTabs": {
+        "preview": "Vista previa",
+        "editor": "Editor IA"
+      }
     },
     "newResumePage": {
       "tailorFailed": "No se pudo adaptar el currículum. Inténtalo de nuevo.",
@@ -5050,10 +5054,11 @@
         "impactfulSummary": "Haz que mi resumen tenga más impacto",
         "measurableMetrics": "Agrega métricas medibles a mis viñetas",
         "tightenGrammar": "Hazlo más conciso y corrige la gramática",
-        "tailorSoftware": "Adáptalo a un cargo de ingeniería de software",
         "actionVerbs": "Usa verbos de acción más contundentes",
         "shortenSummary": "Acorta mi resumen",
-        "moreMetrics": "Agrega más métricas a las viñetas"
+        "moreMetrics": "Agrega más métricas a las viñetas",
+        "tailorCareer": "Adáptalo a un cargo de {{career}}",
+        "tailorTarget": "Adáptalo a mi carrera objetivo"
       },
       "updated": "Listo: tu currículum se actualizó.",
       "couldNotApply": "No pude aplicar ese cambio. Intenta decirlo de otra forma.",

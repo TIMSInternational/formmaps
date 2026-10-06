@@ -4784,7 +4784,11 @@
     },
     "editorPage": {
       "downloadFailed": "Failed to download PDF. Please try again.",
-      "template": "Template"
+      "template": "Template",
+      "mobileTabs": {
+        "preview": "Preview",
+        "editor": "AI editor"
+      }
     },
     "newResumePage": {
       "tailorFailed": "Tailoring failed. Please try again.",
@@ -5050,10 +5054,11 @@
         "impactfulSummary": "Make my summary more impactful",
         "measurableMetrics": "Add measurable metrics to my bullets",
         "tightenGrammar": "Tighten and fix grammar",
-        "tailorSoftware": "Tailor for a software engineering role",
         "actionVerbs": "Use stronger action verbs",
         "shortenSummary": "Shorten my summary",
-        "moreMetrics": "Add more metrics to bullets"
+        "moreMetrics": "Add more metrics to bullets",
+        "tailorCareer": "Tailor for a {{career}} role",
+        "tailorTarget": "Tailor for my target career"
       },
       "updated": "Done — your resume has been updated.",
       "couldNotApply": "I couldn't apply that — try rephrasing.",

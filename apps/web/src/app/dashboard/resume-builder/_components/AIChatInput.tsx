@@ -29,15 +29,16 @@ export function AIChatInput({ onSend, isLoading, suggestions }: AIChatInputProps
 
   return (
     <div className="space-y-3">
-      {/* Suggestion chips */}
-      <div className="flex flex-wrap gap-2">
+      {/* Suggestion chips — one scrollable row on phones so they don't push the
+          thread (and its greeting) out of view (#406); wrapped from md up. */}
+      <div className="flex flex-nowrap md:flex-wrap gap-2 overflow-x-auto md:overflow-visible -mx-1 px-1 pb-1 md:pb-0">
         {defaultSuggestions.map((s) => (
           <button
             key={s}
             type="button"
             disabled={isLoading}
             onClick={() => onSend(s)}
-            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors disabled:opacity-50"
+            className="shrink-0 whitespace-nowrap md:whitespace-normal inline-flex items-center gap-1.5 rounded-full border border-border bg-secondary/50 px-3 py-1.5 text-xs text-muted-foreground hover:text-foreground hover:border-foreground/20 transition-colors disabled:opacity-50"
           >
             <Sparkles className="w-3 h-3" />
             {s}
