@@ -205,3 +205,53 @@ public class VocationalScoringTests
         Likert(2, "d2", d2),
     });
 }
+
+/// <summary>Several raters of one type (two teachers) are averaged into one group that keeps the type weight.</summary>
+public sealed class VocationalSameTypeRatersTests
+{
+    private static readonly ScoringConfig Cfg = new(
+        "v1",
+        new Dictionary<string, double> { ["self"] = 35, ["parent"] = 25, ["teacher"] = 25, ["sibling_friend"] = 15 },
+        new ScoringBands(80, 60, 40),
+        [new ScoringDimension("d1", "D1", 1)]);
+
+    private static ScoringResponse L(double r) => new(1, "likert", "d1", r, null, null, null);
+    private static ScoringResponse R(string v) => new(2, "ranking", null, null, [new RankingEntry(v, 1)], null, null);
+
+    private static readonly ScoringQuestion[] Qs =
+        [new(1, "likert", null), new(2, "ranking", new ScoringRule("rank_points", 20, null, null))];
+
+    private static readonly ScoringGroup[] Groups =
+    [
+        new("self", [L(5), R("tech")]),      // 100
+        new("teacher", [L(3), R("arts")]),   // 50
+        new("teacher", [L(1), R("arts")]),   // 0  → teachers average 25
+    ];
+
+    [Fact]
+    public void Dimension_averages_the_teachers_none_is_dropped()
+    {
+        var r = Assert.IsType<VocationalResultPayload>(VocationalScoring.ComputeVocationalResult(Cfg, Qs, Groups));
+        Assert.Equal(100, r.DimensionScores[0].ByGroup["self"]);
+        Assert.Equal(25, r.DimensionScores[0].ByGroup["teacher"]);
+        Assert.Equal(68.75, r.DimensionScores[0].Score);   // (100·35 + 25·25) / 60
+        Assert.Equal(68.75, r.Composite);
+        Assert.Equal("moderateHigh", r.Band);
+    }
+
+    [Fact]
+    public void Each_type_once_weights_sum_to_one_every_rater_counted()
+    {
+        var r = Assert.IsType<VocationalResultPayload>(VocationalScoring.ComputeVocationalResult(Cfg, Qs, Groups));
+        Assert.Equal(["self", "teacher"], r.GroupsIncluded);
+        Assert.Equal(3, r.RespondentCount);
+        Assert.Equal(1.0, r.WeightsApplied.Values.Sum(), 12);
+    }
+
+    [Fact]
+    public void Rankings_teachers_share_the_teacher_weight()
+    {
+        var r = Assert.IsType<VocationalResultPayload>(VocationalScoring.ComputeVocationalResult(Cfg, Qs, Groups));
+        Assert.Equal([new InterestPoint("tech", 11.67), new InterestPoint("arts", 8.33)], r.Rankings.Interests);
+    }
+}

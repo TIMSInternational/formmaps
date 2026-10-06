@@ -195,8 +195,10 @@ public static class VocationalScoring
     public static Rankings ComputeRankings(
         IReadOnlyList<ScoringGroup> groups, IReadOnlyDictionary<string, double> baseWeights, IReadOnlyList<ScoringQuestion> questions)
     {
-        var present = groups.Select(g => g.Group).ToList();
-        var w = RenormalizeGroupWeights(baseWeights, present);
+        // Several raters of one type share that type's weight equally (two teachers = one teacher's weight).
+        var types = DistinctTypes(groups);
+        var w = RenormalizeGroupWeights(baseWeights, types);
+        var ratersOfType = groups.GroupBy(g => g.Group, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Count(), StringComparer.Ordinal);
         var qByNum = LastWins(questions, q => q.Number, q => q);
         var interestPts = new OrderedTally();
         var industryCnt = new OrderedTally();
@@ -205,7 +207,7 @@ public static class VocationalScoring
 
         foreach (var grp in groups)
         {
-            var gw = w.GetValueOrDefault(grp.Group);
+            var gw = w.GetValueOrDefault(grp.Group) / ratersOfType[grp.Group];
             foreach (var r in grp.Responses)
             {
                 if (r.Type == "ranking" && r.RankingOrder is not null)
@@ -256,10 +258,18 @@ public static class VocationalScoring
     }
 
     /// <summary>Top-level orchestrator (legacy computeVocationalResult): readiness gate → per-dimension scores → composite.</summary>
+    /// <summary>Group types in first-seen order, each once.</summary>
+    private static List<string> DistinctTypes(IReadOnlyList<ScoringGroup> groups) =>
+        groups.Select(g => g.Group).Distinct(StringComparer.Ordinal).ToList();
+
     public static ScoringOutcome ComputeVocationalResult(
         ScoringConfig config, IReadOnlyList<ScoringQuestion> questions, IReadOnlyList<ScoringGroup> groups)
     {
-        var present = groups.Select(g => g.Group).ToList();
+        // Several raters of one type (two teachers, two parents) form ONE group: their dimension scores are
+        // averaged — each rater counts equally — and the type keeps its own weight. Before, only the LAST rater
+        // of a type counted in the dimensions while rankings counted every rater separately, so the applied
+        // weights no longer summed to 1. (Same rule as legacy vocationalScoringService.ts.)
+        var present = DistinctTypes(groups);
         var hasSelf = present.Contains("self");
         var others = present.Where(g => g != "self").ToList();
         if (!hasSelf || others.Count == 0)
@@ -270,12 +280,22 @@ public static class VocationalScoring
         var dimensionScores = config.Dimensions.Select(d =>
         {
             var byGroup = new Dictionary<string, double>(StringComparer.Ordinal);
-            foreach (var grp in groups)
+            foreach (var type in present)
             {
-                var s = DimensionScoreForGroup(grp.Responses, d.Key);
-                if (s is not null)
+                // Sum then divide, in rater order — the same float operations as the legacy engine.
+                double sum = 0;
+                var n = 0;
+                foreach (var grp in groups)
                 {
-                    byGroup[grp.Group] = Round2(s.Value);
+                    if (grp.Group != type) continue;
+                    var s = DimensionScoreForGroup(grp.Responses, d.Key);
+                    if (s is null) continue;
+                    sum += s.Value;
+                    n++;
+                }
+                if (n > 0)
+                {
+                    byGroup[type] = Round2(sum / n);
                 }
             }
 

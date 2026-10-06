@@ -140,10 +140,10 @@ public sealed class VocationalWriterTests : IClassFixture<VocationalWriteDatabas
     }
 
     [Fact]
-    public async Task Recompute_counts_each_evaluation_group_separately_even_with_the_same_group_type()
+    public async Task Recompute_averages_several_raters_of_one_type_and_counts_every_rater()
     {
-        // Two 'teacher' groups (distinct evaluators) stay two ScoringGroups — respondentCount counts groups,
-        // not group types.
+        // Two 'teacher' groups (distinct evaluators): respondentCount counts raters, but the two teachers form
+        // ONE teacher group whose score is their average (each rater counts equally) at the teacher weight.
         var userId = UserId();
         await using var conn = await _dataSource.OpenConnectionAsync();
         var instrumentId = await SeedInstrumentAsync(conn, "v1");
@@ -161,7 +161,11 @@ public sealed class VocationalWriterTests : IClassFixture<VocationalWriteDatabas
 
         Assert.Equal(VocationalRecomputeStatus.Ready, outcome.Status);
         Assert.Equal(3, outcome.Ready!.RespondentCount);                       // self + 2 teachers
-        Assert.Equal(new[] { "self", "teacher", "teacher" }, outcome.Ready!.GroupsIncluded);
+        Assert.Equal(new[] { "self", "teacher" }, outcome.Ready!.GroupsIncluded);
+        // Equal group weights here: self 100; teachers 75 and 25 → 50; (100 + 50) / 2 = 75.
+        // (Keeping only the last teacher, as before, gave (100 + 25) / 2 = 62.5.)
+        Assert.Equal(75, outcome.Ready!.Composite);
+        Assert.Equal("moderateHigh", outcome.Ready!.Band);
     }
 
     [Fact]
