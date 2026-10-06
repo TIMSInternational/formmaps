@@ -242,6 +242,7 @@
       "answerPlaceholder": "Write your answer…",
       "moveUp": "move {{label}} up",
       "moveDown": "move {{label}} down",
+      "keepOrder": "Keep this order",
       "report": {
         "title": "Vocational 360 Report",
         "titleMine": "My Vocational 360 Report",
@@ -3416,7 +3417,9 @@
   },
   "proctoring": {
     "multiDisplayTitle": "Disconnect additional displays",
-    "multiDisplayBody": "A second monitor was detected. Disconnect it to continue the assessment.",
+    "multiDisplayBody": "A second monitor was detected. Disconnect it to continue — on a docked laptop, close the lid or mirror your displays. You can also save and exit and come back later.",
+    "saveAndExit": "Save and exit",
+    "fullscreenUnavailableBanner": "Fullscreen isn't available in this browser. You can continue the assessment; this was noted.",
     "fullscreenTitle": "Return to fullscreen",
     "fullscreenBody": "To ensure assessment integrity, you must stay in fullscreen mode.",
     "fullscreenButton": "Enter fullscreen",

@@ -17,6 +17,7 @@ import { langFromQuery } from "./_components/vocationalLang";
 import { evaluatorReturnHref } from "./_components/returnHref";
 import { RequireChromium } from "@/components/proctoring/RequireChromium";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
+import { PROCTORING_MODE_BY_INSTRUMENT } from "@/components/proctoring/proctoringModes";
 import { useProctoring } from "@/components/proctoring/useProctoring";
 import { installViolationFlush, flushViolations, postViolations } from "@/components/proctoring/flushViolations";
 import type { LockdownViolation } from "@/components/proctoring/types";
@@ -79,6 +80,7 @@ export default function EvaluatorPage() {
   // violations flush to the token endpoint via sendBeacon, which survives a
   // killed tab and needs no auth header.
   const proctoring = useProctoring({
+    mode: PROCTORING_MODE_BY_INSTRUMENT.evaluator360,
     onFlush: (v) => {
       if (!token) return;
       postViolations(
@@ -332,8 +334,8 @@ export default function EvaluatorPage() {
   // watermark otherwise (e.g. the vocational-evaluator branch, or before load).
   const watermark = evaluatorData?.evaluatorEmail ? { email: evaluatorData.evaluatorEmail } : undefined;
   const proctored = (node: ReactNode) => (
-    <RequireChromium>
-      <ProctoredShell proctoring={proctoring} watermark={watermark}>{node}</ProctoredShell>
+    <RequireChromium mode={proctoring.mode}>
+      <ProctoredShell proctoring={proctoring} watermark={watermark} exitHref={evaluatorReturnHref(user) ?? "/"}>{node}</ProctoredShell>
     </RequireChromium>
   );
 

@@ -7,18 +7,39 @@
  * questions until refocus, and a slim elapsed-time bar. All copy via i18n
  * `proctoring.*`. Visual language matches LIA's FlowScreens (navy overlays,
  * green "secure mode" badge).
+ *
+ * Every blocking overlay carries a secondary "Save and exit" so a taker is never
+ * trapped (#391): it flushes violations, ends the session (answers are already
+ * saved server-side per item) and navigates to `exitHref`. When fullscreen is
+ * unavailable the shell shows a non-blocking banner instead of an overlay.
  */
 import { type ReactNode } from "react";
-import { Lock, Maximize2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Info, Lock, LogOut, Maximize2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Proctoring } from "./useProctoring";
 
-function BlockingOverlay({ title, body }: { title: string; body: string }) {
+function SaveAndExitButton({ onExit }: { onExit: () => void }) {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      onClick={onExit}
+      className="mt-6 w-full py-3 px-6 rounded-xl border border-white/30 text-white/90 font-medium hover:bg-white/10 transition-colors flex items-center justify-center gap-2"
+    >
+      <LogOut className="w-5 h-5" />
+      {t("proctoring.saveAndExit")}
+    </button>
+  );
+}
+
+function BlockingOverlay({ title, body, onExit }: { title: string; body: string; onExit: () => void }) {
   return (
     <div className="fixed inset-0 z-[60] bg-[#0F172A] text-white flex items-center justify-center p-8 text-center">
-      <div className="max-w-md">
+      <div className="max-w-md w-full">
         <h2 className="text-2xl font-bold mb-2 text-white">{title}</h2>
         <p className="text-white/80">{body}</p>
+        <SaveAndExitButton onExit={onExit} />
       </div>
     </div>
   );
@@ -53,15 +74,23 @@ export function ProctoredShell({
   children,
   showTimer = true,
   watermark,
+  exitHref = "/dashboard/assessments",
 }: {
   proctoring: Proctoring;
   children: ReactNode;
   showTimer?: boolean;
+  /** Where "Save and exit" navigates. Default `/dashboard/assessments`. */
+  exitHref?: string;
   /** When set, renders a tiled screenshot-deterrent watermark of the taker's email + timestamp. */
   watermark?: { email: string };
 }) {
   const { t } = useTranslation();
-  const { active, elapsedTime, needsFullscreenPrompt, focusLost, multiDisplay, enterFullscreen } = proctoring;
+  const router = useRouter();
+  const { active, elapsedTime, needsFullscreenPrompt, focusLost, multiDisplay, fullscreenUnavailable, enterFullscreen, exit } = proctoring;
+  const saveAndExit = () => {
+    exit();
+    router.push(exitHref);
+  };
 
   return (
     <>
@@ -77,10 +106,17 @@ export function ProctoredShell({
         </div>
       )}
 
+      {active && fullscreenUnavailable && (
+        <div role="status" className="bg-amber-50 text-amber-900 border-b border-amber-200 px-4 py-2 text-sm flex items-center gap-2">
+          <Info className="w-4 h-4 shrink-0" />
+          {t("proctoring.fullscreenUnavailableBanner")}
+        </div>
+      )}
+
       {children}
 
       {active && multiDisplay && (
-        <BlockingOverlay title={t("proctoring.multiDisplayTitle")} body={t("proctoring.multiDisplayBody")} />
+        <BlockingOverlay title={t("proctoring.multiDisplayTitle")} body={t("proctoring.multiDisplayBody")} onExit={saveAndExit} />
       )}
 
       {active && needsFullscreenPrompt && !multiDisplay && (
@@ -98,12 +134,13 @@ export function ProctoredShell({
               <Maximize2 className="w-6 h-6" />
               {t("proctoring.fullscreenButton")}
             </button>
+            <SaveAndExitButton onExit={saveAndExit} />
           </div>
         </div>
       )}
 
       {active && focusLost && !needsFullscreenPrompt && !multiDisplay && (
-        <BlockingOverlay title={t("proctoring.focusLostTitle")} body={t("proctoring.focusLostBody")} />
+        <BlockingOverlay title={t("proctoring.focusLostTitle")} body={t("proctoring.focusLostBody")} onExit={saveAndExit} />
       )}
     </>
   );

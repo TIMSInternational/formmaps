@@ -16,16 +16,24 @@ jest.mock("react-i18next", () => {
   };
 });
 
+const mockPush = jest.fn();
+jest.mock("next/navigation", () => ({ useRouter: () => ({ push: mockPush }) }));
+
+beforeEach(() => mockPush.mockClear());
+
 function mkProctoring(over: Partial<Proctoring> = {}): Proctoring {
   return {
+    mode: "enforce",
     active: true,
     elapsedTime: "00:01:23",
     needsFullscreenPrompt: false,
     focusLost: false,
     multiDisplay: false,
+    fullscreenUnavailable: false,
     enterFullscreen: jest.fn(),
     begin: jest.fn(),
     end: jest.fn(),
+    exit: jest.fn(),
     violations: { current: [] },
     drainViolations: jest.fn(() => []),
     ...over,
@@ -110,5 +118,53 @@ describe("ProctoredShell", () => {
       );
       expect(screen.queryByText(/s@e\.st/)).not.toBeInTheDocument();
     });
+  });
+
+  describe("Save and exit (#391)", () => {
+    it.each([
+      ["second display", { multiDisplay: true }],
+      ["fullscreen", { needsFullscreenPrompt: true }],
+      ["focus lost", { focusLost: true }],
+    ])("the %s overlay offers Save and exit → exit() then /dashboard/assessments", (_name, over) => {
+      const exit = jest.fn();
+      render(
+        <ProctoredShell proctoring={mkProctoring({ ...over, exit })}>
+          <div data-testid="runner">exam</div>
+        </ProctoredShell>,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /Save and exit/i }));
+      expect(exit).toHaveBeenCalledTimes(1);
+      expect(mockPush).toHaveBeenCalledWith("/dashboard/assessments");
+    });
+
+    it("honours a custom exitHref (e.g. unauthenticated external evaluator)", () => {
+      render(
+        <ProctoredShell proctoring={mkProctoring({ focusLost: true })} exitHref="/">
+          <div>exam</div>
+        </ProctoredShell>,
+      );
+      fireEvent.click(screen.getByRole("button", { name: /Save and exit/i }));
+      expect(mockPush).toHaveBeenCalledWith("/");
+    });
+
+    it("the multi-display overlay explains docked laptops", () => {
+      render(
+        <ProctoredShell proctoring={mkProctoring({ multiDisplay: true })}>
+          <div>exam</div>
+        </ProctoredShell>,
+      );
+      expect(screen.getByText(/close the lid or mirror your displays/i)).toBeInTheDocument();
+    });
+  });
+
+  it("shows a non-blocking banner (no overlay) when fullscreen is unavailable", () => {
+    render(
+      <ProctoredShell proctoring={mkProctoring({ fullscreenUnavailable: true })}>
+        <div data-testid="runner">exam</div>
+      </ProctoredShell>,
+    );
+    expect(screen.getByRole("status")).toHaveTextContent(/fullscreen isn.t available/i);
+    expect(screen.queryByRole("button", { name: /Enter fullscreen/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Save and exit/i })).not.toBeInTheDocument();
   });
 });

@@ -242,6 +242,7 @@
       "answerPlaceholder": "Escribe tu respuesta…",
       "moveUp": "subir {{label}}",
       "moveDown": "bajar {{label}}",
+      "keepOrder": "Mantener este orden",
       "report": {
         "title": "Informe vocacional 360",
         "titleMine": "Mi informe vocacional 360",
@@ -3416,7 +3417,9 @@
   },
   "proctoring": {
     "multiDisplayTitle": "Desconecta las pantallas adicionales",
-    "multiDisplayBody": "Detectamos un segundo monitor. Desconéctalo para continuar con la evaluación.",
+    "multiDisplayBody": "Detectamos un segundo monitor. Desconéctalo para continuar; si usas una laptop conectada a un monitor, cierra la tapa o duplica las pantallas. También puedes guardar y salir, y volver más tarde.",
+    "saveAndExit": "Guardar y salir",
+    "fullscreenUnavailableBanner": "La pantalla completa no está disponible en este navegador. Puedes continuar con la evaluación; quedó registrado.",
     "fullscreenTitle": "Regresa a pantalla completa",
     "fullscreenBody": "Para garantizar la integridad de la evaluación, debes permanecer en modo de pantalla completa.",
     "fullscreenButton": "Entrar en pantalla completa",

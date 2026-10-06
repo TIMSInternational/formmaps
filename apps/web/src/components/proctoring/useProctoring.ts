@@ -15,7 +15,18 @@ export const FACE_VERIFY_ENABLED = process.env.NEXT_PUBLIC_LIA_FACE_VERIFY === "
 
 const BLOCKED_KEYS = new Set(["F12", "PrintScreen"]);
 
+/**
+ * - `enforce`: blocking overlays (second display, fullscreen, focus lost) and
+ *   forced fullscreen — for timed ability tests (LIA, PCA).
+ * - `record`: violations are still captured and flushed as evidence, but the
+ *   taker is never blocked and fullscreen is never requested (#392).
+ * Per-instrument choice lives in `proctoringModes.ts`.
+ */
+export type ProctoringMode = "enforce" | "record";
+
 export interface UseProctoringOptions {
+  /** Default "enforce". See `ProctoringMode`. */
+  mode?: ProctoringMode;
   /** Debounce window (ms) between a recorded violation and the `onFlush` callback. Default 2000. */
   flushDebounceMs?: number;
   /**
@@ -28,6 +39,7 @@ export interface UseProctoringOptions {
 }
 
 export interface Proctoring {
+  mode: ProctoringMode;
   active: boolean;
   elapsedTime: string;
   needsFullscreenPrompt: boolean;
@@ -35,9 +47,17 @@ export interface Proctoring {
   focusLost: boolean;
   /** A second/extended display is connected (Chromium `screen.isExtended`). */
   multiDisplay: boolean;
+  /**
+   * Fullscreen is unsupported (e.g. iOS Safari has no element fullscreen) or the
+   * browser refused it (kiosk policy, automation). Recorded once as a
+   * `fullscreen_unavailable` violation; the taker is NOT blocked (#391).
+   */
+  fullscreenUnavailable: boolean;
   enterFullscreen: () => void;
   begin: () => void;
   end: () => void;
+  /** "Save and exit": flush buffered violations now, then end the session. */
+  exit: () => void;
   violations: React.MutableRefObject<LockdownViolation[]>;
   drainViolations: () => LockdownViolation[];
 }
@@ -51,6 +71,14 @@ function isExtendedDisplay(): boolean {
   }
 }
 
+function fullscreenSupported(): boolean {
+  return (
+    typeof document !== "undefined" &&
+    document.fullscreenEnabled === true &&
+    typeof document.documentElement.requestFullscreen === "function"
+  );
+}
+
 function formatElapsed(startMs: number): string {
   const total = Math.floor((Date.now() - startMs) / 1000);
   const h = String(Math.floor(total / 3600)).padStart(2, "0");
@@ -60,11 +88,15 @@ function formatElapsed(startMs: number): string {
 }
 
 export function useProctoring(opts: UseProctoringOptions = {}): Proctoring {
+  const mode: ProctoringMode = opts.mode ?? "enforce";
+  const enforce = mode === "enforce";
   const [active, setActive] = useState(false);
   const [elapsedTime, setElapsedTime] = useState("00:00:00");
   const [needsFullscreenPrompt, setNeedsFullscreenPrompt] = useState(false);
   const [focusLost, setFocusLost] = useState(false);
   const [multiDisplay, setMultiDisplay] = useState(false);
+  const [fullscreenUnavailable, setFullscreenUnavailable] = useState(false);
+  const fullscreenUnavailableRef = useRef(false);
   const startRef = useRef<number>(0);
   const violations = useRef<LockdownViolation[]>([]);
 
@@ -105,9 +137,38 @@ export function useProctoring(opts: UseProctoringOptions = {}): Proctoring {
     scheduleFlush();
   }, [scheduleFlush]);
 
-  const enterFullscreen = useCallback(() => {
-    document.documentElement.requestFullscreen?.().catch(() => {});
-  }, []);
+  // Fullscreen is unsupported or was refused: record it once and stop
+  // enforcing it for the rest of the session, so the taker is never trapped
+  // behind a "Return to fullscreen" overlay they cannot clear (#391).
+  const markFullscreenUnavailable = useCallback((details?: string) => {
+    setNeedsFullscreenPrompt(false);
+    if (fullscreenUnavailableRef.current) return;
+    fullscreenUnavailableRef.current = true;
+    setFullscreenUnavailable(true);
+    recordViolation("fullscreen_unavailable", details);
+  }, [recordViolation]);
+
+  // `fromUserGesture`: only a refusal of an explicit click counts as
+  // "unavailable". The automatic request in begin() often runs without a user
+  // gesture (after an async load), which Chromium legitimately rejects — that
+  // must not switch enforcement off; the overlay's button retries with a gesture.
+  const requestFullscreen = useCallback((fromUserGesture: boolean) => {
+    if (fullscreenUnavailableRef.current || document.fullscreenElement) return;
+    if (!fullscreenSupported()) {
+      markFullscreenUnavailable("unsupported");
+      return;
+    }
+    const onRejected = (e?: unknown) => {
+      if (fromUserGesture) markFullscreenUnavailable(e instanceof Error ? e.name : "rejected");
+    };
+    try {
+      document.documentElement.requestFullscreen().catch(onRejected);
+    } catch (e) {
+      onRejected(e);
+    }
+  }, [markFullscreenUnavailable]);
+
+  const enterFullscreen = useCallback(() => requestFullscreen(true), [requestFullscreen]);
 
   const begin = useCallback(() => {
     startRef.current = Date.now();
@@ -116,8 +177,8 @@ export function useProctoring(opts: UseProctoringOptions = {}): Proctoring {
     const extended = isExtendedDisplay();
     setMultiDisplay(extended);
     if (extended) recordViolation("multi_display");
-    enterFullscreen();
-  }, [enterFullscreen, recordViolation]);
+    if (enforce) requestFullscreen(false);
+  }, [enforce, requestFullscreen, recordViolation]);
 
   const end = useCallback(() => {
     setActive(false);
@@ -127,6 +188,12 @@ export function useProctoring(opts: UseProctoringOptions = {}): Proctoring {
     if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   }, []);
 
+  const exit = useCallback(() => {
+    if (pendingFlushRef.current) clearTimeout(pendingFlushRef.current);
+    flushNow();
+    end();
+  }, [flushNow, end]);
+
   // Elapsed clock
   useEffect(() => {
     if (!active) return;
@@ -134,10 +201,12 @@ export function useProctoring(opts: UseProctoringOptions = {}): Proctoring {
     return () => clearInterval(id);
   }, [active]);
 
-  // Fullscreen enforcement
+  // Fullscreen enforcement (enforce mode only). Never blocks once fullscreen
+  // is known to be unavailable — only a browser that CAN go fullscreen is asked to.
   useEffect(() => {
-    if (!active) return;
+    if (!active || !enforce) return;
     const onChange = () => {
+      if (fullscreenUnavailableRef.current) return;
       const inFullscreen = !!document.fullscreenElement;
       setNeedsFullscreenPrompt(!inFullscreen);
       if (!inFullscreen) recordViolation("fullscreen_exit");
@@ -145,7 +214,7 @@ export function useProctoring(opts: UseProctoringOptions = {}): Proctoring {
     onChange();
     document.addEventListener("fullscreenchange", onChange);
     return () => document.removeEventListener("fullscreenchange", onChange);
-  }, [active, recordViolation]);
+  }, [active, enforce, recordViolation]);
 
   // Violation listeners
   useEffect(() => {
@@ -238,5 +307,20 @@ export function useProctoring(opts: UseProctoringOptions = {}): Proctoring {
     };
   }, [active, recordViolation]);
 
-  return { active, elapsedTime, needsFullscreenPrompt, focusLost, multiDisplay, enterFullscreen, begin, end, violations, drainViolations };
+  // Record mode never exposes a blocking flag; violations are still captured above.
+  return {
+    mode,
+    active,
+    elapsedTime,
+    needsFullscreenPrompt: enforce && needsFullscreenPrompt,
+    focusLost: enforce && focusLost,
+    multiDisplay: enforce && multiDisplay,
+    fullscreenUnavailable,
+    enterFullscreen,
+    begin,
+    end,
+    exit,
+    violations,
+    drainViolations,
+  };
 }
