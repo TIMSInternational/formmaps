@@ -5298,6 +5298,8 @@
         "draftSaved": "Draft saved",
         "aiReviewComplete": "AI review complete",
         "checklistGenerated": "Checklist generated",
+        "checklistGenerateFailed": "Couldn't generate a checklist right now — try again or add items manually.",
+        "aiReviewFailed": "Couldn't review this essay right now — try again in a moment.",
         "updateItemFailed": "Failed to update item",
         "itemAdded": "Item added",
         "loadApplicationsFailed": "Failed to load applications"

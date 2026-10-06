@@ -5298,6 +5298,8 @@
         "draftSaved": "Borrador guardado",
         "aiReviewComplete": "Revisión con IA completada",
         "checklistGenerated": "Lista de verificación generada",
+        "checklistGenerateFailed": "No se pudo generar la lista de verificación en este momento — inténtalo de nuevo o agrega los elementos manualmente.",
+        "aiReviewFailed": "No se pudo revisar este ensayo en este momento — inténtalo de nuevo en unos instantes.",
         "updateItemFailed": "No se pudo actualizar el elemento",
         "itemAdded": "Elemento agregado",
         "loadApplicationsFailed": "No se pudieron cargar las solicitudes"
