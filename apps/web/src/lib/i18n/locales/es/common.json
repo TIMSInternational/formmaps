@@ -187,6 +187,23 @@
       },
       "locked": "Los puntajes, las coincidencias completas de carreras, los informes y las descargas se desbloquean después de tu primer pago.",
       "unlock": "Desbloquear mis resultados completos"
+    },
+    "oneTime": {
+      "name": "Informe de pago único",
+      "description": "Haz todas las evaluaciones de FormMaps, ve tus resultados completos y descarga tus informes: pagas una vez y los conservas.",
+      "features": [
+        "Todas las evaluaciones: PCA, LIA, personalidad y 360",
+        "Tus resultados completos y carreras recomendadas",
+        "Informes descargables (PDF)",
+        "Sin vencimiento: tus resultados siguen disponibles"
+      ],
+      "notIncluded": "No incluye: creador de currículum, postulaciones, coaching, cursos ni chat con IA (vienen con una suscripción).",
+      "period": "pago único",
+      "cta": "Comprar el informe de pago único"
+    },
+    "consent": {
+      "subscription": "Acepto los Términos del Servicio y la Política de Privacidad. Entiendo que mi prueba gratuita de 7 días se convierte en una suscripción mensual de pago si no la cancelo. Si soy menor de 18 años, mi madre, padre o tutor lo acepta y realiza el pago.",
+      "oneTime": "Acepto los Términos del Servicio y la Política de Privacidad para esta compra única. Si soy menor de 18 años, mi madre, padre o tutor lo acepta y realiza el pago."
     }
   },
   "payments": {

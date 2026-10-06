@@ -187,6 +187,23 @@
       },
       "locked": "Scores, full career matches, reports and downloads unlock after your first payment.",
       "unlock": "Unlock my full results"
+    },
+    "oneTime": {
+      "name": "One-time report",
+      "description": "Take all the FormMaps assessments, see your complete results and download your reports — pay once, keep them.",
+      "features": [
+        "All assessments: PCA, LIA, personality and the 360",
+        "Your complete results and career matches",
+        "Downloadable reports (PDF)",
+        "No expiry — your results stay available"
+      ],
+      "notIncluded": "Not included: resume builder, applications, coaching, courses and AI chat (those come with a subscription).",
+      "period": "one-time",
+      "cta": "Buy the one-time report"
+    },
+    "consent": {
+      "subscription": "I agree to the Terms of Service and Privacy Policy. I understand my 7-day free trial converts to a paid monthly subscription unless I cancel. If I am under 18, my parent or guardian agrees and is paying.",
+      "oneTime": "I agree to the Terms of Service and Privacy Policy for this one-time purchase. If I am under 18, my parent or guardian agrees and is paying."
     }
   },
   "payments": {
