@@ -1,5 +1,8 @@
 "use client";
 
+import { ResultsPreviewCard } from "@/components/independent-student/ResultsPreviewCard";
+import { isStudentPaywallEnabled } from "@/lib/independentStudent";
+
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
@@ -28,6 +31,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toStoreLanguage, useContentLanguage } from "@/lib/i18n/contentLanguage";
+
+const paywallEnabled = isStudentPaywallEnabled();
 
 export default function AssessmentsPage() {
   const { user } = useGlobalStore();
@@ -195,6 +200,9 @@ export default function AssessmentsPage() {
           transition={{ delay: 0.05 }}
           className="space-y-4"
         >
+          {/* Free results preview while results are locked (#429) — renders nothing once paid */}
+          {paywallEnabled && <ResultsPreviewCard />}
+
           {/* Progress summary */}
           <div className="dash-card p-4">
             <div className="flex items-center justify-between mb-2.5">

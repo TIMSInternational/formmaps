@@ -6,14 +6,14 @@ import { useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useSubscriptionStatus } from "@/hooks/useSubscription";
+import { ResultsPreviewCard } from "@/components/independent-student/ResultsPreviewCard";
 
 /**
- * "Complete your purchase" — where a student with no school lands while the
- * independent-student paywall is on and they have no entitlement yet
- * (formmaps-platform#399). The account exists; only the purchase is missing
- * (e.g. they closed Stripe Checkout). Nothing else in the app is reachable
- * from here — the API answers 402 PAYMENT_REQUIRED to everything except the
- * sign-in / status / checkout surface.
+ * "Complete your purchase" — where a student without a covering school lands
+ * (paywall ON) when they open a part of the platform their entitlement doesn't
+ * include (#429). Unpaid: they can still take every assessment and see the
+ * free preview. One-time purchasers: upgrade to a subscription for the rest.
+ * The API enforces the same split with 402s.
  */
 export default function CompletePurchasePage() {
   const { t } = useTranslation();
@@ -21,19 +21,34 @@ export default function CompletePurchasePage() {
   const { logout } = useGlobalStore();
   const { data: status, refetch, isFetching } = useSubscriptionStatus({ staleTime: 0 });
 
-  // Paid (webhook landed) → straight in.
+  // Full platform (webhook landed) → straight in. A one-time purchase is NOT
+  // the full platform, so it stays here to see the upgrade option (no loop).
+  const hasFullPlatform = status ? (status.hasFullPlatform ?? status.hasActiveSubscription) : false;
+  const isOneTime = !!status?.hasPaidAccess && !hasFullPlatform;
   useEffect(() => {
-    if (status?.hasActiveSubscription) router.replace("/dashboard");
-  }, [status?.hasActiveSubscription, router]);
+    if (hasFullPlatform) router.replace("/dashboard");
+  }, [hasFullPlatform, router]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center">
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">{t("independentStudent.completePurchase.title")}</h1>
-        <p className="text-gray-600 mb-2">{t("independentStudent.completePurchase.body")}</p>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">
+          {t(isOneTime ? "independentStudent.completePurchase.upgradeTitle" : "independentStudent.completePurchase.title")}
+        </h1>
+        <p className="text-gray-600 mb-2">
+          {t(isOneTime ? "independentStudent.completePurchase.upgradeBody" : "independentStudent.completePurchase.body")}
+        </p>
         <p className="text-gray-500 text-sm mb-6">{t("independentStudent.completePurchase.minors")}</p>
 
+        <div className="mb-6"><ResultsPreviewCard /></div>
+
         <div className="space-y-3">
+          <Link
+            href="/dashboard/assessments"
+            className="block w-full border border-[var(--admin-accent-blue)] text-[var(--admin-accent-blue)] py-3 px-4 rounded-lg font-semibold hover:bg-gray-50 transition-colors"
+          >
+            {t(isOneTime ? "independentStudent.completePurchase.goToResults" : "independentStudent.completePurchase.takeAssessments")}
+          </Link>
           <Link
             href="/subscribe"
             className="block w-full bg-[var(--admin-accent-blue)] text-white py-3 px-4 rounded-lg font-semibold hover:bg-[#256F76] transition-colors"

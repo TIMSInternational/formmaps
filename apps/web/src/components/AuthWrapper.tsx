@@ -17,7 +17,7 @@ import {
   COMPLETE_PURCHASE_ROUTE,
   PAYWALLED_STUDENT_AREAS,
   isStudentPaywallEnabled,
-  unentitledStudentRedirect,
+  studentAccessRedirect,
 } from "@/lib/independentStudent";
 import { reportWebVitals } from "@/lib/webVitals";
 import { toast } from "sonner";
@@ -91,8 +91,10 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
     pathname.startsWith(COMPLETE_PURCHASE_ROUTE);
   const isOnboardingPage = pathname.startsWith("/onboarding");
 
-  // School students don't need subscriptions — their school pays
-  const isSchoolStudent = isStudent && !!user.schoolId;
+  // School students don't need subscriptions — their school pays. With the
+  // paywall ON a school only covers them under an ACTIVE contract (D9), which
+  // only the API knows — so every student asks the status endpoint.
+  const isSchoolStudent = isStudent && !!user.schoolId && !paywallEnabled;
   const shouldCheckSubscription =
     user.isAuthenticated && (isProtectedRoute || isPaywalledArea) && isStudent && !isSchoolStudent && !isSubscriptionPage && !isOnboardingPage;
 
@@ -143,9 +145,8 @@ export function AuthWrapper({ children }: AuthWrapperProps) {
       !statusError &&
       subscriptionStatus !== undefined
     ) {
-      if (!subscriptionStatus.hasActiveSubscription) {
-        return unentitledStudentRedirect(paywallEnabled);
-      }
+      const target = studentAccessRedirect(pathname, subscriptionStatus, paywallEnabled);
+      if (target) return target;
     }
 
     // Coach contract expiry

@@ -43,7 +43,8 @@ export default function SubscribePage() {
 
   // If user already has an active subscription, redirect to dashboard
   useEffect(() => {
-    if (subStatus?.hasActiveSubscription) {
+    // A one-time purchase (#429) is not the full platform — let them upgrade here.
+    if (subStatus && (subStatus.hasFullPlatform ?? subStatus.hasActiveSubscription)) {
       router.push("/dashboard");
     }
   }, [subStatus, router]);
