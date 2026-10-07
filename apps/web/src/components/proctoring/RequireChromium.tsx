@@ -5,10 +5,15 @@
  * Chromium's `screen.isExtended`, which Firefox/Safari do not implement — so a
  * proctored runner is only trustworthy in Chrome/Edge. Unsupported browsers get
  * a blocking card instead of the assessment.
+ *
+ * Only `enforce`-mode instruments are gated: a `record`-mode instrument (#392)
+ * never blocks on a second display, so it does not need `screen.isExtended`
+ * and must stay reachable on Safari / iPhone (#391).
  */
 import { useEffect, useState, type ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import type { ProctoringMode } from "./useProctoring";
 
 /**
  * Pure UA test for a Chromium-based browser (Chrome / Edge / Chromium).
@@ -25,7 +30,14 @@ export function isChromium(
   return isChromeFamily && !isFirefox;
 }
 
-export function RequireChromium({ children }: { children: ReactNode }) {
+export function RequireChromium({
+  children,
+  mode = "enforce",
+}: {
+  children: ReactNode;
+  /** Default "enforce". In "record" mode every browser is let through. */
+  mode?: ProctoringMode;
+}) {
   const { t } = useTranslation();
   // null = not yet determined (SSR / first paint). Avoids flashing the exam to
   // an unsupported browser before the UA check runs.
@@ -35,6 +47,7 @@ export function RequireChromium({ children }: { children: ReactNode }) {
     setSupported(isChromium());
   }, []);
 
+  if (mode === "record") return <>{children}</>;
   if (supported === null) return null;
 
   if (!supported) {

@@ -242,6 +242,7 @@
       "answerPlaceholder": "Escribe tu respuesta…",
       "moveUp": "subir {{label}}",
       "moveDown": "bajar {{label}}",
+      "keepOrder": "Mantener este orden",
       "report": {
         "title": "Informe vocacional 360",
         "titleMine": "Mi informe vocacional 360",
@@ -264,7 +265,7 @@
           "sibling_friend": "Hermano/a o amigo/a"
         },
         "integratedTitle": "Puntaje vocacional integrado",
-        "integratedLocked": "Completa las tres evaluaciones (360, PCA, MIL) para desbloquear tu puntaje integrado.",
+        "integratedLocked": "Completa {{list}} para desbloquear tu puntaje integrado.",
         "interestsTitle": "Intereses y preferencias",
         "topInterests": "Principales áreas de interés",
         "topIndustries": "Principales sectores",
@@ -272,23 +273,21 @@
         "workType": "Tipo de trabajo preferido:",
         "inTheirWords": "En sus propias palabras",
         "readinessTitle": "Estado de las evaluaciones",
-        "row360": "Evaluación 360",
         "row360Hint": "Requiere las respuestas del estudiante y de al menos otro evaluador (padre/madre, profesor o compañero).",
-        "rowPca": "PCA (Análisis de Competencias Personales)",
         "rowPcaHint": "Completa la evaluación PCA.",
-        "rowMilHint": "Completa las pruebas cognitivas MIL.",
         "rowReady": "{{label}}: lista",
         "rowPending": "{{label}}: pendiente",
         "recommendations": "Recomendaciones",
         "recommendationsLoadError": "No se pudieron cargar las recomendaciones.",
-        "recommendationsLocked": "Completa las tres evaluaciones (360, PCA, MIL) para ver tus recomendaciones de carrera.",
+        "recommendationsLocked": "Completa {{list}} para ver tus recomendaciones de carrera.",
         "suggestedDirections": "Caminos sugeridos",
         "strengths": "Fortalezas",
         "growthAreas": "Áreas de crecimiento",
         "topCareerMatches": "Carreras más afines",
         "industriesToExplore": "Sectores para explorar:",
         "nextSteps": "Próximos pasos",
-        "exploreUniversities": "Explorar universidades afines →"
+        "exploreUniversities": "Explorar universidades afines →",
+        "rowLiaHint": "Completa las pruebas cognitivas LIA."
       }
     },
     "noReportData": "Datos del informe no disponibles",
@@ -511,7 +510,7 @@
     "journey": {
       "title": "Tu trayecto",
       "assessmentsTitle": "Completa las evaluaciones",
-      "assessmentsDesc": "Realiza las evaluaciones PCA y MIL para descubrir tus fortalezas",
+      "assessmentsDesc": "Realiza tus evaluaciones ({{list}}) para descubrir tus fortalezas",
       "careersTitle": "Explora rutas profesionales",
       "careersDesc": "Explora carreras que coinciden con tu perfil e intereses",
       "learningTitle": "Empieza a aprender",
@@ -524,12 +523,12 @@
     "studentPortal": "Portal estudiantil",
     "monitorProgress": "Monitorea tu progreso, acelera tus habilidades y domina tu camino profesional con precisión.",
     "recommendationsLocked": "Recomendaciones bloqueadas",
-    "completeAllAssessments": "Completa las 4 evaluaciones (PCA, LIA, Evaluación 360° y Personalidad) para desbloquear tus coincidencias de carrera y recomendaciones personalizadas.",
+    "completeAllAssessments": "Completa las {{count}} evaluaciones ({{list}}) para desbloquear tus coincidencias de carrera y recomendaciones personalizadas.",
     "goToAssessments": "Ir a evaluaciones",
     "universityMatchesLocked": "Completa todas las evaluaciones para ver las coincidencias universitarias",
     "analysisComplete": "Análisis completado",
     "match": "Coincidencia",
-    "cognitiveMatrix": "Matriz MIL",
+    "cognitiveMatrix": "Matriz LIA",
     "aiSuggested": "Sugerido por IA",
     "role": {
       "student": "Estudiante",
@@ -678,7 +677,7 @@
     "startLIA": "Iniciar evaluación LIA",
     "measureCognitiveAbilities": "Mide tus habilidades cognitivas a través de diversas tareas de inteligencia",
     "liaResults": "Resultados LIA",
-    "liaResultsTitle": "Resultados de evaluación MIL",
+    "liaResultsTitle": "Resultados de evaluación LIA",
     "liaResultsComplete": "Todos los módulos cognitivos completados exitosamente",
     "liaResultsInProgress": "Continúa completando tus módulos cognitivos",
     "laborIntelligenceAssessment": "Evaluación de inteligencia laboral",
@@ -731,13 +730,13 @@
     "competences": "Competencias",
     "jcaAnalysis": "Análisis JCA",
     "outstanding": "¡Excelente!",
-    "exceptionalPerformance": "Rendimiento MIL excepcional",
+    "exceptionalPerformance": "Rendimiento LIA excepcional",
     "excellent": "¡Excelente!",
-    "strongAbilities": "Fuertes habilidades MIL",
+    "strongAbilities": "Fuertes habilidades LIA",
     "goodWork": "¡Buen trabajo!",
-    "solidPerformance": "Rendimiento MIL sólido",
+    "solidPerformance": "Rendimiento LIA sólido",
     "wellDone": "¡Bien hecho!",
-    "developingSkills": "Desarrollando habilidades MIL",
+    "developingSkills": "Desarrollando habilidades LIA",
     "milComplete": "¡Completo!",
     "assessmentFinished": "Evaluación terminada",
     "welcomeBack": "¡Hola de nuevo, {{name}}!",
@@ -773,7 +772,7 @@
     "pcaLanguages": "Disponible en español/inglés",
     "pcaResults": "Resultados en el panel",
     "liaAssessmentTitle": "Evaluación LIA",
-    "liaSubtests": "5 subpruebas MIL",
+    "liaSubtests": "5 subpruebas LIA",
     "liaSkills": "Reconocimiento de patrones y razonamiento",
     "liaDuration": "15-20 minutos en total",
     "liaAvailable": "Disponible ahora",
@@ -791,7 +790,7 @@
     "totalQuestions": "Preguntas totales",
     "subtestPerformance": "Rendimiento de subpruebas",
     "percentileSuffix": ".º percentil",
-    "cognitiveProfile": "Perfil MIL",
+    "cognitiveProfile": "Perfil LIA",
     "logicalReasoning": "Razonamiento lógico",
     "logicalReasoningDesc": "Fuerte reconocimiento de patrones y pensamiento analítico",
     "verbalProcessing": "Procesamiento verbal",
@@ -1000,7 +999,12 @@
         "name": "Nombre",
         "email": "Correo electrónico",
         "role": "Rol",
-        "notSet": "Sin definir"
+        "notSet": "Sin definir",
+        "saveName": "Guardar nombre",
+        "saving": "Guardando...",
+        "nameSaved": "Nombre actualizado",
+        "nameFailed": "No pudimos actualizar tu nombre",
+        "nameRequired": "El nombre es obligatorio"
       },
       "notifications": {
         "subtitle": "Elige cómo quieres recibir notificaciones",
@@ -1030,18 +1034,18 @@
       },
       "privacy": {
         "title": "Privacidad",
-        "subtitle": "Controla tus datos y tu visibilidad",
+        "subtitle": "Cada opción está desactivada hasta que la actives. Puedes cambiarlas cuando quieras.",
         "profileVisibility": {
           "label": "Visibilidad del perfil",
-          "description": "Permite que orientadores y coaches vean tu perfil"
+          "description": "Permite que orientadores y coaches vean los datos de tu perfil (nombre, foto, biografía e intereses)."
         },
         "shareProgress": {
           "label": "Compartir progreso",
-          "description": "Comparte tu progreso de aprendizaje con tu colegio"
+          "description": "Comparte los resultados de tus evaluaciones y tu progreso de aprendizaje con tu colegio."
         },
         "usageAnalytics": {
           "label": "Análisis de uso",
-          "description": "Ayúdanos a mejorar compartiendo datos de uso anónimos"
+          "description": "Envía datos de uso anónimos (páginas visitadas, funciones usadas) para ayudarnos a mejorar FormMaps. No se recopila nada mientras esté desactivado."
         }
       },
       "security": {
@@ -1102,7 +1106,12 @@
       "volunteerHours_other": "{{count}} horas de voluntariado",
       "addToPortfolio": "Agregar al portafolio"
     },
-    "pcaViewResultsDesc": "Consulta tu perfil de personalidad PCA y el desglose de tus competencias"
+    "pcaViewResultsDesc": "Consulta tu perfil de personalidad PCA y el desglose de tus competencias",
+    "portfolioItems_one": "elemento",
+    "portfolioItems_other": "elementos",
+    "volunteerHours": "{{count}} h de voluntariado",
+    "coursesEnrolled": "inscritos",
+    "topMatch": "Mejor: {{score}}%"
   },
   "coaching": {
     "featuredCoaches": "Coaches destacados",
@@ -2169,7 +2178,7 @@
         "description": "Comienza tu trayectoria profesional",
         "ctaText": "Comenzar",
         "features": [
-          "Evaluaciones PCA y MIL",
+          "Evaluaciones PCA y LIA",
           "Emparejamiento de carreras (top 10)",
           "Constructor de currículum básico",
           "Acceso al catálogo de cursos",
@@ -2238,29 +2247,13 @@
     "highDemand": "Alta demanda",
     "bridgingAvailable": "Formación puente disponible",
     "viewDetails": "Ver detalles de {{title}}",
-    "gate": {
-      "pca": "Evaluación PCA",
-      "pcaDesc": "Descubre tu perfil de personalidad DISC",
-      "lia": "Evaluación LIA",
-      "liaDesc": "Mide tus habilidades cognitivas en 5 dimensiones",
-      "eval": "Evaluación 360°",
-      "evalDesc": "Recibe retroalimentación de compañeros, padres y docentes",
-      "personality": "Evaluación de personalidad",
-      "personalityDesc": "Descubre tu tipo de personalidad de 4 letras",
-      "title": "Completa tus evaluaciones",
-      "subtitle": "Termina las 4 evaluaciones para desbloquear coincidencias de carrera personalizadas según tu perfil único.",
-      "completed": "completadas",
-      "inProgress": "En progreso",
-      "continue": "Continuar evaluación",
-      "startNext": "Iniciar siguiente evaluación"
-    },
     "explorer": {
       "title": "Explorador de carreras",
       "subtitle": "Tus 10 mejores coincidencias de carrera según tus habilidades cognitivas, personalidad e intereses.",
       "disclaimer": "Estas estimaciones de coincidencia se basan en los datos de tus evaluaciones y son solo una orientación informativa: no garantizan empleo ni reemplazan la orientación vocacional profesional.",
       "noResults": "No se encontraron carreras",
       "noResultsFilterDesc": "Intenta ajustar tu búsqueda o los filtros para ver más resultados.",
-      "noResultsDesc": "Completa tus evaluaciones PCA y MIL para recibir recomendaciones de carrera personalizadas."
+      "noResultsDesc": "Completa tus evaluaciones ({{list}}) para recibir recomendaciones de carrera personalizadas."
     },
     "search_placeholder": "Busca carreras, habilidades o palabras clave...",
     "all_industries": "Todas las industrias",
@@ -2292,7 +2285,7 @@
       "matchStrong": "Coincidencia fuerte",
       "matchGood": "Buena coincidencia",
       "barPersonality": "Personalidad",
-      "barCognitive": "MIL",
+      "barCognitive": "LIA",
       "barInterests": "Intereses",
       "barMotivators": "Motivadores",
       "whyFits": "Por qué encaja contigo",
@@ -2593,6 +2586,8 @@
     "reviewOnCoursera": "Revisar en Coursera",
     "week": "semana",
     "weeks": "semanas",
+    "recommendationsLocked": "Completa tus evaluaciones para obtener recomendaciones de cursos",
+    "goToAssessments": "Ir a evaluaciones",
     "hours": "horas",
     "by": "por",
     "learningObjectives": "Objetivos de aprendizaje",
@@ -2688,7 +2683,12 @@
     "coachNotAvailable": "El coach no está disponible este día.",
     "jumpTo": "Ir a {{date}}",
     "continue": "Continuar",
-    "back": "Volver"
+    "back": "Volver",
+    "sessionMinutes": "Sesión de {{count}} minutos",
+    "sessionHour": "Sesión de 1 hora",
+    "sessionHours": "Sesión de {{count}} horas",
+    "coachTimeHint": "Hora del coach: {{time}}",
+    "coachTimezone": "Zona horaria del coach: {{timezone}}"
   },
   "testPCA": {
     "title": "Pruebas de la API PCA",
@@ -3416,7 +3416,9 @@
   },
   "proctoring": {
     "multiDisplayTitle": "Desconecta las pantallas adicionales",
-    "multiDisplayBody": "Detectamos un segundo monitor. Desconéctalo para continuar con la evaluación.",
+    "multiDisplayBody": "Detectamos un segundo monitor. Desconéctalo para continuar; si usas una laptop conectada a un monitor, cierra la tapa o duplica las pantallas. También puedes guardar y salir, y volver más tarde.",
+    "saveAndExit": "Guardar y salir",
+    "fullscreenUnavailableBanner": "La pantalla completa no está disponible en este navegador. Puedes continuar con la evaluación; quedó registrado.",
     "fullscreenTitle": "Regresa a pantalla completa",
     "fullscreenBody": "Para garantizar la integridad de la evaluación, debes permanecer en modo de pantalla completa.",
     "fullscreenButton": "Entrar en pantalla completa",
@@ -3530,6 +3532,21 @@
       "greetingNoName": "¡Hola!",
       "help": "¿En qué te puedo ayudar hoy?",
       "tryAsking": "Intenta preguntar"
+    },
+    "suggestions": {
+      "student": {
+        "careerRank": "¿Por qué mi carrera #1 quedó en primer lugar?",
+        "skills": "¿Qué habilidades debería desarrollar ahora?",
+        "universities": "Compara mis 3 mejores universidades recomendadas",
+        "courses": "¿Qué cursos me ayudarían a cerrar brechas?",
+        "objective": "Ayúdame a redactar un objetivo profesional"
+      },
+      "studentOnboarding": {
+        "measure": "¿Qué mide cada evaluación?",
+        "duration": "¿Cuánto tiempo toman las evaluaciones?",
+        "startWith": "¿Con qué evaluación debería empezar?",
+        "explore": "Ayúdame a explorar carreras que encajen con mis intereses"
+      }
     }
   },
   "recommendations": {
@@ -4588,7 +4605,8 @@
       "skillCategory": {
         "technical": "Técnicas",
         "soft": "Blandas",
-        "language": "Idiomas"
+        "language": "Idiomas",
+        "Key Skills": "Habilidades clave"
       }
     },
     "livePreview": {
@@ -4778,7 +4796,11 @@
     },
     "editorPage": {
       "downloadFailed": "No se pudo descargar el PDF. Inténtalo de nuevo.",
-      "template": "Plantilla"
+      "template": "Plantilla",
+      "mobileTabs": {
+        "preview": "Vista previa",
+        "editor": "Editor IA"
+      }
     },
     "newResumePage": {
       "tailorFailed": "No se pudo adaptar el currículum. Inténtalo de nuevo.",
@@ -5044,10 +5066,11 @@
         "impactfulSummary": "Haz que mi resumen tenga más impacto",
         "measurableMetrics": "Agrega métricas medibles a mis viñetas",
         "tightenGrammar": "Hazlo más conciso y corrige la gramática",
-        "tailorSoftware": "Adáptalo a un cargo de ingeniería de software",
         "actionVerbs": "Usa verbos de acción más contundentes",
         "shortenSummary": "Acorta mi resumen",
-        "moreMetrics": "Agrega más métricas a las viñetas"
+        "moreMetrics": "Agrega más métricas a las viñetas",
+        "tailorCareer": "Adáptalo a un cargo de {{career}}",
+        "tailorTarget": "Adáptalo a mi carrera objetivo"
       },
       "updated": "Listo: tu currículum se actualizó.",
       "couldNotApply": "No pude aplicar ese cambio. Intenta decirlo de otra forma.",
@@ -5267,7 +5290,7 @@
       },
       "mil": {
         "readyToDiscover": "¿Todo listo para descubrir tus fortalezas cognitivas?",
-        "assessment": "Evaluación MIL",
+        "assessment": "Evaluación LIA",
         "status": "Estado",
         "complete": "Completo",
         "duration": "Duración",
@@ -5298,6 +5321,8 @@
         "draftSaved": "Borrador guardado",
         "aiReviewComplete": "Revisión con IA completada",
         "checklistGenerated": "Lista de verificación generada",
+        "checklistGenerateFailed": "No se pudo generar la lista de verificación en este momento — inténtalo de nuevo o agrega los elementos manualmente.",
+        "aiReviewFailed": "No se pudo revisar este ensayo en este momento — inténtalo de nuevo en unos instantes.",
         "updateItemFailed": "No se pudo actualizar el elemento",
         "itemAdded": "Elemento agregado",
         "loadApplicationsFailed": "No se pudieron cargar las solicitudes"
@@ -5362,7 +5387,11 @@
         "matchScore": "Puntaje de compatibilidad",
         "fit": "Afinidad",
         "notes": "Notas",
-        "notesPlaceholder": "Agrega notas sobre esta solicitud..."
+        "notesPlaceholder": "Agrega notas sobre esta solicitud...",
+        "types": {
+          "university": "Universidad",
+          "career": "Carrera"
+        }
       },
       "checklist": {
         "completedCount": "{{done}}/{{total}} completados",
@@ -5782,7 +5811,11 @@
       "staffSearch": {
         "placeholder": "Buscar orientadores y personal...",
         "failed": "La búsqueda falló. Inténtalo de nuevo.",
-        "noResults": "No se encontraron orientadores ni personal en tu colegio."
+        "noResults": "No se encontraron orientadores ni personal en tu colegio.",
+        "noStaff": "Aún no hay consejeros ni profesores disponibles",
+        "noMatches": "Sin coincidencias para “{{query}}”",
+        "minChars": "Escribe al menos 2 caracteres para buscar",
+        "clearSelection": "Quitar el miembro del personal seleccionado"
       }
     },
     "subscriptions": {
@@ -5852,7 +5885,16 @@
         "testType": "Tipo de examen",
         "testDate": "Fecha del examen",
         "status": "Estado",
-        "officialScore": "Puntaje oficial"
+        "officialScore": "Puntaje oficial",
+        "paaScore": "Puntaje PAA (200–800)",
+        "saberScore": "Puntaje global Saber 11 (0–500)",
+        "ieltsBand": "Banda general IELTS (0–9)",
+        "delfLevel": "Nivel (A1–C2)",
+        "selectLevel": "Selecciona el nivel",
+        "delfScore": "Puntaje (0–100)",
+        "examName": "Nombre del examen",
+        "examNamePlaceholder": "p. ej. DELE B2, Cambridge C1 Advanced",
+        "otherScore": "Puntaje"
       },
       "testType": {
         "SAT": "SAT",
@@ -5860,7 +5902,12 @@
         "AP": "Examen AP",
         "PSAT": "PSAT",
         "TOEFL": "TOEFL",
-        "IB": "Examen IB"
+        "IB": "Examen IB",
+        "PAA": "PAA (UCR/UNA/TEC)",
+        "SABER11": "Saber 11 (ICFES)",
+        "IELTS": "IELTS",
+        "DELF_DALF": "DELF/DALF",
+        "OTHER": "Otro examen"
       },
       "sub": {
         "sat": "Matemáticas {{math}} · Lectura {{reading}}",
@@ -6238,7 +6285,7 @@
       "coverLine3": "LABORAL",
       "reportContents": "Contenido del informe",
       "toc1": "Resumen ejecutivo y estrategia",
-      "toc2": "Dimensiones MIL",
+      "toc2": "Dimensiones LIA",
       "toc3": "Patrones de comportamiento",
       "toc4": "Alineación profesional",
       "candidate": "Candidato/a",
@@ -6261,9 +6308,9 @@
       "executiveHighlights": "Aspectos destacados",
       "strategicAnalysis": "Análisis estratégico",
       "growthAreas": "Áreas de crecimiento",
-      "milProfile": "Perfil MIL",
+      "milProfile": "Perfil LIA",
       "profileShape": "FORMA DEL PERFIL",
-      "milSynergy": "Sinergia MIL",
+      "milSynergy": "Sinergia LIA",
       "dimensions": "Dimensiones",
       "peakPercentile": "% máximo",
       "detailedDimensions": "Dimensiones detalladas",
@@ -6547,63 +6594,6 @@
       "durationMinutes": "{{minutes}} min",
       "previousMonth": "Mes anterior",
       "nextMonth": "Mes siguiente"
-    },
-    "commandPalette": {
-      "items": {
-        "dashboard": {
-          "description": "Resumen y carreras afines"
-        },
-        "assessments": {
-          "description": "PCA, MIL y evaluación"
-        },
-        "careerPaths": {
-          "description": "Tus 10 carreras más afines"
-        },
-        "university": {
-          "label": "Buscador de universidades",
-          "description": "Recomendaciones personalizadas"
-        },
-        "courses": {
-          "description": "Explora cursos e inscríbete"
-        },
-        "resumes": {
-          "description": "Crea y gestiona tus currículums"
-        },
-        "portfolio": {
-          "description": "Muestra tu trabajo"
-        },
-        "coursePlan": {
-          "description": "Planifica tus materias"
-        },
-        "sessions": {
-          "description": "Orientación y coaching"
-        },
-        "applications": {
-          "description": "Haz seguimiento a tus solicitudes universitarias"
-        },
-        "aiCoach": {
-          "label": "Coach con IA",
-          "description": "Asistente de orientación vocacional"
-        },
-        "startPca": {
-          "label": "Iniciar evaluación PCA",
-          "description": "Evaluación de personalidad"
-        },
-        "startMil": {
-          "label": "Iniciar evaluación MIL",
-          "description": "Evaluación de inteligencia laboral"
-        },
-        "browseUniversities": {
-          "label": "Explorar universidades",
-          "description": "Encuentra tu universidad ideal"
-        }
-      },
-      "searchPlaceholder": "Buscar páginas, acciones...",
-      "noResults": "No se encontraron resultados.",
-      "groups": {
-        "pages": "Páginas",
-        "actions": "Acciones"
-      }
     },
     "compareBar": {
       "panelTitle_one": "Comparando {{count}} universidad",
@@ -7124,5 +7114,107 @@
       "unmuteMic": "Activar micrófono",
       "dismissError": "Cerrar error"
     }
+  },
+  "instruments": {
+    "pca": {
+      "name": "PCA",
+      "fullName": "Evaluación PCA",
+      "description": "Descubre tu perfil de personalidad DISC"
+    },
+    "lia": {
+      "name": "LIA",
+      "fullName": "Evaluación LIA",
+      "description": "Mide tus habilidades cognitivas en 5 dimensiones"
+    },
+    "evaluation": {
+      "name": "360°",
+      "fullName": "Evaluación 360°",
+      "description": "Reúne la opinión de compañeros, padres y profesores"
+    },
+    "personality": {
+      "name": "Personalidad",
+      "fullName": "Evaluación de Personalidad",
+      "description": "Descubre tu tipo de personalidad de 4 letras"
+    },
+    "gate": {
+      "title": "Completa tus evaluaciones",
+      "careersSubtitle": "Completa las {{count}} evaluaciones ({{list}}) para desbloquear coincidencias de carrera personalizadas según tu perfil.",
+      "universitiesSubtitle": "Completa las {{count}} evaluaciones ({{list}}) para desbloquear recomendaciones de universidades personalizadas según tu perfil, competencias y preferencias.",
+      "progress": "{{completed}}/{{total}} completadas",
+      "inProgress": "En progreso",
+      "continue": "Continuar evaluación",
+      "startNext": "Comenzar siguiente evaluación",
+      "universityRecoEmpty": "Completa tus evaluaciones ({{list}}) para obtener recomendaciones de universidades personalizadas según tu perfil."
+    }
+  },
+  "commandPalette": {
+    "placeholder": "Buscar páginas, postulaciones, carreras, cursos…",
+    "empty": "No se encontraron resultados.",
+    "searching": "Buscando…",
+    "groups": {
+      "pages": "Páginas",
+      "actions": "Acciones",
+      "applications": "Tus postulaciones",
+      "careers": "Carreras",
+      "courses": "Cursos"
+    },
+    "pages": {
+      "dashboard": {
+        "label": "Panel",
+        "description": "Resumen de tu progreso"
+      },
+      "assessments": {
+        "label": "Evaluaciones",
+        "description": "{{list}}"
+      },
+      "careerPaths": {
+        "label": "Explorador de carreras",
+        "description": "Tus coincidencias de carrera"
+      },
+      "university": {
+        "label": "Buscador de universidades",
+        "description": "Universidades para tu perfil"
+      },
+      "courses": {
+        "label": "Cursos",
+        "description": "Explora e inscríbete en cursos"
+      },
+      "resumes": {
+        "label": "Creador de currículum",
+        "description": "Crea y gestiona currículums"
+      },
+      "portfolio": {
+        "label": "Portafolio",
+        "description": "Muestra tu trabajo"
+      },
+      "coursePlan": {
+        "label": "Plan de cursos",
+        "description": "Planifica tu currículo"
+      },
+      "sessions": {
+        "label": "Mis sesiones",
+        "description": "Orientación y coaching"
+      },
+      "applications": {
+        "label": "Postulaciones",
+        "description": "Da seguimiento a tus postulaciones universitarias"
+      },
+      "aiCoach": {
+        "label": "Coach de IA",
+        "description": "Asistente de orientación profesional"
+      }
+    },
+    "actions": {
+      "start": "Iniciar {{name}}",
+      "browseUniversities": {
+        "label": "Explorar universidades",
+        "description": "Encuentra universidades para ti"
+      }
+    },
+    "savedCareer": "Carrera guardada",
+    "matchedCareer": "Carrera afín"
+  },
+  "meta": {
+    "defaultTitle": "FormMaps - Encuentra tu camino. Construye tu futuro."
   }
 }

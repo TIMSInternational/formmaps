@@ -13,6 +13,7 @@ import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/api/apiClient";
 import { TrackedApplication } from "@/services/applicationService";
+import { toCalendarDay, localDayKey } from "@/lib/dates";
 import { DeadlineDetailPanel } from "./_components/DeadlineDetailPanel";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -34,11 +35,6 @@ const DOT_COLORS = [
   { dot: "#14b8a6", bg: "rgba(20,184,166,0.12)", text: "#14b8a6" },
 ];
 
-function parseDeadlineDate(deadline: string): Date | null {
-  const d = new Date(deadline);
-  return isNaN(d.getTime()) ? null : d;
-}
-
 function buildCalendarDays(year: number, month: number): (Date | null)[] {
   const firstDay = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -57,10 +53,6 @@ function isSameDay(a: Date, b: Date) {
 
 function isToday(d: Date) {
   return isSameDay(d, new Date());
-}
-
-function dayKey(d: Date) {
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -94,10 +86,10 @@ export default function ApplicationsCalendarPage() {
   const deadlineMap = useMemo(() => {
     const map = new Map<string, TrackedApplication[]>();
     applications.forEach((app) => {
-      if (!app.deadline) return;
-      const d = parseDeadlineDate(app.deadline);
-      if (!d) return;
-      const key = dayKey(d);
+      // Bucket by the stored calendar day — never by local getters on a
+      // UTC-midnight Date, which lands a day early west of UTC (#394).
+      const key = toCalendarDay(app.deadline);
+      if (!key) return;
       if (!map.has(key)) map.set(key, []);
       map.get(key)!.push(app);
     });
@@ -184,13 +176,13 @@ export default function ApplicationsCalendarPage() {
             <div className="grid grid-cols-7 gap-px px-3 pb-4" style={{ background: "var(--admin-border-light)" }}>
               {cells.map((day, idx) => {
                 if (!day) return <div key={`empty-${idx}`} className="min-h-[72px] rounded-lg" style={{ background: "var(--admin-bg-card)" }} />;
-                const key = dayKey(day);
+                const key = localDayKey(day);
                 const dayApps = deadlineMap.get(key) ?? [];
                 const hasDeadlines = dayApps.length > 0;
                 const isSelected = selectedDay === key;
                 const todayDay = isToday(day);
                 return (
-                  <div key={key} onClick={() => setSelectedDay(isSelected ? null : key)} onMouseEnter={() => setHoveredDay(key)} onMouseLeave={() => setHoveredDay(null)}
+                  <div key={key} data-day={key} onClick={() => setSelectedDay(isSelected ? null : key)} onMouseEnter={() => setHoveredDay(key)} onMouseLeave={() => setHoveredDay(null)}
                     className="relative min-h-[72px] rounded-lg p-1.5 cursor-pointer flex flex-col gap-1 transition-all"
                     style={{ background: isSelected || hoveredDay === key ? "var(--admin-bg-hover)" : "var(--admin-bg-card)", border: isSelected ? "1.5px solid var(--admin-accent-blue)" : todayDay ? "1.5px solid rgba(59,130,246,0.4)" : "1px solid transparent" }}>
                     <span className={cn("text-xs font-semibold h-5 w-5 flex items-center justify-center rounded-full", todayDay && "text-white")}

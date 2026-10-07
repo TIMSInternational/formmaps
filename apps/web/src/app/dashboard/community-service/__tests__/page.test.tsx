@@ -18,10 +18,6 @@ jest.mock("sonner", () => ({
   toast: { error: jest.fn(), success: jest.fn() },
 }));
 
-jest.mock("@/lib/dateUtils", () => ({
-  formatDateOnly: (d: string) => d,
-}));
-
 // motion/react — render children immediately, strip motion-only props.
 jest.mock("motion/react", () => {
   const React = require("react");

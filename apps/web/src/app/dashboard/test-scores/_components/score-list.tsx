@@ -30,6 +30,7 @@ export function ScoreList({
   onAddClick,
 }: ScoreListProps) {
   const { t } = useTranslation("student");
+  const { t: tCommon } = useTranslation();
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
@@ -76,7 +77,9 @@ export function ScoreList({
                 </div>
                 <div>
                   <h3 className="font-semibold text-sm text-foreground">
-                    {type === "AP" ? t("testScores.list.apExams") : type}
+                    {type === "AP"
+                      ? t("testScores.list.apExams")
+                      : tCommon(`studentUi.testScores.testType.${type}`, { defaultValue: type })}
                   </h3>
                   <p className="text-xs text-muted-foreground">
                     {t("testScores.list.resultCount", { count: group.length })}

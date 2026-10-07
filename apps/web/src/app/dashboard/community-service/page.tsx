@@ -99,11 +99,14 @@ export default function CommunityServicePage() {
       supervisorEmail: form.supervisorEmail || undefined,
     };
 
-    if (editingId) {
-      updateMutation.mutate({ entryId: editingId, payload }, { onSuccess: closeForm });
-    } else {
-      logMutation.mutate(payload, { onSuccess: closeForm });
-    }
+    // Reset + collapse on success (#408). Awaiting the mutation promise rather
+    // than a per-call `onSuccess` keeps this independent of observer
+    // re-subscription; errors are already toasted by the hooks, so the form
+    // stays open with its values for a retry.
+    const request = editingId
+      ? updateMutation.mutateAsync({ entryId: editingId, payload })
+      : logMutation.mutateAsync(payload);
+    request.then(closeForm, () => {});
   };
 
   const handleDelete = (entryId: string) => {
@@ -255,6 +258,7 @@ export default function CommunityServicePage() {
       <AnimatePresence>
         {showForm && (
           <motion.div
+            key="service-form"
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
@@ -382,7 +386,7 @@ export default function CommunityServicePage() {
           </div>
           {data?.entries?.length ? (
             <p className="text-xs font-medium text-muted-foreground">
-              {data.entries.length} {t("communityService.serviceLog.entries")}
+              {t("communityService.serviceLog.entryCount", { count: data.entries.length })}
             </p>
           ) : null}
         </div>

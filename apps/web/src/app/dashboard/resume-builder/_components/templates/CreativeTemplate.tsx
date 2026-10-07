@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import i18n from "@/lib/i18n";
+import { prepareResumeForRender } from "../../_lib/resume-render";
 import { translateProficiency } from "../../_lib/resume-constants";
 import {
   Document,
@@ -262,7 +263,8 @@ interface CreativeTemplatePDFProps {
   data: ResumeData;
 }
 
-export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
+export function CreativeTemplatePDF({ data: rawData }: CreativeTemplatePDFProps) {
+  const data = prepareResumeForRender(rawData);
   // Group skills by category
   const skillsByCategory = data.skills.reduce((acc, skill) => {
     if (!acc[skill.category]) {
@@ -562,7 +564,8 @@ export function CreativeTemplatePDF({ data }: CreativeTemplatePDFProps) {
 }
 
 // Preview component for the template selector
-export function CreativeTemplatePreview({ data }: CreativeTemplatePDFProps) {
+export function CreativeTemplatePreview({ data: rawData }: CreativeTemplatePDFProps) {
+  const data = prepareResumeForRender(rawData);
   return (
     <div className="w-full h-full bg-white flex overflow-hidden">
       {/* Sidebar */}

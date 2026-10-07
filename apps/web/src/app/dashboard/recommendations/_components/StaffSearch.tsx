@@ -14,6 +14,8 @@ export interface StaffUser {
   roleName?: string;
 }
 
+const MIN_QUERY_LENGTH = 2;
+
 interface StaffSearchProps {
   value: StaffUser | null;
   onChange: (u: StaffUser | null) => void;
@@ -22,13 +24,34 @@ interface StaffSearchProps {
 export default function StaffSearch({ value, onChange }: StaffSearchProps) {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
+  // null = unknown (probe pending/failed). Tells "you have no recommenders at
+  // all" apart from "your query matched none" (formmaps-platform#412).
+  const [hasAnyStaff, setHasAnyStaff] = useState<boolean | null>(null);
   const [results, setResults] = useState<StaffUser[]>([]);
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    if (!query || query.length < 2) {
+    let cancelled = false;
+    apiRequest("/api/v1/recommendations/staff?limit=1", { method: "GET" })
+      .then((res) => {
+        const users = res?.data?.data ?? res?.data ?? [];
+        if (!cancelled) setHasAnyStaff(Array.isArray(users) && users.length > 0);
+      })
+      .catch(() => {
+        // Unknown: fall back to the per-query no-matches message.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const trimmedQuery = query.trim();
+  const noStaff = hasAnyStaff === false;
+
+  useEffect(() => {
+    if (noStaff || trimmedQuery.length < MIN_QUERY_LENGTH) {
       setResults([]);
       setOpen(false);
       setError(false);
@@ -40,7 +63,7 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
       try {
         // Student-accessible endpoint: staff at the student's own school only
         const res = await apiRequest(
-          `/api/v1/recommendations/staff?search=${encodeURIComponent(query)}&limit=10`,
+          `/api/v1/recommendations/staff?search=${encodeURIComponent(trimmedQuery)}&limit=10`,
           { method: "GET" }
         );
         const users = res?.data?.data ?? res?.data ?? [];
@@ -55,7 +78,16 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
       }
     }, 300);
     return () => clearTimeout(timer);
-  }, [query]);
+  }, [trimmedQuery, noStaff]);
+
+  // Shown under the input without a search round-trip.
+  const inlineHint = !trimmedQuery
+    ? null
+    : noStaff
+      ? t("studentUi.recommendations.staffSearch.noStaff")
+      : trimmedQuery.length < MIN_QUERY_LENGTH
+        ? t("studentUi.recommendations.staffSearch.minChars")
+        : null;
 
   if (value) {
     return (
@@ -85,6 +117,8 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
           </div>
         </div>
         <button
+          type="button"
+          aria-label={t("studentUi.recommendations.staffSearch.clearSelection")}
           onClick={() => onChange(null)}
           style={{
             background: "none",
@@ -125,6 +159,11 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
           />
         )}
       </div>
+      {inlineHint && (
+        <div className="mt-1.5 text-xs" style={{ color: "var(--admin-font-tertiary)" }}>
+          {inlineHint}
+        </div>
+      )}
       <AnimatePresence>
         {open && (
           <motion.div
@@ -163,7 +202,7 @@ export default function StaffSearch({ value, onChange }: StaffSearchProps) {
                   color: "var(--admin-font-tertiary)",
                 }}
               >
-                {t("studentUi.recommendations.staffSearch.noResults")}
+                {t("studentUi.recommendations.staffSearch.noMatches", { query: trimmedQuery })}
               </div>
             )}
             {results.map((u) => (

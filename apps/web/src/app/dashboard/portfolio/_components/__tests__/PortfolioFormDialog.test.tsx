@@ -78,3 +78,44 @@ describe("PortfolioFormDialog", () => {
     expect(screen.getByLabelText(/activity category/i)).toBeInTheDocument();
   });
 });
+
+// ── #403: Total hours auto-fills from Hours/Week × Weeks/Year ─────────────────
+
+function StatefulDialog({ initial }: { initial: PortfolioItemPayload }) {
+  const [data, setData] = React.useState(initial);
+  return (
+    <PortfolioFormDialog
+      open={true}
+      onOpenChange={jest.fn()}
+      editingItem={null}
+      formData={data}
+      onFormDataChange={setData}
+      onSubmit={jest.fn()}
+      isPending={false}
+    />
+  );
+}
+
+describe("PortfolioFormDialog — total hours auto-fill (#403)", () => {
+  const total = () => screen.getByLabelText(/total hours/i) as HTMLInputElement;
+
+  it("fills Total = Hours/Week × Weeks/Year when the student has not typed a total", () => {
+    render(<StatefulDialog initial={buildPayload({ type: "volunteer" })} />);
+    fireEvent.change(screen.getByLabelText(/hours\/week/i), { target: { value: "4" } });
+    expect(total().value).toBe("");
+    fireEvent.change(screen.getByLabelText(/weeks\/year/i), { target: { value: "40" } });
+    expect(total().value).toBe("160");
+    // keeps following while untouched
+    fireEvent.change(screen.getByLabelText(/hours\/week/i), { target: { value: "5" } });
+    expect(total().value).toBe("200");
+  });
+
+  it("never overwrites a total the student typed", () => {
+    render(<StatefulDialog initial={buildPayload({ type: "volunteer" })} />);
+    fireEvent.change(screen.getByLabelText(/hours\/week/i), { target: { value: "4" } });
+    fireEvent.change(screen.getByLabelText(/weeks\/year/i), { target: { value: "40" } });
+    fireEvent.change(total(), { target: { value: "120" } });
+    fireEvent.change(screen.getByLabelText(/weeks\/year/i), { target: { value: "50" } });
+    expect(total().value).toBe("120");
+  });
+});

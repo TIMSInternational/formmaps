@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CourseCard } from "./CourseCard";
 import { CourseFilters } from "./CourseFilters";
 import { SkeletonCourseCard } from "./SkeletonCourseCard";
@@ -30,6 +30,7 @@ import { toast } from "@/hooks/useToast";
 import { BookOpen, Search, TrendingUp, Sparkles } from "lucide-react";
 import { motion } from "motion/react";
 import Image from "next/image";
+import Link from "next/link";
 
 export function CoursesCatalog() {
   const { t } = useTranslation();
@@ -37,6 +38,8 @@ export function CoursesCatalog() {
   const { data: recData } = useRecommendedCourses();
   const courses = data?.courses || data?.Courses || [];
   const aiRecommendedCourses = recData?.courses || [];
+  // #397: the API withholds recommendations until the student has career matches.
+  const recommendationsLocked = recData?.locked === true;
   const [filters, setFilters] = useState<CourseFilter>({});
   const [sortBy, setSortBy] = useState<CourseSortOption>("recommended");
   const { openPanel } = useSidePanel();
@@ -93,13 +96,9 @@ export function CoursesCatalog() {
     return sorted;
   }, [courses, filters, sortBy]);
 
-  const recommendedCourses = useMemo(() => {
-    if (aiRecommendedCourses.length > 0) return aiRecommendedCourses.slice(0, 6);
-    return courses
-      .filter((c: Course) => c.rating >= 4.5)
-      .sort((a: Course, b: Course) => b.rating - a.rating)
-      .slice(0, 6);
-  }, [courses, aiRecommendedCourses]);
+  // Only the API's profile-based picks — never a top-rated catalog fallback,
+  // which showed "Recommended for You" to students with no assessments (#397).
+  const recommendedCourses = useMemo(() => aiRecommendedCourses.slice(0, 6), [aiRecommendedCourses]);
 
   const availableFilters = useMemo(
     () => ({
@@ -126,6 +125,20 @@ export function CoursesCatalog() {
     },
     [openPanel, enrollments]
   );
+
+  // Cmd+K course results link here with ?course=<id> (#407): open that
+  // course's panel once the catalog has loaded. Read from window.location
+  // rather than useSearchParams so the page needs no Suspense boundary.
+  const deepLinkHandled = useRef(false);
+  useEffect(() => {
+    if (deepLinkHandled.current || courses.length === 0) return;
+    const id = new URLSearchParams(window.location.search).get("course");
+    if (!id) return;
+    const target = courses.find((c: Course) => c.id === id);
+    if (!target) return;
+    deepLinkHandled.current = true;
+    handleViewDetails(target);
+  }, [courses, handleViewDetails]);
 
   const handleStartCourse = useCallback(
     async (course: Course) => {
@@ -203,6 +216,19 @@ export function CoursesCatalog() {
           />
         );
       })()}
+
+      {/* Recommended — locked until the student has career matches */}
+      {!filters.search && recommendationsLocked && (
+        <div className="dash-card p-5 flex items-center gap-3">
+          <Sparkles className="w-4 h-4 text-amber-500 shrink-0" />
+          <p className="text-sm text-foreground flex-1">
+            {t("courses.recommendationsLocked", "Complete your assessments to get course recommendations")}
+          </p>
+          <Link href="/dashboard/assessments" className="text-xs font-medium text-primary hover:text-primary/80 transition-colors">
+            {t("courses.goToAssessments", "Go to assessments")}
+          </Link>
+        </div>
+      )}
 
       {/* Recommended */}
       {!filters.search && recommendedCourses.length > 0 && (

@@ -120,3 +120,44 @@ it("a successful submit says it's done and refreshes every completion reader; a 
   // Just finished: says so — not the "Already submitted" a returning visitor sees.
   expect(await screen.findByRole("heading", { name: "Evaluation completed" })).toBeInTheDocument();
 });
+
+describe("ranking items count as answered only after interaction (#410)", () => {
+  const rankingForm = () => ({ group: "self", questions: [
+    { number: 1, type: "open", scaleAnchors: null, options: null, text: "Q1", block: "open", area: null, dimensionKey: null },
+    { number: 2, type: "ranking", scaleAnchors: null, options: [{ value: "x", labelEs: "X" }, { value: "y", labelEs: "Y" }], text: "Rank these", block: "ranking", area: null, dimensionKey: null },
+  ] });
+
+  it("starts the counter at 0 — the default order is not an answer", async () => {
+    getForm.mockResolvedValue(rankingForm());
+    render(<VocationalEvaluator token="tok" language="english" />);
+    await waitFor(() => screen.getByText("Rank these"));
+    expect(screen.getByText("0 of 2 answered")).toBeInTheDocument();
+  });
+
+  it("counts the ranking after an explicit 'Keep this order' confirm", async () => {
+    getForm.mockResolvedValue(rankingForm());
+    render(<VocationalEvaluator token="tok" language="english" />);
+    await waitFor(() => screen.getByText("Rank these"));
+    fireEvent.click(screen.getByRole("button", { name: /Keep this order/i }));
+    expect(screen.getByText("1 of 2 answered")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Keep this order/i })).not.toBeInTheDocument();
+  });
+
+  it("counts the ranking after a reorder", async () => {
+    getForm.mockResolvedValue(rankingForm());
+    render(<VocationalEvaluator token="tok" language="english" />);
+    await waitFor(() => screen.getByText("Rank these"));
+    fireEvent.click(screen.getAllByRole("button", { name: /down/i })[0]);
+    expect(screen.getByText("1 of 2 answered")).toBeInTheDocument();
+  });
+
+  it("blocks submit while a ranking is untouched", async () => {
+    getForm.mockResolvedValue(rankingForm());
+    render(<VocationalEvaluator token="tok" language="english" />);
+    await waitFor(() => screen.getByText("Rank these"));
+    fireEvent.change(screen.getByRole("textbox"), { target: { value: "answer" } });
+    fireEvent.click(screen.getByRole("button", { name: /submit|enviar|finish/i }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(submit).not.toHaveBeenCalled();
+  });
+});

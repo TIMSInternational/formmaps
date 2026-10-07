@@ -139,7 +139,7 @@ export function StatCards({ activeCourses = 0 }: StatCardsProps) {
         icon={<Compass className="w-4 h-4" />}
         label={t("dashboard.careerMatches", "Career Matches")}
         value={careersLocked ? t("dashboard.locked", "Locked") : String(careers.length)}
-        sub={!careersLocked && topScore > 0 ? `Top: ${topScore}%` : undefined}
+        sub={!careersLocked && topScore > 0 ? t("dashboard.topMatch", { score: topScore }) : undefined}
         cta={careersLocked ? t("dashboard.completeAssessments", "Complete assessments") : t("dashboard.explore", "Explore")}
         href="/dashboard/career-paths"
         loading={timsLoading}
@@ -150,8 +150,10 @@ export function StatCards({ activeCourses = 0 }: StatCardsProps) {
         value={String(portfolio?.totalItems ?? 0)}
         sub={
           (portfolio?.totalVolunteerHours ?? 0) > 0
-            ? `${portfolio!.totalVolunteerHours} vol hrs`
-            : (portfolio?.totalItems ?? 0) > 0 ? "items" : undefined
+            ? t("dashboard.volunteerHours", { count: portfolio!.totalVolunteerHours })
+            : (portfolio?.totalItems ?? 0) > 0
+              ? t("dashboard.portfolioItems", { count: portfolio!.totalItems })
+              : undefined
         }
         cta={t("dashboard.addItem", "Add item")}
         href="/dashboard/portfolio"
@@ -161,7 +163,7 @@ export function StatCards({ activeCourses = 0 }: StatCardsProps) {
         icon={<BookOpen className="w-4 h-4" />}
         label={t("dashboard.courses", "Courses")}
         value={String(activeCourses)}
-        sub={activeCourses > 0 ? "enrolled" : undefined}
+        sub={activeCourses > 0 ? t("dashboard.coursesEnrolled") : undefined}
         cta={
           activeCourses > 0
             ? t("dashboard.resume", "Resume")

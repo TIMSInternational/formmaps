@@ -1,6 +1,6 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { PageTopBar } from "@/components/layout/PageTopBar";
-import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/command-palette/CommandPalette";
+import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/command-palette/events";
 
 jest.mock("@/components/notifications/NotificationCenter", () => ({
   NotificationCenter: () => <div data-testid="notification-center" />,

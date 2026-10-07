@@ -21,6 +21,7 @@ import { useAssessmentProgress } from "@/hooks/useAssessmentQueries";
 import { Card } from "@/components/ui/card";
 import Link from "next/link";
 import { isCareerJourneyComplete } from "./_components/journeyStatus";
+import { REQUIRED_FOR_MATCHES, formatAssessmentList } from "@/lib/assessments";
 
 interface DashboardData {
   activeCourses?: number;
@@ -32,8 +33,9 @@ interface DashboardData {
 }
 
 export default function DashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useGlobalStore();
+  const assessmentList = formatAssessmentList(t, i18n.language);
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -141,10 +143,10 @@ export default function DashboardPage() {
                     {t("dashboard.recommendationsLocked", "Recommendations Locked")}
                   </h3>
                   <p className="text-sm text-muted-foreground max-w-sm mb-4">
-                    {t(
-                      "dashboard.completeAllAssessments",
-                      "Complete all 4 assessments (PCA, LIA, 360° Evaluation, and Personality) to unlock your personalized career matches and recommendations."
-                    )}
+                    {t("dashboard.completeAllAssessments", {
+                      count: REQUIRED_FOR_MATCHES.length,
+                      list: assessmentList,
+                    })}
                   </p>
                   <Link
                     href="/dashboard/assessments"
@@ -173,7 +175,7 @@ export default function DashboardPage() {
               {
                 id: "1",
                 title: t("dashboard.journey.assessmentsTitle"),
-                description: t("dashboard.journey.assessmentsDesc"),
+                description: t("dashboard.journey.assessmentsDesc", { list: assessmentList }),
                 status: allAssessmentsComplete ? "completed" : "active",
                 icon: <FileText style={{ width: 12, height: 12 }} />,
               },

@@ -7,7 +7,7 @@ import {
   Star,
   FileText,
 } from "lucide-react";
-import type { PortfolioItemType, PortfolioItemPayload, StudentActivityCategory } from "@/types/portfolio";
+import type { PortfolioItem, PortfolioItemType, PortfolioItemPayload, StudentActivityCategory } from "@/types/portfolio";
 
 // label = i18n key (common namespace); translate at render time
 export const typeConfig: Record<
@@ -74,3 +74,22 @@ export const activityCategories: { value: StudentActivityCategory; label: string
   { value: "leadership", label: "studentUi.portfolio.category.leadership" },
   { value: "other", label: "studentUi.portfolio.category.other" },
 ];
+
+type HoursFields = Pick<PortfolioItem, "totalHours" | "hoursPerWeek" | "weeksPerYear">;
+
+/** Hours/Week × Weeks/Year, or undefined when either is missing/zero. */
+export function derivedHours({ hoursPerWeek, weeksPerYear }: HoursFields): number | undefined {
+  const product = (Number(hoursPerWeek) || 0) * (Number(weeksPerYear) || 0);
+  return product > 0 ? product : undefined;
+}
+
+/** An item's hours: the typed total, else Hours/Week × Weeks/Year (#403). */
+export function effectiveHours(item: HoursFields): number {
+  const total = Number(item.totalHours) || 0;
+  return total > 0 ? total : derivedHours(item) ?? 0;
+}
+
+/** Sum of effectiveHours over Volunteer items. */
+export function sumVolunteerHours(items: (HoursFields & { type: PortfolioItemType })[]): number {
+  return items.filter((i) => i.type === "volunteer").reduce((sum, i) => sum + effectiveHours(i), 0);
+}

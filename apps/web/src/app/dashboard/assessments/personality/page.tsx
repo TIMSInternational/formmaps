@@ -21,6 +21,7 @@ import {
 } from "@/services/personalityService";
 import { RequireChromium } from "@/components/proctoring/RequireChromium";
 import { ProctoredShell } from "@/components/proctoring/ProctoredShell";
+import { PROCTORING_MODE_BY_INSTRUMENT } from "@/components/proctoring/proctoringModes";
 import { useProctoring } from "@/components/proctoring/useProctoring";
 import { installViolationFlush, postViolations } from "@/components/proctoring/flushViolations";
 import type { LockdownViolation } from "@/components/proctoring/types";
@@ -44,6 +45,7 @@ export default function PersonalityAssessmentPage() {
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const proctoring = useProctoring({
+    mode: PROCTORING_MODE_BY_INSTRUMENT.personality,
     onFlush: (v) => {
       if (!sessionId) return;
       postViolations(
@@ -200,7 +202,7 @@ export default function PersonalityAssessmentPage() {
   // Wrap a live runner in the browser gate + proctoring chrome.
   const watermark = user?.email ? { email: user.email } : undefined;
   const proctored = (node: ReactNode) => (
-    <RequireChromium>
+    <RequireChromium mode={proctoring.mode}>
       <ProctoredShell proctoring={proctoring} watermark={watermark}>{node}</ProctoredShell>
     </RequireChromium>
   );

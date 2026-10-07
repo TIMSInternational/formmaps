@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import { ChecklistItem, CATEGORY_LABELS, CATEGORY_ORDER } from "./types";
 import { FormInput, LoadingRow, EmptyState } from "./shared";
+import { useDateFormat } from "@/hooks/useDateFormat";
 
 interface ChecklistTabProps {
   checklist: ChecklistItem[];
@@ -43,6 +44,7 @@ export function ChecklistTab({
   onAddItem,
 }: ChecklistTabProps) {
   const { t } = useTranslation();
+  const { formatDate } = useDateFormat();
   return (
     <motion.div
       key="checklist"
@@ -221,7 +223,7 @@ export function ChecklistTab({
                         {item.dueDate && (
                           <span className="flex items-center gap-1 text-[11px]" style={{ color: "var(--admin-font-tertiary)" }}>
                             <Calendar className="h-3 w-3" />
-                            {item.dueDate}
+                            {formatDate(item.dueDate)}
                           </span>
                         )}
                         {item.notes && (

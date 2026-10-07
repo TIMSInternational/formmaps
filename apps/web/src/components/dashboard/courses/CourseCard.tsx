@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Course } from "@/types/course";
 import { useTranslation } from "react-i18next";
+import { formatCourseDuration } from "@/lib/courseDuration";
 import { Star, Clock, Users, Award, CheckCircle2, ArrowUpRight, BookOpen } from "lucide-react";
 
 interface CourseCardProps {
@@ -30,9 +31,7 @@ export const CourseCard = React.memo(function CourseCard({
 }: CourseCardProps) {
   const { t } = useTranslation();
 
-  const formatDuration = (weeks: number) => {
-    return `${weeks} ${weeks === 1 ? t("courses.week") : t("courses.weeks")}`;
-  };
+  const durationLabel = formatCourseDuration(course.duration, t);
 
   const formatRating = (rating: number) => {
     return Number(rating ?? 0).toFixed(1);
@@ -119,10 +118,12 @@ export const CourseCard = React.memo(function CourseCard({
             <Badge variant="outline" className={`font-medium ${getDifficultyColor(course.difficulty)}`}>
               {t(`courses.difficulty.${course.difficulty.toLowerCase()}`)}
             </Badge>
-            <Badge variant="secondary" className="bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-100 font-medium">
-              <Clock className="w-3 h-3 mr-1 text-gray-400" aria-hidden="true" />
-              {formatDuration(course.duration)}
-            </Badge>
+            {durationLabel && (
+              <Badge variant="secondary" className="bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-100 font-medium">
+                <Clock className="w-3 h-3 mr-1 text-gray-400" aria-hidden="true" />
+                {durationLabel}
+              </Badge>
+            )}
             <Badge variant="secondary" className="bg-gray-50 text-gray-600 hover:bg-gray-100 border-gray-100 font-medium">
               <Star className="w-3 h-3 mr-1 text-yellow-500 fill-yellow-500" aria-hidden="true" />
               {formatRating(course.rating)}

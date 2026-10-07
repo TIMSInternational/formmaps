@@ -204,3 +204,102 @@ describe("useProctoring", () => {
     });
   });
 });
+
+describe("useProctoring — fullscreen unavailable (#391)", () => {
+  const docEl = document.documentElement as HTMLElement & { requestFullscreen?: unknown };
+  afterEach(() => {
+    delete (docEl as { requestFullscreen?: unknown }).requestFullscreen;
+    Object.defineProperty(document, "fullscreenEnabled", { configurable: true, get: () => undefined });
+    Object.defineProperty(document, "fullscreenElement", { configurable: true, get: () => null });
+  });
+
+  it("does NOT block when the browser has no element fullscreen (iOS Safari) and records fullscreen_unavailable once", () => {
+    const { result } = renderHook(() => useProctoring());
+    act(() => result.current.begin());
+    expect(result.current.needsFullscreenPrompt).toBe(false);
+    expect(result.current.fullscreenUnavailable).toBe(true);
+    act(() => result.current.enterFullscreen());
+    const hits = result.current.violations.current.filter((v) => v.type === "fullscreen_unavailable");
+    expect(hits).toHaveLength(1);
+    expect(result.current.violations.current.some((v) => v.type === "fullscreen_exit")).toBe(false);
+  });
+
+  it("does NOT block when a user-initiated requestFullscreen rejects (kiosk policy / automation) and records the violation", async () => {
+    Object.defineProperty(document, "fullscreenEnabled", { configurable: true, get: () => true });
+    docEl.requestFullscreen = jest.fn(() => Promise.reject(new Error("denied")));
+    const { result } = renderHook(() => useProctoring());
+    await act(async () => {
+      result.current.begin();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    // The automatic, gesture-less request in begin() being refused is normal in
+    // Chromium — it must NOT disable enforcement on its own.
+    expect(result.current.needsFullscreenPrompt).toBe(true);
+    expect(result.current.fullscreenUnavailable).toBe(false);
+    // The overlay's button (a real user gesture) is refused too → unavailable.
+    await act(async () => {
+      result.current.enterFullscreen();
+      await Promise.resolve();
+      await Promise.resolve();
+    });
+    expect(result.current.needsFullscreenPrompt).toBe(false);
+    expect(result.current.fullscreenUnavailable).toBe(true);
+    expect(result.current.violations.current.filter((v) => v.type === "fullscreen_unavailable")).toHaveLength(1);
+  });
+
+  it("still blocks (enforce) when fullscreen is supported but the taker is not in fullscreen", async () => {
+    Object.defineProperty(document, "fullscreenEnabled", { configurable: true, get: () => true });
+    docEl.requestFullscreen = jest.fn(() => Promise.resolve());
+    const { result } = renderHook(() => useProctoring());
+    await act(async () => {
+      result.current.begin();
+      await Promise.resolve();
+    });
+    expect(docEl.requestFullscreen).toHaveBeenCalled();
+    expect(result.current.needsFullscreenPrompt).toBe(true);
+    expect(result.current.fullscreenUnavailable).toBe(false);
+  });
+});
+
+describe("useProctoring — save and exit (#391)", () => {
+  it("exit() flushes buffered violations immediately and ends the session", () => {
+    const onFlush = jest.fn();
+    const { result } = renderHook(() => useProctoring({ onFlush }));
+    act(() => result.current.begin());
+    act(() => setHidden(true));
+    act(() => result.current.exit());
+    expect(onFlush).toHaveBeenCalled();
+    const flushed = onFlush.mock.calls.flatMap((c) => c[0] as LockdownViolation[]);
+    expect(flushed.some((v) => v.type === "tab_switch")).toBe(true);
+    expect(result.current.active).toBe(false);
+    expect(result.current.focusLost).toBe(false);
+  });
+});
+
+describe("useProctoring — record mode (#392)", () => {
+  it("captures violations but never raises a blocking flag nor requests fullscreen", () => {
+    const docEl = document.documentElement as HTMLElement & { requestFullscreen?: unknown };
+    Object.defineProperty(document, "fullscreenEnabled", { configurable: true, get: () => true });
+    docEl.requestFullscreen = jest.fn(() => Promise.resolve());
+    Object.defineProperty(window.screen, "isExtended", { configurable: true, get: () => true });
+    const { result } = renderHook(() => useProctoring({ mode: "record" }));
+    act(() => result.current.begin());
+    act(() => setHidden(true));
+    expect(result.current.mode).toBe("record");
+    expect(result.current.multiDisplay).toBe(false);
+    expect(result.current.focusLost).toBe(false);
+    expect(result.current.needsFullscreenPrompt).toBe(false);
+    expect(docEl.requestFullscreen).not.toHaveBeenCalled();
+    const types = result.current.violations.current.map((v) => v.type);
+    expect(types).toEqual(expect.arrayContaining(["multi_display", "tab_switch"]));
+    expect(types).not.toContain("fullscreen_exit");
+    delete (docEl as { requestFullscreen?: unknown }).requestFullscreen;
+    Object.defineProperty(document, "fullscreenEnabled", { configurable: true, get: () => undefined });
+  });
+
+  it("defaults to enforce", () => {
+    const { result } = renderHook(() => useProctoring());
+    expect(result.current.mode).toBe("enforce");
+  });
+});

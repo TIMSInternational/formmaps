@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import {
@@ -25,11 +25,17 @@ import {
   ChevronRight,
   Loader2,
   CalendarDays,
+  X,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 import { parseYmdLocal } from "@/lib/dateUtils";
+import {
+  formatSlotTime,
+  resolveStudentTimeZone,
+  sessionDurationLabel,
+} from "@/lib/coachBookingTime";
 
 interface BookingModalProps {
   coach: Coach | null;
@@ -112,9 +118,9 @@ export function BookingModal({
   const [isLoadingSlots, setIsLoadingSlots] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
   const [slotsData, setSlotsData] = useState<CoachSlotsResponse | null>(null);
-  const [timezone, setTimezone] = useState<string>(
-    Intl.DateTimeFormat().resolvedOptions().timeZone
-  );
+  // The STUDENT's zone: slots (UTC instants from the API) are rendered here.
+  // The app stores no per-user timezone, so this is the browser's zone.
+  const [timezone] = useState<string>(() => resolveStudentTimeZone());
   const { user } = useGlobalStore();
   const { t, i18n } = useTranslation();
   const dateLocale = i18n?.language?.startsWith("es") ? es : enUS;
@@ -145,25 +151,22 @@ export function BookingModal({
     }
   }, [date, coach?.id, timezone, isOpen]);
 
+  // The coach's own zone (older API responses may not carry it — then no hint).
+  const coachTimezone = slotsData?.coachTimezone;
+  const showCoachTime = Boolean(coachTimezone && coachTimezone !== timezone);
+
+  // Slots are UTC instants. The ISO string stays the slot's identity (and is
+  // what gets submitted); the labels are only for display (#404).
   const availableTimeSlots = useMemo(() => {
     if (!slotsData) return [];
+    return slotsData.slots.map((iso) => ({
+      iso,
+      label: formatSlotTime(iso, timezone),
+      coachLabel: coachTimezone ? formatSlotTime(iso, coachTimezone) : null,
+    }));
+  }, [slotsData, timezone, coachTimezone]);
 
-    // API returns ISO strings or time strings. If ISO, we might need to format them.
-    // Based on the spec, it returns full ISO strings e.g., "2024-12-25T09:00:00+05:30".
-    // We want to display them as "09:00am".
-
-    return slotsData.slots.map((slotIso) => {
-      try {
-        // Build a date object from the ISO string
-        const d = new Date(slotIso);
-        // Format to local time string matching the modal's expected format "hh:mma"
-        return format(d, "hh:mma").toLowerCase();
-      } catch (e) {
-        // Fallback if it's already a simple time string like "09:00am" (though spec says ISO)
-        return slotIso;
-      }
-    });
-  }, [slotsData]);
+  const durationLabel = sessionDurationLabel(slotsData?.sessionDurationMinutes, t);
 
   // Reset state when modal opens/closes
   useEffect(() => {
@@ -177,8 +180,8 @@ export function BookingModal({
     }
   }, [isOpen, initialTopic, initialNotes]);
 
-  const handleTimeSelect = (time: string) => {
-    setSelectedTime(time);
+  const handleTimeSelect = (slotIso: string) => {
+    setSelectedTime(slotIso);
     setStep("details");
   };
 
@@ -189,20 +192,11 @@ export function BookingModal({
     }
 
     try {
-      // Map the selected visible time back to the full ISO string if possible,
-      // or construct it carefully. Since we mapped FROM ISO to display, we should find the matching ISO.
-      // However, if we just formatted it for display, we might have lost the exact original string if there were duplicates (unlikely in time slots).
-
-      // Better approach: Find the original slot ISO string from `slotsData.slots` that matches the selectedTime display.
-      const originalSlotIso = slotsData?.slots.find((slotIso) => {
-        try {
-          return (
-            format(new Date(slotIso), "hh:mma").toLowerCase() === selectedTime
-          );
-        } catch {
-          return false;
-        }
-      });
+      // `selectedTime` IS the API's slot instant (not a display label), so the
+      // payload below sends exactly the UTC instant the API offered.
+      const originalSlotIso = slotsData?.slots.find(
+        (slotIso) => slotIso === selectedTime
+      );
 
       if (!originalSlotIso) {
         // Fallback logic if we can't match (shouldn't happen with correct API)
@@ -292,14 +286,52 @@ export function BookingModal({
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent
-        className="sm:max-w-[1000px] w-full p-0 overflow-hidden gap-0 bg-white text-gray-900 border-gray-200 shadow-2xl rounded-xl"
+        showCloseButton={false}
+        className={cn(
+          "sm:max-w-[1000px] w-full p-0 gap-0 bg-white text-gray-900 border-gray-200 shadow-2xl rounded-xl",
+          // Always scrollable inside the viewport — on phones the content is
+          // far taller than the screen and the page behind is scroll-locked (#396).
+          "max-h-[100dvh] overflow-x-hidden overflow-y-auto overscroll-contain sm:max-h-[calc(100dvh-2rem)]",
+          // < 640px: a full-height sheet pinned to the viewport, not a centred card.
+          "max-sm:inset-0 max-sm:top-0 max-sm:left-0 max-sm:translate-x-0 max-sm:translate-y-0 max-sm:h-[100dvh] max-sm:max-w-none max-sm:rounded-none max-sm:border-0"
+        )}
         aria-describedby={undefined}
       >
         <DialogTitle className="sr-only">{t("components.bookingModal.title")}</DialogTitle>
-        <div className="flex flex-col md:flex-row min-h-[550px]">
+
+        {/* Sticky header (phones): keeps the close button reachable while scrolling. */}
+        <div
+          data-testid="booking-sheet-header"
+          className="sticky top-0 z-20 flex items-center justify-between gap-3 border-b border-gray-100 bg-white px-4 py-3 sm:hidden"
+        >
+          <div className="min-w-0">
+            <p className="truncate text-sm font-semibold text-gray-900">{coach.name}</p>
+            {durationLabel && (
+              <p className="truncate text-xs text-gray-500">{durationLabel}</p>
+            )}
+          </div>
+          <DialogClose asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-11 w-11 shrink-0 rounded-full text-gray-600"
+            >
+              <X className="h-5 w-5" aria-hidden="true" />
+              <span className="sr-only">{t("common.close")}</span>
+            </Button>
+          </DialogClose>
+        </div>
+
+        {/* Desktop close button — same placement as the shared dialog's default. */}
+        <DialogClose className="absolute top-4 right-4 z-20 hidden rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:outline-hidden focus:ring-2 focus:ring-ring focus:ring-offset-2 sm:inline-flex">
+          <X className="size-4" aria-hidden="true" />
+          <span className="sr-only">{t("common.close")}</span>
+        </DialogClose>
+
+        <div className="flex flex-col md:flex-row md:min-h-[550px]">
           {/* Column 1: Coach Info (Sidebar) */}
-          <div className="w-full md:w-[280px] p-6 border-r border-gray-100 flex flex-col bg-white">
-            <div className="mb-8">
+          <div className="w-full md:w-[280px] p-6 border-b md:border-b-0 md:border-r border-gray-100 flex flex-col bg-white">
+            <div className="md:mb-8">
               {step === "details" && (
                 <Button
                   variant="ghost"
@@ -323,16 +355,14 @@ export function BookingModal({
                   ? t("booking.rescheduleSession")
                   : slotsData?.price && slotsData.price.amount > 0
                     ? `${slotsData.price.currency} ${slotsData.price.amount}`
-                    : t("components.bookingModal.oneHourSession")}
+                    : durationLabel}
               </p>
 
               <div className="space-y-4 text-gray-600 text-sm">
                 <div className="flex items-center">
                   <Clock className="h-4 w-4 mr-3 text-gray-400" aria-hidden="true" />
                   <span className="font-medium">
-                    {slotsData?.sessionDurationMinutes
-                      ? t("components.bookingModal.durationMinutes", { minutes: slotsData.sessionDurationMinutes })
-                      : t("components.bookingModal.oneHour")}
+                    {durationLabel ?? "…"}
                   </span>
                 </div>
                 <div className="flex items-center">
@@ -341,7 +371,7 @@ export function BookingModal({
                 </div>
                 <div className="flex items-center">
                   <Globe className="h-4 w-4 mr-3 text-gray-400" aria-hidden="true" />
-                  <span className="font-medium">{slotsData?.timezone || timezone}</span>
+                  <span className="font-medium">{timezone}</span>
                 </div>
               </div>
             </div>
@@ -352,7 +382,7 @@ export function BookingModal({
             {step === "date-time" ? (
               <>
                 {/* Column 2: Calendar */}
-                <div className="flex-1 p-6 border-r border-gray-100 flex flex-col">
+                <div className="flex-1 p-6 border-b md:border-b-0 md:border-r border-gray-100 flex flex-col">
                   <h2 className="text-lg font-semibold mb-4 text-gray-900">
                     {t('booking.selectDateTime')}
                   </h2>
@@ -442,20 +472,19 @@ export function BookingModal({
                     <div className="flex items-center gap-2">
                       <Globe className="h-4 w-4" aria-hidden="true" />
                       <span>
-                        {t('booking.timesShownIn', { timezone: slotsData?.timezone || timezone })}
+                        {t('booking.timesShownIn', { timezone })}
                       </span>
                     </div>
-                    {/* Timezone Helper Text */}
-                    {slotsData?.timezone && slotsData.timezone !== timezone && (
+                    {showCoachTime && (
                       <p className="text-xs text-[var(--admin-accent-blue)]">
-                        {t('booking.convertedToLocal', { timezone })}
+                        {t('booking.coachTimezone', { timezone: coachTimezone })}
                       </p>
                     )}
                   </div>
                 </div>
 
                 {/* Column 3: Time Slots */}
-                <div className="w-full md:w-[260px] p-5 bg-gray-50/50 flex flex-col h-[550px]">
+                <div className="w-full md:w-[260px] p-5 bg-gray-50/50 flex flex-col md:h-[550px]">
                   <div className="mb-4">
                     <h4 className="text-base font-semibold text-gray-900">
                       {date ? format(date, "EEEE, MMM d", { locale: dateLocale }) : t('booking.selectDate')}
@@ -475,7 +504,7 @@ export function BookingModal({
                     )}
                   </div>
 
-                  <div className="flex-1 overflow-y-auto pr-1 space-y-2 custom-scrollbar">
+                  <div className="flex-1 md:overflow-y-auto pr-1 space-y-2 custom-scrollbar">
                     {!date ? (
                       <div className="flex flex-col items-center justify-center h-full text-gray-400 text-sm">
                         <CalendarDays className="h-12 w-12 mb-3 opacity-30" />
@@ -522,25 +551,35 @@ export function BookingModal({
                         )}
                       </div>
                     ) : (
-                      availableTimeSlots.map((time) => {
-                        const isSelected = selectedTime === time;
+                      availableTimeSlots.map(({ iso, label, coachLabel }) => {
+                        const isSelected = selectedTime === iso;
 
                         return (
                           <Button
-                            key={time}
+                            key={iso}
                             // Past check is handled by API mostly, but keeping UI check is fine
                             // though confusing if we mix timezones.
                             // Since API returns valid future slots, we can rely on it primarily.
                             variant={isSelected ? "default" : "outline"}
                             className={cn(
-                              "w-full justify-center font-medium h-11 transition-all rounded-lg",
+                              "w-full flex-col justify-center gap-0 font-medium min-h-11 h-auto py-2 transition-all rounded-lg",
                               isSelected
                                 ? "bg-[var(--admin-accent-blue)] text-white border-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)] shadow-md"
                                 : "border-gray-200 text-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/10 hover:border-[var(--admin-accent-blue)] hover:text-[var(--admin-accent-blue)]"
                             )}
-                            onClick={() => handleTimeSelect(time)}
+                            onClick={() => handleTimeSelect(iso)}
                           >
-                            {time}
+                            <span>{label}</span>
+                            {showCoachTime && coachLabel && (
+                              <span
+                                className={cn(
+                                  "text-[11px] font-normal",
+                                  isSelected ? "text-white/80" : "text-gray-500"
+                                )}
+                              >
+                                {t('booking.coachTimeHint', { time: coachLabel })}
+                              </span>
+                            )}
                           </Button>
                         );
                       })
@@ -562,7 +601,7 @@ export function BookingModal({
               </>
             ) : (
               // Details Step
-              <div className="flex-1 p-10 animate-in fade-in slide-in-from-right-4 duration-300">
+              <div className="flex-1 p-6 md:p-10 animate-in fade-in slide-in-from-right-4 duration-300">
                 <h2 className="text-xl font-bold text-gray-900 mb-6">{t('booking.enterDetailsTitle')}</h2>
                 <div className="max-w-md space-y-6">
                   <div className="grid gap-2">

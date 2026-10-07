@@ -24,6 +24,7 @@ import {
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { QueryStateBoundary } from "@/components/QueryStateBoundary";
+import { useDateFormat } from "@/hooks/useDateFormat";
 
 type ColumnId = "researching" | "shortlisted" | "applying" | "applied" | "accepted";
 
@@ -46,6 +47,7 @@ const COLUMNS: Column[] = [
 export function ApplicationTracker() {
   const router = useRouter();
   const { t } = useTranslation();
+  const { formatDate } = useDateFormat();
   const [applications, setApplications] = useState<TrackedApplication[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isError, setIsError] = useState(false);
@@ -228,7 +230,7 @@ export function ApplicationTracker() {
                                 style={{ color: "var(--admin-accent-amber)" }}
                               >
                                 <Calendar className="h-2.5 w-2.5" />
-                                {app.deadline}
+                                {formatDate(app.deadline)}
                               </div>
                             )}
                           </div>

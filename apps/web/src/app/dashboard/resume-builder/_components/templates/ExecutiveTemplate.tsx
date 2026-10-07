@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import i18n from "@/lib/i18n";
+import { prepareResumeForRender } from "../../_lib/resume-render";
 import { translateProficiency } from "../../_lib/resume-constants";
 import {
   Document,
@@ -267,7 +268,8 @@ interface ExecutiveTemplatePDFProps {
   data: ResumeData;
 }
 
-export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
+export function ExecutiveTemplatePDF({ data: rawData }: ExecutiveTemplatePDFProps) {
+  const data = prepareResumeForRender(rawData);
   // Group skills by category
   const skillsByCategory = data.skills.reduce((acc, skill) => {
     if (!acc[skill.category]) {
@@ -602,7 +604,8 @@ export function ExecutiveTemplatePDF({ data }: ExecutiveTemplatePDFProps) {
 }
 
 // Preview component for the template selector
-export function ExecutiveTemplatePreview({ data }: ExecutiveTemplatePDFProps) {
+export function ExecutiveTemplatePreview({ data: rawData }: ExecutiveTemplatePDFProps) {
+  const data = prepareResumeForRender(rawData);
   return (
     <div className="w-full h-full bg-white p-8 text-xs overflow-hidden">
       {/* Header */}

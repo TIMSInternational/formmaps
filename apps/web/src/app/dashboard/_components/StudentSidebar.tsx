@@ -210,7 +210,8 @@ function TabBtn({ icon: Icon, active, onClick, title }: {
   );
 }
 
-export function StudentSidebar() {
+// onOpenChat: lets the mobile drawer close itself when a chat opens (formmaps#411).
+export function StudentSidebar({ onOpenChat }: { onOpenChat?: () => void } = {}) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, logout, assessmentActive } = useGlobalStore();
@@ -272,6 +273,7 @@ export function StudentSidebar() {
     if (assessmentActive) return; // AI chat is blocked while an assessment is in progress
     if (threadId) selectThread(threadId);
     openPanel({ title: t("shell.askAi"), content: <AIChatSidePanel /> });
+    onOpenChat?.();
   };
 
   const handleNewChat = () => {

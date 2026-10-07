@@ -20,7 +20,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { typeConfig, activityCategories } from "./portfolioConfig";
+import { typeConfig, activityCategories, derivedHours } from "./portfolioConfig";
 import { polishDescription } from "./polishDescription";
 import type { PortfolioItemPayload, PortfolioItemType, PortfolioItem, StudentActivityCategory } from "@/types/portfolio";
 
@@ -45,6 +45,16 @@ export function PortfolioFormDialog({
 }: PortfolioFormDialogProps) {
   const { t } = useTranslation();
   const [polishing, setPolishing] = useState(false);
+
+  // Total hours follows Hours/Week × Weeks/Year until the student types their
+  // own total (#403): it auto-fills while empty or still equal to the
+  // previous product, and a hand-typed different total is never overwritten.
+  function handleRateChange(patch: Pick<PortfolioItemPayload, "hoursPerWeek"> | Pick<PortfolioItemPayload, "weeksPerYear">) {
+    const next = { ...formData, ...patch };
+    const followsDerived = !formData.totalHours || formData.totalHours === derivedHours(formData);
+    if (followsDerived) next.totalHours = derivedHours(next);
+    onFormDataChange(next);
+  }
 
   async function handlePolish() {
     if (!formData.description || polishing) return;
@@ -214,10 +224,14 @@ export function PortfolioFormDialog({
               />
             </div>
             <div className="space-y-1 col-span-2 md:col-span-1">
-              <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+              <label
+                htmlFor="portfolio-total-hours"
+                className="text-xs font-semibold text-muted-foreground uppercase tracking-wider"
+              >
                 {t("studentUi.portfolio.form.totalHours")}
               </label>
               <Input
+                id="portfolio-total-hours"
                 type="number"
                 placeholder="0"
                 className="h-10 bg-secondary border-border"
@@ -275,8 +289,7 @@ export function PortfolioFormDialog({
                 className="h-10 bg-secondary border-border"
                 value={formData.hoursPerWeek ?? ""}
                 onChange={(e) =>
-                  onFormDataChange({
-                    ...formData,
+                  handleRateChange({
                     hoursPerWeek: e.target.value === "" ? undefined : Number(e.target.value),
                   })
                 }
@@ -296,8 +309,7 @@ export function PortfolioFormDialog({
                 className="h-10 bg-secondary border-border"
                 value={formData.weeksPerYear ?? ""}
                 onChange={(e) =>
-                  onFormDataChange({
-                    ...formData,
+                  handleRateChange({
                     weeksPerYear: e.target.value === "" ? undefined : Number(e.target.value),
                   })
                 }

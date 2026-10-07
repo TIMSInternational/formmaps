@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "motion/react";
 import {
@@ -192,42 +192,65 @@ export default function ApplicationDetailPage() {
     }
   }, [id, essayDrafts, t]);
 
+  // Billed, non-idempotent AI calls (served by Node): retries: 0 — apiRequest's default
+  // 5xx retry sent duplicate POSTs (#390) — and at most one in flight per action.
+  const aiInFlight = useRef<Set<string>>(new Set());
+
+  // An upstream AI failure (5xx / network) gets an actionable, localized message instead of
+  // the generic "Server error"; 403 is already surfaced by the api client; other 4xx carry
+  // the server's own message.
+  const toastAiFailure = useCallback((err: unknown, friendlyKey: string) => {
+    const status = (err as { status?: number })?.status;
+    if (status === 403) return;
+    if (!status || status >= 500) toast.error(t(friendlyKey));
+    else toast.error((err as Error)?.message || t(friendlyKey));
+  }, [t]);
+
   const requestAiReview = useCallback(async (essayId: string) => {
+    const key = `review:${essayId}`;
+    if (aiInFlight.current.has(key)) return;
+    aiInFlight.current.add(key);
     try {
       setReviewingEssay(essayId);
       const res = await apiRequest<{ data: { feedback: string } }>(`/api/v1/student/applications/${id}/essays/${essayId}/ai-review`, {
         method: "POST",
         data: {},
-        showErrorToast: true,
+        retries: 0,
+        showErrorToast: false,
       });
       const feedback: string = (res as { data: { feedback: string } })?.data?.feedback ?? (res as unknown as { feedback: string })?.feedback ?? t("studentUi.applications.essays.noFeedback");
       setAiReviews((prev) => ({ ...prev, [essayId]: feedback }));
       toast.success(t("studentUi.applications.toast.aiReviewComplete"));
-    } catch {
-      // error toasted
+    } catch (err) {
+      toastAiFailure(err, "studentUi.applications.toast.aiReviewFailed");
     } finally {
+      aiInFlight.current.delete(key);
       setReviewingEssay(null);
     }
-  }, [id, essayDrafts, t]);
+  }, [id, t, toastAiFailure]);
 
   // ── Checklist ─────────────────────────────────────────────────────────────
 
   const generateChecklist = useCallback(async () => {
+    if (aiInFlight.current.has("checklist")) return;
+    aiInFlight.current.add("checklist");
     try {
       setGeneratingChecklist(true);
       const res = await apiRequest<{ data: ChecklistItem[] }>(`/api/v1/student/applications/${id}/checklist/generate`, {
         method: "POST",
-        showErrorToast: true,
+        retries: 0,
+        showErrorToast: false,
       });
       const list: ChecklistItem[] = (res as { data: ChecklistItem[] })?.data ?? (res as unknown as ChecklistItem[]) ?? [];
       setChecklist(list);
       toast.success(t("studentUi.applications.toast.checklistGenerated"));
-    } catch {
-      // error toasted
+    } catch (err) {
+      toastAiFailure(err, "studentUi.applications.toast.checklistGenerateFailed");
     } finally {
+      aiInFlight.current.delete("checklist");
       setGeneratingChecklist(false);
     }
-  }, [id, t]);
+  }, [id, t, toastAiFailure]);
 
   const toggleChecklistItem = useCallback(async (item: ChecklistItem) => {
     const updated = { ...item, isCompleted: !item.isCompleted };

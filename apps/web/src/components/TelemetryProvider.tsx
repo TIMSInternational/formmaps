@@ -6,6 +6,8 @@ import { SessionTimeoutModal } from "@/components/auth/SessionTimeoutModal";
 import { useConsent, hasAnalyticsConsent } from "@/hooks/useConsent";
 import { useWebVitals } from "@/hooks/useWebVitals";
 import { telemetry } from "@/services/telemetryService";
+import { getUserSettings } from "@/services/userService";
+import { useGlobalStore } from "@/store/useGlobalStore";
 
 /**
  * TelemetryProvider wraps the app to:
@@ -18,6 +20,25 @@ import { telemetry } from "@/services/telemetryService";
  */
 export function TelemetryProvider({ children }: { children: React.ReactNode }) {
   const { hasAnalytics, isLoading } = useConsent();
+  const userId = useGlobalStore((s) => s.user.id);
+  const isAuthenticated = useGlobalStore((s) => s.user.isAuthenticated);
+
+  // The account's own "Usage Analytics" setting is the second gate (#401). It is opt-in:
+  // collection stays off unless the saved setting is explicitly true — no row, a failed
+  // request or a signed-out visitor all mean off.
+  useEffect(() => {
+    telemetry.setAccountAnalytics(false);
+    if (!isAuthenticated) return;
+    let cancelled = false;
+    getUserSettings()
+      .then((settings) => {
+        if (!cancelled) telemetry.setAccountAnalytics(settings?.allowAnalytics === true);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isAuthenticated, userId]);
 
   // Track Web Vitals only if analytics consent is given
   // Note: useWebVitals internally checks before sending

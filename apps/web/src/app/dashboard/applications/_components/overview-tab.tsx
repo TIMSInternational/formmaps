@@ -6,6 +6,7 @@ import { Save, Loader2 } from "lucide-react";
 import { TrackedApplication } from "@/services/applicationService";
 import { InfoRow } from "./shared";
 import { COLUMN_LABELS, fitBadge } from "./types";
+import { useDateFormat } from "@/hooks/useDateFormat";
 
 interface OverviewTabProps {
   app: TrackedApplication;
@@ -18,6 +19,7 @@ interface OverviewTabProps {
 
 export function OverviewTab({ app, notes, notesDirty, savingNotes, onNotesChange, onSaveNotes }: OverviewTabProps) {
   const { t } = useTranslation();
+  const { formatDate } = useDateFormat();
   const fit = fitBadge(app.matchScore);
 
   return (
@@ -34,10 +36,10 @@ export function OverviewTab({ app, notes, notesDirty, savingNotes, onNotesChange
         style={{ background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)" }}
       >
         <InfoRow label={t("studentUi.applications.overview.name")} value={app.name} />
-        <InfoRow label={t("studentUi.applications.overview.type")} value={app.type ?? "—"} />
+        <InfoRow label={t("studentUi.applications.overview.type")} value={app.type ? t(`studentUi.applications.overview.types.${app.type}`, { defaultValue: app.type }) : "—"} capitalize />
         <InfoRow label={t("studentUi.applications.overview.location")} value={app.location ?? "—"} />
         <InfoRow label={t("studentUi.applications.overview.status")} value={COLUMN_LABELS[app.column] ? t(COLUMN_LABELS[app.column]) : app.column} />
-        <InfoRow label={t("studentUi.applications.overview.deadline")} value={app.deadline ?? "—"} />
+        <InfoRow label={t("studentUi.applications.overview.deadline")} value={formatDate(app.deadline)} />
         {app.matchScore && <InfoRow label={t("studentUi.applications.overview.matchScore")} value={`${app.matchScore}%`} />}
         {fit && (
           <div className="flex flex-col gap-1">
