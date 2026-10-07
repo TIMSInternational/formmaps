@@ -15,8 +15,10 @@ public interface ISchoolAdminReader
     Task<ResultsListResult> GetResultsListAsync(
         RequestContext context, string schoolId, ResultsListQuery query, CancellationToken cancellationToken = default);
 
+    /// <param name="schoolId">Null only for an independent student opened by a Super Admin: matches a student with no
+    /// school, never "any school".</param>
     Task<PcaStatusResult?> GetStudentPcaCompletionAsync(
-        RequestContext context, string schoolId, string studentId, CancellationToken cancellationToken = default);
+        RequestContext context, string? schoolId, string studentId, CancellationToken cancellationToken = default);
 
     Task<AssessmentConfig> GetAssessmentConfigAsync(
         RequestContext context, string schoolId, CancellationToken cancellationToken = default);

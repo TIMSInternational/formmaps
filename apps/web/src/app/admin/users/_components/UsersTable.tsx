@@ -2,7 +2,8 @@
 
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Copy, Eye, MailPlus, MoreHorizontal, UserX } from "lucide-react";
+import { Copy, Eye, FileBarChart, MailPlus, MoreHorizontal, UserX } from "lucide-react";
+import { openStudent } from "@/lib/actingSchool";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -35,6 +36,8 @@ export interface UserRecord {
   subscriptionStatus?: string;
   inviteStatus?: "active" | "invited" | "expired";
   inviteExpiresAt?: string | null;
+  schoolId?: string | null;
+  schoolName?: string | null;
 }
 
 interface UsersTableProps {
@@ -129,6 +132,16 @@ export function UsersTable({
                       <DropdownMenuItem onSelect={() => onViewProfile(user)}>
                         <Eye className="mr-2 h-4 w-4" /> {t("admin.users.dropdown.viewProfile")}
                       </DropdownMenuItem>
+                      {(user.role || "").trim().toLowerCase() === "student" && (
+                        <DropdownMenuItem
+                          data-testid="view-student-results"
+                          onSelect={() =>
+                            openStudent(user.id, user.schoolId ? { id: user.schoolId, name: user.schoolName || "" } : null)
+                          }
+                        >
+                          <FileBarChart className="mr-2 h-4 w-4" /> {tPO("users.viewResults")}
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         onSelect={() => {
                           navigator.clipboard?.writeText(user.email).then(

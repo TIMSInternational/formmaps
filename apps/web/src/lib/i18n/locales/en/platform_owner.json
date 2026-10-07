@@ -166,6 +166,7 @@
     }
   },
   "users": {
+    "viewResults": "View profile & results",
     "emailLabel": "Email Address",
     "roleLabel": "Role",
     "roleSelectPlaceholder": "Select role",

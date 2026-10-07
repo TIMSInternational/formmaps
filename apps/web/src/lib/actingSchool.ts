@@ -69,17 +69,40 @@ export function actingSchoolHeaderFor(pathname: string | null | undefined, isSup
   return getActingSchool()?.id;
 }
 
+type Navigate = (path: string) => void;
+const hardNavigate: Navigate = (path) => window.location.assign(path);
+
 /**
  * Enter (or switch to) a school. A full page load, not a client-side navigation: every cached query belongs to
  * the previous school (or to none), and a reload is the one way to guarantee none of it is shown under the new one.
  */
-export function openSchool(school: ActingSchool, path = "/school-admin"): void {
+export function openSchool(school: ActingSchool, path = "/school-admin", navigate: Navigate = hardNavigate): void {
   setActingSchool(school);
-  window.location.assign(path);
+  navigate(path);
 }
 
 /** Leave the school and go back to the platform admin. */
-export function leaveSchool(path = "/admin"): void {
+export function leaveSchool(path = "/admin", navigate: Navigate = hardNavigate): void {
   clearActingSchool();
-  window.location.assign(path);
+  navigate(path);
+}
+
+/** A page about ONE student: /school-admin/users/{id} (and its old alias /school-admin/students/{id}). */
+export function isStudentDetailPath(pathname: string | null | undefined): boolean {
+  return !!pathname && /^\/school-admin\/(users|students)\/[^/]+\/?$/.test(pathname);
+}
+
+/**
+ * Open one student's profile and results from Admin → Users. A student in a school opens INSIDE that school, so every
+ * tab and link on the page behaves as for its school admin. An independent student has no school to enter: the page
+ * opens with none, and the backends scope it to the student (school-only sections say so).
+ */
+export function openStudent(studentId: string, school: ActingSchool | null, navigate: Navigate = hardNavigate): void {
+  const path = `/school-admin/users/${encodeURIComponent(studentId)}`;
+  if (school) {
+    openSchool(school, path, navigate);
+  } else {
+    clearActingSchool();
+    navigate(path);
+  }
 }

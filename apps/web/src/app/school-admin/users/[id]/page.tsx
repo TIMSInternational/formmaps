@@ -85,8 +85,11 @@ export default function StudentDetailsPage() {
   const registerPCA = useRegisterPCA(studentId);
   const { data: evalGroups } = useStudentEvalGroups(studentId);
   const { data: studentReport } = useStudentReport(studentId);
-  const { data: gapsData } = useStudentAcademicGaps(studentId);
-  const { data: recsData } = useStudentRecommendations(studentId);
+  // A student with no school (schoolId null — an independent student opened by a Super Admin) has no graduation rules
+  // to measure gaps against. Undefined (an older backend that does not send it) keeps asking, as before.
+  const inASchool = !!student && student.schoolId !== null;
+  const { data: gapsData } = useStudentAcademicGaps(studentId, inASchool);
+  const { data: recsData } = useStudentRecommendations(studentId, inASchool);
   const { data: transcriptData } = useStudentTranscript(studentId);
   const { data: gpaData } = useStudentGpa(studentId);
 

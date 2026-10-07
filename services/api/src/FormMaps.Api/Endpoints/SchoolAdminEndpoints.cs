@@ -130,16 +130,17 @@ public static class SchoolAdminEndpoints
         ISchoolAdminScopeResolver scope,
         ISchoolAdminReader reader,
         string studentId,
+        HttpContext httpContext,
         CancellationToken cancellationToken)
     {
-        var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, cancellationToken);
+        var bounded = studentId.Length > MaxIdLength ? studentId[..MaxIdLength] : studentId;
+        var (context, schoolId, error) = await AuthorizeStudentAsync(accessor, guard, scope, httpContext, bounded, cancellationToken);
         if (error is not null)
         {
             return error;
         }
 
-        var bounded = studentId.Length > MaxIdLength ? studentId[..MaxIdLength] : studentId;
-        var status = await reader.GetStudentPcaCompletionAsync(context, schoolId!, bounded, cancellationToken);
+        var status = await reader.GetStudentPcaCompletionAsync(context, schoolId, bounded, cancellationToken);
         if (status is null)
         {
             return StudentNotFound();
@@ -772,6 +773,33 @@ public static class SchoolAdminEndpoints
     /// The shared school-admin guard chain: RequireIdentity -> permission "school:manage" (403) -> resolve
     /// the caller's schoolId (400 "No school"). Returns the resolved (context, schoolId) or an error IResult.
     /// </summary>
+    /// <summary>
+    /// <see cref="AuthorizeAsync"/> for a request about ONE student. A Super Admin with no school open (it opened the
+    /// student from Admin → Users) acts on the STUDENT's school — null for an independent student; the reader matches
+    /// that with IS NULL. Everyone else, and a Super Admin inside a school, is scoped exactly as before. Twin of
+    /// formmaps-platform api/src/lib/actingSchool.ts resolveStudentScope.
+    /// </summary>
+    private static async Task<(RequestContext Context, string? SchoolId, IResult? Error)> AuthorizeStudentAsync(
+        IRequestContextAccessor accessor,
+        IProtectedRequestGuard guard,
+        ISchoolAdminScopeResolver scope,
+        HttpContext httpContext,
+        string studentId,
+        CancellationToken cancellationToken)
+    {
+        var context = accessor.Current;
+        if (context.Actor?.IsSuperAdmin == true && context.ActingSchoolId is null &&
+            guard.RequireIdentity(context).Allowed && context.Permissions.Contains(FormMapsPermissions.SchoolManage))
+        {
+            // Resolved here, not injected: only this request shape needs it.
+            var studentSchoolId = await httpContext.RequestServices.GetRequiredService<IStudentSchoolReader>()
+                .ReadStudentSchoolIdAsync(context, studentId, cancellationToken);
+            return (context, studentSchoolId, null);
+        }
+
+        return await AuthorizeAsync(accessor, guard, scope, cancellationToken);
+    }
+
     private static async Task<(RequestContext Context, string? SchoolId, IResult? Error)> AuthorizeAsync(
         IRequestContextAccessor accessor,
         IProtectedRequestGuard guard,

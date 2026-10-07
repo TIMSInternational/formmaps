@@ -1,6 +1,8 @@
 export type StudentStatus = 'pending' | 'accepted' | 'active' | 'inactive';
 
 export interface Student {
+  /** The student's school; null for an independent student (no school). Absent on older backends. */
+  schoolId?: string | null;
   id: string;
   name: string;
   email: string;

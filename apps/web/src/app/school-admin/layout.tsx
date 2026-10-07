@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { isStudentDetailPath } from "@/lib/actingSchool";
 import { useSchoolAdminAccess } from "@/hooks/useSchoolAdminAccess";
 import { AdminThemeProvider } from "@/contexts/AdminThemeContext";
 import { SchoolAdminSidebar } from "./_components/SchoolAdminSidebar";
@@ -14,6 +15,7 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { isSchoolAdmin, isSuperAdmin, schoolId, schoolName, loading } = useSchoolAdminAccess();
 
   useEffect(() => {
@@ -33,9 +35,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <AppShell
       sidebarClassName="hidden md:block" frame sidebar={<SchoolAdminSidebar />}>
             {/* A Super Admin acts on one school at a time: until it picks one, every page is the picker, so no
-                school-scoped request is ever made without a school. */}
-            {isSuperAdmin && schoolId && <ActingSchoolBar schoolName={schoolName} />}
-            {isSuperAdmin && !schoolId ? <SchoolPicker /> : children}
+                school-scoped request is made without a school — except a page about ONE student, opened from
+                Admin → Users, which the backends scope to that student (an independent student has no school). */}
+            {isSuperAdmin && (schoolId || isStudentDetailPath(pathname)) && (
+              <ActingSchoolBar schoolName={schoolId ? schoolName : undefined} studentOnly={!schoolId} />
+            )}
+            {isSuperAdmin && !schoolId && !isStudentDetailPath(pathname) ? <SchoolPicker /> : children}
           </AppShell>
         </ErrorBoundary>
       </ChatProvider>

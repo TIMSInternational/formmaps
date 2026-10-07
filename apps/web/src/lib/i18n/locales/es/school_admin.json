@@ -1896,6 +1896,7 @@
     "searchPlaceholder": "Busca colegios por nombre o correo del administrador",
     "loading": "Cargando colegios…",
     "loadFailed": "No se pudieron cargar los colegios. Inténtalo de nuevo.",
-    "noSchools": "Ningún colegio coincide con tu búsqueda."
+    "noSchools": "Ningún colegio coincide con tu búsqueda.",
+    "viewingStudentOnly": "Super Admin · estás viendo a un estudiante fuera de cualquier colegio. Las secciones propias de un colegio (cursos, notas, créditos) no aplican."
   }
 }

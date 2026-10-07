@@ -7,8 +7,9 @@ import { clearActingSchool, leaveSchool } from "@/lib/actingSchool";
 /**
  * Shown to a Super Admin inside a school: which school every action on this page applies to, and the two ways
  * out. Switching reloads to the picker so nothing cached from this school is shown under the next one.
+ * `studentOnly`: a single student opened from Admin → Users with no school open (an independent student).
  */
-export function ActingSchoolBar({ schoolName }: { schoolName?: string }) {
+export function ActingSchoolBar({ schoolName, studentOnly = false }: { schoolName?: string; studentOnly?: boolean }) {
   const { t } = useTranslation("school_admin");
 
   const switchSchool = () => {
@@ -34,12 +35,16 @@ export function ActingSchoolBar({ schoolName }: { schoolName?: string }) {
     >
       <Building2 style={{ width: 16, height: 16, color: "var(--admin-accent-blue, #3b82f6)", flexShrink: 0 }} />
       <span style={{ fontSize: 13, color: "var(--admin-font-primary)", flex: 1, minWidth: 200 }}>
-        {t("actingSchool.viewing", { school: schoolName || t("actingSchool.thisSchool") })}
+        {studentOnly
+          ? t("actingSchool.viewingStudentOnly")
+          : t("actingSchool.viewing", { school: schoolName || t("actingSchool.thisSchool") })}
       </span>
-      <button type="button" onClick={switchSchool} style={barButton}>
-        <Repeat style={{ width: 13, height: 13 }} />
-        {t("actingSchool.switch")}
-      </button>
+      {!studentOnly && (
+        <button type="button" onClick={switchSchool} style={barButton}>
+          <Repeat style={{ width: 13, height: 13 }} />
+          {t("actingSchool.switch")}
+        </button>
+      )}
       <button type="button" onClick={() => leaveSchool()} style={barButton}>
         <ArrowLeft style={{ width: 13, height: 13 }} />
         {t("actingSchool.backToAdmin")}
