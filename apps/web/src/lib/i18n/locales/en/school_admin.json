@@ -1897,7 +1897,7 @@
     "loading": "Loading schools…",
     "loadFailed": "Could not load schools. Try again.",
     "noSchools": "No schools match your search.",
-    "viewingStudentOnly": "Super Admin · you are viewing one student, outside any school. Sections that belong to a school (courses, grades, credits) do not apply."
+    "viewingStudentOnly": "Super Admin · you opened this student directly, with no school open. Their school's sections still show where they apply; open the school from Admin → Schools to work on the whole school."
   },
   "studentRecord": {
     "tab": "Results & Answers",
