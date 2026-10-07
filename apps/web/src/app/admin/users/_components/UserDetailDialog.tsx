@@ -18,12 +18,13 @@ interface UserDetailDialogProps {
   user: UserRecord | null;
   onClose: () => void;
   onDeactivate: (user: UserRecord) => void;
+  onActivate: (user: UserRecord) => void;
   onResendInvite: (user: UserRecord) => void;
   /** Role or school changed — the list should refetch. */
   onChanged: () => void;
 }
 
-export function UserDetailDialog({ user, onClose, onDeactivate, onResendInvite, onChanged }: UserDetailDialogProps) {
+export function UserDetailDialog({ user, onClose, onDeactivate, onActivate, onResendInvite, onChanged }: UserDetailDialogProps) {
   const { t } = useTranslation("platform_owner");
   const { t: tc } = useTranslation();
   const pendingInvite = user ? ["invited", "expired"].includes(displayStatus(user)) : false;
@@ -79,6 +80,12 @@ export function UserDetailDialog({ user, onClose, onDeactivate, onResendInvite, 
                 className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors text-left">
                 <Mail className="h-4 w-4 text-gray-400" /> {t("users.copyEmail")}
               </button>
+              {user.status === "inactive" && (
+                <button onClick={() => { onClose(); onActivate(user); }}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-green-700 hover:bg-green-50 transition-colors text-left">
+                  <UserCheck className="h-4 w-4" /> {t("users.activateUser")}
+                </button>
+              )}
               {user.status === "active" && (
                 <button onClick={() => { onClose(); onDeactivate(user); }}
                   className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50 transition-colors text-left">

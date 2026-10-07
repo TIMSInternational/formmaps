@@ -16,6 +16,8 @@ export interface School {
 }
 
 export interface SchoolInvitePayload {
+  /** Only on update: an onboarded school's access (active/inactive). */
+  status?: SchoolStatus;
   name: string;
   adminEmail: string;
   maxStudents: number;

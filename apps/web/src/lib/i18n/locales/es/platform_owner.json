@@ -180,6 +180,7 @@
     "detailActions": "Acciones",
     "copyEmail": "Copiar correo",
     "deactivateUser": "Desactivar usuario",
+    "activateUser": "Activar usuario",
     "pagination": {
       "showingPage": "Mostrando página {{page}} de {{total}}"
     }

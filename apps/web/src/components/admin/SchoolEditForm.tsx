@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import { Loader2, Calendar as CalendarIcon } from "lucide-react";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
+import { parseYmdLocal } from "@/lib/dateUtils";
 import { cn } from "@/lib/utils";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -16,7 +17,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useTranslation } from "react-i18next";
-import { School } from "@/types/school";
+import { School, SchoolStatus } from "@/types/school";
 import { updateSchool } from "@/services/schoolService";
 
 interface SchoolEditFormProps {
@@ -29,12 +30,18 @@ export function SchoolEditForm({ school, onSuccess }: SchoolEditFormProps) {
   const [adminEmail, setAdminEmail] = useState(school.adminEmail);
   const [maxStudents, setMaxStudents] = useState<number>(school.maxStudents);
   const [details, setDetails] = useState(school.details || "");
+  // Contract dates are DATE-ONLY values stored as UTC midnight. parseISO would turn 2027-07-31T00:00Z into July 30
+  // in any western timezone, and every save would then move the contract one day earlier.
   const [contractStart, setContractStart] = useState<Date | undefined>(
-    school.contractStart ? parseISO(school.contractStart) : undefined,
+    school.contractStart ? parseYmdLocal(school.contractStart.slice(0, 10)) : undefined,
   );
   const [contractEnd, setContractEnd] = useState<Date | undefined>(
-    school.contractEnd ? parseISO(school.contractEnd) : undefined,
+    school.contractEnd ? parseYmdLocal(school.contractEnd.slice(0, 10)) : undefined,
   );
+  // Only an onboarded school is switched here; invited/pending follow the onboarding flow. Active + a contract window
+  // that includes today is what makes a school cover its students (api lib/studentEntitlement.ts).
+  const canSetAccess = school.status === "active" || school.status === "inactive";
+  const [status, setStatus] = useState<SchoolStatus>(school.status);
   const [isLoading, setIsLoading] = useState(false);
   const { t } = useTranslation();
 
@@ -59,6 +66,7 @@ export function SchoolEditForm({ school, onSuccess }: SchoolEditFormProps) {
         contractEnd: contractEnd
           ? format(contractEnd, "yyyy-MM-dd")
           : undefined,
+        ...(canSetAccess ? { status } : {}),
       });
 
       const updatedSchool: School = {
@@ -67,6 +75,7 @@ export function SchoolEditForm({ school, onSuccess }: SchoolEditFormProps) {
         adminEmail,
         maxStudents,
         details,
+        status: canSetAccess ? status : school.status,
         contractStart: contractStart
           ? format(contractStart, "yyyy-MM-dd")
           : undefined,
@@ -136,6 +145,22 @@ export function SchoolEditForm({ school, onSuccess }: SchoolEditFormProps) {
           required
         />
       </div>
+
+      {canSetAccess && (
+        <div className="space-y-2">
+          <Label htmlFor="edit-status">{t("admin.schools.access", "School contract")}</Label>
+          <select
+            id="edit-status"
+            data-testid="school-access"
+            value={status}
+            onChange={(e) => setStatus(e.target.value as SchoolStatus)}
+            className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+          >
+            <option value="active">{t("admin.schools.accessActive", "Active — covers its students while the contract dates include today")}</option>
+            <option value="inactive">{t("admin.schools.accessInactive", "Inactive — no longer covers its students (their accounts stay)")}</option>
+          </select>
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2 flex flex-col">

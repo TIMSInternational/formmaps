@@ -23,7 +23,7 @@ const USERS: UserRecord[] = [
 function renderTable(overrides: Partial<React.ComponentProps<typeof UsersTable>> = {}) {
   const props = {
     users: USERS, loading: false, page: 1, totalPages: 1,
-    onPageChange: jest.fn(), onViewProfile: jest.fn(), onResendInvite: jest.fn(), onDeactivate: jest.fn(),
+    onPageChange: jest.fn(), onViewProfile: jest.fn(), onResendInvite: jest.fn(), onDeactivate: jest.fn(), onActivate: jest.fn(),
     ...overrides,
   };
   render(<UsersTable {...props} />);
@@ -58,4 +58,25 @@ it("does not offer a resend for an account that finished setup", () => {
   const menu = openMenu("Ana Active");
   expect(within(menu).queryByRole("menuitem", { name: /Resend invitation/ })).not.toBeInTheDocument();
   expect(within(menu).getByRole("menuitem", { name: /Deactivate/ })).toBeInTheDocument();
+});
+
+it("an inactive account can be turned back on — and only an inactive one", () => {
+  const props = renderTable();
+  const menu = openMenu("Ian Inactive");
+  expect(within(menu).queryByRole("menuitem", { name: /Deactivate/ })).not.toBeInTheDocument();
+  fireEvent.click(within(menu).getByRole("menuitem", { name: /Activate User/ }));
+  expect(props.onActivate).toHaveBeenCalledWith(expect.objectContaining({ id: "i" }));
+});
+
+it("an active account is not offered 'Activate'", () => {
+  renderTable();
+  const menu = openMenu("Ana Active");
+  expect(within(menu).queryByRole("menuitem", { name: /^Activate User$/ })).not.toBeInTheDocument();
+});
+
+it("'View profile & results' is offered on students only", () => {
+  renderTable({ users: [{ ...base, id: "t", name: "Tom Teacher", role: "teacher", status: "active" }, USERS[0]] });
+  expect(within(openMenu("Tom Teacher")).queryByTestId("view-student-results")).not.toBeInTheDocument();
+  fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+  expect(within(openMenu("Ana Active")).getByTestId("view-student-results")).toBeInTheDocument();
 });

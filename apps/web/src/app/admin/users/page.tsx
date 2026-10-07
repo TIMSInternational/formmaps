@@ -91,6 +91,28 @@ export default function AdminUsersPage() {
     }
   };
 
+  // The way back from Deactivate: before this, an inactive account had no action at all.
+  const handleActivateUser = async (user: UserRecord) => {
+    const confirmed = await confirm({
+      title: t("admin.users.activate.title"),
+      description: t("admin.users.activate.body", { name: user.name }),
+      confirmLabel: t("admin.users.activate.cta"),
+      cancelLabel: t("common.cancel"),
+    });
+    if (!confirmed) return;
+    try {
+      await apiRequest(`/api/v1/admin/users/${user.id}/status`, {
+        method: "PUT",
+        data: { isActive: true },
+        showErrorToast: false,
+      });
+      toast.success(t("admin.users.activate.done", { name: user.name }));
+      refetch();
+    } catch {
+      toast.error(t("admin.users.activate.failed"));
+    }
+  };
+
   const handleResendInvite = async (user: UserRecord) => {
     const confirmed = await confirm({
       title: t("admin.users.resend.title"),
@@ -217,10 +239,10 @@ export default function AdminUsersPage() {
       {/* Users Table */}
       <UsersTable users={users} loading={usersLoading} page={page} totalPages={totalPages}
         onPageChange={setPage} onViewProfile={setSelectedUser}
-        onResendInvite={handleResendInvite} onDeactivate={handleDeactivateUser} />
+        onResendInvite={handleResendInvite} onDeactivate={handleDeactivateUser} onActivate={handleActivateUser} />
 
       {/* User Detail Dialog */}
-      <UserDetailDialog user={selectedUser} onClose={() => setSelectedUser(null)} onDeactivate={handleDeactivateUser}
+      <UserDetailDialog user={selectedUser} onClose={() => setSelectedUser(null)} onDeactivate={handleDeactivateUser} onActivate={handleActivateUser}
         onResendInvite={handleResendInvite}
         onChanged={() => { setSelectedUser(null); refetch(); }} />
 
