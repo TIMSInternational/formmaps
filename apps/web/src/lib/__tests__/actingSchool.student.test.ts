@@ -28,18 +28,18 @@ describe("openStudent", () => {
   it("a student in a school opens inside that school", () => {
     openStudent("stu-1", { id: "school-a", name: "Academy A" }, assign);
     expect(getActingSchool()).toEqual({ id: "school-a", name: "Academy A" });
-    expect(assign).toHaveBeenCalledWith("/school-admin/users/stu-1");
+    expect(assign).toHaveBeenCalledWith("/school-admin/users/stu-1?tab=record");
   });
 
   it("an independent student opens with NO school — a school left open earlier in the tab is forgotten", () => {
     setActingSchool({ id: "school-a", name: "Academy A" });
     openStudent("stu-2", null, assign);
     expect(getActingSchool()).toBeNull();
-    expect(assign).toHaveBeenCalledWith("/school-admin/users/stu-2");
+    expect(assign).toHaveBeenCalledWith("/school-admin/users/stu-2?tab=record");
   });
 
   it("the id is encoded into the path", () => {
     openStudent("a/b?c", null, assign);
-    expect(assign).toHaveBeenCalledWith("/school-admin/users/a%2Fb%3Fc");
+    expect(assign).toHaveBeenCalledWith("/school-admin/users/a%2Fb%3Fc?tab=record");
   });
 });

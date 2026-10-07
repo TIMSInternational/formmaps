@@ -1898,5 +1898,60 @@
     "loadFailed": "Could not load schools. Try again.",
     "noSchools": "No schools match your search.",
     "viewingStudentOnly": "Super Admin · you are viewing one student, outside any school. Sections that belong to a school (courses, grades, credits) do not apply."
+  },
+  "studentRecord": {
+    "tab": "Results & Answers",
+    "loadError": "We couldn't load this student's record.",
+    "retry": "Try again",
+    "reports": {
+      "title": "Reports",
+      "subtitle": "Analysis PDFs generated from this student's assessments",
+      "language": "PDF language",
+      "langEs": "ES",
+      "langEn": "EN",
+      "langEsFull": "Spanish",
+      "langEnFull": "English",
+      "downloadComplete": "Download complete record (PDF)",
+      "unavailable": "Not available yet",
+      "none": "No reports are available for this student yet.",
+      "downloaded": "PDF downloaded",
+      "downloadFailed": "Could not download the PDF. Please try again."
+    },
+    "assessments": {
+      "title": "Assessments",
+      "completedOn": "Completed {{date}}",
+      "viewAnswers": "View answers ({{count}})",
+      "hideAnswers": "Hide answers",
+      "downloadPdf": "Download PDF",
+      "answersUnavailable": "Answers are not available."
+    },
+    "status": {
+      "not_started": "Not started",
+      "in_progress": "In progress",
+      "completed": "Completed"
+    },
+    "empty": {
+      "title": "No assessments yet",
+      "description": "When this student starts an assessment, its results and answers will appear here."
+    },
+    "answers": {
+      "number": "#",
+      "question": "Question",
+      "answer": "Student's answer",
+      "correctAnswer": "Correct answer",
+      "result": "Result",
+      "notes": "Notes",
+      "options": "Options",
+      "correct": "Correct",
+      "incorrect": "Incorrect",
+      "noAnswer": "No answer",
+      "searchPlaceholder": "Search questions or answers",
+      "searchLabel": "Search answers",
+      "onlyIncorrect": "Only incorrect",
+      "loading": "Loading answers…",
+      "empty": "No answers were recorded for this assessment.",
+      "noMatches": "No questions match your filters.",
+      "error": "We couldn't load the answers."
+    }
   }
 }
