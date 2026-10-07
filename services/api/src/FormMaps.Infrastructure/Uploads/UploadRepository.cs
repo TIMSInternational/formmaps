@@ -17,6 +17,11 @@ public sealed class UploadRepository(
 {
     public async Task<string?> GetCallerSchoolIdAsync(RequestContext context, CancellationToken cancellationToken = default)
     {
+        if (context.ActingSchoolId is { } actingSchoolId)
+        {
+            return actingSchoolId;
+        }
+
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
         await using var command = session.Connection.CreateCommand();

@@ -1885,5 +1885,17 @@
   },
   "pipeline": {
     "milName": "Medición de Inteligencia Laboral"
+  },
+  "actingSchool": {
+    "viewing": "Super Admin · estás trabajando en {{school}}. Todo lo que hagas aquí se aplica a este colegio.",
+    "thisSchool": "este colegio",
+    "switch": "Cambiar de colegio",
+    "backToAdmin": "Volver a Admin",
+    "pickerTitle": "Elige un colegio",
+    "pickerDescription": "Como Super Admin puedes abrir cualquier colegio y hacer todo lo que pueden hacer sus administradores.",
+    "searchPlaceholder": "Busca colegios por nombre o correo del administrador",
+    "loading": "Cargando colegios…",
+    "loadFailed": "No se pudieron cargar los colegios. Inténtalo de nuevo.",
+    "noSchools": "Ningún colegio coincide con tu búsqueda."
   }
 }

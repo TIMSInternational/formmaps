@@ -16,6 +16,12 @@ public sealed class SchoolAdminScopeResolver(IFormMapsDatabaseSessionFactory dat
 {
     public async Task<string?> ResolveSchoolIdAsync(RequestContext context, CancellationToken cancellationToken = default)
     {
+        // A Super Admin acting as a school (validated by RequestContextMiddleware) acts on that school.
+        if (context.ActingSchoolId is { } actingSchoolId)
+        {
+            return actingSchoolId;
+        }
+
         var userId = context.Actor!.UserId;
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 

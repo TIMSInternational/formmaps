@@ -40,7 +40,7 @@ public sealed class SchoolUsersWriter(
 
         // Read admin(caller) + target schoolIds. No isActive filter, no canAccessUser — school-equality ONLY
         // (a school_admin may set grade on ANY same-school user, incl. counselors — faithful to legacy).
-        var adminSchoolId = await ReadSchoolIdAsync(session, callerId, cancellationToken);
+        var adminSchoolId = context.ActingSchoolId ?? await ReadSchoolIdAsync(session, callerId, cancellationToken);
         var targetSchoolId = await ReadSchoolIdAsync(session, targetUserId, cancellationToken);
         // Legacy: `!admin?.schoolId || !target?.schoolId || admin.schoolId !== target.schoolId` — a FALSY schoolId
         // (null OR empty string) fails the guard, so two users both carrying schoolId "" are NOT "same school".
@@ -89,7 +89,7 @@ public sealed class SchoolUsersWriter(
 
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
 
-        var adminSchoolId = await ReadSchoolIdAsync(session, callerId, cancellationToken);
+        var adminSchoolId = context.ActingSchoolId ?? await ReadSchoolIdAsync(session, callerId, cancellationToken);
         var target = await ReadRoleTargetAsync(session, targetUserId, cancellationToken);
         if (target is null)
         {

@@ -4,6 +4,8 @@ import { verifySchoolAdminAccess } from "@/services/schoolAdminService";
 
 interface SchoolAdminAccessResult {
   isSchoolAdmin: boolean;
+  /** A Super Admin acts on the school it opened (lib/actingSchool.ts); schoolId is undefined until it picks one. */
+  isSuperAdmin: boolean;
   loading: boolean;
   error: string | null;
   schoolId?: string;
@@ -12,6 +14,7 @@ interface SchoolAdminAccessResult {
 
 export function useSchoolAdminAccess(): SchoolAdminAccessResult {
   const [isSchoolAdmin, setIsSchoolAdmin] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [schoolId, setSchoolId] = useState<string | undefined>();
@@ -26,6 +29,7 @@ export function useSchoolAdminAccess(): SchoolAdminAccessResult {
         const result = await verifySchoolAdminAccess();
 
         setIsSchoolAdmin(result.isSchoolAdmin);
+        setIsSuperAdmin(!!result.isSuperAdmin);
         setSchoolId(result.schoolId);
         setSchoolName(result.schoolName);
       } catch (err) {
@@ -41,5 +45,5 @@ export function useSchoolAdminAccess(): SchoolAdminAccessResult {
     checkSchoolAdminAccess();
   }, []);
 
-  return { isSchoolAdmin, loading, error, schoolId, schoolName };
+  return { isSchoolAdmin, isSuperAdmin, loading, error, schoolId, schoolName };
 }

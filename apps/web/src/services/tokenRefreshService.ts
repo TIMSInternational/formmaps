@@ -1,3 +1,4 @@
+import { clearActingSchool } from "@/lib/actingSchool";
 /**
  * Token Refresh Service
  *
@@ -53,6 +54,9 @@ export function clearTokens(): void {
   if (typeof window === "undefined") return;
   // Clear non-httpOnly cookie (httpOnly cookies cleared by backend on logout)
   document.cookie = "logged_in=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+  // Every sign-out path (logout, forceLogout) ends here: a Super Admin's opened school must not outlive the
+  // session in this tab.
+  clearActingSchool();
 }
 
 /**

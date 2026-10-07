@@ -188,7 +188,10 @@ public static class AcademicGapsEndpoints
                 statusCode: StatusCodes.Status403Forbidden));
         }
 
-        var scope = await reader.ResolveScopeAsync(context, context.Actor!.UserId, cancellationToken);
+        // A Super Admin acting as a school gets the school-wide (school admin) view of it.
+        var scope = context.ActingSchoolId is { } actingSchoolId
+            ? new AcademicGapsScope(actingSchoolId, SchoolAdminRole)
+            : await reader.ResolveScopeAsync(context, context.Actor!.UserId, cancellationToken);
         if (string.IsNullOrEmpty(scope.SchoolId))
         {
             return AuthResult.Failed(context, Results.Json(

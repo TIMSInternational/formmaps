@@ -149,6 +149,7 @@ public static class DependencyInjection
         services.AddScoped<ITestScoreReader, TestScoreReader>();
         services.AddScoped<ITestScoreWriter, TestScoreWriter>();
         services.AddScoped<ISchoolAdminScopeResolver, SchoolAdminScopeResolver>();
+        services.AddScoped<ISchoolExistenceChecker, SchoolExistenceChecker>();
         services.AddScoped<ISchoolAdminReader, SchoolAdminReader>();
         // FM-DOTNET-049: school-analytics reads (overview / trends / performance-trends / top-performers).
         services.AddScoped<ISchoolAnalyticsReader, SchoolAnalyticsReader>();
