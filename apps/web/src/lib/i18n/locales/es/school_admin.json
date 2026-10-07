@@ -1897,7 +1897,7 @@
     "loading": "Cargando colegios…",
     "loadFailed": "No se pudieron cargar los colegios. Inténtalo de nuevo.",
     "noSchools": "Ningún colegio coincide con tu búsqueda.",
-    "viewingStudentOnly": "Super Admin · estás viendo a un estudiante fuera de cualquier colegio. Las secciones propias de un colegio (cursos, notas, créditos) no aplican."
+    "viewingStudentOnly": "Super Admin · abriste a este estudiante directamente, sin un colegio abierto. Las secciones de su colegio se muestran donde aplican; abre el colegio desde Admin → Colegios para trabajar en todo el colegio."
   },
   "studentRecord": {
     "tab": "Resultados y respuestas",

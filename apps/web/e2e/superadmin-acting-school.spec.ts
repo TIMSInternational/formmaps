@@ -121,7 +121,7 @@ test.describe("Super Admin acts as a school", () => {
     test.skip(!independent, "no independent student in this database");
 
     await openResultsFor(page, independent!.email);
-    await expect(page.getByTestId("acting-school-bar")).toContainText(/outside any school|fuera de cualquier colegio/i);
+    await expect(page.getByTestId("acting-school-bar")).toContainText(/with no school open|sin un colegio abierto/i);
     await expect(page.getByText(independent!.email).first()).toBeVisible();
     expect(gapsRequests).toBe(0);
     expect(failures).toEqual([]);
