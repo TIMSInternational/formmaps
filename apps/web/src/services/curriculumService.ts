@@ -1,4 +1,4 @@
-import { apiRequest } from "@/lib/api/apiClient";
+import { apiRequest, actingSchoolFetchHeaders } from "@/lib/api/apiClient";
 import type {
   CurriculumFramework,
   FrameworkCourse,
@@ -219,7 +219,7 @@ export async function downloadCourseImportFailures(jobId: string): Promise<Blob>
   const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || "";
   const res = await fetch(
     `${baseUrl}/api/v1/school-admin/courses/import/${jobId}/download-failures`,
-    { credentials: "include" }
+    { credentials: "include", headers: actingSchoolFetchHeaders() }
   );
   if (!res.ok) throw new Error("Failed to download failure report");
   return res.blob();

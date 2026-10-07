@@ -5,6 +5,9 @@ import { toast } from '@/hooks/useToast';
 import i18n from 'i18next';
 import { refreshAccessToken, isLoggedIn } from '@/services/tokenRefreshService';
 import { forceLogout } from '@/utils/tokenUtils';
+import { ACTING_SCHOOL_HEADER, actingSchoolHeaderFor } from '@/lib/actingSchool';
+import { normalizeRole } from '@/lib/roleUtils';
+import { Roles } from '@/lib/permissions';
 
 export type ApiEnvelope<T> = {
   success?: boolean;
@@ -150,6 +153,21 @@ apiClient.interceptors.response.use(
   }
 );
 
+function currentActingSchoolId(role: string | null | undefined): string | undefined {
+  return actingSchoolHeaderFor(window.location.pathname, normalizeRole(role) === Roles.SUPER_ADMIN);
+}
+
+/**
+ * Headers for the few raw `fetch` downloads (Blob responses) that bypass this client's interceptor, so a Super
+ * Admin's export acts on the same school as the page it was started from.
+ */
+export function actingSchoolFetchHeaders(): Record<string, string> {
+  if (typeof window === "undefined") return {};
+  const { useGlobalStore } = require("@/store/useGlobalStore");
+  const actingSchoolId = currentActingSchoolId(useGlobalStore.getState().user.role);
+  return actingSchoolId ? { [ACTING_SCHOOL_HEADER]: actingSchoolId } : {};
+}
+
 // Request interceptor — attach Bearer token from store as fallback for cross-site cookie blocking
 apiClient.interceptors.request.use(
   config => {
@@ -165,9 +183,16 @@ apiClient.interceptors.request.use(
 
     if (typeof window !== "undefined") {
       const { useGlobalStore } = require("@/store/useGlobalStore");
-      const token = useGlobalStore.getState().user.accessToken;
+      const { user } = useGlobalStore.getState();
+      const token = user.accessToken;
       if (token && !config.headers?.["Authorization"]) {
         config.headers.set("Authorization", `Bearer ${token}`);
+      }
+
+      // Super Admin inside a school (lib/actingSchool.ts): tell the backend which school.
+      const actingSchoolId = currentActingSchoolId(user.role);
+      if (actingSchoolId) {
+        config.headers.set(ACTING_SCHOOL_HEADER, actingSchoolId);
       }
     }
     return config;

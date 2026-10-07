@@ -12,7 +12,10 @@ import {
   SchoolSettings,
 } from "@/types/student";
 import { decodeJWTToken, isAdminRole, getCurrentUser } from "./authService";
-import { apiRequest } from "@/lib/api/apiClient";
+import { getActingSchool } from "@/lib/actingSchool";
+import { normalizeRole } from "@/lib/roleUtils";
+import { Roles } from "@/lib/permissions";
+import { apiRequest, actingSchoolFetchHeaders } from "@/lib/api/apiClient";
 import { toCamel } from "@/lib/toCamel";
 import { currentLanguage } from "@/lib/i18n/currentLanguage";
 import i18n from "@/lib/i18n";
@@ -73,7 +76,10 @@ export async function getStudents(params: {
 } = {}): Promise<StudentsResponse> {
   try {
     const res = await apiRequest(`/api/v1/school-admin/students${buildQueryString(params as Record<string, string | number | undefined>)}`);
-    return toCamel(res);
+    // With no school the endpoint answers { success, data: { data: [], total: 0 } } instead of the bare
+    // { data, total, ... } page — read as a page, `data` was an object and the dashboard crashed on .filter.
+    const page = res && !Array.isArray(res.data) && Array.isArray(res.data?.data) ? res.data : res;
+    return toCamel(page);
   } catch (error) {
     return {
       data: [],
@@ -308,7 +314,7 @@ export async function exportResults(params: {
   // Export returns a Blob — fall back to raw fetch for binary responses
   const response = await fetch(
     `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1/school-admin/results/export${qs}`,
-    { credentials: "include" }
+    { credentials: "include", headers: actingSchoolFetchHeaders() }
   );
   if (!response.ok) throw new Error("Failed to export results");
   return response.blob();
@@ -355,6 +361,7 @@ export async function changePassword(data: {
 
 export async function verifySchoolAdminAccess(): Promise<{
   isSchoolAdmin: boolean;
+  isSuperAdmin?: boolean;
   schoolId?: string;
   schoolName?: string;
 }> {
@@ -362,12 +369,15 @@ export async function verifySchoolAdminAccess(): Promise<{
     // Check profile via API (cookies sent automatically)
     const user = await getCurrentUser();
     const userRole = user.role?.name || "";
+    // Same role test as the API client's header (normalizeRole), so the picker and the header always agree.
+    if (normalizeRole(userRole) === Roles.SUPER_ADMIN) {
+      // A Super Admin has no school of its own: it acts on the school it opened (lib/actingSchool.ts), or on
+      // none yet — the layout then shows the school picker.
+      const acting = getActingSchool();
+      return { isSchoolAdmin: true, isSuperAdmin: true, schoolId: acting?.id, schoolName: acting?.name };
+    }
     if (isAdminRole(userRole)) {
-      return {
-        isSchoolAdmin: true,
-        schoolId: user.schoolId || "school-1",
-        schoolName: "Admin School",
-      };
+      return { isSchoolAdmin: true, isSuperAdmin: false, schoolId: user.schoolId || undefined };
     }
 
     return { isSchoolAdmin: false };

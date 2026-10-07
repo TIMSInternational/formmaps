@@ -23,7 +23,9 @@ import {
   Pencil,
   Mail,
   Video,
+  LogIn,
 } from "lucide-react";
+import { openSchool } from "@/lib/actingSchool";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -378,7 +380,17 @@ export default function SchoolsPage() {
                         {school.videoCallsEnabled ? tPO("schools.videoOn") : tPO("schools.videoOff")}
                       </button>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right whitespace-nowrap">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        data-testid="open-school"
+                        className="h-8 text-xs text-[var(--admin-accent-blue)] hover:text-[#102B47] hover:bg-[var(--admin-accent-blue)]/10"
+                        onClick={(e) => { e.stopPropagation(); openSchool({ id: school.id, name: school.name }); }}
+                      >
+                        <LogIn className="mr-1.5 h-3.5 w-3.5" />
+                        {tPO("schools.open")}
+                      </Button>
                       {(school.status === "invited" || school.status === "pending") && (
                         <Button
                           variant="ghost"

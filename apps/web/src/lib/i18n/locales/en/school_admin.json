@@ -1885,5 +1885,17 @@
   },
   "pipeline": {
     "milName": "Labor Intelligence Measurement"
+  },
+  "actingSchool": {
+    "viewing": "Super Admin · you are working in {{school}}. Everything you do here applies to this school.",
+    "thisSchool": "this school",
+    "switch": "Switch school",
+    "backToAdmin": "Back to Admin",
+    "pickerTitle": "Choose a school",
+    "pickerDescription": "As Super Admin you can open any school and do everything its administrators can.",
+    "searchPlaceholder": "Search schools by name or admin email",
+    "loading": "Loading schools…",
+    "loadFailed": "Could not load schools. Try again.",
+    "noSchools": "No schools match your search."
   }
 }
