@@ -1898,5 +1898,60 @@
     "loadFailed": "No se pudieron cargar los colegios. Inténtalo de nuevo.",
     "noSchools": "Ningún colegio coincide con tu búsqueda.",
     "viewingStudentOnly": "Super Admin · estás viendo a un estudiante fuera de cualquier colegio. Las secciones propias de un colegio (cursos, notas, créditos) no aplican."
+  },
+  "studentRecord": {
+    "tab": "Resultados y respuestas",
+    "loadError": "No pudimos cargar el expediente de este estudiante.",
+    "retry": "Reintentar",
+    "reports": {
+      "title": "Informes",
+      "subtitle": "PDF de análisis generados a partir de las evaluaciones del estudiante",
+      "language": "Idioma del PDF",
+      "langEs": "ES",
+      "langEn": "EN",
+      "langEsFull": "Español",
+      "langEnFull": "Inglés",
+      "downloadComplete": "Descargar expediente completo (PDF)",
+      "unavailable": "Aún no disponible",
+      "none": "Este estudiante todavía no tiene informes disponibles.",
+      "downloaded": "PDF descargado",
+      "downloadFailed": "No se pudo descargar el PDF. Inténtalo de nuevo."
+    },
+    "assessments": {
+      "title": "Evaluaciones",
+      "completedOn": "Completada el {{date}}",
+      "viewAnswers": "Ver respuestas ({{count}})",
+      "hideAnswers": "Ocultar respuestas",
+      "downloadPdf": "Descargar PDF",
+      "answersUnavailable": "Las respuestas no están disponibles."
+    },
+    "status": {
+      "not_started": "Sin iniciar",
+      "in_progress": "En curso",
+      "completed": "Completada"
+    },
+    "empty": {
+      "title": "Aún no hay evaluaciones",
+      "description": "Cuando este estudiante inicie una evaluación, sus resultados y respuestas aparecerán aquí."
+    },
+    "answers": {
+      "number": "#",
+      "question": "Pregunta",
+      "answer": "Respuesta del estudiante",
+      "correctAnswer": "Respuesta correcta",
+      "result": "Resultado",
+      "notes": "Notas",
+      "options": "Opciones",
+      "correct": "Correcta",
+      "incorrect": "Incorrecta",
+      "noAnswer": "Sin respuesta",
+      "searchPlaceholder": "Buscar en preguntas o respuestas",
+      "searchLabel": "Buscar respuestas",
+      "onlyIncorrect": "Solo incorrectas",
+      "loading": "Cargando respuestas…",
+      "empty": "No se registraron respuestas para esta evaluación.",
+      "noMatches": "Ninguna pregunta coincide con tus filtros.",
+      "error": "No pudimos cargar las respuestas."
+    }
   }
 }

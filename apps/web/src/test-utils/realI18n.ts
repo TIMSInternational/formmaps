@@ -11,16 +11,18 @@ export function createTestI18n(lng: "en" | "es" = "en"): I18n {
   inst.init({
     lng,
     fallbackLng: "en",
-    ns: ["common", "platform_owner"],
+    ns: ["common", "platform_owner", "school_admin"],
     defaultNS: "common",
     resources: {
       en: {
         common: require("@/lib/i18n/locales/en/common.json"),
         platform_owner: require("@/lib/i18n/locales/en/platform_owner.json"),
+        school_admin: require("@/lib/i18n/locales/en/school_admin.json"),
       },
       es: {
         common: require("@/lib/i18n/locales/es/common.json"),
         platform_owner: require("@/lib/i18n/locales/es/platform_owner.json"),
+        school_admin: require("@/lib/i18n/locales/es/school_admin.json"),
       },
     },
     interpolation: { escapeValue: false },

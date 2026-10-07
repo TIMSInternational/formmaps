@@ -1,6 +1,6 @@
 "use client";
 
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useTranslation } from "react-i18next";
 import {
   ArrowLeft,
@@ -18,6 +18,7 @@ import {
   Brain,
   Heart,
   ShieldCheck,
+  ClipboardList,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -59,6 +60,7 @@ import { AssessmentsTab } from "./_components/assessments-tab";
 import { AcademicsTab } from "./_components/academics-tab";
 import { NotesTab } from "./_components/notes-tab";
 import { ExtracurricularsTab } from "./_components/extracurriculars-tab";
+import { RecordTab } from "./_components/record-tab";
 
 export default function StudentDetailsPage() {
   const { t, i18n } = useTranslation();
@@ -66,6 +68,8 @@ export default function StudentDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const studentId = params.id as string;
+  // Deep link: ?tab=record opens "Results & Answers" (Super Admin → Users → "View profile & results").
+  const initialTab = useSearchParams()?.get("tab") === "record" ? "record" : "overview";
 
   const { data: student, isLoading, error } = useStudent(studentId);
   const { data: coursePlan } = useStudentCoursePlan(studentId);
@@ -267,13 +271,14 @@ export default function StudentDetailsPage() {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue="overview" className="w-full">
+      <Tabs defaultValue={initialTab} className="w-full">
         <TabsList style={{
           background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
           borderRadius: 8, padding: 2, height: "auto",
         }} className="flex flex-wrap">
           {[
             { value: "overview", icon: User, label: t("school_admin:ui.studentDetail.page.tabs.overview") },
+            { value: "record", icon: ClipboardList, label: t("school_admin:studentRecord.tab") },
             { value: "assessments", icon: Brain, label: t("school_admin:ui.results.assessments") },
             { value: "courses", icon: BookOpen, label: t("school_admin:academics.title") },
             { value: "notes", icon: MessageSquare, label: t("school_admin:ui.studentDetail.notes.notes") },
@@ -300,6 +305,10 @@ export default function StudentDetailsPage() {
             personalityTotal={personalityTotal}
             evalGroups={evalGroups}
           />
+        </TabsContent>
+
+        <TabsContent value="record" className="mt-4">
+          <RecordTab studentId={studentId} studentName={student.name} />
         </TabsContent>
 
         <TabsContent value="assessments" className="mt-4">

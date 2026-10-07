@@ -98,7 +98,8 @@ export function isStudentDetailPath(pathname: string | null | undefined): boolea
  * opens with none, and the backends scope it to the student (school-only sections say so).
  */
 export function openStudent(studentId: string, school: ActingSchool | null, navigate: Navigate = hardNavigate): void {
-  const path = `/school-admin/users/${encodeURIComponent(studentId)}`;
+  // ?tab=record: land on "Results & Answers", the tab this entry point is named after.
+  const path = `/school-admin/users/${encodeURIComponent(studentId)}?tab=record`;
   if (school) {
     openSchool(school, path, navigate);
   } else {
