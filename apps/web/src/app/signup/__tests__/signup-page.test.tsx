@@ -12,7 +12,7 @@ jest.mock("react-i18next", () => {
   const get = (k: string) =>
     k.split(".").reduce((o: unknown, p: string) => (o == null ? o : (o as Record<string, unknown>)[p]), en);
   return {
-    useTranslation: () => ({ t: (k: string, d?: string) => (get(k) as string) ?? d ?? k }),
+    useTranslation: () => ({ t: (k: string, d?: unknown) => (get(k) as string) ?? (typeof d === "string" ? d : k) }),
   };
 });
 jest.mock("@/services/authService", () => ({
@@ -34,12 +34,12 @@ describe("Signup page", () => {
     mockLogin.mockResolvedValue({ user: { id: "u1", role: { name: "student" } } });
   });
 
-  async function fillAndSubmit() {
+  async function fillAndSubmit(dob = "2008-01-01") {
     const byId = (id: string) => document.getElementById(id) as HTMLInputElement;
     fireEvent.change(byId("firstName"), { target: { value: "Indie" } });
     fireEvent.change(byId("lastName"), { target: { value: "Student" } });
     fireEvent.change(byId("email"), { target: { value: "indie.student@formmaps.dev" } });
-    fireEvent.change(byId("dateOfBirth"), { target: { value: "2008-01-01" } });
+    fireEvent.change(byId("dateOfBirth"), { target: { value: dob } });
     fireEvent.change(screen.getByPlaceholderText("Create a strong password"), {
       target: { value: "Test1234!" },
     });
@@ -62,10 +62,58 @@ describe("Signup page", () => {
       undefined,
       "2008-01-01",
       false,
+      {
+        documents: [
+          { key: "terms", version: "2026-10-15" },
+          { key: "privacy", version: "2026-10-15" },
+        ],
+        parentConfirmed: false,
+      },
     );
     // The 401 from this pre-signup lookup hijacked anonymous users to /login
     expect(mockGetRole).not.toHaveBeenCalled();
     await waitFor(() => expect(mockLogin).toHaveBeenCalledTimes(1));
+  });
+
+  it("keeps submit disabled until the Terms/Privacy box is ticked", () => {
+    render(<SignupPage />);
+    const submit = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+    expect(submit).toBeDisabled();
+    fireEvent.click(document.querySelector('[data-consent-field="termsAccepted"]') as HTMLInputElement);
+    expect(submit).not.toBeDisabled();
+  });
+
+  it("requires the parent/guardian box for a 13–17 student and records parental consent", async () => {
+    render(<SignupPage />);
+    const byId = (id: string) => document.getElementById(id) as HTMLInputElement;
+    fireEvent.change(byId("firstName"), { target: { value: "Teen" } });
+    fireEvent.change(byId("lastName"), { target: { value: "Student" } });
+    fireEvent.change(byId("email"), { target: { value: "teen@formmaps.dev" } });
+    const dob = new Date();
+    dob.setFullYear(dob.getFullYear() - 15);
+    const dobStr = dob.toISOString().slice(0, 10);
+    fireEvent.change(byId("dateOfBirth"), { target: { value: dobStr } });
+    fireEvent.change(screen.getByPlaceholderText("Create a strong password"), { target: { value: "Test1234!" } });
+    fireEvent.change(screen.getByPlaceholderText("Confirm your password"), { target: { value: "Test1234!" } });
+
+    const submit = document.querySelector('button[type="submit"]') as HTMLButtonElement;
+    fireEvent.click(document.querySelector('[data-consent-field="termsAccepted"]') as HTMLInputElement);
+    const parentBox = document.querySelector('[data-consent-field="parentConfirmed"]') as HTMLInputElement;
+    expect(parentBox).toBeInTheDocument();
+    expect(submit).toBeDisabled();
+    fireEvent.click(parentBox);
+    expect(submit).not.toBeDisabled();
+    fireEvent.click(submit);
+
+    await waitFor(() => expect(mockSignUp).toHaveBeenCalledTimes(1));
+    expect(mockSignUp.mock.calls[0][6]).toEqual({
+      documents: [
+        { key: "terms", version: "2026-10-15" },
+        { key: "privacy", version: "2026-10-15" },
+        { key: "parental-consent", version: "2026-10-15" },
+      ],
+      parentConfirmed: true,
+    });
   });
 
   // Greta: invited, so her email already had a (password-less) account, and signup answered

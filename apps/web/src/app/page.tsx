@@ -2,6 +2,7 @@
 import React from "react";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import { LegalFooter } from "@/components/legal/LegalFooter";
 
 export default function page() {
   const { t } = useTranslation();
@@ -36,6 +37,7 @@ export default function page() {
           {t("home.cta.signUp")}
         </Link>
       </div>
+      <LegalFooter className="mt-12" />
     </div>
   );
 }

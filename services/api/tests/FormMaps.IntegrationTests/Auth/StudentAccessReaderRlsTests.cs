@@ -1,0 +1,181 @@
+using FormMaps.Application.Auth;
+using FormMaps.Infrastructure.Auth;
+using FormMaps.Infrastructure.Data;
+using FormMaps.IntegrationTests.TestSupport.Rls;
+using Npgsql;
+
+namespace FormMaps.IntegrationTests.Auth;
+
+/// <summary>
+/// Testcontainers Postgres for <see cref="StudentAccessReader"/> with the PRODUCTION RLS policies live and the
+/// reader running as the NOSUPERUSER NOBYPASSRLS login (formmaps#125 pattern). <c>users</c> and
+/// <c>user_subscriptions</c> are policied in production; <c>schools</c> (#77 group 2, deferred) and
+/// <c>subscription_plans</c> (global catalog) are not — the fixture applies every vendored policy whose table
+/// exists, so if production ever policies either of them the proof test below fails first.
+/// </summary>
+public sealed class StudentAccessDatabaseFixture : RlsEnabledDatabaseFixture
+{
+    protected override string SchemaResourceFileName => "student-access-schema.sql";
+
+    protected override IReadOnlyCollection<string> PoliciedTables => ["users", "user_subscriptions"];
+}
+
+/// <summary>
+/// formmaps#240 (d): a STUDENT's own RLS session — the real <see cref="NpgsqlFormMapsDatabaseSessionFactory"/>
+/// handed the student's <see cref="RequestContext"/> — can read its school's contract columns and the joined
+/// <c>subscription_plans.interval</c>, so <see cref="StudentAccessReader"/> needs no system/bypass path.
+/// </summary>
+public sealed class StudentAccessReaderRlsTests(StudentAccessDatabaseFixture fixture)
+    : IClassFixture<StudentAccessDatabaseFixture>, IAsyncLifetime
+{
+    private static readonly DateTimeOffset Now = new(2026, 10, 6, 12, 0, 0, TimeSpan.Zero);
+
+    private NpgsqlDataSource _appDataSource = null!;
+
+    public Task InitializeAsync()
+    {
+        _appDataSource = NpgsqlDataSource.Create(fixture.AppConnectionString);
+        return fixture.TruncateAsync("user_subscriptions", "subscription_plans", "users", "schools");
+    }
+
+    public async Task DisposeAsync() => await _appDataSource.DisposeAsync();
+
+    [Fact]
+    public async Task Production_policies_cover_users_and_subscriptions_but_not_schools_or_plans()
+    {
+        Assert.Contains("users", fixture.AppliedPolicyTables);
+        Assert.Contains("user_subscriptions", fixture.AppliedPolicyTables);
+        Assert.DoesNotContain("schools", fixture.AppliedPolicyTables);
+        Assert.DoesNotContain("subscription_plans", fixture.AppliedPolicyTables);
+
+        await using var app = new NpgsqlConnection(fixture.AppConnectionString);
+        await app.OpenAsync();
+        Assert.False(await ProductionRlsPolicies.BypassesRlsAsync(app));
+    }
+
+    [Fact]
+    public async Task Student_session_reads_its_active_school_contract()
+    {
+        await SeedSchoolAsync("sch-active", "active", Now.AddMonths(-9), Now.AddMonths(9));
+        await SeedUserAsync("stu-1", "student", "sch-active");
+
+        var access = await Reader().ReadAsync(Student("stu-1", "sch-active"));
+
+        Assert.NotNull(access);
+        Assert.Equal("school_contract", access!.Reason);
+        Assert.True(access.PaidResults);
+    }
+
+    [Fact]
+    public async Task Student_session_sees_an_expired_contract_and_falls_back_to_its_subscription_plan_interval()
+    {
+        await SeedSchoolAsync("sch-expired", "active", Now.AddYears(-2), Now.AddDays(-30));
+        await SeedUserAsync("stu-2", "student", "sch-expired");
+        await SeedPlanAsync("plan-once", "one_time");
+        await SeedSubscriptionAsync("sub-2", "stu-2", "plan-once", "active", nextBillingDate: null);
+
+        var access = await Reader().ReadAsync(Student("stu-2", "sch-expired"));
+
+        // one_time could ONLY come from the joined subscription_plans.interval being visible.
+        Assert.NotNull(access);
+        Assert.Equal("one_time", access!.Reason);
+        Assert.Equal(StudentAccessRules.AssessmentsAndReportsScope, access.Scope);
+        Assert.True(access.PaidResults);
+        Assert.False(access.FullPlatform);
+    }
+
+    [Fact]
+    public async Task Independent_trialing_student_reads_its_recurring_plan()
+    {
+        await SeedUserAsync("stu-3", "student", null);
+        await SeedPlanAsync("plan-month", "month");
+        await SeedSubscriptionAsync("sub-3", "stu-3", "plan-month", "trialing", Now.AddDays(10));
+
+        var access = await Reader().ReadAsync(Student("stu-3", null));
+
+        Assert.NotNull(access);
+        Assert.Equal("subscription", access!.Reason);
+        Assert.True(access.FullPlatform);
+        Assert.False(access.PaidResults);
+    }
+
+    [Fact]
+    public async Task Student_cannot_see_another_students_subscription()
+    {
+        await SeedUserAsync("stu-4", "student", null);
+        await SeedUserAsync("stu-5", "student", null);
+        await SeedPlanAsync("plan-month", "month");
+        await SeedSubscriptionAsync("sub-5", "stu-5", "plan-month", "active", Now.AddDays(10));
+
+        var access = await Reader().ReadAsync(Student("stu-4", null));
+
+        Assert.Equal(StudentAccessRules.NoAccess, access);
+    }
+
+    [Fact]
+    public async Task Unknown_user_reads_as_null()
+    {
+        Assert.Null(await Reader().ReadAsync(Student("ghost", null)));
+    }
+
+    // ---------------------------------------------------------------- helpers
+
+    private StudentAccessReader Reader() => new(
+        new NpgsqlFormMapsDatabaseSessionFactory(_appDataSource, new RlsSessionContextApplier()),
+        new SchoolContractCache(),
+        new FixedTimeProvider(Now),
+        SubscriptionAccess.DefaultGraceDays);
+
+    private static RequestContext Student(string userId, string? schoolId) => RequestContext.Authenticated(
+        new RequestActor(userId, "student", $"{userId}@example.test", "Student"),
+        schoolId,
+        [],
+        TokenSource.AuthorizationBearer,
+        isDevelopmentOverride: false);
+
+    private Task SeedSchoolAsync(string id, string status, DateTimeOffset start, DateTimeOffset end) =>
+        AdminExecAsync(
+            """
+            INSERT INTO "schools" ("id", "isActive", "status", "contractStartDate", "contractEndDate")
+            VALUES (@id, true, @status::"SchoolStatus", @start, @end)
+            """,
+            ("id", id), ("status", status), ("start", start.UtcDateTime), ("end", end.UtcDateTime));
+
+    private Task SeedUserAsync(string id, string role, string? schoolId) =>
+        AdminExecAsync(
+            """INSERT INTO "users" ("id", "roleName", "schoolId") VALUES (@id, @role, @schoolId)""",
+            ("id", id), ("role", role), ("schoolId", schoolId));
+
+    private Task SeedPlanAsync(string id, string interval) =>
+        AdminExecAsync(
+            """INSERT INTO "subscription_plans" ("id", "interval") VALUES (@id, @interval) ON CONFLICT DO NOTHING""",
+            ("id", id), ("interval", interval));
+
+    private Task SeedSubscriptionAsync(string id, string userId, string planId, string status, DateTimeOffset? nextBillingDate) =>
+        AdminExecAsync(
+            """
+            INSERT INTO "user_subscriptions" ("id", "userId", "planId", "status", "isActive", "nextBillingDate")
+            VALUES (@id, @userId, @planId, @status, true, @next)
+            """,
+            ("id", id), ("userId", userId), ("planId", planId), ("status", status), ("next", nextBillingDate?.UtcDateTime));
+
+    private async Task AdminExecAsync(string sql, params (string Name, object? Value)[] parameters)
+    {
+        await using var connection = new NpgsqlConnection(fixture.AdminConnectionString);
+        await connection.OpenAsync();
+        await using var command = new NpgsqlCommand(sql, connection);
+        foreach (var (name, value) in parameters)
+        {
+            command.Parameters.Add(value is DateTime
+                ? new NpgsqlParameter(name, NpgsqlTypes.NpgsqlDbType.Timestamp) { Value = DateTime.SpecifyKind((DateTime)value, DateTimeKind.Unspecified) }
+                : new NpgsqlParameter(name, value ?? DBNull.Value));
+        }
+
+        await command.ExecuteNonQueryAsync();
+    }
+
+    private sealed class FixedTimeProvider(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => now;
+    }
+}

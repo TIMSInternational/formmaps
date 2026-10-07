@@ -21,6 +21,9 @@ import enCoach from "./locales/en/coach.json";
 import esCoach from "./locales/es/coach.json";
 import enPlatformOwner from "./locales/en/platform_owner.json";
 import esPlatformOwner from "./locales/es/platform_owner.json";
+// Legal pages chrome + consent checkbox copy (the documents themselves live in src/lib/legal/content)
+import enLegal from "./locales/en/legal.json";
+import esLegal from "./locales/es/legal.json";
 
 const NAMESPACES = [
   "common",
@@ -31,6 +34,7 @@ const NAMESPACES = [
   "school_admin",
   "coach",
   "platform_owner",
+  "legal",
 ] as const;
 
 const resources = {
@@ -43,6 +47,7 @@ const resources = {
     school_admin: enSchoolAdmin,
     coach: enCoach,
     platform_owner: enPlatformOwner,
+    legal: enLegal,
   },
   es: {
     common: esCommon,
@@ -53,6 +58,7 @@ const resources = {
     school_admin: esSchoolAdmin,
     coach: esCoach,
     platform_owner: esPlatformOwner,
+    legal: esLegal,
   },
 };
 

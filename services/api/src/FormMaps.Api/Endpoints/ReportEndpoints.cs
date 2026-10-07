@@ -1,3 +1,4 @@
+using FormMaps.Api.Auth;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Reports;
 using FormMaps.Domain.Auth;
@@ -12,12 +13,12 @@ public static class ReportEndpoints
             .WithTags("Reports");
 
         group.MapGet("/benchmark", GetBenchmarkAsync);
-        group.MapGet("/user-report/{userId}", GetUserReportAsync);
-        group.MapGet("/pca/{userId}", GetPcaReportAsync);
-        group.MapGet("/lia/{userId}", GetLiaReportAsync);
-        group.MapGet("/timeline/{userId}", GetTimelineReportAsync);
-        group.MapGet("/coaching/{userId}", GetCoachingReportAsync);
-        group.MapGet("/evaluation/{sessionId}", GetEvaluationReportAsync);
+        group.MapGet("/user-report/{userId}", GetUserReportAsync).RequirePaidResults();
+        group.MapGet("/pca/{userId}", GetPcaReportAsync).RequirePaidResults();
+        group.MapGet("/lia/{userId}", GetLiaReportAsync).RequirePaidResults();
+        group.MapGet("/timeline/{userId}", GetTimelineReportAsync).RequirePaidResults();
+        group.MapGet("/coaching/{userId}", GetCoachingReportAsync).RequirePaidResults();
+        group.MapGet("/evaluation/{sessionId}", GetEvaluationReportAsync).RequirePaidResults();
 
         return app;
     }

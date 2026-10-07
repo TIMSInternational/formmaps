@@ -23,9 +23,11 @@ jest.mock("@/services/pcaService", () => ({
 jest.mock("@/services/careerInformeService", () => ({
   getCareerInformeBlob: jest.fn(),
 }));
+jest.mock("@/services/reportEventsService", () => ({ trackReportDownloaded: jest.fn() }));
 jest.mock("sonner", () => ({ toast: { success: jest.fn(), error: jest.fn() } }));
 
 const mockGetCareerInformeBlob = getCareerInformeBlob as jest.Mock;
+const { trackReportDownloaded: mockTrackReportDownloaded } = require("@/services/reportEventsService");
 
 const mockResult = getPCAResult as jest.Mock;
 const mockCompetences = getPCACompetences as jest.Mock;
@@ -120,6 +122,8 @@ describe("PCAResultsPanel", () => {
 
       await waitFor(() => expect(mockGetCareerInformeBlob).toHaveBeenCalledWith("u1", "es"));
       await waitFor(() => expect(toast.success).toHaveBeenCalledWith("informe.downloaded"));
+      // Refund eligibility: the full-report download is recorded (best-effort).
+      expect(mockTrackReportDownloaded).toHaveBeenCalledWith("career-informe-pdf");
       expect(mockClick).toHaveBeenCalled();
       expect(mockRevoke).toHaveBeenCalledWith("blob:fake-url");
 

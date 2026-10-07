@@ -6,6 +6,14 @@ import { FAQ } from "./FAQ";
 import { LoadingState } from "./LoadingState";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import StripeCheckout from "@/components/StripeCheckout";
+import { OneTimeReportCard } from "@/components/independent-student/OneTimeReportCard";
+import { LegalConsent } from "@/components/legal/LegalConsent";
+import {
+  EMPTY_LEGAL_CONSENT,
+  buildLegalConsentPayload,
+  isLegalConsentValid,
+  type LegalConsentValues,
+} from "@/lib/legal/consent";
 import * as subscriptionService from "@/services/subscriptionService";
 import { useSubscriptionStatus } from "@/hooks/useSubscription";
 import type {
@@ -39,6 +47,8 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
     useSubscriptionStatus();
 
   const [loading, setLoading] = useState(true);
+  const [legalConsent, setLegalConsent] = useState<LegalConsentValues>(EMPTY_LEGAL_CONSENT);
+  const subscriptionConsent = isLegalConsentValid("checkout-subscription", legalConsent);
   const [error, setError] = useState<string | null>(null);
   const [processingPayment, setProcessingPayment] = useState<string | null>(
     null
@@ -172,6 +182,11 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
         </p>
       </motion.div>
 
+      {/* Checkout consent (#243) — subscription checkout stays disabled until given */}
+      <div className="max-w-xl mx-auto mb-6">
+        <LegalConsent variant="checkout-subscription" values={legalConsent} onChange={setLegalConsent} />
+      </div>
+
       {/* Billing Options Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
         {billingOptions.map((option, index) => (
@@ -253,6 +268,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                     amount={option.price * 100}
                     userId={userId}
                     planId={option.id}
+                    legalConsent={buildLegalConsentPayload("checkout-subscription", legalConsent)}
                     productName={`${option.name} - ${option.description}`}
                     onStart={() => setProcessingPayment(option.id)}
                     onSuccess={() => {
@@ -262,7 +278,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                       alert(t("studentUi.subscriptions.paymentFailed", { error }));
                       setProcessingPayment(null);
                     }}
-                    disabled={processingPayment !== null}
+                    disabled={processingPayment !== null || !subscriptionConsent}
                     className="w-full"
                   >
                     <Button
@@ -272,7 +288,7 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
                           ? "bg-[var(--admin-accent-blue)] hover:bg-[var(--admin-accent-blue)]/90 text-white"
                           : "bg-foreground hover:bg-foreground/90 text-white"
                       )}
-                      disabled={processingPayment !== null}
+                      disabled={processingPayment !== null || !subscriptionConsent}
                     >
                       {processingPayment === option.id ? (
                         <>
@@ -290,6 +306,16 @@ export function SubscriptionPlans({ className }: SubscriptionPlansProps) {
           </motion.div>
         ))}
       </div>
+
+      {/* One-time $150 report (D1/D2, #243) — not offered on top of a live subscription */}
+      {!hasActiveSubscription && (
+        <div className="mt-10 max-w-5xl mx-auto">
+          <OneTimeReportCard
+            userId={userId}
+            onError={(error: string) => alert(t("studentUi.subscriptions.paymentFailed", { error }))}
+          />
+        </div>
+      )}
 
       {/* FAQ Section */}
       <FAQ className="mt-16 max-w-4xl mx-auto" />

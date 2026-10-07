@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
-import { TermsContent } from "./_components/TermsContent";
+import { LegalDocumentView } from "@/components/legal/LegalDocumentView";
 
 export const metadata: Metadata = {
   title: "Terms of Service",
-  description: "FormMaps terms of service — rules and conditions for using our platform.",
+  description: "FormMaps Terms of Service — the agreement for using FormMaps, including payment terms.",
 };
 
-export default function TermsOfServicePage() {
-  return <TermsContent />;
+export default function Page() {
+  return <LegalDocumentView docKey="terms" />;
 }

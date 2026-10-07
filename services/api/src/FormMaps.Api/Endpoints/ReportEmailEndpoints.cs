@@ -1,3 +1,4 @@
+using FormMaps.Api.Auth;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Email;
 using FormMaps.Application.Reports;
@@ -19,7 +20,7 @@ public static class ReportEmailEndpoints
     public static IEndpointRouteBuilder MapReportEmailEndpoints(this IEndpointRouteBuilder app)
     {
         app.MapGroup("/api/v1/reports").WithTags("ReportEmail")
-            .MapPost("/send-report-email/{userId}", SendReportEmailAsync);
+            .MapPost("/send-report-email/{userId}", SendReportEmailAsync).RequirePaidResults();
         return app;
     }
 
