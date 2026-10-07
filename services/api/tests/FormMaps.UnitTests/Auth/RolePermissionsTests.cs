@@ -14,7 +14,8 @@ public class RolePermissionsTests
             "school:manage", "school:users", "school:billing", "school:integrations", "school:data-mapping",
             "students:read", "students:write", "students:import",
             "courses:read", "courses:write",
-            "course-plans:read", "course-plans:write",
+            "course-plans:read", "course-plans:write", "course-plans:approve",
+            "recommendations:respond",
             "grades:read", "grades:import",
             "curriculum:manage", "prerequisites:manage", "graduation:manage", "calendar:manage",
             "assessments:read",
@@ -26,6 +27,15 @@ public class RolePermissionsTests
             "subscriptions:read", "subscriptions:manage",
         };
         Assert.Equal(expected.OrderBy(x => x), RolePermissions.For(FormMapsRoles.SuperAdmin).OrderBy(x => x));
+    }
+
+    [Fact]
+    public void SuperAdmin_HoldsEveryPermissionASchoolAdminHolds()
+    {
+        // The Super Admin must be able to do everything a School Admin can, in any school (2026-10-07). A permission
+        // added to School Admin alone fails here instead of surfacing as a 403 for the Super Admin.
+        var missing = RolePermissions.For(FormMapsRoles.SchoolAdmin).Except(RolePermissions.For(FormMapsRoles.SuperAdmin));
+        Assert.Empty(missing);
     }
 
     [Fact]

@@ -913,6 +913,7 @@
         "viewProfile": "View Profile",
         "editDetails": "Edit Details",
         "deactivateUser": "Deactivate User",
+        "activateUser": "Activate User",
         "resendInvite": "Resend invitation"
       },
       "openMenu": "Open menu",
@@ -993,6 +994,13 @@
         "done": "{{name}} has been deactivated",
         "failed": "Couldn't deactivate this user. Please try again."
       },
+      "activate": {
+        "title": "Activate user",
+        "body": "Activate {{name}}? They will be able to sign in and use the platform again.",
+        "cta": "Activate",
+        "done": "{{name}} has been activated",
+        "failed": "Couldn't activate this user. Please try again."
+      },
       "resend": {
         "title": "Resend invitation",
         "body": "Send {{name}} a new invitation link at {{email}}? Any older link stops working.",
@@ -1064,7 +1072,10 @@
       "updateSuccess": "School updated successfully",
       "updateError": "Failed to update school",
       "resendSuccess": "Invitation resent to {{name}}",
-      "resendError": "Failed to resend invitation"
+      "resendError": "Failed to resend invitation",
+      "access": "School contract",
+      "accessActive": "Active — covers its students while the contract dates include today",
+      "accessInactive": "Inactive — no longer covers its students (their accounts stay)"
     },
     "invite": {
       "fillRequired": "Please fill in all required fields",

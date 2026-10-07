@@ -2,7 +2,7 @@
 
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Copy, Eye, FileBarChart, MailPlus, MoreHorizontal, UserX } from "lucide-react";
+import { Copy, Eye, FileBarChart, MailPlus, MoreHorizontal, UserCheck, UserX } from "lucide-react";
 import { openStudent } from "@/lib/actingSchool";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -49,10 +49,11 @@ interface UsersTableProps {
   onViewProfile: (user: UserRecord) => void;
   onResendInvite: (user: UserRecord) => void;
   onDeactivate: (user: UserRecord) => void;
+  onActivate: (user: UserRecord) => void;
 }
 
 export function UsersTable({
-  users, loading, page, totalPages, onPageChange, onViewProfile, onResendInvite, onDeactivate,
+  users, loading, page, totalPages, onPageChange, onViewProfile, onResendInvite, onDeactivate, onActivate,
 }: UsersTableProps) {
   const { t } = useTranslation();
   const { t: tPO } = useTranslation("platform_owner");
@@ -156,6 +157,14 @@ export function UsersTable({
                         <DropdownMenuItem onSelect={() => onResendInvite(user)}>
                           <MailPlus className="mr-2 h-4 w-4" /> {t("admin.users.dropdown.resendInvite")}
                         </DropdownMenuItem>
+                      )}
+                      {user.status === "inactive" && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem data-testid="activate-user" onSelect={() => onActivate(user)}>
+                            <UserCheck className="mr-2 h-4 w-4" /> {t("admin.users.dropdown.activateUser")}
+                          </DropdownMenuItem>
+                        </>
                       )}
                       {user.status === "active" && (
                         <>

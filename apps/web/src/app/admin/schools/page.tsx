@@ -51,6 +51,7 @@ import {
 } from "@/services/schoolService";
 import { SchoolEditForm } from "@/components/admin/SchoolEditForm";
 import { formatDate, cn } from "@/lib/utils";
+import { parseYmdLocal } from "@/lib/dateUtils";
 import { toast } from "sonner";
 
 export default function SchoolsPage() {
@@ -362,7 +363,9 @@ export default function SchoolsPage() {
                     </TableCell>
                     <TableCell>
                       {school.contractEnd
-                        ? formatDate(school.contractEnd)
+                        ? // A DATE-ONLY value stored as UTC midnight: read its calendar date, or every western
+                          // timezone shows the day before (2027-07-31 → "July 30").
+                          formatDate(parseYmdLocal(school.contractEnd.slice(0, 10)))
                         : "-"}
                     </TableCell>
                     <TableCell>

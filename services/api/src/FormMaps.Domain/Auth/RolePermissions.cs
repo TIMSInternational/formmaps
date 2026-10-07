@@ -11,6 +11,7 @@ public static class RolePermissions
     private static readonly IReadOnlyDictionary<string, IReadOnlyList<string>> Map =
         new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal)
         {
+            // Everything a School Admin holds, platform-wide (twin of formmaps-platform lib/auth.ts).
             [FormMapsRoles.SuperAdmin] =
             [
                 "admin:dashboard", "admin:users", "admin:schools", "admin:roles",
@@ -18,7 +19,8 @@ public static class RolePermissions
                 "school:manage", "school:users", "school:billing", "school:integrations", "school:data-mapping",
                 "students:read", "students:write", "students:import",
                 "courses:read", "courses:write",
-                "course-plans:read", "course-plans:write",
+                "course-plans:read", "course-plans:write", "course-plans:approve",
+                "recommendations:respond",
                 "grades:read", "grades:import",
                 "curriculum:manage", "prerequisites:manage", "graduation:manage", "calendar:manage",
                 "assessments:read",

@@ -1772,7 +1772,10 @@
       "updateSuccess": "Colegio actualizado con éxito",
       "updateError": "Error al actualizar el colegio",
       "resendSuccess": "Invitación reenviada a {{name}}",
-      "resendError": "Error al reenviar la invitación"
+      "resendError": "Error al reenviar la invitación",
+      "access": "Contrato del colegio",
+      "accessActive": "Activo — cubre a sus estudiantes mientras las fechas del contrato incluyan hoy",
+      "accessInactive": "Inactivo — ya no cubre a sus estudiantes (sus cuentas se mantienen)"
     },
     "coaches": {
       "title": "Coaches",
@@ -1910,6 +1913,7 @@
         "viewProfile": "Ver perfil",
         "editDetails": "Editar detalles",
         "deactivateUser": "Desactivar usuario",
+        "activateUser": "Activar usuario",
         "resendInvite": "Reenviar invitación"
       },
       "dialogTitle": "Agregar nuevo usuario",
@@ -2002,6 +2006,13 @@
         "cta": "Desactivar",
         "done": "Se desactivó la cuenta de {{name}}",
         "failed": "No se pudo desactivar a este usuario. Inténtalo de nuevo."
+      },
+      "activate": {
+        "title": "Activar usuario",
+        "body": "¿Activar a {{name}}? Podrá iniciar sesión y usar la plataforma de nuevo.",
+        "cta": "Activar",
+        "done": "{{name}} ha sido activado",
+        "failed": "No se pudo activar a este usuario. Inténtalo de nuevo."
       },
       "resend": {
         "title": "Reenviar invitación",
