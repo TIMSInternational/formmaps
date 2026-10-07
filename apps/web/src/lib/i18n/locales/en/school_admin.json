@@ -1896,6 +1896,7 @@
     "searchPlaceholder": "Search schools by name or admin email",
     "loading": "Loading schools…",
     "loadFailed": "Could not load schools. Try again.",
-    "noSchools": "No schools match your search."
+    "noSchools": "No schools match your search.",
+    "viewingStudentOnly": "Super Admin · you are viewing one student, outside any school. Sections that belong to a school (courses, grades, credits) do not apply."
   }
 }

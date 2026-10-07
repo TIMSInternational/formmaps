@@ -64,21 +64,23 @@ export function useStudentEvalProgress(studentId: string) {
   });
 }
 
-export function useStudentAcademicGaps(studentId: string) {
+// `enabled` false: the student has no school (an independent student opened by a Super Admin) — gaps are computed
+// from a school's graduation rules, so there is nothing to ask for.
+export function useStudentAcademicGaps(studentId: string, enabled = true) {
   return useQuery({
     queryKey: studentDetailKeys.academicGaps(studentId),
     queryFn: () => getStudentAcademicGaps(studentId),
-    enabled: !!studentId,
+    enabled: !!studentId && enabled,
     staleTime: 1000 * 60 * 5,
     retry: false,
   });
 }
 
-export function useStudentRecommendations(studentId: string) {
+export function useStudentRecommendations(studentId: string, enabled = true) {
   return useQuery({
     queryKey: studentDetailKeys.recommendations(studentId),
     queryFn: () => getStudentCourseRecommendations(studentId),
-    enabled: !!studentId,
+    enabled: !!studentId && enabled,
     staleTime: 1000 * 60 * 5,
     retry: false,
   });

@@ -153,6 +153,75 @@ public class SchoolAdminEndpointsTests
         Assert.True(doc.RootElement.GetProperty("data").GetProperty("completed").GetBoolean());
     }
 
+    // ---- Super Admin opening ONE student (Admin → Users → "View profile & results") ----
+    // Twin of formmaps-platform api/src/__tests__/superadmin-student-detail.route.test.ts.
+
+    [Theory]
+    [InlineData("student-in-a", "school-a")]
+    [InlineData("independent-student", null)]
+    public async Task PcaStatus_super_admin_with_no_school_open_acts_on_the_students_own_school(string student, string? expected)
+    {
+        // FakeScope(null): the caller-school path would answer 400 "No school" — it must not be the one taken.
+        var reader = new FakeReader { PcaStatus = new PcaStatusResult(true) };
+        var schools = new FakeStudentSchools(new() { ["student-in-a"] = "school-a", ["independent-student"] = null });
+        using var factory = new Factory(reader, new FakeScope(null), studentSchools: schools);
+
+        var response = await SendAs(factory.CreateClient(), $"/api/v1/school-admin/results/{student}/pca-status", FormMapsRoles.SuperAdmin);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(expected, reader.PcaSchoolId);
+    }
+
+    [Fact]
+    public async Task PcaStatus_school_admin_is_still_scoped_to_its_own_school_never_the_students()
+    {
+        var reader = new FakeReader { PcaStatus = new PcaStatusResult(true) };
+        var schools = new FakeStudentSchools(new() { ["student-in-a"] = "school-a" });
+        using var factory = new Factory(reader, new FakeScope(School), studentSchools: schools);
+
+        await SendAs(factory.CreateClient(), "/api/v1/school-admin/results/student-in-a/pca-status", FormMapsRoles.SchoolAdmin);
+
+        Assert.Equal(School, reader.PcaSchoolId);
+        Assert.Equal(0, schools.Calls);
+    }
+
+    [Fact]
+    public async Task PcaStatus_super_admin_without_school_manage_is_still_403_and_reads_nothing()
+    {
+        var reader = new FakeReader { PcaStatus = new PcaStatusResult(true) };
+        var schools = new FakeStudentSchools(new() { ["student-in-a"] = "school-a" });
+        using var factory = new Factory(reader, new FakeScope(null), studentSchools: schools);
+
+        var response = await SendAs(factory.CreateClient(), "/api/v1/school-admin/results/student-in-a/pca-status",
+            FormMapsRoles.SuperAdmin, FormMapsPermissions.AnalyticsSchool);
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        Assert.Equal(0, schools.Calls);
+        Assert.Equal(0, reader.PcaCalls);
+    }
+
+    private static Task<HttpResponseMessage> SendAs(
+        HttpClient client, string path, string role, string permission = FormMapsPermissions.SchoolManage)
+    {
+        var request = new HttpRequestMessage(HttpMethod.Get, path);
+        request.Headers.Add(DevelopmentRequestContextFactory.UserIdHeader, "caller-1");
+        request.Headers.Add(DevelopmentRequestContextFactory.RoleHeader, role);
+        request.Headers.Add(DevelopmentRequestContextFactory.PermissionsHeader, permission);
+        return client.SendAsync(request);
+    }
+
+    private sealed class FakeStudentSchools(Dictionary<string, string?> schools) : IStudentSchoolReader
+    {
+        public int Calls { get; private set; }
+
+        public Task<string?> ReadStudentSchoolIdAsync(
+            RequestContext context, string studentId, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            return Task.FromResult(schools.GetValueOrDefault(studentId));
+        }
+    }
+
     [Fact]
     public async Task PcaStatus_bounds_the_path_param_to_100_chars()
     {
@@ -703,7 +772,9 @@ public class SchoolAdminEndpointsTests
         return client.SendAsync(request);
     }
 
-    private sealed class Factory(FakeReader reader, FakeScope scope, FakeWriter? writer = null, FakeEmailWriter? emailWriter = null)
+    private sealed class Factory(
+        FakeReader reader, FakeScope scope, FakeWriter? writer = null, FakeEmailWriter? emailWriter = null,
+        IStudentSchoolReader? studentSchools = null)
         : WebApplicationFactory<Program>
     {
         protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -719,6 +790,11 @@ public class SchoolAdminEndpointsTests
                 services.AddSingleton<ISchoolAdminWriter>(writer ?? new FakeWriter());
                 services.RemoveAll<ISchoolAdminEmailWriter>();
                 services.AddSingleton<ISchoolAdminEmailWriter>(emailWriter ?? new FakeEmailWriter());
+                if (studentSchools is not null)
+                {
+                    services.RemoveAll<IStudentSchoolReader>();
+                    services.AddSingleton(studentSchools);
+                }
             });
         }
     }
@@ -796,6 +872,10 @@ public class SchoolAdminEndpointsTests
 
         public PcaStatusResult? PcaStatus { get; init; }
 
+        public string? PcaSchoolId { get; private set; }
+
+        public int PcaCalls { get; private set; }
+
         public AssessmentConfig Config { get; init; } =
             new("2026-03-01", "2026-06-30", "once_per_semester", true, 7,
                 JsonDocument.Parse("""{"academic":0.4,"social":0.3,"career":0.3}""").RootElement.Clone());
@@ -856,9 +936,11 @@ public class SchoolAdminEndpointsTests
         }
 
         public Task<PcaStatusResult?> GetStudentPcaCompletionAsync(
-            RequestContext context, string schoolId, string studentId, CancellationToken cancellationToken = default)
+            RequestContext context, string? schoolId, string studentId, CancellationToken cancellationToken = default)
         {
             PcaStudentId = studentId;
+            PcaSchoolId = schoolId;
+            PcaCalls++;
             return Task.FromResult(PcaStatus);
         }
 

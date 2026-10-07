@@ -160,7 +160,7 @@ public sealed class SchoolAdminReader(
     }
 
     public async Task<PcaStatusResult?> GetStudentPcaCompletionAsync(
-        RequestContext context, string schoolId, string studentId, CancellationToken cancellationToken = default)
+        RequestContext context, string? schoolId, string studentId, CancellationToken cancellationToken = default)
     {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
@@ -170,12 +170,17 @@ public sealed class SchoolAdminReader(
         // into the WHERE is observably identical (missing == inactive == cross-school all -> null -> uniform
         // 404 "Student not found") yet never reads a foreign row.
         bool exists;
-        await using (var command = Command(session, """
-            SELECT 1 FROM "users" WHERE "id" = @sid AND "schoolId" = @school AND "isActive" = true
-            """))
+        // A null school (an independent student opened by a Super Admin) is matched with IS NULL: "= NULL" matches
+        // nothing in SQL, and the null must never widen to "any school".
+        await using (var command = Command(session, schoolId is null
+            ? """SELECT 1 FROM "users" WHERE "id" = @sid AND "schoolId" IS NULL AND "isActive" = true"""
+            : """SELECT 1 FROM "users" WHERE "id" = @sid AND "schoolId" = @school AND "isActive" = true"""))
         {
             AddParameter(command, "sid", studentId);
-            AddParameter(command, "school", schoolId);
+            if (schoolId is not null)
+            {
+                AddParameter(command, "school", schoolId);
+            }
             exists = await command.ExecuteScalarAsync(cancellationToken) is not null;
         }
 
