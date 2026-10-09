@@ -1899,6 +1899,96 @@
     "noSchools": "Ningún colegio coincide con tu búsqueda.",
     "viewingStudentOnly": "Super Admin · abriste a este estudiante directamente, sin un colegio abierto. Las secciones de su colegio se muestran donde aplican; abre el colegio desde Admin → Colegios para trabajar en todo el colegio."
   },
+  "studentDirectory": {
+    "title": "Estudiantes",
+    "subtitle_one": "{{count}} estudiante — ábrelo para ver cada resultado, respuesta y PDF",
+    "subtitle_other": "{{count}} estudiantes — abre uno para ver cada resultado, respuesta y PDF",
+    "subtitleLoading": "Cargando estudiantes…",
+    "manageUsers": "Usuarios e invitaciones",
+    "loadError": "No pudimos cargar los estudiantes.",
+    "export": {
+      "button": "Exportar CSV",
+      "done": "CSV descargado",
+      "failed": "No se pudo exportar el CSV. Inténtalo de nuevo.",
+      "filename": "estudiantes-resultados-{{lang}}.csv"
+    },
+    "summary": {
+      "label": "Completados por evaluación",
+      "filterHint": "Ver quién no ha empezado: {{assessment}}"
+    },
+    "filters": {
+      "searchLabel": "Buscar estudiantes",
+      "searchPlaceholder": "Buscar por nombre o correo",
+      "grade": "Grado",
+      "allGrades": "Todos los grados",
+      "gradeN": "Grado {{grade}}",
+      "assessment": "Evaluación",
+      "allAssessments": "Todas las evaluaciones",
+      "status": "Estado",
+      "anyStatus": "Cualquier estado",
+      "sort": "Ordenar por",
+      "clear": "Quitar filtros"
+    },
+    "sort": {
+      "name_asc": "Nombre A–Z",
+      "name_desc": "Nombre Z–A",
+      "grade_asc": "Grado",
+      "progress_desc": "Más avanzados",
+      "progress_asc": "Menos avanzados"
+    },
+    "columns": {
+      "student": "Estudiante",
+      "grade": "Grado",
+      "progress": "Hechas",
+      "open": "Abrir"
+    },
+    "assessments": {
+      "lia": "Evaluación LIA",
+      "personality": "Personalidad",
+      "eval360": "Evaluación 360°",
+      "vocational360": "360° vocacional",
+      "mil": "Exámenes MIL",
+      "pca": "PCA — Perfil conductual",
+      "integrated": "Resultado integrado"
+    },
+    "short": {
+      "lia": "LIA",
+      "personality": "Personalidad",
+      "eval360": "360°",
+      "vocational360": "360° voc.",
+      "mil": "MIL",
+      "pca": "PCA",
+      "integrated": "Integrado"
+    },
+    "cell": {
+      "completedOn": "completado el {{date}}"
+    },
+    "openStudent": "Abrir los resultados de {{name}}",
+    "progress": "{{done}} de {{total}} evaluaciones completadas",
+    "empty": {
+      "title": "Aún no hay estudiantes",
+      "description": "Invita a tus estudiantes; sus resultados aparecerán aquí a medida que completen cada evaluación.",
+      "invite": "Invitar estudiantes"
+    },
+    "noMatches": {
+      "title": "Ningún estudiante coincide con estos filtros",
+      "description": "Prueba otra búsqueda o quita los filtros."
+    },
+    "pagination": {
+      "showing": "{{from}}–{{to}} de {{total}}",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "page": "Página {{page}} de {{pages}}"
+    },
+    "nav": {
+      "breadcrumb": "Ruta de navegación",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "position": "{{position}} de {{total}}",
+      "previousTitle": "Anterior: {{name}}",
+      "nextTitle": "Siguiente: {{name}}"
+    }
+  },
   "studentRecord": {
     "tab": "Resultados y respuestas",
     "loadError": "No pudimos cargar el expediente de este estudiante.",

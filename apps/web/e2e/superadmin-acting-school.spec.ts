@@ -102,7 +102,7 @@ test.describe("Super Admin acts as a school", () => {
     await expect(page.getByText("test.student@formmaps.dev").first()).toBeVisible();
 
     // The informe PDF the Assessments tab downloads answers for a Super Admin.
-    const studentId = page.url().split("/").pop()!;
+    const studentId = new URL(page.url()).pathname.split("/").pop()!;
     const pdf = await page.request.get(`/api/v1/career-informe/${studentId}/pdf?lang=es`);
     expect(pdf.status()).toBe(200);
     expect(pdf.headers()["content-type"]).toContain("application/pdf");

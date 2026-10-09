@@ -3162,6 +3162,7 @@
     "nav": {
       "dashboard": "Dashboard",
       "students": "Students",
+      "usersAndInvites": "Users & invites",
       "analytics": "Analytics",
       "academics": "Academics",
       "grades": "Grades & Progress",

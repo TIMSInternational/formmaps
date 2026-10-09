@@ -5,6 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import Link from "next/link";
 import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
+import { isStudentDetailPath } from "@/lib/actingSchool";
 import { useAdminTheme } from "@/contexts/AdminThemeContext";
 import { useChat } from "@/components/ai-chat/ChatContext";
 import { useSidePanel } from "@/components/side-panel/SidePanel";
@@ -24,6 +25,7 @@ import {
   GitBranch,
   ClipboardCheck,
   GraduationCap,
+  BookUser,
   Plug,
   TrendingDown,
   Bell,
@@ -50,7 +52,8 @@ const getNavSections = (t: (key: string, fallback: string) => string) => [
     label: t("nav.main", "Main"),
     items: [
       { label: t("schoolAdmin.nav.dashboard", "Dashboard"), href: "/school-admin", icon: LayoutDashboard },
-      { label: t("schoolAdmin.nav.students", "Users"), href: "/school-admin/users", icon: Users },
+      { label: t("schoolAdmin.nav.students", "Students"), href: "/school-admin/students", icon: BookUser },
+      { label: t("schoolAdmin.nav.usersAndInvites", "Users & invites"), href: "/school-admin/users", icon: Users },
       { label: t("schoolAdmin.nav.parents", "Parents"), href: "/school-admin/parents", icon: UserCog },
       { label: t("schoolAdmin.nav.academics", "Academics"), href: "/school-admin/academics", icon: BookOpen },
       { label: t("schoolAdmin.nav.grades", "Grades & Progress"), href: "/school-admin/grades", icon: GraduationCap },
@@ -195,6 +198,8 @@ export function SchoolAdminSidebar() {
 
   const isActive = (href: string) => {
     if (href === "/school-admin") return pathname === href;
+    // A student's page (/school-admin/users/<id>) belongs to Students; Users & invites is the list and its tools.
+    if (isStudentDetailPath(pathname)) return href === "/school-admin/students";
     return pathname?.startsWith(href) ?? false;
   };
 
