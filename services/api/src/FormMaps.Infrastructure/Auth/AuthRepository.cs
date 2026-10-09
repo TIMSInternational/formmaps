@@ -507,7 +507,7 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
         var context = RequestContext.System();
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
         await using var command = Command(session, """
-            SELECT "id","adminEmail","invitationTokenExpiresAt"
+            SELECT "id","adminEmail","invitationTokenExpiresAt","name","maxStudents"
             FROM "schools" WHERE "invitationToken" = @token AND "isActive" = true
             """);
         AddParameter(command, "token", token);
@@ -516,7 +516,8 @@ public sealed partial class AuthRepository(IFormMapsDatabaseSessionFactory datab
 
         return new SchoolInviteRow(
             reader.GetString(0), reader.GetString(1),
-            reader.IsDBNull(2) ? null : new DateTimeOffset(reader.GetDateTime(2), TimeSpan.Zero));
+            reader.IsDBNull(2) ? null : new DateTimeOffset(reader.GetDateTime(2), TimeSpan.Zero),
+            reader.GetString(3), reader.GetInt32(4));
     }
 
     /// <summary>

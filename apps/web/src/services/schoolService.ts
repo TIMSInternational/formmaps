@@ -74,19 +74,42 @@ export async function toggleSchoolFeature(
 // School Admin Onboarding
 // ============================================
 
+// Audit 2026-10-09 C1: these called /api/v1/school-admin/{token}/onboarding(-status), which existed in
+// neither backend — every school invitation dead-ended. The real endpoints live under /authapi.
+
+/** The invitation behind a token. An unknown or already-used token is a 404 → `isValid: false`. */
 export async function getSchoolAdminOnboardingStatus(
   token: string,
 ): Promise<SchoolAdminOnboardingStatus> {
-  const res = await apiRequest(`/api/v1/school-admin/${token}/onboarding-status`);
-  return res.data;
+  try {
+    const res = await apiRequest<{ data: { schoolName: string; email: string; maxStudents: number; status: "pending" | "expired" } }>(
+      `/authapi/school-admin/invite-status?token=${encodeURIComponent(token)}`,
+      { showErrorToast: false },
+    );
+    const d = res.data;
+    return { userId: "", email: d.email, schoolName: d.schoolName, maxStudents: d.maxStudents, status: d.status, isValid: d.status === "pending" };
+  } catch (err) {
+    if ((err as { status?: number }).status === 404) {
+      return { userId: "", email: "", schoolName: "", maxStudents: 0, status: "expired", isValid: false };
+    }
+    throw err;
+  }
 }
 
+export interface SchoolAdminSession {
+  token: string;
+  user: { id: string; email: string; name: string; role: { name: string }; schoolId: string; permissions: string[] };
+}
+
+/** Sets the admin's password and name, activates the school, and returns a signed-in session. */
 export async function submitSchoolAdminOnboarding(
   token: string,
-  data: SchoolAdminOnboardingData,
-): Promise<{ success: boolean; redirectUrl: string }> {
-  return apiRequest(`/api/v1/school-admin/${token}/onboarding`, {
+  data: Pick<SchoolAdminOnboardingData, "password"> & { adminInfo: Pick<SchoolAdminOnboardingData["adminInfo"], "name"> },
+): Promise<SchoolAdminSession> {
+  const res = await apiRequest<{ data: SchoolAdminSession }>(`/authapi/school-admin/complete-registration`, {
     method: "POST",
-    data,
+    data: { token, password: data.password, name: data.adminInfo.name.trim() },
+    showErrorToast: false,
   });
+  return res.data;
 }

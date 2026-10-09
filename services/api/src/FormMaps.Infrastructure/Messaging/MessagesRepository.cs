@@ -317,7 +317,7 @@ public sealed class MessagesRepository(
         await using (var listCmd = Command(session, """
             SELECT m."id", m."conversationId", m."senderId", u."name", m."content", m."readAt", m."createdDate"
             FROM "messages" m JOIN "users" u ON u."id" = m."senderId"
-            WHERE m."conversationId" = @cid ORDER BY m."createdDate" ASC OFFSET @offset LIMIT @limit
+            WHERE m."conversationId" = @cid ORDER BY m."createdDate" DESC, m."id" DESC OFFSET @offset LIMIT @limit
             """))
         {
             AddParameter(listCmd, "cid", conversationId);
@@ -332,6 +332,10 @@ public sealed class MessagesRepository(
                     reader.IsDBNull(5) ? null : IsoZ(reader.GetDateTime(5)), IsoZ(reader.GetDateTime(6))));
             }
         }
+
+        // Page 1 is the NEWEST page (audit 2026-10-09 C6): oldest-first paging showed the first 50 messages of
+        // a long thread forever, so anything newer never appeared. Each page is still returned oldest-first.
+        rows.Reverse();
 
         var now = NowTruncated();
         await using (var markReadCmd = Command(session, """

@@ -30,6 +30,7 @@ CREATE TABLE IF NOT EXISTS "schools" (
     "id" TEXT PRIMARY KEY,
     "name" TEXT NOT NULL,
     "adminEmail" TEXT NOT NULL,
+    "maxStudents" INTEGER NOT NULL DEFAULT 0,
     "status" TEXT NOT NULL DEFAULT 'invited',
     "invitationToken" TEXT,
     "invitationTokenExpiresAt" TIMESTAMPTZ,

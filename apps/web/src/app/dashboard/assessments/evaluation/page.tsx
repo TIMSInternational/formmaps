@@ -169,7 +169,7 @@ export default function EvaluatorsPage() {
           groupCount={evaluatorGroups.length}
           onSendAllEmails={() => {
             setEmailSendMode("all");
-            handleSendEmailInvitations();
+            handleSendEmailInvitations("all");
           }}
           onSendSpecificEmails={() => {
             setEmailSendMode("specific");

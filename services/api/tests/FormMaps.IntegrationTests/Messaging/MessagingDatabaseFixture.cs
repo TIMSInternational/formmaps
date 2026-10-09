@@ -94,17 +94,23 @@ public sealed class MessagingDatabaseFixture : RlsEnabledDatabaseFixture
         return (a, b, conversationId);
     }
 
-    public async Task SeedMessageAsync(string conversationId, string senderId, DateTime? readAt)
+    public async Task SeedMessageAsync(
+        string conversationId, string senderId, DateTime? readAt, string content = "hi", DateTime? createdDate = null)
     {
         await using var conn = new NpgsqlConnection(AdminConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
-            """INSERT INTO "messages" ("id","conversationId","senderId","content","readAt","updatedAt") VALUES (@id,@cid,@sid,'hi',@readAt,now())""",
+            """
+            INSERT INTO "messages" ("id","conversationId","senderId","content","readAt","updatedAt","createdDate")
+            VALUES (@id,@cid,@sid,@content,@readAt,now(),COALESCE(@created, now()))
+            """,
             conn);
         cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
         cmd.Parameters.AddWithValue("cid", conversationId);
         cmd.Parameters.AddWithValue("sid", senderId);
+        cmd.Parameters.AddWithValue("content", content);
         cmd.Parameters.AddWithValue("readAt", (object?)readAt ?? DBNull.Value);
+        cmd.Parameters.Add(new NpgsqlParameter("created", NpgsqlTypes.NpgsqlDbType.Timestamp) { Value = (object?)createdDate ?? DBNull.Value });
         await cmd.ExecuteNonQueryAsync();
     }
 
