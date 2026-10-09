@@ -55,14 +55,34 @@ public sealed class CounselorNotesRepositoryTests : IClassFixture<CounselorNotes
         await Note(conn, "inactive", "s1", Counselor, isActive: false);   // excluded
         await Note(conn, "other-student", "s2", Counselor);               // excluded
 
-        var all = await Repo().ListAsync(Ctx(), "s1", typeFilter: null, page: 1, limit: 20);
+        var all = await Repo().ListAsync(Ctx(), "s1", Counselor, typeFilter: null, page: 1, limit: 20);
         Assert.Equal(2, all.Total);
         Assert.Equal(["new", "old"], all.Data.Select(n => n.Note.Id)); // createdDate DESC
         Assert.Equal("Author", all.Data[0].AuthorName);                 // join
 
-        var academic = await Repo().ListAsync(Ctx(), "s1", typeFilter: "academic", page: 1, limit: 20);
+        var academic = await Repo().ListAsync(Ctx(), "s1", Counselor, typeFilter: "academic", page: 1, limit: 20);
         Assert.Equal(1, academic.Total);
         Assert.Equal("new", academic.Data.Single().Note.Id);
+    }
+
+    [Fact]
+    public async Task List_returns_a_private_note_to_its_author_only()
+    {
+        // Audit 2026-10-09 A2: private notes were returned to every reader of the student's notes.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await User(conn, Counselor, "Author");
+        await User(conn, "other-counselor", "Other");
+        await Note(conn, "shared", "s1", Counselor);
+        await Note(conn, "mine-private", "s1", Counselor, isPrivate: true);
+        await Note(conn, "theirs-private", "s1", "other-counselor", isPrivate: true);
+
+        var mine = await Repo().ListAsync(Ctx(), "s1", Counselor, typeFilter: null, page: 1, limit: 20);
+        Assert.Equal(2, mine.Total);
+        Assert.Equal(["mine-private", "shared"], mine.Data.Select(n => n.Note.Id).Order());
+
+        var someoneElse = await Repo().ListAsync(Ctx(), "s1", "school-admin-1", typeFilter: null, page: 1, limit: 20);
+        Assert.Equal(1, someoneElse.Total);
+        Assert.Equal("shared", someoneElse.Data.Single().Note.Id);
     }
 
     [Fact]
@@ -76,7 +96,7 @@ public sealed class CounselorNotesRepositoryTests : IClassFixture<CounselorNotes
         await Note(conn, "b-note", "s1", Counselor, created: tie);
         await Note(conn, "a-note", "s1", Counselor, created: tie);
 
-        var result = await Repo().ListAsync(Ctx(), "s1", typeFilter: null, page: 1, limit: 20);
+        var result = await Repo().ListAsync(Ctx(), "s1", Counselor, typeFilter: null, page: 1, limit: 20);
         Assert.Equal(["a-note", "b-note"], result.Data.Select(n => n.Note.Id)); // id ASC on the createdDate tie
     }
 
@@ -245,13 +265,15 @@ public sealed class CounselorNotesRepositoryTests : IClassFixture<CounselorNotes
 
     private static async Task Note(
         NpgsqlConnection conn, string id, string studentId, string authorId, bool isActive = true,
-        string type = "general", string content = "c", DateTime? created = null, DateTime? updated = null)
+        string type = "general", string content = "c", DateTime? created = null, DateTime? updated = null,
+        bool isPrivate = false)
     {
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "counselor_notes"("id","studentId","authorId","type","content","isActive","createdDate","updatedAt")
-            VALUES(@id,@s,@a,@t,@c,@act,@cd,@ud)
+            INSERT INTO "counselor_notes"("id","studentId","authorId","type","content","isActive","createdDate","updatedAt","isPrivate")
+            VALUES(@id,@s,@a,@t,@c,@act,@cd,@ud,@p)
             """, conn);
+        cmd.Parameters.AddWithValue("p", isPrivate);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("s", studentId);
         cmd.Parameters.AddWithValue("a", authorId);

@@ -6572,7 +6572,8 @@
       "connectionLost": "Conexión perdida",
       "checkConnection": "Revisa tu conexión a internet.",
       "sessionExpiredShort": "La sesión expiró. Vuelve a iniciar sesión.",
-      "networkError": "Error de red. Revisa tu conexión e inténtalo de nuevo."
+      "networkError": "Error de red. Revisa tu conexión e inténtalo de nuevo.",
+      "aiBudgetExceeded": "Tu colegio ya usó la asignación de IA de este mes. Inténtalo de nuevo el próximo mes."
     },
     "pcaService": {
       "addFailed": "No se pudo agregar la evaluación PCA"

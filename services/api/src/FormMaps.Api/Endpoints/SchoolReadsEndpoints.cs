@@ -150,7 +150,8 @@ public static class SchoolReadsEndpoints
             resolvedLimit,
             skip,
             Search: string.IsNullOrEmpty(search) ? null : search,
-            Type: string.IsNullOrEmpty(type) ? null : type);
+            Type: string.IsNullOrEmpty(type) ? null : type,
+            ViewerId: context.Actor?.UserId ?? string.Empty);
 
         var result = await reader.GetSchoolNotesAsync(context, schoolId, query, cancellationToken);
         return Results.Ok(new

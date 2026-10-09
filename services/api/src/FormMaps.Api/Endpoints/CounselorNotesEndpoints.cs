@@ -67,7 +67,8 @@ public static class CounselorNotesEndpoints
         var resolvedLimit = Math.Min(50, Math.Max(1, FalsyOr(PcaExamPagination.JsParseInt(limit), 20)));
 
         var result = await repository.ListAsync(
-            context, studentId, EmptyToNull(type), resolvedPage, resolvedLimit, cancellationToken);
+            context, studentId, context.Actor?.UserId ?? string.Empty, EmptyToNull(type), resolvedPage, resolvedLimit,
+            cancellationToken);
 
         var totalPages = (int)Math.Ceiling((double)result.Total / resolvedLimit);
         return Results.Ok(new

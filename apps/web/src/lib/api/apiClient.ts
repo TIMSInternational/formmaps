@@ -131,6 +131,9 @@ apiClient.interceptors.response.use(
         default:
           message = (status >= 500) ? i18n.t('components.apiClient.tryAgain') : (data?.message || i18n.t('components.apiClient.requestFailed'));
       }
+      if (data?.code === 'AI_BUDGET_EXCEEDED') {
+        message = i18n.t('components.apiClient.aiBudgetExceeded');
+      }
 
       if (status === 403 && data?.code !== 'SUBSCRIPTION_REQUIRED') {
         // Subscription-gate 403s are handled by AuthWrapper's /subscribe redirect;
@@ -200,13 +203,18 @@ apiClient.interceptors.request.use(
   error => Promise.reject(error)
 );
 
-// Generic API request function with retry logic
+const IDEMPOTENT_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+// Generic API request function with retry logic.
+// Only reads retry by default: a write that timed out or 5xx'd may already have been applied
+// (or billed, for AI calls), so re-sending it would duplicate it. Pass `retries` to opt in.
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function apiRequest<T = any>(
   path: string,
   config?: AxiosRequestConfig & { retries?: number; showErrorToast?: boolean; retryOnRateLimit?: boolean }
 ): Promise<T> {
-  const { retries = 2, showErrorToast, retryOnRateLimit = false, ...axiosConfig } = config || {};
+  const isIdempotent = IDEMPOTENT_METHODS.has((config?.method || 'GET').toUpperCase());
+  const { retries = isIdempotent ? 2 : 0, showErrorToast, retryOnRateLimit = false, ...axiosConfig } = config || {};
 
   // Default: toast for mutations (POST/PUT/DELETE/PATCH), not for GET
   // GET requests are typically managed by React Query which has its own retry
