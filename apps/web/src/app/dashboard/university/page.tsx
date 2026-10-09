@@ -121,9 +121,10 @@ export default function UniversityPage() {
   ) as University[] | undefined;
 
   const recommendationMap = new Map<string, UniversityRecommendation>(
-    (recoQuery.data?.recommendations || []).map((r) => [
-      r.university.id, r
-    ] as [string, UniversityRecommendation])
+    // Same shape tolerance as recoUniversities: an entry may be the university itself (audit 2026-10-09 C7).
+    (recoQuery.data?.recommendations || [])
+      .map((r) => [(r.university || (r as unknown as University))?.id, r] as [string, UniversityRecommendation])
+      .filter(([id]) => !!id)
   );
 
   const handleViewDetails = React.useCallback(
