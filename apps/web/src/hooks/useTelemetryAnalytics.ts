@@ -1,6 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/api/apiClient";
 
 /**
  * Telemetry analytics data structure
@@ -12,7 +13,8 @@ export interface TelemetryAnalytics {
     // Core traffic metrics
     totalPageViews: number;
     uniqueVisitors: number;
-    avgSessionDuration: number;
+    // null = not derivable from the events the client sends (no session id) — shown as "—", never 0.
+    avgSessionDuration: number | null;
     
     // Active user metrics
     dau: number; // Daily Active Users
@@ -20,14 +22,14 @@ export interface TelemetryAnalytics {
     mau: number; // Monthly Active Users
     
     // User behavior
-    bounceRate: number; // Percentage (0-1)
+    bounceRate: number | null; // Percentage (0-1)
     newUsers: number;
     returningUsers: number;
-    retentionRate: number; // Percentage (0-1)
+    retentionRate: number | null; // Percentage (0-1)
     
     // Engagement
-    sessionsPerUser: number;
-    pagesPerSession: number;
+    sessionsPerUser: number | null;
+    pagesPerSession: number | null;
     
     // Top content
     topPages: Array<{ page: string; views: number }>;
@@ -37,10 +39,10 @@ export interface TelemetryAnalytics {
     
     // Funnel completions
     completionRates: {
-      resumeBuilder: number;
-      assessments: number;
-      coachOnboarding: number;
-      profileSetup: number;
+      resumeBuilder?: number | null;
+      assessments?: number | null;
+      coachOnboarding?: number | null;
+      profileSetup?: number | null;
     };
     
     // Trends (for charts)
@@ -49,30 +51,17 @@ export interface TelemetryAnalytics {
   };
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "";
-
 /**
- * Fetch telemetry analytics from the backend
+ * Fetch telemetry analytics (GET /api/v1/admin/analytics/summary → { period, metrics }).
+ * Through apiRequest, so the Bearer fallback and error mapping apply like every other admin call.
  */
 async function getTelemetryAnalytics(
   period: "day" | "week" | "month" | "year"
 ): Promise<TelemetryAnalytics> {
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/admin/analytics/summary?period=${period}`,
-    {
-      headers: { "Content-Type": "application/json" },
-      credentials: "include",
-    }
+  const json = await apiRequest<{ data?: TelemetryAnalytics } & Partial<TelemetryAnalytics>>(
+    `/api/v1/admin/analytics/summary?period=${period}`
   );
-
-  if (!response.ok) {
-    throw new Error(`Failed to fetch telemetry analytics: ${response.status}`);
-  }
-
-  const json = await response.json();
-  // API returns { data: { period, metrics }, success, message }
-  // Extract the inner data object
-  return json.data || json;
+  return (json.data || json) as TelemetryAnalytics;
 }
 
 /**

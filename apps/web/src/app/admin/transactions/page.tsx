@@ -29,6 +29,14 @@ import { useAdminAnalytics } from "@/hooks/useAdminAnalytics";
 import { formatCurrency } from "@/lib/utils";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import { TableRowsSkeleton } from "@/components/skeletons/TableSkeleton";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
+import { useQueryClient } from "@tanstack/react-query";
+import {
+  getAllAdminTransactions,
+  refundAdminPayment,
+  transactionStatusGroup,
+  type AdminTransaction,
+} from "@/services/adminTransactionsService";
 
 export default function AdminTransactionsPage() {
   const router = useRouter();
@@ -39,6 +47,10 @@ export default function AdminTransactionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [exporting, setExporting] = useState(false);
+  const [refundingId, setRefundingId] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
+  const queryClient = useQueryClient();
 
   const {
     data,
@@ -57,12 +69,21 @@ export default function AdminTransactionsPage() {
   const totalPages = data ? Math.ceil(data.total / data.limit) : 1;
   const loading = transactionsLoading;
 
+  // Revenue in currencies other than the platform's is reported apart, never summed into the total.
+  const byCurrency = ((analyticsData?.stats as { revenueByCurrency?: Record<string, number> } | undefined)?.revenueByCurrency) || {};
+  const others = Object.entries(byCurrency).filter(([c, v]) => c !== "usd" && v > 0);
+  const otherCurrencies = others.length
+    ? tPO("transactions.otherCurrencies", { amounts: others.map(([c, v]) => formatCurrency(v, c.toUpperCase())).join(", ") })
+    : null;
+
   // Stats Configuration
   const statsCards = [
     {
       label: tPO("transactions.stats.totalRevenue"),
       value: formatCurrency(analyticsData?.stats.totalRevenue || 0),
-      growth: analyticsData?.stats.monthlyGrowth.revenue || 0,
+      // monthlyGrowth.revenue is DOLLARS collected this month, not a percent (it was shown as "+N%").
+      growthLabel: tPO("transactions.growth.revenueThisMonth", { amount: formatCurrency(analyticsData?.stats.monthlyGrowth.revenue || 0) }),
+      sub: otherCurrencies,
       icon: CreditCard,
       color: "text-emerald-600",
       bg: "bg-emerald-50",
@@ -72,7 +93,7 @@ export default function AdminTransactionsPage() {
     {
       label: tPO("transactions.stats.totalTransactions"),
       value: data?.total?.toLocaleString() || "0",
-      growth: null,
+      growthLabel: null,
       icon: Receipt,
       color: "text-[var(--admin-accent-blue)]",
       bg: "bg-[var(--admin-accent-blue)]/10",
@@ -82,7 +103,8 @@ export default function AdminTransactionsPage() {
     {
       label: tPO("transactions.stats.activeUsers"),
       value: analyticsData?.stats.totalUsers?.toLocaleString() || "0",
-      growth: analyticsData?.stats.monthlyGrowth.users || 0,
+      // a COUNT of new users this month, not a percent
+      growthLabel: tPO("transactions.growth.newUsers", { count: analyticsData?.stats.monthlyGrowth.users || 0 }),
       icon: Clock,
       color: "text-amber-600",
       bg: "bg-amber-50",
@@ -92,7 +114,7 @@ export default function AdminTransactionsPage() {
     {
       label: tPO("transactions.stats.activeCoaches"),
       value: (analyticsData?.stats as any)?.activeCoaches?.toLocaleString() || "0",
-      growth: null,
+      growthLabel: null,
       icon: AlertCircle,
       color: "text-violet-600",
       bg: "bg-violet-50",
@@ -101,20 +123,34 @@ export default function AdminTransactionsPage() {
     }
   ];
 
-  const handleExport = () => {
-    if (!transactions.length) {
+  const handleExport = async () => {
+    setExporting(true);
+    let all: AdminTransaction[];
+    let truncated = false;
+    try {
+      // Every matching transaction, not just the 10 rows on screen.
+      const res = await getAllAdminTransactions({ search: searchTerm, status: statusFilter === "all" ? "" : statusFilter });
+      all = res.items;
+      truncated = res.truncated;
+    } catch (err) {
+      toast.error((err as Error).message);
+      setExporting(false);
+      return;
+    }
+    setExporting(false);
+    if (!all.length) {
       toast.error(tPO("transactions.toast.noTransactions"));
       return;
     }
-    const headers = ["ID", "Date", "Amount", "Currency", "Status", "Description"];
+    const headers = ["ID", "Date", "User", "Email", "Amount", "Currency", "Status", "Description"];
     // Quote every cell and neutralize leading =+-@ (CSV formula injection —
     // descriptions are user-influenced text).
     const cell = (v: unknown) => {
       const s = String(v ?? "");
       return `"${(/^[=+\-@\t\r]/.test(s) ? `'${s}` : s).replace(/"/g, '""')}"`;
     };
-    const rows = transactions.map((t: any) => [
-      t.id, t.date || t.createdDate, (t.amount / 100).toFixed(2), t.currency || "USD", t.status, t.description || ""
+    const rows = all.map((t) => [
+      t.id, t.date, t.userName, t.userEmail, (t.amount / 100).toFixed(2), (t.currency || "usd").toUpperCase(), t.status, t.description || ""
     ]);
     const csv = [headers, ...rows].map((r) => r.map(cell).join(",")).join("\n");
     const blob = new Blob([csv], { type: "text/csv" });
@@ -124,7 +160,33 @@ export default function AdminTransactionsPage() {
     a.download = `transactions_${new Date().toISOString().split("T")[0]}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    toast.success(tPO("transactions.toast.exportSuccess"));
+    if (truncated) toast.warning(tPO("transactions.toast.exportTruncated", { count: all.length }));
+    else toast.success(tPO("transactions.toast.exportSuccess"));
+  };
+
+  // B12: refunds existed only as an API needing a Stripe PaymentIntent id the page never had.
+  const handleRefund = async (trx: AdminTransaction) => {
+    const ok = await confirm({
+      title: tPO("transactions.refund.confirmTitle"),
+      description: tPO("transactions.refund.confirmDesc", {
+        amount: formatCurrency(trx.amount / 100, (trx.currency || "usd").toUpperCase()),
+        user: trx.userName || trx.userEmail,
+      }),
+      confirmLabel: tPO("transactions.refund.confirmLabel"),
+      variant: "destructive",
+    });
+    if (!ok) return;
+    setRefundingId(trx.id);
+    try {
+      await refundAdminPayment(trx.id);
+      toast.success(tPO("transactions.refund.success"));
+      await queryClient.invalidateQueries({ queryKey: ["adminTransactions"] });
+    } catch (err) {
+      const code = ((err as { data?: { code?: string } }).data?.code) || "generic";
+      toast.error(tPO(`transactions.refund.errors.${code}`, { defaultValue: tPO("transactions.refund.errors.generic") }));
+    } finally {
+      setRefundingId(null);
+    }
   };
 
   // Handle admin access check
@@ -165,8 +227,8 @@ export default function AdminTransactionsPage() {
             </p>
           </div>
 
-          <Button onClick={handleExport} variant="outline" className="h-10 rounded-xl border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-50 transition-all hover:shadow-md gap-2">
-            <Download className="w-4 h-4" />
+          <Button onClick={handleExport} disabled={exporting} variant="outline" className="h-10 rounded-xl border-gray-200 bg-white text-gray-700 shadow-sm hover:bg-gray-50 transition-all hover:shadow-md gap-2">
+            {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
             {t("admin.transactions.exportReport")}
           </Button>
 
@@ -229,13 +291,9 @@ export default function AdminTransactionsPage() {
                 }}>
                   <stat.icon style={{ width: 16, height: 16, color: "var(--admin-font-tertiary, #818181)" }} />
                 </div>
-                {stat.growth !== null && stat.growth !== undefined && (
-                  <div style={{
-                    display: "flex", alignItems: "center", gap: 2,
-                    fontSize: 11, fontWeight: 500,
-                    color: Number(stat.growth) >= 0 ? "var(--admin-accent-green, #10b981)" : "var(--admin-accent-red, #ef4444)",
-                  }}>
-                    {Number(stat.growth) >= 0 ? "+" : ""}{Math.abs(Number(stat.growth)).toFixed(1)}%
+                {stat.growthLabel && (
+                  <div style={{ fontSize: 11, fontWeight: 500, color: "var(--admin-accent-green, #10b981)" }}>
+                    {stat.growthLabel}
                   </div>
                 )}
               </div>
@@ -245,6 +303,9 @@ export default function AdminTransactionsPage() {
               <div style={{ fontSize: 12, color: "var(--admin-font-tertiary, #818181)", marginTop: 4 }}>
                 {stat.label}
               </div>
+              {"sub" in stat && stat.sub && (
+                <div style={{ fontSize: 11, color: "var(--admin-font-tertiary, #818181)", marginTop: 2 }}>{stat.sub}</div>
+              )}
             </div>
           ))}
         </div>
@@ -294,25 +355,27 @@ export default function AdminTransactionsPage() {
                     </TableCell>
                     <TableCell className="text-gray-600 py-4">{trx.description}</TableCell>
                     <TableCell className="font-bold text-gray-900 py-4">
-                      ${(trx.amount / 100).toFixed(2)}
+                      {formatCurrency(trx.amount / 100, (trx.currency || "usd").toUpperCase())}
                     </TableCell>
                     <TableCell className="py-4">
                       <Badge
+                        data-testid="transaction-status"
+                        data-status={trx.status}
                         variant={
-                          trx.status === "completed"
+                          transactionStatusGroup(trx.status) === "completed"
                             ? "default"
-                            : trx.status === "pending"
+                            : transactionStatusGroup(trx.status) === "pending"
                               ? "secondary"
                               : "destructive"
                         }
-                        className={`font-medium shadow-none border-0 ${trx.status === "completed"
-                          ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                          : trx.status === "pending"
-                            ? "bg-amber-50 text-amber-700 hover:bg-amber-100"
-                            : "bg-red-50 text-red-700 hover:bg-red-100"
-                          }`}
+                        className={`font-medium shadow-none border-0 ${{
+                          completed: "bg-emerald-50 text-emerald-700 hover:bg-emerald-100",
+                          pending: "bg-amber-50 text-amber-700 hover:bg-amber-100",
+                          refunded: "bg-gray-100 text-gray-700 hover:bg-gray-100",
+                          failed: "bg-red-50 text-red-700 hover:bg-red-100",
+                        }[transactionStatusGroup(trx.status)]}`}
                       >
-                        {t(`admin.transactions.status.${trx.status}`)}
+                        {t(`admin.transactions.status.${trx.status}`, { defaultValue: trx.status })}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-gray-500 py-4">
@@ -320,10 +383,19 @@ export default function AdminTransactionsPage() {
                     </TableCell>
                     <TableCell className="text-gray-500 py-4">
                       <div className="flex items-center gap-2">
-                        <div className="p-1.5 bg-gray-100 rounded-md">
-                          <CreditCard className="w-3.5 h-3.5 text-gray-600" />
-                        </div>
-                        <span className="text-sm">{trx.paymentMethodId || "Card"}</span>
+                        {/* No payment method is recorded on the row — it used to say "Card" for everything. */}
+                        <span className="text-sm">{trx.paymentMethodId || tPO("transactions.noMethod")}</span>
+                        {trx.status === "succeeded" && !trx.bookingId && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="h-7 rounded-lg text-xs"
+                            disabled={refundingId === trx.id}
+                            onClick={() => handleRefund(trx)}
+                          >
+                            {refundingId === trx.id ? <Loader2 className="w-3 h-3 animate-spin" /> : tPO("transactions.refund.action")}
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -359,6 +431,7 @@ export default function AdminTransactionsPage() {
             </div>
           </div>
         </div>
+        <ConfirmDialog />
     </div>
   );
 }

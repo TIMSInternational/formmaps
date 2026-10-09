@@ -96,8 +96,8 @@ export const TelemetryDashboard = React.memo(function TelemetryDashboard({ perio
   const telemetryStats = [
     { label: t("telemetry.stats.dailyUsers"), value: (metrics.dau || 0).toLocaleString(), subtext: t("telemetry.stats.activeWithin24h"), icon: Users, color: "text-[var(--admin-accent-blue)]", bg: "bg-[var(--admin-accent-blue)]/10", blobColor: "bg-[var(--admin-accent-blue)]" },
     { label: t("telemetry.stats.weeklyUsers"), value: (metrics.wau || 0).toLocaleString(), subtext: t("telemetry.stats.activePast7Days"), icon: Calendar, color: "text-emerald-600", bg: "bg-emerald-50", blobColor: "bg-emerald-500" },
-    { label: t("telemetry.stats.retentionRate"), value: formatPercent(metrics.retentionRate || 0), subtext: t("telemetry.stats.returningUsers"), icon: Heart, color: "text-rose-600", bg: "bg-rose-50", blobColor: "bg-rose-500" },
-    { label: t("telemetry.stats.avgDuration"), value: formatDuration(metrics.avgSessionDuration || 0), subtext: t("telemetry.stats.timeOnSite"), icon: Clock, color: "text-amber-600", bg: "bg-amber-50", blobColor: "bg-amber-500" },
+    { label: t("telemetry.stats.retentionRate"), value: metrics.retentionRate == null ? "—" : formatPercent(metrics.retentionRate), subtext: t("telemetry.stats.returningUsers"), icon: Heart, color: "text-rose-600", bg: "bg-rose-50", blobColor: "bg-rose-500" },
+    { label: t("telemetry.stats.avgDuration"), value: metrics.avgSessionDuration == null ? "—" : formatDuration(metrics.avgSessionDuration), subtext: t("telemetry.stats.timeOnSite"), icon: Clock, color: "text-amber-600", bg: "bg-amber-50", blobColor: "bg-amber-500" },
   ];
 
   return (
@@ -124,8 +124,8 @@ export const TelemetryDashboard = React.memo(function TelemetryDashboard({ perio
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
         {[
           { label: t("telemetry.engagement.pageViews"), value: (metrics.totalPageViews || 0).toLocaleString(), icon: Eye, bg: "bg-slate-100", text: "text-slate-600" },
-          { label: t("telemetry.engagement.pagesPerSession"), value: (metrics.pagesPerSession || 0).toFixed(1), icon: FileText, bg: "bg-indigo-50", text: "text-indigo-600" },
-          { label: t("telemetry.engagement.bounceRate"), value: formatPercent(metrics.bounceRate || 0), icon: ArrowDownRight, bg: "bg-orange-50", text: "text-orange-600" },
+          { label: t("telemetry.engagement.pagesPerSession"), value: metrics.pagesPerSession == null ? "—" : metrics.pagesPerSession.toFixed(1), icon: FileText, bg: "bg-indigo-50", text: "text-indigo-600" },
+          { label: t("telemetry.engagement.bounceRate"), value: metrics.bounceRate == null ? "—" : formatPercent(metrics.bounceRate), icon: ArrowDownRight, bg: "bg-orange-50", text: "text-orange-600" },
           { label: t("telemetry.engagement.completion"), value: t("telemetry.engagement.completionValue"), icon: CheckCircle, bg: "bg-green-50", text: "text-green-600" },
         ].map((item, i) => (
           <div key={i} className="flex items-center gap-4 p-4 bg-white border border-gray-100 rounded-2xl  hover:shadow-md transition-shadow">

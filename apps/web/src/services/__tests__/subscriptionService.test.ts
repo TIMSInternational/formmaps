@@ -40,3 +40,24 @@ describe("subscriptionService — Stripe flows", () => {
     }
   });
 });
+
+describe("fetchSubscriptionPlans — Decimal prices (audit 2026-10-09 B3)", () => {
+  afterEach(() => jest.resetAllMocks());
+
+  it("turns the API's string price into a number, so the admin Plans page can format it", async () => {
+    const { fetchSubscriptionPlans } = await import("@/services/subscriptionService");
+    mockApiRequest.mockResolvedValue({
+      success: true,
+      data: [
+        { id: "p1", name: "Monthly", price: "19.99", interval: "month" },
+        { id: "p2", name: "Free", price: null, interval: "month" },
+      ],
+    });
+
+    const res = await fetchSubscriptionPlans();
+
+    expect(res.billingOptions[0].price).toBe(19.99);
+    expect(res.billingOptions[1].price).toBe(0);
+    expect(() => res.billingOptions.map((p) => p.price.toFixed(2))).not.toThrow();
+  });
+});

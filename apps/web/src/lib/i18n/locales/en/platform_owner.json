@@ -321,7 +321,10 @@
     "moreFeatures": "+ {{count}} more features",
     "statusActive": "Active",
     "statusInactive": "Inactive",
+    "catalogBadge": "Catalog price",
+    "catalogNote": "Student plan from the price catalog: checkout always charges the catalog price, so only the features can be edited here.",
     "toast": {
+      "catalogLocked": "Student catalog plans can't change name, price, interval or availability here.",
       "failedToLoad": "Failed to load subscription plans",
       "validationError": "Please enter a valid name and price",
       "updatedSuccess": "Plan updated successfully",
@@ -375,7 +378,29 @@
     },
     "toast": {
       "noTransactions": "No transactions to export",
-      "exportSuccess": "Transactions exported"
+      "exportSuccess": "Transactions exported",
+      "exportTruncated": "Exported the first {{count}} transactions"
+    },
+    "growth": {
+      "newUsers": "+{{count}} this month",
+      "revenueThisMonth": "+{{amount}} this month"
+    },
+    "otherCurrencies": "Plus {{amounts}} in other currencies",
+    "noMethod": "—",
+    "refund": {
+      "action": "Refund",
+      "confirmTitle": "Refund this payment?",
+      "confirmDesc": "Refund {{amount}} to {{user}} under the refund policy. Stripe returns the money and the student loses access to what they bought. This cannot be undone.",
+      "confirmLabel": "Refund",
+      "success": "Refund issued",
+      "errors": {
+        "NOT_ELIGIBLE": "Not refundable under the refund policy",
+        "NOT_CHARGED": "Nothing was charged for this payment",
+        "BOOKING_PAYMENT": "Coaching bookings are refunded by cancelling the booking",
+        "NOT_FOUND": "Payment not found",
+        "NO_CUSTOMER": "This subscription charge has no Stripe customer",
+        "generic": "The refund could not be issued"
+      }
     }
   },
   "payouts": {
@@ -383,15 +408,37 @@
       "totalPaidOut": "Total Paid Out",
       "totalPayouts": "Total Payouts",
       "avgCommission": "Avg Commission",
-      "commissionRate": "Commission Rate"
+      "commissionRate": "Commission Rate",
+      "paidOutCount": "Payouts made",
+      "pendingPayouts": "Pending payouts",
+      "pendingCount_one": "{{count}} waiting",
+      "pendingCount_other": "{{count}} waiting",
+      "commissionEarned": "Platform commission"
     },
     "filter": {
       "placeholder": "Filter by Status",
       "allStatuses": "All Statuses",
       "pending": "Pending",
+      "approved": "Approved",
       "processing": "Processing",
       "completed": "Completed",
+      "rejected": "Rejected",
       "failed": "Failed"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "processing": "Processing",
+      "completed": "Paid",
+      "rejected": "Rejected",
+      "failed": "Failed"
+    },
+    "markPaid": {
+      "action": "Mark as paid",
+      "confirmTitle": "Mark this payout as paid?",
+      "confirmDesc": "FormMaps does not send the money: pay {{coach}} {{amount}} yourself first (bank transfer or Stripe), then mark it here. This is recorded in the audit log.",
+      "confirmLabel": "Mark as paid",
+      "success": "Payout marked as paid"
     },
     "pagination": {
       "showingPage": "Showing page {{page}} of {{total}}"
@@ -407,6 +454,7 @@
     "title": "Platform Settings",
     "subtitle": "Manage global configuration, payments, and security protocols",
     "saveButton": "Save Changes",
+    "inertNote": "Not in effect yet — the platform doesn't use these settings, so they are locked to avoid giving the wrong impression.",
     "toast": {
       "savedSuccess": "Settings updated successfully",
       "saveFailed": "Failed to save settings"

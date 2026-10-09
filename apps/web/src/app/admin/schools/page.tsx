@@ -86,7 +86,15 @@ export default function SchoolsPage() {
 
   const handleResendInvite = async (school: School) => {
     try {
-      await resendSchoolInvite(school.id);
+      const result = await resendSchoolInvite(school.id);
+      // The resend replaces the old link; if the email didn't go out the school has NO working link.
+      if (result?.emailSent === false) {
+        toast.warning(t("admin.schools.resendNoEmail", { name: school.name }), {
+          description: result.invitationUrl,
+          duration: 20000,
+        });
+        return;
+      }
       toast.success(
         t("admin.schools.resendSuccess", {
           name: school.name,

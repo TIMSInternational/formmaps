@@ -49,7 +49,7 @@ export function PricingSettingsTab({
 
   useEffect(() => {
     if (coachDetails) {
-      setHourlyRate(coachDetails.hourlyRate || 0);
+      setHourlyRate(Number(coachDetails.hourlyRate) || 0);
       setIsLoading(false);
       return;
     }
@@ -61,7 +61,7 @@ export function PricingSettingsTab({
         if (user?.id) {
           const data = await getCoachProfile();
           if (data) {
-            setHourlyRate(data.hourlyRate || 0);
+            setHourlyRate(Number(data.hourlyRate) || 0);
             if (onUpdated) onUpdated(data);
           }
         }
