@@ -5,6 +5,7 @@ import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
 import { Radar, Users, CheckCircle2, Clock, AlertTriangle, Search, Send, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/api/apiClient";
+import { getAllStudents } from "@/services/schoolAdminService";
 import { toast } from "sonner";
 import { Student360Dialog } from "./Student360Dialog";
 import type { EvalStudent } from "./Student360Dialog";
@@ -14,13 +15,6 @@ const statusConfig = {
   in_progress: { labelKey: "ui.evaluations.status.in_progress", color: "#f59e0b", bg: "rgba(245,158,11,0.1)" },
   not_started: { labelKey: "ui.evaluations.status.not_started", color: "var(--admin-font-tertiary)", bg: "var(--admin-bg-hover)" },
 };
-
-interface StudentApiItem {
-  id: string;
-  name: string;
-  email: string;
-  gradeLevel: number | null;
-}
 
 interface EvalOverviewItem {
   studentId: string;
@@ -40,8 +34,9 @@ export function EvaluationsPanel() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await apiRequest("/api/v1/school-admin/students?limit=200", { method: "GET" });
-        const studentList = res?.data?.data ?? res?.data ?? [];
+        // Every student (all pages): one request for 200 got the server's maximum of 100.
+        // The roster rows carry gradeLevel (GET /school-admin/students); the shared Student type does not declare it.
+        const studentList = (await getAllStudents()) as unknown as Array<{ id: string; name: string; email: string; gradeLevel?: number | null }>;
 
         const evalRes = await apiRequest("/api/v1/school-admin/evaluations/overview", { method: "GET" }).catch(() => null);
         const evalMap = new Map<string, { totalEvaluators: number; completedEvaluators: number; selfCompleted: boolean }>();
@@ -51,12 +46,12 @@ export function EvaluationsPanel() {
           }
         }
 
-        const mapped: EvalStudent[] = studentList.map((s: StudentApiItem) => {
+        const mapped: EvalStudent[] = studentList.map((s) => {
           const eval_ = evalMap.get(s.id);
           const total = eval_?.totalEvaluators ?? 0;
           const completed = eval_?.completedEvaluators ?? 0;
           const status = total === 0 ? "not_started" : completed >= total && eval_?.selfCompleted ? "completed" : "in_progress";
-          return { id: s.id, name: s.name, email: s.email, gradeLevel: s.gradeLevel, totalEvaluators: total, completedEvaluators: completed, selfCompleted: eval_?.selfCompleted ?? false, status };
+          return { id: s.id, name: s.name, email: s.email, gradeLevel: s.gradeLevel ?? null, totalEvaluators: total, completedEvaluators: completed, selfCompleted: eval_?.selfCompleted ?? false, status };
         });
 
         setStudents(mapped);

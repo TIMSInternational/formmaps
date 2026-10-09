@@ -88,7 +88,8 @@ export default function StudentsPage() {
     page,
     limit: 10,
     search: searchTerm,
-    status: roleFilter === "all" ? undefined : roleFilter,
+    // "all" includes deactivated students; active = accepted the invite, pending = invited, not accepted yet.
+    status: roleFilter,
   });
 
   const students = data?.data || [];
@@ -300,11 +301,11 @@ export default function StudentsPage() {
                     {student.gradeLevel || "—"}
                   </TableCell>
                   <TableCell className="py-3 px-4">
-                    <Badge className="text-xs font-medium shadow-none border-0" style={{
-                      background: student.status === "active" ? "rgba(16,185,129,0.1)" : "rgba(107,114,128,0.1)",
-                      color: student.status === "active" ? "#10b981" : "#6b7280",
+                    <Badge data-testid="roster-status" data-status={student.status || "active"} className="text-xs font-medium shadow-none border-0" style={{
+                      background: student.status === "pending" ? "rgba(245,158,11,0.1)" : student.status === "inactive" ? "rgba(107,114,128,0.1)" : "rgba(16,185,129,0.1)",
+                      color: student.status === "pending" ? "#d97706" : student.status === "inactive" ? "#6b7280" : "#10b981",
                     }}>
-                      {student.status || t("users.filter.active")}
+                      {t(`users.filter.${["pending", "inactive"].includes(student.status) ? student.status : "active"}`)}
                     </Badge>
                   </TableCell>
                   <TableCell className="py-3 px-4" style={{ fontSize: 12, color: "var(--admin-font-light)" }}>

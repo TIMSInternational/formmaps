@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getSchoolAdminStats,
   getStudents,
+  getAllStudents,
   getStudent,
   inviteStudent,
   bulkInviteStudents,
@@ -52,6 +53,15 @@ export function useSchoolAdminStats() {
 // ============================================
 // Student Hooks
 // ============================================
+
+/** Every student of the school (all pages) — for pickers that must show the whole roster. */
+export function useAllStudents(params: { search?: string; status?: string } = {}) {
+  return useQuery({
+    queryKey: [...schoolAdminKeys.students(), "all", params] as const,
+    queryFn: () => getAllStudents(params),
+    staleTime: 1000 * 60 * 2,
+  });
+}
 
 export function useStudents(params: {
   page?: number;
@@ -162,6 +172,7 @@ export function useTopPerformers(limit: number = 10) {
 export function useStudentResults(params: {
   page?: number;
   limit?: number;
+  search?: string;
   studentId?: string;
   assessmentType?: string;
   dateFrom?: string;

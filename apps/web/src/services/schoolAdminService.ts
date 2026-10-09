@@ -91,6 +91,25 @@ export async function getStudents(params: {
   }
 }
 
+/** Pages the list endpoint serves at most (both backends clamp `limit` to 100). */
+export const STUDENTS_PAGE_MAX = 100;
+
+/**
+ * Every student of the school. The list endpoint returns at most 100 per page, so asking for `limit: 1000` silently
+ * returned the first 100 — students past that could not be assigned a counselor or managed in Evaluations. This walks
+ * the pages instead (bounded at 50 pages = 5,000 students).
+ */
+export async function getAllStudents(params: { search?: string; status?: string } = {}): Promise<StudentsResponse["data"]> {
+  const all: StudentsResponse["data"] = [];
+  for (let page = 1; page <= 50; page++) {
+    const res = await getStudents({ ...params, page, limit: STUDENTS_PAGE_MAX });
+    const rows = res.data ?? [];
+    all.push(...rows);
+    if (rows.length < STUDENTS_PAGE_MAX || page >= (res.totalPages ?? 1)) break;
+  }
+  return all;
+}
+
 export async function getStudent(studentId: string): Promise<Student> {
   const res = await apiRequest(`/api/v1/school-admin/students/${studentId}${buildQueryString()}`);
   return toCamel(res.data || res);
@@ -268,6 +287,7 @@ export async function getTopPerformers(
 export async function getStudentResults(params: {
   page?: number;
   limit?: number;
+  search?: string;
   studentId?: string;
   assessmentType?: string;
   dateFrom?: string;

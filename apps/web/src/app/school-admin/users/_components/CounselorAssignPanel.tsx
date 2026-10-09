@@ -25,7 +25,8 @@ export function CounselorAssignPanel() {
   const [search, setSearch] = useState("");
 
   const { data: users, isLoading } = useSchoolUsers({ role: "counselor", limit: 100 });
-  const { data: allStudentsData } = useStudents({ limit: 1000 });
+  // Only the total is read here (the count is right on any page size).
+  const { data: allStudentsData } = useStudents({ limit: 1 });
 
   const [assignedByRow, setAssignedByRow] = useState<Record<string, string[]>>({});
   const reportAssigned = useCallback((counselorId: string, studentIds: string[]) => {

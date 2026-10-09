@@ -25,7 +25,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAssignStudents, useUnassignStudents, useCounselorStudents } from "@/hooks/useSchoolProfileQueries";
-import { useStudents } from "@/hooks/useSchoolAdmin";
+import { useAllStudents } from "@/hooks/useSchoolAdmin";
 import type { SchoolUser } from "@/types/assessmentConfig";
 import { ReassignDialog } from "./ReassignDialog";
 
@@ -64,7 +64,7 @@ export function CounselorRow({
     counselor.id,
     { limit: 1000 }
   );
-  const { data: allStudents } = useStudents({ limit: 1000 });
+  const { data: allStudents } = useAllStudents();
 
   const assign = useAssignStudents();
   const unassign = useUnassignStudents();
@@ -76,7 +76,7 @@ export function CounselorRow({
   }, [assignedIdsList, counselor.id, onReportAssigned]);
 
   const availableStudents = useMemo(() => {
-    return (allStudents?.data ?? []).filter((s: StudentInfo) => {
+    return (allStudents ?? []).filter((s: StudentInfo) => {
       if (globalAssignedIds.has(s.id)) return false;
       const matchesSearch = s.name?.toLowerCase().includes(search.toLowerCase());
       const matchesGrade = gradeFilter === "all" || String(s.gradeLevel) === gradeFilter;
@@ -86,7 +86,7 @@ export function CounselorRow({
 
   const uniqueGrades = useMemo(() => {
     const grades = new Set<string>();
-    (allStudents?.data ?? []).forEach((s: StudentInfo) => {
+    (allStudents ?? []).forEach((s: StudentInfo) => {
       if (s.gradeLevel) grades.add(String(s.gradeLevel));
     });
     return Array.from(grades).sort((a, b) => parseInt(a) - parseInt(b));

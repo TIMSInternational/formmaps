@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -8,9 +8,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
-} from "@/components/ui/select";
 import {
   Dialog, DialogContent,
 } from "@/components/ui/dialog";
@@ -27,16 +24,22 @@ import { StudentReportModal } from "./StudentReportModal";
 export function ResultsPanel() {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
+  // The search box reaches the API after a short pause (it used to be typed into and never sent).
+  const [query, setQuery] = useState("");
+  useEffect(() => {
+    const id = setTimeout(() => setQuery(search.trim()), 300);
+    return () => clearTimeout(id);
+  }, [search]);
   const [page, setPage] = useState(1);
   const [selectedStudentId, setSelectedStudentId] = useState<string | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const limit = 10;
 
+  // No "assessment type" filter: neither backend has one (the select was ignored). Students → filters by assessment.
   const { data: results, isLoading, refetch } = useStudentResults({
     page, limit,
-    assessmentType: typeFilter !== "all" ? typeFilter : undefined,
+    search: query || undefined,
   });
   const handleExport = async (format: "csv" | "pdf") => {
     try {
@@ -93,18 +96,6 @@ export function ResultsPanel() {
             onChange={(e) => { setSearch(e.target.value); setPage(1); }}
           />
         </div>
-        <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-full sm:w-44 h-9 rounded-lg text-sm"
-            style={{ background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", color: "var(--admin-font-primary)" }}>
-            <SelectValue placeholder={t("school_admin:ui.results.assessmentType")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("school_admin:ui.results.allTypes")}</SelectItem>
-            <SelectItem value="career">{t("school_admin:ui.results.careerAssessment")}</SelectItem>
-            <SelectItem value="skills">{t("school_admin:ui.results.skillsAssessment")}</SelectItem>
-            <SelectItem value="personality">{t("school_admin:ui.results.personalityTest")}</SelectItem>
-          </SelectContent>
-        </Select>
       </div>
 
       {/* Results Table */}
