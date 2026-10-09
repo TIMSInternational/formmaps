@@ -124,7 +124,7 @@ function ParentRow({ parent }: { parent: StudentParentLink }) {
             className="h-7 w-7 text-gray-400 hover:text-[var(--admin-accent-blue)]"
             title={t("components.StudentInviteParentPanel.resendInvite")}
             disabled={resend.isPending}
-            onClick={() => resend.mutate(parent.id)}
+            onClick={() => resend.mutate({ parentLinkId: parent.id, email: parent.email })}
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>

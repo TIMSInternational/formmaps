@@ -358,9 +358,12 @@ export async function updateAdminProfile(data: {
   name?: string;
   phone?: string;
 }): Promise<{ success: boolean; message: string }> {
+  // audit 2026-10-09 C10: PUT /user/profile renames the account from `name` (User.name, and the
+  // profile card follows). Sending `fullName` only touched the profile card, so the admin's name
+  // never changed.
   return apiRequest("/api/v1/user/profile", {
     method: "PUT",
-    data: { fullName: data.name, phone: data.phone },
+    data: { name: data.name, phone: data.phone },
   });
 }
 

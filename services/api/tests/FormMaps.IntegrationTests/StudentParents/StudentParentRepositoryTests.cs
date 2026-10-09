@@ -9,8 +9,10 @@ namespace FormMaps.IntegrationTests.StudentParents;
 
 /// <summary>
 /// Real-DB (Testcontainers) tests for <see cref="StudentParentRepository"/> (FM-DOTNET-076). Pins list scoping +
-/// order; create (token minted, id returned) + the unique (studentId, parentEmail) → Duplicate; delete ownership;
-/// resend ownership + token regeneration.
+/// order; delete ownership. audit 2026-10-09 C8b/C8: invite mints a token for the EMAIL (returned to the endpoint
+/// only), is idempotent per (studentId, parentEmail) (re-invite refreshes the row; an accepted link is a no-op), attaches
+/// an onboarded parent account found through RLS (a school-less parent the student's identity cannot see), never links
+/// the student to themselves; resend requires ownership, refuses accepted links, and attaches a since-onboarded parent.
 /// </summary>
 public sealed class StudentParentRepositoryTests : IClassFixture<StudentParentRepositoryTests.Fixture>, IAsyncLifetime
 {
@@ -100,15 +102,18 @@ public sealed class StudentParentRepositoryTests : IClassFixture<StudentParentRe
     }
 
     [Fact]
-    public async Task Create_mints_token_and_returns_id()
+    public async Task Invite_mints_token_and_returns_id()
     {
-        var result = await Repo().CreateInviteAsync(Ctx(), Student, "mom@example.com", "Mom", "parent");
-        Assert.False(result.Duplicate);
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Student, "school-1", email: "kid@x.com");
+
+        var result = await Repo().InviteOrAttachAsync(Ctx(), Student, "mom@example.com", "Mom", "");
+        Assert.Equal(ParentInviteKind.Invited, result.Kind);
         Assert.False(string.IsNullOrEmpty(result.Id));
         Assert.False(string.IsNullOrEmpty(result.Token));
+        Assert.Equal(Student, result.StudentName); // User() names the row after its id
 
-        await using var conn = await _adminDataSource.OpenConnectionAsync();
-        await using var check = new NpgsqlCommand("""SELECT "parentEmail","invitationToken","invitedBy","tokenExpiresAt" FROM "student_parent_links" WHERE "id"=@id""", conn);
+        await using var check = new NpgsqlCommand("""SELECT "parentEmail","invitationToken","invitedBy","tokenExpiresAt","relation","isAccepted" FROM "student_parent_links" WHERE "id"=@id""", conn);
         check.Parameters.AddWithValue("id", result.Id!);
         await using var reader = await check.ExecuteReaderAsync();
         await reader.ReadAsync();
@@ -116,14 +121,94 @@ public sealed class StudentParentRepositoryTests : IClassFixture<StudentParentRe
         Assert.Equal(result.Token, reader.GetString(1));
         Assert.Equal(Student, reader.GetString(2));    // invitedBy = caller
         Assert.False(reader.IsDBNull(3));               // tokenExpiresAt set
+        Assert.Equal("parent", reader.GetString(4));    // relation not supplied → "parent"
+        Assert.False(reader.GetBoolean(5));
     }
 
     [Fact]
-    public async Task Create_duplicate_email_is_Duplicate()
+    public async Task Reinvite_refreshes_the_existing_row_instead_of_a_duplicate()
     {
-        Assert.False((await Repo().CreateInviteAsync(Ctx(), Student, "dup@example.com", "", "parent")).Duplicate);
-        var second = await Repo().CreateInviteAsync(Ctx(), Student, "dup@example.com", "", "parent");
-        Assert.True(second.Duplicate); // unique (studentId, parentEmail)
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Student, "school-1", email: "kid@x.com");
+        await Link(conn, "mine", Student, "dup@example.com", isActive: false, token: "old-token");
+
+        var result = await Repo().InviteOrAttachAsync(Ctx(), Student, "dup@example.com", "", "");
+        Assert.Equal(ParentInviteKind.Invited, result.Kind);
+        Assert.Equal("mine", result.Id);
+        Assert.NotEqual("old-token", result.Token);
+        Assert.Equal(1L, await CountAsync(conn, """SELECT count(*) FROM "student_parent_links" """));
+        await using var check = new NpgsqlCommand("""SELECT "isActive","invitationToken" FROM "student_parent_links" WHERE "id"='mine'""", conn);
+        await using var reader = await check.ExecuteReaderAsync();
+        await reader.ReadAsync();
+        Assert.True(reader.GetBoolean(0));
+        Assert.Equal(result.Token, reader.GetString(1));
+    }
+
+    [Fact]
+    public async Task Invite_attaches_an_onboarded_parent_the_students_identity_cannot_see()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Student, "school-1", email: "kid@x.com");
+        await User(conn, "parent-user-1", schoolId: null, email: "mom@example.com", roleName: "parent", password: "hash");
+
+        // Negative control: RLS hides the school-less parent row from the student's own identity.
+        await using (var identity = await OpenIdentitySessionAsync(Student, "school-1"))
+        {
+            Assert.Equal(0L, await CountAsync(identity, """SELECT count(*) FROM "users" WHERE "id"='parent-user-1'"""));
+        }
+
+        var result = await Repo().InviteOrAttachAsync(Ctx(), Student, "mom@example.com", "", "mother");
+        Assert.Equal(ParentInviteKind.Attached, result.Kind);
+        Assert.Equal("parent-user-1", result.ParentUserId);
+        Assert.Null(result.Token);
+        Assert.Equal("parent-user-1", result.ParentName); // falls back to the account's name
+
+        await using var check = new NpgsqlCommand("""SELECT "parentUserId","isAccepted","invitationToken","acceptedAt" FROM "student_parent_links" WHERE "id"=@id""", conn);
+        check.Parameters.AddWithValue("id", result.Id!);
+        await using var reader = await check.ExecuteReaderAsync();
+        await reader.ReadAsync();
+        Assert.Equal("parent-user-1", reader.GetString(0));
+        Assert.True(reader.GetBoolean(1));
+        Assert.True(reader.IsDBNull(2));
+        Assert.False(reader.IsDBNull(3));
+    }
+
+    [Fact]
+    public async Task Invite_does_not_attach_a_non_parent_or_passwordless_account()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Student, "school-1", email: "kid@x.com");
+        await User(conn, "teacher", schoolId: null, email: "t@example.com", roleName: "counselor", password: "hash");
+        await User(conn, "pending-parent", schoolId: null, email: "p@example.com", roleName: "parent", password: null);
+
+        Assert.Equal(ParentInviteKind.Invited, (await Repo().InviteOrAttachAsync(Ctx(), Student, "t@example.com", "", "")).Kind);
+        Assert.Equal(ParentInviteKind.Invited, (await Repo().InviteOrAttachAsync(Ctx(), Student, "p@example.com", "", "")).Kind);
+    }
+
+    [Fact]
+    public async Task Invite_is_a_noop_for_an_active_accepted_link()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Student, "school-1", email: "kid@x.com");
+        await Link(conn, "mine", Student, "mom@example.com", token: null, accepted: true);
+
+        var result = await Repo().InviteOrAttachAsync(Ctx(), Student, "mom@example.com", "", "");
+        Assert.Equal(ParentInviteKind.AlreadyLinked, result.Kind);
+        Assert.Equal("mine", result.Id);
+        Assert.Null(result.Token);
+        await using var check = new NpgsqlCommand("""SELECT "invitationToken" FROM "student_parent_links" WHERE "id"='mine'""", conn);
+        Assert.True(await check.ExecuteScalarAsync() is DBNull);
+    }
+
+    [Fact]
+    public async Task Invite_never_links_a_student_to_themselves()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Student, "school-1", email: "kid@x.com");
+
+        var result = await Repo().InviteOrAttachAsync(Ctx(), Student, "kid@x.com", "", "");
+        Assert.Equal(ParentInviteKind.SelfLink, result.Kind);
+        Assert.Equal(0L, await CountAsync(conn, """SELECT count(*) FROM "student_parent_links" """));
     }
 
     [Fact]
@@ -148,18 +233,55 @@ public sealed class StudentParentRepositoryTests : IClassFixture<StudentParentRe
     public async Task Resend_requires_ownership_and_regenerates_token()
     {
         await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Student, "school-1", email: "kid@x.com");
         await Link(conn, "mine", Student, "a@x.com", token: "old-token");
         await Link(conn, "theirs", "student-2", "b@x.com");
 
-        Assert.Null(await Repo().ResendAsync(Ctx(), Student, "missing"));
-        Assert.Null(await Repo().ResendAsync(Ctx(), Student, "theirs"));
+        Assert.Equal(ParentResendKind.NotFound, (await Repo().ResendAsync(Ctx(), Student, "missing")).Kind);
+        Assert.Equal(ParentResendKind.NotFound, (await Repo().ResendAsync(Ctx(), Student, "theirs")).Kind);
 
-        var newToken = await Repo().ResendAsync(Ctx(), Student, "mine");
-        Assert.False(string.IsNullOrEmpty(newToken));
-        Assert.NotEqual("old-token", newToken);
+        var outcome = await Repo().ResendAsync(Ctx(), Student, "mine");
+        Assert.Equal(ParentResendKind.Reissued, outcome.Kind);
+        Assert.Equal("a@x.com", outcome.ParentEmail);
+        Assert.False(string.IsNullOrEmpty(outcome.Token));
+        Assert.NotEqual("old-token", outcome.Token);
 
         await using var check = new NpgsqlCommand("""SELECT "invitationToken" FROM "student_parent_links" WHERE "id"='mine'""", conn);
-        Assert.Equal(newToken, (string)(await check.ExecuteScalarAsync())!);
+        Assert.Equal(outcome.Token, (string)(await check.ExecuteScalarAsync())!);
+    }
+
+    [Fact]
+    public async Task Resend_refuses_accepted_and_inactive_links()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Student, "school-1", email: "kid@x.com");
+        await Link(conn, "accepted", Student, "a@x.com", accepted: true);
+        await Link(conn, "inactive", Student, "b@x.com", isActive: false, token: "t");
+
+        Assert.Equal(ParentResendKind.NotFound, (await Repo().ResendAsync(Ctx(), Student, "accepted")).Kind);
+        Assert.Equal(ParentResendKind.NotFound, (await Repo().ResendAsync(Ctx(), Student, "inactive")).Kind);
+        await using var check = new NpgsqlCommand("""SELECT "invitationToken" FROM "student_parent_links" WHERE "id"='accepted'""", conn);
+        Assert.True(await check.ExecuteScalarAsync() is DBNull);
+    }
+
+    [Fact]
+    public async Task Resend_attaches_a_parent_who_has_since_onboarded()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await User(conn, Student, "school-1", email: "kid@x.com");
+        await User(conn, "parent-user-1", schoolId: null, email: "mom@example.com", roleName: "Parent", password: "hash");
+        await Link(conn, "mine", Student, "mom@example.com", token: "old-token");
+
+        var outcome = await Repo().ResendAsync(Ctx(), Student, "mine");
+        Assert.Equal(ParentResendKind.Attached, outcome.Kind);
+        Assert.Equal("parent-user-1", outcome.ParentUserId);
+        Assert.Null(outcome.Token);
+        await using var check = new NpgsqlCommand("""SELECT "parentUserId","isAccepted","invitationToken" FROM "student_parent_links" WHERE "id"='mine'""", conn);
+        await using var reader = await check.ExecuteReaderAsync();
+        await reader.ReadAsync();
+        Assert.Equal("parent-user-1", reader.GetString(0));
+        Assert.True(reader.GetBoolean(1));
+        Assert.True(reader.IsDBNull(2));
     }
 
     // ---- helpers ----
@@ -199,11 +321,17 @@ public sealed class StudentParentRepositoryTests : IClassFixture<StudentParentRe
         return (long)(await cmd.ExecuteScalarAsync())!;
     }
 
-    private static async Task User(NpgsqlConnection conn, string id, string? schoolId)
+    private static async Task User(
+        NpgsqlConnection conn, string id, string? schoolId, string? email = null, string roleName = "student",
+        string? password = null)
     {
-        await using var cmd = new NpgsqlCommand("""INSERT INTO "users"("id","name","schoolId") VALUES(@id,@id,@s)""", conn);
+        await using var cmd = new NpgsqlCommand(
+            """INSERT INTO "users"("id","name","schoolId","email","roleName","password") VALUES(@id,@id,@s,@e,@r,@p)""", conn);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("s", (object?)schoolId ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("e", (object?)email ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("r", roleName);
+        cmd.Parameters.AddWithValue("p", (object?)password ?? DBNull.Value);
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -214,13 +342,14 @@ public sealed class StudentParentRepositoryTests : IClassFixture<StudentParentRe
 
     private static async Task Link(
         NpgsqlConnection conn, string id, string studentId, string parentEmail, bool isActive = true,
-        string? token = null, DateTime? created = null)
+        string? token = null, DateTime? created = null, bool accepted = false)
     {
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "student_parent_links"("id","studentId","parentEmail","invitationToken","isActive","createdDate","updatedAt")
-            VALUES(@id,@s,@e,@t,@act,@cd,@ud)
+            INSERT INTO "student_parent_links"("id","studentId","parentEmail","invitationToken","isActive","isAccepted","createdDate","updatedAt")
+            VALUES(@id,@s,@e,@t,@act,@acc,@cd,@ud)
             """, conn);
+        cmd.Parameters.AddWithValue("acc", accepted);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("s", studentId);
         cmd.Parameters.AddWithValue("e", parentEmail);

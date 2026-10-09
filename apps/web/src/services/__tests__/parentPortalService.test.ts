@@ -1,5 +1,15 @@
 import { apiRequest } from "@/lib/api/apiClient";
-import { getChildProgress, getParentNotifications } from "@/services/parentPortalService";
+import {
+  getChildProgress,
+  getParentNotifications,
+  getMyParents,
+  getStudentParents,
+  inviteMyParent,
+  inviteParentToStudent,
+  resendMyParentInvite,
+  resendParentInvite,
+  toStudentParentLink,
+} from "@/services/parentPortalService";
 
 jest.mock("@/lib/api/apiClient", () => ({ apiRequest: jest.fn() }));
 const mockApiRequest = apiRequest as jest.Mock;
@@ -90,5 +100,81 @@ describe("getParentNotifications unwraps the paginated envelope", () => {
     expect(await getParentNotifications()).toEqual([]);
     mockApiRequest.mockResolvedValue({});
     expect(await getParentNotifications()).toEqual([]);
+  });
+});
+
+// audit 2026-10-09 C8b / C9 — parent invites: the link is emailed (never returned), the
+// student route reads { parentEmail, parentName, relation }, and the counselor panel uses the
+// caseload-checked routes instead of the school-admin ones (which 403 for counselors).
+describe("parent invite service calls", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("student invite sends the field names the route reads and returns { id, emailSent }", async () => {
+    mockApiRequest.mockResolvedValue({ success: true, data: { id: "l-1", emailSent: true } });
+    const r = await inviteMyParent({ name: "Mom", email: "mom@x.com", relationship: "mother", message: "hi" });
+    expect(mockApiRequest).toHaveBeenCalledWith("/api/v1/student/parents/invite", {
+      method: "POST",
+      data: { parentEmail: "mom@x.com", parentName: "Mom", relation: "mother" },
+    });
+    expect(r).toEqual({ id: "l-1", emailSent: true });
+  });
+
+  it("student resend returns { emailSent }", async () => {
+    mockApiRequest.mockResolvedValue({ success: true, data: { emailSent: false } });
+    expect(await resendMyParentInvite("l-1")).toEqual({ emailSent: false });
+    expect(mockApiRequest).toHaveBeenCalledWith("/api/v1/student/parents/l-1/resend", { method: "POST" });
+  });
+
+  it("maps the student list's raw link rows to the panel shape", async () => {
+    mockApiRequest.mockResolvedValue({
+      success: true,
+      data: [
+        { id: "a", parentEmail: "a@x.com", parentName: "A", relation: "father", isAccepted: true, createdDate: "2026-01-01" },
+        { id: "b", parentEmail: "b@x.com", parentName: "B", relation: "mother", isAccepted: false, tokenExpiresAt: "2000-01-01T00:00:00Z" },
+        { id: "c", parentEmail: "c@x.com", parentName: "", relation: "guardian", isAccepted: false, tokenExpiresAt: "2999-01-01T00:00:00Z" },
+      ],
+    });
+    const rows = await getMyParents();
+    expect(rows.map((r) => [r.id, r.email, r.name, r.relationship, r.status])).toEqual([
+      ["a", "a@x.com", "A", "father", "accepted"],
+      ["b", "b@x.com", "B", "mother", "expired"],
+      ["c", "c@x.com", "", "guardian", "pending"],
+    ]);
+  });
+
+  it("passes rows already in the panel shape through unchanged", () => {
+    const row = { id: "x", name: "N", email: "n@x.com", relationship: "other" as const, status: "pending" as const, invitedAt: "t" };
+    expect(toStudentParentLink(row)).toBe(row);
+  });
+
+  it("counselor scope lists via the caseload-checked counselor route", async () => {
+    mockApiRequest.mockResolvedValue({ success: true, data: [] });
+    await getStudentParents("s-1", "counselor");
+    expect(mockApiRequest).toHaveBeenCalledWith("/api/v1/counselor/students/s-1/parents");
+  });
+
+  it("counselor scope invites via POST /parent/invite with the student id in the body", async () => {
+    mockApiRequest.mockResolvedValue({ success: true, data: { id: "l-1", emailSent: true } });
+    const r = await inviteParentToStudent({ studentId: "s-1", name: "Mom", email: "mom@x.com", relationship: "mother" }, "counselor");
+    expect(mockApiRequest).toHaveBeenCalledWith("/api/v1/parent/invite", {
+      method: "POST",
+      data: { studentId: "s-1", parentEmail: "mom@x.com", parentName: "Mom", relation: "mother" },
+    });
+    expect(r).toEqual({ id: "l-1", emailSent: true });
+  });
+
+  it("counselor scope resends via POST /parent/:id/resend", async () => {
+    mockApiRequest.mockResolvedValue({ success: true, data: { emailSent: true } });
+    await resendParentInvite("s-1", "l-1", "counselor");
+    expect(mockApiRequest).toHaveBeenCalledWith("/api/v1/parent/l-1/resend", { method: "POST" });
+  });
+
+  it("school-admin scope is unchanged by default", async () => {
+    mockApiRequest.mockResolvedValue({ success: true, data: [] });
+    await getStudentParents("s-1");
+    expect(mockApiRequest).toHaveBeenCalledWith("/api/v1/school-admin/students/s-1/parents");
+    mockApiRequest.mockResolvedValue({ success: true, data: { emailSent: true } });
+    await resendParentInvite("s-1", "l-1");
+    expect(mockApiRequest).toHaveBeenLastCalledWith("/api/v1/school-admin/students/s-1/parents/l-1/resend", { method: "POST" });
   });
 });

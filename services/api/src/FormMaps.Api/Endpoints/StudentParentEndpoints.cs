@@ -1,5 +1,6 @@
 using System.Text.Json;
 using FormMaps.Application.Auth;
+using FormMaps.Application.Email;
 using FormMaps.Application.StudentParents;
 
 namespace FormMaps.Api.Endpoints;
@@ -8,9 +9,13 @@ namespace FormMaps.Api.Endpoints;
 /// Student parent-links CRUD (FM-DOTNET-076 — routes/student.ts, mounted /api/v1/student). One dark flag
 /// <c>FORMMAPS_ROUTE_STUDENT_PARENTS_TO_DOTNET</c> co-flips four paths (Next matches path-not-method): GET /parents,
 /// POST /parents/invite, DELETE /parents/:parentLinkId, POST /parents/:parentLinkId/resend. Self-scoped — RequireIdentity
-/// only. Invite/resend mint a token + return an invitationUrl (no email). The invite body is RAW (no zod): parentEmail
-/// required (falsy → 400 "parentEmail required"; a truthy non-string → 500, reproducing .toLowerCase() throwing),
-/// parentName || "", relation || "parent" (a truthy non-string → 500 at the Prisma String column).
+/// only. The invite body is RAW (no zod): parentEmail required (falsy → 400 "parentEmail required"; a truthy
+/// non-string → 500, reproducing .trim() throwing), parentName || "", relation || "parent" (a truthy non-string → 500).
+/// audit 2026-10-09 C8b: invite/resend EMAIL the onboarding link to the parent and answer { id, emailSent } /
+/// { emailSent } — never the URL or token (the student used to get the link and could create "their parent's"
+/// account themselves), and the list no longer carries invitationToken. C8: an onboarded parent's address is attached
+/// (+ linked-notification email, alreadyLinked:true); the student's own address → 400 SELF_LINK. Mirrors legacy
+/// parentLinkService inviteOrAttachParent / resendOrAttachParent.
 /// </summary>
 public static class StudentParentEndpoints
 {
@@ -39,7 +44,8 @@ public static class StudentParentEndpoints
 
     private static async Task<IResult> InviteAsync(
         HttpContext http, IRequestContextAccessor accessor, IProtectedRequestGuard guard,
-        IStudentParentRepository repository, IConfiguration config, CancellationToken cancellationToken)
+        IStudentParentRepository repository, IConfiguration config, IEmailSender emailSender, EmailTemplates templates,
+        IEmailLanguageResolver emailLanguages, CancellationToken cancellationToken)
     {
         var (context, error) = RequireSelf(accessor, guard);
         if (error is not null) return error;
@@ -50,15 +56,40 @@ public static class StudentParentEndpoints
         var resolveError = ResolveInvite(body.Value, out var email, out var name, out var relation);
         if (resolveError is not null) return resolveError;
 
-        var result = await repository.CreateInviteAsync(context, context.Actor!.UserId, email!, name!, relation!, cancellationToken);
-        if (result.Duplicate)
+        var studentId = context.Actor!.UserId;
+        var outcome = await repository.InviteOrAttachAsync(context, studentId, email!, name!, relation!, cancellationToken);
+        switch (outcome.Kind)
         {
-            return InternalError(); // unique (studentId, parentEmail) violation → Prisma throw → 500
+            case ParentInviteKind.SelfLink:
+                return Results.Json(
+                    new { success = false, code = "SELF_LINK", message = "You cannot invite yourself as a parent" },
+                    statusCode: StatusCodes.Status400BadRequest);
+            case ParentInviteKind.AlreadyLinked:
+                return Results.Json(
+                    new { success = true, data = new { id = outcome.Id, emailSent = false, alreadyLinked = true } },
+                    statusCode: StatusCodes.Status201Created);
+            case ParentInviteKind.Attached:
+            {
+                // The parent has an account: their own language.
+                var language = await emailLanguages.ForUserAsync(outcome.ParentUserId, cancellationToken);
+                var message = templates.BuildParentLinked(outcome.ParentName, outcome.StudentName, language);
+                var sent = await emailSender.SendAsync(email!, message.Subject, message.Html, cancellationToken);
+                return Results.Json(
+                    new { success = true, data = new { id = outcome.Id, emailSent = sent, alreadyLinked = true } },
+                    statusCode: StatusCodes.Status201Created);
+            }
+            default:
+            {
+                // No account yet: the inviter's (the student's) language.
+                var language = await emailLanguages.ForUserAsync(studentId, cancellationToken);
+                var message = templates.BuildParentInvite(
+                    outcome.ParentName, outcome.StudentName, InvitationUrl(config, outcome.Token!), language);
+                var sent = await emailSender.SendAsync(email!, message.Subject, message.Html, cancellationToken);
+                return Results.Json(
+                    new { success = true, data = new { id = outcome.Id, emailSent = sent } },
+                    statusCode: StatusCodes.Status201Created);
+            }
         }
-
-        return Results.Json(
-            new { success = true, data = new { id = result.Id, invitationUrl = InvitationUrl(config, result.Token!) } },
-            statusCode: StatusCodes.Status201Created);
     }
 
     private static async Task<IResult> DeleteAsync(
@@ -74,15 +105,33 @@ public static class StudentParentEndpoints
 
     private static async Task<IResult> ResendAsync(
         IRequestContextAccessor accessor, IProtectedRequestGuard guard, IStudentParentRepository repository,
-        IConfiguration config, string parentLinkId, CancellationToken cancellationToken)
+        IConfiguration config, IEmailSender emailSender, EmailTemplates templates, IEmailLanguageResolver emailLanguages,
+        string parentLinkId, CancellationToken cancellationToken)
     {
         var (context, error) = RequireSelf(accessor, guard);
         if (error is not null) return error;
 
-        var token = await repository.ResendAsync(context, context.Actor!.UserId, parentLinkId, cancellationToken);
-        return token is null
-            ? LinkNotFound()
-            : Results.Ok(new { success = true, data = new { invitationUrl = InvitationUrl(config, token) } });
+        var studentId = context.Actor!.UserId;
+        var outcome = await repository.ResendAsync(context, studentId, parentLinkId, cancellationToken);
+        if (outcome.Kind == ParentResendKind.NotFound)
+        {
+            return LinkNotFound();
+        }
+
+        if (outcome.Kind == ParentResendKind.Attached)
+        {
+            var parentLanguage = await emailLanguages.ForUserAsync(outcome.ParentUserId, cancellationToken);
+            var linked = templates.BuildParentLinked(outcome.ParentName, outcome.StudentName, parentLanguage);
+            var linkedSent = await emailSender.SendAsync(outcome.ParentEmail, linked.Subject, linked.Html, cancellationToken);
+            return Results.Ok(new { success = true, data = new { emailSent = linkedSent, alreadyLinked = true } });
+        }
+
+        // Same language as the original invitation: whoever sent it (falling back to whoever is resending).
+        var language = await emailLanguages.ForUserAsync(outcome.InvitedBy ?? studentId, cancellationToken);
+        var message = templates.BuildParentInvite(
+            outcome.ParentName, outcome.StudentName, InvitationUrl(config, outcome.Token!), language);
+        var sent = await emailSender.SendAsync(outcome.ParentEmail, message.Subject, message.Html, cancellationToken);
+        return Results.Ok(new { success = true, data = new { emailSent = sent } });
     }
 
     // req.body { parentEmail, parentName, relation }: parentEmail falsy → 400; a truthy non-string → 500
@@ -103,14 +152,15 @@ public static class StudentParentEndpoints
             return InternalError(); // truthy non-string → .toLowerCase() throws → 500
         }
 
-        email = emailEl.GetString()!.ToLowerInvariant();
+        email = emailEl.GetString()!.Trim().ToLowerInvariant();
 
         if (!ResolveOptional(body, "parentName", "", out name))
         {
             return InternalError();
         }
 
-        if (!ResolveOptional(body, "relation", "parent", out relation))
+        // "" = not supplied: a new link defaults to "parent", a re-invite keeps the existing relation.
+        if (!ResolveOptional(body, "relation", "", out relation))
         {
             return InternalError();
         }
@@ -151,7 +201,7 @@ public static class StudentParentEndpoints
         parentName = r.ParentName,
         parentUserId = r.ParentUserId,
         relation = r.Relation,
-        invitationToken = r.InvitationToken,
+        // invitationToken deliberately omitted (audit 2026-10-09 C8b): with it a student can build the onboarding link.
         tokenExpiresAt = r.TokenExpiresAt,
         isAccepted = r.IsAccepted,
         acceptedAt = r.AcceptedAt,

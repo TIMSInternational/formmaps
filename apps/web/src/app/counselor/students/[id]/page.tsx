@@ -171,7 +171,8 @@ export default function CounselorStudentDetailPage() {
 
         <TabsContent value="parents" className="mt-6">
           <div className="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm">
-            <InviteParentPanel studentId={studentId} studentName={student.name} />
+            {/* audit 2026-10-09 C9: counselor scope = caseload-checked routes (the school-admin ones 403 for counselors). */}
+            <InviteParentPanel studentId={studentId} studentName={student.name} scope="counselor" />
           </div>
         </TabsContent>
       </Tabs>

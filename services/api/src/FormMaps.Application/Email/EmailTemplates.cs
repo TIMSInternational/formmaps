@@ -251,6 +251,62 @@ public sealed class EmailTemplates(EmailOptions options)
         return new EmailMessage(subject, Wrap(body, language));
     }
 
+    /// <summary>Parent-portal invitation — mirrors sendParentInviteEmail (audit 2026-10-09 C8b: the student
+    /// parent-invite used to hand the link to the student and send nothing). The parent has no account yet, so
+    /// <paramref name="language"/> is the inviter's. Every parent-link token lives 48h, so the copy says "2 days"
+    /// (legacy expiryLabel(48)). studentName is RAW in the subject (matches TS) and escaped in the body.</summary>
+    public EmailMessage BuildParentInvite(
+        string parentName, string studentName, string inviteUrl, string language = EmailLanguage.Default)
+    {
+        var es = Es(language);
+        var student = string.IsNullOrEmpty(studentName) ? (es ? "tu hijo/a" : "your child") : studentName;
+        var name = string.IsNullOrEmpty(parentName) ? (es ? "" : "Parent") : parentName;
+        var subject = es ? $"FormMaps — Acceso al portal de padres para {student}" : $"FormMaps — Parent Portal Access for {student}";
+        var intro = es
+            ? $"Te invitaron a acceder al portal de padres de <strong>{EscapeHtml(student)}</strong>."
+            : $"You have been invited to access the parent portal for <strong>{EscapeHtml(student)}</strong>.";
+        var value = es
+            ? "Desde el portal puedes seguir el progreso académico de tu hijo/a, sus resultados en las evaluaciones y su exploración vocacional."
+            : "Through the portal you can track your child's academic progress, assessment results, and career exploration.";
+        var cta = es ? "Crear mi cuenta" : "Set Up Parent Account";
+        var expires = es ? "Este enlace de invitación vence en 2 días." : "This invitation link expires in 2 days.";
+        var body =
+            $"""
+                <h2 style="color:#102B47">{Hello(EscapeHtml(name), language)}</h2>
+                <p>{intro}</p>
+                <p>{value}</p>
+                {Button(inviteUrl, cta)}
+                <p>{expires}</p>
+            """;
+        return new EmailMessage(subject, Wrap(body, language));
+    }
+
+    /// <summary>An onboarded parent was attached to a student directly — mirrors sendParentLinkedNotificationEmail
+    /// (audit 2026-10-09 C8). Auto-attach has no inbox action, so the parent is always told. <paramref name="language"/>
+    /// is the parent's own.</summary>
+    public EmailMessage BuildParentLinked(string parentName, string studentName, string language = EmailLanguage.Default)
+    {
+        var es = Es(language);
+        var student = string.IsNullOrEmpty(studentName) ? (es ? "un/a estudiante" : "a student") : studentName;
+        var name = string.IsNullOrEmpty(parentName) ? (es ? "" : "Parent") : parentName;
+        var subject = es ? $"FormMaps — Tu cuenta quedó vinculada a {student}" : $"FormMaps — You've been linked to {student}";
+        var linked = es
+            ? $"Tu cuenta de padre/madre en FormMaps quedó vinculada a <strong>{EscapeHtml(student)}</strong>, así que ya puedes ver su progreso en el portal de padres."
+            : $"Your FormMaps parent account has been linked to <strong>{EscapeHtml(student)}</strong>, so you can now see their progress in your parent portal.";
+        var cta = es ? "Abrir el portal de padres" : "Open Parent Portal";
+        var unexpected = es
+            ? "Si no esperabas este mensaje, comunícate con el colegio."
+            : "If you did not expect this, please contact the school.";
+        var body =
+            $"""
+                <h2 style="color:#102B47">{Hello(EscapeHtml(name), language)}</h2>
+                <p>{linked}</p>
+                {Button(options.FrontendUrl + "/parent", cta)}
+                <p>{unexpected}</p>
+            """;
+        return new EmailMessage(subject, Wrap(body, language));
+    }
+
     private static string AutomatedSecurity(string language) => Es(language)
         ? "Esta es una notificación de seguridad automática de FormMaps."
         : "This is an automated security notification from FormMaps.";

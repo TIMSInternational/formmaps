@@ -3,11 +3,12 @@ using FormMaps.Application.Auth;
 namespace FormMaps.Application.StudentParents;
 
 /// <summary>
-/// Student parent-links CRUD (FM-DOTNET-076 — routes/student.ts + studentService.ts). Self-scoped (req.userId): list,
-/// invite (mint a link + token), delete (unlink), resend (regenerate token). NOT email-coupled — invite/resend only
-/// create/refresh an invitationToken and return a frontend invitationUrl (no SES). The invite is bounded by the
-/// unique (studentId, parentEmail) constraint → a duplicate 500s (Prisma throw). Token via InvitationTokenGenerator
-/// (crypto.randomBytes(32) base64url); tokenExpiresAt = now + 48h.
+/// Student parent-links CRUD (FM-DOTNET-076 — routes/student.ts + studentService.ts → parentLinkService.ts
+/// inviteOrAttachParent / resendOrAttachParent). Self-scoped (req.userId): list, invite, delete (unlink), resend.
+/// audit 2026-10-09 C8b: the endpoint EMAILS the invitation to the parent; the token never leaves the server (the
+/// student used to get the onboarding URL and could create "their parent's" account themselves). C8: an address that
+/// already belongs to an onboarded parent is attached as accepted instead of a pending invite onboarding would 409.
+/// Idempotent per (studentId, parentEmail); never a self-link. Token via InvitationTokenGenerator; expiry now + 48h.
 /// </summary>
 public interface IStudentParentRepository
 {
@@ -15,9 +16,9 @@ public interface IStudentParentRepository
     Task<IReadOnlyList<ParentLinkRow>> ListAsync(
         RequestContext context, string studentId, CancellationToken cancellationToken = default);
 
-    /// <summary>Create a parent link (email already lowercased; name/relation already defaulted). Duplicate =
-    /// the unique (studentId, parentEmail) constraint fired (→ 500). Ok returns the new id + token.</summary>
-    Task<CreateInviteResult> CreateInviteAsync(
+    /// <summary>Invite or attach (email already lowercased; name/relation already defaulted). See
+    /// <see cref="ParentInviteKind"/> for the outcomes; the endpoint sends the matching email.</summary>
+    Task<ParentInviteOutcome> InviteOrAttachAsync(
         RequestContext context, string studentId, string parentEmail, string parentName, string relation,
         CancellationToken cancellationToken = default);
 
@@ -25,14 +26,47 @@ public interface IStudentParentRepository
     Task<bool> DeleteLinkAsync(
         RequestContext context, string studentId, string parentLinkId, CancellationToken cancellationToken = default);
 
-    /// <summary>Regenerate the token on the caller's own link. Null = missing OR not owned (→ 404); else the new
-    /// token (the endpoint builds the invitationUrl).</summary>
-    Task<string?> ResendAsync(
+    /// <summary>Resend on the caller's own link. NotFound = missing, not owned, inactive or already accepted (→ 404);
+    /// Attached = the address has since become an onboarded parent (linked, no token); Reissued = fresh token.</summary>
+    Task<ParentResendOutcome> ResendAsync(
         RequestContext context, string studentId, string parentLinkId, CancellationToken cancellationToken = default);
 }
 
-/// <summary>Create-invite outcome: Duplicate (unique violation → 500) or the new id + token.</summary>
-public sealed record CreateInviteResult(bool Duplicate, string? Id, string? Token);
+/// <summary>audit 2026-10-09 C8b/C8 invite outcomes.</summary>
+public enum ParentInviteKind
+{
+    /// <summary>A pending link was created or re-issued with a fresh token → invitation email.</summary>
+    Invited,
+
+    /// <summary>The address belongs to an onboarded parent → link attached as accepted → linked-notification email.</summary>
+    Attached,
+
+    /// <summary>An active accepted link already exists → no write, no email.</summary>
+    AlreadyLinked,
+
+    /// <summary>The address is the student's own → 400, no write.</summary>
+    SelfLink,
+}
+
+/// <summary>Invite outcome. Token is set only for <see cref="ParentInviteKind.Invited"/> and is for the email ONLY;
+/// ParentUserId only for Attached.</summary>
+public sealed record ParentInviteOutcome(
+    ParentInviteKind Kind, string? Id, string? Token, string? ParentUserId, string ParentName, string StudentName);
+
+public enum ParentResendKind
+{
+    NotFound,
+    Reissued,
+    Attached,
+}
+
+/// <summary>Resend outcome; Token (Reissued only) is for the email ONLY.</summary>
+public sealed record ParentResendOutcome(
+    ParentResendKind Kind, string? Token, string ParentEmail, string ParentName, string StudentName,
+    string? ParentUserId, string? InvitedBy)
+{
+    public static readonly ParentResendOutcome NotFound = new(ParentResendKind.NotFound, null, "", "", "", null, null);
+}
 
 /// <summary>
 /// A student_parent_links row as legacy emits it (raw Prisma passthrough, schema field order). tokenExpiresAt /
