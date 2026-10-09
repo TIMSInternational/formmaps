@@ -171,7 +171,8 @@ public sealed class SchoolReadsReader(IFormMapsDatabaseSessionFactory databaseSe
 
         // where = studentId ∈ ids AND isActive; + optional type equality; + optional search over content OR
         // student.name (Prisma `contains` insensitive = ILIKE '%term%'; legacy does NOT escape %/_ — faithful).
-        var where = "n.\"studentId\" = ANY(@ids) AND n.\"isActive\" = true";
+        var where = "n.\"studentId\" = ANY(@ids) AND n.\"isActive\" = true"
+                    + " AND (n.\"isPrivate\" = false OR n.\"authorId\" = @viewer)";
         if (!string.IsNullOrEmpty(query.Type))
         {
             where += " AND n.\"type\" = @type";
@@ -336,6 +337,7 @@ public sealed class SchoolReadsReader(IFormMapsDatabaseSessionFactory databaseSe
     private void AddNotesFilters(DbCommand command, string[] ids, SchoolNotesQuery query)
     {
         AddParameter(command, "ids", ids);
+        AddParameter(command, "viewer", query.ViewerId);
         if (!string.IsNullOrEmpty(query.Type))
         {
             AddParameter(command, "type", query.Type);

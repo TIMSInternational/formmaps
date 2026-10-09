@@ -20,9 +20,12 @@ public interface ICounselorNotesRepository
     Task<bool> HasCounselorStudentAccessAsync(
         RequestContext context, string counselorId, string studentId, CancellationToken cancellationToken = default);
 
-    /// <summary>The student's active notes (paged, optional type filter) + real COUNT, each with the author's name.</summary>
+    /// <summary>
+    /// The student's active notes (paged, optional type filter) + real COUNT, each with the author's name. A private
+    /// note is included only when <paramref name="viewerId"/> wrote it (audit 2026-10-09 A2).
+    /// </summary>
     Task<NotesPage> ListAsync(
-        RequestContext context, string studentId, string? typeFilter, int page, int limit,
+        RequestContext context, string studentId, string viewerId, string? typeFilter, int page, int limit,
         CancellationToken cancellationToken = default);
 
     /// <summary>

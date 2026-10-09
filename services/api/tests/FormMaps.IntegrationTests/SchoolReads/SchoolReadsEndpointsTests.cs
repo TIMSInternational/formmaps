@@ -204,6 +204,8 @@ public class SchoolReadsEndpointsTests
         // The endpoint clamped + forwarded page/limit to the reader.
         Assert.Equal(3, reader.LastQuery!.Page);
         Assert.Equal(25, reader.LastQuery.Limit);
+        // The caller is the viewer: private notes are filtered to their author (audit 2026-10-09 A2).
+        Assert.Equal("admin-1", reader.LastQuery.ViewerId);
     }
 
     [Theory]

@@ -251,6 +251,27 @@ public sealed class SchoolReadsReaderTests : IClassFixture<SchoolReadsDatabaseFi
     }
 
     [Fact]
+    public async Task Notes_hide_a_counselors_private_note_from_the_school_admin()
+    {
+        // Audit 2026-10-09 A2: Session Notes listed private notes. Private = author only.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUser(conn, "s1", School, role: "Student", name: "Ada Lovelace");
+        await SeedUser(conn, "c1", School, role: "counselor");
+        await SeedNote(conn, "shared", "s1", "c1", content: "zebra shared");
+        await SeedNote(conn, "private", "s1", "c1", content: "zebra private", isPrivate: true);
+
+        var asAdmin = await Reader().GetSchoolNotesAsync(Ctx(), School, Query(viewerId: "admin-1"));
+        Assert.Equal(new[] { "shared" }, asAdmin.Data.Select(n => n.Id).ToArray());
+        Assert.Equal(1, asAdmin.Total);
+
+        var asAdminSearching = await Reader().GetSchoolNotesAsync(Ctx(), School, Query(search: "zebra", viewerId: "admin-1"));
+        Assert.Equal(new[] { "shared" }, asAdminSearching.Data.Select(n => n.Id).ToArray());
+
+        var asAuthor = await Reader().GetSchoolNotesAsync(Ctx(), School, Query(viewerId: "c1"));
+        Assert.Equal(2, asAuthor.Total);
+    }
+
+    [Fact]
     public async Task Notes_paginates_ordered_by_createdDate_desc()
     {
         await using var conn = await _dataSource.OpenConnectionAsync();
@@ -358,8 +379,9 @@ public sealed class SchoolReadsReaderTests : IClassFixture<SchoolReadsDatabaseFi
             schoolId: School, permissions: new[] { "school:manage" },
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
 
-    private static SchoolNotesQuery Query(int page = 1, int limit = 20, string? search = null, string? type = null) =>
-        new(page, limit, (long)(page - 1) * limit, search, type);
+    private static SchoolNotesQuery Query(
+        int page = 1, int limit = 20, string? search = null, string? type = null, string viewerId = "school-admin-viewer") =>
+        new(page, limit, (long)(page - 1) * limit, search, type, viewerId);
 
     private static DateTime Unspec(DateTime utc) => DateTime.SpecifyKind(utc, DateTimeKind.Unspecified);
 
@@ -455,13 +477,14 @@ public sealed class SchoolReadsReaderTests : IClassFixture<SchoolReadsDatabaseFi
     private static async Task SeedNote(
         NpgsqlConnection conn, string id, string studentId, string authorId,
         string type = "academic", string content = "note", bool isActive = true,
-        string[]? tags = null, DateTime? createdDate = null)
+        string[]? tags = null, DateTime? createdDate = null, bool isPrivate = false)
     {
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "counselor_notes" ("id","studentId","authorId","type","content","isActive","tags","createdDate","updatedAt")
-            VALUES (@id,@s,@au,@t,@c,@a,@tags,@cd,@cd)
+            INSERT INTO "counselor_notes" ("id","studentId","authorId","type","content","isActive","tags","createdDate","updatedAt","isPrivate")
+            VALUES (@id,@s,@au,@t,@c,@a,@tags,@cd,@cd,@p)
             """, conn);
+        cmd.Parameters.AddWithValue("p", isPrivate);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("s", studentId);
         cmd.Parameters.AddWithValue("au", authorId);

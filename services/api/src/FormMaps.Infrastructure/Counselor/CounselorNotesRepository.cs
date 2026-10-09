@@ -51,12 +51,13 @@ public sealed class CounselorNotesRepository(
     }
 
     public async Task<NotesPage> ListAsync(
-        RequestContext context, string studentId, string? typeFilter, int page, int limit,
+        RequestContext context, string studentId, string viewerId, string? typeFilter, int page, int limit,
         CancellationToken cancellationToken = default)
     {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
-        var where = "n.\"studentId\" = @sid AND n.\"isActive\" = true";
+        // A private note is readable by its author only.
+        var where = "n.\"studentId\" = @sid AND n.\"isActive\" = true AND (n.\"isPrivate\" = false OR n.\"authorId\" = @viewer)";
         var hasType = !string.IsNullOrEmpty(typeFilter);
         if (hasType)
         {
@@ -67,6 +68,7 @@ public sealed class CounselorNotesRepository(
         await using (var countCommand = Command(session, $"""SELECT COUNT(*)::int FROM "counselor_notes" n WHERE {where}"""))
         {
             AddParameter(countCommand, "sid", studentId);
+            AddParameter(countCommand, "viewer", viewerId);
             if (hasType)
             {
                 AddParameter(countCommand, "type", typeFilter!);
@@ -86,6 +88,7 @@ public sealed class CounselorNotesRepository(
             """))
         {
             AddParameter(listCommand, "sid", studentId);
+            AddParameter(listCommand, "viewer", viewerId);
             if (hasType)
             {
                 AddParameter(listCommand, "type", typeFilter!);

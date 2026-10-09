@@ -136,6 +136,16 @@ public class CounselorNotesEndpointsTests
         Assert.Equal(expected, repo.LastTypeFilter);
     }
 
+    [Fact]
+    public async Task Get_forwards_the_caller_as_viewer_so_private_notes_stay_with_their_author()
+    {
+        var repo = new FakeRepo { Access = true };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+        await Send(client, HttpMethod.Get, NotesPath);
+        Assert.Equal("counselor-1", repo.LastViewerId);
+    }
+
     // ---- POST ----
 
     [Fact]
@@ -416,6 +426,7 @@ public class CounselorNotesEndpointsTests
         public CompleteFollowUpResult Complete { get; init; } = new(false, new CompleteFollowUpData("note1", true, null));
 
         public string? LastTypeFilter { get; private set; }
+        public string? LastViewerId { get; private set; }
         public int LastLimit { get; private set; }
         public CreateNoteInput? LastCreate { get; private set; }
         public bool LastFieldsValid { get; private set; }
@@ -427,9 +438,10 @@ public class CounselorNotesEndpointsTests
             Task.FromResult(Access);
 
         public Task<NotesPage> ListAsync(
-            RequestContext context, string studentId, string? typeFilter, int page, int limit,
+            RequestContext context, string studentId, string viewerId, string? typeFilter, int page, int limit,
             CancellationToken cancellationToken = default)
         {
+            LastViewerId = viewerId;
             LastTypeFilter = typeFilter;
             LastLimit = limit;
             return Task.FromResult(Page);

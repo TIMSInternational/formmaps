@@ -54,7 +54,8 @@ public sealed record DashboardStats(
 public sealed record CounselorAssignment(string StudentId, string CounselorId);
 
 /// <summary>Resolved /notes query params (page/limit clamped, search/type JS-falsy-collapsed) — see the endpoint.</summary>
-public sealed record SchoolNotesQuery(int Page, int Limit, long Skip, string? Search, string? Type);
+/// <summary>ViewerId: a counselor's private note is returned only to its author (audit 2026-10-09 A2).</summary>
+public sealed record SchoolNotesQuery(int Page, int Limit, long Skip, string? Search, string? Type, string ViewerId);
 
 /// <summary>
 /// getSchoolNotes result. Carries page/limit (the service shape) so the empty-students case

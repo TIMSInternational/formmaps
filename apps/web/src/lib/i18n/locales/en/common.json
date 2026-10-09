@@ -6572,7 +6572,8 @@
       "connectionLost": "Connection lost",
       "checkConnection": "Please check your internet connection.",
       "sessionExpiredShort": "Session expired. Please log in again.",
-      "networkError": "Network error. Please check your connection and try again."
+      "networkError": "Network error. Please check your connection and try again.",
+      "aiBudgetExceeded": "Your school's AI allowance for this month has been used up. Please try again next month."
     },
     "pcaService": {
       "addFailed": "Failed to add PCA evaluation"
