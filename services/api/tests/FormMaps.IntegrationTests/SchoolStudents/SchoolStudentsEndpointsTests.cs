@@ -135,6 +135,26 @@ public class SchoolStudentsEndpointsTests
         Assert.Equal(expSearch, reader.LastQuery.Search);
     }
 
+    [Theory]
+    [InlineData("", null)]                           // no filter → the default (non-deactivated)
+    [InlineData("?status=active", "active")]
+    [InlineData("?status=pending", "pending")]
+    [InlineData("?status=inactive", "inactive")]
+    [InlineData("?status=all", "all")]
+    [InlineData("?status=deleted", null)]            // junk is dropped, not an error
+    [InlineData("?status=ACTIVE", null)]             // exact values only (Node compares exactly)
+    public async Task List_status_filter_is_forwarded_only_when_known(string query, string? expStatus)
+    {
+        var reader = new FakeReader();
+        using var factory = new Factory(reader, new FakeScope(School));
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, StudentsPath + query);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(expStatus, reader.LastQuery!.Status);
+    }
+
     // ---- detail ----
 
     [Fact]

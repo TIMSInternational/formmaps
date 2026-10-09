@@ -27,12 +27,23 @@ public interface ISchoolStudentsReader
         RequestContext context, string schoolId, string studentId, CancellationToken cancellationToken = default);
 }
 
-/// <summary>Resolved pagination + optional search for the roster list (page/limit already clamped upstream).</summary>
-public sealed record StudentListQuery(int Page, int Limit, long Skip, string? Search);
+/// <summary>
+/// Resolved pagination + optional search + optional status for the roster list (page/limit already clamped upstream).
+/// <para><c>Status</c> (routes/school-students.ts parseStudentStatusFilter): <c>active</c> = accepted the invite (has a
+/// password); <c>pending</c> = invited, not accepted (no password); <c>inactive</c> = deactivated; <c>all</c> = everyone;
+/// null = the long-standing default, every non-deactivated student. Unknown values are dropped to null upstream.</para>
+/// </summary>
+public sealed record StudentListQuery(int Page, int Limit, long Skip, string? Search, string? Status = null)
+{
+    public static readonly IReadOnlyList<string> StatusFilters = new[] { "active", "pending", "inactive", "all" };
+
+    public static string? ParseStatus(string? raw) => raw is not null && StatusFilters.Contains(raw) ? raw : null;
+}
 
 /// <summary>
 /// One roster row: the legacy select (id, name, email, roleName, gradeLevel, isActive, createdDate) plus the
-/// derived <c>status</c> (isActive ? "active" : "inactive"). Emitted in that key order.
+/// derived <c>status</c>: "inactive" when deactivated, else "active" with a password and "pending" (invite not
+/// accepted) without one. Emitted in that key order. The password itself is never read into the row.
 /// </summary>
 public sealed record StudentListItem(
     string Id,

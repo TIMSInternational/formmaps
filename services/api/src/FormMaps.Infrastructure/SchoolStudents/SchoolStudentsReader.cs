@@ -39,9 +39,19 @@ public sealed class SchoolStudentsReader(IFormMapsDatabaseSessionFactory databas
     {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
-        // where = schoolId + isActive + roleName ∈ {Student,student}; + optional search over name OR email
+        // where = schoolId + roleName ∈ {Student,student} + the status filter; + optional search over name OR email
         // (Prisma `contains` insensitive = ILIKE '%term%'; legacy does NOT escape %/_ — faithful).
-        var where = $""" "schoolId" = @school AND "isActive" = true AND{StudentRoleFilter}""";
+        // Status (listStudents): none → isActive; active → + password set; pending → + no password;
+        // inactive → NOT isActive; all → no isActive filter.
+        var where = $""" "schoolId" = @school AND{StudentRoleFilter}""";
+        where += query.Status switch
+        {
+            "all" => "",
+            "inactive" => """ AND "isActive" = false""",
+            "active" => """ AND "isActive" = true AND "password" IS NOT NULL""",
+            "pending" => """ AND "isActive" = true AND "password" IS NULL""",
+            _ => """ AND "isActive" = true""",
+        };
         var hasSearch = !string.IsNullOrEmpty(query.Search);
         if (hasSearch)
         {
@@ -62,7 +72,8 @@ public sealed class SchoolStudentsReader(IFormMapsDatabaseSessionFactory databas
 
         var items = new List<StudentListItem>();
         await using (var listCommand = Command(session, $"""
-            SELECT "id", "name", "email", "roleName", "gradeLevel", "isActive", "createdDate"
+            SELECT "id", "name", "email", "roleName", "gradeLevel", "isActive", "createdDate",
+                   ("password" IS NOT NULL) AS "hasPassword"
             FROM "users"
             WHERE {where}
             ORDER BY "createdDate" DESC, "id" ASC
@@ -89,7 +100,7 @@ public sealed class SchoolStudentsReader(IFormMapsDatabaseSessionFactory databas
                     GradeLevel: reader.IsDBNull(4) ? null : reader.GetInt32(4),
                     IsActive: isActive,
                     CreatedDate: IsoZ(reader.GetDateTime(6)),
-                    Status: isActive ? "active" : "inactive"));
+                    Status: !isActive ? "inactive" : reader.GetBoolean(7) ? "active" : "pending"));
             }
         }
 

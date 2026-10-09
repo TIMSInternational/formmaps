@@ -16,7 +16,8 @@ CREATE TABLE "users" (
     "gradeLevel"  integer,
     "isActive"    boolean NOT NULL DEFAULT true,
     "createdDate" timestamp NOT NULL DEFAULT now(),
-    "updatedAt"   timestamp NOT NULL DEFAULT now()
+    "updatedAt"   timestamp NOT NULL DEFAULT now(),
+    "password"    text              -- null = invited, invite not accepted yet (roster "pending")
 );
 
 CREATE TABLE "student_grades" (

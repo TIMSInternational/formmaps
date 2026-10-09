@@ -183,6 +183,28 @@ public sealed class SchoolStudentsReaderTests : IClassFixture<SchoolStudentsData
         Assert.All(result.Data, d => Assert.Equal("active", d.Status));
     }
 
+    [Theory]
+    [InlineData(null, new[] { "p1", "a1" }, 2)]          // default: every non-deactivated student
+    [InlineData("active", new[] { "a1" }, 1)]            // accepted the invite (has a password)
+    [InlineData("pending", new[] { "p1" }, 1)]           // invited, not accepted (no password)
+    [InlineData("inactive", new[] { "i1" }, 1)]          // deactivated
+    [InlineData("all", new[] { "p1", "i1", "a1" }, 3)]
+    public async Task List_status_filter_selects_and_labels_rows(string? status, string[] expIds, int expTotal)
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await SeedUser(conn, "a1", School, createdDate: Utc("2026-01-01"));
+        await SeedUser(conn, "i1", School, isActive: false, createdDate: Utc("2026-01-02"));
+        await SeedUser(conn, "p1", School, password: null, createdDate: Utc("2026-01-03"));
+        await SeedUser(conn, "px", OtherSchool, password: null);
+
+        var result = await Reader().ListStudentsAsync(Ctx(), School, Query(status: status));
+
+        Assert.Equal(expIds, result.Data.Select(d => d.Id).ToArray());
+        Assert.Equal(expTotal, result.Total);
+        var labels = new Dictionary<string, string> { ["a1"] = "active", ["p1"] = "pending", ["i1"] = "inactive" };
+        Assert.All(result.Data, d => Assert.Equal(labels[d.Id], d.Status));
+    }
+
     [Fact]
     public async Task List_paginates_with_totalPages_and_offset()
     {
@@ -431,8 +453,8 @@ public sealed class SchoolStudentsReaderTests : IClassFixture<SchoolStudentsData
             schoolId: School, permissions: new[] { "school:manage" },
             tokenSource: TokenSource.DevelopmentHeader, isDevelopmentOverride: true);
 
-    private static StudentListQuery Query(int page = 1, int limit = 20, string? search = null) =>
-        new(page, limit, (long)(page - 1) * limit, search);
+    private static StudentListQuery Query(int page = 1, int limit = 20, string? search = null, string? status = null) =>
+        new(page, limit, (long)(page - 1) * limit, search, status);
 
     private static DateTime Utc(string date) => DateTime.Parse(date + "T00:00:00Z").ToUniversalTime();
 
@@ -464,13 +486,15 @@ public sealed class SchoolStudentsReaderTests : IClassFixture<SchoolStudentsData
     private static async Task SeedUser(
         NpgsqlConnection conn, string id, string schoolId, string role = "Student", bool isActive = true,
         int? gradeLevel = null, string? name = null, string? email = null,
-        DateTime? createdDate = null, DateTime? updatedAt = null)
+        DateTime? createdDate = null, DateTime? updatedAt = null, string? password = "$2b$10$seeded-hash")
     {
+        // A password = the invite was accepted ("active"); pass null for an invited-not-accepted ("pending") student.
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "users" ("id","name","email","roleName","schoolId","gradeLevel","isActive","createdDate","updatedAt")
-            VALUES (@id,@n,@e,@r,@s,@g,@a,@cd,@ua)
+            INSERT INTO "users" ("id","name","email","roleName","schoolId","gradeLevel","isActive","createdDate","updatedAt","password")
+            VALUES (@id,@n,@e,@r,@s,@g,@a,@cd,@ua,@pw)
             """, conn);
+        cmd.Parameters.AddWithValue("pw", (object?)password ?? DBNull.Value);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("n", name ?? $"Name {id}");
         cmd.Parameters.AddWithValue("e", email ?? $"{id}@e.st");

@@ -42,6 +42,7 @@ public static class SchoolStudentsEndpoints
         string? page,
         string? limit,
         string? search,
+        string? status,
         CancellationToken cancellationToken)
     {
         var (context, schoolId, error) = await AuthorizeAsync(accessor, guard, scope, cancellationToken);
@@ -64,7 +65,8 @@ public static class SchoolStudentsEndpoints
             pagination.Page,
             pagination.Limit,
             pagination.Skip,
-            Search: string.IsNullOrEmpty(search) ? null : search);
+            Search: string.IsNullOrEmpty(search) ? null : search,
+            Status: StudentListQuery.ParseStatus(status));
 
         var result = await reader.ListStudentsAsync(context, schoolId, query, cancellationToken);
 
