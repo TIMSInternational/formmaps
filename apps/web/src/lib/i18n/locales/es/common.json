@@ -2992,6 +2992,7 @@
     "nav": {
       "dashboard": "Panel",
       "students": "Estudiantes",
+      "usersAndInvites": "Usuarios e invitaciones",
       "analytics": "Análisis",
       "academics": "Académico",
       "grades": "Calificaciones y progreso",

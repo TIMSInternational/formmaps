@@ -16,7 +16,10 @@ describe("isStudentDetailPath", () => {
     expect(isStudentDetailPath(p)).toBe(true);
   });
 
-  it.each(["/school-admin", "/school-admin/users", "/school-admin/users/abc/edit", "/school-admin/settings", "/admin/users/abc", null])(
+  it.each([
+    "/school-admin", "/school-admin/users", "/school-admin/users/abc/edit", "/school-admin/settings", "/admin/users/abc", null,
+    "/school-admin/users/bulk-onboard", "/school-admin/students/bulk-onboard/", "/school-admin/students",
+  ])(
     "%s is not",
     (p) => {
       expect(isStudentDetailPath(p)).toBe(false);

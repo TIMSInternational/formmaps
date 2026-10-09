@@ -87,9 +87,12 @@ export function leaveSchool(path = "/admin", navigate: Navigate = hardNavigate):
   navigate(path);
 }
 
-/** A page about ONE student: /school-admin/users/{id} (and its old alias /school-admin/students/{id}). */
+/**
+ * A page about ONE student: /school-admin/users/{id} (and its old alias /school-admin/students/{id}).
+ * /school-admin/(users|students)/bulk-onboard is a school page, not a student.
+ */
 export function isStudentDetailPath(pathname: string | null | undefined): boolean {
-  return !!pathname && /^\/school-admin\/(users|students)\/[^/]+\/?$/.test(pathname);
+  return !!pathname && /^\/school-admin\/(users|students)\/(?!bulk-onboard\/?$)[^/]+\/?$/.test(pathname);
 }
 
 /**

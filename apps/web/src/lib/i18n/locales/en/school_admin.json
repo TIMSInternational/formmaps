@@ -1899,6 +1899,96 @@
     "noSchools": "No schools match your search.",
     "viewingStudentOnly": "Super Admin · you opened this student directly, with no school open. Their school's sections still show where they apply; open the school from Admin → Schools to work on the whole school."
   },
+  "studentDirectory": {
+    "title": "Students",
+    "subtitle_one": "{{count}} student — open them to see every result, answer and PDF",
+    "subtitle_other": "{{count}} students — open one to see every result, answer and PDF",
+    "subtitleLoading": "Loading students…",
+    "manageUsers": "Users & invites",
+    "loadError": "We couldn't load the students.",
+    "export": {
+      "button": "Export CSV",
+      "done": "CSV downloaded",
+      "failed": "Could not export the CSV. Please try again.",
+      "filename": "students-results-{{lang}}.csv"
+    },
+    "summary": {
+      "label": "Completed per assessment",
+      "filterHint": "Show who hasn't started: {{assessment}}"
+    },
+    "filters": {
+      "searchLabel": "Search students",
+      "searchPlaceholder": "Search by name or email",
+      "grade": "Grade",
+      "allGrades": "All grades",
+      "gradeN": "Grade {{grade}}",
+      "assessment": "Assessment",
+      "allAssessments": "All assessments",
+      "status": "Status",
+      "anyStatus": "Any status",
+      "sort": "Sort by",
+      "clear": "Clear filters"
+    },
+    "sort": {
+      "name_asc": "Name A–Z",
+      "name_desc": "Name Z–A",
+      "grade_asc": "Grade",
+      "progress_desc": "Most complete",
+      "progress_asc": "Least complete"
+    },
+    "columns": {
+      "student": "Student",
+      "grade": "Grade",
+      "progress": "Done",
+      "open": "Open"
+    },
+    "assessments": {
+      "lia": "LIA assessment",
+      "personality": "Personality",
+      "eval360": "360° evaluation",
+      "vocational360": "Vocational 360°",
+      "mil": "MIL exams",
+      "pca": "PCA — Behavioral profile",
+      "integrated": "Integrated result"
+    },
+    "short": {
+      "lia": "LIA",
+      "personality": "Personality",
+      "eval360": "360°",
+      "vocational360": "Voc. 360°",
+      "mil": "MIL",
+      "pca": "PCA",
+      "integrated": "Integrated"
+    },
+    "cell": {
+      "completedOn": "completed {{date}}"
+    },
+    "openStudent": "Open {{name}}'s results",
+    "progress": "{{done}} of {{total}} assessments completed",
+    "empty": {
+      "title": "No students yet",
+      "description": "Invite your students; their results will appear here as they complete each assessment.",
+      "invite": "Invite students"
+    },
+    "noMatches": {
+      "title": "No students match these filters",
+      "description": "Try another search or clear the filters."
+    },
+    "pagination": {
+      "showing": "{{from}}–{{to}} of {{total}}",
+      "previous": "Previous",
+      "next": "Next",
+      "page": "Page {{page}} of {{pages}}"
+    },
+    "nav": {
+      "breadcrumb": "Breadcrumb",
+      "previous": "Previous",
+      "next": "Next",
+      "position": "{{position}} of {{total}}",
+      "previousTitle": "Previous: {{name}}",
+      "nextTitle": "Next: {{name}}"
+    }
+  },
   "studentRecord": {
     "tab": "Results & Answers",
     "loadError": "We couldn't load this student's record.",

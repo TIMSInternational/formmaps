@@ -61,6 +61,11 @@ import { AcademicsTab } from "./_components/academics-tab";
 import { NotesTab } from "./_components/notes-tab";
 import { ExtracurricularsTab } from "./_components/extracurriculars-tab";
 import { RecordTab } from "./_components/record-tab";
+import { StudentNav } from "./_components/student-nav";
+import { DIRECTORY_KEYS, readDirectoryQuery, studentsListHref } from "@/lib/studentDirectory";
+import { useStudentRecord } from "@/hooks/useStudentRecord";
+
+const TABS = ["overview", "record", "assessments", "courses", "notes", "graduation", "parents"] as const;
 
 export default function StudentDetailsPage() {
   const { t, i18n } = useTranslation();
@@ -68,8 +73,19 @@ export default function StudentDetailsPage() {
   const router = useRouter();
   const params = useParams();
   const studentId = params.id as string;
-  // Deep link: ?tab=record opens "Results & Answers" (Super Admin → Users → "View profile & results").
-  const initialTab = useSearchParams()?.get("tab") === "record" ? "record" : "overview";
+  // The open tab lives in the URL (?tab=record opens "Results & Answers"), so it survives a refresh, a shared
+  // link and previous / next between students. The students list's filters ride in the same URL.
+  const searchParams = useSearchParams();
+  const tabParam = searchParams?.get("tab") ?? "";
+  const activeTab = (TABS as readonly string[]).includes(tabParam) ? tabParam : "overview";
+  const setTab = (tab: string) => {
+    const p = new URLSearchParams(searchParams?.toString() ?? "");
+    if (tab === "overview") p.delete("tab");
+    else p.set("tab", tab);
+    const qs = p.toString();
+    router.replace(qs ? `?${qs}` : "?", { scroll: false });
+  };
+  const listHref = studentsListHref(readDirectoryQuery(searchParams));
 
   const { data: student, isLoading, error } = useStudent(studentId);
   const { data: coursePlan } = useStudentCoursePlan(studentId);
@@ -96,6 +112,12 @@ export default function StudentDetailsPage() {
   const { data: recsData } = useStudentRecommendations(studentId, inASchool);
   const { data: transcriptData } = useStudentTranscript(studentId);
   const { data: gpaData } = useStudentGpa(studentId);
+  // "Assessments n / 7" counts the same seven assessments, with the same rules, as the Students list and
+  // Results & Answers (the record overview), so the three never disagree.
+  const { data: record } = useStudentRecord(studentId, i18n.language?.startsWith("es") ? "es" : "en");
+  const assessmentsDone = record
+    ? record.assessments.filter((a) => (DIRECTORY_KEYS as readonly string[]).includes(a.key) && a.status === "completed").length
+    : null;
 
   const getInitials = (name: string) => name ? _getInitials(name) : "ST";
 
@@ -123,7 +145,7 @@ export default function StudentDetailsPage() {
           {t("schoolAdmin.students.error.description", "The student record you are trying to access does not exist or may have been removed.")}
         </p>
         <button
-          onClick={() => router.push("/school-admin/users")}
+          onClick={() => router.push(listHref)}
           style={{
             height: 36, borderRadius: 6, padding: "0 16px",
             fontSize: 12, fontWeight: 600,
@@ -172,22 +194,8 @@ export default function StudentDetailsPage() {
 
   return (
     <div className="space-y-6">
-      {/* Back button */}
-      <button
-        onClick={() => router.push("/school-admin/users")}
-        style={{
-          height: 32, borderRadius: 6, padding: "0 12px",
-          fontSize: 12, fontWeight: 600,
-          display: "inline-flex", alignItems: "center", gap: 6,
-          background: "transparent",
-          color: "var(--admin-font-primary)",
-          border: "1px solid var(--admin-border-default)",
-          cursor: "pointer",
-        }}
-      >
-        <ArrowLeft style={{ width: 14, height: 14, color: "var(--admin-accent-blue)" }} />
-        {t("schoolAdmin.students.backToList", "Back to Student Roster")}
-      </button>
+      {/* Students › Name, and previous / next through the list this page was opened from */}
+      <StudentNav studentId={studentId} studentName={student.name} tab={activeTab} />
 
       {/* Profile Banner */}
       <div style={{
@@ -250,7 +258,7 @@ export default function StudentDetailsPage() {
         {[
           { label: "GPA", value: gpaData?.gpaWeighted?.toFixed(2) ?? gpaData?.gpaUnweighted?.toFixed(2) ?? "\u2014", icon: Award, color: "#f59e0b" },
           { label: t("school_admin:ui.courses.credits"), value: `${plan?.graduationProgress?.totalCreditsEarned ?? gpaData?.totalCredits ?? "0"} / ${plan?.graduationProgress?.totalCreditsRequired ?? "0"}`, icon: GraduationCap, color: "var(--admin-accent-blue)" },
-          { label: t("school_admin:ui.results.assessments"), value: `${milCompleted + pcaCompleted + evalCompleted + personalityCompleted} / ${milTotal + pcaTotal + evalTotal + personalityTotal}`, icon: FileText, color: "#14b8a6" },
+          { label: t("school_admin:ui.results.assessments"), value: assessmentsDone === null ? "\u2014" : `${assessmentsDone} / ${DIRECTORY_KEYS.length}`, icon: FileText, color: "#14b8a6" },
           { label: t("school_admin:ui.studentDetail.page.lastSeen"), value: student.lastActive ? fmtDate(student.lastActive, { month: "short", day: "numeric" }) : t("school_admin:ui.studentDetail.page.never"), icon: Activity, color: "var(--admin-accent-blue)" },
         ].map((stat) => (
           <div key={stat.label} style={{
@@ -271,7 +279,7 @@ export default function StudentDetailsPage() {
       </div>
 
       {/* Main Content Tabs */}
-      <Tabs defaultValue={initialTab} className="w-full">
+      <Tabs value={activeTab} onValueChange={setTab} className="w-full">
         <TabsList style={{
           background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
           borderRadius: 8, padding: 2, height: "auto",
