@@ -321,7 +321,10 @@
     "moreFeatures": "+ {{count}} características más",
     "statusActive": "Activo",
     "statusInactive": "Inactivo",
+    "catalogBadge": "Precio de catálogo",
+    "catalogNote": "Plan de estudiante del catálogo de precios: el pago siempre cobra el precio del catálogo, así que aquí solo se pueden editar las funciones.",
     "toast": {
+      "catalogLocked": "Los planes de estudiante del catálogo no pueden cambiar nombre, precio, intervalo ni disponibilidad aquí.",
       "failedToLoad": "Error al cargar los planes de suscripción",
       "validationError": "Por favor, ingresa un nombre y un precio válidos",
       "updatedSuccess": "Plan actualizado correctamente",
@@ -375,7 +378,29 @@
     },
     "toast": {
       "noTransactions": "No hay transacciones para exportar",
-      "exportSuccess": "Transacciones exportadas"
+      "exportSuccess": "Transacciones exportadas",
+      "exportTruncated": "Se exportaron las primeras {{count}} transacciones"
+    },
+    "growth": {
+      "newUsers": "+{{count}} este mes",
+      "revenueThisMonth": "+{{amount}} este mes"
+    },
+    "otherCurrencies": "Más {{amounts}} en otras monedas",
+    "noMethod": "—",
+    "refund": {
+      "action": "Reembolsar",
+      "confirmTitle": "¿Reembolsar este pago?",
+      "confirmDesc": "Reembolsar {{amount}} a {{user}} según la política de reembolsos. Stripe devuelve el dinero y el estudiante pierde el acceso a lo que compró. No se puede deshacer.",
+      "confirmLabel": "Reembolsar",
+      "success": "Reembolso emitido",
+      "errors": {
+        "NOT_ELIGIBLE": "No es reembolsable según la política de reembolsos",
+        "NOT_CHARGED": "No se cobró nada por este pago",
+        "BOOKING_PAYMENT": "Las sesiones de coaching se reembolsan cancelando la reserva",
+        "NOT_FOUND": "Pago no encontrado",
+        "NO_CUSTOMER": "Este cobro de suscripción no tiene cliente en Stripe",
+        "generic": "No se pudo emitir el reembolso"
+      }
     }
   },
   "payouts": {
@@ -383,15 +408,37 @@
       "totalPaidOut": "Total pagado",
       "totalPayouts": "Total de pagos",
       "avgCommission": "Comisión promedio",
-      "commissionRate": "Tasa de comisión"
+      "commissionRate": "Tasa de comisión",
+      "paidOutCount": "Pagos realizados",
+      "pendingPayouts": "Pagos pendientes",
+      "pendingCount_one": "{{count}} en espera",
+      "pendingCount_other": "{{count}} en espera",
+      "commissionEarned": "Comisión de la plataforma"
     },
     "filter": {
       "placeholder": "Filtrar por estado",
       "allStatuses": "Todos los estados",
       "pending": "Pendiente",
+      "approved": "Aprobado",
       "processing": "En proceso",
       "completed": "Completado",
+      "rejected": "Rechazado",
       "failed": "Fallido"
+    },
+    "status": {
+      "pending": "Pendiente",
+      "approved": "Aprobado",
+      "processing": "En proceso",
+      "completed": "Pagado",
+      "rejected": "Rechazado",
+      "failed": "Fallido"
+    },
+    "markPaid": {
+      "action": "Marcar como pagado",
+      "confirmTitle": "¿Marcar este pago como pagado?",
+      "confirmDesc": "FormMaps no envía el dinero: primero págale a {{coach}} {{amount}} por tu cuenta (transferencia bancaria o Stripe) y luego márcalo aquí. Queda registrado en el registro de auditoría.",
+      "confirmLabel": "Marcar como pagado",
+      "success": "Pago marcado como pagado"
     },
     "pagination": {
       "showingPage": "Mostrando página {{page}} de {{total}}"
@@ -407,6 +454,7 @@
     "title": "Configuración de la plataforma",
     "subtitle": "Gestionar configuración global, pagos y protocolos de seguridad",
     "saveButton": "Guardar cambios",
+    "inertNote": "Aún no está en uso: la plataforma no aplica estos ajustes, así que están bloqueados para no dar una impresión equivocada.",
     "toast": {
       "savedSuccess": "Configuración actualizada correctamente",
       "saveFailed": "Error al guardar la configuración"

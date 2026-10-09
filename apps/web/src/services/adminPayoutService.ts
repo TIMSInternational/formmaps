@@ -29,6 +29,7 @@ export interface AdminPayoutListResponse {
 
 export interface AdminPayoutFilters {
   status?: PayoutStatus;
+  search?: string;
   page?: number;
   limit?: number;
   coachId?: string;
@@ -39,6 +40,9 @@ export interface AdminPayoutFilters {
 export interface CommissionStatsResponse {
   totalCommission: number;
   totalPayouts: number;
+  completedCount?: number;
+  pendingAmount?: number;
+  pendingCount?: number;
   periodStart?: string;
   periodEnd?: string;
   currency?: string;
@@ -62,7 +66,9 @@ export async function getAdminPayouts(
   filters: AdminPayoutFilters = {}
 ): Promise<AdminPayoutListResponse> {
   const query = buildQuery({
-    status: filters.status ?? "pending",
+    // No status = every status (the page's default "All" tab used to be sent as "pending").
+    status: filters.status,
+    search: filters.search?.trim() || undefined,
     page: filters.page ?? 1,
     limit: filters.limit ?? 20,
   });
@@ -83,7 +89,7 @@ export async function getAdminPayouts(
     total: payload.total ?? payload.totalCount ?? items.length ?? 0,
     page: payload.page ?? filters.page ?? 1,
     limit: payload.limit ?? filters.limit ?? 20,
-    totalPages: payload.totalPages,
+    totalPages: payload.totalPages ?? Math.max(1, Math.ceil((payload.total ?? items.length ?? 0) / (payload.limit ?? filters.limit ?? 20))),
   };
 }
 

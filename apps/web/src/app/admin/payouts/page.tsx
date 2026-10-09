@@ -55,6 +55,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { useConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export default function AdminPayoutsPage() {
   const router = useRouter();
@@ -66,6 +67,7 @@ export default function AdminPayoutsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [actioningId, setActioningId] = useState<string | null>(null);
+  const { confirm, ConfirmDialog } = useConfirmDialog();
 
   // Fetch Payouts with Pagination
   const { data: payoutsData, isLoading, refetch } = useQuery({
@@ -74,8 +76,7 @@ export default function AdminPayoutsPage() {
       page,
       limit: 10,
       status: statusFilter === "all" ? undefined : (statusFilter as PayoutStatus),
-      // For search, we might need backend support or handling it differently if the API matches
-      // Assuming the API generally supports filtering by status and pagination
+      search: searchTerm,
     }),
     enabled: isAdmin,
     placeholderData: keepPreviousData,
@@ -91,13 +92,24 @@ export default function AdminPayoutsPage() {
 
   const payouts = payoutsData?.items || [];
   const totalPages = payoutsData?.totalPages || 1;
+  const currency = statsData?.currency || "USD";
 
   // Handle Actions
-  const handleApprove = async (id: string) => {
+  // "Approve" only ever flipped the status — FormMaps sends no money. Say so, and confirm first.
+  const handleApprove = async (payout: AdminPayout, id: string) => {
+    const ok = await confirm({
+      title: tPO("payouts.markPaid.confirmTitle"),
+      description: tPO("payouts.markPaid.confirmDesc", {
+        coach: payout.coachName || payout.coachEmail || "",
+        amount: formatCurrency(Number(payout.amount) || 0, payout.currency || "USD"),
+      }),
+      confirmLabel: tPO("payouts.markPaid.confirmLabel"),
+    });
+    if (!ok) return;
     setActioningId(id);
     try {
       await approveAdminPayout(id);
-      toast.success(t("admin.payouts.toast.approved", { defaultValue: "Payout approved" }));
+      toast.success(tPO("payouts.markPaid.success"));
       refetch();
     } catch (error: any) {
       toast.error(error?.message || t("pages.admin.payouts.approveFailed"));
@@ -149,11 +161,12 @@ export default function AdminPayoutsPage() {
     return () => clearTimeout(timer);
   }, [searchTerm, statusFilter]);
 
-  // Computed Stats for Cards (Using API data + fallbacks)
+  // Stat cards from the commission aggregates (they used to show the commission as "paid out" and the
+  // paid-out amount as a count).
   const statsCards = [
     {
       label: tPO("payouts.stats.totalPaidOut"),
-      value: formatCurrency(statsData?.totalCommission || 0), // Assuming this maps to paid out or similar
+      value: formatCurrency(statsData?.totalPayouts || 0, currency),
       icon: Wallet,
       color: "text-emerald-600",
       bg: "bg-emerald-50",
@@ -161,8 +174,8 @@ export default function AdminPayoutsPage() {
       blobColor: "bg-emerald-500"
     },
     {
-      label: tPO("payouts.stats.totalPayouts"),
-      value: (statsData?.totalPayouts || 0).toLocaleString(),
+      label: tPO("payouts.stats.paidOutCount"),
+      value: (statsData?.completedCount || 0).toLocaleString(),
       icon: CheckCircle,
       color: "text-[var(--admin-accent-blue)]",
       bg: "bg-[var(--admin-accent-blue)]/10",
@@ -170,8 +183,9 @@ export default function AdminPayoutsPage() {
       blobColor: "bg-[var(--admin-accent-blue)]"
     },
     {
-      label: tPO("payouts.stats.avgCommission"),
-      value: (statsData as any)?.averageCommission ? formatCurrency((statsData as any).averageCommission) : formatCurrency((statsData?.totalCommission || 0) / Math.max(statsData?.totalPayouts || 1, 1)),
+      label: tPO("payouts.stats.pendingPayouts"),
+      value: formatCurrency(statsData?.pendingAmount || 0, currency),
+      sub: tPO("payouts.stats.pendingCount", { count: statsData?.pendingCount || 0 }),
       icon: Clock,
       color: "text-amber-600",
       bg: "bg-amber-50",
@@ -179,8 +193,8 @@ export default function AdminPayoutsPage() {
       blobColor: "bg-amber-500"
     },
     {
-      label: tPO("payouts.stats.commissionRate"),
-      value: (statsData as any)?.commissionRate ? `${(statsData as any).commissionRate}%` : "15%",
+      label: tPO("payouts.stats.commissionEarned"),
+      value: formatCurrency(statsData?.totalCommission || 0, currency),
       icon: XCircle,
       color: "text-violet-600",
       bg: "bg-violet-50",
@@ -228,8 +242,10 @@ export default function AdminPayoutsPage() {
               <SelectContent>
                 <SelectItem value="all">{tPO("payouts.filter.allStatuses")}</SelectItem>
                 <SelectItem value="pending">{tPO("payouts.filter.pending")}</SelectItem>
+                <SelectItem value="approved">{tPO("payouts.filter.approved")}</SelectItem>
                 <SelectItem value="processing">{tPO("payouts.filter.processing")}</SelectItem>
                 <SelectItem value="completed">{tPO("payouts.filter.completed")}</SelectItem>
+                <SelectItem value="rejected">{tPO("payouts.filter.rejected")}</SelectItem>
                 <SelectItem value="failed">{tPO("payouts.filter.failed")}</SelectItem>
               </SelectContent>
             </Select>
@@ -269,6 +285,9 @@ export default function AdminPayoutsPage() {
               <div style={{ fontSize: 12, color: "var(--admin-font-tertiary, #818181)", marginTop: 4 }}>
                 {stat.label}
               </div>
+              {"sub" in stat && stat.sub && (
+                <div style={{ fontSize: 11, color: "var(--admin-font-tertiary, #818181)", marginTop: 2 }}>{stat.sub}</div>
+              )}
             </div>
           ))}
         </div>
@@ -336,7 +355,7 @@ export default function AdminPayoutsPage() {
                                 : "bg-amber-50 text-amber-700 hover:bg-amber-100"
                             }`}
                         >
-                          {payout.status}
+                          {tPO(`payouts.status.${payout.status}`, { defaultValue: payout.status })}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right pr-6 py-4">
@@ -358,8 +377,9 @@ export default function AdminPayoutsPage() {
                                 variant="ghost"
                                 className="h-8 w-8 p-0 rounded-full text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                                 disabled={!payoutId || actioningId === payoutId}
-                                onClick={() => payoutId && handleApprove(payoutId)}
-                                title={t("admin.payouts.actions.approve")}
+                                onClick={() => payoutId && handleApprove(payout, payoutId)}
+                                title={tPO("payouts.markPaid.action")}
+                                aria-label={tPO("payouts.markPaid.action")}
                               >
                                 {actioningId === payoutId ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                               </Button>
@@ -431,6 +451,7 @@ export default function AdminPayoutsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <ConfirmDialog />
     </div>
   );
 }

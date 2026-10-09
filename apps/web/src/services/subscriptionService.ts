@@ -17,6 +17,8 @@ export interface SubscriptionPlan {
   features: string[];
   stripeProductId?: string;
   stripePriceId?: string;
+  /** Set for student plans whose price checkout takes from the API's catalog — read-only in the admin. */
+  catalogKey?: string | null;
 }
 
 export interface SubscriptionData {
@@ -189,16 +191,18 @@ interface RawPlan {
   _id?: string;
   name?: string;
   description?: string;
-  price?: number;
+  // Prisma Decimal — the API serialises it as a string ("19.99").
+  price?: number | string | null;
   interval?: string;
   features?: string[];
   stripeProductId?: string;
   stripePriceId?: string;
+  catalogKey?: string | null;
 }
 
 function enhancePlanWithUIFields(plan: RawPlan) {
   const interval = plan.interval || "month";
-  const price = plan.price || 0;
+  const price = Number(plan.price) || 0;
 
   // Default enhancements
   let enhancements = {
@@ -322,7 +326,7 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionData> {
               id: plan.id || plan._id || "",
               name: plan.name || "",
               description: plan.description || enhancedPlan.description,
-              price: plan.price || 0,
+              price: Number(plan.price) || 0,
               originalPrice: enhancedPlan.originalPrice,
               period: plan.interval || "month",
               popular: enhancedPlan.popular,
@@ -332,6 +336,7 @@ export async function fetchSubscriptionPlans(): Promise<SubscriptionData> {
               features: plan.features || [],
               stripeProductId: plan.stripeProductId,
               stripePriceId: plan.stripePriceId,
+              catalogKey: plan.catalogKey ?? null,
             };
           }),
           features: defaultSubscriptionData.features,

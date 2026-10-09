@@ -154,22 +154,24 @@ export default function AdminPlansPage() {
         try {
             const cleanFeatures = formData.features.filter(f => f.trim().length > 0);
 
-            const payload = {
-                ...formData,
-                features: cleanFeatures
-            };
+            // A catalog plan's price/name/interval come from the API's catalog (checkout charges that), so only
+            // its features are sent; the API refuses the rest with 409 CATALOG_PLAN.
+            const payload = editingPlan?.catalogKey
+                ? { features: cleanFeatures }
+                : { ...formData, features: cleanFeatures };
 
             if (editingPlan) {
                 await updateSubscriptionPlan(editingPlan.id, payload);
                 toast.success(t("plans.toast.updatedSuccess"));
             } else {
-                await createSubscriptionPlan(payload);
+                await createSubscriptionPlan({ ...formData, features: cleanFeatures });
                 toast.success(t("plans.toast.createdSuccess"));
             }
 
             setIsDialogOpen(false);
             loadPlans();
         } catch (error) {
+            if ((error as { data?: { code?: string } })?.data?.code === "CATALOG_PLAN") { toast.error(t("plans.toast.catalogLocked")); return; }
             toast.error(editingPlan ? t("plans.toast.failedToUpdate") : t("plans.toast.failedToCreate"));
         } finally {
             setIsSaving(false);
@@ -185,6 +187,7 @@ export default function AdminPlansPage() {
             toast.success(t("plans.toast.deletedSuccess"));
             loadPlans();
         } catch (error) {
+            if ((error as { data?: { code?: string } })?.data?.code === "CATALOG_PLAN") { toast.error(t("plans.toast.catalogLocked")); return; }
             toast.error(t("plans.toast.failedToDelete"));
         }
     };
@@ -268,6 +271,9 @@ export default function AdminPlansPage() {
                                     <div className="p-8 flex-1">
                                         <div className="mb-6">
                                             <h3 className="text-xl font-bold text-gray-900 mb-2">{plan.name}</h3>
+                                            {plan.catalogKey && (
+                                                <Badge data-testid="catalog-plan-badge" variant="secondary" className="mb-2 rounded-lg">{t("plans.catalogBadge")}</Badge>
+                                            )}
                                             <div className="flex items-baseline gap-1">
                                                 <span className="text-4xl font-extrabold text-gray-900 tracking-tight">
                                                     ${(plan.price ?? 0).toFixed(2)}
@@ -317,6 +323,7 @@ export default function AdminPlansPage() {
                                             >
                                                 <Edit className="h-4 w-4 text-gray-600" />
                                             </Button>
+                                            {!plan.catalogKey && (
                                             <Button
                                                 size="sm"
                                                 variant="ghost"
@@ -325,6 +332,7 @@ export default function AdminPlansPage() {
                                             >
                                                 <Trash2 className="h-4 w-4" />
                                             </Button>
+                                            )}
                                         </div>
                                     </div>
                                 </motion.div>
@@ -342,7 +350,7 @@ export default function AdminPlansPage() {
                                 {editingPlan ? t("plans.form.editTitle") : t("plans.form.createTitle")}
                             </DialogTitle>
                             <DialogDescription className="text-base text-gray-500">
-                                {editingPlan ? t("plans.form.editDesc") : t("plans.form.createDesc")}
+                                {editingPlan?.catalogKey ? t("plans.catalogNote") : editingPlan ? t("plans.form.editDesc") : t("plans.form.createDesc")}
                             </DialogDescription>
                         </DialogHeader>
 
@@ -352,6 +360,7 @@ export default function AdminPlansPage() {
                                 <Input
                                     placeholder={t("plans.form.planNamePlaceholder")}
                                     value={formData.name}
+                                    disabled={!!editingPlan?.catalogKey}
                                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                                     className="h-11 rounded-xl border-gray-200 focus:ring-2 focus:ring-primary/20"
                                 />
@@ -367,6 +376,7 @@ export default function AdminPlansPage() {
                                             min="0"
                                             step="0.01"
                                             value={formData.price}
+                                            disabled={!!editingPlan?.catalogKey}
                                             onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) })}
                                             className="h-11 pl-7 rounded-xl border-gray-200"
                                         />
@@ -376,6 +386,7 @@ export default function AdminPlansPage() {
                                     <Label className="text-gray-700 font-medium">{t("plans.form.billingInterval")}</Label>
                                     <Select
                                         value={formData.interval}
+                                        disabled={!!editingPlan?.catalogKey}
                                         onValueChange={(v: any) => setFormData({ ...formData, interval: v })}
                                     >
                                         <SelectTrigger className="h-11 rounded-xl border-gray-200">

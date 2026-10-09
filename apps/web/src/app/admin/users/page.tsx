@@ -62,8 +62,11 @@ export default function AdminUsersPage() {
   const { confirm, ConfirmDialog } = useConfirmDialog();
 
   const statsCards = [
-    { label: t("admin.users.stats.totalUsers"), value: statsLoading ? null : (analyticsData?.stats.totalUsers.toLocaleString() || "0"), growth: analyticsData?.stats.monthlyGrowth.users || 0, icon: Users },
-    { label: t("admin.users.stats.activeUsers"), value: statsLoading ? null : (telemetryData?.metrics?.mau?.toLocaleString() || "0"), growth: telemetryData?.metrics?.newUsers ? (telemetryData.metrics.newUsers / (telemetryData.metrics.mau || 1)) * 100 : 0, icon: UserCheck },
+    // monthlyGrowth.users is a COUNT of new users this month — it was rendered as a percent ("+12.0%").
+    { label: t("admin.users.stats.totalUsers"), value: statsLoading ? null : (analyticsData?.stats.totalUsers.toLocaleString() || "0"), growth: null, growthLabel: t("platform_owner:transactions.growth.newUsers", { count: analyticsData?.stats.monthlyGrowth.users || 0 }), icon: Users },
+    // Active / new come from /admin/analytics/summary (telemetry). The old badge here divided new by active
+    // and called it growth "from last month" — it was neither.
+    { label: t("admin.users.stats.activeUsers"), value: statsLoading ? null : (telemetryData?.metrics?.mau?.toLocaleString() || "0"), growth: null, icon: UserCheck },
     { label: t("admin.users.stats.newSignups"), value: statsLoading ? null : (telemetryData?.metrics?.newUsers?.toLocaleString() || "0"), growth: null, icon: UserPlus },
     // The sign comes from the number: this used to prefix "+" onto a negative rate ("+-5%").
     { label: t("admin.users.stats.growthRate"), value: statsLoading ? null : formatSignedPercent(analyticsData?.stats.growthRate ?? 0), growth: analyticsData?.stats.growthRate, icon: TrendingUp },
@@ -218,6 +221,9 @@ export default function AdminUsersPage() {
               <div style={{ width: 32, height: 32, borderRadius: 6, background: "var(--admin-bg-icon-box, #2a2a2a)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <stat.icon style={{ width: 16, height: 16, color: "var(--admin-font-tertiary, #818181)" }} />
               </div>
+              {"growthLabel" in stat && stat.growthLabel && (
+                <div style={{ fontSize: 11, fontWeight: 500, color: "var(--admin-accent-green, #10b981)" }}>{stat.growthLabel}</div>
+              )}
               {stat.growth !== null && stat.growth !== undefined && (
                 <div style={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, fontWeight: 500, color: Number(stat.growth) >= 0 ? "var(--admin-accent-green, #10b981)" : "var(--admin-accent-red, #ef4444)" }}>
                   {/* Math.abs used to drop the minus: a decline read as a red "5.0%". */}
@@ -229,7 +235,7 @@ export default function AdminUsersPage() {
               {stat.value ?? <Skeleton className="h-9 w-24" />}
             </div>
             <div style={{ fontSize: 12, color: "var(--admin-font-tertiary, #818181)", marginTop: 4 }}>{stat.label}</div>
-            {stat.growth !== null && (
+            {stat.growth !== null && stat.growth !== undefined && (
               <div style={{ fontSize: 11, color: "var(--admin-font-light, #555)", marginTop: 4 }}>{t("admin.users.stats.fromLastMonth")}</div>
             )}
           </div>

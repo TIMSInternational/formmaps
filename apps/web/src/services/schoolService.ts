@@ -45,10 +45,11 @@ export async function updateSchool(
 
 export async function resendSchoolInvite(
   schoolId: string,
-): Promise<{ success: boolean; message: string }> {
-  return apiRequest(`/api/v1/admin/schools/${schoolId}/invite`, {
+): Promise<{ invitationUrl?: string; emailSent?: boolean }> {
+  const res = await apiRequest(`/api/v1/admin/schools/${schoolId}/invite`, {
     method: "POST",
   });
+  return res?.data ?? res;
 }
 
 export async function getSchoolStats(): Promise<SchoolStats> {

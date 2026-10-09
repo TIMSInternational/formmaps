@@ -42,10 +42,10 @@ interface DailyTrendItem {
 }
 
 interface CompletionRates {
-  resumeBuilder?: number;
-  assessments?: number;
-  coachOnboarding?: number;
-  profileSetup?: number;
+  resumeBuilder?: number | null;
+  assessments?: number | null;
+  coachOnboarding?: number | null;
+  profileSetup?: number | null;
 }
 
 interface TelemetryChartsProps {
@@ -253,13 +253,14 @@ export const TelemetryCharts = React.memo(function TelemetryCharts({
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-medium text-gray-700">{t(item.labelKey)}</span>
                   <span className="font-bold text-gray-900">
-                    {Math.round((completionRates[item.key] || 0) * 100)}%
+                    {/* No data for a funnel = "—", not a 0% that reads as nobody finishing. */}
+                    {completionRates[item.key] == null ? "—" : `${Math.round((completionRates[item.key] ?? 0) * 100)}%`}
                   </span>
                 </div>
                 <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
                   <div
                     className={`h-full ${item.color} rounded-full transition-all duration-1000 ease-out`}
-                    style={{ width: `${(completionRates[item.key] || 0) * 100}%` }}
+                    style={{ width: `${(completionRates[item.key] ?? 0) * 100}%` }}
                   />
                 </div>
               </div>

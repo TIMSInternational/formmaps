@@ -1773,6 +1773,7 @@
       "updateError": "Error al actualizar el colegio",
       "resendSuccess": "Invitación reenviada a {{name}}",
       "resendError": "Error al reenviar la invitación",
+      "resendNoEmail": "Se creó un enlace nuevo para {{name}}, pero no se pudo enviar el correo. Copia el enlace y envíalo tú.",
       "access": "Contrato del colegio",
       "accessActive": "Activo — cubre a sus estudiantes mientras las fechas del contrato incluyan hoy",
       "accessInactive": "Inactivo — ya no cubre a sus estudiantes (sus cuentas se mantienen)"
@@ -2096,7 +2097,15 @@
         "completed": "Completado",
         "pending": "Pendiente",
         "failed": "Fallido",
-        "refunded": "Reembolsado"
+        "refunded": "Reembolsado",
+        "succeeded": "Completado",
+        "trialing": "Prueba gratuita",
+        "partially_refunded": "Reembolso parcial",
+        "disputed": "En disputa",
+        "dispute_lost": "Disputa perdida",
+        "amount_mismatch": "Monto no coincide",
+        "expired": "Pago abandonado",
+        "canceled": "Cancelado"
       },
       "exportReport": "Exportar informe",
       "noTransactions": "No se encontraron transacciones.",

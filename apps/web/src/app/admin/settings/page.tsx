@@ -166,7 +166,9 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
 
-              <div className="space-y-6">
+              {/* Audit 2026-10-09 B13: nothing reads these yet — saving them changed nothing. Locked + said so. */}
+              <p data-testid="setting-inert" className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">{t("settings.inertNote")}</p>
+              <fieldset disabled className="space-y-6 disabled:opacity-60">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label className="text-gray-700 font-medium">{t("settings.general.siteName")}</Label>
@@ -200,7 +202,7 @@ export default function AdminSettingsPage() {
                     onCheckedChange={(c) => updateSetting('general', 'maintenanceMode', c)}
                   />
                 </div>
-              </div>
+              </fieldset>
             </div>
 
             {/* Legal & Support */}
@@ -215,7 +217,8 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
 
-              <div className="space-y-5">
+              <p data-testid="setting-inert" className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">{t("settings.inertNote")}</p>
+              <fieldset disabled className="space-y-5 disabled:opacity-60">
                 <div className="space-y-2">
                   <Label className="text-gray-700 font-medium">{t("settings.legal.privacyUrl")}</Label>
                   <Input
@@ -246,7 +249,7 @@ export default function AdminSettingsPage() {
                     placeholder="https://..."
                   />
                 </div>
-              </div>
+              </fieldset>
             </div>
 
           </div>
@@ -285,6 +288,8 @@ export default function AdminSettingsPage() {
 
                 <Separator />
 
+                <p data-testid="setting-inert" className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">{t("settings.inertNote")}</p>
+                <fieldset disabled className="space-y-5 disabled:opacity-60">
                 <div className="space-y-2">
                   <Label className="text-gray-700">{t("settings.finance.currency")}</Label>
                   <Select
@@ -318,6 +323,7 @@ export default function AdminSettingsPage() {
                     </SelectContent>
                   </Select>
                 </div>
+                </fieldset>
               </div>
             </div>
 
@@ -333,7 +339,8 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
 
-              <div className="space-y-6">
+              <p data-testid="setting-inert" className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">{t("settings.inertNote")}</p>
+              <fieldset disabled className="space-y-6 disabled:opacity-60">
                 <div className="space-y-2">
                   <Label className="text-gray-700">{t("settings.security.sessionTimeout")}</Label>
                   <Input
@@ -344,7 +351,7 @@ export default function AdminSettingsPage() {
                     className="h-11 rounded-xl border-gray-200 focus:ring-rose-100 focus:border-rose-500"
                   />
                 </div>
-              </div>
+              </fieldset>
             </div>
 
             {/* System */}
@@ -359,7 +366,8 @@ export default function AdminSettingsPage() {
                 </div>
               </div>
 
-              <div className="space-y-6">
+              <p data-testid="setting-inert" className="text-xs font-medium text-amber-700 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mb-4">{t("settings.inertNote")}</p>
+              <fieldset disabled className="space-y-6 disabled:opacity-60">
                 <div className="space-y-2">
                   <Label className="text-gray-700">{t("settings.system.maxUpload")}</Label>
                   <div className="relative">
@@ -375,7 +383,7 @@ export default function AdminSettingsPage() {
                   </div>
                   <p className="text-xs text-gray-500">{t("settings.system.maxUploadDesc")}</p>
                 </div>
-              </div>
+              </fieldset>
             </div>
 
           </div>
