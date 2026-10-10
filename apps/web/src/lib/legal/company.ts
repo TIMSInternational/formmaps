@@ -16,9 +16,9 @@ export const LEGAL_ENTITY = {
  * before the 2026-10-15 documents; keep them in sync with the mailboxes that are actually monitored.
  */
 export const LEGAL_CONTACT = {
-  privacyEmail: "privacy@formmaps.ai",
-  legalEmail: "legal@formmaps.ai",
-  billingEmail: "legal@formmaps.ai",
+  privacyEmail: "privacy@formmaps.com",
+  legalEmail: "legal@formmaps.com",
+  billingEmail: "legal@formmaps.com",
 } as const;
 
 /** USD prices quoted by the Terms and the Refund Policy. Must match the checkout lineup. */
