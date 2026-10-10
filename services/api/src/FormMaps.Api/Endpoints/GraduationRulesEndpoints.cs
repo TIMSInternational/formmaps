@@ -141,7 +141,7 @@ public static class GraduationRulesEndpoints
         var limit = Math.Min(100, Math.Max(1, JsParseIntOr(Query(http, "limit"), 20)));
 
         var result = await reader.GetProgressListAsync(
-            context, schoolId!, page, limit, Query(http, "status"), Query(http, "sortBy"), cancellationToken);
+            context, schoolId!, page, limit, Query(http, "status"), Query(http, "sortBy"), cancellationToken, Query(http, "search"));
 
         return Results.Ok(new
         {
@@ -161,7 +161,8 @@ public static class GraduationRulesEndpoints
                 total = result.Total,
                 page = result.Page,
                 limit = result.Limit,
-                totalPages = result.TotalPages
+                totalPages = result.TotalPages,
+                summary = result.Summary ?? GraduationProgressSummary.Empty
             }
         });
     }
