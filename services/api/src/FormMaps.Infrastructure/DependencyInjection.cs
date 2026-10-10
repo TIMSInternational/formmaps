@@ -364,7 +364,7 @@ public static class DependencyInjection
         var emailOptions = new EmailOptions(
             FromEmail: EnvOr(configuration, "SES_FROM_EMAIL", EmailOptions.DefaultFromEmail),
             FrontendUrl: StripTrailingSlash(EnvOr(configuration, "FRONTEND_BASE_URL", EmailOptions.DefaultFrontendUrl)),
-            InviteBaseUrl: EnvOr(configuration, "FRONTEND_BASE_URL", EmailOptions.DefaultInviteBaseUrl),
+            InviteBaseUrl: StripTrailingSlash(EnvOr(configuration, "FRONTEND_BASE_URL", EmailOptions.DefaultInviteBaseUrl)),
             LogoUrl: EnvOr(configuration, "EMAIL_LOGO_URL", EmailOptions.DefaultLogoUrl),
             PostalAddress: EnvOr(configuration, "COMPANY_POSTAL_ADDRESS", EmailOptions.DefaultPostalAddress),
             AwsRegion: EnvOr(configuration, "AWS_REGION", EmailOptions.DefaultAwsRegion));

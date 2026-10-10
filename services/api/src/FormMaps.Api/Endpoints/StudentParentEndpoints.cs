@@ -186,10 +186,16 @@ public static class StudentParentEndpoints
         return false;
     }
 
-    private static string InvitationUrl(IConfiguration config, string token)
+    private static string InvitationUrl(IConfiguration config, string token) =>
+        ParentInvitationUrl(config["FRONTEND_BASE_URL"], token);
+
+    /// <summary>
+    /// The parent onboarding link. Audit F: the fallback used to be the dead <c>app.formmaps.ai</c>; it is now the live
+    /// app, the same default as legacy <c>frontendBaseUrl()</c> (lib/frontend-url.ts), with trailing slashes stripped.
+    /// </summary>
+    public static string ParentInvitationUrl(string? configuredBaseUrl, string token)
     {
-        var configured = config["FRONTEND_BASE_URL"];
-        var baseUrl = string.IsNullOrEmpty(configured) ? "https://app.formmaps.ai" : configured;
+        var baseUrl = string.IsNullOrWhiteSpace(configuredBaseUrl) ? EmailOptions.DefaultFrontendUrl : configuredBaseUrl.Trim().TrimEnd('/');
         return $"{baseUrl}/parent/onboarding?token={token}";
     }
 
