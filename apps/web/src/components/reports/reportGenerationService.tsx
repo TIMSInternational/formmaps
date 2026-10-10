@@ -6,7 +6,9 @@ import PCAReportPDF, { PCAReportData, dummyPCAData } from './PCAReportPDF';
 import type { PdfLanguage } from './pdfI18n';
 
 // Report types
-export type ReportType = 'lia' | 'pca' | 'evaluation' | 'timeline' | 'coaching' | 'benchmark';
+// The 360 / timeline / benchmark types were removed (audit F): they fetched /api/report/user-report/:id,
+// a path no backend serves, and no screen offered them.
+export type ReportType = 'lia' | 'pca' | 'coaching';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
@@ -66,45 +68,12 @@ export const generatePCAReport = async (data?: PCAReportData, language?: PdfLang
   }
 };
 
-// Generate and download Evaluation Report from backend
-export const generateEvaluationReport = async (userId?: string): Promise<void> => {
-  const uid = userId || JSON.parse(localStorage.getItem('user') || '{}').id;
-  if (!uid) throw new Error('User ID required for evaluation report');
-  const date = new Date().toISOString().split('T')[0];
-  await fetchBackendReport(
-    `/api/report/user-report/${uid}?section=evaluation`,
-    `360_Evaluation_Report_${date}.pdf`
-  );
-};
-
-// Generate and download Timeline Report from backend
-export const generateTimelineReport = async (userId?: string): Promise<void> => {
-  const uid = userId || JSON.parse(localStorage.getItem('user') || '{}').id;
-  if (!uid) throw new Error('User ID required for timeline report');
-  const date = new Date().toISOString().split('T')[0];
-  await fetchBackendReport(
-    `/api/report/user-report/${uid}?section=timeline`,
-    `Career_Timeline_Report_${date}.pdf`
-  );
-};
-
 // Generate and download Coaching Report from backend
 export const generateCoachingReport = async (): Promise<void> => {
   const date = new Date().toISOString().split('T')[0];
   await fetchBackendReport(
     `/api/v1/coach/me/analytics/report?type=pdf`,
     `Coaching_Session_Report_${date}.pdf`
-  );
-};
-
-// Generate and download Benchmark Report from backend
-export const generateBenchmarkReport = async (userId?: string): Promise<void> => {
-  const uid = userId || JSON.parse(localStorage.getItem('user') || '{}').id;
-  if (!uid) throw new Error('User ID required for benchmark report');
-  const date = new Date().toISOString().split('T')[0];
-  await fetchBackendReport(
-    `/api/report/user-report/${uid}?section=benchmark`,
-    `Benchmark_Comparison_Report_${date}.pdf`
   );
 };
 
@@ -137,14 +106,8 @@ export const generateReport = async (
       return generateLIAReport(options?.liaData, options?.language);
     case 'pca':
       return generatePCAReport(options?.pcaData, options?.language);
-    case 'evaluation':
-      return generateEvaluationReport(options?.userId);
-    case 'timeline':
-      return generateTimelineReport(options?.userId);
     case 'coaching':
       return generateCoachingReport();
-    case 'benchmark':
-      return generateBenchmarkReport(options?.userId);
     default:
       throw new Error(`Unknown report type: ${type}`);
   }

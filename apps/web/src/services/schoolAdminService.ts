@@ -276,7 +276,8 @@ export async function getTopPerformers(
     const res = await apiRequest(`/api/v1/school-admin/analytics/top-performers${buildQueryString({ limit })}`);
     return toCamel(res);
   } catch (error) {
-    return { data: [] };
+    // Audit F: rethrow — returning [] made a failed load look like "no performance data yet".
+    throw error;
   }
 }
 
@@ -297,13 +298,8 @@ export async function getStudentResults(params: {
     const res = await apiRequest(`/api/v1/school-admin/results${buildQueryString(params as Record<string, string | number | undefined>)}`);
     return toCamel(res);
   } catch (error) {
-    return {
-      data: [],
-      total: 0,
-      page: 1,
-      limit: 10,
-      totalPages: 0,
-    };
+    // Audit F: rethrow — an empty page made a failed load look like "no results found".
+    throw error;
   }
 }
 

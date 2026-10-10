@@ -3374,6 +3374,7 @@
       "allAssessments": "All Assessments",
       "noResults": "No results found",
       "noResultsDesc": "Assessment results will appear here",
+      "loadError": "Couldn't load results. Try again.",
       "table": {
         "student": "Student",
         "assessment": "Assessment",
@@ -6532,10 +6533,7 @@
       "reports": {
         "lia": "LIA Assessment Report",
         "pca": "Personality Profile Report",
-        "evaluation": "360° Evaluation Report",
-        "timeline": "Career Timeline Report",
-        "coaching": "Coaching Session Report",
-        "benchmark": "Benchmark Comparison Report"
+        "coaching": "Coaching Session Report"
       },
       "generating": "Generating PDF...",
       "downloaded": "Downloaded!",

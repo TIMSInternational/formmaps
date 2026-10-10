@@ -37,15 +37,6 @@ export async function getCareerById(id: string): Promise<CareerRole | null> {
   }
 }
 
-export async function getCareerFamilies() {
-  try {
-    const res = await apiRequest<{ data?: { clusters?: unknown[] } & unknown[] }>("/api/v1/careers/clusters", { method: "GET" });
-    return res.data?.clusters || res.data || [];
-  } catch {
-    return [];
-  }
-}
-
 // --- Admin career operations ---
 
 export async function adminListCareers() {
