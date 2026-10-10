@@ -51,6 +51,7 @@ import {
 } from "@/services/schoolService";
 import { SchoolEditForm } from "@/components/admin/SchoolEditForm";
 import { SchoolCoverageReport } from "@/components/admin/SchoolCoverageReport";
+import { ComplimentaryAccessPanel } from "@/components/admin/ComplimentaryAccessPanel";
 import { formatDate, cn } from "@/lib/utils";
 import { parseYmdLocal } from "@/lib/dateUtils";
 import { toast } from "sonner";
@@ -262,6 +263,10 @@ export default function SchoolsPage() {
                   />
                 )}
               </div>
+              {/* audit E5: free access for the whole school for N days. */}
+              {selectedSchool && (
+                <ComplimentaryAccessPanel targetType="school" targetId={selectedSchool.id} targetName={selectedSchool.name} />
+              )}
             </DialogContent>
           </Dialog>
         </div>

@@ -3,6 +3,7 @@ using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
 using FormMaps.Api.Auth;
+using FormMaps.Application.Auth;
 using FormMaps.Application.Billing;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -64,6 +65,93 @@ public class BillingEndpointsTests(BillingDatabaseFixture fixture) : IClassFixtu
                 services.AddScoped<IStripeGateway>(_ => new FakeStripeGateway());
             });
         });
+
+    // ------------------------------------------- audit 2026-10-09 E5: complimentary access (decision D6)
+
+    private sealed class FakeComplimentaryReader(DateTimeOffset? expiresAt) : IComplimentaryAccessReader
+    {
+        public int Calls { get; private set; }
+
+        public Task<DateTimeOffset?> GetActiveExpiryAsync(
+            RequestContext context, string userId, string? schoolId, CancellationToken cancellationToken = default)
+        {
+            Calls++;
+            return Task.FromResult(expiresAt);
+        }
+    }
+
+    private WebApplicationFactory<Program> CreateFactory(IComplimentaryAccessReader complimentary) => new WebApplicationFactory<Program>()
+        .WithWebHostBuilder(builder =>
+        {
+            builder.UseEnvironment(Environments.Development);
+            builder.ConfigureTestServices(services =>
+            {
+                services.AddSingleton(fixture.SessionFactory);
+                services.AddScoped<IStripeGateway>(_ => new FakeStripeGateway());
+                services.AddScoped(_ => complimentary);
+            });
+        });
+
+    /// <summary>Legacy user.ts "complimentary" branch: full access, planId "complimentary", its expiry, no charge.</summary>
+    [Theory]
+    [InlineData(StatusV1Path)]
+    [InlineData(StatusLegacyPath)]
+    public async Task GetStatus_ComplimentaryGrant_WithoutSubscription_ReturnsComplimentaryPayload(string path)
+    {
+        await fixture.ResetAsync();
+        var expiresAt = new DateTimeOffset(2099, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var complimentary = new FakeComplimentaryReader(expiresAt);
+        using var factory = CreateFactory(complimentary);
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_comp1", "student");
+
+        var response = await client.GetAsync(path);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
+        Assert.True(data.GetProperty("hasActiveSubscription").GetBoolean());
+        Assert.True(data.GetProperty("hasPaidAccess").GetBoolean());
+        Assert.True(data.GetProperty("isComplimentary").GetBoolean());
+        Assert.Equal("complimentary", data.GetProperty("planId").GetString());
+        Assert.Equal("active", data.GetProperty("status").GetString());
+        Assert.Equal(expiresAt, data.GetProperty("expiryDate").GetDateTimeOffset());
+        Assert.Equal(1, complimentary.Calls);
+    }
+
+    [Fact]
+    public async Task GetStatus_PaidSubscription_IsNotReplacedByAGrant()
+    {
+        await fixture.ResetAsync();
+        await fixture.SeedMatchingSubscriptionAsync("user_comp2", "sub_comp2", "active");
+        var complimentary = new FakeComplimentaryReader(new DateTimeOffset(2099, 1, 1, 0, 0, 0, TimeSpan.Zero));
+        using var factory = CreateFactory(complimentary);
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_comp2", "student");
+
+        var data = JsonDocument.Parse(await (await client.GetAsync(StatusV1Path)).Content.ReadAsStringAsync()).RootElement.GetProperty("data");
+
+        Assert.Equal("plan_1", data.GetProperty("planId").GetString());
+        Assert.False(data.TryGetProperty("isComplimentary", out _));
+        Assert.Equal(0, complimentary.Calls);
+    }
+
+    [Fact]
+    public async Task GetStatus_RealComplimentaryReader_WithoutTheTable_IsNoGrant()
+    {
+        // The billing fixture has no complimentary_access_grants table: the real reader's 42P01 path answers
+        // "no grant", exactly the pre-E5 response (the migration may land after the code).
+        await fixture.ResetAsync();
+        using var factory = CreateFactory();
+        using var client = factory.CreateClient();
+        AddDevIdentity(client, "user_comp3", "student");
+
+        var response = await client.GetAsync(StatusV1Path);
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var data = JsonDocument.Parse(await response.Content.ReadAsStringAsync()).RootElement.GetProperty("data");
+        Assert.False(data.GetProperty("hasActiveSubscription").GetBoolean());
+        Assert.Equal("none", data.GetProperty("status").GetString());
+    }
 
     /// <summary>
     /// Wave 3 billing-subscription-parity (formmaps#108 comment). The payload is legacy's

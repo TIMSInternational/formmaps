@@ -72,25 +72,26 @@ export function SchoolCoverageReport() {
               <TableHead className="text-right">{tPO("schools.coverage.table.students")}</TableHead>
               <TableHead className="text-right">{tPO("schools.coverage.table.bySchool")}</TableHead>
               <TableHead className="text-right">{tPO("schools.coverage.table.bySubscription")}</TableHead>
+              <TableHead className="text-right">{tPO("schools.coverage.table.byComplimentary")}</TableHead>
               <TableHead className="text-right">{tPO("schools.coverage.table.notCovered")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-20 text-center text-gray-500">
+                <TableCell colSpan={9} className="h-20 text-center text-gray-500">
                   {tPO("schools.coverage.loading")}
                 </TableCell>
               </TableRow>
             ) : failed ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-20 text-center text-red-600" role="alert">
+                <TableCell colSpan={9} className="h-20 text-center text-red-600" role="alert">
                   {tPO("schools.coverage.error")}
                 </TableCell>
               </TableRow>
             ) : rows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={8} className="h-20 text-center text-gray-500">
+                <TableCell colSpan={9} className="h-20 text-center text-gray-500">
                   {tPO("schools.coverage.empty")}
                 </TableCell>
               </TableRow>
@@ -113,10 +114,16 @@ export function SchoolCoverageReport() {
                       {row.covered ? tPO("schools.coverage.yes") : tPO("schools.coverage.no")}
                     </span>
                     <div className="text-xs text-gray-500 mt-0.5">{tPO(`schools.coverage.reasons.${row.reason}`)}</div>
+                    {row.complimentaryUntil && (
+                      <div className="text-xs text-green-700 mt-0.5">
+                        {tPO("complimentary.until", { date: new Date(row.complimentaryUntil).toLocaleDateString() })}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="text-right">{row.students}</TableCell>
                   <TableCell className="text-right">{row.coveredBySchool}</TableCell>
                   <TableCell className="text-right">{row.coveredBySubscription}</TableCell>
+                  <TableCell className="text-right">{row.coveredByComplimentary ?? 0}</TableCell>
                   <TableCell className={cn("text-right", row.notCovered > 0 && "text-amber-700 font-medium")}>
                     {row.notCovered}
                   </TableCell>

@@ -6,8 +6,9 @@ namespace FormMaps.Application.Auth;
 /// <param name="FullPlatform">Whole student product (resume builder, applications, coaching, AI chat ...).</param>
 /// <param name="PaidResults">Full assessment results, reports and downloads — only after a real charge.</param>
 /// <param name="Scope"><see cref="StudentAccessRules.FullPlatformScope"/>, <see cref="StudentAccessRules.AssessmentsAndReportsScope"/> or null.</param>
-/// <param name="Reason">not_student | school_contract | subscription | one_time | none.</param>
-public sealed record StudentAccess(bool FullPlatform, bool PaidResults, string? Scope, string Reason);
+/// <param name="Reason">not_student | school_contract | subscription | one_time | complimentary | none.</param>
+/// <param name="ExpiresAt">Only for "complimentary": when the grant stops covering (exclusive).</param>
+public sealed record StudentAccess(bool FullPlatform, bool PaidResults, string? Scope, string Reason, DateTimeOffset? ExpiresAt = null);
 
 /// <summary>A school's contract window (legacy <c>SchoolContract</c>).</summary>
 /// <param name="TimeZone">IANA zone (<c>schools.timezone</c>); null/unknown → <see cref="StudentAccessRules.PlatformTimeZoneId"/>.</param>
@@ -51,6 +52,34 @@ public static class StudentAccessRules
     public static readonly StudentAccess NoAccess = new(false, false, null, "none");
 
     public static StudentAccess FullAccess(string reason) => new(true, true, FullPlatformScope, reason);
+
+    public const string ComplimentaryReason = "complimentary";
+
+    /// <summary>
+    /// audit 2026-10-09 E5 (legacy <c>isComplimentaryGrantActive</c>, lib/complimentaryAccess.ts): a Super Admin
+    /// complimentary grant covers while not revoked and <c>startsAt &lt;= now &lt; expiresAt</c> — at the exact
+    /// expiry instant it no longer covers. It is its own table, never a subscription or payment.
+    /// </summary>
+    public static bool IsComplimentaryGrantActive(
+        DateTimeOffset startsAt, DateTimeOffset expiresAt, DateTimeOffset? revokedAt, DateTimeOffset now) =>
+        revokedAt is null && startsAt <= now && now < expiresAt;
+
+    /// <summary>
+    /// Legacy <c>getStudentAccess</c> after the school-contract check (audit E5): a subscription that already grants
+    /// everything stays the reason; otherwise an active complimentary grant (own or school's, latest expiry) grants
+    /// everything until it expires; otherwise the subscription verdict as before.
+    /// </summary>
+    public static StudentAccess WithComplimentary(StudentAccess fromSubscription, DateTimeOffset? complimentaryExpiresAt)
+    {
+        if (fromSubscription.FullPlatform && fromSubscription.PaidResults)
+        {
+            return fromSubscription;
+        }
+
+        return complimentaryExpiresAt is { } expiresAt
+            ? new StudentAccess(true, true, FullPlatformScope, ComplimentaryReason, expiresAt)
+            : fromSubscription;
+    }
 
     /// <summary>INDEPENDENT_STUDENT_PAYWALL — default OFF. Only "true"/"1"/"on" (trimmed, any case) enable it.</summary>
     public static bool IsPaywallEnabled(string? raw)

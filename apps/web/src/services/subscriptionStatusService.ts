@@ -13,6 +13,8 @@ export interface SubscriptionStatus {
   /** Full results / reports / downloads — only after a real charge (D4). */
   hasPaidAccess?: boolean;
   scope?: "full_platform" | "assessments_and_reports" | null;
+  /** A Super Admin complimentary grant (audit E5): planId "complimentary", ends on expiryDate, never charged. */
+  isComplimentary?: boolean;
 }
 
 export interface ResultsPreview {

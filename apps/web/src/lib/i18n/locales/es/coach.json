@@ -492,7 +492,10 @@
       "cancelPlan": "Cancelar plan",
       "opening": "Abriendo…",
       "ending": "Finalizando",
-      "active": "Activa"
+      "active": "Activa",
+      "complimentaryTitle": "Acceso de cortesía",
+      "complimentaryUntil": "Acceso completo, sin costo, hasta el {{date}}. No se te cobrará nada.",
+      "complimentary": "Cortesía"
     },
     "cancel": {
       "title": "¿Cancelar suscripción?",

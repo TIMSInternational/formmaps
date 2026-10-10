@@ -492,7 +492,10 @@
       "cancelPlan": "Cancel Plan",
       "opening": "Opening…",
       "ending": "Ending",
-      "active": "Active"
+      "active": "Active",
+      "complimentaryTitle": "Complimentary access",
+      "complimentaryUntil": "Full access, free of charge, until {{date}}. Nothing will be charged.",
+      "complimentary": "Complimentary"
     },
     "cancel": {
       "title": "Cancel Subscription?",

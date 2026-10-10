@@ -162,6 +162,7 @@
         "students": "Estudiantes",
         "bySchool": "Por la institución",
         "bySubscription": "Suscripción propia",
+        "byComplimentary": "Acceso gratuito propio",
         "notCovered": "Sin acceso"
       },
       "reasons": {
@@ -170,7 +171,8 @@
         "status_not_active": "El estado de la institución no es activo",
         "no_end_date": "Sin fecha de fin de contrato",
         "not_started": "El contrato aún no ha comenzado",
-        "expired": "Contrato vencido"
+        "expired": "Contrato vencido",
+        "complimentary": "Acceso de cortesía (gratis)"
       }
     },
     "loadingSchools": "Cargando instituciones...",
@@ -558,5 +560,24 @@
       "maxUpload": "Tamaño máximo de carga (MB)",
       "maxUploadDesc": "Límite para la carga de archivos de usuarios"
     }
+  },
+  "complimentary": {
+    "title": "Acceso gratuito",
+    "loading": "Cargando acceso gratuito…",
+    "helpStudent": "Da a este estudiante acceso completo gratis durante un número de días. Termina solo y nunca se cobra.",
+    "helpSchool": "Da a todos los estudiantes de este colegio acceso completo gratis durante un número de días. Termina solo y nunca se cobra.",
+    "days": "Días",
+    "note": "Nota (opcional)",
+    "daysInvalid": "Ingresa un número entero de días entre 1 y {{max}}.",
+    "grant": "Dar acceso gratuito",
+    "saving": "Guardando…",
+    "until": "Cortesía hasta el {{date}}",
+    "revoke": "Revocar",
+    "revokeTitle": "¿Revocar el acceso gratuito?",
+    "revokeBody": "{{name}} pierde el acceso gratuito ahora. Un plan pagado o el contrato del colegio siguen aplicando.",
+    "granted": "{{name}} tiene acceso gratuito hasta el {{date}}.",
+    "revoked": "Se revocó el acceso gratuito de {{name}}.",
+    "grantFailed": "No se pudo dar el acceso gratuito.",
+    "revokeFailed": "No se pudo revocar el acceso gratuito."
   }
 }

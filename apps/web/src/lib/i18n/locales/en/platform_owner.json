@@ -162,6 +162,7 @@
         "students": "Students",
         "bySchool": "Via school",
         "bySubscription": "Own subscription",
+        "byComplimentary": "Own free access",
         "notCovered": "No access"
       },
       "reasons": {
@@ -170,7 +171,8 @@
         "status_not_active": "School status is not active",
         "no_end_date": "No contract end date",
         "not_started": "Contract not started yet",
-        "expired": "Contract expired"
+        "expired": "Contract expired",
+        "complimentary": "Complimentary access (free)"
       }
     },
     "loadingSchools": "Loading schools...",
@@ -558,5 +560,24 @@
       "maxUpload": "Max Upload Size (MB)",
       "maxUploadDesc": "Limit for user file uploads"
     }
+  },
+  "complimentary": {
+    "title": "Free access",
+    "loading": "Loading free access…",
+    "helpStudent": "Give this student full access for free for a number of days. It ends on its own and is never charged.",
+    "helpSchool": "Give every student of this school full access for free for a number of days. It ends on its own and is never charged.",
+    "days": "Days",
+    "note": "Note (optional)",
+    "daysInvalid": "Enter a whole number of days from 1 to {{max}}.",
+    "grant": "Grant free access",
+    "saving": "Saving…",
+    "until": "Complimentary until {{date}}",
+    "revoke": "Revoke",
+    "revokeTitle": "Revoke free access?",
+    "revokeBody": "{{name}} loses the free access now. A paid plan or school contract still applies.",
+    "granted": "{{name}} has free access until {{date}}.",
+    "revoked": "Free access for {{name}} revoked.",
+    "grantFailed": "Could not grant free access.",
+    "revokeFailed": "Could not revoke free access."
   }
 }

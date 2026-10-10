@@ -54,6 +54,7 @@ public static class ProductionRlsPolicies
         "007-self-scoped.sql",
         "008-form-drafts.sql",
         "009-parent-links.sql",
+        "012-complimentary-access.sql",
         "pilot.sql",
     ];
 

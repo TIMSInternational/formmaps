@@ -62,7 +62,7 @@ it("shows per-school coverage, reason and student counts", async () => {
   const open = screen.getByTestId("coverage-row-s-2");
   expect(open).toHaveTextContent("Not covered");
   expect(open).toHaveTextContent("No contract end date");
-  expect(open.textContent).toMatch(/8\s*0\s*3\s*5$/);
+  expect(open.textContent).toMatch(/8\s*0\s*3\s*0\s*5$/); // students, via school, own subscription, own free access (E5), none
   expect(screen.getByTestId("coverage-paywall")).toHaveTextContent("Student paywall is OFF");
   expect(mockGet).toHaveBeenCalledWith({ page: 1, limit: 25 });
 });
@@ -87,4 +87,26 @@ it("shows an error when the report cannot load", async () => {
   mockGet.mockRejectedValue(new Error("403"));
   render(<SchoolCoverageReport />);
   expect(await screen.findByRole("alert")).toHaveTextContent("Could not load the coverage report.");
+});
+
+// audit 2026-10-09 E5 — complimentary access in the coverage report.
+it("shows a school's complimentary coverage and students on their own free access", async () => {
+  const r = report(1, 1);
+  r.data = [
+    {
+      ...r.data[0], id: "s-comp", name: "Comp School", status: "invited", covered: true, reason: "complimentary",
+      contractStartDate: null, contractEndDate: null,
+      complimentaryUntil: "2026-11-09T15:00:00.000Z", students: 4, coveredBySchool: 4, coveredByComplimentary: 0,
+    } as never,
+    { ...r.data[1], coveredBySubscription: 1, coveredByComplimentary: 2, notCovered: 5 } as never,
+  ];
+  mockGet.mockResolvedValue(r);
+  render(<SchoolCoverageReport />);
+
+  const comp = await screen.findByTestId("coverage-row-s-comp");
+  expect(comp).toHaveTextContent("Complimentary access (free)");
+  expect(comp).toHaveTextContent(`Complimentary until ${new Date("2026-11-09T15:00:00.000Z").toLocaleDateString()}`);
+  expect(screen.getByRole("columnheader", { name: "Own free access" })).toBeInTheDocument();
+  const cells = screen.getByTestId("coverage-row-s-2").querySelectorAll("td");
+  expect(Array.from(cells).slice(-3).map((c) => c.textContent)).toEqual(["1", "2", "5"]);
 });
