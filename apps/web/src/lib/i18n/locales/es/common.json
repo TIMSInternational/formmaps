@@ -188,6 +188,12 @@
       "locked": "Los puntajes, las coincidencias completas de carreras, los informes y las descargas se desbloquean después de tu primer pago.",
       "unlock": "Desbloquear mis resultados completos"
     },
+    "resultsLocked": {
+      "title": "Desbloquea tus resultados",
+      "body": "Tu evaluación está completa y guardada. Tus resultados completos, informes y descargas se desbloquean con tu primer pago.",
+      "cta": "Desbloquear mis resultados",
+      "back": "Volver a mis evaluaciones"
+    },
     "oneTime": {
       "name": "Informe de pago único",
       "description": "Haz todas las evaluaciones de FormMaps, ve tus resultados completos y descarga tus informes: pagas una vez y los conservas.",

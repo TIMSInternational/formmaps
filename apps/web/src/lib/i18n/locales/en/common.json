@@ -188,6 +188,12 @@
       "locked": "Scores, full career matches, reports and downloads unlock after your first payment.",
       "unlock": "Unlock my full results"
     },
+    "resultsLocked": {
+      "title": "Unlock your results",
+      "body": "Your assessment is complete and saved. Your full results, reports and downloads unlock after your first payment.",
+      "cta": "Unlock my results",
+      "back": "Back to my assessments"
+    },
     "oneTime": {
       "name": "One-time report",
       "description": "Take all the FormMaps assessments, see your complete results and download your reports — pay once, keep them.",
