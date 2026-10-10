@@ -6489,10 +6489,7 @@
       "reports": {
         "lia": "informe de evaluación LIA",
         "pca": "informe de perfil de personalidad",
-        "evaluation": "informe de evaluación 360°",
-        "timeline": "informe de línea de tiempo profesional",
-        "coaching": "informe de sesiones de coaching",
-        "benchmark": "informe de comparación de referencias"
+        "coaching": "informe de sesiones de coaching"
       },
       "generating": "Generando PDF...",
       "downloaded": "¡Descargado!",

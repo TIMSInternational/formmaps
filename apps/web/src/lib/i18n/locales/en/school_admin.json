@@ -579,12 +579,6 @@
       "calendar": "Calendar",
       "integrations": "Integrations"
     },
-    "mockToggle": {
-      "previewMode": "Preview Mode",
-      "liveMode": "Live Mode",
-      "usingMock": "Using mock data",
-      "usingReal": "Using real data"
-    },
     "profilePanel": {
       "title": "School Profile",
       "subtitle": "Manage your school information and branding",

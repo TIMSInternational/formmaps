@@ -263,11 +263,3 @@ export interface AdminAnalytics {
   }[];
 }
 
-export async function getAdminAnalytics(
-  period: "week" | "month" | "year" = "month"
-): Promise<AdminAnalytics> {
-  const allParams = buildParams({ period });
-  const qs = new URLSearchParams(allParams as Record<string, string>).toString();
-  const res = await apiRequest(`/api/admin/analytics?${qs}`);
-  return res.data || res;
-}

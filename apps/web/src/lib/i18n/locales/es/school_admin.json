@@ -579,12 +579,6 @@
       "calendar": "Calendario",
       "integrations": "Integraciones"
     },
-    "mockToggle": {
-      "previewMode": "Modo vista previa",
-      "liveMode": "Modo en vivo",
-      "usingMock": "Usando datos de prueba",
-      "usingReal": "Usando datos reales"
-    },
     "profilePanel": {
       "title": "Perfil de la institución",
       "subtitle": "Gestiona la información y la identidad de marca de tu institución",

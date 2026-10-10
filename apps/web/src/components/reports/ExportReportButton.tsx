@@ -37,10 +37,7 @@ const ExportReportButton: React.FC<ExportReportButtonProps> = ({
   const reportLabels: Record<ReportType, string> = {
     lia: t('components.exportReportButton.reports.lia'),
     pca: t('components.exportReportButton.reports.pca'),
-    evaluation: t('components.exportReportButton.reports.evaluation'),
-    timeline: t('components.exportReportButton.reports.timeline'),
     coaching: t('components.exportReportButton.reports.coaching'),
-    benchmark: t('components.exportReportButton.reports.benchmark'),
   };
 
   const handleExport = async () => {

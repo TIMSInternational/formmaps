@@ -7,7 +7,6 @@ import dynamic from "next/dynamic";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Switch } from "@/components/ui/switch";
 import {
   Settings,
   User,
@@ -16,7 +15,6 @@ import {
   Calendar,
   Users,
   Loader2,
-  Beaker,
   Building2,
   CalendarDays,
   Plug,
@@ -53,7 +51,6 @@ function GeneralSettings() {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [profileLoading, setProfileLoading] = useState(false);
-  const [useMockData, setUseMockData] = useState(false);
 
   // Password form
   const [currentPassword, setCurrentPassword] = useState("");
@@ -116,28 +113,6 @@ function GeneralSettings() {
           <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
             {t("schoolAdmin.settings.subtitle", "Manage your account and school settings.")}
           </p>
-        </div>
-        <div className="flex flex-wrap items-center gap-3 shrink-0">
-          {process.env.NODE_ENV === "development" && (
-            <div className="flex items-center gap-3 px-4 py-2 rounded-lg shrink-0" style={{ border: "1px solid var(--admin-border-default)", background: "var(--admin-bg-card)" }}>
-              <Beaker className="w-4 h-4" style={{ color: useMockData ? "#f59e0b" : "var(--admin-accent-green, #10b981)" }} />
-              <div className="flex flex-col justify-center">
-                <Label htmlFor="mock-data-toggle" style={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--admin-font-primary)", cursor: "pointer" }}>
-                  {useMockData ? ts("settings.mockToggle.previewMode") : ts("settings.mockToggle.liveMode")}
-                </Label>
-                <span style={{ fontSize: 10, color: "var(--admin-font-tertiary)", marginTop: 1 }}>
-                  {useMockData ? ts("settings.mockToggle.usingMock") : ts("settings.mockToggle.usingReal")}
-                </span>
-              </div>
-              <div className="ml-2 pl-3 flex items-center" style={{ borderLeft: "1px solid var(--admin-border-default)", height: 24 }}>
-                <Switch
-                  id="mock-data-toggle"
-                  checked={useMockData}
-                  onCheckedChange={setUseMockData}
-                />
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
