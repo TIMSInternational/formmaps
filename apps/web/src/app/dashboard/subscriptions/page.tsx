@@ -13,20 +13,15 @@ import { openBillingPortal } from "@/services/subscriptionService";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 
-// Fallback plans used only if backend returns nothing
+// Fallback plans used only if backend returns nothing. Feature lists come from i18n
+// (studentUi.subscriptions.fallbackFeatures.<plan>), so they follow the UI language.
 const FALLBACK_PLANS = [
   {
     id: "starter",
     name: "Starter",
     price: 9.99,
     interval: "monthly",
-    features: [
-      "PCA & MIL Assessments",
-      "Career matching (top 10)",
-      "Basic resume builder",
-      "Course catalog access",
-      "Email support",
-    ],
+    features: [] as string[],
     isActive: true,
   },
   {
@@ -34,17 +29,7 @@ const FALLBACK_PLANS = [
     name: "Pro",
     price: 29.99,
     interval: "monthly",
-    features: [
-      "Everything in Starter",
-      "360° Evaluation system",
-      "Full career matching (370+ careers)",
-      "AI-powered resume builder",
-      "University recommendations",
-      "Course plan builder",
-      "Portfolio builder",
-      "1 coaching session / month",
-      "Priority support",
-    ],
+    features: [] as string[],
     isActive: true,
   },
   {
@@ -52,16 +37,7 @@ const FALLBACK_PLANS = [
     name: "Premium",
     price: 49.99,
     interval: "monthly",
-    features: [
-      "Everything in Pro",
-      "Unlimited coaching sessions",
-      "AI career narrative reports",
-      "Counselor session booking",
-      "Community service tracking",
-      "Senior project support",
-      "Certification tracking",
-      "Dedicated support",
-    ],
+    features: [] as string[],
     isActive: true,
   },
 ];
@@ -109,7 +85,12 @@ export default function SubscriptionsPage() {
   }
 
   const isLoading = statusLoading || plansLoading;
-  const plans: SubscriptionPlan[] = backendPlans?.length ? backendPlans : FALLBACK_PLANS;
+  const plans: SubscriptionPlan[] = backendPlans?.length
+    ? backendPlans
+    : FALLBACK_PLANS.map((p) => {
+        const features: unknown = t(`studentUi.subscriptions.fallbackFeatures.${p.id}`, { returnObjects: true });
+        return { ...p, features: Array.isArray(features) ? (features as string[]) : [] };
+      });
   const hasActive = subStatus?.hasActiveSubscription;
   const currentPlanId = subStatus?.planId;
   const interval = plans[0]?.interval === "yearly" ? "year" : "month";
@@ -280,7 +261,7 @@ export default function SubscriptionsPage() {
                       setShowCancelConfirm(false);
                     },
                     onError: (error) => {
-                      alert(`Failed to cancel: ${error.message}`);
+                      toast.error(t("studentUi.subscriptions.cancelFailed", { error: error.message }));
                     },
                   });
                 }}
@@ -416,7 +397,7 @@ export default function SubscriptionsPage() {
                     onStart={() => setProcessingPlan(plan.id)}
                     onSuccess={() => window.location.reload()}
                     onError={(error: string) => {
-                      alert(`Payment failed: ${error}`);
+                      toast.error(t("studentUi.subscriptions.paymentFailed", { error }));
                       setProcessingPlan(null);
                     }}
                     disabled={processingPlan !== null}

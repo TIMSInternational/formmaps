@@ -553,7 +553,7 @@ public class TeacherEndpointsTests : IDisposable
         factory.Repository.Pending =
         [
             new TeacherPendingEvaluationRow("eg-1", "Ada", "2030-05-06T07:08:09.010Z", "inv-1"),
-            new TeacherPendingEvaluationRow("eg-2", "your student", "2030-05-06T07:08:09.010Z", "inv-2"),
+            new TeacherPendingEvaluationRow("eg-2", null, "2030-05-06T07:08:09.010Z", "inv-2"),
         ];
         using var client = factory.CreateClient();
 
@@ -566,7 +566,7 @@ public class TeacherEndpointsTests : IDisposable
         Assert.Equal("Ada", data[0].GetProperty("studentName").GetString());
         Assert.Equal("2030-05-06T07:08:09.010Z", data[0].GetProperty("deadline").GetString());
         Assert.Equal("inv-1", data[0].GetProperty("token").GetString());
-        Assert.Equal("your student", data[1].GetProperty("studentName").GetString());
+        Assert.Equal(JsonValueKind.Null, data[1].GetProperty("studentName").ValueKind);
         Assert.Equal(4, data[0].EnumerateObject().Count());
     }
 

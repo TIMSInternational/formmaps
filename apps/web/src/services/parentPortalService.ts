@@ -1,4 +1,5 @@
 import { apiClient, apiRequest } from "@/lib/api/apiClient";
+import { namedOrNull } from "./teacherPortalService";
 import type {
   ChildProgressSummary,
   ChildResults,
@@ -83,10 +84,14 @@ export async function getChildReportBlob(studentId: string, lang: "es" | "en"): 
 
 // Get pending 360 evaluations for parent
 export async function getParentPendingEvaluations(): Promise<
-  { evaluationId: string; studentName: string; deadline: string; token: string }[]
+  { evaluationId: string; studentName: string | null; deadline: string; token: string }[]
 > {
   const res = await apiRequest("/api/v1/parent/evaluations/pending");
-  return res.data ?? res;
+  const items = res?.data ?? res ?? [];
+  // null name → the page says "your student" in the viewer's language (audit F).
+  return Array.isArray(items)
+    ? items.map((e: { evaluationId: string; studentName: string | null; deadline: string; token: string }) => ({ ...e, studentName: namedOrNull(e.studentName) }))
+    : [];
 }
 
 // ─── Parent Invitation (called by school-admin / counselor) ──────────────────

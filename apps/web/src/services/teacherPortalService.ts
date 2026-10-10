@@ -15,7 +15,8 @@ export interface TeacherProfile {
 
 export interface TeacherPendingEvaluation {
   evaluationId: string;
-  studentName: string;
+  /** null when the student has no name — render t("evaluations.yourStudent"). */
+  studentName: string | null;
   deadline: string;
   token: string;
 }
@@ -26,11 +27,16 @@ export async function getTeacherProfile(): Promise<TeacherProfile> {
   return res.data ?? res;
 }
 
+/** A real student name, or null. Older APIs sent the English placeholder "your student" for a missing name. */
+export function namedOrNull(name: string | null | undefined): string | null {
+  return name && name !== "your student" ? name : null;
+}
+
 // Pending 360 evaluations where the teacher is the evaluator
 export async function getTeacherPendingEvaluations(): Promise<TeacherPendingEvaluation[]> {
   const res = await apiRequest("/api/v1/teacher/evaluations/pending");
   const items = res?.data ?? res ?? [];
-  return Array.isArray(items) ? items : [];
+  return Array.isArray(items) ? items.map((e: TeacherPendingEvaluation) => ({ ...e, studentName: namedOrNull(e.studentName) })) : [];
 }
 
 // ─── Teacher Onboarding (token-based, public) ────────────────────────────────

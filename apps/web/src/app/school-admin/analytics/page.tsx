@@ -78,18 +78,20 @@ export default function AnalyticsPage() {
 
   const handleExport = useCallback(() => {
     try {
+      // Column and row labels follow the viewer's language (audit F); keys live in common "analyticsCsv".
+      const c = (key: string) => t(`common:analyticsCsv.${key}`);
       const rows = [
-        ["Metric", "Value"],
-        ["Total Students", totalStudents],
-        ["At-Risk Students", atRisk],
-        ["Counselor Coverage", `${counselorCoverage}%`],
-        ["Assessment Completion", `${completionRate}%`],
-        ["Avg GPA", avgGpa],
-        ["PCA Complete", pcaFullDone],
-        ["MIL Complete", milDone],
-        ["360 Complete", evalDone],
-        ["Personality Complete", personalityDone],
-        ["Fully Complete", fullyComplete],
+        [c("metric"), c("value")],
+        [c("totalStudents"), totalStudents],
+        [c("atRisk"), atRisk],
+        [c("counselorCoverage"), `${counselorCoverage}%`],
+        [c("assessmentCompletion"), `${completionRate}%`],
+        [c("avgGpa"), avgGpa],
+        [c("pcaComplete"), pcaFullDone],
+        [c("milComplete"), milDone],
+        [c("evalComplete"), evalDone],
+        [c("personalityComplete"), personalityDone],
+        [c("fullyComplete"), fullyComplete],
       ];
       const csv = rows.map(r => r.join(",")).join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
@@ -99,7 +101,7 @@ export default function AnalyticsPage() {
       a.click(); URL.revokeObjectURL(url);
       toast.success(t("analytics.exportedSuccess"));
     } catch { toast.error(t("analytics.exportFailed")); }
-  }, [totalStudents, atRisk, counselorCoverage, completionRate, avgGpa, pcaFullDone, milDone, evalDone, personalityDone, fullyComplete]);
+  }, [t, totalStudents, atRisk, counselorCoverage, completionRate, avgGpa, pcaFullDone, milDone, evalDone, personalityDone, fullyComplete]);
 
   if (statsLoading && overviewLoading) {
     return (

@@ -154,7 +154,7 @@ function EvaluationCard({
   t,
   onComplete,
 }: {
-  ev: { evaluationId: string; studentName: string; deadline: string; token: string };
+  ev: { evaluationId: string; studentName: string | null; deadline: string; token: string };
   idx: number;
   urgencyColor: (d: string) => string;
   urgencyLabel: (d: string) => string;
@@ -175,7 +175,7 @@ function EvaluationCard({
           <div>
             <p className="font-semibold text-foreground">
               {t("evaluations.card.evaluationFor")}{" "}
-              <span style={{ color: "var(--admin-accent-blue)" }}>{ev.studentName}</span>
+              <span style={{ color: "var(--admin-accent-blue)" }}>{ev.studentName ?? t("evaluations.yourStudent")}</span>
             </p>
             <div className="flex items-center gap-2 mt-1">
               <Calendar className="h-3.5 w-3.5 text-muted-foreground" />

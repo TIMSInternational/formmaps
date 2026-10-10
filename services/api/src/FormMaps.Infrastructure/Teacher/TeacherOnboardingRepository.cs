@@ -280,8 +280,9 @@ public sealed class TeacherOnboardingRepository(
                 var studentName = reader.IsDBNull(1) ? null : reader.GetString(1);
                 rows.Add(new TeacherPendingEvaluationRow(
                     EvaluationId: reader.GetString(0),
-                    // `g.evaluatedUser?.name || "your student"` (:126) -- an EMPTY name is falsy too.
-                    StudentName: string.IsNullOrEmpty(studentName) ? "your student" : studentName,
+                    // `g.evaluatedUser?.name || null` (:126) -- an EMPTY name is falsy too. The web renders
+                    // "your student" in the viewer's language (audit F).
+                    StudentName: string.IsNullOrEmpty(studentName) ? null : studentName,
                     Deadline: IsoZ(reader.GetDateTime(2)),
                     Token: reader.GetString(3)));
             }

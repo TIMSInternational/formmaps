@@ -43,7 +43,8 @@
         "dueTomorrow": "Vence mañana",
         "daysLeft": "{{count}} días restantes"
       }
-    }
+    },
+    "yourStudent": "tu estudiante"
   },
   "onboarding": {
     "title": "Configura tu cuenta del portal docente",

@@ -51,15 +51,15 @@ export default function GradeImportForm({ onClose }: Props) {
     const header = Object.keys(data[0]).map((h) => h.trim().toLowerCase());
     for (const col of REQUIRED_COLUMNS) {
       if (!header.includes(col)) {
-        errs.push(`Missing required column: ${col}`);
+        errs.push(t("schoolAdmin.gradeImport.missingColumn", { column: col }));
       }
     }
 
     data.forEach((r, i) => {
-      if (!r.student_id && !r.student_email) errs.push(`Row ${i + 1}: missing student_id or student_email`);
-      if (!r.course_code) errs.push(`Row ${i + 1}: missing course_code`);
+      if (!r.student_id && !r.student_email) errs.push(t("schoolAdmin.gradeImport.rowMissingStudent", { row: i + 1 }));
+      if (!r.course_code) errs.push(t("schoolAdmin.gradeImport.rowMissingCourse", { row: i + 1 }));
       // basic grade validation
-      if (r.grade && typeof r.grade === "string" && r.grade.length > 3) errs.push(`Row ${i + 1}: invalid grade value`);
+      if (r.grade && typeof r.grade === "string" && r.grade.length > 3) errs.push(t("schoolAdmin.gradeImport.rowInvalidGrade", { row: i + 1 }));
     });
 
     return errs;

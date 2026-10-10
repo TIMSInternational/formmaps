@@ -299,7 +299,7 @@ public sealed class ParentPortalRepositoryTests : IClassFixture<ParentPortalRepo
         var rows = await Repo().ListPendingEvaluationsAsync(Ctx(), Parent);
         Assert.Equal(2, rows.Count);
         Assert.Contains(rows, r => r.EvaluationId == "eg-named" && r.StudentName == "Kid Name");
-        Assert.Contains(rows, r => r.EvaluationId == "eg-orphan" && r.StudentName == "your student");
+        Assert.Contains(rows, r => r.EvaluationId == "eg-orphan" && r.StudentName == null);
     }
 
     [Fact]

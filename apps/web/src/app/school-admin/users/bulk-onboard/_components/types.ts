@@ -38,7 +38,8 @@ export interface OnboardResult {
   linked: number;
   updated: number;
   failed: number;
-  results: Array<{ name: string; email: string; status: string; error?: string; classLevel?: string; message?: string }>;
+  /** counselorName: who the student was assigned to (rendered with a translated label, never pre-built English text). */
+  results: Array<{ name: string; email: string; status: string; error?: string; classLevel?: string; counselorName?: string }>;
 }
 
 // Map API preview response to frontend shape
@@ -94,7 +95,9 @@ export function mapOnboardResponse(raw: Record<string, unknown>): OnboardResult 
     classLevel: r.classLevel ? String(r.classLevel) : undefined,
     status: String(r.status ?? ""),
     error: r.status === "failed" ? String(r.message ?? "") : undefined,
-    message: r.message || r.counselorAssigned ? `Counselor: ${r.counselorAssigned}` : undefined,
+    // Was `r.message || r.counselorAssigned ? `Counselor: ${...}` : undefined` — the ternary bound to the whole `||`,
+    // so any row with a message read "Counselor: undefined", in English. Now just the name (audit F).
+    counselorName: r.counselorAssigned ? String(r.counselorAssigned) : undefined,
   }));
   return {
     created: summary.created || 0,
