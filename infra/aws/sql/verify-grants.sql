@@ -133,6 +133,15 @@ WITH checks(tbl, priv, expected, hard, why) AS (
     ('public.shadow_payments', 'SELECT', true, true, 'granted with the trio (dotnet-service-role.sql sec 4 note)'),
     ('public.shadow_payments', 'INSERT', true, true, 'granted with the trio'),
     ('public.shadow_payments', 'UPDATE', true, true, 'granted with the trio'),
+    -- audit D3/E5 (batch E).
+    ('public.payouts', 'SELECT', true,  true, 'audit D3: monthly payouts view'),
+    ('public.payouts', 'INSERT', true,  true, 'audit D3: generate creates pending rows'),
+    ('public.payouts', 'UPDATE', true,  true, 'audit D3: re-sync pending + mark paid'),
+    ('public.payouts', 'DELETE', false, true, 'withheld: a payout is never deleted'),
+    ('public.payments', 'SELECT', true,  true, 'audit D3: refund/dispute exclusion'),
+    ('public.payments', 'UPDATE', false, true, 'withheld: payments are written only by Node/Stripe'),
+    ('public.complimentary_access_grants', 'SELECT', true,  true, 'audit E5: paywall entitlement read'),
+    ('public.complimentary_access_grants', 'INSERT', false, true, 'withheld: grants are Node Super Admin only'),
     -- formmaps#120/#128 / cutover: SchoolUsersWriter.cs:214 does INSERT INTO
     -- "audit_logs" (role-change audit rows). This was a KNOWN-GAP from
     -- 2026-08-14 — nothing granted anything on audit_logs, so the write worked
