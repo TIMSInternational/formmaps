@@ -1,6 +1,8 @@
-import { apiRequest } from "@/lib/api/apiClient";
+import { apiClient, apiRequest } from "@/lib/api/apiClient";
 import {
   getChildProgress,
+  getChildResults,
+  getChildReportBlob,
   getParentNotifications,
   getMyParents,
   getStudentParents,
@@ -11,8 +13,30 @@ import {
   toStudentParentLink,
 } from "@/services/parentPortalService";
 
-jest.mock("@/lib/api/apiClient", () => ({ apiRequest: jest.fn() }));
+jest.mock("@/lib/api/apiClient", () => ({ apiRequest: jest.fn(), apiClient: { request: jest.fn() } }));
 const mockApiRequest = apiRequest as jest.Mock;
+const mockClientRequest = apiClient.request as jest.Mock;
+
+// Audit 2026-10-09 E1: parents read their child's results and download the career report.
+describe("child results + report", () => {
+  beforeEach(() => jest.clearAllMocks());
+
+  it("getChildResults reads the parent-scoped results route in the page language", async () => {
+    const data = { student: { id: "stu-1", name: "Kid", gradeLevel: "11", schoolName: null }, generatedAt: "x", assessments: [], report: { available: false } };
+    mockApiRequest.mockResolvedValue({ success: true, data });
+    await expect(getChildResults("stu-1", "en")).resolves.toEqual(data);
+    expect(mockApiRequest).toHaveBeenCalledWith("/api/v1/parent/children/stu-1/results?lang=en");
+  });
+
+  it("getChildReportBlob downloads the parent-scoped PDF as a blob", async () => {
+    const blob = new Blob(["%PDF"]);
+    mockClientRequest.mockResolvedValue({ data: blob });
+    await expect(getChildReportBlob("stu-1", "es")).resolves.toBe(blob);
+    expect(mockClientRequest).toHaveBeenCalledWith({
+      url: "/api/v1/parent/children/stu-1/report/pdf?lang=es", method: "GET", responseType: "blob",
+    });
+  });
+});
 
 // batch-1 fix/broken-pages: the API returns a nested shape; the page reads a
 // flat one. Without the mapping the page showed a blank name, "undefined/

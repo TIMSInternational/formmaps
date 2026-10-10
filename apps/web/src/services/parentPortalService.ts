@@ -1,6 +1,7 @@
-import { apiRequest } from "@/lib/api/apiClient";
+import { apiClient, apiRequest } from "@/lib/api/apiClient";
 import type {
   ChildProgressSummary,
+  ChildResults,
   ParentProfile,
   ParentInviteRequest,
   StudentParentLink,
@@ -61,10 +62,23 @@ export async function getChildProgress(
     creditsRequired: d.creditProgress?.required ?? null,
     creditPercentage: d.creditProgress?.percentage ?? null,
     assessmentStatus: { completed: completedCount, total: 3 },
-    careerPath: "",
-    recentActivity: [],
-    pendingActions: [],
   };
+}
+
+/** The linked child's results (audit E1). 403 when the link is gone, 402 when the child's results are unpaid. */
+export async function getChildResults(studentId: string, lang: "es" | "en"): Promise<ChildResults> {
+  const res = await apiRequest(`/api/v1/parent/children/${studentId}/results?lang=${lang}`);
+  return (res.data ?? res) as ChildResults;
+}
+
+/** The child's Career & University report PDF. */
+export async function getChildReportBlob(studentId: string, lang: "es" | "en"): Promise<Blob> {
+  const response = await apiClient.request<Blob>({
+    url: `/api/v1/parent/children/${studentId}/report/pdf?lang=${lang}`,
+    method: "GET",
+    responseType: "blob",
+  });
+  return response.data;
 }
 
 // Get pending 360 evaluations for parent
