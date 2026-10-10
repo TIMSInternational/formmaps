@@ -1539,3 +1539,19 @@ describe("next.config rewrites -- M4 no-decision ports (#63 moderation, #59 reco
     }
   });
 });
+
+// Audit 2026-10-09 E1. The parent results + report routes exist only on Node (they reuse the Node student record
+// and the Node career-informe renderer). With every parent flag ON, the .NET parent rules must not swallow them.
+describe("parent child results + report stay on Node", () => {
+  it("with both parent flags on, /results and /report/pdf fall through to the Node catch-all", async () => {
+    const afterFiles = await loadAfterFiles({
+      FORMMAPS_DOTNET_API_BASE_URL: DOTNET,
+      FORMMAPS_ROUTE_PARENT_CHILD_READS_TO_DOTNET: "1",
+      FORMMAPS_ROUTE_PARENT_PORTAL_TO_DOTNET: "1",
+    });
+    expect(winningRule(afterFiles, "/api/v1/parent/children/stu-1/progress")!.destination).toContain(DOTNET);
+    for (const path of ["/api/v1/parent/children/stu-1/results", "/api/v1/parent/children/stu-1/report/pdf"]) {
+      expect(winningRule(afterFiles, path)!.source).toBe(CATCH_ALL);
+    }
+  });
+});
