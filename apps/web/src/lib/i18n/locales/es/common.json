@@ -2018,7 +2018,11 @@
         "body": "¿Seguro que quieres desactivar a {{name}}? Ya no podrá acceder a la plataforma.",
         "cta": "Desactivar",
         "done": "Se desactivó la cuenta de {{name}}",
-        "failed": "No se pudo desactivar a este usuario. Inténtalo de nuevo."
+        "failed": "No se pudo desactivar a este usuario. Inténtalo de nuevo.",
+        "coachSessions_one": "Este coach tiene {{count}} sesión pagada próxima. Se cancelará y se le devolverá el dinero al estudiante.",
+        "coachSessions_other": "Este coach tiene {{count}} sesiones pagadas próximas. Se cancelarán y se les devolverá el dinero a los estudiantes.",
+        "refundFailed_one": "No se pudo emitir {{count}} reembolso. Hazlo manualmente en Stripe.",
+        "refundFailed_other": "No se pudieron emitir {{count}} reembolsos. Hazlos manualmente en Stripe."
       },
       "activate": {
         "title": "Activar usuario",

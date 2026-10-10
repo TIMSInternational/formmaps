@@ -1009,7 +1009,11 @@
         "body": "Are you sure you want to deactivate {{name}}? They will no longer be able to access the platform.",
         "cta": "Deactivate",
         "done": "{{name}} has been deactivated",
-        "failed": "Couldn't deactivate this user. Please try again."
+        "failed": "Couldn't deactivate this user. Please try again.",
+        "coachSessions_one": "This coach has {{count}} paid upcoming session. It will be cancelled and the student refunded.",
+        "coachSessions_other": "This coach has {{count}} paid upcoming sessions. They will be cancelled and the students refunded.",
+        "refundFailed_one": "{{count}} refund could not be issued. Refund it manually in Stripe.",
+        "refundFailed_other": "{{count}} refunds could not be issued. Refund them manually in Stripe."
       },
       "activate": {
         "title": "Activate user",
