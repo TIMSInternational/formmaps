@@ -24,6 +24,52 @@ export async function getSchools(
   return apiRequest(`/api/v1/admin/schools${qs ? `?${qs}` : ""}`);
 }
 
+// audit 2026-10-09 E4 — Super Admin coverage report (GET /api/v1/admin/coverage, Node).
+export type SchoolCoverageReason =
+  | "active_contract"
+  | "school_inactive"
+  | "status_not_active"
+  | "no_end_date"
+  | "not_started"
+  | "expired";
+
+export interface SchoolCoverageRow {
+  id: string;
+  name: string;
+  status: string;
+  isActive: boolean;
+  contractStartDate: string | null;
+  contractEndDate: string | null;
+  timezone: string;
+  covered: boolean;
+  reason: SchoolCoverageReason;
+  students: number;
+  coveredBySchool: number;
+  coveredBySubscription: number;
+  notCovered: number;
+}
+
+export interface CoverageReportResponse {
+  success: boolean;
+  data: SchoolCoverageRow[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  paywallEnabled: boolean;
+  generatedAt: string;
+}
+
+export async function getCoverageReport(
+  params: { page?: number; limit?: number } = {},
+): Promise<CoverageReportResponse> {
+  const query = new URLSearchParams();
+  if (params.page) query.append("page", params.page.toString());
+  if (params.limit) query.append("limit", params.limit.toString());
+  const qs = query.toString();
+  return apiRequest(`/api/v1/admin/coverage${qs ? `?${qs}` : ""}`);
+}
+
 export async function inviteSchool(
   data: SchoolInvitePayload,
 ): Promise<{ success: boolean; message: string }> {
