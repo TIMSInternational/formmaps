@@ -201,6 +201,7 @@
     <EmbeddedResource Include="Moderation\Data\moderation-schema.sql" />
     <!-- Schema-only DDL (shadow_* tables + minimal live-side stubs) for the Testcontainers billing shadow-repository write harness (Domain 9a, Task 3). -->
     <EmbeddedResource Include="Billing\Data\billing-shadow-schema.sql" />
+    <EmbeddedResource Include="Billing\Payouts\Data\coach-payouts-schema.sql" />
     <!-- Constraint-absent user_subscriptions DDL (no userId unique) for the formmaps#108 duplicate-row contract tests; embedded since formmaps#125 moved that fixture onto RlsEnabledDatabaseFixture. -->
     <EmbeddedResource Include="Billing\Data\live-subscription-duplicate-row-schema.sql" />
     <!-- Stub schema (one row per table the role script grants against) for the DB-role GRANT verification harness (formmaps#10). -->
