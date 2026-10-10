@@ -42,3 +42,17 @@ CREATE TABLE "user_subscriptions" (
     "nextBillingDate" TIMESTAMP(3),
     CONSTRAINT "user_subscriptions_pkey" PRIMARY KEY ("id")
 );
+
+-- audit 2026-10-09 E5: Super Admin complimentary grants (prisma/migrations/20261010120000_complimentary_access).
+CREATE TABLE "complimentary_access_grants" (
+    "id"          TEXT NOT NULL,
+    "userId"      TEXT,
+    "schoolId"    TEXT,
+    "startsAt"    TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "expiresAt"   TIMESTAMP(3) NOT NULL,
+    "note"        TEXT,
+    "grantedById" TEXT NOT NULL DEFAULT 'super-1',
+    "revokedAt"   TIMESTAMP(3),
+    "revokedById" TEXT,
+    CONSTRAINT "complimentary_access_grants_pkey" PRIMARY KEY ("id")
+);

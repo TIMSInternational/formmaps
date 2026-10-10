@@ -487,6 +487,11 @@ public static class DependencyInjection
                 sp.GetRequiredService<SchoolContractCache>(),
                 sp.GetRequiredService<TimeProvider>(),
                 graceDays));
+        // audit E5: Super Admin complimentary grants (subscription status endpoint).
+        services.AddScoped<IComplimentaryAccessReader>(sp =>
+            new ComplimentaryAccessReader(
+                sp.GetRequiredService<IFormMapsDatabaseSessionFactory>(),
+                sp.GetRequiredService<TimeProvider>()));
 
         return services;
     }
