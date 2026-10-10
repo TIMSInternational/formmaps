@@ -51,7 +51,7 @@ public sealed class StudentAccessReader(
         """;
 
     private const string SchoolSql = """
-        SELECT "isActive", "status"::text AS "status", "contractStartDate", "contractEndDate"
+        SELECT "isActive", "status"::text AS "status", "contractStartDate", "contractEndDate", "timezone"
         FROM "schools"
         WHERE "id" = @id
         """;
@@ -109,7 +109,8 @@ public sealed class StudentAccessReader(
                             reader.GetBoolean(reader.GetOrdinal("isActive")),
                             ReadNullableString(reader, "status"),
                             ReadNullableUtc(reader, "contractStartDate"),
-                            ReadNullableUtc(reader, "contractEndDate"));
+                            ReadNullableUtc(reader, "contractEndDate"),
+                            ReadNullableString(reader, "timezone"));
                     }
                 }
 

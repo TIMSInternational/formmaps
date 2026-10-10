@@ -13,6 +13,7 @@ CREATE TABLE "schools" (
     "status"            "SchoolStatus" NOT NULL DEFAULT 'invited',
     "contractStartDate" TIMESTAMP(3),
     "contractEndDate"   TIMESTAMP(3),
+    "timezone"          TEXT,
     CONSTRAINT "schools_pkey" PRIMARY KEY ("id")
 );
 

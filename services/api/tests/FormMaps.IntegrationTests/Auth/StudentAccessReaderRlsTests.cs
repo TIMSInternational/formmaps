@@ -113,6 +113,37 @@ public sealed class StudentAccessReaderRlsTests(StudentAccessDatabaseFixture fix
     }
 
     [Fact]
+    public async Task Entitlement_contract_end_date_is_inclusive_through_end_of_day_in_school_timezone()
+    {
+        // audit 2026-10-09 E4: end date 2026-10-09 (stored midnight UTC), no school timezone -> Bogota (UTC-5).
+        await SeedSchoolAsync("sch-boundary", "active", new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 10, 9, 0, 0, 0, TimeSpan.Zero));
+        await SeedUserAsync("stu-6", "student", "sch-boundary");
+
+        var lastMinute = await Reader(new DateTimeOffset(2026, 10, 10, 4, 59, 0, TimeSpan.Zero))
+            .ReadAsync(Student("stu-6", "sch-boundary"));
+        var nextDay = await Reader(new DateTimeOffset(2026, 10, 10, 5, 0, 0, TimeSpan.Zero))
+            .ReadAsync(Student("stu-6", "sch-boundary"));
+
+        Assert.Equal("school_contract", lastMinute!.Reason);
+        Assert.Equal(StudentAccessRules.NoAccess, nextDay);
+    }
+
+    [Fact]
+    public async Task Entitlement_reads_the_schools_own_timezone()
+    {
+        await SeedSchoolAsync("sch-madrid", "active", new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+            new DateTimeOffset(2026, 10, 9, 0, 0, 0, TimeSpan.Zero), "Europe/Madrid");
+        await SeedUserAsync("stu-7", "student", "sch-madrid");
+
+        // 2026-10-10 00:00 CEST = 2026-10-09T22:00Z: already past the end date in Madrid (still the 9th in Bogota).
+        var access = await Reader(new DateTimeOffset(2026, 10, 9, 22, 0, 0, TimeSpan.Zero))
+            .ReadAsync(Student("stu-7", "sch-madrid"));
+
+        Assert.Equal(StudentAccessRules.NoAccess, access);
+    }
+
+    [Fact]
     public async Task Unknown_user_reads_as_null()
     {
         Assert.Null(await Reader().ReadAsync(Student("ghost", null)));
@@ -120,10 +151,10 @@ public sealed class StudentAccessReaderRlsTests(StudentAccessDatabaseFixture fix
 
     // ---------------------------------------------------------------- helpers
 
-    private StudentAccessReader Reader() => new(
+    private StudentAccessReader Reader(DateTimeOffset? now = null) => new(
         new NpgsqlFormMapsDatabaseSessionFactory(_appDataSource, new RlsSessionContextApplier()),
         new SchoolContractCache(),
-        new FixedTimeProvider(Now),
+        new FixedTimeProvider(now ?? Now),
         SubscriptionAccess.DefaultGraceDays);
 
     private static RequestContext Student(string userId, string? schoolId) => RequestContext.Authenticated(
@@ -133,13 +164,13 @@ public sealed class StudentAccessReaderRlsTests(StudentAccessDatabaseFixture fix
         TokenSource.AuthorizationBearer,
         isDevelopmentOverride: false);
 
-    private Task SeedSchoolAsync(string id, string status, DateTimeOffset start, DateTimeOffset end) =>
+    private Task SeedSchoolAsync(string id, string status, DateTimeOffset start, DateTimeOffset end, string? timezone = null) =>
         AdminExecAsync(
             """
-            INSERT INTO "schools" ("id", "isActive", "status", "contractStartDate", "contractEndDate")
-            VALUES (@id, true, @status::"SchoolStatus", @start, @end)
+            INSERT INTO "schools" ("id", "isActive", "status", "contractStartDate", "contractEndDate", "timezone")
+            VALUES (@id, true, @status::"SchoolStatus", @start, @end, @timezone)
             """,
-            ("id", id), ("status", status), ("start", start.UtcDateTime), ("end", end.UtcDateTime));
+            ("id", id), ("status", status), ("start", start.UtcDateTime), ("end", end.UtcDateTime), ("timezone", timezone));
 
     private Task SeedUserAsync(string id, string role, string? schoolId) =>
         AdminExecAsync(

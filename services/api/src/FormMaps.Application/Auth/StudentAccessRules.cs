@@ -10,11 +10,13 @@ namespace FormMaps.Application.Auth;
 public sealed record StudentAccess(bool FullPlatform, bool PaidResults, string? Scope, string Reason);
 
 /// <summary>A school's contract window (legacy <c>SchoolContract</c>).</summary>
+/// <param name="TimeZone">IANA zone (<c>schools.timezone</c>); null/unknown → <see cref="StudentAccessRules.PlatformTimeZoneId"/>.</param>
 public sealed record SchoolContract(
     bool IsActive,
     string? Status,
     DateTimeOffset? ContractStartDate,
-    DateTimeOffset? ContractEndDate);
+    DateTimeOffset? ContractEndDate,
+    string? TimeZone = null);
 
 /// <summary>
 /// One student's entitlement row: <c>user_subscriptions</c> LEFT JOIN <c>subscription_plans</c>.
@@ -57,10 +59,23 @@ public static class StudentAccessRules
         return value is "true" or "1" or "on";
     }
 
+    /// <summary>The platform's home zone (Colombia, UTC-5, no DST) — used when a school has no valid timezone.</summary>
+    public const string PlatformTimeZoneId = "America/Bogota";
+
+    // Fixed UTC-5 fallback if the host has no tz database (Bogota has had no DST since 1993).
+    private static readonly TimeZoneInfo PlatformTimeZone = FindZone(PlatformTimeZoneId)
+        ?? TimeZoneInfo.CreateCustomTimeZone(PlatformTimeZoneId, TimeSpan.FromHours(-5), PlatformTimeZoneId, PlatformTimeZoneId);
+
     /// <summary>
     /// A school covers its students only with an ACTIVE contract: school active, status "active", and a
     /// contract window that includes now. A missing end date is NOT an active contract (that is what a
-    /// seed/test school looks like).
+    /// seed/test school looks like — #395); status "invited" never covers.
+    /// <para>
+    /// audit 2026-10-09 E4 (mirrors legacy schoolHasActiveContract): the window is whole CALENDAR DAYS in the
+    /// school's timezone (<see cref="PlatformTimeZoneId"/> when unset): covered from 00:00 local on the start
+    /// date through 23:59:59 local on the end date (end INCLUSIVE). It compared the stored midnight-UTC
+    /// instants, so a contract "ending 30 June" stopped covering at 19:00 on 29 June in Bogota.
+    /// </para>
     /// </summary>
     public static bool SchoolHasActiveContract(SchoolContract? school, DateTimeOffset now)
     {
@@ -69,17 +84,55 @@ public static class StudentAccessRules
             return false;
         }
 
-        if (school.ContractEndDate is not { } end || end < now)
+        if (school.ContractEndDate is not { } end)
         {
             return false;
         }
 
-        if (school.ContractStartDate is { } start && start > now)
+        var zone = ResolveZone(school.TimeZone);
+        if (now >= StartOfContractDay(end, zone, addDays: 1))
+        {
+            return false;
+        }
+
+        if (school.ContractStartDate is { } start && now < StartOfContractDay(start, zone))
         {
             return false;
         }
 
         return true;
+    }
+
+    /// <summary>
+    /// The instant local midnight starts on the calendar day of <paramref name="date"/> (+ <paramref name="addDays"/>)
+    /// in <paramref name="zone"/>. Contract dates are plain dates stored as midnight UTC, so the calendar day is the
+    /// UTC date part.
+    /// </summary>
+    public static DateTimeOffset StartOfContractDay(DateTimeOffset date, TimeZoneInfo zone, int addDays = 0)
+    {
+        var utc = date.UtcDateTime;
+        var local = new DateTime(utc.Year, utc.Month, utc.Day, 0, 0, 0, DateTimeKind.Unspecified).AddDays(addDays);
+        while (zone.IsInvalidTime(local))
+        {
+            local = local.AddMinutes(30); // midnight skipped by a DST jump: the day starts at the first valid time
+        }
+
+        return new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(local, zone), TimeSpan.Zero);
+    }
+
+    public static TimeZoneInfo ResolveZone(string? timeZoneId) =>
+        string.IsNullOrWhiteSpace(timeZoneId) ? PlatformTimeZone : FindZone(timeZoneId) ?? PlatformTimeZone;
+
+    private static TimeZoneInfo? FindZone(string id)
+    {
+        try
+        {
+            return TimeZoneInfo.FindSystemTimeZoneById(id);
+        }
+        catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException)
+        {
+            return null;
+        }
     }
 
     /// <summary>Legacy <c>isRecurringInterval</c>: month/monthly/year/yearly, trimmed + lower-cased.</summary>
