@@ -6601,7 +6601,8 @@
       "checkConnection": "Revisa tu conexión a internet.",
       "sessionExpiredShort": "La sesión expiró. Vuelve a iniciar sesión.",
       "networkError": "Error de red. Revisa tu conexión e inténtalo de nuevo.",
-      "aiBudgetExceeded": "Tu colegio ya usó la asignación de IA de este mes. Inténtalo de nuevo el próximo mes."
+      "aiBudgetExceeded": "Tu colegio ya usó la asignación de IA de este mes. Inténtalo de nuevo el próximo mes.",
+      "broadcastTooLarge": "Este grupo tiene {{count}} destinatarios, más de los {{max}} que puede alcanzar un mensaje masivo. No se envió nada."
     },
     "pcaService": {
       "addFailed": "No se pudo agregar la evaluación PCA"

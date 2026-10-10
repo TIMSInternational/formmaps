@@ -759,7 +759,8 @@ public sealed class MessagesRepository(
         ["students"] = ["student", "Student"],
         ["parents"] = ["parent", "Parent"],
         ["counselors"] = ["counselor", "Counselor"],
-        ["staff"] = ["school_admin", "counselor", "coach", "Coach"],
+        // audit 2026-10-09 D4: teachers and general staff are school staff too; the group used to skip them.
+        ["staff"] = ["school_admin", "counselor", "teacher", "staff", "coach", "Coach"],
     };
 
     /// <summary>
@@ -800,6 +801,9 @@ public sealed class MessagesRepository(
             {
                 restrictToIds = await GetAssignedStudentIdsAsync(session, userId, cancellationToken);
             }
+
+            var groupSize = await CountSchoolRecipientsAsync(session, schoolId, roles, userId, restrictToIds, cancellationToken);
+            if (groupSize > BroadcastResult.MaxRecipients) return BroadcastResult.TooLarge(groupSize);
 
             var recipients = await GetSchoolRecipientsAsync(session, schoolId, roles, userId, restrictToIds, cancellationToken);
             if (recipients.Count == 0) return BroadcastResult.Empty;
@@ -943,16 +947,31 @@ public sealed class MessagesRepository(
         return ids;
     }
 
+    private const string SchoolRecipientsWhere = """
+        WHERE "schoolId" = @schoolId AND "roleName" = ANY(@roles) AND "isActive" = true AND "id" <> @excludeUserId
+        """;
+
+    private static async Task<int> CountSchoolRecipientsAsync(
+        FormMapsDatabaseSession session, string schoolId, string[] roles, string excludeUserId,
+        IReadOnlyList<string>? restrictToIds, CancellationToken cancellationToken)
+    {
+        var sql = """SELECT COUNT(*) FROM "users" """ + SchoolRecipientsWhere
+            + (restrictToIds is not null ? """ AND "id" = ANY(@restrictToIds)""" : "");
+        await using var command = Command(session, sql);
+        AddParameter(command, "schoolId", schoolId);
+        AddParameter(command, "roles", roles);
+        AddParameter(command, "excludeUserId", excludeUserId);
+        if (restrictToIds is not null) AddParameter(command, "restrictToIds", restrictToIds.ToArray());
+        return Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken));
+    }
+
     private static async Task<IReadOnlyList<RecipientRow>> GetSchoolRecipientsAsync(
         FormMapsDatabaseSession session, string schoolId, string[] roles, string excludeUserId,
         IReadOnlyList<string>? restrictToIds, CancellationToken cancellationToken)
     {
-        var sql = """
-            SELECT "id", "email" FROM "users"
-            WHERE "schoolId" = @schoolId AND "roleName" = ANY(@roles) AND "isActive" = true AND "id" <> @excludeUserId
-            """ + (restrictToIds is not null ? """ AND "id" = ANY(@restrictToIds)""" : "") + """
-             LIMIT 500
-            """;
+        var sql = """SELECT "id", "email" FROM "users" """ + SchoolRecipientsWhere
+            + (restrictToIds is not null ? """ AND "id" = ANY(@restrictToIds)""" : "")
+            + $" LIMIT {BroadcastResult.MaxRecipients}";
         await using var command = Command(session, sql);
         AddParameter(command, "schoolId", schoolId);
         AddParameter(command, "roles", roles);

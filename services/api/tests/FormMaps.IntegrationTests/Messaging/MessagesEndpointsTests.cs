@@ -413,6 +413,24 @@ public class MessagesEndpointsTests
     }
 
     [Fact]
+    public async Task Broadcast_to_a_group_above_the_maximum_is_400_BROADCAST_TOO_LARGE()
+    {
+        // audit 2026-10-09 D4: mirrors Node — refused whole, with the group size and the maximum.
+        var repo = new FakeRepo { BroadcastResult = BroadcastResult.TooLarge(2345) };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Post, "/api/v1/messages/broadcast",
+            body: """{"recipientGroup":"parents","content":"hi all"}""", role: FormMapsRoles.SchoolAdmin, schoolId: "school-1");
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("BROADCAST_TOO_LARGE", doc.RootElement.GetProperty("code").GetString());
+        Assert.Equal(2345, doc.RootElement.GetProperty("recipientCount").GetInt32());
+        Assert.Equal(BroadcastResult.MaxRecipients, doc.RootElement.GetProperty("maxRecipients").GetInt32());
+    }
+
+    [Fact]
     public async Task Broadcast_with_any_failed_recipient_is_legacy_500_internal_server_error()
     {
         // routes/messages.ts: a rejected recipient inside Promise.all lands in the route's catch ->
