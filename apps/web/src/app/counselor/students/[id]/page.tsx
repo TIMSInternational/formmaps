@@ -1,12 +1,14 @@
 "use client";
 
+import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTranslation } from "react-i18next";
-import { Bell, MessageSquare, Brain, Award, BookOpen, Users } from "lucide-react";
+import { Bell, MessageSquare, Brain, Award, BookOpen, Users, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { InviteParentPanel } from "@/components/school-admin/InviteParentPanel";
+import { RecordTab } from "@/app/school-admin/users/[id]/_components/record-tab";
 import { useMyCounselorStudentDetail } from "@/hooks/useSchoolProfileQueries";
 import {
   useStudentNotes,
@@ -61,7 +63,15 @@ export default function CounselorStudentDetailPage() {
   );
   const counselorAdd = useCounselorAddCourse(studentId);
   const counselorRemove = useCounselorRemoveCourse(studentId);
-  const { data: recsData } = useStudentRecommendations(studentId);
+  // The open tab. Course recommendations are AI-generated, so they load only once the Course Plan
+  // tab has been opened (audit 2026-10-09, perf), not on every visit to the student.
+  const [tab, setTab] = useState("notes");
+  const [coursePlanOpened, setCoursePlanOpened] = useState(false);
+  const openTab = (value: string) => {
+    setTab(value);
+    if (value === "course-plan") setCoursePlanOpened(true);
+  };
+  const { data: recsData } = useStudentRecommendations(studentId, coursePlanOpened);
   const { data: gapsData } = useStudentAcademicGaps(studentId);
   const { data: transcriptData } = useStudentTranscript(studentId);
   const { data: gpaData } = useStudentGpa(studentId);
@@ -116,8 +126,8 @@ export default function CounselorStudentDetailPage() {
 
       <StudentStatCards student={student} />
 
-      <Tabs defaultValue="notes">
-        <TabsList className="grid w-full grid-cols-5">
+      <Tabs value={tab} onValueChange={openTab}>
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="notes">
             <MessageSquare className="h-4 w-4 mr-2" />
             {t("studentDetail.tabNotes", "Counselor Notes")}
@@ -125,6 +135,10 @@ export default function CounselorStudentDetailPage() {
           <TabsTrigger value="assessments">
             <Brain className="h-4 w-4 mr-2" />
             {t("studentDetail.tabAssessments", "Assessments")}
+          </TabsTrigger>
+          <TabsTrigger value="record">
+            <ClipboardList className="h-4 w-4 mr-2" />
+            {t("studentDetail.tabRecord", "Results & Answers")}
           </TabsTrigger>
           <TabsTrigger value="grades">
             <Award className="h-4 w-4 mr-2" />
@@ -153,6 +167,12 @@ export default function CounselorStudentDetailPage() {
           milHistory={milHistory}
           evalGroups={evalGroups}
         />
+
+        {/* audit 2026-10-09 E2: the same Results & Answers view as the school admin's, over the
+            student-record API, which already lets a counselor read their actively assigned students. */}
+        <TabsContent value="record" className="mt-6">
+          <RecordTab studentId={studentId} studentName={student.name} />
+        </TabsContent>
 
         <GradesTab gpaData={gpaData ?? undefined} transcriptData={transcriptData} />
 
