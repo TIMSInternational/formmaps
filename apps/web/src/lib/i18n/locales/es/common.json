@@ -2322,6 +2322,9 @@
       "disclaimer": "Estas estimaciones de coincidencia se basan en los datos de tus evaluaciones y son solo una orientación informativa: no garantizan empleo ni reemplazan la orientación vocacional profesional.",
       "noResults": "No se encontraron carreras",
       "noResultsFilterDesc": "Intenta ajustar tu búsqueda o los filtros para ver más resultados.",
+      "scoresPendingTitle": "Tus coincidencias de carrera aún no están listas",
+      "scoresPendingDesc": "Todavía no pudimos calcular las puntuaciones de coincidencia a partir de tus resultados. Vuelve más tarde o consulta a tu orientador si no cambia.",
+      "clearFilters": "Limpiar filtros",
       "noResultsDesc": "Completa tus evaluaciones ({{list}}) para recibir recomendaciones de carrera personalizadas."
     },
     "search_placeholder": "Busca carreras, habilidades o palabras clave...",

@@ -2322,6 +2322,9 @@
       "disclaimer": "These match estimates are based on your assessment data and are for informational guidance only — not a guarantee of employment and not a substitute for professional career counseling.",
       "noResults": "No careers found",
       "noResultsFilterDesc": "Try adjusting your search or filter criteria to see more results.",
+      "scoresPendingTitle": "Your career matches aren't ready yet",
+      "scoresPendingDesc": "We couldn't calculate match scores from your assessment results yet. Check back later, or ask your counselor if this doesn't change.",
+      "clearFilters": "Clear filters",
       "noResultsDesc": "Complete your assessments ({{list}}) to receive personalized career recommendations."
     },
     "search_placeholder": "Search for careers, skills, or keywords...",
