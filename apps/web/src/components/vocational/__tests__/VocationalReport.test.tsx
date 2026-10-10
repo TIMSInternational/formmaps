@@ -1,5 +1,5 @@
-import { render, screen, waitFor } from "@testing-library/react";
-import { VocationalReport } from "../VocationalReport";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
+import { VocationalReport, resetVocationalReportCache } from "../VocationalReport";
 import * as svc from "@/services/vocationalReportService";
 
 // Real i18next over the shipped common.json, so assertions check rendered copy.
@@ -20,7 +20,7 @@ const r360 = svc.recompute360 as jest.Mock;
 const rInt = svc.recomputeIntegrated as jest.Mock;
 const namesEn = svc.getDimensionNamesEn as jest.Mock;
 
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => { jest.clearAllMocks(); resetVocationalReportCache(); });
 
 const readyScore = { status: "ready", composite: 80, band: "strong", respondentCount: 2, groupsIncluded: ["self", "parent"],
   dimensionScores: [{ key: "d1", nameEs: "Intereses", score: 75, band: "moderateHigh", byGroup: { self: 80 } }],
@@ -97,4 +97,33 @@ it("shows the 'unlock your results' state on a 402 instead of the load error", a
     "href", "/complete-purchase?returnTo=%2Fdashboard%2Fassessments%2Fvocational",
   );
   expect(rInt).not.toHaveBeenCalled();
+});
+
+it("does not recompute again when the same report is reopened, but Refresh does (audit F)", async () => {
+  r360.mockResolvedValue(readyScore);
+  rInt.mockResolvedValue({ status: "not_ready", missing: ["mil"] });
+  const first = render(<VocationalReport evaluatedUserId="stu1" />);
+  await waitFor(() => expect(screen.getByText("Intereses")).toBeInTheDocument());
+  first.unmount();
+
+  render(<VocationalReport evaluatedUserId="stu1" />);
+  await waitFor(() => expect(screen.getByText("Intereses")).toBeInTheDocument());
+  expect(r360).toHaveBeenCalledTimes(1);
+  expect(rInt).toHaveBeenCalledTimes(1);
+
+  fireEvent.click(screen.getByRole("button", { name: /refresh/i }));
+  await waitFor(() => expect(r360).toHaveBeenCalledTimes(2));
+  expect(rInt).toHaveBeenCalledTimes(2);
+});
+
+it("does not cache a failure: reopening after an error asks again", async () => {
+  r360.mockRejectedValueOnce(new Error("500"));
+  const first = render(<VocationalReport evaluatedUserId="stu1" />);
+  await waitFor(() => expect(screen.getByRole("alert")).toBeInTheDocument());
+  first.unmount();
+  r360.mockResolvedValue(readyScore);
+  rInt.mockResolvedValue({ status: "not_ready", missing: ["mil"] });
+  render(<VocationalReport evaluatedUserId="stu1" />);
+  await waitFor(() => expect(screen.getByText("Intereses")).toBeInTheDocument());
+  expect(r360).toHaveBeenCalledTimes(2);
 });
