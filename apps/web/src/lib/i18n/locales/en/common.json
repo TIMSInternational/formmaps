@@ -1728,9 +1728,9 @@
           "label": "Session Reminders",
           "description": "Reminders before upcoming counseling sessions"
         },
-        "weeklyDigest": {
-          "label": "Weekly Digest",
-          "description": "A weekly summary of your activity and progress"
+        "marketingEmails": {
+          "label": "Career tips & product updates",
+          "description": "Occasional emails with career tips and FormMaps news"
         }
       },
       "theme": {

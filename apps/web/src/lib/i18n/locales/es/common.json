@@ -1069,9 +1069,9 @@
           "label": "Recordatorios de sesiones",
           "description": "Recordatorios antes de tus próximas sesiones de orientación"
         },
-        "weeklyDigest": {
-          "label": "Resumen semanal",
-          "description": "Un resumen semanal de tu actividad y tu progreso"
+        "marketingEmails": {
+          "label": "Consejos de carrera y novedades",
+          "description": "Correos ocasionales con consejos de carrera y novedades de FormMaps"
         }
       },
       "theme": {

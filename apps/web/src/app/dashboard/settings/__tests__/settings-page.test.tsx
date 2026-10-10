@@ -90,14 +90,14 @@ describe("Student settings page — real persistence", () => {
 
   it("Save Settings persists toggles via PUT /user/settings with backend field names", async () => {
     render(<StudentSettingsPage />);
-    const digest = await screen.findByRole("switch", { name: /weekly digest/i });
-    fireEvent.click(digest); // false -> true
+    const marketing = await screen.findByRole("switch", { name: /career tips & product updates/i });
+    fireEvent.click(marketing); // false -> true
     fireEvent.click(screen.getByRole("button", { name: /save settings/i }));
 
     await waitFor(() => expect(mockUpdate).toHaveBeenCalledTimes(1));
     expect(mockUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
-        marketingEmails: true, // Weekly Digest maps to marketingEmails
+        marketingEmails: true, // the marketing opt-in toggle maps to marketingEmails
         emailNotifications: true,
         bookingNotifications: true, // Session Reminders maps to bookingNotifications
         shareProgress: true,
@@ -218,5 +218,23 @@ describe("Student settings page — editable display name (#401)", () => {
   it("caps the name at 100 characters", async () => {
     render(<StudentSettingsPage />);
     expect(await screen.findByLabelText(/^name$/i)).toHaveAttribute("maxLength", "100");
+  });
+
+  // audit 2026-10-09 C12: no weekly digest is ever sent, so no toggle may claim one.
+  it("does not offer a Weekly Digest toggle (nothing sends one)", async () => {
+    render(<StudentSettingsPage />);
+    await screen.findByRole("switch", { name: /push notifications/i });
+    expect(screen.queryByRole("switch", { name: /weekly digest/i })).toBeNull();
+    expect(screen.queryByText(/weekly digest/i)).toBeNull();
+  });
+
+  it("the marketing opt-in reflects the saved marketingEmails value", async () => {
+    mockGet.mockResolvedValue({
+      emailNotifications: true, pushNotifications: true, bookingNotifications: true,
+      marketingEmails: true, language: "en", profileVisible: true, shareProgress: true, allowAnalytics: true,
+    });
+    render(<StudentSettingsPage />);
+    const marketing = await screen.findByRole("switch", { name: /career tips & product updates/i });
+    await waitFor(() => expect(marketing).toHaveAttribute("aria-checked", "true"));
   });
 });

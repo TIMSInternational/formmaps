@@ -138,7 +138,12 @@ export default function AssessmentsPage() {
       title: t("dashboard.evaluationTitle"),
       description: t("dashboard.evaluationDescription"),
       status: evaluationAssessment?.status || "not_started",
-      href: "/dashboard/assessments/evaluation",
+      // audit 2026-10-09 C13: "View results" used to land on the invite-management page. With
+      // results in, it opens the student's own vocational 360 report (self-view; the API's
+      // canAccessUser lets a student read their own score).
+      href: evaluationAssessment?.status === "completed"
+        ? "/dashboard/assessments/vocational"
+        : "/dashboard/assessments/evaluation",
       actionLabel: evaluationAssessment?.status === "completed"
         ? t("dashboard.viewResults")
         : evaluationAssessment?.status === "in_progress"

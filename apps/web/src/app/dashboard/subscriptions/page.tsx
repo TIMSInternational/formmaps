@@ -358,7 +358,10 @@ export default function SubscriptionsPage() {
                   </div>
                 ) : hasActive ? (
                   <button
-                    onClick={() => router.push("/subscribe")}
+                    // audit 2026-10-09 C11: /subscribe bounces anyone with a live plan back to
+                    // /dashboard, so switching plans goes through the Stripe billing portal.
+                    onClick={handleManageBilling}
+                    disabled={portalLoading}
                     style={{
                       width: "100%", height: 36, borderRadius: 6, marginBottom: 16,
                       display: "flex", alignItems: "center", justifyContent: "center",

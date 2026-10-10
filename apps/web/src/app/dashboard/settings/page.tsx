@@ -192,7 +192,10 @@ export default function StudentSettingsPage() {
   const [emailNotifications, setEmailNotifications] = useState(true);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [sessionReminders, setSessionReminders] = useState(true);
-  const [weeklyDigest, setWeeklyDigest] = useState(false);
+  // audit 2026-10-09 C12: this used to be a "Weekly Digest" toggle that silently wrote
+  // marketingEmails — nothing sends a weekly digest, so it is now the honest marketing opt-in
+  // (the same consent captured at signup), which the user must be able to withdraw.
+  const [marketingEmails, setMarketingEmails] = useState(false);
 
   // Language preference (local display state only — actual changes go via setLanguage hook)
   const [language, setLocalLanguage] = useState<"en" | "es">("en");
@@ -243,7 +246,7 @@ export default function StudentSettingsPage() {
         setEmailNotifications(settings.emailNotifications);
         setPushNotifications(settings.pushNotifications);
         setSessionReminders(settings.bookingNotifications);
-        setWeeklyDigest(settings.marketingEmails);
+        setMarketingEmails(settings.marketingEmails);
         // Normalise to "en"|"es" — backend may return either code or legacy words.
         const lang: "en" | "es" =
           settings.language === "es" || settings.language === "spanish" ? "es" : "en";
@@ -270,7 +273,7 @@ export default function StudentSettingsPage() {
         emailNotifications,
         pushNotifications,
         bookingNotifications: sessionReminders,
-        marketingEmails: weeklyDigest,
+        marketingEmails,
         language,  // already "en"|"es" from local state
         profileVisible,
         shareProgress,
@@ -373,11 +376,11 @@ export default function StudentSettingsPage() {
             onChange={setSessionReminders}
           />
           <ToggleRow
-            id="weekly-digest"
-            label={t("dashboard.settings.notifications.weeklyDigest.label")}
-            description={t("dashboard.settings.notifications.weeklyDigest.description")}
-            checked={weeklyDigest}
-            onChange={setWeeklyDigest}
+            id="marketing-emails"
+            label={t("dashboard.settings.notifications.marketingEmails.label")}
+            description={t("dashboard.settings.notifications.marketingEmails.description")}
+            checked={marketingEmails}
+            onChange={setMarketingEmails}
           />
         </div>
       </SectionCard>

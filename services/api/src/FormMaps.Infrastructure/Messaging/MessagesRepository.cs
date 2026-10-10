@@ -42,7 +42,15 @@ public sealed class MessagesRepository(
         RequestContext context, string userId, string role, string? schoolId, string? search,
         CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(schoolId)) return [];
+        // audit 2026-10-09 C14 (formmaps#132): a coach has no schoolId, so the school-scoped list below was always
+        // empty for them. A coach's contacts are exactly the students with a non-cancelled booking with them.
+        if (role == "coach") return await GetBookedContactsAsync(userId, search, coachSide: true, cancellationToken);
+
+        // ...and a student can also reach the coaches they booked (independent students have no school at all).
+        var bookedCoaches = role == "student"
+            ? await GetBookedContactsAsync(userId, search, coachSide: false, cancellationToken)
+            : [];
+        if (string.IsNullOrWhiteSpace(schoolId)) return bookedCoaches;
 
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
         var privileged = role is "school_admin" or "super admin" or "counselor";
@@ -80,7 +88,97 @@ public sealed class MessagesRepository(
                 reader.GetString(2),
                 reader.GetString(3)));
         }
+        if (bookedCoaches.Count == 0) return rows;
+        return rows.Concat(bookedCoaches.Where(c => rows.All(r => r.Id != c.Id)))
+            .OrderBy(c => c.Name, StringComparer.OrdinalIgnoreCase)
+            .Take(20)
+            .ToList();
+    }
+
+    /// <summary>
+    /// audit 2026-10-09 C14 (formmaps#132): the coach&lt;-&gt;student messaging relationship is a booking. A coach and a
+    /// school student are mutually invisible under the "users" policy (self OR same non-empty school), so the user
+    /// rows are read on a SYSTEM session — but the predicate is the authorization and is confined to the caller's
+    /// own bookings: <paramref name="coachSide"/> lists the students who booked the calling coach, otherwise the
+    /// coaches the calling student booked. A cancelled (or soft-deleted) booking grants nothing.
+    /// </summary>
+    private async Task<IReadOnlyList<ContactRow>> GetBookedContactsAsync(
+        string userId, string? search, bool coachSide, CancellationToken cancellationToken)
+    {
+        var bookedIds = coachSide
+            ? """SELECT b."studentId" FROM "bookings" b JOIN "coaches" co ON co."id" = b."coachId" WHERE co."userId" = @userId AND b."status" <> 'cancelled' AND b."isActive" = true"""
+            : """SELECT co."userId" FROM "bookings" b JOIN "coaches" co ON co."id" = b."coachId" WHERE b."studentId" = @userId AND b."status" <> 'cancelled' AND b."isActive" = true""";
+        var targetRole = coachSide ? "student" : "coach";
+        var sql = $"""
+            SELECT u."id", u."name", u."email", u."roleName" FROM "users" u
+            WHERE u."id" IN ({bookedIds}) AND lower(u."roleName") = '{targetRole}' AND u."isActive" = true AND u."id" <> @userId
+            {(string.IsNullOrWhiteSpace(search) ? "" : """AND (u."name" ILIKE @search OR u."email" ILIKE @search)""")}
+            ORDER BY u."name" ASC LIMIT 20
+            """;
+
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
+        await using var command = Command(session, sql);
+        AddParameter(command, "userId", userId);
+        if (!string.IsNullOrWhiteSpace(search)) AddParameter(command, "search", $"%{search}%");
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        var rows = new List<ContactRow>();
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            rows.Add(new ContactRow(
+                reader.GetString(0), reader.IsDBNull(1) ? null : reader.GetString(1), reader.GetString(2), reader.GetString(3)));
+        }
         return rows;
+    }
+
+    /// <summary>audit 2026-10-09 C14: true when <paramref name="studentId"/> has a non-cancelled, active booking with
+    /// the coach whose user id is <paramref name="coachUserId"/>. bookings/coaches carry no RLS policy (escalated in
+    /// 007-self-scoped.sql), so this runs on the caller's own session.</summary>
+    private static async Task<bool> HasCoachBookingAsync(
+        FormMapsDatabaseSession session, string coachUserId, string studentId, CancellationToken cancellationToken)
+    {
+        await using var command = Command(session, """
+            SELECT 1 FROM "bookings" b JOIN "coaches" co ON co."id" = b."coachId"
+            WHERE co."userId" = @coachUserId AND b."studentId" = @studentId AND b."status" <> 'cancelled' AND b."isActive" = true
+            LIMIT 1
+            """);
+        AddParameter(command, "coachUserId", coachUserId);
+        AddParameter(command, "studentId", studentId);
+        return await command.ExecuteScalarAsync(cancellationToken) is not null;
+    }
+
+    /// <summary>
+    /// audit 2026-10-09 C14: names/emails of conversation participants the caller cannot see under the "users"
+    /// policy (a coach and a booked school student are mutually invisible). Callers pass ONLY the other participant
+    /// of a conversation they have already proven they are in, so the system read cannot widen past that.
+    /// </summary>
+    private async Task<Dictionary<string, (string? Name, string Email)>> LookupParticipantsAsSystemAsync(
+        IReadOnlyCollection<string> participantIds, CancellationToken cancellationToken)
+    {
+        var found = new Dictionary<string, (string? Name, string Email)>();
+        if (participantIds.Count == 0) return found;
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
+        await using var command = Command(session, """SELECT "id", "name", "email" FROM "users" WHERE "id" = ANY(@ids)""");
+        AddParameter(command, "ids", participantIds.Distinct().ToArray());
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+        while (await reader.ReadAsync(cancellationToken))
+            found[reader.GetString(0)] = (reader.IsDBNull(1) ? null : reader.GetString(1), reader.GetString(2));
+        return found;
+    }
+
+    private async Task<ConversationRow> FillHiddenParticipantsAsync(ConversationRow row, CancellationToken cancellationToken)
+    {
+        if (row.AEmail is not null && row.BEmail is not null) return row;
+        var hidden = new List<string>();
+        if (row.AEmail is null) hidden.Add(row.ParticipantAId);
+        if (row.BEmail is null) hidden.Add(row.ParticipantBId);
+        var found = await LookupParticipantsAsSystemAsync(hidden, cancellationToken);
+        return row with
+        {
+            AName = row.AEmail is null && found.TryGetValue(row.ParticipantAId, out var a) ? a.Name : row.AName,
+            AEmail = row.AEmail ?? (found.TryGetValue(row.ParticipantAId, out var ae) ? ae.Email : ""),
+            BName = row.BEmail is null && found.TryGetValue(row.ParticipantBId, out var b) ? b.Name : row.BName,
+            BEmail = row.BEmail ?? (found.TryGetValue(row.ParticipantBId, out var be) ? be.Email : ""),
+        };
     }
 
     private static async Task<IReadOnlyList<string>> GetAssignedCounselorIdsAsync(
@@ -141,8 +239,8 @@ public sealed class MessagesRepository(
                 c."lastMessagePreview", c."lastMessageAt",
                 COALESCE(uc."cnt", 0)::int AS "unreadCount"
             FROM "conversations" c
-            JOIN "users" ua ON ua."id" = c."participantAId"
-            JOIN "users" ub ON ub."id" = c."participantBId"
+            LEFT JOIN "users" ua ON ua."id" = c."participantAId"
+            LEFT JOIN "users" ub ON ub."id" = c."participantBId"
             LEFT JOIN (
                 SELECT m."conversationId", count(*) AS "cnt" FROM "messages" m
                 WHERE m."senderId" <> @userId AND m."readAt" IS NULL
@@ -152,18 +250,29 @@ public sealed class MessagesRepository(
             ORDER BY c."lastMessageAt" DESC NULLS FIRST
             """);
         AddParameter(command, "userId", userId);
-        await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         var rows = new List<ConversationSummary>();
-        while (await reader.ReadAsync(cancellationToken))
+        var hidden = new List<string>();
+        await using (var reader = await command.ExecuteReaderAsync(cancellationToken))
         {
-            rows.Add(new ConversationSummary(
-                reader.GetString(0), reader.GetString(1),
-                reader.IsDBNull(2) ? null : reader.GetString(2), reader.GetString(3),
-                reader.IsDBNull(4) ? null : reader.GetString(4),
-                reader.IsDBNull(5) ? null : IsoZ(reader.GetDateTime(5)),
-                reader.GetInt32(6)));
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                // audit 2026-10-09 C14: LEFT JOIN — an inner join silently dropped every coach<->student thread,
+                // because the other participant's "users" row is invisible to the caller under RLS.
+                if (reader.IsDBNull(3)) hidden.Add(reader.GetString(1));
+                rows.Add(new ConversationSummary(
+                    reader.GetString(0), reader.GetString(1),
+                    reader.IsDBNull(2) ? null : reader.GetString(2), reader.IsDBNull(3) ? "" : reader.GetString(3),
+                    reader.IsDBNull(4) ? null : reader.GetString(4),
+                    reader.IsDBNull(5) ? null : IsoZ(reader.GetDateTime(5)),
+                    reader.GetInt32(6)));
+            }
         }
-        return rows;
+        if (hidden.Count == 0) return rows;
+        // Every id here is the other participant of a conversation the WHERE clause proved the caller is in.
+        var found = await LookupParticipantsAsSystemAsync(hidden, cancellationToken);
+        return rows.Select(r => found.TryGetValue(r.OtherParticipantId, out var u) && r.OtherParticipantEmail == ""
+            ? r with { OtherParticipantName = u.Name, OtherParticipantEmail = u.Email }
+            : r).ToList();
     }
 
     private DateTime NowTruncated() =>
@@ -188,7 +297,22 @@ public sealed class MessagesRepository(
         await using var session = await databaseSessionFactory.OpenWritableAsync(context, cancellationToken);
 
         var currentSchoolId = schoolId;
+
+        // audit 2026-10-09 C14 (formmaps#132): a coach may reach exactly the students with a non-cancelled booking
+        // with them, and those students their coach — nobody else. The pair is mutually invisible under the "users"
+        // policy, so only once the booking proves the relationship is the target read on a SYSTEM session.
+        var bookingLinked = role switch
+        {
+            "coach" => await HasCoachBookingAsync(session, userId, targetId, cancellationToken),
+            "student" => await HasCoachBookingAsync(session, targetId, userId, cancellationToken),
+            _ => false,
+        };
         var (targetSchoolId, targetRole) = await LookupUserAsync(session, targetId, cancellationToken);
+        if (targetRole is null && bookingLinked)
+        {
+            await using var systemSession = await databaseSessionFactory.OpenReadOnlyAsync(RequestContext.System(), cancellationToken);
+            (targetSchoolId, targetRole) = await LookupUserAsync(systemSession, targetId, cancellationToken);
+        }
         if (targetRole is null)
             return new CreateConversationResult(CreateConversationStatus.RecipientNotFound, null, "Recipient not found");
 
@@ -206,10 +330,19 @@ public sealed class MessagesRepository(
         }
         else if (!isSuperAdmin)
         {
+            // audit 2026-10-09 C14: coach was allow-by-omission (any user, any school). Now booking-bounded; an
+            // ineligible target answers exactly like a nonexistent one so this is not a user-existence oracle.
+            if (role == "coach" && !(bookingLinked && targetRole.ToLowerInvariant() == "student"))
+                return new CreateConversationResult(CreateConversationStatus.RecipientNotFound, null, "Recipient not found");
+
             if (role == "student")
             {
                 var normalizedTargetRole = targetRole.ToLowerInvariant();
-                if (normalizedTargetRole == "counselor")
+                if (normalizedTargetRole == "coach")
+                {
+                    if (!bookingLinked) return new CreateConversationResult(CreateConversationStatus.Forbidden, null, "You can only message a coach you have booked");
+                }
+                else if (normalizedTargetRole == "counselor")
                 {
                     var assigned = await HasActiveAssignmentAsync(session, userId, targetId, cancellationToken);
                     if (!assigned) return new CreateConversationResult(CreateConversationStatus.Forbidden, null, "You are not assigned to this counselor");
@@ -255,6 +388,7 @@ public sealed class MessagesRepository(
         if (existing is not null)
         {
             await session.CommitAsync(cancellationToken);
+            existing = await FillHiddenParticipantsAsync(existing, cancellationToken);
             return new CreateConversationResult(CreateConversationStatus.Existing, ToSummary(existing, userId), null);
         }
 
@@ -277,6 +411,7 @@ public sealed class MessagesRepository(
         var created = await FindConversationRowAsync(session, participantAId, participantBId, cancellationToken)
             ?? throw new InvalidOperationException("conversation vanished immediately after insert");
         await session.CommitAsync(cancellationToken);
+        created = await FillHiddenParticipantsAsync(created, cancellationToken);
         return new CreateConversationResult(CreateConversationStatus.Created, ToSummary(created, userId), null);
     }
 
@@ -314,9 +449,10 @@ public sealed class MessagesRepository(
         }
 
         var rows = new List<MessageRow>();
+        var hiddenSenders = new HashSet<string>();
         await using (var listCmd = Command(session, """
-            SELECT m."id", m."conversationId", m."senderId", u."name", m."content", m."readAt", m."createdDate"
-            FROM "messages" m JOIN "users" u ON u."id" = m."senderId"
+            SELECT m."id", m."conversationId", m."senderId", u."name", m."content", m."readAt", m."createdDate", u."id" IS NULL
+            FROM "messages" m LEFT JOIN "users" u ON u."id" = m."senderId"
             WHERE m."conversationId" = @cid ORDER BY m."createdDate" DESC, m."id" DESC OFFSET @offset LIMIT @limit
             """))
         {
@@ -326,6 +462,7 @@ public sealed class MessagesRepository(
             await using var reader = await listCmd.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
+                if (reader.GetBoolean(7)) hiddenSenders.Add(reader.GetString(2));
                 rows.Add(new MessageRow(
                     reader.GetString(0), reader.GetString(1), reader.GetString(2),
                     reader.IsDBNull(3) ? null : reader.GetString(3), reader.GetString(4),
@@ -336,6 +473,15 @@ public sealed class MessagesRepository(
         // Page 1 is the NEWEST page (audit 2026-10-09 C6): oldest-first paging showed the first 50 messages of
         // a long thread forever, so anything newer never appeared. Each page is still returned oldest-first.
         rows.Reverse();
+
+        // audit 2026-10-09 C14: the LEFT JOIN keeps messages whose sender the caller cannot see under RLS (the
+        // coach<->student case); senders are participants of a conversation proven above to include the caller.
+        if (hiddenSenders.Count > 0)
+        {
+            var found = await LookupParticipantsAsSystemAsync(hiddenSenders, cancellationToken);
+            rows = rows.Select(r => hiddenSenders.Contains(r.SenderId) && found.TryGetValue(r.SenderId, out var u)
+                ? r with { SenderName = u.Name } : r).ToList();
+        }
 
         var now = NowTruncated();
         await using (var markReadCmd = Command(session, """
@@ -374,6 +520,7 @@ public sealed class MessagesRepository(
         var conversation = await FindConversationRowAsync(session, conversationId, cancellationToken);
         if (conversation is null || (conversation.ParticipantAId != userId && conversation.ParticipantBId != userId))
             return new SendMessageResult(SendMessageStatus.NotFound, null, null, null, null, null);
+        conversation = await FillHiddenParticipantsAsync(conversation, cancellationToken);
 
         var otherId = conversation.ParticipantAId == userId ? conversation.ParticipantBId : conversation.ParticipantAId;
         if (await IsBlockedBetweenAsync(session, userId, otherId, cancellationToken))
@@ -406,7 +553,7 @@ public sealed class MessagesRepository(
             await update.ExecuteNonQueryAsync(cancellationToken);
         }
 
-        var recipientEmail = conversation.ParticipantAId == userId ? conversation.BEmail : conversation.AEmail;
+        var recipientEmail = (conversation.ParticipantAId == userId ? conversation.BEmail : conversation.AEmail) ?? "";
         var senderName = (conversation.ParticipantAId == userId ? conversation.AName : conversation.BName) ?? "";
 
         await using (var outbox = Command(session, """
@@ -454,8 +601,8 @@ public sealed class MessagesRepository(
     }
 
     private sealed record ConversationRow(
-        string Id, string ParticipantAId, string ParticipantBId, string? AName, string AEmail,
-        string? BName, string BEmail, string? LastMessagePreview, string? LastMessageAt);
+        string Id, string ParticipantAId, string ParticipantBId, string? AName, string? AEmail,
+        string? BName, string? BEmail, string? LastMessagePreview, string? LastMessageAt);
 
     private static ConversationSummary ToSummary(ConversationRow row, string userId)
     {
@@ -464,7 +611,7 @@ public sealed class MessagesRepository(
             row.Id,
             iAmA ? row.ParticipantBId : row.ParticipantAId,
             iAmA ? row.BName : row.AName,
-            iAmA ? row.BEmail : row.AEmail,
+            (iAmA ? row.BEmail : row.AEmail) ?? "",
             row.LastMessagePreview, row.LastMessageAt, 0);
     }
 
@@ -485,8 +632,8 @@ public sealed class MessagesRepository(
             SELECT c."id", c."participantAId", c."participantBId", ua."name", ua."email", ub."name", ub."email",
                    c."lastMessagePreview", c."lastMessageAt"
             FROM "conversations" c
-            JOIN "users" ua ON ua."id" = c."participantAId"
-            JOIN "users" ub ON ub."id" = c."participantBId"
+            LEFT JOIN "users" ua ON ua."id" = c."participantAId"
+            LEFT JOIN "users" ub ON ub."id" = c."participantBId"
             {whereClause}
             """);
         if (conversationId is not null)
@@ -503,8 +650,8 @@ public sealed class MessagesRepository(
         if (!await reader.ReadAsync(cancellationToken)) return null;
         return new ConversationRow(
             reader.GetString(0), reader.GetString(1), reader.GetString(2),
-            reader.IsDBNull(3) ? null : reader.GetString(3), reader.GetString(4),
-            reader.IsDBNull(5) ? null : reader.GetString(5), reader.GetString(6),
+            reader.IsDBNull(3) ? null : reader.GetString(3), reader.IsDBNull(4) ? null : reader.GetString(4),
+            reader.IsDBNull(5) ? null : reader.GetString(5), reader.IsDBNull(6) ? null : reader.GetString(6),
             reader.IsDBNull(7) ? null : reader.GetString(7),
             reader.IsDBNull(8) ? null : IsoZ(reader.GetDateTime(8)));
     }
