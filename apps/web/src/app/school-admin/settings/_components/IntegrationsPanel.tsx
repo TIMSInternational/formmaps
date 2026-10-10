@@ -9,28 +9,24 @@ import {
   CheckCircle2, AlertTriangle, Database, ArrowUpDown, Eye, EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
-import { saveIsamsConfig, getIsamsStatus, triggerIsamsSync } from "@/services/isamsService";
+import { saveIsamsConfig, getIsamsStatus, triggerIsamsSync, testIsamsConnection } from "@/services/isamsService";
 import { useSchoolAdminAccess } from "@/hooks/useSchoolAdminAccess";
 
+// audit 2026-10-09 C17: only the (non-secret) endpoint is remembered in this tab, and only after
+// the server accepted the save. The API key is never written to browser storage, and the
+// connection / last-sync state always comes from the server — never from a local cache.
 const STORAGE_KEY = "isams_config_local";
 
-function loadLocalConfig() {
+function loadLocalEndpoint(): string {
   try {
     const s = sessionStorage.getItem(STORAGE_KEY);
-    if (s) {
-      const cfg = JSON.parse(s);
-      return { endpoint: cfg.endpoint || "", apiKey: "", lastSync: cfg.lastSync || null, connected: cfg.connected ?? false };
-    }
+    if (s) return JSON.parse(s).endpoint || "";
   } catch {}
-  return { endpoint: "", apiKey: "", lastSync: null, connected: false };
+  return "";
 }
 
-function saveLocalConfig(cfg: any) {
-  sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
-    endpoint: cfg.endpoint,
-    lastSync: cfg.lastSync,
-    connected: cfg.connected,
-  }));
+function saveLocalEndpoint(endpoint: string) {
+  try { sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ endpoint })); } catch {}
 }
 
 export default function IntegrationsPanel() {
@@ -47,25 +43,33 @@ export default function IntegrationsPanel() {
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
-    const cfg = loadLocalConfig();
-    if (cfg.endpoint) setEndpoint(cfg.endpoint);
-    if (cfg.apiKey) setApiKey(cfg.apiKey);
-    if (cfg.lastSync) setLastSync(cfg.lastSync);
-    if (cfg.connected != null) setConnected(cfg.connected);
+    const saved = loadLocalEndpoint();
+    if (saved) setEndpoint(saved);
   }, []);
+
+  useEffect(() => {
+    if (!schoolId) return;
+    let cancelled = false;
+    getIsamsStatus(schoolId).then((status) => {
+      if (cancelled) return;
+      setConnected(status.configured ? status.connected : null);
+      setLastSync(status.lastSyncAt);
+    });
+    return () => { cancelled = true; };
+  }, [schoolId]);
 
   const handleSave = async () => {
     if (!endpoint.trim()) { toast.error(t("settings.integrationsPanel.endpointRequired")); return; }
+    if (!schoolId) { toast.error(t("settings.integrationsPanel.configSaveFailed")); return; }
     setLoading(true);
     try {
-      if (schoolId) await saveIsamsConfig(schoolId, { endpoint, apiKey });
-      saveLocalConfig({ endpoint, apiKey, lastSync, connected });
+      await saveIsamsConfig(schoolId, { endpoint, apiKey });
+      saveLocalEndpoint(endpoint);
       toast.success(t("settings.integrationsPanel.configSaved"));
       setHasChanges(false);
     } catch {
-      saveLocalConfig({ endpoint, apiKey, lastSync, connected });
-      toast.success(t("settings.integrationsPanel.configSavedLocally"));
-      setHasChanges(false);
+      // audit 2026-10-09 C17: a failed save is a failure — nothing is stored and nothing says "saved".
+      toast.error(t("settings.integrationsPanel.configSaveFailed"));
     } finally {
       setLoading(false);
     }
@@ -73,19 +77,14 @@ export default function IntegrationsPanel() {
 
   const handleTest = async () => {
     if (!endpoint.trim()) { toast.error(t("settings.integrationsPanel.enterEndpoint")); return; }
+    if (!schoolId) { toast.error(t("settings.integrationsPanel.connectionTestFailed")); return; }
     setTesting(true);
     try {
-      if (schoolId) {
-        const status = await getIsamsStatus(schoolId);
-        setConnected(status.connected ?? false);
-        saveLocalConfig({ endpoint, apiKey, lastSync, connected: status.connected });
-        toast[status.connected ? "success" : "error"](status.connected ? t("settings.integrationsPanel.connectionSuccess") : t("settings.integrationsPanel.connectionFailed"));
-      } else {
-        const isValid = endpoint.startsWith("http");
-        setConnected(isValid);
-        saveLocalConfig({ endpoint, apiKey, lastSync, connected: isValid });
-        toast[isValid ? "success" : "error"](isValid ? t("settings.integrationsPanel.connectionTestPassed") : t("settings.integrationsPanel.invalidEndpoint"));
-      }
+      // audit 2026-10-09 C17: contact iSAMS for real and report the server's verdict.
+      const result = await testIsamsConnection(schoolId, { endpoint: endpoint.trim(), apiKey: apiKey || undefined });
+      setConnected(result.connected);
+      if (result.connected) toast.success(t("settings.integrationsPanel.connectionSuccess"));
+      else toast.error(t("settings.integrationsPanel.failedCheck"), result.message ? { description: result.message } : undefined);
     } catch {
       setConnected(false);
       toast.error(t("settings.integrationsPanel.connectionTestFailed"));
@@ -98,9 +97,7 @@ export default function IntegrationsPanel() {
     setSyncing(true);
     try {
       if (schoolId) await triggerIsamsSync(schoolId);
-      const now = new Date().toISOString();
-      setLastSync(now);
-      saveLocalConfig({ endpoint, apiKey, lastSync: now, connected });
+      setLastSync(new Date().toISOString());
       toast.success(t("settings.integrationsPanel.syncTriggered"));
     } catch {
       toast.error(t("settings.integrationsPanel.syncFailed"));

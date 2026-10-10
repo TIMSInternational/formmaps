@@ -621,6 +621,7 @@
       "endpointRequired": "La URL del endpoint es obligatoria",
       "configSaved": "Configuración guardada",
       "configSavedLocally": "Configuración guardada localmente",
+      "configSaveFailed": "No se pudo guardar la configuración. No se almacenó nada; inténtalo de nuevo.",
       "enterEndpoint": "Primero ingresa un endpoint",
       "connectionSuccess": "Conexión exitosa",
       "connectionFailed": "Conexión fallida",

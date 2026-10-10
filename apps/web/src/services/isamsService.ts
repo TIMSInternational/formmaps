@@ -32,6 +32,29 @@ export async function getIsamsStatus(schoolId: string): Promise<IsamsStatus> {
   }
 }
 
+export interface IsamsTestResult {
+  connected: boolean;
+  message: string;
+}
+
+// audit 2026-10-09 C17: "Test connection" used to read the cached status (or just check the URL
+// started with "http") — it never contacted iSAMS. This calls the real test endpoint. With no
+// apiKey, the server tests the school's stored credentials. Errors propagate to the caller.
+export async function testIsamsConnection(
+  schoolId: string,
+  payload: { endpoint: string; apiKey?: string }
+): Promise<IsamsTestResult> {
+  const res = await apiRequest(
+    `/api/v1/school-admin/integrations/isams/test?schoolId=${encodeURIComponent(schoolId)}`,
+    {
+      method: "POST",
+      data: { endpoint: payload.endpoint, authType: "api_key", ...(payload.apiKey ? { credentials: payload.apiKey } : {}) },
+    }
+  );
+  const data = res?.data ?? res;
+  return { connected: !!data?.connected, message: typeof data?.message === "string" ? data.message : "" };
+}
+
 export async function triggerIsamsSync(schoolId: string) {
   return await apiRequest(
     `/api/v1/school-admin/integrations/isams/sync?schoolId=${encodeURIComponent(schoolId)}`,
