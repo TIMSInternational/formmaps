@@ -185,6 +185,18 @@ public static class MessagesEndpoints
 
         var result = await repository.BroadcastAsync(
             context, context.Tenant.UserId, role, context.Tenant.SchoolId, body.RecipientGroup, body.Content, cancellationToken);
+        if (result.RefusedGroupSize is { } groupSize)
+        {
+            // audit 2026-10-09 D4: refuse the whole broadcast rather than silently reach only part of the group.
+            return Results.Json(new
+            {
+                success = false,
+                code = "BROADCAST_TOO_LARGE",
+                message = $"This group has {groupSize} recipients; a broadcast can reach at most {BroadcastResult.MaxRecipients}.",
+                recipientCount = groupSize,
+                maxRecipients = BroadcastResult.MaxRecipients,
+            }, statusCode: StatusCodes.Status400BadRequest);
+        }
         if (result.Failures.Count > 0)
         {
             // Legacy: a rejected recipient inside Promise.all lands in the route's catch -> 500 "Internal

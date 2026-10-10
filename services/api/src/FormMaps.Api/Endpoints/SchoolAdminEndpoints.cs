@@ -386,13 +386,16 @@ public static class SchoolAdminEndpoints
                 name = r.Name,
                 email = r.Email,
                 gradeLevel = r.GradeLevel,
-                // Emit the dictionary directly: legacy pca keys are the verbatim EXAM_TYPES names (PascalCase),
-                // and Web-default JSON leaves DictionaryKeyPolicy null so keys are NOT camelCased; the reader
-                // builds the dict in EXAM_TYPES insertion order, which STJ preserves.
-                pca = r.Pca,
-                mil = r.Mil,
+                // Emit the dictionary directly: lia keys are the verbatim EXAM_TYPES names (PascalCase), and
+                // Web-default JSON leaves DictionaryKeyPolicy null so keys are NOT camelCased; the reader builds
+                // the dict in EXAM_TYPES insertion order, which STJ preserves.
+                lia = r.Lia,
+                pcaStatus = r.PcaStatus,
+                // Deprecated alias of lia for web builds deployed before audit D1 (same as Node).
+                pca = r.Lia,
                 eval360 = r.Eval360,
-                eval360Detail = new { total = r.Eval360Detail.Total, completed = r.Eval360Detail.Completed }
+                eval360Detail = new { total = r.Eval360Detail.Total, completed = r.Eval360Detail.Completed },
+                personality = r.Personality
             })
         });
     }
@@ -695,11 +698,20 @@ public static class SchoolAdminEndpoints
             }
 
             if (!TryTruthyString(el, "assessmentType", out var type)) { continue; }
+
+            // Audit D7: `clear: true` removes the window (the grid and the calendar share this store).
+            if (el.TryGetProperty("clear", out var clearEl) && clearEl.ValueKind == JsonValueKind.True)
+            {
+                items.Add(new ScheduleUpsertItem(gradeLevel, type, default, default, Clear: true));
+                continue;
+            }
+
             if (!TryTruthyString(el, "startDate", out var startRaw)) { continue; }
             if (!TryTruthyString(el, "endDate", out var endRaw)) { continue; }
 
             if (!TryParseDate(startRaw, out var start)) { error = "Invalid startDate"; return false; }
             if (!TryParseDate(endRaw, out var end)) { error = "Invalid endDate"; return false; }
+            if (end < start) { error = "endDate must be on or after startDate"; return false; }
 
             items.Add(new ScheduleUpsertItem(gradeLevel, type, start, end));
         }

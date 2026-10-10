@@ -296,6 +296,28 @@ public class GraduationRulesEndpointsTests
         Assert.Equal("off_track", row.GetProperty("status").GetString());
     }
 
+    // audit 2026-10-09 D6
+    [Fact]
+    public async Task Progress_list_passes_the_search_and_emits_the_summary()
+    {
+        using var factory = new Factory
+        {
+            Reader = { Page = new GraduationProgressPage([], 0, 1, 20, 0, new GraduationProgressSummary(40, 25, 10, 5, 71)) }
+        };
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Get, Base + "/progress?search=ada");
+
+        Assert.Equal("ada", factory.Reader.SeenSearch);
+        using var doc = await Json(response);
+        var summary = doc.RootElement.GetProperty("data").GetProperty("summary");
+        Assert.Equal(40, summary.GetProperty("total").GetInt32());
+        Assert.Equal(25, summary.GetProperty("onTrack").GetInt32());
+        Assert.Equal(10, summary.GetProperty("atRisk").GetInt32());
+        Assert.Equal(5, summary.GetProperty("offTrack").GetInt32());
+        Assert.Equal(71, summary.GetProperty("avgProgress").GetInt32());
+    }
+
     [Fact]
     public async Task Student_progress_404s_and_emits_the_two_key_message_shape()
     {
@@ -449,6 +471,7 @@ public class GraduationRulesEndpointsTests
 
         public string? SeenAcademicYearId { get; private set; }
 
+        public string? SeenSearch { get; private set; }
         public int SeenPage { get; private set; }
 
         public int SeenLimit { get; private set; }
@@ -462,8 +485,9 @@ public class GraduationRulesEndpointsTests
 
         public Task<GraduationProgressPage> GetProgressListAsync(
             RequestContext context, string schoolId, int page, int limit, string? status, string? sortBy,
-            CancellationToken cancellationToken = default)
+            CancellationToken cancellationToken = default, string? search = null)
         {
+            SeenSearch = search;
             SeenPage = page;
             SeenLimit = limit;
             return Task.FromResult(Page);

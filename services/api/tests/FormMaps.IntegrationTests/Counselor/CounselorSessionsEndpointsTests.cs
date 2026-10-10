@@ -64,6 +64,25 @@ public class CounselorSessionsEndpointsTests
         Assert.Equal("ev1", row.GetProperty("calendarEventIds").GetProperty("a").GetString()); // verbatim jsonb
     }
 
+    [Fact]
+    public async Task Upcoming_flag_and_counts_reach_the_page()
+    {
+        var repo = new FakeRepo { Page = new SessionsPage([], 0, new SessionCounts(Upcoming: 4, Completed: 7, Cancelled: 1)) };
+        using var factory = new Factory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await Send(client, HttpMethod.Get, ListPath + "?upcoming=true&limit=3");
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var data = doc.RootElement.GetProperty("data");
+        Assert.True(repo.LastUpcomingOnly);
+        Assert.Equal(4, data.GetProperty("upcoming").GetInt32());
+        Assert.Equal(7, data.GetProperty("completed").GetInt32());
+        Assert.Equal(1, data.GetProperty("cancelled").GetInt32());
+
+        await Send(client, HttpMethod.Get, ListPath);
+        Assert.False(repo.LastUpcomingOnly); // off unless asked
+    }
+
     [Theory]
     [InlineData("?limit=999", 50)]
     [InlineData("?limit=abc", 20)]
@@ -209,12 +228,15 @@ public class CounselorSessionsEndpointsTests
         public int LastLimit { get; private set; }
         public string? LastNotes { get; private set; }
 
+        public bool LastUpcomingOnly { get; private set; }
+
         public Task<SessionsPage> ListAsync(
             RequestContext context, string counselorId, string? statusFilter, int page, int limit,
-            CancellationToken cancellationToken = default)
+            bool upcomingOnly = false, CancellationToken cancellationToken = default)
         {
             LastStatusFilter = statusFilter;
             LastLimit = limit;
+            LastUpcomingOnly = upcomingOnly;
             return Task.FromResult(Page);
         }
 

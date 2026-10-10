@@ -11,7 +11,7 @@ import {
 interface AlertSummary {
   total?: number;
   byPriority?: { critical?: number; high?: number };
-  newSinceLastLogin?: number;
+  unread?: number;
 }
 
 interface AlertsSummaryStatsProps {
@@ -24,7 +24,7 @@ export function AlertsSummaryStats({ summary }: AlertsSummaryStatsProps) {
     { label: t("ui.alerts.totalAlerts"), value: summary.total ?? 0, icon: Bell, color: "#6b7280" },
     { label: t("ui.alerts.criticalPriority"), value: summary.byPriority?.critical ?? 0, icon: AlertTriangle, color: "#ef4444" },
     { label: t("ui.alerts.highPriority"), value: summary.byPriority?.high ?? 0, icon: AlertCircle, color: "#f59e0b" },
-    { label: t("ui.alerts.newSinceLogin"), value: summary.newSinceLastLogin ?? 0, icon: CheckCircle2, color: "#8b5cf6" },
+    { label: t("ui.alerts.unread"), value: summary.unread ?? 0, icon: CheckCircle2, color: "#8b5cf6" },
   ];
 
   return (

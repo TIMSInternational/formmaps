@@ -157,6 +157,45 @@ public sealed class SchoolAdminWriterTests : IClassFixture<SchoolAdminDatabaseFi
     }
 
     [Fact]
+    public async Task Schedule_clear_deactivates_and_saving_again_reactivates()
+    {
+        var s = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Unspecified);
+        var e = new DateTime(2026, 3, 20, 0, 0, 0, DateTimeKind.Unspecified);
+        var first = await Writer().UpsertSchedulesAsync(Ctx(), School, Actor, [new ScheduleUpsertItem(10, "360", s, e)]);
+
+        var cleared = await Writer().UpsertSchedulesAsync(Ctx(), School, "editor-2",
+            [new ScheduleUpsertItem(10, "360", default, default, Clear: true)]);
+        Assert.Empty(cleared); // a cleared window is not returned as a saved row
+        Assert.Equal((false, "editor-2"), await ActiveAndUpdatedBy(first[0].Id));
+
+        var again = await Writer().UpsertSchedulesAsync(Ctx(), School, Actor, [new ScheduleUpsertItem(10, "360", s, e)]);
+        var row = Assert.Single(again);
+        Assert.Equal(first[0].Id, row.Id);
+        Assert.True(row.IsActive);
+    }
+
+    [Fact]
+    public async Task Schedule_clear_of_a_missing_window_writes_nothing()
+    {
+        var rows = await Writer().UpsertSchedulesAsync(Ctx(), School, Actor,
+            [new ScheduleUpsertItem(12, "PCA", default, default, Clear: true)]);
+        Assert.Empty(rows);
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand("""SELECT COUNT(*) FROM "assessment_schedules" """, conn);
+        Assert.Equal(0L, (long)(await cmd.ExecuteScalarAsync())!);
+    }
+
+    private async Task<(bool, string?)> ActiveAndUpdatedBy(string id)
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await using var cmd = new NpgsqlCommand("""SELECT "isActive", "updatedBy" FROM "assessment_schedules" WHERE "id" = @id""", conn);
+        cmd.Parameters.AddWithValue("id", id);
+        await using var r = await cmd.ExecuteReaderAsync();
+        await r.ReadAsync();
+        return (r.GetBoolean(0), r.IsDBNull(1) ? null : r.GetString(1));
+    }
+
+    [Fact]
     public async Task Schedule_empty_list_writes_nothing()
     {
         var rows = await Writer().UpsertSchedulesAsync(Ctx(), School, Actor, []);

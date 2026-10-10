@@ -121,7 +121,7 @@ public sealed class SchoolStudentsParentsReaderTests : IClassFixture<SchoolStude
     // ---- listParents ----
 
     [Fact]
-    public async Task ListParents_groups_by_lower_email_keep_first_and_counts_links()
+    public async Task ListParents_groups_by_lower_email_keep_first_and_counts_parents()
     {
         await using var conn = await _adminDataSource.OpenConnectionAsync();
         await SeedUser(conn, "s1", School, name: "Ada", gradeLevel: 11);
@@ -136,7 +136,7 @@ public sealed class SchoolStudentsParentsReaderTests : IClassFixture<SchoolStude
 
         var page = await Reader().ListParentsAsync(Ctx(), School, Query(limit: 20));
 
-        Assert.Equal(3, page.Total);                 // THREE in-school links (l1,l2,l3)
+        Assert.Equal(2, page.Total);                 // audit 2026-10-09 D10: TWO parents (it used to count the 3 links)
         Assert.Equal(2, page.Data.Count);            // grouped to TWO parents
         var pat = page.Data[0];                        // l1 first (createdDate DESC)
         Assert.Equal("l1", pat.Id);
@@ -144,12 +144,32 @@ public sealed class SchoolStudentsParentsReaderTests : IClassFixture<SchoolStude
         Assert.Equal("u9", pat.ParentUserId);
         Assert.Equal(new[] { "s1", "s2" }, pat.Students.Select(s => s.Id).ToArray()); // both students appended
         Assert.Equal(11, pat.Students[0].GradeLevel);
-        // ASYMMETRY (faithful): the DISPLAY grouping (data) is case-INSENSITIVE (parentEmail.toLowerCase) → 2 parents,
-        // but stats.totalParents mirrors Prisma groupBy on the RAW parentEmail (case-SENSITIVE) → "Pat@e.st" and
-        // "pat@e.st" count as DISTINCT → 3. linkedStudents/pendingInvites are raw link counts (3 each).
-        Assert.Equal(3, page.Stats.TotalParents);
+        Assert.Equal(new[] { "l1", "l2" }, pat.Students.Select(s => s.LinkId).ToArray()); // each child's OWN link
+        // audit 2026-10-09 D10: totalParents is case-INSENSITIVE like the grouping ("Pat@e.st" = "pat@e.st") → 2.
+        // linkedStudents/pendingInvites are raw link counts (3 each).
+        Assert.Equal(2, page.Stats.TotalParents);
         Assert.Equal(3, page.Stats.LinkedStudents);
         Assert.Equal(3, page.Stats.PendingInvites);
+    }
+
+    [Fact]
+    public async Task ListParents_pages_parents_so_a_parent_with_several_children_is_never_split()
+    {
+        // audit 2026-10-09 D10: with link paging and limit 1, Pat's two children landed on different pages.
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await SeedUser(conn, "s1", School, name: "Ada");
+        await SeedUser(conn, "s2", School, name: "Bo");
+        await SeedLink(conn, "l1", "s1", "pat@e.st", createdDate: Now.AddDays(-1));
+        await SeedLink(conn, "l2", "s1", "mom@e.st", createdDate: Now.AddDays(-2));
+        await SeedLink(conn, "l3", "s2", "PAT@e.st", createdDate: Now.AddDays(-3));
+
+        var first = await Reader().ListParentsAsync(Ctx(), School, Query(page: 1, limit: 1));
+        var second = await Reader().ListParentsAsync(Ctx(), School, Query(page: 2, limit: 1));
+
+        Assert.Equal(2, first.Total);
+        Assert.Equal(2, first.TotalPages);
+        Assert.Equal(new[] { "l1", "l3" }, Assert.Single(first.Data).Students.Select(s => s.LinkId).ToArray());
+        Assert.Equal("mom@e.st", Assert.Single(second.Data).ParentEmail);
     }
 
     [Fact]

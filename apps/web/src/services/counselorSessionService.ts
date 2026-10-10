@@ -1,4 +1,31 @@
 import { apiRequest } from "@/lib/api/apiClient";
+import { fetchAllPages } from "@/lib/api/fetchAllPages";
+
+/** Both backends serve counselor sessions at most 50 per page. */
+export const SESSIONS_PAGE_MAX = 50;
+
+/** Statuses the counselor still has to hold: a rescheduled session is as upcoming as a confirmed one. */
+export const UPCOMING_SESSION_STATUSES = ["confirmed", "rescheduled"];
+
+/**
+ * audit 2026-10-09 D4: the counselor Sessions page asked for `limit: 100` (clamped to 50) and read
+ * upcoming/completed/cancelled counts the API never returns, so the stat cards were blank and sessions past the 50th
+ * were missing. The counts now come from the full list.
+ */
+/** Still to come: confirmed or rescheduled and not yet started — the same rule as the API's upcoming count. */
+export function isUpcomingSession(s: { status: string; startTime?: string }, nowMs: number = Date.now()): boolean {
+  if (!UPCOMING_SESSION_STATUSES.includes(s.status)) return false;
+  return !s.startTime || new Date(s.startTime).getTime() >= nowMs;
+}
+
+export function sessionCounts(sessions: { status: string; startTime?: string }[], nowMs: number = Date.now()) {
+  return {
+    total: sessions.length,
+    upcoming: sessions.filter((s) => isUpcomingSession(s, nowMs)).length,
+    completed: sessions.filter((s) => s.status === "completed").length,
+    cancelled: sessions.filter((s) => s.status === "cancelled").length,
+  };
+}
 
 export interface CounselorSession {
   id: string;
@@ -10,7 +37,7 @@ export interface CounselorSession {
   studentEmail: string;
   startTime: string;
   endTime: string;
-  status: "confirmed" | "cancelled" | "completed";
+  status: "confirmed" | "rescheduled" | "cancelled" | "completed";
   topic: string;
   notes: string;
   counselorNotes: string;
@@ -119,12 +146,30 @@ export async function getStudentCounselorSessions(params?: {
   return res.data ?? res;
 }
 
+/** Every counselor session of the calling student (pages through the 50-per-page endpoint). */
+export async function getAllStudentCounselorSessions(): Promise<CounselorSession[]> {
+  return fetchAllPages(async (page, limit) => {
+    const res = await getStudentCounselorSessions({ page, limit });
+    return { rows: res.data ?? [], totalPages: res.totalPages };
+  }, { pageSize: SESSIONS_PAGE_MAX });
+}
+
+/** Every session of the calling counselor (pages through the 50-per-page endpoint). */
+export async function getAllMyCounselorSessions(): Promise<CounselorSession[]> {
+  return fetchAllPages(async (page, limit) => {
+    const res = await getMyCounselorSessions({ page, limit });
+    return { rows: res.data ?? [], totalPages: res.totalPages };
+  }, { pageSize: SESSIONS_PAGE_MAX });
+}
+
 // ============================================================
 // Counselor: List my sessions
 // ============================================================
 
 export async function getMyCounselorSessions(params?: {
   status?: string;
+  /** Only sessions still to come (confirmed or rescheduled, from now on), soonest first. */
+  upcoming?: boolean;
   page?: number;
   limit?: number;
 }): Promise<{
@@ -138,6 +183,7 @@ export async function getMyCounselorSessions(params?: {
 }> {
   const q = new URLSearchParams();
   if (params?.status) q.append("status", params.status);
+  if (params?.upcoming) q.append("upcoming", "true");
   if (params?.page) q.append("page", params.page.toString());
   if (params?.limit) q.append("limit", params.limit.toString());
   const res = await apiRequest(`/api/v1/counselor/me/sessions?${q}`);

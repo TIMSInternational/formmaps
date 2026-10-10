@@ -36,7 +36,7 @@ export function CoursesCatalog() {
   const { t } = useTranslation();
   const { data, isLoading } = useCourseList();
   const { data: recData } = useRecommendedCourses();
-  const courses = data?.courses || data?.Courses || [];
+  const courses = data?.courses || [];
   const aiRecommendedCourses = recData?.courses || [];
   // #397: the API withholds recommendations until the student has career matches.
   const recommendationsLocked = recData?.locked === true;
@@ -81,8 +81,8 @@ export function CoursesCatalog() {
       case "newest":
         sorted.sort(
           (a, b) =>
-            new Date(b.publishedDate).getTime() -
-            new Date(a.publishedDate).getTime()
+            new Date(b.createdDate).getTime() -
+            new Date(a.createdDate).getTime()
         );
         break;
       case "duration":

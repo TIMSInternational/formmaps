@@ -15,6 +15,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { completionFraction } from "@/services/assessmentProgressService";
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -110,14 +111,11 @@ export function StatCards({ activeCourses = 0 }: StatCardsProps) {
   // card contradicts itself: this used to filter/size the `assessments` array (which
   // omitted Personality) for "1/3" while printing a percentage computed over four —
   // "1/3 · 33%" for a student who owes PCA, LIA, 360 and Personality.
-  const totalCount = assessmentData?.totalAssessments ?? 4;
-  const overallPct = assessmentData?.overallCompletion ?? 0;
+  const { completed: completedCount, total: totalCount, percent: overallPct } = completionFraction(assessmentData);
   // A legacyUnlockGrandfathered student is 100% by the server's verdict while
   // completedAssessments stays an honest 3-of-4 (Personality genuinely undone — see
   // CareerExplorer.tsx, which gates on the percentage for exactly that reason). Show
   // the fraction the percentage implies so the two numbers can never disagree.
-  const completedCount =
-    overallPct === 100 ? totalCount : (assessmentData?.completedAssessments ?? 0);
 
   return (
     <div className="grid grid-cols-1 xs:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">

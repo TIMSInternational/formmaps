@@ -37,6 +37,13 @@ const TABS = [
   { key: "integrations", labelKey: "settings.tabs.integrations", icon: Plug },
 ] as const;
 
+/** A contract calendar day ("2027-06-30") as a short date; the day itself, never shifted by the viewer's zone. */
+function formatContractDay(day: string | null): string {
+  if (!day) return "—";
+  const d = new Date(`${day}T00:00:00Z`);
+  return Number.isNaN(d.getTime()) ? day : d.toLocaleDateString(undefined, { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" });
+}
+
 function GeneralSettings() {
   const { t } = useTranslation();
   const { t: ts } = useTranslation("school_admin");
@@ -209,9 +216,17 @@ function GeneralSettings() {
                   </div>
                   <div>
                     <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>{t("schoolAdmin.settings.schoolInfo.contractPeriod", "Contract Period")}</p>
-                    <p style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
-                      {settings.school.contractStart} - {settings.school.contractEnd}
+                    {/* The API never returned these fields, so this used to read " - ". */}
+                    <p data-testid="contract-period" style={{ fontSize: 13, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+                      {settings.school.contractStart || settings.school.contractEnd
+                        ? `${formatContractDay(settings.school.contractStart)} – ${formatContractDay(settings.school.contractEnd)}`
+                        : t("schoolAdmin.settings.schoolInfo.noContract")}
                     </p>
+                    {(settings.school.contractStart || settings.school.contractEnd) && settings.school.timezone && (
+                      <p style={{ fontSize: 11, color: "var(--admin-font-tertiary)" }}>
+                        {t("schoolAdmin.settings.schoolInfo.contractDays", { timezone: settings.school.timezone })}
+                      </p>
+                    )}
                   </div>
                 </div>
               </div>

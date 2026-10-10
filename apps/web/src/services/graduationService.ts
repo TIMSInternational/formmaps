@@ -62,6 +62,7 @@ export async function getAllGraduationProgress(params?: {
   limit?: number;
   status?: string;
   sortBy?: string;
+  search?: string;
 }): Promise<GraduationProgressResponse> {
   const res = await apiRequest(
     `/api/v1/school-admin/graduation/progress${buildQueryString(params as Record<string, string | number | undefined>)}`

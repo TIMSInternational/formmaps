@@ -11,8 +11,28 @@ const ASSESSMENT_TYPES = ["PCA", "MIL", "360", "Personality"] as const;
 export interface ScheduleSaveItem {
   gradeLevel: number;
   assessmentType: string;
-  startDate: string;
-  endDate: string;
+  startDate?: string;
+  endDate?: string;
+  /** Remove this grade × type window (both dates were emptied). */
+  clear?: boolean;
+}
+
+/** What to save: every complete cell, plus a clear for each saved window whose dates were both emptied. */
+export function scheduleSaveItems(
+  saved: { gradeLevel: number; assessmentType: string }[],
+  draft: Record<string, { startDate: string; endDate: string }>,
+): ScheduleSaveItem[] {
+  const items: ScheduleSaveItem[] = Object.entries(draft)
+    .filter(([, v]) => v.startDate && v.endDate)
+    .map(([k, v]) => {
+      const [grade, type] = k.split("-");
+      return { gradeLevel: parseInt(grade), assessmentType: type, startDate: v.startDate, endDate: v.endDate };
+    });
+  for (const s of saved) {
+    const v = draft[`${s.gradeLevel}-${s.assessmentType}`];
+    if (v && !v.startDate && !v.endDate) items.push({ gradeLevel: s.gradeLevel, assessmentType: s.assessmentType, clear: true });
+  }
+  return items;
 }
 
 export function ScheduleGrid({ schedules, onSave, isSaving }: {
@@ -44,13 +64,7 @@ export function ScheduleGrid({ schedules, onSave, isSaving }: {
   };
 
   const handleSave = () => {
-    const items = Object.entries(draft)
-      .filter(([, v]) => v.startDate && v.endDate)
-      .map(([k, v]) => {
-        const [grade, type] = k.split("-");
-        return { gradeLevel: parseInt(grade), assessmentType: type, startDate: v.startDate, endDate: v.endDate };
-      });
-    onSave(items);
+    onSave(scheduleSaveItems(schedules, draft));
     setDirty(false);
   };
 

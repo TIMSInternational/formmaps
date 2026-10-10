@@ -126,15 +126,35 @@ public sealed class SchoolAdminWriter(
             ON CONFLICT ("schoolId", "gradeLevel", "assessmentType") DO UPDATE SET
                 "startDate" = EXCLUDED."startDate",
                 "endDate" = EXCLUDED."endDate",
+                "isActive" = true,
                 "updatedBy" = @uid,
                 "updatedAt" = @now
             RETURNING "id", "schoolId", "gradeLevel", "assessmentType", "startDate", "endDate", "isActive",
                       "createdBy", "createdDate", "updatedBy", "updatedAt"
             """;
 
+        // Audit D7: a cleared window is soft-removed; saving it again (the upsert above) reactivates it.
+        const string clearSql = """
+            UPDATE "assessment_schedules"
+            SET "isActive" = false, "updatedBy" = @uid, "updatedAt" = @now
+            WHERE "schoolId" = @sid AND "gradeLevel" = @grade AND "assessmentType" = @type AND "isActive" = true
+            """;
+
         foreach (var item in items)
         {
             var now = Now();
+            if (item.Clear)
+            {
+                await using var clear = Command(session, clearSql);
+                AddParameter(clear, "sid", schoolId);
+                AddParameter(clear, "grade", item.GradeLevel);
+                AddParameter(clear, "type", item.AssessmentType);
+                AddParameter(clear, "uid", (object?)userId ?? DBNull.Value);
+                AddTimestamp(clear, "now", now);
+                await clear.ExecuteNonQueryAsync(cancellationToken);
+                continue;
+            }
+
             await using var command = Command(session, sql);
             AddParameter(command, "id", Guid.NewGuid().ToString());
             AddParameter(command, "sid", schoolId);

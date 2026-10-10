@@ -10,6 +10,7 @@ import type {
   CounselorStudentsResponse,
 } from "@/types/assessmentConfig";
 import { apiRequest } from "@/lib/api/apiClient";
+import { fetchAllPages } from "@/lib/api/fetchAllPages";
 import { toCamel } from "@/lib/toCamel";
 
 const buildQueryString = (params?: Record<string, string | number | undefined>): string => {
@@ -71,6 +72,8 @@ export async function uploadSchoolLogo(file: File): Promise<{ logoUrl: string }>
 
 export async function getSchoolUsers(params?: {
   role?: string;
+  /** "staff" lists only school staff roles (never students or parents). */
+  scope?: "staff";
   status?: string;
   search?: string;
   page?: number;
@@ -147,6 +150,21 @@ export async function getCounselorStudents(counselorId: string, params?: {
   return toCamel(data) as CounselorStudentsResponse;
 }
 
+/** Both backends serve a counselor's caseload at most 50 per page. */
+export const COUNSELOR_STUDENTS_PAGE_MAX = 50;
+
+/**
+ * A counselor's whole caseload. audit 2026-10-09 D4: the Counselors screen asked for `limit: 1000`, which the API
+ * clamps to 50, so students past the 50th looked unassigned and could be assigned to a second counselor.
+ */
+export async function getAllCounselorStudents(counselorId: string): Promise<CounselorStudentsResponse> {
+  const rows = await fetchAllPages(async (page, limit) => {
+    const res = await getCounselorStudents(counselorId, { page, limit });
+    return { rows: res.data ?? [], totalPages: res.totalPages };
+  }, { pageSize: COUNSELOR_STUDENTS_PAGE_MAX });
+  return { data: rows, total: rows.length, page: 1, limit: rows.length, totalPages: 1 };
+}
+
 // ============================================
 // Counselor Self-Serve (SCRUM-145)
 // ============================================
@@ -165,6 +183,19 @@ export async function getMyCounselorStudents(params?: {
   );
   const data = res.data ?? res.Data ?? res;
   return toCamel(data) as CounselorStudentsResponse;
+}
+
+/**
+ * The calling counselor's whole caseload, rows exactly as the API returns them. audit 2026-10-09 D4: the counselor
+ * pickers (essays, college apps, college list, scholarships, activities, documents, reports) asked for `limit=50`,
+ * the endpoint's maximum, so a counselor with more than 50 students could not pick the rest.
+ */
+export async function getAllMyCounselorStudents<T = Record<string, unknown>>(): Promise<T[]> {
+  return fetchAllPages<T>(async (page, limit) => {
+    const res = await apiRequest(`/api/v1/counselor/me/students?limit=${limit}&page=${page}`);
+    const items = res?.data?.data ?? res?.data ?? [];
+    return { rows: Array.isArray(items) ? items : [], totalPages: res?.data?.totalPages };
+  }, { pageSize: COUNSELOR_STUDENTS_PAGE_MAX });
 }
 
 export async function getMyCounselorStudentDetail(

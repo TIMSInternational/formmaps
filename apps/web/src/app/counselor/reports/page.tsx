@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { apiRequest } from "@/lib/api/apiClient";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,6 +17,7 @@ import { MILReports } from "./_components/MILReports";
 import { AcademicReports } from "./_components/AcademicReports";
 import type { ReportStudent } from "./_components/ReportShared";
 import { useTranslation } from "react-i18next";
+import { getAllMyCounselorStudents } from "@/services/schoolProfileService";
 
 type TabKey = "pca" | "mil" | "academic";
 
@@ -32,9 +32,7 @@ export default function CounselorReportsPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await apiRequest("/api/v1/counselor/me/students?limit=50");
-        const items = Array.isArray(res?.data) ? res.data : res?.data?.data ?? [];
-        setStudents(Array.isArray(items) ? items : []);
+        setStudents(await getAllMyCounselorStudents());
       } catch { /* empty */ }
       setLoading(false);
     })();

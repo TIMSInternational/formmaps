@@ -48,11 +48,11 @@ public sealed class GraduationRulesReader(IFormMapsDatabaseSessionFactory databa
 
     public async Task<GraduationProgressPage> GetProgressListAsync(
         RequestContext context, string schoolId, int page, int limit, string? status, string? sortBy,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, string? search = null)
     {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
-        var empty = new GraduationProgressPage([], 0, page, limit, 0);
+        var empty = new GraduationProgressPage([], 0, page, limit, 0, GraduationProgressSummary.Empty);
 
         var yearId = await CurrentAcademicYearIdAsync(session, schoolId, cancellationToken);
         if (string.IsNullOrEmpty(yearId))
@@ -88,7 +88,7 @@ public sealed class GraduationRulesReader(IFormMapsDatabaseSessionFactory databa
 
         if (students.Count == 0)
         {
-            return new GraduationProgressPage([], 0, page, limit, 0);
+            return empty;
         }
 
         var studentIds = students.Select(s => s.Id).ToArray();
@@ -156,7 +156,21 @@ public sealed class GraduationRulesReader(IFormMapsDatabaseSessionFactory databa
                 progressPercent >= 75 ? "on_track" : progressPercent >= 50 ? "at_risk" : "off_track"));
         }
 
+        // audit 2026-10-09 D6 (mirrors Node): the summary covers the whole roster; the search runs over the roster,
+        // not the page on screen.
+        var summary = new GraduationProgressSummary(
+            results.Count,
+            results.Count(r => r.Status == "on_track"),
+            results.Count(r => r.Status == "at_risk"),
+            results.Count(r => r.Status == "off_track"),
+            results.Count > 0 ? (int)JsRound(results.Average(r => (double)r.ProgressPercent)) : 0);
+
         IEnumerable<GraduationProgressListRow> filtered = results;
+        if (!string.IsNullOrEmpty(search))
+        {
+            filtered = filtered.Where(r => (r.StudentName ?? string.Empty).Contains(search, StringComparison.OrdinalIgnoreCase));
+        }
+
         if (!string.IsNullOrEmpty(status))
         {
             filtered = filtered.Where(r => string.Equals(r.Status, status, StringComparison.Ordinal));
@@ -174,7 +188,7 @@ public sealed class GraduationRulesReader(IFormMapsDatabaseSessionFactory databa
         var total = sorted.Count;
         var paged = sorted.Skip((page - 1) * limit).Take(limit).ToList();
 
-        return new GraduationProgressPage(paged, total, page, limit, (int)Math.Ceiling((double)total / limit));
+        return new GraduationProgressPage(paged, total, page, limit, (int)Math.Ceiling((double)total / limit), summary);
     }
 
     // ---------------------------------------------------------------- GET /graduation/progress/:studentId

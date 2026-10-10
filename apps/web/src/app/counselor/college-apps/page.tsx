@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { ApplicationRow } from "./_components/ApplicationRow";
 import { AddApplicationForm } from "./_components/AddApplicationForm";
+import { getAllMyCounselorStudents } from "@/services/schoolProfileService";
 
 interface Student { id: string; name: string; email: string; }
 interface Application {
@@ -34,11 +35,7 @@ export default function CollegeAppsPage() {
 
   const { data: studentsData, isLoading: studentsLoading } = useQuery({
     queryKey: ["counselor-students"],
-    queryFn: async () => {
-      const res = await apiRequest("/api/v1/counselor/me/students?limit=50");
-      const items = res?.data?.data ?? res?.data ?? [];
-      return Array.isArray(items) ? items : [];
-    },
+    queryFn: () => getAllMyCounselorStudents<Student>(),
   });
   const students: Student[] = studentsData ?? [];
 

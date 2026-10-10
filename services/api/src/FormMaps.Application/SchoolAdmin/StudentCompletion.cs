@@ -44,3 +44,17 @@ public sealed record StudentCompletionVerdict(
     bool PcaCompleted,
     bool PersonalityCompleted,
     bool AllDone);
+
+/// <summary>
+/// School-wide assessment counts (audit D2) — see SchoolAssessmentTally. TotalStudents = active student accounts
+/// (ActiveStudents signed up + PendingInvites not yet); Completed + InProgress + NotStarted = TotalStudents;
+/// CompletionRate = Completed / TotalStudents as a 1-dp percentage.
+/// </summary>
+public sealed record SchoolAssessmentCounts(
+    int TotalStudents,
+    int ActiveStudents,
+    int PendingInvites,
+    int Completed,
+    int InProgress,
+    int NotStarted,
+    double CompletionRate);

@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { ActivityForm, ActivityFormData } from "./_components/ActivityForm";
 import { ActivityCard } from "./_components/ActivityCard";
+import { getAllMyCounselorStudents } from "@/services/schoolProfileService";
 
 interface Student {
   id: string;
@@ -61,11 +62,7 @@ export default function CounselorActivitiesPage() {
 
   const { data: students = [], isLoading: studentsLoading } = useQuery({
     queryKey: ["counselor-students"],
-    queryFn: async () => {
-      const res = await apiRequest("/api/v1/counselor/me/students?limit=50");
-      const items = res?.data?.data ?? res?.data ?? [];
-      return Array.isArray(items) ? items : [];
-    },
+    queryFn: () => getAllMyCounselorStudents<Student>(),
   });
 
   const { data: activities = [], isLoading: activitiesLoading } = useQuery({

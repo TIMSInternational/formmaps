@@ -55,6 +55,7 @@ public static class SchoolUsersEndpoints
         string? limit,
         string? role,
         string? search,
+        [Microsoft.AspNetCore.Mvc.FromQuery(Name = "scope")] string? userScope,
         CancellationToken cancellationToken)
     {
         var (context, schoolId, error) = await AuthorizeWithScopeAsync(accessor, guard, scope, cancellationToken);
@@ -75,7 +76,8 @@ public static class SchoolUsersEndpoints
             resolvedLimit,
             skip,
             Role: string.IsNullOrEmpty(role) ? null : role,
-            Search: string.IsNullOrEmpty(search) ? null : search);
+            Search: string.IsNullOrEmpty(search) ? null : search,
+            StaffOnly: userScope == "staff");
 
         var result = await reader.ListSchoolUsersAsync(context, schoolId, query, cancellationToken);
         return Results.Ok(new
@@ -87,7 +89,8 @@ public static class SchoolUsersEndpoints
                 total = result.Total,
                 page = result.Page,
                 limit = result.Limit,
-                totalPages = result.TotalPages
+                totalPages = result.TotalPages,
+                roleCounts = result.RoleCounts ?? new Dictionary<string, int>()
             }
         });
     }

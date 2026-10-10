@@ -46,4 +46,6 @@ public sealed record ScheduleUpsertItem(
     int GradeLevel,
     string AssessmentType,
     DateTime StartDate,
-    DateTime EndDate);
+    DateTime EndDate,
+    // Audit D7: `clear: true` removes the grade × type window (isActive = false); dates are ignored.
+    bool Clear = false);

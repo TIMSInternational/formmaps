@@ -210,7 +210,10 @@ public static class SchoolProfileEndpoints
             name = s.Name,
             currentStudents = s.CurrentStudents,
             maxStudents = s.MaxStudents,
-            plan = s.Plan
+            plan = s.Plan,
+            contractStart = s.ContractStart,
+            contractEnd = s.ContractEnd,
+            timezone = s.Timezone
         },
         admin = new
         {

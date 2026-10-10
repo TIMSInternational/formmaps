@@ -98,12 +98,19 @@ public sealed record GraduationProgressListRow(
     int ProgressPercent,
     string Status);
 
+/// <summary>audit 2026-10-09 D6: school-wide counts behind the graduation cards (they used to come from the page on screen).</summary>
+public sealed record GraduationProgressSummary(int Total, int OnTrack, int AtRisk, int OffTrack, int AvgProgress)
+{
+    public static readonly GraduationProgressSummary Empty = new(0, 0, 0, 0, 0);
+}
+
 public sealed record GraduationProgressPage(
     IReadOnlyList<GraduationProgressListRow> Data,
     int Total,
     int Page,
     int Limit,
-    int TotalPages);
+    int TotalPages,
+    GraduationProgressSummary? Summary = null);
 
 // =============================================================================
 // GET /graduation/progress/:studentId — THREE response shapes, not one

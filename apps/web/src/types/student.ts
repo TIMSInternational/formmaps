@@ -175,8 +175,10 @@ export interface SchoolSettings {
     name: string;
     maxStudents: number;
     currentStudents: number;
-    contractStart: string;
-    contractEnd: string;
+    /** Calendar day "YYYY-MM-DD", or null when no contract is set. */
+    contractStart: string | null;
+    contractEnd: string | null;
+    timezone?: string;
   };
   admin: {
     id: string;

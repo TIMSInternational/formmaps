@@ -1057,6 +1057,8 @@
       },
       "staffStats": {
         "totalUsers": "Total users",
+        "totalStaff": "Total staff",
+        "teachers": "Teachers",
         "inSchool": "in school",
         "counselors": "Counselors",
         "activeStaff": "active staff",
@@ -3399,7 +3401,9 @@
         "contractStart": "Contract Start",
         "contractEnd": "Contract End",
         "contractPeriod": "Contract Period",
-        "loadError": "Unable to load school info"
+        "loadError": "Unable to load school info",
+        "noContract": "Not set — contact FormMaps",
+        "contractDays": "Whole days, {{timezone}} time"
       },
       "profile": {
         "title": "Profile Settings",
@@ -6601,7 +6605,8 @@
       "checkConnection": "Please check your internet connection.",
       "sessionExpiredShort": "Session expired. Please log in again.",
       "networkError": "Network error. Please check your connection and try again.",
-      "aiBudgetExceeded": "Your school's AI allowance for this month has been used up. Please try again next month."
+      "aiBudgetExceeded": "Your school's AI allowance for this month has been used up. Please try again next month.",
+      "broadcastTooLarge": "This group has {{count}} recipients, more than the {{max}} a broadcast can reach. Nothing was sent."
     },
     "pcaService": {
       "addFailed": "Failed to add PCA evaluation"

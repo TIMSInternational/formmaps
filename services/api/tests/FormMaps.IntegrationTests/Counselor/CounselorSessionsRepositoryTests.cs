@@ -65,6 +65,29 @@ public sealed class CounselorSessionsRepositoryTests : IClassFixture<CounselorSe
     }
 
     [Fact]
+    public async Task Upcoming_is_future_confirmed_or_rescheduled_soonest_first_with_counts()
+    {
+        // Repo clock: 2026-07-23 12:00 UTC.
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await User(conn, "s1", "Alice");
+        await Session(conn, "later", Counselor, "s1", start: new DateTime(2026, 8, 10), status: "confirmed");
+        await Session(conn, "soon", Counselor, "s1", start: new DateTime(2026, 7, 24), status: "rescheduled");
+        await Session(conn, "past-confirmed", Counselor, "s1", start: new DateTime(2026, 7, 1), status: "confirmed");
+        await Session(conn, "done", Counselor, "s1", start: new DateTime(2026, 7, 2), status: "completed");
+        await Session(conn, "off", Counselor, "s1", start: new DateTime(2026, 8, 1), status: "cancelled");
+
+        var upcoming = await Repo().ListAsync(Ctx(), Counselor, statusFilter: null, page: 1, limit: 20, upcomingOnly: true);
+        Assert.Equal(["soon", "later"], upcoming.Data.Select(s => s.Id)); // past + cancelled out, ascending
+        Assert.Equal(2, upcoming.Total);
+        Assert.Equal(new SessionCounts(Upcoming: 2, Completed: 1, Cancelled: 1), upcoming.Counts);
+
+        var all = await Repo().ListAsync(Ctx(), Counselor, statusFilter: null, page: 1, limit: 20);
+        Assert.Equal(5, all.Total);                               // no upcoming filter by default
+        Assert.Equal("later", all.Data[0].Id);                    // still startTime DESC
+        Assert.Equal(upcoming.Counts, all.Counts);                // counts are the whole caseload, not the page
+    }
+
+    [Fact]
     public async Task Complete_not_owned_then_owned()
     {
         await using var conn = await _dataSource.OpenConnectionAsync();

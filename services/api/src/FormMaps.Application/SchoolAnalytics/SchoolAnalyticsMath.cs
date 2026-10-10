@@ -130,6 +130,17 @@ public static class SchoolAnalyticsMath
         return new GpaAggregate(averageProgressScore, studentsAtRisk, gpaCount);
     }
 
+    /// <summary>
+    /// Overview GPA fields from per-student GPAs already computed by the configured GPA engine (audit D9 — the
+    /// hardcoded <see cref="GradeMap"/> lacked A+/D+/D- and ignored credits and the school's scale).
+    /// </summary>
+    public static GpaAggregate AggregateStudentGpas(IReadOnlyCollection<double> studentGpas)
+    {
+        var atRisk = studentGpas.Count(g => g < AtRiskThreshold);
+        var average = studentGpas.Count > 0 ? ProgressScore(studentGpas.Sum() / studentGpas.Count) : 0;
+        return new GpaAggregate(average, atRisk, studentGpas.Count);
+    }
+
     /// <summary>range → day window: 90d→90, 1y→365, everything else (incl. "30d"/unknown)→30 (schoolService.ts:744).</summary>
     public static int DaysForRange(string? range) => range switch
     {

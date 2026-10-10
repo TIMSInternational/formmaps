@@ -90,45 +90,54 @@ public sealed class SchoolStudentsParentsReader(
             where += " AND (l.\"parentName\" ILIKE @search OR l.\"parentEmail\" ILIKE @search)";
         }
 
-        int total;
-        await using (var countCommand = Command(session, $"""
-            SELECT COUNT(*)::int
-            FROM "student_parent_links" l
-            JOIN "users" s ON l."studentId" = s."id"
-            WHERE {where}
-            """))
-        {
-            AddParameter(countCommand, "school", schoolId);
-            if (hasSearch)
-            {
-                AddParameter(countCommand, "search", "%" + query.Search + "%");
-            }
-
-            total = await ScalarIntFromAsync(countCommand, cancellationToken);
-        }
-
-        // Paginate LINKS (createdDate DESC + id ASC tie-break), then group by lower(parentEmail) keep-first. A parent
-        // linked to N students yields N links → N appended students; total counts raw LINKS (so data.Count can be < total).
-        var groups = new Dictionary<string, GroupAccumulator>(StringComparer.Ordinal);
-        var order = new List<string>();
-        await using (var listCommand = Command(session, $"""
-            SELECT l."id", l."parentName", l."parentEmail", l."parentUserId", l."isAccepted", l."acceptedAt",
-                   l."createdDate", s."id", s."name", s."email", s."gradeLevel"
+        // audit 2026-10-09 D10 (mirrors Node): page PARENTS, not links. Paging links and then grouping split a parent with
+        // several children across pages and made `total` a link count. Every matching link's key (lower(parentEmail))
+        // in createdDate-DESC/id-ASC order gives the parents in first-seen order; then only this page's parents' links.
+        var parentKeys = new List<string>();
+        var seenKeys = new HashSet<string>(StringComparer.Ordinal);
+        await using (var keysCommand = Command(session, $"""
+            SELECT lower(l."parentEmail")
             FROM "student_parent_links" l
             JOIN "users" s ON l."studentId" = s."id"
             WHERE {where}
             ORDER BY l."createdDate" DESC, l."id" ASC
-            OFFSET @skip LIMIT @limit
             """))
         {
+            AddParameter(keysCommand, "school", schoolId);
+            if (hasSearch)
+            {
+                AddParameter(keysCommand, "search", "%" + query.Search + "%");
+            }
+
+            await using var keysReader = await keysCommand.ExecuteReaderAsync(cancellationToken);
+            while (await keysReader.ReadAsync(cancellationToken))
+            {
+                var key = keysReader.GetString(0);
+                if (seenKeys.Add(key)) parentKeys.Add(key);
+            }
+        }
+
+        var total = parentKeys.Count;
+        var pageKeys = parentKeys.Skip((int)query.Skip).Take(query.Limit).ToArray();
+
+        var groups = new Dictionary<string, GroupAccumulator>(StringComparer.Ordinal);
+        if (pageKeys.Length > 0)
+        {
+            await using var listCommand = Command(session, $"""
+                SELECT l."id", l."parentName", l."parentEmail", l."parentUserId", l."isAccepted", l."acceptedAt",
+                       l."createdDate", s."id", s."name", s."email", s."gradeLevel"
+                FROM "student_parent_links" l
+                JOIN "users" s ON l."studentId" = s."id"
+                WHERE {where} AND lower(l."parentEmail") = ANY(@keys)
+                ORDER BY l."createdDate" DESC, l."id" ASC
+                """);
             AddParameter(listCommand, "school", schoolId);
             if (hasSearch)
             {
                 AddParameter(listCommand, "search", "%" + query.Search + "%");
             }
 
-            AddParameter(listCommand, "skip", query.Skip);
-            AddParameter(listCommand, "limit", query.Limit);
+            AddParameter(listCommand, "keys", pageKeys);
             await using var reader = await listCommand.ExecuteReaderAsync(cancellationToken);
             while (await reader.ReadAsync(cancellationToken))
             {
@@ -146,16 +155,19 @@ public sealed class SchoolStudentsParentsReader(
                         CreatedDate: IsoZ(reader.GetDateTime(6)),
                         Students: []);
                     groups[key] = group;
-                    order.Add(key);
                 }
 
                 group.Students.Add(new ParentStudent(
                     Id: reader.GetString(7),
                     Name: reader.IsDBNull(8) ? null : reader.GetString(8),
                     Email: reader.GetString(9),
-                    GradeLevel: reader.IsDBNull(10) ? null : reader.GetInt32(10)));
+                    GradeLevel: reader.IsDBNull(10) ? null : reader.GetInt32(10),
+                    LinkId: reader.GetString(0),
+                    IsAccepted: reader.GetBoolean(4)));
             }
         }
+
+        var order = pageKeys.Where(groups.ContainsKey).ToList();
 
         var data = order.Select(key =>
         {
@@ -166,7 +178,7 @@ public sealed class SchoolStudentsParentsReader(
 
         // Stats — school-wide, NO search filter, NO pagination (three independent aggregates).
         var totalParents = await StatIntAsync(session, """
-            SELECT COUNT(DISTINCT l."parentEmail")::int
+            SELECT COUNT(DISTINCT lower(l."parentEmail"))::int
             FROM "student_parent_links" l JOIN "users" s ON l."studentId" = s."id"
             WHERE s."schoolId" = @school AND l."isActive" = true
             """, schoolId, cancellationToken);

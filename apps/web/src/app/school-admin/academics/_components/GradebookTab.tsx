@@ -7,7 +7,7 @@ import { Upload, Plug, Search, Plus, Pencil, Trash2, GraduationCap, Loader2 } fr
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { getStudents } from "@/services/schoolAdminService";
+import { getAllStudents } from "@/services/schoolAdminService";
 import { useStudentGradebook, useDeleteGrade } from "@/hooks/useGradebookQueries";
 import type { GradebookGrade } from "@/services/gradebookService";
 import { GradeImportPanel } from "./GradeImportPanel";
@@ -34,10 +34,11 @@ export function GradebookTab() {
 
   const { data: studentsResp, isLoading: studentsLoading } = useQuery({
     queryKey: ["gradebook-students", search],
-    queryFn: () => getStudents({ search: search || undefined, limit: 500, sortBy: "name" }),
+    // audit 2026-10-09 D4: `limit: 500` was clamped to 100, so students past the first 100 had no gradebook.
+    queryFn: () => getAllStudents({ search: search || undefined, sortBy: "name" }),
     staleTime: 1000 * 60,
   });
-  const students: StudentRow[] = Array.isArray(studentsResp?.data) ? (studentsResp!.data as StudentRow[]) : [];
+  const students: StudentRow[] = Array.isArray(studentsResp) ? (studentsResp as StudentRow[]) : [];
 
   const { data: gradebook, isLoading: gradesLoading } = useStudentGradebook(selectedId);
   const deleteGrade = useDeleteGrade(selectedId ?? "");

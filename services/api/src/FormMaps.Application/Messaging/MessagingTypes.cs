@@ -40,7 +40,16 @@ public sealed record BroadcastFailure(string RecipientId, string Error);
 /// when <see cref="Failures"/> is non-empty -- and, as with legacy's rejected Promise.all, the chunk that
 /// produced the failures is the last one attempted; recipients in later chunks were never tried.
 /// </summary>
-public sealed record BroadcastResult(int RecipientCount, IReadOnlyList<BroadcastFailure> Failures)
+/// <remarks>
+/// audit 2026-10-09 D4: <see cref="RefusedGroupSize"/> is set (and nothing was sent) when the group is larger than
+/// <see cref="MaxRecipients"/>. The recipient query used to `LIMIT 500` and silently skip everyone past it.
+/// </remarks>
+public sealed record BroadcastResult(int RecipientCount, IReadOnlyList<BroadcastFailure> Failures, int? RefusedGroupSize = null)
 {
+    /// <summary>Largest group one broadcast may reach (a DoS bound, well above any school's size today). Mirrors Node.</summary>
+    public const int MaxRecipients = 2000;
+
     public static readonly BroadcastResult Empty = new(0, []);
+
+    public static BroadcastResult TooLarge(int groupSize) => new(0, [], groupSize);
 }

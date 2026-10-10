@@ -56,19 +56,23 @@ describe("InsightsCard", () => {
 });
 
 describe("InsightsCard — locked completion state", () => {
-  it("shows X/Y progress and the 100% unlock copy when below threshold", () => {
+  // Audit D8: the gate is 90% (the API's threshold), not 100%; Personality has its own chip.
+  it("shows X/Y progress and the API's unlock threshold when below it", () => {
     const insights = {
       hasEnoughData: false,
-      completion: { total: 10, complete: 7, byComponent: { lia: 9, disc: 8, eval360: 7 } },
+      threshold: 90,
+      completion: { total: 10, complete: 7, byComponent: { lia: 9, disc: 8, eval360: 7, personality: 6 } },
     } as InsightsData;
 
-    const { getByText } = render(
+    const { getByText, queryByText } = render(
       <InsightsCard insights={insights} onRefresh={() => {}} isRefreshing={false} />
     );
 
     expect(getByText("7 / 10")).toBeInTheDocument();         // headline
-    expect(getByText(/unlock when 100%/i)).toBeInTheDocument(); // unlock copy
+    expect(getByText(/unlock when 90%/i)).toBeInTheDocument(); // unlock copy
+    expect(queryByText(/100%/)).not.toBeInTheDocument();
     expect(getByText(/360:\s*7\/10/)).toBeInTheDocument();    // component breakdown chip
+    expect(getByText(/Personality:\s*6\/10/)).toBeInTheDocument();
   });
 
   it("falls back to the message when completion data is absent", () => {

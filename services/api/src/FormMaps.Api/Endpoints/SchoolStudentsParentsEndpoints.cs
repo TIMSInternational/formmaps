@@ -144,7 +144,9 @@ public static class SchoolStudentsParentsEndpoints
             id = s.Id,
             name = s.Name,
             email = s.Email,
-            gradeLevel = s.GradeLevel
+            gradeLevel = s.GradeLevel,
+            linkId = s.LinkId,
+            isAccepted = s.IsAccepted
         })
     };
 

@@ -164,7 +164,7 @@ public class SchoolProfileEndpointsTests
         var reader = new FakeReader
         {
             Settings = new SchoolSettings("Test School", 12, 300, "Standard", "admin-1", "Admin", "admin@s.test",
-                true, false, true, "America/New_York"),
+                true, false, true, "America/New_York", ContractStart: "2026-01-01", ContractEnd: "2027-06-30"),
         };
         using var factory = new Factory(reader, new FakeWriter(), new FakeScope(School));
         using var client = factory.CreateClient();
@@ -180,6 +180,10 @@ public class SchoolProfileEndpointsTests
         Assert.Equal("admin@s.test", data.GetProperty("admin").GetProperty("email").GetString());
         Assert.False(data.GetProperty("notifyOnAssessmentComplete").GetBoolean());
         Assert.Equal(300, data.GetProperty("maxStudents").GetInt32()); // top-level maxStudents present too
+        // Audit D12: Settings reads the contract period and zone from school.*.
+        Assert.Equal("2026-01-01", data.GetProperty("school").GetProperty("contractStart").GetString());
+        Assert.Equal("2027-06-30", data.GetProperty("school").GetProperty("contractEnd").GetString());
+        Assert.Equal("America/New_York", data.GetProperty("school").GetProperty("timezone").GetString());
     }
 
     // ---- mass-assignment guard runs at the endpoint ----

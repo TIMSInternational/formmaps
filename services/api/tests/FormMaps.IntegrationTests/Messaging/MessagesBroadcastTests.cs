@@ -35,6 +35,69 @@ public sealed class MessagesBroadcastTests : IClassFixture<MessagingDatabaseFixt
         Assert.Equal(2, count.RecipientCount);
     }
 
+    // audit 2026-10-09 D4 -------------------------------------------------------------------------------
+
+    private async Task SeedManyStudentsAsync(string schoolId, int count)
+    {
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand(
+            """
+            INSERT INTO "users" ("id","name","email","roleId","roleName","schoolId","isActive")
+            SELECT g.id, g.id, g.id || '@test.dev', 'r', 'student', @schoolId, true
+            FROM (SELECT gen_random_uuid()::text AS id FROM generate_series(1, @count)) g
+            """, conn);
+        cmd.Parameters.AddWithValue("schoolId", schoolId);
+        cmd.Parameters.AddWithValue("count", count);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    [Fact]
+    public async Task A_group_above_the_maximum_is_refused_whole_and_nothing_is_sent()
+    {
+        var schoolId = Guid.NewGuid().ToString();
+        var admin = await _fixture.SeedUserAsync(schoolId, "school_admin");
+        await SeedManyStudentsAsync(schoolId, BroadcastResult.MaxRecipients + 1);
+
+        var result = await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "too many");
+
+        Assert.Equal(BroadcastResult.MaxRecipients + 1, result.RefusedGroupSize);
+        Assert.Equal(0, result.RecipientCount);
+        await using var conn = new NpgsqlConnection(_fixture.AdminConnectionString);
+        await conn.OpenAsync();
+        await using var cmd = new NpgsqlCommand("""SELECT COUNT(*) FROM "messages" WHERE "senderId" = @admin""", conn);
+        cmd.Parameters.AddWithValue("admin", admin);
+        Assert.Equal(0L, (long)(await cmd.ExecuteScalarAsync())!);
+    }
+
+    [Fact]
+    public async Task A_group_past_the_old_500_cap_is_reached_in_full()
+    {
+        var schoolId = Guid.NewGuid().ToString();
+        var admin = await _fixture.SeedUserAsync(schoolId, "school_admin");
+        await SeedManyStudentsAsync(schoolId, 501);
+
+        var result = await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "students", "all of you");
+
+        Assert.Null(result.RefusedGroupSize);
+        Assert.Equal(501, result.RecipientCount);
+    }
+
+    [Fact]
+    public async Task The_staff_group_includes_teachers_and_general_staff()
+    {
+        var schoolId = Guid.NewGuid().ToString();
+        var admin = await _fixture.SeedUserAsync(schoolId, "school_admin");
+        await _fixture.SeedUserAsync(schoolId, "teacher");
+        await _fixture.SeedUserAsync(schoolId, "staff");
+        await _fixture.SeedUserAsync(schoolId, "counselor");
+        await _fixture.SeedUserAsync(schoolId, "student");
+
+        var result = await Repo().BroadcastAsync(_fixture.Ctx(admin, schoolId), admin, "school_admin", schoolId, "staff", "staff meeting");
+
+        Assert.Equal(3, result.RecipientCount); // teacher + staff + counselor; the student and the sender are not staff recipients
+    }
+
     [Fact]
     public async Task Counselor_broadcast_to_students_only_reaches_assigned_students()
     {

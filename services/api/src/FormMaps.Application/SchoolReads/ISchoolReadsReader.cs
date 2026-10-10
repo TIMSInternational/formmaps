@@ -48,7 +48,10 @@ public sealed record DashboardStats(
     int PendingRequests,
     int CompletedAssessments,
     double AssessmentCompletionRate,
-    double AverageScore);
+    double AverageScore,
+    // Audit D2: were echoed as TotalStudents / PendingRequests. Signed-up vs invited-not-signed-up students.
+    int ActiveStudents = 0,
+    int PendingInvites = 0);
 
 /// <summary>One getAllCounselorAssignments pair — { studentId, counselorId } (schoolService.ts:152-157).</summary>
 public sealed record CounselorAssignment(string StudentId, string CounselorId);

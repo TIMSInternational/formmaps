@@ -46,7 +46,7 @@ export default function BroadcastPanel() {
       setSelectedGroup(null);
       toast.success(t("ui.broadcast.sentToast", { count }));
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || t("ui.broadcast.sendFailed"));
+      toast.error(err?.message || t("ui.broadcast.sendFailed"));
     } finally {
       setSending(false);
     }

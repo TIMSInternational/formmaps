@@ -20,7 +20,7 @@ public interface IGraduationRulesReader
     /// <summary>getGraduationProgressList — roster-wide credit progress, filtered/sorted/paged in memory.</summary>
     Task<GraduationProgressPage> GetProgressListAsync(
         RequestContext context, string schoolId, int page, int limit, string? status, string? sortBy,
-        CancellationToken cancellationToken = default);
+        CancellationToken cancellationToken = default, string? search = null);
 
     /// <summary>getStudentGraduationProgress — per-category credit rollup for one student.</summary>
     Task<StudentGraduationProgress> GetStudentProgressAsync(

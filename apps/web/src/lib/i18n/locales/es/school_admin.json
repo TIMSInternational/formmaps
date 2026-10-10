@@ -10,7 +10,10 @@
       "analyzingSubtitle": "Revisando estudiantes, evaluaciones, calificaciones y progreso de graduación",
       "label": "Informe IA",
       "fullAnalysis": "Análisis completo",
-      "impactLabel": "impacto {{impact}}"
+      "impactLabel": "impacto {{impact}}",
+      "lockedTitle": "Aún no hay suficientes datos",
+      "locked": "{{complete}} de {{total}} estudiantes completaron todas las evaluaciones ({{percent}} %). El resumen de IA se activa al {{threshold}} %.",
+      "empty": "No se pudo generar el resumen en este momento. Inténtalo más tarde."
     },
     "atRisk": {
       "title": "Requiere atención",
@@ -33,7 +36,9 @@
       "criticalAlert_one": "{{count}} alerta crítica",
       "criticalAlert_other": "{{count}} alertas críticas",
       "highPriority": "{{count}} prioridad alta",
-      "newSinceLogin": "{{count}} nuevas desde el último acceso"
+      "newSinceLogin": "{{count}} nuevas desde el último acceso",
+      "unread_one": "{{count}} alerta sin leer",
+      "unread_other": "{{count}} alertas sin leer"
     },
     "recentStudents": {
       "title": "Estudiantes recientes",
@@ -298,7 +303,7 @@
     "card": {
       "studentsCompletedAll_one": "estudiante completó todas las evaluaciones",
       "studentsCompletedAll_other": "estudiantes completaron todas las evaluaciones",
-      "unlockHint": "Los análisis se activan cuando el 100 % de los estudiantes termina.",
+      "unlockHint": "Los análisis se activan cuando el {{threshold}} % de los estudiantes termina.",
       "emptyFallback": "Los análisis aparecerán cuando suficientes estudiantes completen las evaluaciones.",
       "cached": "En caché",
       "refresh": "Actualizar",
@@ -529,6 +534,7 @@
     "statusPending": "Pendiente",
     "resendInvite": "Reenviar invitación",
     "unlinkParent": "Desvincular padre",
+    "unlinkFromStudent": "Desvincular de {{name}}",
     "pagination": "Página {{page}} de {{total}}",
     "previous": "Anterior",
     "next": "Siguiente",
@@ -805,7 +811,9 @@
       "addWindow": "Agregar ventana",
       "empty": "No hay ventanas de evaluación",
       "fallback": "Evaluación",
-      "gradeOption": "Grado {{grade}}"
+      "gradeOption": "Grado {{grade}}",
+      "sharedHint": "Compartidas con el Calendario de evaluaciones de la página Evaluaciones.",
+      "remove": "Quitar ventana"
     },
     "toast": {
       "endAfterStart": "La fecha de fin debe ser posterior a la de inicio",
@@ -991,6 +999,8 @@
       "createFailed": "No se pudo crear el curso",
       "csvNoRows": "El CSV no tiene filas de datos",
       "csvImported": "Importados: {{success}}; con error: {{failed}}",
+      "csvMissingDepartment": "Se omitieron filas sin departamento: todo curso necesita uno.",
+      "csvFailedLines": "No importadas — revisa estas líneas del archivo: {{lines}}",
       "fileTooLarge": "El archivo es demasiado grande (máx. 5 MB)",
       "foundCourses_one": "Se encontró {{count}} curso",
       "foundCourses_other": "Se encontraron {{count}} cursos",
@@ -1400,7 +1410,11 @@
         "credit_gap": "Déficit de créditos",
         "no_career_path": "Sin ruta profesional",
         "inactive": "Inactivo",
-        "general": "General"
+        "general": "General",
+        "low_gpa": "GPA bajo",
+        "credit_deficit": "Déficit de créditos",
+        "stalled_assessments": "Evaluaciones detenidas",
+        "overdue_followup": "Seguimiento vencido"
       },
       "priority": {
         "critical": "Crítica",
@@ -1437,6 +1451,7 @@
       "criticalPriority": "Prioridad crítica",
       "highPriority": "Prioridad alta",
       "newSinceLogin": "Nuevas desde tu último ingreso",
+      "unread": "Sin leer",
       "selected_one": "{{count}} seleccionada",
       "selected_other": "{{count}} seleccionadas"
     },
@@ -1494,7 +1509,7 @@
       "noMil": "Sin resultados MIL/LIA",
       "noMilDesc": "Este estudiante aún no ha completado las evaluaciones cognitivas.",
       "milProfile": "Perfil MIL",
-      "milProfileDesc": "5 dominios: razonamiento, detección, numérico, memoria, orientación",
+      "milProfileDesc": "5 subpruebas: reconocimiento de patrones, razonamiento verbal, memoria de trabajo, velocidad numérica y rotación visual",
       "domains": {
         "PatternRecognition": "Reconocimiento de patrones",
         "VerbalReasoning": "Razonamiento verbal",
@@ -1512,7 +1527,8 @@
       "strengths": "Fortalezas",
       "areasForGrowth": "Áreas de mejora",
       "examHistory": "Historial de resultados de exámenes",
-      "examHistoryDesc": "Todos los intentos de examen con puntajes, tiempos y datos por pregunta",
+      "examHistoryDesc": "Cada subprueba con estado, puntaje, respuestas y fecha de finalización",
+      "csv": {"subtest": "Subprueba", "score": "Puntaje (percentil)", "overall": "General", "status": "Estado", "correct": "Correctas", "incorrect": "Incorrectas", "total": "Preguntas", "completedAt": "Finalizada"},
       "overallScoreLabel": "Puntaje general:",
       "examsCompleted": "{{completed}}/{{total}} exámenes completados",
       "report360Downloaded": "Informe 360 descargado",
@@ -1885,7 +1901,7 @@
     }
   },
   "pipeline": {
-    "milName": "Medición de Inteligencia Laboral"
+    "pcaName": "Análisis de Competencias Personales (DISC)"
   },
   "actingSchool": {
     "viewing": "Super Admin · estás trabajando en {{school}}. Todo lo que hagas aquí se aplica a este colegio.",

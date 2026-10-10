@@ -10,6 +10,7 @@ import { apiRequest } from "@/lib/api/apiClient";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { getAllMyCounselorStudents } from "@/services/schoolProfileService";
 
 interface Student {
   id: string;
@@ -75,10 +76,7 @@ export default function CounselorDocumentsPage() {
   // Fetch students
   const { data: students = [], isLoading: studentsLoading } = useQuery({
     queryKey: ["counselor-students"],
-    queryFn: async () => {
-      const res = await apiRequest("/api/v1/counselor/me/students?limit=50");
-      const items = res?.data?.data ?? res?.data ?? []; return Array.isArray(items) ? items : [];
-    },
+    queryFn: () => getAllMyCounselorStudents<Student>(),
   });
 
   // Fetch documents for selected student

@@ -55,7 +55,8 @@
     "colMemory": "Memoria",
     "colNumeric": "Numérico",
     "colRotation": "Rotación",
-    "colMil": "MIL",
+    "colPca": "PCA",
+    "groupLia": "MIL / LIA",
     "col360": "360°"
   },
   "alerts": {
@@ -84,7 +85,12 @@
     "colDate": "Fecha",
     "noAlerts": "No se encontraron alertas",
     "statTotal": "Total",
-    "statNew": "Nuevas"
+    "statNew": "Nuevas",
+    "statUnread": "Sin leer",
+    "lowGpa": "GPA bajo",
+    "creditDeficit": "Déficit de créditos",
+    "stalledAssessments": "Evaluaciones detenidas",
+    "overdueFollowup": "Seguimiento vencido"
   },
   "students": {
     "badge": "Carga de casos",
@@ -295,6 +301,7 @@
     "confirm": "Confirmar",
     "cancel": "Cancelar",
     "statusUpcoming": "Próxima",
+    "statusRescheduled": "Reprogramada",
     "statusCompleted": "Completada",
     "statusCancelled": "Cancelada",
     "actionJoin": "Unirse",
