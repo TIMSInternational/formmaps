@@ -13,6 +13,8 @@ import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useContentLanguage } from "@/lib/i18n/contentLanguage";
 import { personalityApi, type PersonalityResults } from "@/services/personalityService";
+import { isPaymentRequiredError } from "@/lib/api/apiClient";
+import { ResultsLockedState } from "@/components/independent-student/ResultsLockedState";
 import { PersonalityRadar } from "./_components/PersonalityRadar";
 import { PersonalityIntensityBars } from "./_components/PersonalityIntensityBars";
 import { PersonalityNarrative } from "./_components/PersonalityNarrative";
@@ -26,6 +28,8 @@ export default function PersonalityResultsPage() {
   const [results, setResults] = useState<PersonalityResults | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  // audit 2026-10-09 C18: 402 = paywall (finished, not paid) — never "not completed".
+  const [locked, setLocked] = useState(false);
 
   useEffect(() => {
     if (!user.id) return;
@@ -35,8 +39,10 @@ export default function PersonalityResultsPage() {
       .then((data) => {
         if (!cancelled) setResults(data);
       })
-      .catch(() => {
-        if (!cancelled) setError(true);
+      .catch((err) => {
+        if (cancelled) return;
+        if (isPaymentRequiredError(err)) setLocked(true);
+        else setError(true);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -52,6 +58,10 @@ export default function PersonalityResultsPage() {
         <Loader2 className="w-10 h-10 text-[#065292] animate-spin" />
       </div>
     );
+  }
+
+  if (locked) {
+    return <ResultsLockedState />;
   }
 
   if (error || !results) {

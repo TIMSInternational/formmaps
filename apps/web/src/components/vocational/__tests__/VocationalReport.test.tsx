@@ -14,6 +14,7 @@ jest.mock("react-i18next", () => {
 });
 beforeEach(() => { mockLang = "en"; });
 
+jest.mock("next/navigation", () => ({ usePathname: () => "/dashboard/assessments/vocational" }));
 jest.mock("@/services/vocationalReportService");
 const r360 = svc.recompute360 as jest.Mock;
 const rInt = svc.recomputeIntegrated as jest.Mock;
@@ -83,4 +84,17 @@ it("renders the report chrome in Spanish", async () => {
   expect(screen.getByText("Dimensiones")).toBeInTheDocument();
   expect(screen.getByText(/Moderadamente alto/)).toBeInTheDocument();
   expect(screen.queryByText(/Vocational 360 Report|Dimensions|moderateHigh/)).not.toBeInTheDocument();
+});
+
+// audit 2026-10-09 C18: paywall ON + no paid results → the API answers 402; show the unlock state, not "try again".
+it("shows the 'unlock your results' state on a 402 instead of the load error", async () => {
+  r360.mockRejectedValue(Object.assign(new Error("Your full results unlock after your first payment"), {
+    status: 402, data: { success: false, code: "PAID_RESULTS_REQUIRED" },
+  }));
+  render(<VocationalReport evaluatedUserId="stu1" selfView />);
+  await waitFor(() => expect(screen.getByText("Unlock your results")).toBeInTheDocument());
+  expect(screen.getByRole("link", { name: "Unlock my results" })).toHaveAttribute(
+    "href", "/complete-purchase?returnTo=%2Fdashboard%2Fassessments%2Fvocational",
+  );
+  expect(rInt).not.toHaveBeenCalled();
 });

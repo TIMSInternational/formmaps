@@ -8,6 +8,7 @@ import { forceLogout } from '@/utils/tokenUtils';
 import { ACTING_SCHOOL_HEADER, actingSchoolHeaderFor } from '@/lib/actingSchool';
 import { normalizeRole } from '@/lib/roleUtils';
 import { Roles } from '@/lib/permissions';
+import { ASSESSMENT_AREAS, COMPLETE_PURCHASE_ROUTE } from '@/lib/independentStudent';
 
 export type ApiEnvelope<T> = {
   success?: boolean;
@@ -29,6 +30,55 @@ export const apiClient: AxiosInstance = axios.create({
   timeout: 30000,
   withCredentials: true, // Send httpOnly cookies with every request
 });
+
+// audit 2026-10-09 C18 — student paywall (INDEPENDENT_STUDENT_PAYWALL). Both backends answer a gated
+// request with 402 { success: false, message, code } (Node middleware/studentPaywall.ts ≡ .NET
+// StudentPaywallPolicy / StudentPaywallFilter), code ∈ PAYMENT_REQUIRED | FULL_PLATFORM_REQUIRED |
+// PAID_RESULTS_REQUIRED. Before this the web treated a 402 like any other 4xx, so results pages rendered
+// "you have not completed this assessment" and sent the student back to a test they had finished (loop).
+export const PAID_RESULTS_REQUIRED_CODE = 'PAID_RESULTS_REQUIRED';
+
+/** True for a paywall 402 — results pages render the "unlock your results" state for it. */
+export function isPaymentRequiredError(error: unknown): boolean {
+  return (error as { status?: unknown } | null)?.status === 402;
+}
+
+// Pages where a 402 must never navigate: the purchase flow itself (no redirect loop), auth, and the
+// assessment areas, which are open to every student (D4) — a background widget there that hits a gated
+// endpoint must not eject a student from the test they are taking.
+const PAYWALL_REDIRECT_EXEMPT = [
+  COMPLETE_PURCHASE_ROUTE, '/subscribe', '/payment-success', '/payment-cancelled', '/login', '/signup',
+  ...ASSESSMENT_AREAS,
+];
+
+/**
+ * Where a 402 sends the browser, or null to stay. PAID_RESULTS_REQUIRED never navigates: results endpoints
+ * are also read by pages that are open to unpaid students (assessments hub progress, dashboard widgets), and
+ * /complete-purchase bounces a trialing student (full platform, no paid results) straight back — the results
+ * page shows an "unlock your results" state instead. Platform-level codes go to the purchase page with a
+ * return URL it honours once access is granted.
+ */
+export function purchaseRedirectFor(pathname: string, search: string, code: unknown): string | null {
+  if (code === PAID_RESULTS_REQUIRED_CODE) return null;
+  if (PAYWALL_REDIRECT_EXEMPT.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return null;
+  return `${COMPLETE_PURCHASE_ROUTE}?returnTo=${encodeURIComponent(`${pathname}${search}`)}`;
+}
+
+/** Indirection so tests can observe the navigation (jsdom's location.assign is not spy-able). */
+export const paywallNavigation = { assign: (url: string) => window.location.assign(url) };
+// N gated queries mounting at once must produce ONE navigation, not N.
+let lastPaywallRedirectAt = 0;
+const PAYWALL_REDIRECT_COOLDOWN_MS = 10_000;
+
+function handlePaymentRequired(code: unknown) {
+  if (typeof window === 'undefined') return;
+  const target = purchaseRedirectFor(window.location.pathname, window.location.search, code);
+  if (!target) return;
+  const now = Date.now();
+  if (now - lastPaywallRedirectAt < PAYWALL_REDIRECT_COOLDOWN_MS) return;
+  lastPaywallRedirectAt = now;
+  paywallNavigation.assign(target);
+}
 
 // Flag to prevent infinite refresh loops
 let isRefreshing = false;
@@ -130,6 +180,10 @@ apiClient.interceptors.response.use(
           break;
         default:
           message = (status >= 500) ? i18n.t('components.apiClient.tryAgain') : (data?.message || i18n.t('components.apiClient.requestFailed'));
+      }
+      if (status === 402) {
+        // audit 2026-10-09 C18: a 4xx, so apiRequest and React Query never retry it.
+        handlePaymentRequired(data?.code);
       }
       if (data?.code === 'AI_BUDGET_EXCEEDED') {
         message = i18n.t('components.apiClient.aiBudgetExceeded');

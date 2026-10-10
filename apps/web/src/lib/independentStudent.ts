@@ -46,6 +46,16 @@ export function isStudentPaywallEnabled(value: string | undefined = process.env.
 export const COMPLETE_PURCHASE_ROUTE = "/complete-purchase";
 
 /**
+ * audit 2026-10-09 C18: the `returnTo` the apiClient's 402 redirect appends to /complete-purchase, accepted only
+ * as a same-origin app path (no `//host`, no scheme, not the purchase page itself — that would loop).
+ */
+export function safeReturnTo(raw: string | null | undefined): string | null {
+  if (!raw || !raw.startsWith("/") || raw.startsWith("//") || raw.startsWith("/\\")) return null;
+  if (raw === COMPLETE_PURCHASE_ROUTE || raw.startsWith(`${COMPLETE_PURCHASE_ROUTE}?`) || raw.startsWith(`${COMPLETE_PURCHASE_ROUTE}/`)) return null;
+  return raw;
+}
+
+/**
  * Student areas outside /dashboard that the paywall must also cover when ON
  * (flag OFF: AuthWrapper only checks its protectedRoutes, as today).
  */
