@@ -95,6 +95,7 @@ app.MapAuthEndpoints();
 app.MapAuthAdminEndpoints();
 app.MapBillingWebhookEndpoints();
 app.MapBillingEndpoints();
+app.MapAdminPayoutsEndpoints();
 app.MapHub<MessagesHub>("/hubs/messages").RequireCors(FormMaps.Api.Security.ApiSecurityExtensions.CorsPolicyName);
 app.MapCounselorNotesEndpoints();
 app.MapAcademicGapsEndpoints();

@@ -467,7 +467,40 @@
       "confirmTitle": "Mark this payout as paid?",
       "confirmDesc": "FormMaps does not send the money: pay {{coach}} {{amount}} yourself first (bank transfer or Stripe), then mark it here. This is recorded in the audit log.",
       "confirmLabel": "Mark as paid",
-      "success": "Payout marked as paid"
+      "success": "Payout marked as paid",
+      "dialogDesc": "FormMaps does not send the money: pay {{coach}} {{amount}} yourself first (bank transfer or Stripe), then record it here. This is recorded in the audit log.",
+      "paidAtLabel": "Date paid",
+      "referenceLabel": "Reference (optional)",
+      "referencePlaceholder": "Bank transfer ID or a note",
+      "cancel": "Cancel"
+    },
+    "monthly": {
+      "title": "Monthly coach payouts",
+      "subtitle": "What each coach earned in the month: completed, paid sessions, minus refunds and the platform commission.",
+      "monthLabel": "Month",
+      "generate": "Generate payouts",
+      "generating": "Generating…",
+      "notEnded": "You can generate payouts once the month has ended.",
+      "confirmTitle": "Generate payouts for {{month}}?",
+      "confirmDesc": "Creates one pending payout per coach for {{month}}. Running it again never duplicates a payout and never changes one already paid.",
+      "confirmLabel": "Generate",
+      "generated": "Payouts for {{month}}: {{created}} created, {{updated}} updated, {{unchanged}} unchanged",
+      "generateFailed": "Could not generate the payouts",
+      "loadFailed": "Could not load the month",
+      "empty": "No completed, paid sessions in this month.",
+      "notGenerated": "Not generated",
+      "difference": "Differs from the paid amount by {{amount}}",
+      "paidOn": "Paid {{date}}",
+      "total": "Total",
+      "table": {
+        "coach": "Coach",
+        "sessions": "Sessions",
+        "gross": "Gross",
+        "commission": "Commission",
+        "net": "Net to coach",
+        "status": "Status",
+        "actions": "Actions"
+      }
     },
     "pagination": {
       "showingPage": "Showing page {{page}} of {{total}}"
