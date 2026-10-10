@@ -281,6 +281,8 @@ jobs:
           FIELD_ENCRYPTION_KEY_ARN: ${{ secrets.FORMMAPS_PROD_FIELD_ENCRYPTION_KEY_ARN }}
           PROD_WEB_ORIGIN: ${{ vars.FORMMAPS_PROD_WEB_ORIGIN }}
           PROD_FRONTEND_BASE_URL: ${{ vars.FORMMAPS_PROD_FRONTEND_BASE_URL }}
+          # Default "false" (unset variable) keeps the paywall off. Flip with Node, never alone.
+          PROD_INDEPENDENT_STUDENT_PAYWALL: ${{ vars.FORMMAPS_PROD_INDEPENDENT_STUDENT_PAYWALL }}
         run: |
           set -euo pipefail
           # FrontendBaseUrl follows the CORS origin unless deliberately split
@@ -303,6 +305,7 @@ jobs:
               FieldEncryptionKeyArn="$FIELD_ENCRYPTION_KEY_ARN" \
               ProdWebOrigin="$PROD_WEB_ORIGIN" \
               FrontendBaseUrl="$FRONTEND_BASE_URL" \
+              IndependentStudentPaywall="${PROD_INDEPENDENT_STUDENT_PAYWALL:-false}" \
               Cpu="512" \
               Memory="1024"
 

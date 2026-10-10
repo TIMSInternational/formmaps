@@ -127,6 +127,16 @@ Parameters:
       `JWT_AUDIENCE` runtime value (`nexa-frontend`, which overrides the code
       default `formmaps-frontend`). A mismatch 401s every real cookie
       (2026-07-22 P0).
+  IndependentStudentPaywall:
+    Type: String
+    Default: "false"
+    AllowedValues: ["false", "true"]
+    Description: >-
+      INDEPENDENT_STUDENT_PAYWALL for FormMaps.Api (StudentAccessRules.FlagKey). "false" = the
+      paywall middleware/filters are complete no-ops (today's behaviour; the variable was absent).
+      Flip together with the Node nexa-api service's INDEPENDENT_STUDENT_PAYWALL, never one alone:
+      the two APIs gate different routes of the same student session. Set via the repo variable
+      FORMMAPS_PROD_INDEPENDENT_STUDENT_PAYWALL + a prod deploy.
   FrontendBaseUrl:
     Type: String
     Default: https://app.formmaps.com
@@ -340,6 +350,8 @@ Resources:
                 Value: !Ref LegacyApiBaseUrl
               - Name: FRONTEND_BASE_URL
                 Value: !Ref FrontendBaseUrl
+              - Name: INDEPENDENT_STUDENT_PAYWALL
+                Value: !Ref IndependentStudentPaywall
               - Name: S3_BUCKET
                 Value: !Ref S3Bucket
             RuntimeEnvironmentSecrets:
