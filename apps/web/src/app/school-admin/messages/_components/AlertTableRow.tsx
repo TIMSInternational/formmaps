@@ -1,6 +1,7 @@
 "use client";
 
 import { useTranslation } from "react-i18next";
+import { localizeAlert } from "@/lib/localizeAlert";
 import { Checkbox } from "@/components/ui/checkbox";
 import { TableCell, TableRow } from "@/components/ui/table";
 import {
@@ -40,7 +41,10 @@ interface AlertRecord {
   id: string;
   type: string;
   studentName?: string;
+  title?: string | null;
   message?: string;
+  /** Generated alerts: translation key + params (see lib/localizeAlert.ts). */
+  details?: unknown;
   priority: string;
   status: string;
 }
@@ -54,7 +58,8 @@ interface AlertTableRowProps {
 }
 
 export function AlertTableRow({ alert, isSelected, onToggleSelect, onMarkRead, onDismiss }: AlertTableRowProps) {
-  const { t } = useTranslation("school_admin");
+  const { t, i18n } = useTranslation("school_admin");
+  const { message } = localizeAlert(alert, t, i18n?.language || "en");
   const pBadge = priorityBadge[alert.priority as AlertPriority] || priorityBadge.low;
 
   return (
@@ -89,7 +94,7 @@ export function AlertTableRow({ alert, isSelected, onToggleSelect, onMarkRead, o
         )}
       </TableCell>
       <TableCell>
-        <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.4 }} className="line-clamp-2">{alert.message}</p>
+        <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", lineHeight: 1.4 }} className="line-clamp-2">{message}</p>
       </TableCell>
       <TableCell>
         <span style={{

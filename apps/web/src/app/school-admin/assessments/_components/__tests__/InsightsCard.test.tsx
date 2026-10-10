@@ -75,16 +75,17 @@ describe("InsightsCard — locked completion state", () => {
     expect(getByText(/Personality:\s*6\/10/)).toBeInTheDocument();
   });
 
-  it("falls back to the message when completion data is absent", () => {
+  it("shows its own translated fallback, never the server's English-only message, when completion data is absent (audit F)", () => {
     const insights = {
       hasEnoughData: false,
       message: "Need at least 3 students to generate school insights",
     } as InsightsData;
 
-    const { getByText } = render(
+    const { getByText, queryByText } = render(
       <InsightsCard insights={insights} onRefresh={() => {}} isRefreshing={false} />
     );
 
-    expect(getByText(/at least 3 students/i)).toBeInTheDocument();
+    expect(getByText(/Insights will appear once enough students complete assessments/i)).toBeInTheDocument();
+    expect(queryByText(/at least 3 students/i)).toBeNull();
   });
 });

@@ -174,6 +174,38 @@ export async function resendUserInvite(userId: string): Promise<ResendUserInvite
   return (response?.data ?? response ?? {}) as ResendUserInviteResult;
 }
 
+export interface DeactivationImpact {
+  isCoach: boolean;
+  /** Paid sessions still to come that deactivating this coach will cancel and refund. */
+  paidFutureSessions: number;
+}
+
+/** What deactivating this account will do (audit F4), so the confirm can name the cancelled sessions. */
+export async function getDeactivationImpact(userId: string): Promise<DeactivationImpact> {
+  const response = await apiRequest(`/api/v1/admin/users/${encodeURIComponent(userId)}/deactivation-impact`, {
+    showErrorToast: false,
+  });
+  const data = (response?.data ?? response ?? {}) as Partial<DeactivationImpact>;
+  return { isCoach: !!data.isCoach, paidFutureSessions: Number(data.paidFutureSessions) || 0 };
+}
+
+/** The coach bookings a deactivation cancelled; present only when the account was a coach's. */
+export interface CoachBookingCancellation {
+  cancelled: number;
+  refunded: string[];
+  refundFailed: string[];
+}
+
+/** PUT /admin/users/:id/status. Returns the coach booking outcome when the user was a coach. */
+export async function setUserActive(userId: string, isActive: boolean): Promise<{ coachBookings?: CoachBookingCancellation }> {
+  const response = await apiRequest(`/api/v1/admin/users/${encodeURIComponent(userId)}/status`, {
+    method: "PUT",
+    data: { isActive },
+    showErrorToast: false,
+  });
+  return (response?.data ?? {}) as { coachBookings?: CoachBookingCancellation };
+}
+
 export interface RoleOption {
   id: string;
   name: string;

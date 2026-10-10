@@ -65,5 +65,5 @@ public sealed record NotificationRow(
     string UpdatedAt);
 
 /// <summary>A pending-evaluation row shaped for the parent page: {evaluationId, studentName, deadline, token}. The
-/// token is the evaluator's OWN invite (safe to return). studentName falls back to "your student".</summary>
-public sealed record PendingEvaluation(string EvaluationId, string StudentName, string? Deadline, string Token);
+/// token is the evaluator's OWN invite (safe to return). studentName is null when the student has no name (the web says "your student" in the viewer's language).</summary>
+public sealed record PendingEvaluation(string EvaluationId, string? StudentName, string? Deadline, string Token);

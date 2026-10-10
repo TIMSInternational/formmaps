@@ -205,7 +205,8 @@
       },
       "gradeLabel": "Grade {{grade}}",
       "noData": "No performance data yet",
-      "statusNotStarted": "not started"
+      "statusNotStarted": "not started",
+      "loadError": "Couldn't load top performers. Try again."
     }
   },
   "assessments": {
@@ -577,12 +578,6 @@
       "profile": "School Profile",
       "calendar": "Calendar",
       "integrations": "Integrations"
-    },
-    "mockToggle": {
-      "previewMode": "Preview Mode",
-      "liveMode": "Live Mode",
-      "usingMock": "Using mock data",
-      "usingReal": "Using real data"
     },
     "profilePanel": {
       "title": "School Profile",

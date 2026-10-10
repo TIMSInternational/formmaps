@@ -2018,7 +2018,11 @@
         "body": "¿Seguro que quieres desactivar a {{name}}? Ya no podrá acceder a la plataforma.",
         "cta": "Desactivar",
         "done": "Se desactivó la cuenta de {{name}}",
-        "failed": "No se pudo desactivar a este usuario. Inténtalo de nuevo."
+        "failed": "No se pudo desactivar a este usuario. Inténtalo de nuevo.",
+        "coachSessions_one": "Este coach tiene {{count}} sesión pagada próxima. Se cancelará y se le devolverá el dinero al estudiante.",
+        "coachSessions_other": "Este coach tiene {{count}} sesiones pagadas próximas. Se cancelarán y se les devolverá el dinero a los estudiantes.",
+        "refundFailed_one": "No se pudo emitir {{count}} reembolso. Hazlo manualmente en Stripe.",
+        "refundFailed_other": "No se pudieron emitir {{count}} reembolsos. Hazlos manualmente en Stripe."
       },
       "activate": {
         "title": "Activar usuario",
@@ -2336,7 +2340,11 @@
       "scoresPendingTitle": "Tus coincidencias de carrera aún no están listas",
       "scoresPendingDesc": "Todavía no pudimos calcular las puntuaciones de coincidencia a partir de tus resultados. Vuelve más tarde o consulta a tu orientador si no cambia.",
       "clearFilters": "Limpiar filtros",
-      "noResultsDesc": "Completa tus evaluaciones ({{list}}) para recibir recomendaciones de carrera personalizadas."
+      "noResultsDesc": "Completa tus evaluaciones ({{list}}) para recibir recomendaciones de carrera personalizadas.",
+      "pillSearch": "Búsqueda",
+      "pillIndustry": "Industria",
+      "pillSort": "Orden",
+      "startAssessments": "Comenzar evaluaciones"
     },
     "search_placeholder": "Busca carreras, habilidades o palabras clave...",
     "all_industries": "Todas las industrias",
@@ -2351,6 +2359,10 @@
       "high": "Coincidencia excelente",
       "good": "Coincidencia alta",
       "moderate": "Buena coincidencia"
+    },
+    "personality": {
+      "description": "Agrega tu tipo de personalidad de 4 letras para obtener coincidencias de carrera aún más precisas",
+      "recommended": "Recomendado"
     }
   },
   "careers": {
@@ -2586,7 +2598,8 @@
       "specializationRequired": "La especialización es obligatoria",
       "locationRequired": "La ubicación es obligatoria",
       "languageRequired": "Se requiere al menos un idioma",
-      "tagRequired": "Se requiere al menos una etiqueta"
+      "tagRequired": "Se requiere al menos una etiqueta",
+      "nameRequired": "El nombre es obligatorio"
     },
     "personalInfo": {
       "uploadPhoto": "Subir foto de perfil",
@@ -3195,6 +3208,7 @@
       "allAssessments": "Todas las evaluaciones",
       "noResults": "No se encontraron resultados",
       "noResultsDesc": "Los resultados de evaluaciones aparecerán aquí",
+      "loadError": "No se pudieron cargar los resultados. Inténtalo de nuevo.",
       "table": {
         "student": "Estudiante",
         "assessment": "Evaluación",
@@ -3295,7 +3309,11 @@
       "parse": "Vista previa",
       "preview": "Vista previa",
       "errors": "Errores de validación:",
-      "confirmImport": "Iniciar importación"
+      "confirmImport": "Iniciar importación",
+      "missingColumn": "Falta la columna obligatoria: {{column}}",
+      "rowMissingStudent": "Fila {{row}}: falta student_id o student_email",
+      "rowMissingCourse": "Fila {{row}}: falta course_code",
+      "rowInvalidGrade": "Fila {{row}}: valor de nota no válido"
     }
   },
   "lia": {
@@ -5948,7 +5966,38 @@
       "currentPlan": "Plan actual",
       "paymentFailed": "El pago falló: {{error}}",
       "processing": "Procesando...",
-      "portalFailed": "No se pudo abrir el portal de facturación. Inténtalo de nuevo."
+      "portalFailed": "No se pudo abrir el portal de facturación. Inténtalo de nuevo.",
+      "cancelFailed": "No se pudo cancelar la suscripción: {{error}}",
+      "fallbackFeatures": {
+        "starter": [
+          "Evaluaciones LIA y PCA",
+          "Coincidencia de carreras (top 10)",
+          "Creador de hoja de vida básico",
+          "Acceso al catálogo de cursos",
+          "Soporte por correo electrónico"
+        ],
+        "pro": [
+          "Todo lo de Starter",
+          "Sistema de evaluación 360°",
+          "Coincidencia completa de carreras (más de 370)",
+          "Creador de hoja de vida con IA",
+          "Recomendaciones de universidades",
+          "Creador de plan de cursos",
+          "Creador de portafolio",
+          "1 sesión de coaching al mes",
+          "Soporte prioritario"
+        ],
+        "premium": [
+          "Todo lo de Pro",
+          "Sesiones de coaching ilimitadas",
+          "Informes narrativos de carrera con IA",
+          "Reserva de sesiones con orientador",
+          "Seguimiento de servicio comunitario",
+          "Apoyo para el proyecto de grado",
+          "Seguimiento de certificaciones",
+          "Soporte dedicado"
+        ]
+      }
     },
     "testScores": {
       "form": {
@@ -6083,7 +6132,7 @@
       },
       "s11": {
         "title": "11. Contacto",
-        "body": "¿Tienes preguntas sobre estos Términos? Contáctanos en <link>legal@formmaps.ai</link>."
+        "body": "¿Tienes preguntas sobre estos Términos? Contáctanos en <link>legal@formmaps.com</link>."
       }
     },
     "privacy": {
@@ -6151,7 +6200,7 @@
       },
       "s8": {
         "title": "8. Contacto",
-        "body": "Para consultas relacionadas con la privacidad, contáctanos en <link>privacy@formmaps.ai</link>."
+        "body": "Para consultas relacionadas con la privacidad, contáctanos en <link>privacy@formmaps.com</link>."
       }
     },
     "print": {
@@ -6488,10 +6537,7 @@
       "reports": {
         "lia": "informe de evaluación LIA",
         "pca": "informe de perfil de personalidad",
-        "evaluation": "informe de evaluación 360°",
-        "timeline": "informe de línea de tiempo profesional",
-        "coaching": "informe de sesiones de coaching",
-        "benchmark": "informe de comparación de referencias"
+        "coaching": "informe de sesiones de coaching"
       },
       "generating": "Generando PDF...",
       "downloaded": "¡Descargado!",
@@ -7308,5 +7354,41 @@
   },
   "meta": {
     "defaultTitle": "FormMaps - Encuentra tu camino. Construye tu futuro."
+  },
+  "alertsGenerated": {
+    "low_gpa": {
+      "title": "Promedio bajo",
+      "message": "El promedio es {{gpa}}, por debajo del mínimo de 2.0."
+    },
+    "credit_deficit": {
+      "title": "Déficit de créditos",
+      "message": "Tiene {{earned}} de los ~{{expected}} créditos esperados para el grado {{grade}}."
+    },
+    "stalled_assessments": {
+      "title": "Evaluaciones sin iniciar",
+      "message": "No tiene actividad de evaluación completada (LIA, PCA o 360°)."
+    },
+    "overdue_followup": {
+      "title": "Seguimiento vencido",
+      "message": "Un seguimiento del orientador vencía el {{date}} y sigue abierto."
+    },
+    "overdue_followup_nodate": {
+      "title": "Seguimiento vencido",
+      "message": "Un seguimiento del orientador está vencido y sigue abierto."
+    }
+  },
+  "analyticsCsv": {
+    "metric": "Métrica",
+    "value": "Valor",
+    "totalStudents": "Total de estudiantes",
+    "atRisk": "Estudiantes en riesgo",
+    "counselorCoverage": "Cobertura de orientadores",
+    "assessmentCompletion": "Evaluaciones completadas",
+    "avgGpa": "Promedio general",
+    "pcaComplete": "PCA completa",
+    "milComplete": "LIA completa",
+    "evalComplete": "360 completa",
+    "personalityComplete": "Personalidad completa",
+    "fullyComplete": "Todo completo"
   }
 }

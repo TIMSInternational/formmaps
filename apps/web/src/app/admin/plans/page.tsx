@@ -64,12 +64,6 @@ interface CreatePlanData {
     isActive: boolean;
 }
 
-const PLAN_INTERVALS = [
-    { value: "one_time", label: "One Time", description: "Single payment" },
-    { value: "monthly", label: "Monthly", description: "Recurring monthly" },
-    { value: "yearly", label: "Yearly", description: "Recurring yearly" },
-] as const;
-
 
 export default function AdminPlansPage() {
     const { t } = useTranslation("platform_owner");

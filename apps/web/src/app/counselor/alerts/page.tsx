@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
+import { localizeAlert } from "@/lib/localizeAlert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -49,7 +50,7 @@ const typeIcons: Record<AlertType, React.ReactNode> = {
 };
 
 export default function AlertsPage() {
-  const { t } = useTranslation("counselor");
+  const { t, i18n } = useTranslation("counselor");
   const router = useRouter();
   const [search, setSearch] = useState("");
   // The search box used to update state that no query read; it now searches on the server.
@@ -200,7 +201,9 @@ export default function AlertsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {alerts?.data?.map((a) => (
+              {alerts?.data?.map((a) => {
+                const shown = localizeAlert(a, t, i18n?.language || "en");
+                return (
                 <TableRow
                   key={a.id}
                   className={`${selected.includes(a.id) ? "bg-[var(--admin-bg-hover,rgba(0,0,0,0.04))]" : ""}`}
@@ -211,8 +214,8 @@ export default function AlertsPage() {
                   </TableCell>
                   <TableCell>{typeIcons[a.type] || <Info className="h-4 w-4" />}</TableCell>
                   <TableCell className="max-w-[250px]">
-                    <p className="font-medium text-sm truncate text-foreground">{a.title}</p>
-                    <p className="text-xs text-muted-foreground truncate">{a.message}</p>
+                    <p className="font-medium text-sm truncate text-foreground">{shown.title}</p>
+                    <p className="text-xs text-muted-foreground truncate">{shown.message}</p>
                   </TableCell>
                   <TableCell className="text-sm text-foreground">
                     {a.studentId ? (
@@ -241,7 +244,8 @@ export default function AlertsPage() {
                     )}
                   </TableCell>
                 </TableRow>
-              ))}
+                );
+              })}
               {(!alerts?.data || alerts.data.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center text-muted-foreground py-12">{t("alerts.noAlerts", "No alerts found")}</TableCell>

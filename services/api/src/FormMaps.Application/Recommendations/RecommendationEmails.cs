@@ -8,10 +8,8 @@ namespace FormMaps.Application.Recommendations;
 /// (names, relationship, message, decline reason) is HTML-escaped before interpolation, exactly as legacy does; the
 /// shell is the shared <see cref="EmailTemplates.Wrap"/> / <see cref="EmailTemplates.Button"/> branding.
 ///
-/// <para>The button target is <c>{FRONTEND_BASE_URL || "https://app.formmaps.ai"}/login</c>. That is
-/// <see cref="EmailOptions.InviteBaseUrl"/> — the RAW, non-trailing-slash-stripped variant with the <c>.ai</c>
-/// fallback — NOT <see cref="EmailOptions.FrontendUrl"/> (whose fallback is <c>.com</c>). Legacy declares its own
-/// module-level constant with the .ai fallback (recommendationEmails.ts:11), so this is the matching one.</para>
+/// <para>The button target is <c>{frontendBaseUrl()}/login</c>, i.e. <see cref="EmailOptions.InviteBaseUrl"/>. Audit F
+/// moved both legacy (recommendationEmails.ts) and this port off the dead <c>.ai</c> fallback onto the live app.</para>
 ///
 /// <para>DIVERGENCE RECORDED, NOT MADE: legacy renders the due date and the submitted date with JavaScript's
 /// <c>Date.prototype.toLocaleDateString()</c> — i.e. the Node process's ICU default locale AND its local timezone.

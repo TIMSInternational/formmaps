@@ -1,6 +1,7 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import LanguageDetector from "i18next-browser-languagedetector";
+import { browserLanguageDetector } from "./browserLanguage";
 
 // Common namespace (all existing keys — preserves every t('key') call)
 import enCommon from "./locales/en/common.json";
@@ -62,8 +63,14 @@ const resources = {
   },
 };
 
+// A stored choice (localStorage) wins; otherwise the browser's languages, Spanish when it is neither
+// Spanish nor English (browserLanguage.ts). The stock "navigator" + "htmlTag" detectors fell through to
+// English (fallbackLng / the root layout's lang="en") while every email defaults to Spanish.
+const languageDetector = new LanguageDetector();
+languageDetector.addDetector(browserLanguageDetector);
+
 i18n
-  .use(LanguageDetector)
+  .use(languageDetector)
   .use(initReactI18next)
   .init({
     resources,
@@ -78,7 +85,7 @@ i18n
     },
 
     detection: {
-      order: ["localStorage", "navigator", "htmlTag"],
+      order: ["localStorage", browserLanguageDetector.name],
       caches: ["localStorage"],
     },
   });

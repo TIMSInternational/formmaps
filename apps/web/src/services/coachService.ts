@@ -49,7 +49,6 @@ export async function submitOnboardingData(
   return res.data;
 }
 
-
 // --- User Side APIs ---
 
 export async function getCoaches(
@@ -394,17 +393,6 @@ export async function inviteCoach(data: {
   return apiRequest(`/authapi/invite-coach`, { method: "POST", data });
 }
 
-export async function inviteCoachBulk(file: File): Promise<Array<{ email: string; success: boolean; message?: string }>> {
-  const formData = new FormData();
-  formData.append("file", file);
-
-  return apiRequest(`/authapi/invite-coach-bulk`, {
-    method: "POST",
-    data: formData,
-    headers: { "Content-Type": "multipart/form-data" },
-  });
-}
-
 export async function updateCoach(
   coachId: string,
   data: Partial<Coach>,
@@ -419,22 +407,6 @@ export async function signupCoachBulk(
     method: "POST",
     data: { coaches },
   });
-}
-
-// --- Test Function ---
-
-export async function testCoachAPIs(): Promise<void> {
-  try {
-    // Test get coaches
-    const coaches = await getCoaches({ limit: 5 });
-
-    if (coaches.data.length > 0) {
-      const coachId = coaches.data[0].id;
-      const details = await getCoachDetails(coachId);
-    }
-  } catch (error) {
-    // error handled silently
-  }
 }
 
 export async function uploadProfileImage(file: File): Promise<Coach> {

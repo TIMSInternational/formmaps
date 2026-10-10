@@ -579,7 +579,7 @@ public sealed class TeacherOnboardingRepositoryTests(TeacherDatabaseFixture fixt
     }
 
     /// <summary>
-    /// `g.evaluatedUser?.name || "your student"` (teacher.ts:126). Reached here by making the evaluated user's
+    /// `g.evaluatedUser?.name || null` (teacher.ts:126; was "your student" before audit F). Reached here by making the evaluated user's
     /// row invisible to the caller while the group itself stays visible — which the production policies allow,
     /// because evaluation_groups admits on the evaluated user's school while users admits on the CALLER's.
     /// </summary>
@@ -593,7 +593,7 @@ public sealed class TeacherOnboardingRepositoryTests(TeacherDatabaseFixture fixt
 
         var rows = await Repository().ListPendingEvaluationsAsync(Ctx(Caller, School), Caller);
 
-        Assert.Equal("your student", Assert.Single(rows).StudentName);
+        Assert.Null(Assert.Single(rows).StudentName);
     }
 
     // =============================================================================================

@@ -74,7 +74,8 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
           </>
         ) : (
           <p style={{ fontSize: 13, color: "var(--admin-font-tertiary)" }}>
-            {insights?.message || t("insights.card.emptyFallback")}
+            {/* Not the server's `message`: that is English-only text (audit F). */}
+            {t("insights.card.emptyFallback")}
           </p>
         )}
       </div>

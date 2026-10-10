@@ -81,7 +81,8 @@
         "dueTomorrow": "Due tomorrow",
         "daysLeft": "{{count}} days left"
       }
-    }
+    },
+    "yourStudent": "your child"
   },
   "notifications": {
     "badge": "Parent",

@@ -32,7 +32,7 @@ import { InviteUserWizard } from "./_components/invite-wizard/InviteUserWizard";
 import { UserDetailDialog } from "./_components/UserDetailDialog";
 import { UsersTable, type UserRecord } from "./_components/UsersTable";
 import { formatSignedPercent } from "./_components/userStatus";
-import { resendUserInvite } from "@/services/adminUsersService";
+import { getDeactivationImpact, resendUserInvite, setUserActive } from "@/services/adminUsersService";
 
 export default function AdminUsersPage() {
   const router = useRouter();
@@ -73,21 +73,27 @@ export default function AdminUsersPage() {
   ];
 
   const handleDeactivateUser = async (user: UserRecord) => {
+    // Audit F4: deactivating a coach cancels and refunds their paid upcoming sessions — say so first.
+    // If the count can't be loaded the confirm still works; the server does the refunds either way.
+    const paidSessions = (user.role || "").trim().toLowerCase() === "coach"
+      ? await getDeactivationImpact(user.id).then((i) => i.paidFutureSessions).catch(() => 0)
+      : 0;
+    const body = t("admin.users.deactivate.body", { name: user.name });
     const confirmed = await confirm({
       title: t("admin.users.deactivate.title"),
-      description: t("admin.users.deactivate.body", { name: user.name }),
+      description: paidSessions > 0
+        ? `${body} ${t("admin.users.deactivate.coachSessions", { count: paidSessions })}`
+        : body,
       confirmLabel: t("admin.users.deactivate.cta"),
       cancelLabel: t("common.cancel"),
       variant: "destructive",
     });
     if (!confirmed) return;
     try {
-      await apiRequest(`/api/v1/admin/users/${user.id}/status`, {
-        method: "PUT",
-        data: { isActive: false },
-        showErrorToast: false,
-      });
+      const { coachBookings } = await setUserActive(user.id, false);
       toast.success(t("admin.users.deactivate.done", { name: user.name }));
+      const failed = coachBookings?.refundFailed.length ?? 0;
+      if (failed > 0) toast.warning(t("admin.users.deactivate.refundFailed", { count: failed }));
       refetch();
     } catch {
       toast.error(t("admin.users.deactivate.failed"));

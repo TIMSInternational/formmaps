@@ -97,65 +97,7 @@ export async function getCourseById(id: string) {
   return response?.data ?? response ?? null;
 }
 
-export async function adminCreateCourse(payload: Course) {
-  const response = await apiRequest(`/api/course/admin`, {
-    method: "POST",
-    data: payload,
-  });
-  return response?.data ?? response;
-}
-
-// --- Import flow wrappers (frontend -> API) ---
-export async function adminStartImport(url: string, source?: string) {
-  return apiRequest(`/api/course/admin/import`, {
-    method: "POST",
-    data: { url, source },
-  });
-}
-
-export async function adminGetImportStatus(jobId: string) {
-  return apiRequest(`/api/course/admin/import/${jobId}/status`, {
-    method: "GET",
-  });
-}
-
-export async function adminAcceptImport(
-  jobId: string,
-  overrides?: Record<string, any>
-) {
-  return apiRequest(`/api/course/admin/import/${jobId}/accept`, {
-    method: "POST",
-    data: { overrides },
-  });
-}
-
-export async function adminUpdateCourse(id: string, payload: Partial<Course>) {
-  const response = await apiRequest(`/api/course/admin/${id}`, {
-    method: "PUT",
-    data: payload,
-  });
-  return response?.data ?? response;
-}
-
 export async function adminDeleteCourse(id: string) {
-  const response = await apiRequest(`/api/course/admin/${id}`, {
-    method: "DELETE",
-  });
-  return response?.data ?? response;
-}
-
-export async function adminUpdateCourseApi(
-  id: string,
-  payload: Partial<Course>
-) {
-  const response = await apiRequest(`/api/course/admin/${id}`, {
-    method: "PUT",
-    data: payload,
-  });
-  return response?.data ?? response;
-}
-
-export async function adminDeleteCourseApi(id: string) {
   const response = await apiRequest(`/api/course/admin/${id}`, {
     method: "DELETE",
   });
