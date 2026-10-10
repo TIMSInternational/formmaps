@@ -73,3 +73,10 @@ CREATE TABLE "lia_assessment_sessions" (
 CREATE TABLE "personality_assessment_sessions" (
     "id" TEXT NOT NULL, "user_id" TEXT NOT NULL, "status" TEXT NOT NULL DEFAULT 'in_progress', "is_active" BOOLEAN NOT NULL DEFAULT true,
     CONSTRAINT "personality_assessment_sessions_pkey" PRIMARY KEY ("id"));
+
+-- Audit D9: GPA goes through the configured GPA engine (credits, course level, per-school scale).
+ALTER TABLE "student_grades" ADD COLUMN "credits" DECIMAL(65,30) NOT NULL DEFAULT 0;
+ALTER TABLE "student_grades" ADD COLUMN "courseLevel" TEXT;
+CREATE TABLE "gpa_configurations" (
+    "id" TEXT NOT NULL, "schoolId" TEXT NOT NULL, "unweightedMap" JSONB, "weightBonuses" JSONB,
+    CONSTRAINT "gpa_configurations_pkey" PRIMARY KEY ("id"));

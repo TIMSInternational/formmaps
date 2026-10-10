@@ -1,3 +1,4 @@
+using FormMaps.Application.SchoolAnalytics;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.SchoolAnalytics;
@@ -27,7 +28,7 @@ public sealed class SchoolAnalyticsReaderTests : IClassFixture<SchoolAnalyticsDa
         _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
         await using var conn = await _dataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand(
-            """TRUNCATE "users","student_grades","pca_evaluations","pca_exam_sessions","evaluation_groups","counselor_student_assignments","lia_assessment_sessions","personality_assessment_sessions" """,
+            """TRUNCATE "users","student_grades","pca_evaluations","pca_exam_sessions","evaluation_groups","counselor_student_assignments","lia_assessment_sessions","personality_assessment_sessions","gpa_configurations" """,
             conn);
         await cmd.ExecuteNonQueryAsync();
     }
@@ -69,6 +70,32 @@ public sealed class SchoolAnalyticsReaderTests : IClassFixture<SchoolAnalyticsDa
         Assert.Equal(62.5, overview.AverageProgressScore);
         Assert.Equal(1, overview.StudentsAtRisk);          // only s2 (mean 1.0 < 2.0)
         Assert.Equal(67, overview.CounselorCoverage);      // round(2*100/3) = 67
+    }
+
+    // Audit D9: GPA goes through the configured engine — A+/D- exist, credits weight, the school's scale wins.
+    [Fact]
+    public async Task Overview_gpa_uses_the_configured_gpa_engine()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUser(conn, "s1", School);
+        await SeedUser(conn, "s2", School);
+        await SeedGrade(conn, "g1", School, "s1", "A+", credits: 3);  // 4.0 x3
+        await SeedGrade(conn, "g2", School, "s1", "D-", credits: 1);  // 0.7 x1 -> (12+0.7)/4 = 3.175
+        await SeedGrade(conn, "g3", School, "s2", "D+");              // no credits -> counts as 1 -> 1.3 (at risk)
+
+        var overview = await Reader().GetOverviewAsync(Ctx(), School);
+        Assert.Equal(1, overview.StudentsAtRisk);
+        Assert.Equal(SchoolAnalyticsMath.ProgressScore((3.175 + 1.3) / 2), overview.AverageProgressScore);
+
+        await using (var cfg = new NpgsqlCommand(
+            """INSERT INTO "gpa_configurations" ("id","schoolId","unweightedMap") VALUES ('c1', @s, '{"D+": 2.5}'::jsonb)""", conn))
+        {
+            cfg.Parameters.AddWithValue("s", School);
+            await cfg.ExecuteNonQueryAsync();
+        }
+
+        var configured = await Reader().GetOverviewAsync(Ctx(), School);
+        Assert.Equal(0, configured.StudentsAtRisk);                   // school scale: D+ = 2.5; A+/D- unknown -> skipped
     }
 
     [Fact]
@@ -310,13 +337,14 @@ public sealed class SchoolAnalyticsReaderTests : IClassFixture<SchoolAnalyticsDa
 
     private static async Task SeedGrade(
         NpgsqlConnection conn, string id, string schoolId, string studentId, string? grade,
-        string status = "completed", bool isActive = true, DateTime? createdDate = null)
+        string status = "completed", bool isActive = true, DateTime? createdDate = null, decimal credits = 0)
     {
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "student_grades" ("id","schoolId","studentId","grade","status","isActive","createdDate")
-            VALUES (@id,@s,@st,@g,@status,@a,@c)
+            INSERT INTO "student_grades" ("id","schoolId","studentId","grade","status","isActive","createdDate","credits")
+            VALUES (@id,@s,@st,@g,@status,@a,@c,@cr)
             """, conn);
+        cmd.Parameters.AddWithValue("cr", credits);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("s", schoolId);
         cmd.Parameters.AddWithValue("st", studentId);
