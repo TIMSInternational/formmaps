@@ -124,6 +124,7 @@
     "tabGrades": "Calificaciones",
     "tabCoursePlan": "Plan de cursos",
     "tabParents": "Padres",
+    "tabRecord": "Resultados y respuestas",
     "backToMyStudents": "Volver a mis estudiantes",
     "gradeN": "Grado {{n}}"
   },
