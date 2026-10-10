@@ -12,13 +12,24 @@ import { useQuery } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api/apiClient";
 import { useTranslation } from "react-i18next";
 
+// Shape of GET /counselor/assessment-pipeline. This read pcaExams / milStatus / eval360Status with
+// "completed" values, none of which the API returns — every cell showed "not started" (audit D1).
+type PipelineStatus = "done" | "in_progress" | "not_started";
 interface PipelineStudent {
   id: string;
   name: string;
-  gradeLevel?: number;
-  pcaExams?: Record<string, string>;
-  milStatus?: string;
-  eval360Status?: string;
+  gradeLevel?: number | null;
+  /** The five LIA (MIL) subtests. */
+  lia?: Record<string, PipelineStatus>;
+  /** The real PCA (TIMS DISC survey). */
+  pcaStatus?: PipelineStatus;
+  eval360?: PipelineStatus;
+}
+
+function StatusCell({ status }: { status?: string }) {
+  if (status === "done") return <Check className="h-3.5 w-3.5 text-green-600 mx-auto" />;
+  if (status === "in_progress") return <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400 mx-auto" />;
+  return <Minus className="h-3.5 w-3.5 text-gray-300 mx-auto" />;
 }
 
 export function AssessmentPipeline() {
@@ -97,6 +108,11 @@ export function AssessmentPipeline() {
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
+                  <tr className="bg-gray-50 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                    <th colSpan={2} />
+                    <th colSpan={examKeys.length} className="px-1.5 pt-2 text-center">{t("pipeline.groupLia")}</th>
+                    <th colSpan={2} />
+                  </tr>
                   <tr className="bg-gray-50 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                     <th className="pl-5 py-2.5 pr-2">{t("pipeline.colStudent", "Student")}</th>
                     <th className="px-2 py-2.5 w-14">{t("pipeline.colGrade", "Grade")}</th>
@@ -105,13 +121,13 @@ export function AssessmentPipeline() {
                     <th className="px-1.5 py-2.5 text-center w-12" title={t("assessments.examMemory", "Working Memory")}>{t("pipeline.colMemory", "Memory")}</th>
                     <th className="px-1.5 py-2.5 text-center w-14" title={t("assessments.examNumeric", "Numeric Velocity")}>{t("pipeline.colNumeric", "Numeric")}</th>
                     <th className="px-1.5 py-2.5 text-center w-14" title={t("assessments.examRotation", "Visual Rotation")}>{t("pipeline.colRotation", "Rotation")}</th>
-                    <th className="px-1.5 py-2.5 text-center w-10">{t("pipeline.colMil", "MIL")}</th>
+                    <th className="px-1.5 py-2.5 text-center w-10">{t("pipeline.colPca")}</th>
                     <th className="px-1.5 py-2.5 text-center w-10 pr-5">{t("pipeline.col360", "360°")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {students.slice(0, 10).map((s) => {
-                    const pca: Record<string, string> = s.pcaExams ?? {};
+                    const lia: Record<string, string> = s.lia ?? {};
                     return (
                       <tr
                         key={s.id}
@@ -131,37 +147,16 @@ export function AssessmentPipeline() {
                         <td className="px-2 py-2">
                           <span className="text-[12px] text-muted-foreground">{s.gradeLevel ? `Gr ${s.gradeLevel}` : "\u2014"}</span>
                         </td>
-                        {examKeys.map((key) => {
-                          const status = pca[key] ?? "not_started";
-                          return (
-                            <td key={key} className="px-1.5 py-2 text-center">
-                              {status === "completed" ? (
-                                <Check className="h-3.5 w-3.5 text-green-600 mx-auto" />
-                              ) : status === "in_progress" ? (
-                                <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400 mx-auto" />
-                              ) : (
-                                <Minus className="h-3.5 w-3.5 text-gray-300 mx-auto" />
-                              )}
-                            </td>
-                          );
-                        })}
+                        {examKeys.map((key) => (
+                          <td key={key} className="px-1.5 py-2 text-center">
+                            <StatusCell status={lia[key]} />
+                          </td>
+                        ))}
                         <td className="px-1.5 py-2 text-center">
-                          {s.milStatus === "completed" ? (
-                            <Check className="h-3.5 w-3.5 text-green-600 mx-auto" />
-                          ) : s.milStatus === "in_progress" ? (
-                            <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400 mx-auto" />
-                          ) : (
-                            <Minus className="h-3.5 w-3.5 text-gray-300 mx-auto" />
-                          )}
+                          <StatusCell status={s.pcaStatus} />
                         </td>
                         <td className="px-1.5 py-2 text-center pr-5">
-                          {s.eval360Status === "completed" ? (
-                            <Check className="h-3.5 w-3.5 text-green-600 mx-auto" />
-                          ) : s.eval360Status === "in_progress" ? (
-                            <span className="inline-block h-2.5 w-2.5 rounded-full bg-amber-400 mx-auto" />
-                          ) : (
-                            <Minus className="h-3.5 w-3.5 text-gray-300 mx-auto" />
-                          )}
+                          <StatusCell status={s.eval360} />
                         </td>
                       </tr>
                     );

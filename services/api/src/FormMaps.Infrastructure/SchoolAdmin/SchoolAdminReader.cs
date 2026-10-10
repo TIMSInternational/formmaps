@@ -612,17 +612,56 @@ public sealed class SchoolAdminReader(
             }
         }
 
-        var pipeline = students.Select(s =>
+        // Real PCA (TIMS DISC survey): a row = started, isCompleted = DISC results observed (insights-gate rule).
+        var pcaStatusByUser = new Dictionary<string, string>(StringComparer.Ordinal);
+        var personalityDone = new HashSet<string>(StringComparer.Ordinal);
+        if (ids.Length > 0)
         {
-            var pcaMap = pcaByUser.GetValueOrDefault(s.Id);
-            var pca = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (var t in ExamTypes)
+            await using (var command = Command(session, """
+                SELECT "userId", "isCompleted" FROM "pca_evaluations"
+                WHERE "userId" = ANY(@ids) AND "isActive" = true
+                """))
             {
-                var status = pcaMap?.GetValueOrDefault(t);
-                pca[t] = status == "Completed" ? "done" : status == "InProgress" ? "in_progress" : "not_started";
+                AddArray(command, "ids", ids);
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    var userId = reader.GetString(0);
+                    if (reader.GetBoolean(1))
+                    {
+                        pcaStatusByUser[userId] = "done";
+                    }
+                    else
+                    {
+                        pcaStatusByUser.TryAdd(userId, "in_progress");
+                    }
+                }
             }
 
-            var milDone = ExamTypes.All(t => pcaMap?.GetValueOrDefault(t) == "Completed");
+            await using (var command = Command(session, """
+                SELECT DISTINCT "user_id" FROM "personality_assessment_sessions"
+                WHERE "user_id" = ANY(@ids) AND "status" = 'completed' AND "is_active" = true
+                """))
+            {
+                AddArray(command, "ids", ids);
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    personalityDone.Add(reader.GetString(0));
+                }
+            }
+        }
+
+        var pipeline = students.Select(s =>
+        {
+            var liaMap = pcaByUser.GetValueOrDefault(s.Id);
+            var lia = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var t in ExamTypes)
+            {
+                var status = liaMap?.GetValueOrDefault(t);
+                lia[t] = status == "Completed" ? "done" : status == "InProgress" ? "in_progress" : "not_started";
+            }
+
             var hasEval = evalByUser.TryGetValue(s.Id, out var evalData);
             var eval360 = !hasEval
                 ? "not_started"
@@ -633,11 +672,12 @@ public sealed class SchoolAdminReader(
                 Name: s.Name,
                 Email: s.Email,
                 GradeLevel: s.GradeLevel,
-                Pca: pca,
-                Mil: milDone ? "done" : "not_started",
+                Lia: lia,
+                PcaStatus: pcaStatusByUser.GetValueOrDefault(s.Id) ?? "not_started",
                 Eval360: eval360,
                 Eval360Detail: new PipelineEvalDetail(
-                    hasEval ? evalData.Total : 0, hasEval ? evalData.Completed : 0));
+                    hasEval ? evalData.Total : 0, hasEval ? evalData.Completed : 0),
+                Personality: personalityDone.Contains(s.Id) ? "done" : "not_started");
         });
 
         // if (grade) -> gradeLevel === grade  (JS truthiness: null/0/NaN drop the filter).
@@ -649,7 +689,8 @@ public sealed class SchoolAdminReader(
         if (statusFilter == "incomplete")
         {
             pipeline = pipeline.Where(p =>
-                p.Pca.Values.Any(v => v != "done") || p.Mil != "done" || p.Eval360 != "done");
+                p.Lia.Values.Any(v => v != "done") || p.PcaStatus != "done" || p.Eval360 != "done"
+                || p.Personality != "done");
         }
 
         return pipeline.ToList();

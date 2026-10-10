@@ -55,7 +55,8 @@
     "colMemory": "Memoria",
     "colNumeric": "Numérico",
     "colRotation": "Rotación",
-    "colMil": "MIL",
+    "colPca": "PCA",
+    "groupLia": "MIL / LIA",
     "col360": "360°"
   },
   "alerts": {

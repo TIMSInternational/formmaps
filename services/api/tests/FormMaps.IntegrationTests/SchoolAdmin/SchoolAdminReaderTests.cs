@@ -490,10 +490,13 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
         await SeedUserAsync(conn, "b", School, name: "Bob", gradeLevel: 11);
         await SeedUserAsync(conn, "c", School, name: "Cy", gradeLevel: 12);
 
-        // A: completed parity LIA -> all 5 pca done, mil done; 2 groups both completed -> eval360 done => fully done.
+        // A: completed parity LIA -> all 5 lia done; 2 groups both completed -> eval360 done; PCA + personality
+        // done => fully done.
         await SeedLiaAsync(conn, "a", "completed");
         await SeedGroupAsync(conn, "a", "self", isCompleted: true);
         await SeedGroupAsync(conn, "a", "parent", isCompleted: true);
+        await SeedPcaEvalAsync(conn, "a", isCompleted: true);
+        await SeedPersonalityAsync(conn, "a", "completed");
         // B: PatternRecognition InProgress then Completed (precedence -> done); others not_started -> incomplete.
         await SeedExamDetailAsync(conn, "b", "PatternRecognition", "InProgress", isCompleted: false);
         await SeedExamDetailAsync(conn, "b", "PatternRecognition", "Completed", isCompleted: true);
@@ -502,14 +505,15 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
         var all = await Reader().GetAssessmentPipelineAsync(Ctx("admin-1"), School, null, "");
         Assert.Equal(new[] { "a", "b", "c" }, all.Select(r => r.Id).ToArray());        // gradeLevel asc, name asc
         var a = all.Single(r => r.Id == "a");
-        Assert.All(a.Pca.Values, v => Assert.Equal("done", v));                        // parity -> all done
-        Assert.Equal("done", a.Mil);
+        Assert.All(a.Lia.Values, v => Assert.Equal("done", v));                        // parity -> all done
+        Assert.Equal("done", a.PcaStatus);
+        Assert.Equal("done", a.Personality);
         Assert.Equal("done", a.Eval360);
         Assert.Equal(2, a.Eval360Detail.Total);
         var b = all.Single(r => r.Id == "b");
-        Assert.Equal("done", b.Pca["PatternRecognition"]);                             // Completed wins over InProgress
-        Assert.Equal("not_started", b.Pca["VerbalReasoning"]);
-        Assert.Equal("not_started", b.Mil);
+        Assert.Equal("done", b.Lia["PatternRecognition"]);                             // Completed wins over InProgress
+        Assert.Equal("not_started", b.Lia["VerbalReasoning"]);
+        Assert.Equal("not_started", b.PcaStatus);
         Assert.Equal("not_started", b.Eval360);
 
         var incomplete = await Reader().GetAssessmentPipelineAsync(Ctx("admin-1"), School, null, "incomplete");
@@ -527,8 +531,34 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
         await SeedLiaAsync(conn, "a", "in_progress");   // active run -> all 5 InProgress
 
         var rows = await Reader().GetAssessmentPipelineAsync(Ctx("admin-1"), School, null, "");
-        Assert.All(rows.Single().Pca.Values, v => Assert.Equal("in_progress", v));
-        Assert.Equal("not_started", rows.Single().Mil);  // not all Completed
+        Assert.All(rows.Single().Lia.Values, v => Assert.Equal("in_progress", v));
+        Assert.Equal("not_started", rows.Single().PcaStatus);
+    }
+
+    // Audit D1: the five subtests are the LIA; the real PCA (pca_evaluations) is reported on its own, so a
+    // student who finished the LIA, 360 and personality but not the PCA is still incomplete.
+    [Fact]
+    public async Task Pipeline_reports_real_pca_and_personality_separately_from_the_lia()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await SeedUserAsync(conn, "lia", School, name: "Lia", gradeLevel: 11);
+        await SeedUserAsync(conn, "pca", School, name: "Pca", gradeLevel: 11);
+        await SeedUserAsync(conn, "started", School, name: "Started", gradeLevel: 11);
+        await SeedLiaAsync(conn, "lia", "completed");
+        await SeedGroupAsync(conn, "lia", "self", isCompleted: true);
+        await SeedPersonalityAsync(conn, "lia", "completed");
+        await SeedPcaEvalAsync(conn, "pca", isCompleted: true);
+        await SeedPcaEvalAsync(conn, "started", isCompleted: false);
+
+        var rows = await Reader().GetAssessmentPipelineAsync(Ctx("admin-1"), School, null, "");
+        Assert.Equal("not_started", rows.Single(r => r.Id == "lia").PcaStatus);
+        Assert.Equal("done", rows.Single(r => r.Id == "lia").Personality);
+        Assert.Equal("done", rows.Single(r => r.Id == "pca").PcaStatus);
+        Assert.Equal("in_progress", rows.Single(r => r.Id == "started").PcaStatus);
+        Assert.Equal("not_started", rows.Single(r => r.Id == "pca").Personality);
+
+        var incomplete = await Reader().GetAssessmentPipelineAsync(Ctx("admin-1"), School, null, "incomplete");
+        Assert.Contains("lia", incomplete.Select(r => r.Id));
     }
 
     private SchoolAdminReader Reader() =>

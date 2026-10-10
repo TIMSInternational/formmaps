@@ -40,8 +40,9 @@ export default function AnalyticsPage() {
     const g = st.gradeLevel || 0;
     if (!gradeStats[g]) gradeStats[g] = { total: 0, pcaDone: 0, milDone: 0, evalDone: 0, personalityDone: 0 };
     gradeStats[g].total++;
-    if (Object.values(st.pca).every(v => v === "done")) gradeStats[g].pcaDone++;
-    if (st.mil === "done") gradeStats[g].milDone++;
+    // PCA = the DISC survey; MIL = all five LIA subtests (audit D1 — these used to be the same thing).
+    if (st.pcaStatus === "done") gradeStats[g].pcaDone++;
+    if (Object.values(st.lia).every(v => v === "done")) gradeStats[g].milDone++;
     if (st.eval360 === "done") gradeStats[g].evalDone++;
     if (st.personality === "done") gradeStats[g].personalityDone++;
   }
@@ -54,12 +55,12 @@ export default function AnalyticsPage() {
   };
 
   // Overall pipeline counts
-  const pcaFullDone = students.filter(st => Object.values(st.pca).every(v => v === "done")).length;
-  const milDone = students.filter(st => st.mil === "done").length;
+  const pcaFullDone = students.filter(st => st.pcaStatus === "done").length;
+  const milDone = students.filter(st => Object.values(st.lia).every(v => v === "done")).length;
   const evalDone = students.filter(st => st.eval360 === "done").length;
   const personalityDone = students.filter(st => st.personality === "done").length;
   const fullyComplete = students.filter(st =>
-    Object.values(st.pca).every(v => v === "done") && st.mil === "done" && st.eval360 === "done" && st.personality === "done"
+    st.pcaStatus === "done" && Object.values(st.lia).every(v => v === "done") && st.eval360 === "done" && st.personality === "done"
   ).length;
 
   // Insights data

@@ -1885,7 +1885,7 @@
     }
   },
   "pipeline": {
-    "milName": "Medición de Inteligencia Laboral"
+    "pcaName": "Análisis de Competencias Personales (DISC)"
   },
   "actingSchool": {
     "viewing": "Super Admin · estás trabajando en {{school}}. Todo lo que hagas aquí se aplica a este colegio.",

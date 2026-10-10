@@ -70,6 +70,7 @@ CREATE TABLE "pca_evaluations" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "isCompleted" BOOLEAN NOT NULL DEFAULT false,
+    "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT "pca_evaluations_pkey" PRIMARY KEY ("id")

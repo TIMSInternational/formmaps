@@ -1885,7 +1885,7 @@
     }
   },
   "pipeline": {
-    "milName": "Labor Intelligence Measurement"
+    "pcaName": "Personal Competence Analysis (DISC)"
   },
   "actingSchool": {
     "viewing": "Super Admin · you are working in {{school}}. Everything you do here applies to this school.",

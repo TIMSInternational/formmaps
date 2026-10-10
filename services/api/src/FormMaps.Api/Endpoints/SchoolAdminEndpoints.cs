@@ -386,13 +386,16 @@ public static class SchoolAdminEndpoints
                 name = r.Name,
                 email = r.Email,
                 gradeLevel = r.GradeLevel,
-                // Emit the dictionary directly: legacy pca keys are the verbatim EXAM_TYPES names (PascalCase),
-                // and Web-default JSON leaves DictionaryKeyPolicy null so keys are NOT camelCased; the reader
-                // builds the dict in EXAM_TYPES insertion order, which STJ preserves.
-                pca = r.Pca,
-                mil = r.Mil,
+                // Emit the dictionary directly: lia keys are the verbatim EXAM_TYPES names (PascalCase), and
+                // Web-default JSON leaves DictionaryKeyPolicy null so keys are NOT camelCased; the reader builds
+                // the dict in EXAM_TYPES insertion order, which STJ preserves.
+                lia = r.Lia,
+                pcaStatus = r.PcaStatus,
+                // Deprecated alias of lia for web builds deployed before audit D1 (same as Node).
+                pca = r.Lia,
                 eval360 = r.Eval360,
-                eval360Detail = new { total = r.Eval360Detail.Total, completed = r.Eval360Detail.Completed }
+                eval360Detail = new { total = r.Eval360Detail.Total, completed = r.Eval360Detail.Completed },
+                personality = r.Personality
             })
         });
     }

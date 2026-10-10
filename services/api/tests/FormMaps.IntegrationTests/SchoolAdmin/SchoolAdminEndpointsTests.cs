@@ -405,7 +405,7 @@ public class SchoolAdminEndpointsTests
                 ["NumericVelocity"] = "not_started",
                 ["VisualRotation"] = "not_started"
             },
-            "not_started", "in_progress", new PipelineEvalDetail(2, 1));
+            "in_progress", "in_progress", new PipelineEvalDetail(2, 1), "done");
         var reader = new FakeReader { Pipeline = [row] };
         using var factory = new Factory(reader, new FakeScope(School));
         using var client = factory.CreateClient();
@@ -416,7 +416,14 @@ public class SchoolAdminEndpointsTests
         Assert.Equal(11, reader.PipelineGrade);
         Assert.Equal("incomplete", reader.PipelineStatus);
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
-        var pca = doc.RootElement.GetProperty("data")[0].GetProperty("pca");
+        var first = doc.RootElement.GetProperty("data")[0];
+        // Audit D1: the subtests are `lia`; the real PCA is `pcaStatus`; `pca` is a deprecated alias of lia;
+        // there is no `mil`.
+        Assert.Equal("in_progress", first.GetProperty("pcaStatus").GetString());
+        Assert.Equal("done", first.GetProperty("personality").GetString());
+        Assert.False(first.TryGetProperty("mil", out _));
+        Assert.Equal(first.GetProperty("lia").GetRawText(), first.GetProperty("pca").GetRawText());
+        var pca = first.GetProperty("lia");
         // key order must be the EXAM_TYPES order
         var keys = pca.EnumerateObject().Select(p => p.Name).ToArray();
         Assert.Equal(
