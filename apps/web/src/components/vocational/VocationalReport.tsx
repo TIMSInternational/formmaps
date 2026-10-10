@@ -13,6 +13,8 @@ import { IntegratedHeadline } from "./_components/IntegratedHeadline";
 import { DimensionBreakdown } from "./_components/DimensionBreakdown";
 import { RankingsPanel } from "./_components/RankingsPanel";
 import { RecommendationsPanel } from "./_components/RecommendationsPanel";
+import { isPaymentRequiredError } from "@/lib/api/apiClient";
+import { ResultsLockedState } from "@/components/independent-student/ResultsLockedState";
 
 export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserId: string; selfView?: boolean }) {
   const { t, i18n } = useTranslation();
@@ -23,14 +25,18 @@ export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserI
   const [integrated, setIntegrated] = useState<IntegratedOutcome | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  // audit 2026-10-09 C18: 402 = paywall (student without paid results) — an unlock state, not "try again".
+  const [locked, setLocked] = useState(false);
 
   const load = useCallback(async () => {
-    setLoading(true); setError(false);
+    setLoading(true); setError(false); setLocked(false);
     try {
       const s = await recompute360(evaluatedUserId);   // 360 first (integrated reads the persisted 360)
       const i = await recomputeIntegrated(evaluatedUserId);
       setScore(s); setIntegrated(i);
-    } catch { setError(true); } finally { setLoading(false); }
+    } catch (err) {
+      if (isPaymentRequiredError(err)) setLocked(true); else setError(true);
+    } finally { setLoading(false); }
   }, [evaluatedUserId]);
 
   useEffect(() => { load(); }, [load]);
@@ -59,6 +65,9 @@ export function VocationalReport({ evaluatedUserId, selfView }: { evaluatedUserI
 
   if (loading) {
     return <div className="space-y-4" role="status"><Skeleton className="h-28 rounded-xl" /><Skeleton className="h-40 rounded-xl" /><Skeleton className="h-40 rounded-xl" /></div>;
+  }
+  if (locked) {
+    return <ResultsLockedState />;
   }
   if (error || !score || !integrated) {
     return (

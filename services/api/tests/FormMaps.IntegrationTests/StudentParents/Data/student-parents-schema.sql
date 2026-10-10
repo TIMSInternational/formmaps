@@ -6,11 +6,17 @@
 -- reads it, but student_parent_links' tenant_isolation (003-fk-users.sql) sub-selects it for the school branch
 -- ("the student's school staff may see the link"), so the policy cannot be created without it. Dropping the
 -- policy instead would leave the table unprotected and make the isolation assertions vacuous.
+-- audit 2026-10-09 C8b/C8: invite/resend now read the caller's own row (name for the email, email for the self-link
+-- guard) and look up an onboarded parent account (email + roleName + password + isActive) on a System session.
 
 CREATE TABLE "users" (
     "id"       text PRIMARY KEY,
     "name"     text NOT NULL DEFAULT '',
-    "schoolId" text
+    "schoolId" text,
+    "email"    text,
+    "roleName" text NOT NULL DEFAULT 'student',
+    "password" text,
+    "isActive" boolean NOT NULL DEFAULT true
 );
 
 CREATE TABLE "student_parent_links" (

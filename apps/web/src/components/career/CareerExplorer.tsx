@@ -37,7 +37,6 @@ export default function CareerExplorer() {
   const [filters, setFilters] = useState<{
     search?: string;
     industry?: string;
-    education?: string;
     sort?: string;
   }>({});
 
@@ -47,12 +46,9 @@ export default function CareerExplorer() {
   const personalityCompleted = personalityStatus === "completed";
 
   const { data: timsData, isLoading: timsLoading } = useTimsCareerScoring();
-  const { data: listData, isLoading: listLoading } = useCareerList({
-    search: filters.search,
-    industry: filters.industry,
-    education: filters.education,
-    sort: filters.sort as any,
-  });
+  // audit 2026-10-09 C16: the catalog endpoint takes no filter params (they were silently
+  // dropped), so fetch it once and filter the loaded list client-side below.
+  const { data: listData, isLoading: listLoading } = useCareerList();
 
   const { favorites, toggleFavorite } = useFavorites();
   const { openPanel } = useSidePanel();
@@ -75,15 +71,28 @@ export default function CareerExplorer() {
 
   const timsCareerList = timsData?.data?.careers;
 
-  // Treat as loading if TIMS is loading, or if results came back but all scores are 0 (scoring not complete)
-  const allZeroScores = timsCareerList && timsCareerList.length > 0 && timsCareerList.every((c) => c.totalScore === 0);
-  const isLoading = timsLoading || listLoading || allZeroScores;
+  // audit 2026-10-09 C16: all-zero scores used to count as "loading" — nothing refetches, so the
+  // student sat on a skeleton forever. It is a finished-but-empty result: show an empty state.
+  const allZeroScores = !!timsCareerList && timsCareerList.length > 0 && timsCareerList.every((c) => c.totalScore === 0);
+  const isLoading = timsLoading || listLoading;
+
+  const fieldOf = (cluster?: string) => (cluster || "").replace(/_/g, " ").trim();
+  const fieldOptions = React.useMemo(
+    () => Array.from(new Set((timsCareerList || []).map((c) => fieldOf(c.cluster)).filter(Boolean))).sort((a, b) => a.localeCompare(b)),
+    [timsCareerList],
+  );
 
   const displayCareers = React.useMemo(() => {
-    if (timsCareerList && timsCareerList.length > 0) {
+    if (timsCareerList && timsCareerList.length > 0 && !allZeroScores) {
       const staticCareers = listData?.careers || [];
+      const q = (filters.search || "").trim().toLowerCase();
+      // Client-side filters over the full scored list, applied BEFORE taking the top N.
+      const scored = timsCareerList.filter((sc) =>
+        (!filters.industry || fieldOf(sc.cluster) === filters.industry) &&
+        (!q || `${sc.programTitle} ${fieldOf(sc.cluster)}`.toLowerCase().includes(q)),
+      );
 
-      const list = timsCareerList.map((sc) => {
+      const list = scored.map((sc) => {
         const local = staticCareers.find(
           (c) => c.id === sc.programId || c.slug === sc.programId
         );
@@ -121,20 +130,22 @@ export default function CareerExplorer() {
         };
       });
 
-      const sort = filters.sort || "recommended";
-      if (sort === "recommended" || sort === "match") {
-        list.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+      // Rank by match first so "Name (A-Z)" orders the student's top matches, not the alphabet.
+      list.sort((a, b) => (b.matchScore || 0) - (a.matchScore || 0));
+      const top = list.slice(0, MAX_CAREERS);
+      if (filters.sort === "title") {
+        const name = (c: (typeof top)[number]) => (typeof c.title === "string" ? c.title : c.title?.en) || "";
+        top.sort((a, b) => name(a).localeCompare(name(b)));
       }
-
-      return list.slice(0, MAX_CAREERS);
+      return top;
     }
 
-    if (!isLoading && listData?.careers) {
+    if (!isLoading && !allZeroScores && listData?.careers) {
       return [...listData.careers].slice(0, MAX_CAREERS);
     }
 
     return [];
-  }, [listData, timsCareerList, filters.sort, isLoading]);
+  }, [listData, timsCareerList, allZeroScores, isLoading, filters.search, filters.industry, filters.sort]);
 
   if (!assessmentLoading && !allAssessmentsComplete) {
     return <AssessmentGate progress={assessmentProgress} unlocks="careers" />;
@@ -172,7 +183,7 @@ export default function CareerExplorer() {
       </div>
 
       <div className="shrink-0">
-        <CareerFilters filters={filters} onChange={setFilters} />
+        <CareerFilters filters={filters} onChange={setFilters} fieldOptions={fieldOptions} />
       </div>
 
       {/* Active filter pills */}
@@ -180,7 +191,6 @@ export default function CareerExplorer() {
         const pills: FilterPill[] = [];
         if (filters.search) pills.push({ key: "search", label: "Search", value: filters.search });
         if (filters.industry) pills.push({ key: "industry", label: "Industry", value: filters.industry });
-        if (filters.education) pills.push({ key: "education", label: "Education", value: filters.education });
         if (filters.sort && filters.sort !== "recommended") pills.push({ key: "sort", label: "Sort", value: filters.sort });
         return (
           <ActiveFilterPills
@@ -200,12 +210,18 @@ export default function CareerExplorer() {
       )}
 
       {!isLoading && displayCareers.length === 0 && (
-        filters.search || filters.industry || filters.education ? (
+        allZeroScores ? (
+          <EmptyState
+            type="no_results"
+            title={t("career.explorer.scoresPendingTitle")}
+            description={t("career.explorer.scoresPendingDesc")}
+          />
+        ) : filters.search || filters.industry ? (
           <EmptyState
             type="no_results"
             title={t("career.explorer.noResults", "No careers match your filters")}
             description={t("career.explorer.noResultsFilterDesc", "Try adjusting your search or filter criteria to see more results.")}
-            actionLabel="Clear Filters"
+            actionLabel={t("career.explorer.clearFilters")}
             onAction={() => setFilters({})}
           />
         ) : (

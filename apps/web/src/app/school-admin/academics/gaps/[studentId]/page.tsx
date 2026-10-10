@@ -50,22 +50,27 @@ export default function StudentGapAnalysisPage() {
     staleTime: 1000 * 60 * 15,
   });
 
-  // Approve course → add to student's course plan
+  const [approvedCourses, setApprovedCourses] = useState<Set<string>>(new Set());
+
+  // Approve course → add to student's course plan. It posted to /api/v1/school-admin/course-plans/add, which
+  // exists in neither backend, so every approval failed (audit 2026-10-09 C3). This is the real route.
   const approveCourse = useMutation({
     mutationFn: async ({ courseId, term }: { courseId: string; term: string }) => {
-      return apiRequest("/api/v1/school-admin/course-plans/add", {
+      return apiRequest(`/api/v1/school-admin/students/${encodeURIComponent(studentId)}/course-plan/courses`, {
         method: "POST",
-        data: { studentId, courseId, term, status: "planned" },
+        data: { courseId, term },
       });
     },
     onSuccess: () => {
       toast.success(t("ui.studentGaps.courseAdded"));
       queryClient.invalidateQueries({ queryKey: ["ai-recommendations", studentId] });
     },
-    onError: () => toast.error(t("ui.studentGaps.addFailed")),
+    onError: (_err, vars) => {
+      // The button was marked approved optimistically; a failed save must not stay that way.
+      setApprovedCourses(prev => { const next = new Set(prev); next.delete(vars.courseId); return next; });
+      toast.error(t("ui.studentGaps.addFailed"));
+    },
   });
-
-  const [approvedCourses, setApprovedCourses] = useState<Set<string>>(new Set());
 
   if (studentLoading || gradLoading) return (
     <div className="space-y-4" style={{ maxWidth: 900, margin: "0 auto" }}>

@@ -1,4 +1,5 @@
 import { apiRequest } from "@/lib/api/apiClient";
+import { parseGradeCsv } from "@/lib/gradeCsv";
 
 export interface GradeImportStatus {
   jobId: string;
@@ -10,18 +11,20 @@ export interface GradeImportStatus {
   completedAt?: string;
 }
 
-export async function uploadGrades(file: File, schoolId: string): Promise<{ jobId: string }> {
-  const form = new FormData();
-  form.append("file", file);
+export class EmptyGradeCsvError extends Error {}
 
-  const json = await apiRequest(
-    `/api/v1/school-admin/grades/import?schoolId=${encodeURIComponent(schoolId)}`,
-    {
-      method: "POST",
-      data: form,
-      headers: { "Content-Type": "multipart/form-data" },
-    }
-  );
+/**
+ * The API takes parsed rows (JSON), not a file: this used to POST multipart and always got a 400.
+ * The school comes from the caller's session server-side.
+ */
+export async function uploadGrades(file: File, _schoolId?: string): Promise<{ jobId: string }> {
+  void _schoolId;
+  const rows = parseGradeCsv(await file.text());
+  if (rows.length === 0) throw new EmptyGradeCsvError("No valid rows");
+  const json = await apiRequest(`/api/v1/school-admin/grades/import`, {
+    method: "POST",
+    data: { rows, filename: file.name },
+  });
   return json.data ?? json;
 }
 

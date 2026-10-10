@@ -58,7 +58,8 @@ public sealed record ChangeRoleResult(
 /// both "unknown token" and "found but expired") would destroy that distinction. Task 12 must
 /// perform the expiry comparison itself using this field.
 /// </summary>
-public sealed record SchoolInviteRow(string Id, string AdminEmail, DateTimeOffset? InvitationTokenExpiresAt);
+public sealed record SchoolInviteRow(
+    string Id, string AdminEmail, DateTimeOffset? InvitationTokenExpiresAt, string Name = "", int MaxStudents = 0);
 
 /// <summary>
 /// Password-reset-token lookup result backing forgot/reset-password (authService.ts's

@@ -19,6 +19,8 @@ import {
   revokeMyParentAccess,
   resendMyParentInvite,
   type ParentOnboardingPayload,
+  type ParentInviteResult,
+  type ParentPanelScope,
 } from "@/services/parentPortalService";
 import type {
   ParentInviteRequest,
@@ -46,8 +48,8 @@ import {
 //   invite   -> optimistic INSERT, and it still invalidates. The row is entirely
 //               client-known (name, email, relationship, always `pending`), but the
 //               link id is minted server-side and the invite response does NOT carry
-//               the list row back — the school-admin route answers `{ inviteId }` and
-//               the student route answers `{ id, invitationUrl }` — so the placeholder
+//               the list row back — every invite route answers `{ id, emailSent }`
+//               (never the invitation link: audit 2026-10-09 C8b) — so the placeholder
 //               has to be reconciled by a refetch rather than replaced in place.
 //   revoke   -> optimistic REMOVE, no invalidate. The row being gone is the entire
 //               server-side effect; refetching would buy the same list again.
@@ -105,6 +107,22 @@ function pendingLink(input: {
   };
 }
 
+/**
+ * audit 2026-10-09 C8b/C8: the invitation is emailed to the parent, so say where it went — or
+ * that it did not go. `alreadyLinked` means the address already had a parent account and was
+ * attached directly; `emailSent` then refers to the "you've been linked" notice.
+ */
+export function toastParentInviteResult(result: ParentInviteResult | undefined, email: string | undefined) {
+  const opts = { email: email ?? "" };
+  if (result?.alreadyLinked) {
+    toast.success(i18n.t(result.emailSent ? "components.hooks.parentPortal.parentLinked" : "components.hooks.parentPortal.alreadyLinked", opts));
+  } else if (result?.emailSent) {
+    toast.success(i18n.t(email ? "components.hooks.parentPortal.inviteSentTo" : "components.hooks.parentPortal.inviteResent", opts));
+  } else {
+    toast.error(i18n.t("components.hooks.parentPortal.inviteEmailFailed", opts));
+  }
+}
+
 export function useParentProfile() {
   return useQuery({
     queryKey: parentKeys.profile(),
@@ -132,21 +150,21 @@ export function useParentPendingEvaluations() {
 
 // ─── Student Parents (used by school-admin / counselor) ──────────────────────
 
-export function useStudentParents(studentId?: string) {
+export function useStudentParents(studentId?: string, scope: ParentPanelScope = "school-admin") {
   return useQuery({
     queryKey: parentKeys.studentParents(studentId ?? ""),
-    queryFn: () => getStudentParents(studentId!),
+    queryFn: () => getStudentParents(studentId!, scope),
     enabled: !!studentId,
     staleTime: 2 * 60 * 1000,
   });
 }
 
-export function useInviteParent() {
+export function useInviteParent(scope: ParentPanelScope = "school-admin") {
   const qc = useQueryClient();
   const optimistic = useOptimisticCache();
 
   return useMutation({
-    mutationFn: (payload: ParentInviteRequest) => inviteParentToStudent(payload),
+    mutationFn: (payload: ParentInviteRequest) => inviteParentToStudent(payload, scope),
 
     // Prepended, not appended: the list comes back ordered `createdDate DESC`, so the
     // invite just sent is the first row — appending would show it at the bottom and
@@ -159,7 +177,7 @@ export function useInviteParent() {
       );
     },
 
-    onSuccess: () => toast.success(i18n.t("profile.inviteParent.inviteSent")),
+    onSuccess: (result, payload) => toastParentInviteResult(result, payload.email),
 
     onError: (err: Error, _payload, context) => {
       optimistic.rollback(context);
@@ -201,19 +219,19 @@ export function useRevokeParentAccess() {
   });
 }
 
-export function useResendParentInvite() {
+export function useResendParentInvite(scope: ParentPanelScope = "school-admin") {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ studentId, parentLinkId }: { studentId: string; parentLinkId: string }) =>
-      resendParentInvite(studentId, parentLinkId),
+    mutationFn: ({ studentId, parentLinkId }: { studentId: string; parentLinkId: string; email?: string }) =>
+      resendParentInvite(studentId, parentLinkId, scope),
 
     // Deliberately NOT optimistic — see the header. The visible effect of a resend is
     // a new `tokenExpiresAt`, and the `status` badge is derived from it, so faking the
     // result would mean guessing the server's expiry window.
-    onSuccess: (_result, { studentId }) => {
+    onSuccess: (result, { studentId, email }) => {
       qc.invalidateQueries({ queryKey: parentKeys.studentParents(studentId) });
-      toast.success(i18n.t("components.hooks.parentPortal.inviteResent"));
+      toastParentInviteResult(result, email);
     },
 
     onError: (err: Error) => toast.error(err.message || i18n.t("components.hooks.parentPortal.resendFailed")),
@@ -245,15 +263,15 @@ export function useInviteMyParent() {
       ]);
     },
 
-    onSuccess: () => toast.success(i18n.t("profile.inviteParent.inviteSent")),
+    onSuccess: (result, payload) => toastParentInviteResult(result, payload.email),
 
     onError: (err: Error, _payload, context) => {
       optimistic.rollback(context);
       toast.error(err.message || i18n.t("components.hooks.parentPortal.inviteFailed"));
     },
 
-    // As with the school-admin invite: the response carries an id and an invitation
-    // URL, not the list row, so the placeholder is reconciled by the refetch.
+    // As with the school-admin invite: the response carries `{ id, emailSent }`, not
+    // the list row, so the placeholder is reconciled by the refetch.
     onSettled: () => {
       qc.invalidateQueries({ queryKey: parentKeys.myParents() });
     },
@@ -284,12 +302,12 @@ export function useResendMyParentInvite() {
   const qc = useQueryClient();
 
   return useMutation({
-    mutationFn: (parentLinkId: string) => resendMyParentInvite(parentLinkId),
+    mutationFn: ({ parentLinkId }: { parentLinkId: string; email?: string }) => resendMyParentInvite(parentLinkId),
 
     // Not optimistic, for the same reason as the school-admin resend.
-    onSuccess: () => {
+    onSuccess: (result, { email }) => {
       qc.invalidateQueries({ queryKey: parentKeys.myParents() });
-      toast.success(i18n.t("components.hooks.parentPortal.inviteResent"));
+      toastParentInviteResult(result, email);
     },
 
     onError: (err: Error) => toast.error(err.message || i18n.t("components.hooks.parentPortal.resendFailed")),

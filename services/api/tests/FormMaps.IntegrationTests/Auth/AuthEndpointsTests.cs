@@ -1004,6 +1004,62 @@ public class AuthEndpointsTests : IDisposable
         Assert.Equal("Invalid invitation token", doc.RootElement.GetProperty("message").GetString());
     }
 
+    // ---- GET /authapi/school-admin/invite-status (audit 2026-10-09 C1) ----
+
+    [Fact]
+    public async Task SchoolInviteStatus_pending_token_returns_school_and_normalized_email()
+    {
+        var repo = new FakeAuthRepository
+        {
+            SchoolInvite = new SchoolInviteRow("school-1", "  HEAD@CD.EDU ", DateTimeOffset.UtcNow.AddDays(1), "Country Day", 250),
+        };
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/authapi/school-admin/invite-status?token=valid-token");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var data = doc.RootElement.GetProperty("data");
+        Assert.Equal("Country Day", data.GetProperty("schoolName").GetString());
+        Assert.Equal("head@cd.edu", data.GetProperty("email").GetString());
+        Assert.Equal(250, data.GetProperty("maxStudents").GetInt32());
+        Assert.Equal("pending", data.GetProperty("status").GetString());
+    }
+
+    [Fact]
+    public async Task SchoolInviteStatus_expired_token_says_expired()
+    {
+        var repo = new FakeAuthRepository
+        {
+            SchoolInvite = new SchoolInviteRow("school-1", "head@cd.edu", DateTimeOffset.UtcNow.AddDays(-1), "Country Day", 250),
+        };
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/authapi/school-admin/invite-status?token=old-token");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("expired", doc.RootElement.GetProperty("data").GetProperty("status").GetString());
+    }
+
+    [Theory]
+    [InlineData("?token=unknown")]
+    [InlineData("")]
+    public async Task SchoolInviteStatus_unknown_or_missing_token_is_404_INVITE_INVALID(string query)
+    {
+        var repo = new FakeAuthRepository { SchoolInvite = null };
+        using var factory = CreateFactory(repo);
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/authapi/school-admin/invite-status" + query);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("INVITE_INVALID", doc.RootElement.GetProperty("code").GetString());
+    }
+
     [Fact]
     public async Task SchoolAdminRegistration_expired_token_is_400_distinct_message()
     {

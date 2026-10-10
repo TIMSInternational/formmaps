@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/api/apiClient";
+import { parseGradeCsv } from "@/lib/gradeCsv";
 import { Upload, FileText, CheckCircle2, Loader2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -28,28 +29,8 @@ export function GradeImportPanel({ onImported }: { onImported?: () => void }) {
     setResult(null);
 
     const text = await file.text();
-    const lines = text.split(/\r?\n/).filter(Boolean);
-    if (lines.length < 2) { toast.error(t("ui.courses.csvNoRows")); return; }
-
-    const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
-    const col = (name: string) => headers.indexOf(name);
-
-    const rows: Array<Record<string, string>> = [];
-    for (let i = 1; i < lines.length; i++) {
-      const cells: string[] = []; let inQ = false, cell = "";
-      for (const ch of lines[i]) { if (ch === '"') inQ = !inQ; else if (ch === ',' && !inQ) { cells.push(cell.trim()); cell = ""; } else cell += ch; }
-      cells.push(cell.trim());
-
-      const email = col("email") >= 0 ? cells[col("email")] : (col("student_email") >= 0 ? cells[col("student_email")] : "");
-      const studentId = col("student_id") >= 0 ? cells[col("student_id")] : (col("studentid") >= 0 ? cells[col("studentid")] : "");
-      const courseCode = col("course_code") >= 0 ? cells[col("course_code")] : (col("coursecode") >= 0 ? cells[col("coursecode")] : (col("course") >= 0 ? cells[col("course")] : ""));
-      const grade = col("grade") >= 0 ? cells[col("grade")] : "";
-      const credits = col("credits") >= 0 ? cells[col("credits")] : "";
-      const semester = col("semester") >= 0 ? cells[col("semester")] : (col("term") >= 0 ? cells[col("term")] : "");
-
-      if (!grade || (!email && !studentId)) continue;
-      rows.push({ email, studentId, courseCode, grade, credits, semester, status: "completed" });
-    }
+    if (text.split(/\r?\n/).filter(Boolean).length < 2) { toast.error(t("ui.courses.csvNoRows")); return; }
+    const rows = parseGradeCsv(text);
 
     if (rows.length === 0) { toast.error(t("ui.gradeImport.noValidRows")); return; }
     setPreview(rows);

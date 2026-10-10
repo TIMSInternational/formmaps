@@ -4,7 +4,6 @@ import React, { use, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { OnboardingLayout } from "@/components/onboarding/OnboardingLayout";
 import { SchoolAdminInfoStep } from "@/components/onboarding/school/SchoolAdminInfoStep";
-import { SchoolSettingsStep } from "@/components/onboarding/school/SchoolSettingsStep";
 import { SchoolAdminPasswordStep } from "@/components/onboarding/school/SchoolAdminPasswordStep";
 import {
   SchoolAdminOnboardingData,
@@ -12,6 +11,8 @@ import {
 } from "@/types/school";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { useGlobalStore } from "@/store/useGlobalStore";
+import { resetClientState } from "@/lib/resetClientState";
 
 export default function SchoolAdminOnboardingPage({
   params,
@@ -27,10 +28,6 @@ export default function SchoolAdminOnboardingPage({
       description: t("onboarding.school.adminDesc"),
     },
     {
-      title: t("onboarding.school.settingsTitle"),
-      description: t("onboarding.school.settingsDesc"),
-    },
-    {
       title: t("onboarding.steps.setPasswordTitle"),
       description: t("onboarding.steps.setPasswordDesc"),
     },
@@ -42,6 +39,7 @@ export default function SchoolAdminOnboardingPage({
   const [schoolName, setSchoolName] = useState<string>("");
   const [email, setEmail] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const { setUser } = useGlobalStore();
 
   // Load data from localStorage on mount
   useEffect(() => {
@@ -51,6 +49,7 @@ export default function SchoolAdminOnboardingPage({
     if (savedData) {
       try {
         const parsedData = JSON.parse(savedData);
+        delete parsedData.password;
         setData((prev) => ({ ...prev, ...parsedData }));
       } catch (e) {
       // error handled silently
@@ -58,16 +57,19 @@ export default function SchoolAdminOnboardingPage({
     }
 
     if (savedStep) {
-      setCurrentStep(parseInt(savedStep));
+      setCurrentStep(Math.min(Math.max(parseInt(savedStep) || 1, 1), 2));
     }
   }, [token]);
 
   // Save data to localStorage whenever it changes
   useEffect(() => {
     if (data !== INITIAL_SCHOOL_ADMIN_ONBOARDING_DATA) {
+      // The password is never written to localStorage (it used to be, in plain text).
+      const { password: _password, ...rest } = data;
+      void _password;
       localStorage.setItem(
         `school_onboarding_data_${token}`,
-        JSON.stringify(data),
+        JSON.stringify(rest),
       );
     }
   }, [data, token]);
@@ -147,19 +149,31 @@ export default function SchoolAdminOnboardingPage({
       const { submitSchoolAdminOnboarding } =
         await import("@/services/schoolService");
 
-      const response = await submitSchoolAdminOnboarding(token, finalData);
-
-      toast.success(t("onboarding.toast.completed"));
+      const session = await submitSchoolAdminOnboarding(token, finalData);
 
       // Clear localStorage on successful submission
       localStorage.removeItem(`school_onboarding_data_${token}`);
       localStorage.removeItem(`school_onboarding_step_${token}`);
 
-      // Redirect to school admin dashboard
-      const redirect = response.redirectUrl;
-      router.push(redirect && redirect.startsWith("/") && !redirect.startsWith("//") ? redirect : "/school-admin");
+      // Signed in by the registration response (same hydration as /login).
+      resetClientState();
+      setUser({
+        id: session.user.id,
+        email: session.user.email,
+        name: session.user.name,
+        role: session.user.role?.name || "school_admin",
+        accessToken: session.token,
+        schoolId: session.user.schoolId || null,
+        avatar: null,
+        permissions: session.user.permissions || [],
+        isAuthenticated: true,
+      });
+      toast.success(t("onboarding.toast.completed"));
+      window.location.href = "/school-admin";
     } catch (error) {
-      toast.error(t("onboarding.toast.submitFailed"));
+      // A token that expired or was already used while the page was open.
+      const message = (error as Error)?.message || "";
+      toast.error(/invitation token/i.test(message) ? t("onboarding.error.invalidLink") : t("onboarding.toast.submitFailed"));
     } finally {
       setIsLoading(false);
     }
@@ -196,15 +210,6 @@ export default function SchoolAdminOnboardingPage({
         />
       )}
       {currentStep === 2 && (
-        <SchoolSettingsStep
-          data={data.schoolSettings}
-          onNext={(
-            schoolSettings: SchoolAdminOnboardingData["schoolSettings"],
-          ) => handleNext({ schoolSettings })}
-          onBack={handleBack}
-        />
-      )}
-      {currentStep === 3 && (
         <SchoolAdminPasswordStep
           value={data.password}
           onNext={(password: string) => handleNext({ password })}

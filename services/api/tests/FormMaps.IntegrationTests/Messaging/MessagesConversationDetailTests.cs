@@ -47,6 +47,25 @@ public sealed class MessagesConversationDetailTests : IClassFixture<MessagingDat
     }
 
     [Fact]
+    public async Task Page_one_is_the_newest_messages_returned_oldest_first()
+    {
+        // Audit 2026-10-09 C6: oldest-first paging showed the first page of a long thread forever, so new
+        // messages never appeared. 12 messages, limit 5: page 1 = #8..#12, page 3 = #1..#2.
+        var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();
+        var start = new DateTime(2026, 3, 1, 9, 0, 0, DateTimeKind.Unspecified);
+        for (var i = 1; i <= 12; i++)
+            await _fixture.SeedMessageAsync(conversationId, otherId, readAt: null, content: $"m{i}", createdDate: start.AddMinutes(i));
+
+        var ctx = _fixture.Ctx(userId, MessagingDatabaseFixture.DefaultSchoolId);
+        var page1 = await Repo().GetConversationMessagesAsync(ctx, userId, conversationId, page: 1, limit: 5);
+        var page3 = await Repo().GetConversationMessagesAsync(ctx, userId, conversationId, page: 3, limit: 5);
+
+        Assert.Equal(["m8", "m9", "m10", "m11", "m12"], page1.Page!.Data.Select(m => m.Content));
+        Assert.Equal(["m1", "m2"], page3.Page!.Data.Select(m => m.Content));
+        Assert.Equal(12, page1.Page.Total);
+    }
+
+    [Fact]
     public async Task Does_not_mark_my_own_messages_or_already_read_messages()
     {
         var (userId, otherId, conversationId) = await _fixture.SeedConversationAsync();

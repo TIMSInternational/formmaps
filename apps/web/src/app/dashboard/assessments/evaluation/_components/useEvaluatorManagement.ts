@@ -9,6 +9,8 @@ import {
   EvaluatorGroup,
   Evaluator,
   createEvaluationGroup,
+  updateEvaluationGroup,
+  deleteEvaluationGroup,
   getUserEvaluationGroups,
   resendInvitationLink,
   sendBulkEmailInvitations,
@@ -88,9 +90,8 @@ export function useEvaluatorManagement() {
       if (user?.id) {
         const result = await getUserEvaluationGroups(user.id, language);
         setApiEvaluators(result || []);
-        if (result && result.length > 0) {
-          mergeApiDataIntoGroups(result);
-        }
+        // Also when empty: removing the last evaluator must clear the list.
+        mergeApiDataIntoGroups(result || []);
       }
     } catch (error) {
       // error handled silently
@@ -149,6 +150,7 @@ export function useEvaluatorManagement() {
             invitationToken: apiEvaluator.invitationToken || "",
             invitationSent: apiEvaluator.isEmailSent || false,
             responseReceived: apiEvaluator.isEvaluationCompleted || false,
+            // isTokenUsed = the rater opened their link; from then on they can't be edited or removed.
             isActive: !apiEvaluator.isTokenUsed,
           };
           targetGroup.evaluators.push(ev);
@@ -296,9 +298,20 @@ export function useEvaluatorManagement() {
             ? "Teacher"
             : newEvaluator.relationship;
 
-        if (isEditing) {
-          // Editing is not implemented server-side; say so instead of claiming a save.
-          toast.info(t("evaluation.toast.editUnavailable"));
+        if (isEditing && selectedEvaluator) {
+          // Audit 2026-10-09 C5: edits used to change only the screen. A corrected email gets a fresh link
+          // (the server rotates the token, so the one sent to the wrong address stops working).
+          const updated = await updateEvaluationGroup(selectedEvaluator, {
+            evaluatorName: newEvaluator.name,
+            evaluatorEmail: newEvaluator.email,
+            relation: relationValue,
+            groupType: apiGroupType as any,
+            evaluatedUserId: user.id,
+          });
+          const resent = (updated as { data?: { invitationResent?: boolean } })?.data?.invitationResent;
+          toast.success(resent
+            ? t("evaluation.toast.evalUpdatedResent", { email: newEvaluator.email })
+            : t("evaluation.toast.evalUpdated"));
         } else {
           const created = await createEvaluationGroup({
             evaluatorName: newEvaluator.name,
@@ -321,61 +334,20 @@ export function useEvaluatorManagement() {
         await loadApiEvaluators();
       }
     } catch (error) {
+      const started = (error as { data?: { code?: string } })?.data?.code === "EVALUATION_STARTED";
       setErrors({
-        general: isEditing
-          ? t("evaluation.validation.updateFailed")
-          : t("evaluation.evaluatorManagement.failedAdd"),
+        general: started
+          ? t("evaluation.toast.evalLocked")
+          : isEditing
+            ? t("evaluation.validation.updateFailed")
+            : t("evaluation.evaluatorManagement.failedAdd"),
       });
       setLoading(false);
       return;
     }
 
-    const selectedGroupType =
-      evaluatorGroups.find((g) => g.id === selectedGroup)?.type || "parent";
-
-    if (isEditing) {
-      const updatedGroups = evaluatorGroups.map((g) =>
-        g.id === selectedGroup
-          ? {
-              ...g,
-              evaluators: g.evaluators.map((e) =>
-                e.id === selectedEvaluator
-                  ? {
-                      ...e,
-                      name: newEvaluator.name,
-                      email: newEvaluator.email,
-                      phone: newEvaluator.phone,
-                      relationship: newEvaluator.relationship,
-                    }
-                  : e
-              ),
-            }
-          : g
-      );
-      setEvaluatorGroups(updatedGroups);
-    } else {
-      const evaluator: Evaluator = {
-        id: Date.now().toString(),
-        name: newEvaluator.name,
-        email: newEvaluator.email,
-        phone: newEvaluator.phone,
-        relationship: newEvaluator.relationship,
-        groupType: selectedGroupType,
-        groupId: selectedGroup,
-        invitationToken: "",
-        invitationSent: false,
-        responseReceived: false,
-        isActive: true,
-      };
-
-      const updatedGroups = evaluatorGroups.map((g) =>
-        g.id === selectedGroup
-          ? { ...g, evaluators: [...g.evaluators, evaluator] }
-          : g
-      );
-      setEvaluatorGroups(updatedGroups);
-    }
-
+    // The list was reloaded from the API above — it is the source of truth (ids included), so no
+    // locally-fabricated rows are patched in any more.
     setNewEvaluator({ name: "", email: "", phone: "", relationship: "" });
     setSelectedGroup("");
     setSelectedEvaluator(null);
@@ -389,19 +361,16 @@ export function useEvaluatorManagement() {
     evaluatorId: string
   ) => {
     try {
-      const updatedGroups = evaluatorGroups.map((g) =>
-        g.id === groupId
-          ? {
-              ...g,
-              evaluators: g.evaluators.filter((e) => e.id !== evaluatorId),
-            }
-          : g
-      );
-      setEvaluatorGroups(updatedGroups);
+      // Audit 2026-10-09 C5: this only hid the row; the rater stayed invited and came back on reload.
+      await deleteEvaluationGroup(evaluatorId);
+      setEvaluatorGroups((groups) => groups.map((g) =>
+        g.id === groupId ? { ...g, evaluators: g.evaluators.filter((e) => e.id !== evaluatorId) } : g
+      ));
       await loadApiEvaluators();
       toast.success(t("evaluation.toast.evalRemoved"));
     } catch (error) {
-      toast.error(t("evaluation.toast.evalRemoveFailed"));
+      const started = (error as { data?: { code?: string } })?.data?.code === "EVALUATION_STARTED";
+      toast.error(started ? t("evaluation.toast.evalLocked") : t("evaluation.toast.evalRemoveFailed"));
     }
   };
 
@@ -441,7 +410,9 @@ export function useEvaluatorManagement() {
     toast.info(t("evaluation.toast.smsPreview", { phone: phoneNumber }));
   };
 
-  const handleSendEmailInvitations = async () => {
+  // `mode` is passed explicitly: "Send to all" set the mode in state and called this in the same tick, so it
+  // read the PREVIOUS mode and could send only the last selection (audit 2026-10-09 C5).
+  const handleSendEmailInvitations = async (mode: "all" | "specific" = emailSendMode) => {
     if (getTotalEvaluators() === 0) return;
     if (!areAllGroupsComplete()) {
       toast.error(t("evaluation.toast.groupsIncomplete"));
@@ -451,7 +422,7 @@ export function useEvaluatorManagement() {
     try {
       setLoading(true);
       let result;
-      if (emailSendMode === "all") {
+      if (mode === "all") {
         result = await sendBulkEmailInvitations(user?.id || "");
       } else {
         const selectedIds =

@@ -13,17 +13,22 @@ import {
 } from "@/components/ui/select";
 import { useSearchTracking } from "@/hooks/useTrackingHooks";
 
+// audit 2026-10-09 C16: the careers API has no filter parameters and the catalog carries no
+// industry / education / demand data, so the old hard-coded Industry (Technology/Finance/...),
+// Education and "High Demand" controls filtered nothing. The explorer now filters the loaded,
+// scored list client-side: search, career field (clusters actually present) and sort.
 export function CareerFilters({
   filters,
   onChange,
+  fieldOptions = [],
 }: {
   filters: {
     search?: string;
     industry?: string;
-    education?: string;
     sort?: string;
   };
   onChange: (newFilters: any) => void;
+  fieldOptions?: string[];
 }) {
   const { language } = useGlobalStore();
   const { t } = useTranslation();
@@ -68,32 +73,13 @@ export function CareerFilters({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">{t("career.all_industries", "All Industries")}</SelectItem>
-                <SelectItem value="Technology">{t("components.careerFilters.industries.technology")}</SelectItem>
-                <SelectItem value="Finance">{t("components.careerFilters.industries.finance")}</SelectItem>
-                <SelectItem value="Retail">{t("components.careerFilters.industries.retail")}</SelectItem>
-                <SelectItem value="Healthcare">{t("components.careerFilters.industries.healthcare")}</SelectItem>
+                {fieldOptions.map((f) => (
+                  <SelectItem key={f} value={f}>{f}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
 
-          <div className="min-w-[160px] flex-1 md:flex-none">
-            <Select
-              value={filters.education || "all"}
-              onValueChange={(value) => handleChange("education", value)}
-            >
-              <SelectTrigger className="w-full h-[50px] rounded-xl border-gray-200 bg-white text-gray-700 font-medium focus:ring-indigo-500/20 focus:border-indigo-500 hover:bg-gray-50" aria-label={t("career.all_education", "Education")}>
-                <SelectValue placeholder={t("career.all_education", "Education")} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t("career.all_education", "Any Education")}</SelectItem>
-                <SelectItem value="HighSchool">{t("components.careerFilters.education.highSchool")}</SelectItem>
-                <SelectItem value="Associate">{t("university.degrees.Associate")}</SelectItem>
-                <SelectItem value="Bachelors">{t("university.degrees.Bachelor")}</SelectItem>
-                <SelectItem value="Masters">{t("university.degrees.Master")}</SelectItem>
-                <SelectItem value="PhD">{t("components.careerFilters.education.phd")}</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
 
           <div className="min-w-[160px] flex-1 md:flex-none">
             <Select
@@ -108,7 +94,6 @@ export function CareerFilters({
                 <SelectItem value="recommended">{t("career.sort_recommended", "Recommended")}</SelectItem>
                 <SelectItem value="match">{t("career.sort_match", "Match Score")}</SelectItem>
                 <SelectItem value="title">{t("career.sort_title", "Name (A-Z)")}</SelectItem>
-                <SelectItem value="demand">{t("career.sort_demand", "High Demand")}</SelectItem>
               </SelectContent>
             </Select>
           </div>

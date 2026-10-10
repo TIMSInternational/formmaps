@@ -3,8 +3,8 @@
  *
  * The parent-portal hooks add two shapes the gradebook and notes tests do not cover:
  *
- *  1. A write whose response is NOT the list row. Both invite endpoints answer with an
- *     id and an invitation URL, never the row the list renders, so the placeholder has
+ *  1. A write whose response is NOT the list row. Every invite endpoint answers with
+ *     `{ id, emailSent }` (never the invitation link — audit 2026-10-09 C8b), not the row the list renders, so the placeholder has
  *     to survive until a refetch reconciles it — the one refetch this file keeps. The
  *     tests below pin the refetch to the key the list is actually READ from; an
  *     invalidate aimed one key off is invisible in the UI until the data goes stale.
@@ -581,7 +581,7 @@ describe("#89 the writes that are deliberately not optimistic", () => {
     await waitFor(() => expect(result.current.list.isSuccess).toBe(true));
     const invalidate = jest.spyOn(qc, "invalidateQueries");
 
-    act(() => { result.current.resend.mutate("m-1"); });
+    act(() => { result.current.resend.mutate({ parentLinkId: "m-1" }); });
 
     await waitFor(() => expect(mockListMine).toHaveBeenCalledTimes(2));
     expect(invalidate).toHaveBeenCalledWith({ queryKey: MY_PARENTS_KEY });

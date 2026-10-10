@@ -77,25 +77,89 @@ export async function getParentPendingEvaluations(): Promise<
 
 // ─── Parent Invitation (called by school-admin / counselor) ──────────────────
 
+/**
+ * Which backend surface the student-parents panel talks to. The school-admin routes need
+ * `school:manage`, so a counselor got a 403 on every call (audit 2026-10-09 C9); counselors use
+ * the caseload-checked routes instead.
+ */
+export type ParentPanelScope = "school-admin" | "counselor";
+
+/**
+ * What every invite/resend answers (audit 2026-10-09 C8b): the invitation link is EMAILED to the
+ * parent and never returned. `alreadyLinked` = the address already belongs to a parent account and
+ * was attached directly (C8) — `emailSent` then refers to the "you've been linked" notice.
+ */
+export interface ParentInviteResult {
+  id?: string;
+  emailSent: boolean;
+  alreadyLinked?: boolean;
+}
+
+type RawParentLink = Partial<StudentParentLink> & {
+  parentEmail?: string;
+  parentName?: string;
+  relation?: string;
+  isAccepted?: boolean;
+  tokenExpiresAt?: string | null;
+  createdDate?: string;
+  acceptedAt?: string | null;
+  parentUserId?: string | null;
+};
+
+/**
+ * The panel renders `{ name, email, relationship, status }`. The school-admin and counselor routes
+ * already answer that shape; GET /student/parents answers raw link rows. Accept both.
+ */
+export function toStudentParentLink(row: RawParentLink): StudentParentLink {
+  if (row.status && row.email !== undefined) return row as StudentParentLink;
+  const expired = !!row.tokenExpiresAt && new Date(row.tokenExpiresAt).getTime() < Date.now();
+  return {
+    id: row.id ?? "",
+    name: row.name ?? row.parentName ?? "",
+    email: row.email ?? row.parentEmail ?? "",
+    relationship: (row.relationship ?? row.relation ?? "other") as ParentRelationship,
+    status: row.isAccepted ? "accepted" : expired ? "expired" : "pending",
+    invitedAt: row.invitedAt ?? row.createdDate ?? "",
+    acceptedAt: row.acceptedAt ?? undefined,
+    parentUserId: row.parentUserId ?? undefined,
+  };
+}
+
+const asRows = (res: { data?: unknown } | unknown): StudentParentLink[] => {
+  const body = (res as { data?: unknown })?.data ?? res;
+  return Array.isArray(body) ? body.map((r) => toStudentParentLink(r as RawParentLink)) : [];
+};
+
 // List all parents/guardians linked to a student
 export async function getStudentParents(
-  studentId: string
+  studentId: string,
+  scope: ParentPanelScope = "school-admin"
 ): Promise<StudentParentLink[]> {
   const res = await apiRequest(
-    `/api/v1/school-admin/students/${studentId}/parents`
+    scope === "counselor"
+      ? `/api/v1/counselor/students/${studentId}/parents`
+      : `/api/v1/school-admin/students/${studentId}/parents`
   );
-  return res.data ?? res;
+  return asRows(res);
 }
 
 // Invite a parent/guardian to a student's portal
 export async function inviteParentToStudent(
-  payload: ParentInviteRequest
-): Promise<{ inviteId: string; message: string }> {
+  payload: ParentInviteRequest,
+  scope: ParentPanelScope = "school-admin"
+): Promise<ParentInviteResult> {
   const { studentId, ...body } = payload;
-  const res = await apiRequest(
-    `/api/v1/school-admin/students/${studentId}/parents/invite`,
-    { method: "POST", data: body }
-  );
+  const res =
+    scope === "counselor"
+      ? // Caseload-checked for counselors (routes/parent.ts POST /invite).
+        await apiRequest("/api/v1/parent/invite", {
+          method: "POST",
+          data: { studentId, parentEmail: body.email, parentName: body.name, relation: body.relationship },
+        })
+      : await apiRequest(`/api/v1/school-admin/students/${studentId}/parents/invite`, {
+          method: "POST",
+          data: body,
+        });
   return res.data ?? res;
 }
 
@@ -113,29 +177,34 @@ export async function revokeParentAccess(
 // Resend a pending invite
 export async function resendParentInvite(
   studentId: string,
-  parentLinkId: string
-): Promise<void> {
-  await apiRequest(
-    `/api/v1/school-admin/students/${studentId}/parents/${parentLinkId}/resend`,
+  parentLinkId: string,
+  scope: ParentPanelScope = "school-admin"
+): Promise<ParentInviteResult> {
+  const res = await apiRequest(
+    scope === "counselor"
+      ? `/api/v1/parent/${parentLinkId}/resend`
+      : `/api/v1/school-admin/students/${studentId}/parents/${parentLinkId}/resend`,
     { method: "POST" }
   );
+  return res?.data ?? res;
 }
 
 // ─── Student Self-Invitation (called by student) ─────────────────────────────
 
 // List all parents/guardians linked to the current student
 export async function getMyParents(): Promise<StudentParentLink[]> {
-  const res = await apiRequest("/api/v1/student/parents");
-  return res.data ?? res;
+  return asRows(await apiRequest("/api/v1/student/parents"));
 }
 
-// Invite a parent/guardian to the current student's portal
+// Invite a parent/guardian to the current student's portal. The route reads
+// { parentEmail, parentName, relation } — the form's { email, name, relationship } was
+// answered "parentEmail required", so this never worked from the UI.
 export async function inviteMyParent(
   payload: Omit<ParentInviteRequest, "studentId">
-): Promise<{ inviteId: string; message: string }> {
+): Promise<ParentInviteResult> {
   const res = await apiRequest("/api/v1/student/parents/invite", {
     method: "POST",
-    data: payload,
+    data: { parentEmail: payload.email, parentName: payload.name, relation: payload.relationship },
   });
   return res.data ?? res;
 }
@@ -152,10 +221,11 @@ export async function revokeMyParentAccess(
 // Resend a pending invite for the current student
 export async function resendMyParentInvite(
   parentLinkId: string
-): Promise<void> {
-  await apiRequest(`/api/v1/student/parents/${parentLinkId}/resend`, {
+): Promise<ParentInviteResult> {
+  const res = await apiRequest(`/api/v1/student/parents/${parentLinkId}/resend`, {
     method: "POST",
   });
+  return res?.data ?? res;
 }
 
 // ─── Parent Notifications ────────────────────────────────────────────────────

@@ -46,6 +46,7 @@ public static class AuthEndpoints
         group.MapPut("/change-email", ChangeEmailAsync).RequireRateLimiting(FormMapsRateLimitPolicies.Sensitive);
         group.MapPut("/change-role", ChangeRoleAsync).RequireRateLimiting(FormMapsRateLimitPolicies.Sensitive);
         group.MapPost("/school-admin/complete-registration", CompleteSchoolAdminRegistrationAsync).RequireRateLimiting(FormMapsRateLimitPolicies.Auth);
+        group.MapGet("/school-admin/invite-status", GetSchoolInviteStatusAsync).RequireRateLimiting(FormMapsRateLimitPolicies.Auth);
         group.MapPost("/forgot-password", ForgotPasswordAsync).RequireRateLimiting(FormMapsRateLimitPolicies.Auth);
         group.MapPost("/reset-password", ResetPasswordAsync).RequireRateLimiting(FormMapsRateLimitPolicies.Auth);
         return app;
@@ -572,6 +573,37 @@ public static class AuthEndpoints
             },
         });
     }
+
+    // =========================================================================================
+    // GET /authapi/school-admin/invite-status?token= (twin of authService.ts getSchoolInviteStatus)
+    // What the school invitation page needs before asking for a password. It used to call
+    // /api/v1/school-admin/{token}/onboarding-status, which existed in neither backend (audit 2026-10-09 C1).
+    // A redeemed token is nulled, so "already used" and "unknown" are the same 404.
+    // =========================================================================================
+
+    private static async Task<IResult> GetSchoolInviteStatusAsync(
+        string? token, IAuthRepository repository, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(token) || token.Length > 512) return InviteInvalid();
+        var school = await repository.FindSchoolByInvitationTokenAsync(token, cancellationToken);
+        if (school is null) return InviteInvalid();
+        var expired = school.InvitationTokenExpiresAt is { } expiresAt && expiresAt < DateTimeOffset.UtcNow;
+        return Results.Ok(new
+        {
+            success = true,
+            data = new
+            {
+                schoolName = school.Name,
+                email = NormalizeEmail(school.AdminEmail),
+                maxStudents = school.MaxStudents,
+                status = expired ? "expired" : "pending",
+            },
+        });
+    }
+
+    private static IResult InviteInvalid() => Results.Json(
+        new { success = false, code = "INVITE_INVALID", message = "This invitation link is not valid." },
+        statusCode: StatusCodes.Status404NotFound);
 
     // =========================================================================================
     // POST /authapi/school-admin/complete-registration

@@ -144,6 +144,35 @@
   },
   "schools": {
     "searchPlaceholder": "Buscar instituciones...",
+    "coverage": {
+      "title": "Cobertura de estudiantes",
+      "description": "Qué instituciones cubren a sus estudiantes con el muro de pago para estudiantes y cuántos estudiantes conservan el acceso con su propia suscripción. Las fechas del contrato cuentan como días completos en la zona horaria de la institución.",
+      "paywallOn": "El muro de pago para estudiantes está ACTIVADO",
+      "paywallOff": "El muro de pago para estudiantes está DESACTIVADO: esto muestra lo que aplicará cuando se active",
+      "loading": "Cargando cobertura...",
+      "empty": "Aún no hay instituciones.",
+      "error": "No se pudo cargar el informe de cobertura.",
+      "yes": "Cubierta",
+      "no": "Sin cobertura",
+      "table": {
+        "school": "Institución",
+        "status": "Estado",
+        "contract": "Contrato",
+        "covered": "Cobertura",
+        "students": "Estudiantes",
+        "bySchool": "Por la institución",
+        "bySubscription": "Suscripción propia",
+        "notCovered": "Sin acceso"
+      },
+      "reasons": {
+        "active_contract": "Contrato vigente",
+        "school_inactive": "Institución desactivada",
+        "status_not_active": "El estado de la institución no es activo",
+        "no_end_date": "Sin fecha de fin de contrato",
+        "not_started": "El contrato aún no ha comenzado",
+        "expired": "Contrato vencido"
+      }
+    },
     "loadingSchools": "Cargando instituciones...",
     "noSchoolsFound": "No se encontraron instituciones. ¡Invita una para comenzar!",
     "videoOnTitle": "Desactivar videollamadas",

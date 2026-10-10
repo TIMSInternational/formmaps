@@ -621,6 +621,7 @@
       "endpointRequired": "Endpoint URL is required",
       "configSaved": "Configuration saved",
       "configSavedLocally": "Configuration saved locally",
+      "configSaveFailed": "Could not save the configuration. Nothing was stored — please try again.",
       "enterEndpoint": "Enter an endpoint first",
       "connectionSuccess": "Connection successful",
       "connectionFailed": "Connection failed",

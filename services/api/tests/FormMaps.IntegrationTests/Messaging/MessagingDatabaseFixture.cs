@@ -94,17 +94,23 @@ public sealed class MessagingDatabaseFixture : RlsEnabledDatabaseFixture
         return (a, b, conversationId);
     }
 
-    public async Task SeedMessageAsync(string conversationId, string senderId, DateTime? readAt)
+    public async Task SeedMessageAsync(
+        string conversationId, string senderId, DateTime? readAt, string content = "hi", DateTime? createdDate = null)
     {
         await using var conn = new NpgsqlConnection(AdminConnectionString);
         await conn.OpenAsync();
         await using var cmd = new NpgsqlCommand(
-            """INSERT INTO "messages" ("id","conversationId","senderId","content","readAt","updatedAt") VALUES (@id,@cid,@sid,'hi',@readAt,now())""",
+            """
+            INSERT INTO "messages" ("id","conversationId","senderId","content","readAt","updatedAt","createdDate")
+            VALUES (@id,@cid,@sid,@content,@readAt,now(),COALESCE(@created, now()))
+            """,
             conn);
         cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
         cmd.Parameters.AddWithValue("cid", conversationId);
         cmd.Parameters.AddWithValue("sid", senderId);
+        cmd.Parameters.AddWithValue("content", content);
         cmd.Parameters.AddWithValue("readAt", (object?)readAt ?? DBNull.Value);
+        cmd.Parameters.Add(new NpgsqlParameter("created", NpgsqlTypes.NpgsqlDbType.Timestamp) { Value = (object?)createdDate ?? DBNull.Value });
         await cmd.ExecuteNonQueryAsync();
     }
 
@@ -137,6 +143,29 @@ public sealed class MessagingDatabaseFixture : RlsEnabledDatabaseFixture
         cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
         cmd.Parameters.AddWithValue("c", counselorId);
         cmd.Parameters.AddWithValue("s", studentId);
+        await cmd.ExecuteNonQueryAsync();
+    }
+
+    /// <summary>audit 2026-10-09 C14: a booking between a coach (by user id) and a student. Creates the coach row
+    /// on first use.</summary>
+    public async Task SeedBookingAsync(string coachUserId, string studentId, string status = "confirmed", bool isActive = true)
+    {
+        await using var conn = new NpgsqlConnection(AdminConnectionString);
+        await conn.OpenAsync();
+        await using (var coachCmd = new NpgsqlCommand(
+            """INSERT INTO "coaches" ("id","userId") VALUES (@id,@u) ON CONFLICT ("userId") DO NOTHING""", conn))
+        {
+            coachCmd.Parameters.AddWithValue("id", "coach-" + coachUserId);
+            coachCmd.Parameters.AddWithValue("u", coachUserId);
+            await coachCmd.ExecuteNonQueryAsync();
+        }
+        await using var cmd = new NpgsqlCommand(
+            """INSERT INTO "bookings" ("id","coachId","studentId","status","isActive") VALUES (@id,@c,@s,@status,@active)""", conn);
+        cmd.Parameters.AddWithValue("id", Guid.NewGuid().ToString());
+        cmd.Parameters.AddWithValue("c", "coach-" + coachUserId);
+        cmd.Parameters.AddWithValue("s", studentId);
+        cmd.Parameters.AddWithValue("status", status);
+        cmd.Parameters.AddWithValue("active", isActive);
         await cmd.ExecuteNonQueryAsync();
     }
 

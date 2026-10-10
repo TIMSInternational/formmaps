@@ -144,6 +144,35 @@
   },
   "schools": {
     "searchPlaceholder": "Search schools...",
+    "coverage": {
+      "title": "Student coverage",
+      "description": "Which schools cover their students under the student paywall, and how many students keep access through their own subscription. Contract dates count as whole days in the school's timezone.",
+      "paywallOn": "Student paywall is ON",
+      "paywallOff": "Student paywall is OFF: this shows what will apply when it is switched on",
+      "loading": "Loading coverage...",
+      "empty": "No schools yet.",
+      "error": "Could not load the coverage report.",
+      "yes": "Covered",
+      "no": "Not covered",
+      "table": {
+        "school": "School",
+        "status": "Status",
+        "contract": "Contract",
+        "covered": "Coverage",
+        "students": "Students",
+        "bySchool": "Via school",
+        "bySubscription": "Own subscription",
+        "notCovered": "No access"
+      },
+      "reasons": {
+        "active_contract": "Active contract",
+        "school_inactive": "School deactivated",
+        "status_not_active": "School status is not active",
+        "no_end_date": "No contract end date",
+        "not_started": "Contract not started yet",
+        "expired": "Contract expired"
+      }
+    },
     "loadingSchools": "Loading schools...",
     "noSchoolsFound": "No schools found. Invite one to get started!",
     "videoOnTitle": "Disable video calls",

@@ -63,8 +63,9 @@ export async function getCoaches(
   const query = new URLSearchParams();
   if (params.page) query.append("page", params.page.toString());
   if (params.limit) query.append("limit", params.limit.toString());
-  if (params.specialization)
-    query.append("specialization", params.specialization);
+  // audit 2026-10-09 C15: the API's canonical name is `specialty` (it now also accepts
+  // `specialization`); this used to send only `specialization`, which the API ignored.
+  if (params.specialization) query.append("specialty", params.specialization);
   if (params.search) query.append("search", params.search);
 
   return apiRequest(`/api/v1/coach?${query.toString()}`);

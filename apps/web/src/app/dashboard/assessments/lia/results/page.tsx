@@ -15,6 +15,8 @@ import { getMILResults, type MILResultsData } from "@/services/milService";
 import { SUBTEST_DESCRIPTIONS } from "@/data/liaReportContent";
 import { buildLIAReportData } from "@/components/reports/buildLIAReportData";
 import { ResultsReport } from "../_tims/ResultsReport";
+import { isPaymentRequiredError } from "@/lib/api/apiClient";
+import { ResultsLockedState } from "@/components/independent-student/ResultsLockedState";
 import { ArrowLeft, Printer, AlertTriangle } from "lucide-react";
 
 const ExportReportButton = dynamic(() => import("@/components/reports/ExportReportButton"), { ssr: false });
@@ -33,6 +35,9 @@ export default function LIAResultsPage() {
   const [legacy, setLegacy] = useState<MILResultsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  // audit 2026-10-09 C18: 402 = paywall (finished, not paid) — never "not completed". The paywall runs before
+  // the route, so an unpaid student gets 402 here before any 404/MIL fallback could apply.
+  const [locked, setLocked] = useState(false);
 
   useEffect(() => {
     const userId = user.id;
@@ -44,6 +49,10 @@ export default function LIAResultsPage() {
         if (!cancelled) setResults(data);
         return;
       } catch (err) {
+        if (isPaymentRequiredError(err)) {
+          if (!cancelled) setLocked(true);
+          return;
+        }
         if ((err as { status?: number })?.status !== 404) {
           if (!cancelled) setError(true);
           return;
@@ -73,6 +82,10 @@ export default function LIAResultsPage() {
         <div className="w-12 h-12 border-4 border-[#102B47] border-t-transparent rounded-full animate-spin" />
       </div>
     );
+  }
+
+  if (locked) {
+    return <ResultsLockedState />;
   }
 
   if (legacy && !results) {

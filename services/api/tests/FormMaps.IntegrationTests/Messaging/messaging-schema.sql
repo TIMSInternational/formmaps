@@ -34,6 +34,17 @@ CREATE TABLE "student_parent_links" (
   "isAccepted" boolean NOT NULL DEFAULT false
 );
 
+-- audit 2026-10-09 C14: the coach<->student messaging relationship is a booking. Production policies NEITHER
+-- table (escalated in 007-self-scoped.sql: read cross-user by the marketplace), so neither is in PoliciedTables.
+CREATE TABLE "coaches" (
+  "id" text PRIMARY KEY, "userId" text NOT NULL UNIQUE
+);
+
+CREATE TABLE "bookings" (
+  "id" text PRIMARY KEY, "coachId" text NOT NULL, "studentId" text NOT NULL,
+  "status" text NOT NULL DEFAULT 'pending', "isActive" boolean NOT NULL DEFAULT true
+);
+
 CREATE TABLE "notification_outbox" (
   "id" text PRIMARY KEY, "type" text NOT NULL, "payload" jsonb NOT NULL, "due_at" timestamp NOT NULL,
   "processed_at" timestamp, "attempts" int NOT NULL DEFAULT 0, "createdDate" timestamp NOT NULL DEFAULT now()

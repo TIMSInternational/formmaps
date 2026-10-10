@@ -50,6 +50,7 @@ import {
   toggleSchoolFeature,
 } from "@/services/schoolService";
 import { SchoolEditForm } from "@/components/admin/SchoolEditForm";
+import { SchoolCoverageReport } from "@/components/admin/SchoolCoverageReport";
 import { formatDate, cn } from "@/lib/utils";
 import { parseYmdLocal } from "@/lib/dateUtils";
 import { toast } from "sonner";
@@ -443,6 +444,9 @@ export default function SchoolsPage() {
             {t("common.next", "Next")}
           </Button>
         </div>
+
+        {/* audit 2026-10-09 E4: who is covered when the student paywall is on */}
+        <SchoolCoverageReport />
     </div>
   );
 }

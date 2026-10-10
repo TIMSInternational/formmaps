@@ -188,6 +188,12 @@
       "locked": "Scores, full career matches, reports and downloads unlock after your first payment.",
       "unlock": "Unlock my full results"
     },
+    "resultsLocked": {
+      "title": "Unlock your results",
+      "body": "Your assessment is complete and saved. Your full results, reports and downloads unlock after your first payment.",
+      "cta": "Unlock my results",
+      "back": "Back to my assessments"
+    },
     "oneTime": {
       "name": "One-time report",
       "description": "Take all the FormMaps assessments, see your complete results and download your reports — pay once, keep them.",
@@ -406,6 +412,9 @@
       "noPhoneNumbers": "No evaluators have phone numbers available for SMS invitations.",
       "smsComingSoon": "SMS functionality coming soon!",
       "editUnavailable": "Changes to an evaluator can't be saved yet. To correct a name or email, remove the evaluator and add them again.",
+      "evalUpdated": "Evaluator updated.",
+      "evalUpdatedResent": "Evaluator updated — a new invitation was sent to {{email}}.",
+      "evalLocked": "This evaluator has already opened their invitation, so they can no longer be changed or removed.",
       "noPhone": "This evaluator has no phone number.",
       "emailsSent": "Email invitations sent.",
       "smsFailed": "Error sending SMS invitations. Please try again.",
@@ -1734,9 +1743,9 @@
           "label": "Session Reminders",
           "description": "Reminders before upcoming counseling sessions"
         },
-        "weeklyDigest": {
-          "label": "Weekly Digest",
-          "description": "A weekly summary of your activity and progress"
+        "marketingEmails": {
+          "label": "Career tips & product updates",
+          "description": "Occasional emails with career tips and FormMaps news"
         }
       },
       "theme": {
@@ -1845,6 +1854,9 @@
       "remote": "Remote",
       "new": "New",
       "fetchError": "Failed to load coaches. Please try again.",
+      "specialtyFilter": "Filter by specialty",
+      "allSpecialties": "All specialties",
+      "loadMore": "Load more coaches",
       "retry": "Retry"
     },
     "earnings": {
@@ -2319,6 +2331,9 @@
       "disclaimer": "These match estimates are based on your assessment data and are for informational guidance only — not a guarantee of employment and not a substitute for professional career counseling.",
       "noResults": "No careers found",
       "noResultsFilterDesc": "Try adjusting your search or filter criteria to see more results.",
+      "scoresPendingTitle": "Your career matches aren't ready yet",
+      "scoresPendingDesc": "We couldn't calculate match scores from your assessment results yet. Check back later, or ask your counselor if this doesn't change.",
+      "clearFilters": "Clear filters",
       "noResultsDesc": "Complete your assessments ({{list}}) to receive personalized career recommendations."
     },
     "search_placeholder": "Search for careers, skills, or keywords...",
@@ -6550,6 +6565,10 @@
         "accessRevoked": "Access revoked",
         "revokeFailed": "Failed to revoke access",
         "inviteResent": "Invite resent",
+        "inviteSentTo": "Invitation sent to {{email}}",
+        "inviteEmailFailed": "The invitation was saved, but the email to {{email}} could not be sent. Try resending it.",
+        "parentLinked": "{{email}} already has a parent account, so it is now linked and we let them know by email.",
+        "alreadyLinked": "{{email}} is already linked to this student.",
         "resendFailed": "Failed to resend invite",
         "markReadFailed": "Failed to mark notification as read",
         "allMarkedRead": "All notifications marked as read",

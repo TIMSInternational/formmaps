@@ -232,6 +232,8 @@ function EvaluatorCard({
               {showDropdown === evaluator.id && (
                 <div className="absolute right-0 mt-1 w-48 bg-card rounded-xl border border-border z-50">
                   <div className="py-1">
+                    {/* A rater who already opened the link can't be edited or removed (the API refuses). */}
+                    {evaluator.isActive && (
                     <button
                       onClick={() => {
                         onEdit(evaluator);
@@ -242,6 +244,7 @@ function EvaluatorCard({
                       <Pencil className="w-3.5 h-3.5" />
                       {t("common.edit")}
                     </button>
+                    )}
                     <button
                       onClick={() => {
                         onResendEmail(evaluator.id);
@@ -252,30 +255,9 @@ function EvaluatorCard({
                       <Mail className="w-3.5 h-3.5" />
                       {t("evaluation.card.resendEmail")}
                     </button>
-                    <button
-                      onClick={() => {
-                        onResendPhone(evaluator.id, evaluator.phone);
-                        onToggleDropdown(evaluator.id);
-                      }}
-                      className="flex items-center px-3 py-2 text-sm text-foreground hover:bg-secondary w-full text-left gap-2 disabled:opacity-50"
-                      disabled={
-                        !evaluator.phone ||
-                        evaluator.phone === "Not provided"
-                      }
-                    >
-                      <Phone className="w-3.5 h-3.5" />
-                      <span
-                        className={
-                          !evaluator.phone ||
-                          evaluator.phone === "Not provided"
-                            ? "opacity-50"
-                            : ""
-                        }
-                      >
-                        {t("evaluation.card.resendPhone")}
-                      </span>
-                    </button>
-                    <div className="border-t border-border my-1"></div>
+                    {/* "Resend via phone" removed: SMS is not implemented, it only showed a preview toast (audit 2026-10-09 C5). */}
+                    {evaluator.isActive && <div className="border-t border-border my-1"></div>}
+                    {evaluator.isActive && (
                     <button
                       onClick={() => {
                         onRemove(groupId, evaluator.id);
@@ -286,6 +268,7 @@ function EvaluatorCard({
                       <Trash2 className="w-3.5 h-3.5" />
                       {t("common.delete")}
                     </button>
+                    )}
                   </div>
                 </div>
               )}

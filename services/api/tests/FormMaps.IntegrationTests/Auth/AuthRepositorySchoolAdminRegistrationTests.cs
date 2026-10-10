@@ -32,6 +32,8 @@ public class AuthRepositorySchoolAdminRegistrationTests(AuthDatabaseFixture fixt
         Assert.NotNull(row);
         Assert.Equal(schoolId, row!.Id);
         Assert.Equal("admin@newschool.example.com", row.AdminEmail);
+        // The invitation page shows which school it is (invite-status, audit 2026-10-09 C1).
+        Assert.Equal("Test School", row.Name);
     }
 
     [Fact]

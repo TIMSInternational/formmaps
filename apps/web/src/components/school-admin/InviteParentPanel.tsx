@@ -45,12 +45,19 @@ import {
   useRevokeParentAccess,
   useResendParentInvite,
 } from "@/hooks/useParentPortalQueries";
+import type { ParentPanelScope } from "@/services/parentPortalService";
 import type { ParentRelationship, StudentParentLink } from "@/types/parentPortal";
 import { cn } from "@/lib/utils";
 
 interface Props {
   studentId: string;
   studentName: string;
+  /**
+   * audit 2026-10-09 C9: the counselor student page renders this panel too, and the school-admin
+   * routes need school:manage (→ 403 for counselors). "counselor" uses the caseload-checked routes;
+   * revoke stays school-admin only (the parent-link DELETE is not open to counselors).
+   */
+  scope?: ParentPanelScope;
 }
 
 // i18n keys (common namespace) for each relationship value; the value is API data.
@@ -80,13 +87,15 @@ const STATUS_CONFIG = {
 function ParentRow({
   parent,
   studentId,
+  scope,
 }: {
   parent: StudentParentLink;
   studentId: string;
+  scope: ParentPanelScope;
 }) {
   const { t } = useTranslation();
   const revoke = useRevokeParentAccess();
-  const resend = useResendParentInvite();
+  const resend = useResendParentInvite(scope);
   const cfg = STATUS_CONFIG[parent.status];
   const StatusIcon = cfg.icon;
 
@@ -139,30 +148,32 @@ function ParentRow({
             title={t("components.inviteParentPanel.resendInvite")}
             disabled={resend.isPending}
             onClick={() =>
-              resend.mutate({ studentId, parentLinkId: parent.id })
+              resend.mutate({ studentId, parentLinkId: parent.id, email: parent.email })
             }
           >
             <RefreshCw className="h-3.5 w-3.5" />
           </Button>
         )}
-        <Button
-          variant="ghost"
-          size="icon"
-          className="h-7 w-7 text-gray-400 hover:text-red-600"
-          title={t("components.inviteParentPanel.revokeAccess")}
-          disabled={revoke.isPending}
-          onClick={() =>
-            revoke.mutate({ studentId, parentLinkId: parent.id })
-          }
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+        {scope === "school-admin" && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-gray-400 hover:text-red-600"
+            title={t("components.inviteParentPanel.revokeAccess")}
+            disabled={revoke.isPending}
+            onClick={() =>
+              revoke.mutate({ studentId, parentLinkId: parent.id })
+            }
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        )}
       </div>
     </motion.div>
   );
 }
 
-export function InviteParentPanel({ studentId, studentName }: Props) {
+export function InviteParentPanel({ studentId, studentName, scope = "school-admin" }: Props) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [showForm, setShowForm] = useState(false);
@@ -171,8 +182,8 @@ export function InviteParentPanel({ studentId, studentName }: Props) {
   const [relationship, setRelationship] = useState<ParentRelationship>("mother");
   const [message, setMessage] = useState("");
 
-  const { data: parents, isLoading } = useStudentParents(studentId);
-  const invite = useInviteParent();
+  const { data: parents, isLoading } = useStudentParents(studentId, scope);
+  const invite = useInviteParent(scope);
 
   const handleInvite = async () => {
     if (!name.trim() || !email.trim()) return;
@@ -316,7 +327,7 @@ export function InviteParentPanel({ studentId, studentName }: Props) {
           </div>
         ) : (
           parentList.map((parent: any) => (
-            <ParentRow key={parent.id} parent={parent} studentId={studentId} />
+            <ParentRow key={parent.id} parent={parent} studentId={studentId} scope={scope} />
           ))
         )}
       </div>

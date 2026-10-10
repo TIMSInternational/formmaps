@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { useGlobalStore } from "@/store/useGlobalStore";
 import { useSubscriptionStatus } from "@/hooks/useSubscription";
 import { ResultsPreviewCard } from "@/components/independent-student/ResultsPreviewCard";
+import { safeReturnTo } from "@/lib/independentStudent";
 
 /**
  * "Complete your purchase" — where a student without a covering school lands
@@ -26,7 +27,9 @@ export default function CompletePurchasePage() {
   const hasFullPlatform = status ? (status.hasFullPlatform ?? status.hasActiveSubscription) : false;
   const isOneTime = !!status?.hasPaidAccess && !hasFullPlatform;
   useEffect(() => {
-    if (hasFullPlatform) router.replace("/dashboard");
+    // audit 2026-10-09 C18: back to the page whose 402 sent them here (apiClient appends ?returnTo=).
+    // Read from window, not useSearchParams, so this statically-rendered page needs no Suspense boundary.
+    if (hasFullPlatform) router.replace(safeReturnTo(new URLSearchParams(window.location.search).get("returnTo")) ?? "/dashboard");
   }, [hasFullPlatform, router]);
 
   return (

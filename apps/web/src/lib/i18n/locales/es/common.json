@@ -188,6 +188,12 @@
       "locked": "Los puntajes, las coincidencias completas de carreras, los informes y las descargas se desbloquean después de tu primer pago.",
       "unlock": "Desbloquear mis resultados completos"
     },
+    "resultsLocked": {
+      "title": "Desbloquea tus resultados",
+      "body": "Tu evaluación está completa y guardada. Tus resultados completos, informes y descargas se desbloquean con tu primer pago.",
+      "cta": "Desbloquear mis resultados",
+      "back": "Volver a mis evaluaciones"
+    },
     "oneTime": {
       "name": "Informe de pago único",
       "description": "Haz todas las evaluaciones de FormMaps, ve tus resultados completos y descarga tus informes: pagas una vez y los conservas.",
@@ -406,6 +412,9 @@
       "noPhoneNumbers": "Ningún evaluador tiene número de teléfono disponible para invitaciones SMS.",
       "smsComingSoon": "La funcionalidad de SMS estará disponible pronto.",
       "editUnavailable": "Todavía no se pueden guardar cambios de un evaluador. Para corregir un nombre o correo, elimínalo y vuelve a agregarlo.",
+      "evalUpdated": "Evaluador actualizado.",
+      "evalUpdatedResent": "Evaluador actualizado: se envió una nueva invitación a {{email}}.",
+      "evalLocked": "Este evaluador ya abrió su invitación, así que ya no se puede cambiar ni eliminar.",
       "noPhone": "Este evaluador no tiene número de teléfono.",
       "emailsSent": "Invitaciones enviadas por correo.",
       "smsFailed": "Error al enviar las invitaciones por SMS. Intenta de nuevo.",
@@ -1066,9 +1075,9 @@
           "label": "Recordatorios de sesiones",
           "description": "Recordatorios antes de tus próximas sesiones de orientación"
         },
-        "weeklyDigest": {
-          "label": "Resumen semanal",
-          "description": "Un resumen semanal de tu actividad y tu progreso"
+        "marketingEmails": {
+          "label": "Consejos de carrera y novedades",
+          "description": "Correos ocasionales con consejos de carrera y novedades de FormMaps"
         }
       },
       "theme": {
@@ -1177,6 +1186,9 @@
       "remote": "Remoto",
       "new": "Nuevo",
       "fetchError": "No se pudieron cargar los coaches. Inténtalo de nuevo.",
+      "specialtyFilter": "Filtrar por especialidad",
+      "allSpecialties": "Todas las especialidades",
+      "loadMore": "Cargar más coaches",
       "retry": "Reintentar"
     },
     "earnings": {
@@ -2319,6 +2331,9 @@
       "disclaimer": "Estas estimaciones de coincidencia se basan en los datos de tus evaluaciones y son solo una orientación informativa: no garantizan empleo ni reemplazan la orientación vocacional profesional.",
       "noResults": "No se encontraron carreras",
       "noResultsFilterDesc": "Intenta ajustar tu búsqueda o los filtros para ver más resultados.",
+      "scoresPendingTitle": "Tus coincidencias de carrera aún no están listas",
+      "scoresPendingDesc": "Todavía no pudimos calcular las puntuaciones de coincidencia a partir de tus resultados. Vuelve más tarde o consulta a tu orientador si no cambia.",
+      "clearFilters": "Limpiar filtros",
       "noResultsDesc": "Completa tus evaluaciones ({{list}}) para recibir recomendaciones de carrera personalizadas."
     },
     "search_placeholder": "Busca carreras, habilidades o palabras clave...",
@@ -6550,6 +6565,10 @@
         "accessRevoked": "Acceso revocado",
         "revokeFailed": "No se pudo revocar el acceso",
         "inviteResent": "Invitación reenviada",
+        "inviteSentTo": "Invitación enviada a {{email}}",
+        "inviteEmailFailed": "La invitación quedó guardada, pero no pudimos enviar el correo a {{email}}. Intenta reenviarla.",
+        "parentLinked": "{{email}} ya tiene una cuenta de padre/madre, así que quedó vinculada y le avisamos por correo.",
+        "alreadyLinked": "{{email}} ya está vinculado/a a este estudiante.",
         "resendFailed": "No se pudo reenviar la invitación",
         "markReadFailed": "No se pudo marcar la notificación como leída",
         "allMarkedRead": "Todas las notificaciones se marcaron como leídas",
