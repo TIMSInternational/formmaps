@@ -61,7 +61,7 @@ public sealed class SchoolAnalyticsReader(IFormMapsDatabaseSessionFactory databa
         var gpaByStudent = ids.Length == 0
             ? new Dictionary<string, double>(StringComparer.Ordinal)
             : await GpaByStudentAsync(session, schoolId, ids, cancellationToken);
-        var gpa = SchoolAnalyticsMath.AggregateGpa(gpaByStudent.Values);
+        var gpa = SchoolAnalyticsMath.AggregateStudentGpas(gpaByStudent.Values);
 
         // counselorCoverage = min(100, round(distinct-assigned-students * 100 / totalStudents)).
         var assignedDistinct = ids.Length == 0

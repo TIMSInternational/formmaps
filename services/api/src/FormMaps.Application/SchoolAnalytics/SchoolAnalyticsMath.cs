@@ -134,7 +134,7 @@ public static class SchoolAnalyticsMath
     /// Overview GPA fields from per-student GPAs already computed by the configured GPA engine (audit D9 — the
     /// hardcoded <see cref="GradeMap"/> lacked A+/D+/D- and ignored credits and the school's scale).
     /// </summary>
-    public static GpaAggregate AggregateGpa(IReadOnlyCollection<double> studentGpas)
+    public static GpaAggregate AggregateStudentGpas(IReadOnlyCollection<double> studentGpas)
     {
         var atRisk = studentGpas.Count(g => g < AtRiskThreshold);
         var average = studentGpas.Count > 0 ? ProgressScore(studentGpas.Sum() / studentGpas.Count) : 0;
