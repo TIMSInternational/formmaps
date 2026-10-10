@@ -3365,6 +3365,7 @@
       "allAssessments": "All Assessments",
       "noResults": "No results found",
       "noResultsDesc": "Assessment results will appear here",
+      "loadError": "Couldn't load results. Try again.",
       "table": {
         "student": "Student",
         "assessment": "Assessment",

@@ -205,7 +205,8 @@
       },
       "gradeLabel": "Grado {{grade}}",
       "noData": "Aún no hay datos de desempeño",
-      "statusNotStarted": "sin iniciar"
+      "statusNotStarted": "sin iniciar",
+      "loadError": "No se pudieron cargar los mejores estudiantes. Inténtalo de nuevo."
     }
   },
   "assessments": {

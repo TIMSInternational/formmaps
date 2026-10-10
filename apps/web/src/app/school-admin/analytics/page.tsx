@@ -19,7 +19,7 @@ export default function AnalyticsPage() {
   const { t } = useTranslation("school_admin");
   const { data: stats, isLoading: statsLoading } = useSchoolAdminStats();
   const { data: overview, isLoading: overviewLoading } = useAnalyticsOverview("month");
-  const { data: topPerformers } = useTopPerformers(10);
+  const { data: topPerformers, isError: topPerformersFailed, refetch: refetchTopPerformers } = useTopPerformers(10);
   const { data: pipeline } = useQuery({ queryKey: ["analytics-pipeline"], queryFn: () => getPipeline(), staleTime: 1000 * 60 * 5 });
   const { data: insights } = useQuery<InsightsData>({ queryKey: ["analytics-insights"], queryFn: () => getInsights(), staleTime: 1000 * 60 * 10 });
 
@@ -441,7 +441,16 @@ export default function AnalyticsPage() {
                 <tr>
                   <td colSpan={5} style={{ padding: 32, textAlign: "center", color: "var(--admin-font-tertiary)" }}>
                     <Activity style={{ width: 24, height: 24, margin: "0 auto 8px", opacity: 0.4 }} />
-                    {t("analytics.topPerformers.noData")}
+                    {topPerformersFailed ? (
+                      <span data-testid="top-performers-error">
+                        {t("analytics.topPerformers.loadError")}{" "}
+                        <button type="button" onClick={() => refetchTopPerformers()} style={{ color: "var(--admin-accent)", fontWeight: 600 }}>
+                          {t("common.retry")}
+                        </button>
+                      </span>
+                    ) : (
+                      t("analytics.topPerformers.noData")
+                    )}
                   </td>
                 </tr>
               )}

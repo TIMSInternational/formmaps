@@ -57,3 +57,17 @@ it("has no assessment-type filter (no backend supports one)", () => {
   expect(screen.queryByRole("combobox")).not.toBeInTheDocument();
   expect(results.mock.calls.every((c) => !("assessmentType" in (c[0] ?? {})))).toBe(true);
 });
+
+it("a failed load says so, with Retry, instead of 'No results found' (audit F)", async () => {
+  results.mockReset();
+  results.mockRejectedValueOnce(new Error("502"));
+  results.mockResolvedValue({ data: [], total: 0, page: 1, limit: 10, totalPages: 0 } as never);
+  renderPanel();
+  await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+  expect(await screen.findByTestId("results-load-error")).toHaveTextContent("Couldn't load results");
+  expect(screen.queryByText("No results found")).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Retry" }));
+  await act(async () => { await Promise.resolve(); await Promise.resolve(); });
+  expect(await screen.findByText("No results found")).toBeInTheDocument();
+});

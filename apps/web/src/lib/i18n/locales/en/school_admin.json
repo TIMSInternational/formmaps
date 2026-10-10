@@ -205,7 +205,8 @@
       },
       "gradeLabel": "Grade {{grade}}",
       "noData": "No performance data yet",
-      "statusNotStarted": "not started"
+      "statusNotStarted": "not started",
+      "loadError": "Couldn't load top performers. Try again."
     }
   },
   "assessments": {

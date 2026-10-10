@@ -3195,6 +3195,7 @@
       "allAssessments": "Todas las evaluaciones",
       "noResults": "No se encontraron resultados",
       "noResultsDesc": "Los resultados de evaluaciones aparecerán aquí",
+      "loadError": "No se pudieron cargar los resultados. Inténtalo de nuevo.",
       "table": {
         "student": "Estudiante",
         "assessment": "Evaluación",

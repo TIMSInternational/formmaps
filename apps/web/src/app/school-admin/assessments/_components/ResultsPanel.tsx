@@ -37,7 +37,7 @@ export function ResultsPanel() {
   const limit = 10;
 
   // No "assessment type" filter: neither backend has one (the select was ignored). Students → filters by assessment.
-  const { data: results, isLoading, refetch } = useStudentResults({
+  const { data: results, isLoading, isError, refetch } = useStudentResults({
     page, limit,
     search: query || undefined,
   });
@@ -119,6 +119,16 @@ export function ResultsPanel() {
           <TableBody>
             {isLoading ? (
               <TableRowsSkeleton columnCount={7} rowCount={5} />
+            ) : isError ? (
+              <TableRow>
+                <TableCell colSpan={7} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }} data-testid="results-load-error">
+                  <FileText className="w-8 h-8 mx-auto mb-2" style={{ opacity: 0.3 }} />
+                  <p className="text-sm font-medium">{t("schoolAdmin.results.loadError")}</p>
+                  <button type="button" onClick={() => refetch()} className="text-xs mt-1 font-semibold" style={{ color: "var(--admin-accent)" }}>
+                    {t("schoolAdmin.common.retry")}
+                  </button>
+                </TableCell>
+              </TableRow>
             ) : !(Array.isArray(results?.data) ? results.data : (results?.data as any)?.data)?.length ? (
               <TableRow>
                 <TableCell colSpan={7} className="h-32 text-center" style={{ color: "var(--admin-font-light)" }}>
