@@ -58,3 +58,18 @@ CREATE INDEX "analytics_pca_evaluations_userId_idx" ON "pca_evaluations"("userId
 CREATE INDEX "analytics_pca_exam_sessions_userId_idx" ON "pca_exam_sessions"("userId");
 CREATE INDEX "analytics_evaluation_groups_evaluatedUserId_idx" ON "evaluation_groups"("evaluatedUserId");
 CREATE INDEX "analytics_counselor_assignments_studentId_idx" ON "counselor_student_assignments"("studentId");
+
+-- Audit D2: the overview's completion rate comes from the shared school assessment tally
+-- (SchoolAssessmentTally). Same column names/types as production.
+ALTER TABLE "users" ADD COLUMN "password" TEXT;
+ALTER TABLE "users" ADD COLUMN "legacyUnlockGrandfathered" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "pca_exam_sessions" ADD COLUMN "examType" TEXT NOT NULL DEFAULT 'PatternRecognition';
+ALTER TABLE "pca_exam_sessions" ADD COLUMN "isActive" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "pca_evaluations" ADD COLUMN "isCompleted" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "evaluation_groups" ADD COLUMN "isActive" BOOLEAN NOT NULL DEFAULT true;
+CREATE TABLE "lia_assessment_sessions" (
+    "id" TEXT NOT NULL, "user_id" TEXT NOT NULL, "status" TEXT NOT NULL, "is_active" BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT "lia_assessment_sessions_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "personality_assessment_sessions" (
+    "id" TEXT NOT NULL, "user_id" TEXT NOT NULL, "status" TEXT NOT NULL DEFAULT 'in_progress', "is_active" BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT "personality_assessment_sessions_pkey" PRIMARY KEY ("id"));

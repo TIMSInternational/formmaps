@@ -299,39 +299,51 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
 
     // ---------------------------------------------------------------- status
 
+    // Audit D2: completed = AllDone (all four assessments), not "has a pca_evaluations row"; active students
+    // only; in progress = started something but not AllDone (was hardcoded 0).
     [Fact]
-    public async Task Status_counts_all_students_and_pca_existence_ignoring_isCompleted()
+    public async Task Status_uses_the_shared_tally_completed_is_all_done_over_active_students()
     {
         await using var conn = await _adminDataSource.OpenConnectionAsync();
-        await SeedUserAsync(conn, "a", School);
-        await SeedUserAsync(conn, "b", School, isActive: false); // counted (no isActive filter)
-        await SeedUserAsync(conn, "c", School);
-        await SeedUserAsync(conn, "z", OtherSchool);             // excluded
-        await SeedPcaEvalAsync(conn, "a", isCompleted: false);   // existence counts as "completed"
-        await SeedPcaEvalAsync(conn, "a", isCompleted: true);    // duplicate -> still one distinct user
+        await SeedUserAsync(conn, "a", School);                                   // all four done -> completed
+        await SeedLiaAsync(conn, "a", "completed");
+        await SeedGroupAsync(conn, "a", "self", isCompleted: true);
+        await SeedPcaEvalAsync(conn, "a", isCompleted: true);
+        await SeedPersonalityAsync(conn, "a", "completed");
+        await SeedUserAsync(conn, "g", School, legacyUnlockGrandfathered: true);  // grandfathered -> completed
+        await SeedUserAsync(conn, "c", School);                                   // only STARTED the PCA -> in progress
+        await SeedPcaEvalAsync(conn, "c", isCompleted: false);
+        await SeedUserAsync(conn, "d", School);                                   // LIA + 360 + personality, PCA only started
+        await SeedLiaAsync(conn, "d", "completed");                               // -> in progress (a PCA row is not completion)
+        await SeedGroupAsync(conn, "d", "self", isCompleted: true);
+        await SeedPersonalityAsync(conn, "d", "completed");
+        await SeedPcaEvalAsync(conn, "d", isCompleted: false);
+        await SeedUserAsync(conn, "p", School, password: null);                   // pending invite, nothing -> not started
+        await SeedUserAsync(conn, "b", School, isActive: false);                  // deactivated -> not counted
+        await SeedPcaEvalAsync(conn, "b", isCompleted: true);
+        await SeedUserAsync(conn, "z", OtherSchool);                              // other school -> excluded
 
         var status = await Reader().GetAssessmentStatusAsync(Ctx("admin-1"), School);
 
-        Assert.Equal(3, status.TotalStudents);
-        Assert.Equal(1, status.Completed);       // only "a" has a pca row
-        Assert.Equal(2, status.NotStarted);
-        Assert.Equal(0, status.InProgress);
-        Assert.Equal(Math.Round(1 * 100d / 3 * 100, MidpointRounding.AwayFromZero) / 100, status.CompletionRate); // 33.33
+        Assert.Equal(5, status.TotalStudents);
+        Assert.Equal(2, status.Completed);
+        Assert.Equal(2, status.InProgress);
+        Assert.Equal(1, status.NotStarted);
+        Assert.Equal(40d, status.CompletionRate);
     }
 
     [Fact]
-    public async Task Status_completionRate_rounds_half_away_from_zero()
+    public async Task Status_completionRate_is_one_decimal_rounded_half_up()
     {
         await using var conn = await _adminDataSource.OpenConnectionAsync();
-        for (var i = 0; i < 32; i++)
+        for (var i = 0; i < 16; i++)
         {
-            await SeedUserAsync(conn, $"u-{i}", School);
+            await SeedUserAsync(conn, $"u-{i}", School, legacyUnlockGrandfathered: i == 0);
         }
 
-        await SeedPcaEvalAsync(conn, "u-0", isCompleted: true); // 1/32 -> 100/32=3.125 -> *100=312.5 -> 313 -> 3.13 (banker's 3.12)
-
+        // 1/16 -> *1000 = 62.5 -> JS Math.round 63 -> 6.3 (banker's would give 6.2)
         var status = await Reader().GetAssessmentStatusAsync(Ctx("admin-1"), School);
-        Assert.Equal(3.13d, status.CompletionRate);
+        Assert.Equal(6.3d, status.CompletionRate);
     }
 
     // ---------------------------------------------------------------- schedule
@@ -561,6 +573,24 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
         Assert.Contains("lia", incomplete.Select(r => r.Id));
     }
 
+    // Audit D2: the pipeline's 360 "done" is the completion gate's threshold, min(total, 3) finished evaluations.
+    [Fact]
+    public async Task Pipeline_360_done_uses_the_min_total_3_threshold()
+    {
+        await using var conn = await _adminDataSource.OpenConnectionAsync();
+        await SeedUserAsync(conn, "three", School, name: "Three", gradeLevel: 11);
+        await SeedUserAsync(conn, "two", School, name: "Two", gradeLevel: 11);
+        for (var i = 0; i < 5; i++)
+        {
+            await SeedGroupAsync(conn, "three", "parent", isCompleted: i < 3);
+            await SeedGroupAsync(conn, "two", "parent", isCompleted: i < 2);
+        }
+
+        var rows = await Reader().GetAssessmentPipelineAsync(Ctx("admin-1"), School, null, "");
+        Assert.Equal("done", rows.Single(r => r.Id == "three").Eval360);
+        Assert.Equal("in_progress", rows.Single(r => r.Id == "two").Eval360);
+    }
+
     private SchoolAdminReader Reader() =>
         new(new NpgsqlFormMapsDatabaseSessionFactory(_dataSource, new RlsSessionContextApplier()), TimeProvider.System);
 
@@ -584,11 +614,12 @@ public sealed class SchoolAdminReaderTests : IClassFixture<SchoolAdminDatabaseFi
     private static async Task SeedUserAsync(
         NpgsqlConnection conn, string id, string? schoolId, string role = "Student",
         string name = "Student", string email = "s@e.st", int? gradeLevel = null, bool isActive = true,
-        bool legacyUnlockGrandfathered = false)
+        bool legacyUnlockGrandfathered = false, string? password = "hash")
     {
         await using var cmd = new NpgsqlCommand(
-            """INSERT INTO "users" ("id","name","email","roleName","schoolId","gradeLevel","isActive","legacyUnlockGrandfathered") VALUES (@id,@n,@e,@r,@s,@g,@a,@lug)""",
+            """INSERT INTO "users" ("id","name","email","roleName","schoolId","gradeLevel","isActive","legacyUnlockGrandfathered","password") VALUES (@id,@n,@e,@r,@s,@g,@a,@lug,@pw)""",
             conn);
+        cmd.Parameters.AddWithValue("pw", (object?)password ?? DBNull.Value);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("n", name);
         cmd.Parameters.AddWithValue("e", email);

@@ -3,6 +3,7 @@ using System.Globalization;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using FormMaps.Application.SchoolAnalytics;
+using FormMaps.Infrastructure.SchoolAdmin;
 using FormMaps.Application.SchoolReads;
 
 namespace FormMaps.Infrastructure.SchoolReads;
@@ -68,14 +69,12 @@ public sealed class SchoolReadsReader(IFormMapsDatabaseSessionFactory databaseSe
             """, schoolId, cancellationToken);
 
         var ids = studentIds.ToArray();
-        var completedAssessments = 0;
+        // Audit D2: completed / rate / active / pending come from the shared school tally (completed = AllDone,
+        // not "has a pca_evaluations row").
+        var counts = await SchoolAssessmentTally.ComputeAsync(session, schoolId, cancellationToken);
         var averageScore = 0.0;
         if (ids.Length > 0)
         {
-            // completedAssessments = distinct pca_evaluations users among the active students (existence, not isCompleted).
-            completedAssessments = await ScalarIntByIdsAsync(session, """
-                SELECT COUNT(DISTINCT "userId")::int FROM "pca_evaluations" WHERE "userId" = ANY(@ids)
-                """, ids, cancellationToken);
 
             // averageScore = SQL AVG(scorePercentage) over status='Completed' sessions; NULL (no rows) → 0, then
             // JsRound(avg*10)/10 (1-dp). status is a PG enum (ExamStatus); ::text = 'Completed' matches the label.
@@ -101,18 +100,16 @@ public sealed class SchoolReadsReader(IFormMapsDatabaseSessionFactory databaseSe
             averageScore = SchoolAnalyticsMath.JsRound(avgScore * 10) / 10;
         }
 
-        var assessmentCompletionRate = totalStudents > 0
-            ? SchoolAnalyticsMath.JsRound(completedAssessments / (double)totalStudents * 1000) / 10
-            : 0.0;
-
         return new DashboardStats(
             TotalStudents: totalStudents,
             TotalCounselors: totalCounselors,
             TotalCourses: totalCourses,
             PendingRequests: pendingRequests,
-            CompletedAssessments: completedAssessments,
-            AssessmentCompletionRate: assessmentCompletionRate,
-            AverageScore: averageScore);
+            CompletedAssessments: counts.Completed,
+            AssessmentCompletionRate: counts.CompletionRate,
+            AverageScore: averageScore,
+            ActiveStudents: counts.ActiveStudents,
+            PendingInvites: counts.PendingInvites);
     }
 
     public async Task<IReadOnlyList<CounselorAssignment>> GetAllCounselorAssignmentsAsync(

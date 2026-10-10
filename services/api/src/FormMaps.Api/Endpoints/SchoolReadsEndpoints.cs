@@ -72,10 +72,10 @@ public static class SchoolReadsEndpoints
             data = new
             {
                 totalStudents = stats.TotalStudents,
-                activeStudents = stats.TotalStudents,   // legacy: activeStudents = totalStudents (same value)
+                activeStudents = stats.ActiveStudents,  // audit D2: signed-up students (was a copy of totalStudents)
                 totalCounselors = stats.TotalCounselors,
                 totalCourses = stats.TotalCourses,
-                pendingInvites = stats.PendingRequests, // legacy: pendingInvites = pendingRequests (same value)
+                pendingInvites = stats.PendingInvites,  // audit D2: invited, not signed up (was the course-change count)
                 pendingRequests = stats.PendingRequests,
                 completedAssessments = stats.CompletedAssessments,
                 assessmentCompletionRate = stats.AssessmentCompletionRate,

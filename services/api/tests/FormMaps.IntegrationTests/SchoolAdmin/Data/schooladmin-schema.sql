@@ -155,3 +155,7 @@ CREATE INDEX "pca_evaluations_userId_idx" ON "pca_evaluations"("userId");
 CREATE INDEX "pca_exam_sessions_userId_idx" ON "pca_exam_sessions"("userId");
 CREATE INDEX "lia_assessment_sessions_user_id_idx" ON "lia_assessment_sessions"("user_id");
 CREATE INDEX "assessment_schedules_schoolId_idx" ON "assessment_schedules"("schoolId");
+
+-- Audit D2: the assessment-status card reads the shared school tally, which tells signed-up students
+-- (password set) from pending invites. Same column as production.
+ALTER TABLE "users" ADD COLUMN "password" TEXT;

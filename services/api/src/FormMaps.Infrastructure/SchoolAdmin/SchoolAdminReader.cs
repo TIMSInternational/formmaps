@@ -235,27 +235,10 @@ public sealed class SchoolAdminReader(
     {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
-        // totalStudents = count of school students (no isActive filter — legacy omits it here).
-        var studentIds = await StudentIdsAsync(session, schoolId, activeOnly: false, cancellationToken);
-        var total = studentIds.Count;
-
-        var completed = 0;
-        if (total > 0)
-        {
-            // completedUserIds = distinct students with >=1 pca_evaluations row (EXISTENCE, not isCompleted).
-            await using var command = Command(session, """
-                SELECT COUNT(DISTINCT "userId") FROM "pca_evaluations" WHERE "userId" = ANY(@ids)
-                """);
-            AddArray(command, "ids", studentIds);
-            completed = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture);
-        }
-
-        var notStarted = total - completed;
-        var completionRate = total > 0
-            ? Math.Round(completed * 100d / total * 100, MidpointRounding.AwayFromZero) / 100
-            : 0d;
-
-        return new AssessmentStatus(total, notStarted, 0, completed, completionRate);
+        // Audit D2: was "has a pca_evaluations row" over every student account (deactivated included) with
+        // inProgress hardcoded to 0. Now the shared school tally (completed = AllDone over active students).
+        var c = await SchoolAssessmentTally.ComputeAsync(session, schoolId, cancellationToken);
+        return new AssessmentStatus(c.TotalStudents, c.NotStarted, c.InProgress, c.Completed, c.CompletionRate);
     }
 
     public async Task<IReadOnlyList<AssessmentScheduleRow>> GetSchedulesAsync(
@@ -663,9 +646,10 @@ public sealed class SchoolAdminReader(
             }
 
             var hasEval = evalByUser.TryGetValue(s.Id, out var evalData);
+            // Done = the completion gate's threshold, min(total, 3) finished evaluations (audit D2).
             var eval360 = !hasEval
                 ? "not_started"
-                : evalData.Completed >= evalData.Total && evalData.Total > 0 ? "done" : "in_progress";
+                : evalData.Total > 0 && evalData.Completed >= Math.Min(evalData.Total, 3) ? "done" : "in_progress";
 
             return new PipelineRow(
                 Id: s.Id,

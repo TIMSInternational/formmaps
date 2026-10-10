@@ -80,3 +80,21 @@ CREATE INDEX "schoolreads_counselor_assignments_counselorId_idx" ON "counselor_s
 CREATE INDEX "schoolreads_counselor_sessions_counselorId_idx" ON "counselor_sessions"("counselorId");
 CREATE INDEX "schoolreads_counselor_notes_studentId_idx" ON "counselor_notes"("studentId");
 CREATE INDEX "schoolreads_counselor_notes_authorId_idx" ON "counselor_notes"("authorId");
+
+-- Audit D2: the dashboard KPIs come from the shared school assessment tally (SchoolAssessmentTally), which
+-- reads signed-up vs pending students and all four assessments. Same column names/types as production.
+ALTER TABLE "users" ADD COLUMN "password" TEXT;
+ALTER TABLE "users" ADD COLUMN "legacyUnlockGrandfathered" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "pca_exam_sessions" ADD COLUMN "examType" TEXT NOT NULL DEFAULT 'PatternRecognition';
+ALTER TABLE "pca_exam_sessions" ADD COLUMN "isCompleted" BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE "pca_exam_sessions" ADD COLUMN "isActive" BOOLEAN NOT NULL DEFAULT true;
+ALTER TABLE "pca_evaluations" ADD COLUMN "isCompleted" BOOLEAN NOT NULL DEFAULT false;
+CREATE TABLE "lia_assessment_sessions" (
+    "id" TEXT NOT NULL, "user_id" TEXT NOT NULL, "status" TEXT NOT NULL, "is_active" BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT "lia_assessment_sessions_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "evaluation_groups" (
+    "id" TEXT NOT NULL, "evaluatedUserId" TEXT NOT NULL, "isEvaluationCompleted" BOOLEAN NOT NULL DEFAULT false,
+    "isActive" BOOLEAN NOT NULL DEFAULT true, CONSTRAINT "evaluation_groups_pkey" PRIMARY KEY ("id"));
+CREATE TABLE "personality_assessment_sessions" (
+    "id" TEXT NOT NULL, "user_id" TEXT NOT NULL, "status" TEXT NOT NULL DEFAULT 'in_progress', "is_active" BOOLEAN NOT NULL DEFAULT true,
+    CONSTRAINT "personality_assessment_sessions_pkey" PRIMARY KEY ("id"));

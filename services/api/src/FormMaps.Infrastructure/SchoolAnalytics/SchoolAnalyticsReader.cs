@@ -2,6 +2,7 @@ using System.Data.Common;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
 using FormMaps.Application.SchoolAnalytics;
+using FormMaps.Infrastructure.SchoolAdmin;
 
 namespace FormMaps.Infrastructure.SchoolAnalytics;
 
@@ -49,15 +50,10 @@ public sealed class SchoolAnalyticsReader(IFormMapsDatabaseSessionFactory databa
 
         var ids = studentIds.ToArray();
 
-        // distinctPcaUserCount = COUNT(DISTINCT "userId") in pca_evaluations for these students (0 when none).
-        var distinctPcaUserCount = ids.Length == 0
-            ? 0
-            : await ScalarIntAsync(session, """
-                SELECT COUNT(DISTINCT "userId")::int FROM "pca_evaluations" WHERE "userId" = ANY(@ids)
-                """, ids, cancellationToken);
-        var assessmentCompletionRate = totalStudents > 0
-            ? (int)SchoolAnalyticsMath.JsRound(distinctPcaUserCount * 100.0 / totalStudents)
-            : 0;
+        // Audit D2: the same tally as the dashboard and the assessment-status card (was "has a pca_evaluations
+        // row" over every student account, deactivated ones included). JS Math.round(completionRate).
+        var counts = await SchoolAssessmentTally.ComputeAsync(session, schoolId, cancellationToken);
+        var assessmentCompletionRate = (int)SchoolAnalyticsMath.JsRound(counts.CompletionRate);
 
         // GPA aggregate: raw (studentId, grade) rows -> per-student mean in the pure math (skip unmapped grades).
         var gradeRows = new List<(string StudentId, string? Grade)>();
