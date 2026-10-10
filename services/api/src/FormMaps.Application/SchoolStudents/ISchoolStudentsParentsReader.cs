@@ -64,10 +64,12 @@ public sealed record ParentGroup(
     string CreatedDate,
     IReadOnlyList<ParentStudent> Students);
 
-/// <summary>A student under a grouped parent: id, name (nullable), email, gradeLevel (nullable).</summary>
-public sealed record ParentStudent(string Id, string? Name, string Email, int? GradeLevel);
+/// <summary>A student under a grouped parent: id, name (nullable), email, gradeLevel (nullable), and — audit 2026-10-09
+/// D10 — the id and acceptance of THIS child's link, so unlink/resend act on it rather than the parent's first link.</summary>
+public sealed record ParentStudent(string Id, string? Name, string Email, int? GradeLevel, string LinkId = "", bool IsAccepted = false);
 
-/// <summary>The listParents envelope inner shape: data (grouped parents), total (LINK count), totalPages, page, stats.</summary>
+/// <summary>The listParents envelope inner shape: data (grouped parents), total (PARENT count — audit 2026-10-09 D10; it
+/// used to count links), totalPages, page, stats.</summary>
 public sealed record ParentsListPage(
     IReadOnlyList<ParentGroup> Data, int Total, int TotalPages, int Page, ParentsStats Stats);
 

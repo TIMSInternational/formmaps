@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
-import { Search, Users, UserCheck, Clock, Plus, Mail, Trash2, X } from "lucide-react";
+import { Search, Users, UserCheck, Clock, Plus, Mail, X } from "lucide-react";
 import { AdminStatCard } from "@/app/admin/_components/AdminStatCard";
 import { TableRowsSkeleton } from "@/components/skeletons/TableSkeleton";
 import { motion } from "motion/react";
@@ -25,7 +25,8 @@ interface ParentRow {
   isAccepted: boolean;
   acceptedAt: string | null;
   createdDate: string;
-  students: { id: string; name: string | null; email: string; gradeLevel: string | null }[];
+  /** linkId / isAccepted are this child's own link (audit 2026-10-09 D10). */
+  students: { id: string; name: string | null; email: string; gradeLevel: string | null; linkId: string; isAccepted: boolean }[];
 }
 
 interface ParentsResponse {
@@ -35,6 +36,11 @@ interface ParentsResponse {
   totalPages: number;
   page: number;
   stats: { totalParents: number; linkedStudents: number; pendingInvites: number };
+}
+
+/** A parent is active once every child's invite is accepted. */
+function allAccepted(parent: ParentRow) {
+  return parent.students.length > 0 ? parent.students.every((s) => s.isAccepted) : parent.isAccepted;
 }
 
 function useParents(params: { page: number; limit: number; search: string }) {
@@ -97,10 +103,13 @@ export default function ParentsPage() {
     finally { setInviting(false); }
   };
 
-  const handleResend = async (linkId: string, e: React.MouseEvent) => {
+  // audit 2026-10-09 D10: resend every pending invite of this parent, not just the first link's.
+  const handleResend = async (parent: ParentRow, e: React.MouseEvent) => {
     e.stopPropagation();
     try {
-      await apiRequest(`/api/v1/school-admin/parents/${linkId}/resend`, { method: "POST" });
+      for (const s of parent.students.filter((c) => !c.isAccepted)) {
+        await apiRequest(`/api/v1/school-admin/parents/${s.linkId}/resend`, { method: "POST" });
+      }
       toast.success(t("parents.toast.resent"));
     } catch { toast.error(t("parents.toast.resendFailed")); }
   };
@@ -267,11 +276,8 @@ export default function ParentsPage() {
               parents.map((parent) => (
                 <TableRow
                   key={parent.id}
-                  style={{ borderBottom: "1px solid var(--admin-border-default)", cursor: "pointer" }}
+                  style={{ borderBottom: "1px solid var(--admin-border-default)" }}
                   className="transition-colors"
-                  onClick={() => {
-                    if (parent.parentUserId) router.push(`/school-admin/users/${parent.parentUserId}`);
-                  }}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 >
@@ -295,28 +301,39 @@ export default function ParentsPage() {
                   </TableCell>
                   <TableCell className="py-3 px-4">
                     <div className="flex flex-wrap gap-1">
+                      {/* audit 2026-10-09 D10: a child opens that student's page (the row used to open the student page
+                          with the PARENT's id), and unlink removes that child's link only. */}
                       {parent.students.map((s) => (
                         <Badge
-                          key={s.id}
+                          key={s.linkId || s.id}
                           variant="outline"
-                          className="text-xs"
+                          className="text-xs gap-1"
                           style={{
                             borderColor: "var(--admin-border-default)",
                             color: "var(--admin-font-tertiary)",
                             background: "var(--admin-bg-hover)",
                           }}
                         >
-                          {s.name || s.email}{s.gradeLevel ? ` (${s.gradeLevel})` : ""}
+                          <button type="button" onClick={() => router.push(`/school-admin/users/${s.id}`)}
+                            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", color: "inherit" }}>
+                            {s.name || s.email}{s.gradeLevel ? ` (${s.gradeLevel})` : ""}
+                          </button>
+                          <button type="button" onClick={(e) => handleUnlink(s.linkId, e)}
+                            title={t("parents.unlinkFromStudent", { name: s.name || s.email })}
+                            aria-label={t("parents.unlinkFromStudent", { name: s.name || s.email })}
+                            style={{ background: "none", border: "none", padding: 0, cursor: "pointer", display: "flex" }}>
+                            <X style={{ width: 10, height: 10, color: "#ef4444" }} />
+                          </button>
                         </Badge>
                       ))}
                     </div>
                   </TableCell>
                   <TableCell className="py-3 px-4">
                     <Badge className="text-xs font-medium shadow-none border-0" style={{
-                      background: parent.isAccepted ? "rgba(16,185,129,0.1)" : "rgba(234,179,8,0.1)",
-                      color: parent.isAccepted ? "#10b981" : "#eab308",
+                      background: allAccepted(parent) ? "rgba(16,185,129,0.1)" : "rgba(234,179,8,0.1)",
+                      color: allAccepted(parent) ? "#10b981" : "#eab308",
                     }}>
-                      {parent.isAccepted ? t("parents.statusActive") : t("parents.statusPending")}
+                      {allAccepted(parent) ? t("parents.statusActive") : t("parents.statusPending")}
                     </Badge>
                   </TableCell>
                   <TableCell className="py-3 px-4" style={{ fontSize: 12, color: "var(--admin-font-light)" }}>
@@ -324,20 +341,14 @@ export default function ParentsPage() {
                   </TableCell>
                   <TableCell className="py-3 px-4">
                     <div style={{ display: "flex", gap: 4 }}>
-                      {!parent.isAccepted && (
-                        <button onClick={(e) => handleResend(parent.id, e)} title={t("parents.resendInvite")}
+                      {!allAccepted(parent) && (
+                        <button onClick={(e) => handleResend(parent, e)} title={t("parents.resendInvite")}
                           style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", cursor: "pointer", transition: "all 0.15s" }}
                           onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(59,130,246,0.1)"; e.currentTarget.style.borderColor = "var(--admin-accent-blue)"; }}
                           onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}>
                           <Mail style={{ width: 12, height: 12, color: "var(--admin-accent-blue)" }} />
                         </button>
                       )}
-                      <button onClick={(e) => handleUnlink(parent.id, e)} title={t("parents.unlinkParent")}
-                        style={{ width: 28, height: 28, borderRadius: 6, display: "flex", alignItems: "center", justifyContent: "center", background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)", cursor: "pointer", transition: "all 0.15s" }}
-                        onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.1)"; e.currentTarget.style.borderColor = "#ef4444"; }}
-                        onMouseLeave={(e) => { e.currentTarget.style.background = "var(--admin-bg-hover)"; e.currentTarget.style.borderColor = "var(--admin-border-default)"; }}>
-                        <Trash2 style={{ width: 12, height: 12, color: "#ef4444" }} />
-                      </button>
                     </div>
                   </TableCell>
                 </TableRow>
