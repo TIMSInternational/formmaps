@@ -1057,6 +1057,8 @@
       },
       "staffStats": {
         "totalUsers": "Total users",
+        "totalStaff": "Total staff",
+        "teachers": "Teachers",
         "inSchool": "in school",
         "counselors": "Counselors",
         "activeStaff": "active staff",

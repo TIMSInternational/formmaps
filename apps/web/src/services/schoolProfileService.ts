@@ -72,6 +72,8 @@ export async function uploadSchoolLogo(file: File): Promise<{ logoUrl: string }>
 
 export async function getSchoolUsers(params?: {
   role?: string;
+  /** "staff" lists only school staff roles (never students or parents). */
+  scope?: "staff";
   status?: string;
   search?: string;
   page?: number;

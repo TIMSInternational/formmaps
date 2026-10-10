@@ -2066,6 +2066,8 @@
       },
       "staffStats": {
         "totalUsers": "Usuarios totales",
+        "totalStaff": "Personal total",
+        "teachers": "Profesores",
         "inSchool": "en el colegio",
         "counselors": "Orientadores",
         "activeStaff": "personal activo",

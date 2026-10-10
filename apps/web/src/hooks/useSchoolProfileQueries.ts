@@ -196,6 +196,7 @@ export function useUploadSchoolLogo() {
 
 export function useSchoolUsers(params?: {
   role?: string;
+  scope?: "staff";
   status?: string;
   search?: string;
   page?: number;

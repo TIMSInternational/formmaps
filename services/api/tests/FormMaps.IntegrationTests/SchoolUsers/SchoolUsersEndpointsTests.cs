@@ -131,6 +131,36 @@ public class SchoolUsersEndpointsTests
         Assert.Equal(expSearch, reader.LastQuery.Search);
     }
 
+    // audit 2026-10-09 D5
+    [Theory]
+    [InlineData("?scope=staff", true)]
+    [InlineData("?scope=everyone", false)]
+    [InlineData("", false)]
+    public async Task Users_scope_staff_reaches_the_reader(string query, bool staffOnly)
+    {
+        var reader = new FakeReader();
+        using var client = Client(reader, new FakeWriter(), new FakeScope(School));
+        await client.SendAsync(Auth(HttpMethod.Get, UsersPath + query));
+        Assert.Equal(staffOnly, reader.LastQuery!.StaffOnly);
+    }
+
+    [Fact]
+    public async Task Users_response_carries_role_counts()
+    {
+        var reader = new FakeReader
+        {
+            Users = new SchoolUsersPage([], 0, 1, 20, 0, new Dictionary<string, int> { ["counselor"] = 3, ["teacher"] = 7 }),
+        };
+        using var client = Client(reader, new FakeWriter(), new FakeScope(School));
+
+        var response = await client.SendAsync(Auth(HttpMethod.Get, UsersPath + "?scope=staff"));
+
+        using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        var counts = doc.RootElement.GetProperty("data").GetProperty("roleCounts");
+        Assert.Equal(3, counts.GetProperty("counselor").GetInt32());
+        Assert.Equal(7, counts.GetProperty("teacher").GetInt32());
+    }
+
     // ---- PUT grade-level ----
 
     [Fact]

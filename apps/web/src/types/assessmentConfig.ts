@@ -82,6 +82,8 @@ export interface SchoolUsersResponse {
   page: number;
   limit: number;
   totalPages: number;
+  /** Users per role over the whole filtered set (not the page), ignoring the role filter. Keys are camel-cased by toCamel. */
+  roleCounts?: Record<string, number>;
 }
 
 export interface StaffInvitePayload {

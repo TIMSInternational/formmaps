@@ -34,8 +34,9 @@ export function StaffPanel() {
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
+  // audit 2026-10-09 D5: scope "staff" — "All roles" used to list every student and parent of the school.
   const { data, isLoading, refetch } = useSchoolUsers({
-    page, limit: 10, search: searchTerm,
+    page, limit: 10, search: searchTerm, scope: "staff",
     role: roleFilter === "all" ? undefined : roleFilter,
   });
   const inviteStaff = useInviteStaff();
@@ -87,12 +88,9 @@ export function StaffPanel() {
     setActionLoading(null);
   };
 
-  // Count by role
-  const roleCounts = users.reduce((acc: any, u: any) => {
-    const r = (u.roleName || u.role || "other").toLowerCase();
-    acc[r] = (acc[r] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+  // Counts over the whole staff (audit 2026-10-09 D5: they used to count only the 10 rows on screen).
+  const roleCounts: Record<string, number> = data?.roleCounts ?? {};
+  const totalStaff = Object.values(roleCounts).reduce((sum, n) => sum + n, 0);
 
   const roleColor = (role: string) => {
     const r = role.toLowerCase().replace(/_/g, " ");
@@ -122,7 +120,9 @@ export function StaffPanel() {
             <SelectContent>
               <SelectItem value="all">{t("school_admin:ui.staff.allRoles")}</SelectItem>
               <SelectItem value="counselor">{t("school_admin:ui.staff.roles.counselor")}</SelectItem>
+              <SelectItem value="teacher">{t("school_admin:ui.staff.roles.teacher")}</SelectItem>
               <SelectItem value="staff">{t("school_admin:ui.staff.roles.staff")}</SelectItem>
+              <SelectItem value="coach">{t("school_admin:ui.staff.roles.coach")}</SelectItem>
               <SelectItem value="school_admin">{t("school_admin:ui.staff.adminShort")}</SelectItem>
             </SelectContent>
           </Select>
@@ -189,9 +189,9 @@ export function StaffPanel() {
       {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
         {/* No `trend`: these counts have no history, and trend={0} drew a fake "+0%" and a rising bar. */}
-        <AdminStatCard label={t("admin.users.staffStats.totalUsers")} value={String(data?.total || 0)} icon={Users} sub={t("admin.users.staffStats.inSchool")} />
+        <AdminStatCard label={t("admin.users.staffStats.totalStaff")} value={String(totalStaff)} icon={Users} sub={t("admin.users.staffStats.inSchool")} />
         <AdminStatCard label={t("admin.users.staffStats.counselors")} value={String(roleCounts["counselor"] || 0)} icon={Shield} sub={t("admin.users.staffStats.activeStaff")} />
-        <AdminStatCard label={t("admin.users.staffStats.students")} value={String(roleCounts["student"] || 0)} icon={UserPlus} sub={t("admin.users.staffStats.enrolled")} />
+        <AdminStatCard label={t("admin.users.staffStats.teachers")} value={String(roleCounts["teacher"] || 0)} icon={UserPlus} sub={t("admin.users.staffStats.activeStaff")} />
       </div>
 
       {/* Table */}
