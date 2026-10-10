@@ -31,6 +31,7 @@ public static class CounselorSessionsEndpoints
         string? page,
         string? limit,
         string? status,
+        string? upcoming,
         CancellationToken cancellationToken)
     {
         var (context, error) = RequireCounselorSessions(accessor, guard);
@@ -44,7 +45,8 @@ public static class CounselorSessionsEndpoints
 
         // status filter applies only when present AND != "all" (the repo re-checks); empty → null.
         var result = await repository.ListAsync(
-            context, context.Actor!.UserId, EmptyToNull(status), resolvedPage, resolvedLimit, cancellationToken);
+            context, context.Actor!.UserId, EmptyToNull(status), resolvedPage, resolvedLimit,
+            upcomingOnly: upcoming == "true", cancellationToken: cancellationToken);
 
         var totalPages = (int)Math.Ceiling((double)result.Total / resolvedLimit);
         return Results.Ok(new
@@ -56,7 +58,11 @@ public static class CounselorSessionsEndpoints
                 total = result.Total,
                 page = resolvedPage,
                 limit = resolvedLimit,
-                totalPages
+                totalPages,
+                // Audit D15: the Sessions page shows these; they were never returned.
+                upcoming = result.Counts?.Upcoming ?? 0,
+                completed = result.Counts?.Completed ?? 0,
+                cancelled = result.Counts?.Cancelled ?? 0
             }
         });
     }

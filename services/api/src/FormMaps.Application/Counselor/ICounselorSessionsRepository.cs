@@ -17,9 +17,11 @@ public interface ICounselorSessionsRepository
 {
     /// <summary>The counselor's own active sessions (raw rows + joined student name) + total. Optional status filter
     /// (applied only when non-empty and != "all").</summary>
+    /// <remarks>Audit D15: <paramref name="upcomingOnly"/> keeps sessions still to come (confirmed or rescheduled, starting
+    /// now or later), soonest first; the page always carries the counselor's <see cref="SessionCounts"/>.</remarks>
     Task<SessionsPage> ListAsync(
         RequestContext context, string counselorId, string? statusFilter, int page, int limit,
-        CancellationToken cancellationToken = default);
+        bool upcomingOnly = false, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Mark a session completed (status/completedAt/counselorNotes). NotYourSession = missing OR not owned by the
@@ -37,7 +39,13 @@ public enum CompleteResult
 }
 
 /// <summary>A page of session rows + the (filter-scoped) real COUNT total.</summary>
-public sealed record SessionsPage(IReadOnlyList<SessionRow> Data, int Total);
+public sealed record SessionsPage(IReadOnlyList<SessionRow> Data, int Total, SessionCounts? Counts = null);
+
+/// <summary>
+/// Audit D15: the counselor's session counts the Sessions page shows. Upcoming = confirmed or rescheduled and not yet
+/// started (a rescheduled session is still upcoming; it used to count nowhere).
+/// </summary>
+public sealed record SessionCounts(int Upcoming, int Completed, int Cancelled);
 
 /// <summary>
 /// A counselor_sessions row as legacy emits it (raw Prisma passthrough, schema field order) PLUS the joined student

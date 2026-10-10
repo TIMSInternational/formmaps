@@ -112,7 +112,9 @@ public sealed class SchoolProfileReaderTests : IClassFixture<SchoolProfileDataba
         Assert.Equal(2, settings.CurrentStudents);       // both-case active only
         Assert.Equal(300, settings.MaxStudents);         // 0 || 300
         Assert.Equal("Standard", settings.Plan);         // no plan column
-        Assert.Equal("America/New_York", settings.Timezone); // "" || default
+        Assert.Equal("America/Bogota", settings.Timezone); // "" || default (the platform zone coverage uses)
+        Assert.Null(settings.ContractStart);
+        Assert.Null(settings.ContractEnd);
         Assert.True(settings.NotifyOnStudentSignup);     // null ?? true
         Assert.True(settings.NotifyOnAssessmentComplete);// null ?? true
         Assert.False(settings.AllowStudentSelfRegistration); // null ?? false
@@ -137,6 +139,19 @@ public sealed class SchoolProfileReaderTests : IClassFixture<SchoolProfileDataba
         Assert.True(settings.AllowStudentSelfRegistration);
         Assert.Equal(250, settings.MaxStudents);              // non-zero preserved
         Assert.Equal("Europe/London", settings.Timezone);    // non-empty preserved
+    }
+
+    [Fact]
+    public async Task Settings_returns_the_contract_period_as_calendar_days()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedSchoolAsync(conn, contractStart: new DateTime(2026, 1, 1), contractEnd: new DateTime(2027, 6, 30));
+        await SeedUserAsync(conn, Admin, School, "Admin", "admin@school.test", "SchoolAdmin");
+
+        var settings = await Reader().GetSettingsAsync(Ctx(), Admin, School);
+
+        Assert.Equal("2026-01-01", settings!.ContractStart);
+        Assert.Equal("2027-06-30", settings.ContractEnd);
     }
 
     [Fact]
@@ -167,16 +182,21 @@ public sealed class SchoolProfileReaderTests : IClassFixture<SchoolProfileDataba
         string? address = null,
         bool? notifyOnStudentSignup = null,
         bool? notifyOnAssessmentComplete = null,
-        bool? allowStudentSelfRegistration = null)
+        bool? allowStudentSelfRegistration = null,
+        DateTime? contractStart = null,
+        DateTime? contractEnd = null)
     {
         await using var cmd = new NpgsqlCommand(
             """
             INSERT INTO "schools"
                 ("id","name","adminEmail","contactEmail","maxStudents","details","phone","website","timezone",
-                 "address","notifyOnStudentSignup","notifyOnAssessmentComplete","allowStudentSelfRegistration")
+                 "address","notifyOnStudentSignup","notifyOnAssessmentComplete","allowStudentSelfRegistration",
+                 "contractStartDate","contractEndDate")
             VALUES (@id,'Test School','admin@school.test',@ce,@ms,@d,@p,@w,@tz,
-                    CAST(@addr AS jsonb),@nss,@nac,@asr)
+                    CAST(@addr AS jsonb),@nss,@nac,@asr,@cs,@cend)
             """, conn);
+        cmd.Parameters.Add(new NpgsqlParameter("cs", NpgsqlTypes.NpgsqlDbType.Timestamp) { Value = (object?)contractStart ?? DBNull.Value });
+        cmd.Parameters.Add(new NpgsqlParameter("cend", NpgsqlTypes.NpgsqlDbType.Timestamp) { Value = (object?)contractEnd ?? DBNull.Value });
         cmd.Parameters.AddWithValue("id", School);
         cmd.Parameters.AddWithValue("ce", (object?)contactEmail ?? DBNull.Value);
         cmd.Parameters.AddWithValue("ms", maxStudents);

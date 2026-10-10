@@ -13,6 +13,14 @@ interface AcademicYear {
 }
 interface Holiday { id: string; name: string; date: string; endDate?: string | null; type: string; }
 interface AssessmentPeriod { id: string; name: string; termId: string; assessmentTypes: string[]; startDate: string; endDate: string; }
+interface ScheduleRow { id: string; gradeLevel: number; assessmentType: string; startDate: string; endDate: string; }
+// Assessment windows come from the shared assessment schedule (the same rows as Assessments →
+// Schedule), plus any older calendar-only periods so they can still be seen and removed.
+// Audit D7: the calendar used to keep its own windows that the schedule grid never saw.
+interface AssessmentWindow {
+  key: string; source: "schedule" | "period"; id: string; label: string; startDate: string; endDate: string;
+  gradeLevel?: number; assessmentType?: string;
+}
 
 function formatDate(d: string) { return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
 function formatShort(d: string) { return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" }); }
@@ -27,7 +35,7 @@ export default function AcademicCalendarPage() {
   const { t } = useTranslation("school_admin");
   const [years, setYears] = useState<AcademicYear[]>([]);
   const [holidays, setHolidays] = useState<Holiday[]>([]);
-  const [assessments, setAssessments] = useState<AssessmentPeriod[]>([]);
+  const [assessments, setAssessments] = useState<AssessmentWindow[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewMonth, setViewMonth] = useState(new Date().getMonth());
   const [viewYear, setViewYear] = useState(new Date().getFullYear());
@@ -57,18 +65,32 @@ export default function AcademicCalendarPage() {
   useEffect(() => {
     (async () => {
       try {
-        const [yRes, hRes, aRes] = await Promise.all([
+        const [yRes, hRes, aRes, sRes] = await Promise.all([
           apiRequest("/api/v1/school-admin/calendar/academic-years"),
           apiRequest("/api/v1/school-admin/calendar/holidays"),
-          apiRequest("/api/v1/school-admin/calendar/assessment-periods"),
+          apiRequest("/api/v1/school-admin/calendar/assessment-periods").catch(() => null),
+          apiRequest("/api/v1/school-admin/assessments/schedule").catch(() => null),
         ]);
         setYears(yRes?.data?.data ?? yRes?.data ?? []);
         setHolidays(hRes?.data?.data ?? hRes?.data ?? []);
-        setAssessments(aRes?.data?.data ?? aRes?.data ?? []);
+        const typeLabel = (type: string) => (type === "Personality" ? t("assessments.pipeline.colPersonality") : type);
+        const schedules: ScheduleRow[] = sRes?.data ?? [];
+        const periods: AssessmentPeriod[] = aRes?.data?.data ?? aRes?.data ?? [];
+        setAssessments([
+          ...schedules.map((s): AssessmentWindow => ({
+            key: `sch-${s.id}`, source: "schedule", id: s.id, startDate: s.startDate, endDate: s.endDate,
+            gradeLevel: s.gradeLevel, assessmentType: s.assessmentType,
+            label: `${typeLabel(s.assessmentType)} — ${t("calendar.assessmentsSection.gradeOption", { grade: s.gradeLevel })}`,
+          })),
+          ...periods.map((p): AssessmentWindow => ({
+            key: `ap-${p.id}`, source: "period", id: p.id, startDate: p.startDate, endDate: p.endDate,
+            label: p.name || p.assessmentTypes?.join(", ") || t("calendar.assessmentsSection.fallback"),
+          })),
+        ].sort((a, b) => a.startDate.localeCompare(b.startDate)));
       } catch {}
       setLoading(false);
     })();
-  }, [refreshKey]);
+  }, [refreshKey, t]);
 
   const refetch = () => setRefreshKey(k => k + 1);
 
@@ -99,12 +121,11 @@ export default function AcademicCalendarPage() {
 
   const handleAddAssessment = async () => {
     if (!assessmentStart || !assessmentEnd) return;
+    if (assessmentEnd < assessmentStart) { toast.error(t("calendar.toast.endAfterStart")); return; }
     setSavingAssessment(true);
     try {
-      const currentAY = years.find(y => y.isCurrent);
-      const termId = currentAY?.terms?.[0]?.id || "";
-      const name = `${assessmentType} — Grade ${assessmentGrade}`;
-      await apiRequest("/api/v1/school-admin/calendar/assessment-periods", { method: "POST", data: { name, termId, assessmentTypes: [assessmentType], startDate: assessmentStart, endDate: assessmentEnd } });
+      // Saved to the shared schedule (one window per grade × assessment), so the Assessments page shows it too.
+      await apiRequest("/api/v1/school-admin/assessments/schedule", { method: "PUT", data: { schedules: [{ gradeLevel: Number(assessmentGrade), assessmentType, startDate: assessmentStart, endDate: assessmentEnd }] } });
       toast.success(t("calendar.toast.windowAdded"));
       setAssessmentType("PCA"); setAssessmentGrade("9"); setAssessmentStart(""); setAssessmentEnd("");
       setShowAssessmentForm(false);
@@ -113,9 +134,13 @@ export default function AcademicCalendarPage() {
     setSavingAssessment(false);
   };
 
-  const handleDeleteAssessment = async (id: string) => {
+  const handleDeleteAssessment = async (w: AssessmentWindow) => {
     try {
-      await apiRequest(`/api/v1/school-admin/calendar/assessment-periods/${id}`, { method: "DELETE" });
+      if (w.source === "schedule") {
+        await apiRequest("/api/v1/school-admin/assessments/schedule", { method: "PUT", data: { schedules: [{ gradeLevel: w.gradeLevel, assessmentType: w.assessmentType, clear: true }] } });
+      } else {
+        await apiRequest(`/api/v1/school-admin/calendar/assessment-periods/${w.id}`, { method: "DELETE" });
+      }
       toast.success(t("calendar.toast.windowDeleted"));
       refetch();
     } catch { toast.error(t("calendar.toast.windowDeleteFailed")); }
@@ -147,7 +172,7 @@ export default function AcademicCalendarPage() {
     spanEvents.push({ id: `term-${t.id}`, label: t.name, color: "var(--admin-accent-blue)", startDate: new Date(t.startDate).toISOString().slice(0, 10), endDate: new Date(t.endDate).toISOString().slice(0, 10) });
   }
   for (const a of assessments) {
-    spanEvents.push({ id: `ap-${a.id}`, label: a.name || a.assessmentTypes?.join(", ") || t("calendar.assessmentsSection.fallback"), color: "#8b5cf6", startDate: new Date(a.startDate).toISOString().slice(0, 10), endDate: new Date(a.endDate).toISOString().slice(0, 10) });
+    spanEvents.push({ id: a.key, label: a.label, color: "#8b5cf6", startDate: new Date(a.startDate).toISOString().slice(0, 10), endDate: new Date(a.endDate).toISOString().slice(0, 10) });
   }
   for (const h of holidays) {
     if (!isMultiDay(h)) continue;
@@ -401,13 +426,14 @@ export default function AcademicCalendarPage() {
               </div>
             )}
             <div style={{ padding: 8, maxHeight: 200, overflowY: "auto" }}>
+              <div style={{ padding: "0 4px 6px", fontSize: 10, color: "var(--admin-font-tertiary)" }}>{t("calendar.assessmentsSection.sharedHint")}</div>
               {assessments.length === 0 ? <div style={{ padding: 12, textAlign: "center", fontSize: 12, color: "var(--admin-font-tertiary)" }}>{t("calendar.assessmentsSection.empty")}</div> : assessments.map(a => (
-                <div key={a.id} className="group" style={{ padding: "6px 10px", borderRadius: 4, marginBottom: 2, border: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div key={a.key} data-testid={`assessment-window-${a.key}`} className="group" style={{ padding: "6px 10px", borderRadius: 4, marginBottom: 2, border: "1px solid var(--admin-border-default)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
                   <div>
-                    <div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{a.name || a.assessmentTypes?.join(", ") || t("calendar.assessmentsSection.fallback")}</div>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{a.label}</div>
                     <div style={{ fontSize: 10, color: "var(--admin-font-tertiary)" }}>{formatShort(a.startDate)} — {formatShort(a.endDate)}</div>
                   </div>
-                  <button onClick={() => handleDeleteAssessment(a.id)} className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ width: 18, height: 18, borderRadius: 3, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  <button onClick={() => handleDeleteAssessment(a)} aria-label={t("calendar.assessmentsSection.remove")} className="opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity" style={{ width: 18, height: 18, borderRadius: 3, border: "none", background: "transparent", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
                     <Trash2 style={{ width: 11, height: 11, color: "#ef4444" }} />
                   </button>
                 </div>

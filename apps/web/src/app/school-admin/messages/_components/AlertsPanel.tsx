@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { useTranslation } from "react-i18next";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -23,11 +24,10 @@ import { AlertsSummaryStats } from "./AlertsSummaryStats";
 import { AlertTableRow } from "./AlertTableRow";
 
 const typeLabelKeys: Record<AlertType, string> = {
-  grade_drop: "school_admin:ui.alerts.type.grade_drop",
-  missing_assessment: "school_admin:ui.alerts.type.missing_assessment",
-  credit_gap: "school_admin:ui.alerts.type.credit_gap",
-  no_career_path: "school_admin:ui.alerts.type.no_career_path",
-  inactive: "school_admin:ui.alerts.type.inactive",
+  low_gpa: "school_admin:ui.alerts.type.low_gpa",
+  credit_deficit: "school_admin:ui.alerts.type.credit_deficit",
+  stalled_assessments: "school_admin:ui.alerts.type.stalled_assessments",
+  overdue_followup: "school_admin:ui.alerts.type.overdue_followup",
 };
 
 interface AlertRecord {
@@ -42,16 +42,24 @@ interface AlertRecord {
 export default function AlertsPanel() {
   const { t } = useTranslation();
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-  const [priorityFilter, setPriorityFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const debouncedSearch = useDebouncedValue(search.trim(), 300);
+  const [typeFilter, setTypeFilterRaw] = useState("all");
+  const [priorityFilter, setPriorityFilterRaw] = useState("all");
+  const [statusFilter, setStatusFilterRaw] = useState("all");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  // A filter change starts again from page 1 (it used to keep the page, often past the end).
+  const resetting = (set: (v: string) => void) => (v: string) => { set(v); setPage(1); setSelected(new Set()); };
+  const setTypeFilter = resetting(setTypeFilterRaw);
+  const setPriorityFilter = resetting(setPriorityFilterRaw);
+  const setStatusFilter = resetting(setStatusFilterRaw);
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
 
   const { data: alerts, isLoading } = useAlerts({
     type: (typeFilter !== "all" ? typeFilter : undefined) as AlertType | undefined,
     priority: (priorityFilter !== "all" ? priorityFilter : undefined) as AlertPriority | undefined,
     status: (statusFilter !== "all" ? statusFilter : undefined) as AlertStatus | undefined,
+    search: debouncedSearch || undefined,
     page,
     limit: 15,
   });
@@ -90,9 +98,8 @@ export default function AlertsPanel() {
     );
   };
 
-  const filteredAlerts: AlertRecord[] = (alerts?.data ?? []).filter(
-    (a: AlertRecord) => !search || a.message?.toLowerCase().includes(search.toLowerCase()) || a.studentName?.toLowerCase().includes(search.toLowerCase())
-  );
+  // Search runs on the server across every page; it used to filter only the rows on screen.
+  const filteredAlerts: AlertRecord[] = alerts?.data ?? [];
 
   const toggleSelect = (id: string, checked: boolean) => {
     const newSelected = new Set(selected);

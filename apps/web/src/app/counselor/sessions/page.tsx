@@ -84,7 +84,11 @@ export default function CounselorSessionsPage() {
     }
   };
 
-  const upcoming = sessions.filter(s => s.status === "confirmed");
+  // Still to come: confirmed or rescheduled, not yet started — the same rule as the API's upcoming count.
+  const nowMs = Date.now();
+  const upcoming = sessions
+    .filter(s => (s.status === "confirmed" || s.status === "rescheduled") && new Date(s.startTime).getTime() >= nowMs)
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
   const past = sessions.filter(s => s.status === "completed" || s.status === "cancelled");
   const displayed = activeTab === "upcoming" ? upcoming : activeTab === "past" ? past : sessions;
 
@@ -141,6 +145,7 @@ export default function CounselorSessionsPage() {
     if (status === "confirmed") return <Badge className="bg-emerald-100 text-emerald-700 border-0"><CheckCircle2 className="h-3 w-3 mr-1" />{t("sessions.statusUpcoming", "Upcoming")}</Badge>;
     if (status === "completed") return <Badge className="bg-blue-100 text-blue-700 border-0"><CheckCircle2 className="h-3 w-3 mr-1" />{t("sessions.statusCompleted", "Completed")}</Badge>;
     if (status === "cancelled") return <Badge className="bg-red-100 text-red-700 border-0"><XCircle className="h-3 w-3 mr-1" />{t("sessions.statusCancelled", "Cancelled")}</Badge>;
+    if (status === "rescheduled") return <Badge className="bg-amber-100 text-amber-700 border-0"><CheckCircle2 className="h-3 w-3 mr-1" />{t("common:sessions.status.rescheduled", "Rescheduled")}</Badge>;
     return <Badge variant="secondary">{status}</Badge>;
   };
 
@@ -265,7 +270,7 @@ export default function CounselorSessionsPage() {
                         </div>
 
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {session.status === "confirmed" && (
+                          {(session.status === "confirmed" || session.status === "rescheduled") && (
                             <>
                               {session.meetingLink && (
                                 <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 px-3 text-xs rounded-lg" asChild>

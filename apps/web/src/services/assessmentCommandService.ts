@@ -49,7 +49,7 @@ export async function getSchedules(): Promise<AssessmentSchedule[]> {
   return (res.data ?? res) as AssessmentSchedule[];
 }
 
-export async function saveSchedules(schedules: { gradeLevel: number; assessmentType: string; startDate: string; endDate: string }[]) {
+export async function saveSchedules(schedules: { gradeLevel: number; assessmentType: string; startDate?: string; endDate?: string; clear?: boolean }[]) {
   const res = await apiRequest("/api/v1/school-admin/assessments/schedule", { method: "PUT", data: { schedules } });
   return res.data ?? res;
 }

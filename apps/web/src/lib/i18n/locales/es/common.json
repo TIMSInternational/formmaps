@@ -3229,7 +3229,9 @@
         "contractStart": "Inicio del contrato",
         "contractEnd": "Fin del contrato",
         "contractPeriod": "Período de contrato",
-        "loadError": "No se pudo cargar la información del colegio"
+        "loadError": "No se pudo cargar la información del colegio",
+        "noContract": "Sin definir: contacta a FormMaps",
+        "contractDays": "Días completos, hora de {{timezone}}"
       },
       "profile": {
         "title": "Configuración del perfil",

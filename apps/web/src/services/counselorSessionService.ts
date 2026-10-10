@@ -10,7 +10,7 @@ export interface CounselorSession {
   studentEmail: string;
   startTime: string;
   endTime: string;
-  status: "confirmed" | "cancelled" | "completed";
+  status: "confirmed" | "rescheduled" | "cancelled" | "completed";
   topic: string;
   notes: string;
   counselorNotes: string;
@@ -125,6 +125,8 @@ export async function getStudentCounselorSessions(params?: {
 
 export async function getMyCounselorSessions(params?: {
   status?: string;
+  /** Only sessions still to come (confirmed or rescheduled, from now on), soonest first. */
+  upcoming?: boolean;
   page?: number;
   limit?: number;
 }): Promise<{
@@ -138,6 +140,7 @@ export async function getMyCounselorSessions(params?: {
 }> {
   const q = new URLSearchParams();
   if (params?.status) q.append("status", params.status);
+  if (params?.upcoming) q.append("upcoming", "true");
   if (params?.page) q.append("page", params.page.toString());
   if (params?.limit) q.append("limit", params.limit.toString());
   const res = await apiRequest(`/api/v1/counselor/me/sessions?${q}`);

@@ -3399,7 +3399,9 @@
         "contractStart": "Contract Start",
         "contractEnd": "Contract End",
         "contractPeriod": "Contract Period",
-        "loadError": "Unable to load school info"
+        "loadError": "Unable to load school info",
+        "noContract": "Not set — contact FormMaps",
+        "contractDays": "Whole days, {{timezone}} time"
       },
       "profile": {
         "title": "Profile Settings",

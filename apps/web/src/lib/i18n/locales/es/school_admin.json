@@ -33,7 +33,9 @@
       "criticalAlert_one": "{{count}} alerta crítica",
       "criticalAlert_other": "{{count}} alertas críticas",
       "highPriority": "{{count}} prioridad alta",
-      "newSinceLogin": "{{count}} nuevas desde el último acceso"
+      "newSinceLogin": "{{count}} nuevas desde el último acceso",
+      "unread_one": "{{count}} alerta sin leer",
+      "unread_other": "{{count}} alertas sin leer"
     },
     "recentStudents": {
       "title": "Estudiantes recientes",
@@ -805,7 +807,9 @@
       "addWindow": "Agregar ventana",
       "empty": "No hay ventanas de evaluación",
       "fallback": "Evaluación",
-      "gradeOption": "Grado {{grade}}"
+      "gradeOption": "Grado {{grade}}",
+      "sharedHint": "Compartidas con el Calendario de evaluaciones de la página Evaluaciones.",
+      "remove": "Quitar ventana"
     },
     "toast": {
       "endAfterStart": "La fecha de fin debe ser posterior a la de inicio",
@@ -1400,7 +1404,11 @@
         "credit_gap": "Déficit de créditos",
         "no_career_path": "Sin ruta profesional",
         "inactive": "Inactivo",
-        "general": "General"
+        "general": "General",
+        "low_gpa": "GPA bajo",
+        "credit_deficit": "Déficit de créditos",
+        "stalled_assessments": "Evaluaciones detenidas",
+        "overdue_followup": "Seguimiento vencido"
       },
       "priority": {
         "critical": "Crítica",
@@ -1437,6 +1445,7 @@
       "criticalPriority": "Prioridad crítica",
       "highPriority": "Prioridad alta",
       "newSinceLogin": "Nuevas desde tu último ingreso",
+      "unread": "Sin leer",
       "selected_one": "{{count}} seleccionada",
       "selected_other": "{{count}} seleccionadas"
     },

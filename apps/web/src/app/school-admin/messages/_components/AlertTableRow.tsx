@@ -22,19 +22,18 @@ const priorityBadge: Record<AlertPriority, { bg: string; color: string }> = {
 };
 
 const typeIcons: Record<AlertType, React.ReactNode> = {
-  grade_drop: <TrendingDown className="h-3.5 w-3.5" style={{ color: "#ef4444" }} />,
-  missing_assessment: <AlertCircle className="h-3.5 w-3.5" style={{ color: "#f59e0b" }} />,
-  credit_gap: <MapPin className="h-3.5 w-3.5" style={{ color: "var(--admin-accent-blue)" }} />,
-  no_career_path: <AlertTriangle className="h-3.5 w-3.5" style={{ color: "#eab308" }} />,
-  inactive: <Info className="h-3.5 w-3.5" style={{ color: "var(--admin-font-tertiary)" }} />,
+  low_gpa: <TrendingDown className="h-3.5 w-3.5" style={{ color: "#ef4444" }} />,
+  credit_deficit: <MapPin className="h-3.5 w-3.5" style={{ color: "var(--admin-accent-blue)" }} />,
+  stalled_assessments: <AlertCircle className="h-3.5 w-3.5" style={{ color: "#f59e0b" }} />,
+  overdue_followup: <AlertTriangle className="h-3.5 w-3.5" style={{ color: "#eab308" }} />,
 };
+const fallbackIcon = <Info className="h-3.5 w-3.5" style={{ color: "var(--admin-font-tertiary)" }} />;
 
 const typeLabelKeys: Record<AlertType, string> = {
-  grade_drop: "ui.alerts.type.grade_drop",
-  missing_assessment: "ui.alerts.type.missing_assessment",
-  credit_gap: "ui.alerts.type.credit_gap",
-  no_career_path: "ui.alerts.type.no_career_path",
-  inactive: "ui.alerts.type.inactive",
+  low_gpa: "ui.alerts.type.low_gpa",
+  credit_deficit: "ui.alerts.type.credit_deficit",
+  stalled_assessments: "ui.alerts.type.stalled_assessments",
+  overdue_followup: "ui.alerts.type.overdue_followup",
 };
 
 interface AlertRecord {
@@ -68,7 +67,7 @@ export function AlertTableRow({ alert, isSelected, onToggleSelect, onMarkRead, o
       </TableCell>
       <TableCell>
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          {typeIcons[alert.type as AlertType] || typeIcons.inactive}
+          {typeIcons[alert.type as AlertType] || fallbackIcon}
           <span style={{ fontSize: 12, fontWeight: 600, color: "var(--admin-font-primary)" }}>{typeLabelKeys[alert.type as AlertType] ? t(typeLabelKeys[alert.type as AlertType]) : t("ui.alerts.type.general")}</span>
         </div>
       </TableCell>

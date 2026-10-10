@@ -65,7 +65,8 @@ export default function CounselorDashboardPage() {
   const [loadingSessions, setLoadingSessions] = useState(true);
 
   useEffect(() => {
-    getMyCounselorSessions({ status: "confirmed", limit: 3 })
+    // The next three sessions still to come (it used to show the latest-dated confirmed ones, past included).
+    getMyCounselorSessions({ upcoming: true, limit: 3 })
       .then(res => setUpcomingSessions(res.data))
       .catch((err) => console.error("Failed to load counselor sessions:", err))
       .finally(() => setLoadingSessions(false));

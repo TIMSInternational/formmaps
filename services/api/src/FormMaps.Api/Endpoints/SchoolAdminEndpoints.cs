@@ -695,11 +695,20 @@ public static class SchoolAdminEndpoints
             }
 
             if (!TryTruthyString(el, "assessmentType", out var type)) { continue; }
+
+            // Audit D7: `clear: true` removes the window (the grid and the calendar share this store).
+            if (el.TryGetProperty("clear", out var clearEl) && clearEl.ValueKind == JsonValueKind.True)
+            {
+                items.Add(new ScheduleUpsertItem(gradeLevel, type, default, default, Clear: true));
+                continue;
+            }
+
             if (!TryTruthyString(el, "startDate", out var startRaw)) { continue; }
             if (!TryTruthyString(el, "endDate", out var endRaw)) { continue; }
 
             if (!TryParseDate(startRaw, out var start)) { error = "Invalid startDate"; return false; }
             if (!TryParseDate(endRaw, out var end)) { error = "Invalid endDate"; return false; }
+            if (end < start) { error = "endDate must be on or after startDate"; return false; }
 
             items.Add(new ScheduleUpsertItem(gradeLevel, type, start, end));
         }

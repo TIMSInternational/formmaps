@@ -57,7 +57,11 @@ public sealed record SchoolSettings(
     bool NotifyOnStudentSignup,
     bool NotifyOnAssessmentComplete,
     bool AllowStudentSelfRegistration,
-    string Timezone);
+    string Timezone,
+    // Audit D12: the contract window as plain calendar days ("2027-06-30", the UTC date part of the stored
+    // midnight-UTC value — the same reading the student-coverage rule uses), so Settings can show it.
+    string? ContractStart = null,
+    string? ContractEnd = null);
 
 /// <summary>
 /// The PUT /settings return payload (legacy updateSettings) — the RAW updated-row values (NO coalescing): a flag

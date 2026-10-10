@@ -624,6 +624,37 @@ public class SchoolAdminEndpointsTests
     }
 
     [Fact]
+    public async Task Put_schedule_clear_item_is_forwarded_without_dates()
+    {
+        var writer = new FakeWriter();
+        using var factory = new Factory(new FakeReader(), new FakeScope(School), writer);
+        using var client = factory.CreateClient();
+
+        var response = await SendPut(client, "/api/v1/school-admin/assessments/schedule",
+            new { schedules = new object[] { new { gradeLevel = 9, assessmentType = "MIL", clear = true } } });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var item = Assert.Single(writer.ReceivedItems!);
+        Assert.True(item.Clear);
+        Assert.Equal((9, "MIL"), (item.GradeLevel, item.AssessmentType));
+    }
+
+    [Fact]
+    public async Task Put_schedule_end_before_start_400()
+    {
+        var writer = new FakeWriter();
+        using var factory = new Factory(new FakeReader(), new FakeScope(School), writer);
+        using var client = factory.CreateClient();
+
+        var response = await SendPut(client, "/api/v1/school-admin/assessments/schedule",
+            new { schedules = new[] { new { gradeLevel = 9, assessmentType = "PCA", startDate = "2026-06-30", endDate = "2026-03-01" } } });
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        await AssertMessage(response, "endDate must be on or after startDate");
+        Assert.Null(writer.ReceivedItems);
+    }
+
+    [Fact]
     public async Task Put_schedule_invalid_date_400()
     {
         using var factory = new Factory(new FakeReader(), new FakeScope(School));

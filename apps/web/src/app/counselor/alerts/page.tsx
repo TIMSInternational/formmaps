@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { useTranslation } from "react-i18next";
@@ -31,6 +31,7 @@ import {
   useUpdateAlert,
   useBulkAlertAction,
 } from "@/hooks/useAlertQueries";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import type { AlertType, AlertPriority, AlertStatus } from "@/types/alert";
 
 const priorityColors: Record<AlertPriority, string> = {
@@ -41,27 +42,30 @@ const priorityColors: Record<AlertPriority, string> = {
 };
 
 const typeIcons: Record<AlertType, React.ReactNode> = {
-  grade_drop: <AlertTriangle className="h-4 w-4 text-red-500" />,
-  missing_assessment: <AlertCircle className="h-4 w-4 text-orange-500" />,
-  credit_gap: <Info className="h-4 w-4 text-blue-500" />,
-  no_career_path: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
-  inactive: <Info className="h-4 w-4 text-muted-foreground" />,
+  low_gpa: <AlertTriangle className="h-4 w-4 text-red-500" />,
+  credit_deficit: <Info className="h-4 w-4 text-blue-500" />,
+  stalled_assessments: <AlertCircle className="h-4 w-4 text-orange-500" />,
+  overdue_followup: <AlertTriangle className="h-4 w-4 text-yellow-500" />,
 };
 
 export default function AlertsPage() {
   const { t } = useTranslation("counselor");
   const router = useRouter();
   const [search, setSearch] = useState("");
+  // The search box used to update state that no query read; it now searches on the server.
+  const debouncedSearch = useDebouncedValue(search.trim(), 300);
   const [typeFilter, setTypeFilter] = useState("");
   const [priorityFilter, setPriorityFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [page, setPage] = useState(1);
   const [selected, setSelected] = useState<string[]>([]);
+  useEffect(() => { setPage(1); }, [debouncedSearch]);
 
   const { data: alerts, isLoading } = useAlerts({
     type: (typeFilter || undefined) as AlertType | undefined,
     priority: (priorityFilter || undefined) as AlertPriority | undefined,
     status: (statusFilter || undefined) as AlertStatus | undefined,
+    search: debouncedSearch || undefined,
     page,
     limit: 20,
   });
@@ -118,7 +122,7 @@ export default function AlertsPage() {
               { label: t("alerts.statTotal", "Total"), value: summary.total ?? 0, icon: Bell, iconColor: "text-indigo-500", iconBg: "bg-indigo-500/10" },
               { label: t("alerts.critical", "Critical"), value: summary.byPriority?.critical ?? 0, icon: ShieldAlert, iconColor: "text-red-500", iconBg: "bg-red-500/10" },
               { label: t("alerts.high", "High"), value: summary.byPriority?.high ?? 0, icon: AlertTriangle, iconColor: "text-orange-500", iconBg: "bg-orange-500/10" },
-              { label: t("alerts.statNew", "New"), value: summary.newSinceLastLogin ?? 0, icon: Sparkles, iconColor: "text-[var(--admin-accent-blue)]", iconBg: "bg-[var(--admin-accent-blue)]/10" },
+              { label: t("alerts.statUnread", "Unread"), value: summary.unread ?? 0, icon: Sparkles, iconColor: "text-[var(--admin-accent-blue)]", iconBg: "bg-[var(--admin-accent-blue)]/10" },
               { label: t("alerts.low", "Low"), value: summary.byPriority?.low ?? 0, icon: Info, iconColor: "text-emerald-500", iconBg: "bg-emerald-500/10" },
             ].map((stat, i) => (
               <motion.div
@@ -145,17 +149,16 @@ export default function AlertsPage() {
       <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }} className="flex flex-wrap gap-3 items-center">
         <div className="relative flex-1 min-w-[200px] max-w-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input placeholder={t("alerts.searchPlaceholder", "Search alerts...")} value={search} onChange={(e) => { setSearch(e.target.value); setPage(1); }} className="pl-10" />
+          <Input placeholder={t("alerts.searchPlaceholder", "Search alerts...")} value={search} onChange={(e) => setSearch(e.target.value)} className="pl-10" aria-label={t("alerts.searchPlaceholder", "Search alerts...")} />
         </div>
         <Select value={typeFilter} onValueChange={(v) => { setTypeFilter(v === "all" ? "" : v); setPage(1); }}>
           <SelectTrigger className="w-[170px]"><SelectValue placeholder={t("alerts.allTypes", "All Types")} /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">{t("alerts.allTypes", "All Types")}</SelectItem>
-            <SelectItem value="grade_drop">{t("alerts.gradeDrop", "Grade Drop")}</SelectItem>
-            <SelectItem value="missing_assessment">{t("alerts.missingAssessment", "Missing Assessment")}</SelectItem>
-            <SelectItem value="credit_gap">{t("alerts.creditGap", "Credit Gap")}</SelectItem>
-            <SelectItem value="no_career_path">{t("alerts.noCareerPath", "No Career Path")}</SelectItem>
-            <SelectItem value="inactive">{t("alerts.inactive", "Inactive")}</SelectItem>
+            <SelectItem value="low_gpa">{t("alerts.lowGpa", "Low GPA")}</SelectItem>
+            <SelectItem value="credit_deficit">{t("alerts.creditDeficit", "Credit deficit")}</SelectItem>
+            <SelectItem value="stalled_assessments">{t("alerts.stalledAssessments", "Stalled assessments")}</SelectItem>
+            <SelectItem value="overdue_followup">{t("alerts.overdueFollowup", "Overdue follow-up")}</SelectItem>
           </SelectContent>
         </Select>
         <Select value={priorityFilter} onValueChange={(v) => { setPriorityFilter(v === "all" ? "" : v); setPage(1); }}>
@@ -224,7 +227,7 @@ export default function AlertsPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge className={priorityColors[a.priority]}>{a.priority}</Badge>
+                    <Badge className={priorityColors[a.priority]}>{t(`alerts.${a.priority}`, { defaultValue: a.priority })}</Badge>
                   </TableCell>
                   <TableCell>
                     <Badge variant={a.status === "active" ? "default" : "secondary"}>{t(`ui.alerts.status.${a.status}`, { defaultValue: a.status })}</Badge>

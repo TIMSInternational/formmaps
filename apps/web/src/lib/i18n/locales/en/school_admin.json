@@ -33,7 +33,9 @@
       "criticalAlert_one": "{{count}} critical alert",
       "criticalAlert_other": "{{count}} critical alerts",
       "highPriority": "{{count}} high priority",
-      "newSinceLogin": "{{count}} new since login"
+      "newSinceLogin": "{{count}} new since login",
+      "unread_one": "{{count}} unread alert",
+      "unread_other": "{{count}} unread alerts"
     },
     "recentStudents": {
       "title": "Recent Students",
@@ -805,7 +807,9 @@
       "addWindow": "Add Window",
       "empty": "No assessment windows",
       "fallback": "Assessment",
-      "gradeOption": "Grade {{grade}}"
+      "gradeOption": "Grade {{grade}}",
+      "sharedHint": "Shared with the Assessment Schedule on the Assessments page.",
+      "remove": "Remove window"
     },
     "toast": {
       "endAfterStart": "End date must be after the start date",
@@ -1400,7 +1404,11 @@
         "credit_gap": "Credit Gap",
         "no_career_path": "No Career Path",
         "inactive": "Inactive",
-        "general": "General"
+        "general": "General",
+        "low_gpa": "Low GPA",
+        "credit_deficit": "Credit Deficit",
+        "stalled_assessments": "Stalled Assessments",
+        "overdue_followup": "Overdue Follow-up"
       },
       "priority": {
         "critical": "Critical",
@@ -1437,6 +1445,7 @@
       "criticalPriority": "Critical Priority",
       "highPriority": "High Priority",
       "newSinceLogin": "New Since Login",
+      "unread": "Unread",
       "selected_one": "{{count}} selected",
       "selected_other": "{{count}} selected"
     },

@@ -236,7 +236,8 @@ function ActionItems() {
   const items = [
     alerts?.critical > 0 && { label: t("dashboard.actionItems.criticalAlert", { count: alerts.critical }), color: "#ef4444", icon: AlertTriangle, href: "/school-admin/messages?tab=alerts" },
     alerts?.high > 0 && { label: t("dashboard.actionItems.highPriority", { count: alerts.high }), color: "#f59e0b", icon: Bell, href: "/school-admin/messages?tab=alerts" },
-    alerts?.newSinceLogin > 0 && { label: t("dashboard.actionItems.newSinceLogin", { count: alerts.newSinceLogin }), color: "var(--admin-accent-blue)", icon: Activity, href: "/school-admin/messages?tab=alerts" },
+    // The API reports unread alerts; there was never a "new since login" field, so this item never showed.
+    alerts?.unread > 0 && { label: t("dashboard.actionItems.unread", { count: alerts.unread }), color: "var(--admin-accent-blue)", icon: Activity, href: "/school-admin/messages?tab=alerts" },
   ].filter(Boolean);
 
   return (

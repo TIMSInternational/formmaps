@@ -18,6 +18,9 @@ public sealed class CounselorSessionsRepository(
     IFormMapsDatabaseSessionFactory databaseSessionFactory,
     TimeProvider timeProvider) : ICounselorSessionsRepository
 {
+    // Audit D15: a rescheduled session is still to come.
+    private const string UpcomingStatuses = "'confirmed', 'rescheduled'";
+
     private const string SelectColumns =
         """
         cs."id", cs."counselorId", cs."studentId", cs."startTime", cs."endTime", cs."status", cs."topic", cs."notes",
@@ -28,9 +31,10 @@ public sealed class CounselorSessionsRepository(
 
     public async Task<SessionsPage> ListAsync(
         RequestContext context, string counselorId, string? statusFilter, int page, int limit,
-        CancellationToken cancellationToken = default)
+        bool upcomingOnly = false, CancellationToken cancellationToken = default)
     {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+        var now = Now();
 
         var where = "cs.\"counselorId\" = @cid AND cs.\"isActive\" = true";
         var hasStatus = !string.IsNullOrEmpty(statusFilter) && statusFilter != "all";
@@ -38,6 +42,14 @@ public sealed class CounselorSessionsRepository(
         {
             where += " AND cs.\"status\" = @status";
         }
+
+        if (upcomingOnly)
+        {
+            where += $" AND cs.\"status\" IN ({UpcomingStatuses}) AND cs.\"startTime\" >= @now";
+        }
+
+        // Upcoming reads soonest first (the dashboard showed the latest-dated confirmed sessions, past ones included).
+        var order = upcomingOnly ? "cs.\"startTime\" ASC, cs.\"id\" ASC" : "cs.\"startTime\" DESC, cs.\"id\" ASC";
 
         int total;
         await using (var countCommand = Command(session, $"""SELECT COUNT(*)::int FROM "counselor_sessions" cs WHERE {where}"""))
@@ -48,7 +60,29 @@ public sealed class CounselorSessionsRepository(
                 AddParameter(countCommand, "status", statusFilter!);
             }
 
+            if (upcomingOnly)
+            {
+                AddTimestamp(countCommand, "now", now);
+            }
+
             total = await ScalarIntAsync(countCommand, cancellationToken);
+        }
+
+        SessionCounts counts;
+        await using (var countsCommand = Command(session, $"""
+            SELECT
+                COUNT(*) FILTER (WHERE cs."status" IN ({UpcomingStatuses}) AND cs."startTime" >= @now)::int,
+                COUNT(*) FILTER (WHERE cs."status" = 'completed')::int,
+                COUNT(*) FILTER (WHERE cs."status" = 'cancelled')::int
+            FROM "counselor_sessions" cs
+            WHERE cs."counselorId" = @cid AND cs."isActive" = true
+            """))
+        {
+            AddParameter(countsCommand, "cid", counselorId);
+            AddTimestamp(countsCommand, "now", now);
+            await using var reader = await countsCommand.ExecuteReaderAsync(cancellationToken);
+            await reader.ReadAsync(cancellationToken);
+            counts = new SessionCounts(reader.GetInt32(0), reader.GetInt32(1), reader.GetInt32(2));
         }
 
         var rows = new List<SessionRow>();
@@ -57,7 +91,7 @@ public sealed class CounselorSessionsRepository(
             FROM "counselor_sessions" cs
             LEFT JOIN "users" u ON u."id" = cs."studentId"
             WHERE {where}
-            ORDER BY cs."startTime" DESC, cs."id" ASC
+            ORDER BY {order}
             OFFSET @offset LIMIT @limit
             """))
         {
@@ -65,6 +99,11 @@ public sealed class CounselorSessionsRepository(
             if (hasStatus)
             {
                 AddParameter(listCommand, "status", statusFilter!);
+            }
+
+            if (upcomingOnly)
+            {
+                AddTimestamp(listCommand, "now", now);
             }
 
             AddParameter(listCommand, "offset", (long)(page - 1) * limit);
@@ -76,7 +115,7 @@ public sealed class CounselorSessionsRepository(
             }
         }
 
-        return new SessionsPage(rows, total);
+        return new SessionsPage(rows, total, counts);
     }
 
     public async Task<CompleteResult> CompleteAsync(

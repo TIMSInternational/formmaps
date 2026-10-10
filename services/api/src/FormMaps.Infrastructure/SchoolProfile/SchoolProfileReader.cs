@@ -21,7 +21,9 @@ namespace FormMaps.Infrastructure.SchoolProfile;
 public sealed class SchoolProfileReader(IFormMapsDatabaseSessionFactory databaseSessionFactory) : ISchoolProfileReader
 {
     private const int MaxStudentsDefault = 300;
-    private const string TimezoneDefault = "America/New_York";
+    // Audit D12: the platform's home zone — the same default the student-coverage rule (studentEntitlement
+    // PLATFORM_TIMEZONE) applies to a school with no timezone, so Settings shows the zone actually used.
+    private const string TimezoneDefault = "America/Bogota";
 
     public async Task<SchoolProfileDto?> GetSchoolProfileAsync(
         RequestContext context, string schoolId, CancellationToken cancellationToken = default)
@@ -52,9 +54,10 @@ public sealed class SchoolProfileReader(IFormMapsDatabaseSessionFactory database
         int maxStudents;
         bool? notifyOnStudentSignup, notifyOnAssessmentComplete, allowStudentSelfRegistration;
         string? timezone;
+        string? contractStart, contractEnd;
         await using (var command = Command(session, """
             SELECT "name", "maxStudents", "notifyOnStudentSignup", "notifyOnAssessmentComplete",
-                   "allowStudentSelfRegistration", "timezone"
+                   "allowStudentSelfRegistration", "timezone", "contractStartDate", "contractEndDate"
             FROM "schools" WHERE "id" = @id
             """))
         {
@@ -71,6 +74,8 @@ public sealed class SchoolProfileReader(IFormMapsDatabaseSessionFactory database
             notifyOnAssessmentComplete = reader.IsDBNull(3) ? null : reader.GetBoolean(3);
             allowStudentSelfRegistration = reader.IsDBNull(4) ? null : reader.GetBoolean(4);
             timezone = reader.IsDBNull(5) ? null : reader.GetString(5);
+            contractStart = reader.IsDBNull(6) ? null : reader.GetDateTime(6).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            contractEnd = reader.IsDBNull(7) ? null : reader.GetDateTime(7).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
         }
 
         // admin = the authenticated caller {id, name, email} (legacy findUnique on req.userId). If the row is
@@ -112,7 +117,9 @@ public sealed class SchoolProfileReader(IFormMapsDatabaseSessionFactory database
             NotifyOnStudentSignup: notifyOnStudentSignup ?? true,
             NotifyOnAssessmentComplete: notifyOnAssessmentComplete ?? true,
             AllowStudentSelfRegistration: allowStudentSelfRegistration ?? false,
-            Timezone: resolvedTimezone);
+            Timezone: resolvedTimezone,
+            ContractStart: contractStart,
+            ContractEnd: contractEnd);
     }
 
     // ---------------------------------------------------------------- helpers
