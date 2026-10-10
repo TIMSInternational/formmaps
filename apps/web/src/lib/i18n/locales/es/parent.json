@@ -81,7 +81,8 @@
         "dueTomorrow": "Vence mañana",
         "daysLeft": "{{count}} días restantes"
       }
-    }
+    },
+    "yourStudent": "tu hijo/a"
   },
   "notifications": {
     "badge": "Padre/madre",

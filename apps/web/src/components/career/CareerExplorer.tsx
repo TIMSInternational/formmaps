@@ -189,9 +189,9 @@ export default function CareerExplorer() {
       {/* Active filter pills */}
       {(() => {
         const pills: FilterPill[] = [];
-        if (filters.search) pills.push({ key: "search", label: "Search", value: filters.search });
-        if (filters.industry) pills.push({ key: "industry", label: "Industry", value: filters.industry });
-        if (filters.sort && filters.sort !== "recommended") pills.push({ key: "sort", label: "Sort", value: filters.sort });
+        if (filters.search) pills.push({ key: "search", label: t("career.explorer.pillSearch"), value: filters.search });
+        if (filters.industry) pills.push({ key: "industry", label: t("career.explorer.pillIndustry"), value: filters.industry });
+        if (filters.sort && filters.sort !== "recommended") pills.push({ key: "sort", label: t("career.explorer.pillSort"), value: t(`career.sort_${filters.sort}`, { defaultValue: filters.sort }) });
         return (
           <ActiveFilterPills
             pills={pills}
@@ -229,7 +229,7 @@ export default function CareerExplorer() {
             type="not_started"
             title={t("career.explorer.noResults", "No careers found")}
             description={t("career.explorer.noResultsDesc", { list: formatAssessmentList(t, i18n.language) })}
-            actionLabel="Start Assessments"
+            actionLabel={t("career.explorer.startAssessments")}
             actionHref="/dashboard/assessments"
           />
         )

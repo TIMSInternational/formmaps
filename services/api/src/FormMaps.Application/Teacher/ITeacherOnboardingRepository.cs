@@ -44,7 +44,7 @@ public sealed record TeacherProfileRow(string Id, string Name, string Email, str
 
 /// <summary>teacher.ts:124-129 projection of an EvaluationGroup the caller is the evaluator on.</summary>
 public sealed record TeacherPendingEvaluationRow(
-    string EvaluationId, string StudentName, string Deadline, string Token);
+    string EvaluationId, string? StudentName, string Deadline, string Token);
 
 /// <summary>
 /// Data access for routes/teacher.ts (issue #62), mounted /api/v1/teacher at index.ts:356.

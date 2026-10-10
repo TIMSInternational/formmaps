@@ -2336,7 +2336,11 @@
       "scoresPendingTitle": "Your career matches aren't ready yet",
       "scoresPendingDesc": "We couldn't calculate match scores from your assessment results yet. Check back later, or ask your counselor if this doesn't change.",
       "clearFilters": "Clear filters",
-      "noResultsDesc": "Complete your assessments ({{list}}) to receive personalized career recommendations."
+      "noResultsDesc": "Complete your assessments ({{list}}) to receive personalized career recommendations.",
+      "pillSearch": "Search",
+      "pillIndustry": "Industry",
+      "pillSort": "Sort",
+      "startAssessments": "Start Assessments"
     },
     "search_placeholder": "Search for careers, skills, or keywords...",
     "all_industries": "All Industries",
@@ -2351,6 +2355,10 @@
       "high": "Excellent Match",
       "good": "Strong Match",
       "moderate": "Good Match"
+    },
+    "personality": {
+      "description": "Add your 4-letter personality type for even sharper career matches",
+      "recommended": "Recommended"
     }
   },
   "careers": {
@@ -2586,7 +2594,8 @@
       "specializationRequired": "Specialization is required",
       "locationRequired": "Location is required",
       "languageRequired": "At least one language is required",
-      "tagRequired": "At least one tag is required"
+      "tagRequired": "At least one tag is required",
+      "nameRequired": "Name is required"
     },
     "personalInfo": {
       "uploadPhoto": "Upload profile photo",
@@ -3465,7 +3474,11 @@
       "parse": "Preview",
       "preview": "Preview",
       "errors": "Validation errors:",
-      "confirmImport": "Start Import"
+      "confirmImport": "Start Import",
+      "missingColumn": "Missing required column: {{column}}",
+      "rowMissingStudent": "Row {{row}}: missing student_id or student_email",
+      "rowMissingCourse": "Row {{row}}: missing course_code",
+      "rowInvalidGrade": "Row {{row}}: invalid grade value"
     }
   },
   "shell": {
@@ -5948,7 +5961,38 @@
       "currentPlan": "Current Plan",
       "paymentFailed": "Payment failed: {{error}}",
       "processing": "Processing...",
-      "portalFailed": "Could not open the billing portal. Please try again."
+      "portalFailed": "Could not open the billing portal. Please try again.",
+      "cancelFailed": "Could not cancel the subscription: {{error}}",
+      "fallbackFeatures": {
+        "starter": [
+          "LIA & PCA Assessments",
+          "Career matching (top 10)",
+          "Basic resume builder",
+          "Course catalog access",
+          "Email support"
+        ],
+        "pro": [
+          "Everything in Starter",
+          "360° Evaluation system",
+          "Full career matching (370+ careers)",
+          "AI-powered resume builder",
+          "University recommendations",
+          "Course plan builder",
+          "Portfolio builder",
+          "1 coaching session / month",
+          "Priority support"
+        ],
+        "premium": [
+          "Everything in Pro",
+          "Unlimited coaching sessions",
+          "AI career narrative reports",
+          "Counselor session booking",
+          "Community service tracking",
+          "Senior project support",
+          "Certification tracking",
+          "Dedicated support"
+        ]
+      }
     },
     "testScores": {
       "form": {
@@ -7308,5 +7352,41 @@
   },
   "meta": {
     "defaultTitle": "FormMaps - Find your path. Shape your future."
+  },
+  "alertsGenerated": {
+    "low_gpa": {
+      "title": "Low GPA",
+      "message": "GPA is {{gpa}} — below the 2.0 threshold."
+    },
+    "credit_deficit": {
+      "title": "Credit deficit",
+      "message": "Has {{earned}} of ~{{expected}} credits expected by grade {{grade}}."
+    },
+    "stalled_assessments": {
+      "title": "Assessments not started",
+      "message": "No completed assessment activity (LIA, PCA or 360°)."
+    },
+    "overdue_followup": {
+      "title": "Overdue follow-up",
+      "message": "A counselor follow-up was due {{date}} and is still open."
+    },
+    "overdue_followup_nodate": {
+      "title": "Overdue follow-up",
+      "message": "A counselor follow-up is overdue and still open."
+    }
+  },
+  "analyticsCsv": {
+    "metric": "Metric",
+    "value": "Value",
+    "totalStudents": "Total Students",
+    "atRisk": "At-Risk Students",
+    "counselorCoverage": "Counselor Coverage",
+    "assessmentCompletion": "Assessment Completion",
+    "avgGpa": "Avg GPA",
+    "pcaComplete": "PCA Complete",
+    "milComplete": "LIA Complete",
+    "evalComplete": "360 Complete",
+    "personalityComplete": "Personality Complete",
+    "fullyComplete": "Fully Complete"
   }
 }

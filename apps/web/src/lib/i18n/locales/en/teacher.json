@@ -43,7 +43,8 @@
         "dueTomorrow": "Due tomorrow",
         "daysLeft": "{{count}} days left"
       }
-    }
+    },
+    "yourStudent": "your student"
   },
   "onboarding": {
     "title": "Set Up Your Teacher Portal Account",

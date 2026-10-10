@@ -203,7 +203,7 @@ public sealed class ParentPortalRepository(
                 var studentName = reader.IsDBNull(1) ? null : reader.GetString(1);
                 rows.Add(new PendingEvaluation(
                     EvaluationId: reader.GetString(0),
-                    StudentName: string.IsNullOrEmpty(studentName) ? "your student" : studentName, // name || "your student"
+                    StudentName: string.IsNullOrEmpty(studentName) ? null : studentName, // name || null (audit F: no English fallback)
                     Deadline: IsoZ(reader.GetDateTime(2)),
                     Token: reader.GetString(3)));
             }

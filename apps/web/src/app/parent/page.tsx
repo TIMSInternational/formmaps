@@ -180,12 +180,12 @@ export default function ParentDashboard() {
           </h2>
           <div className="space-y-3">
             {pendingEvals.map(
-              (evaluation: { evaluationId: string; studentName: string; deadline: string; token: string }) => (
+              (evaluation: { evaluationId: string; studentName: string | null; deadline: string; token: string }) => (
                 <div key={evaluation.evaluationId} className="dash-card p-4 flex items-center justify-between">
                   <div>
                     <p className="font-medium text-foreground">
                       {t("dashboard.evaluationFor")}{" "}
-                      {evaluation.studentName}
+                      {evaluation.studentName ?? t("evaluations.yourStudent")}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {t("dashboard.dueBy")}:{" "}
