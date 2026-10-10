@@ -14,6 +14,21 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 
+// MIL / LIA downloads are a spreadsheet a school can open, with the subtests named in the viewer's
+// language — they were the raw API JSON (internal keys, server fields) labelled "MIL" (audit D14).
+const SUBTESTS = ["PatternRecognition", "VerbalReasoning", "WorkingMemory", "NumericVelocity", "VisualRotation"] as const;
+function csvCell(value: unknown): string {
+  let v = value == null ? "" : String(value);
+  if (/^[=+\-@\t\r]/.test(v)) v = `'${v}`; // never let a spreadsheet evaluate it as a formula
+  return /[",\n]/.test(v) ? `"${v.replace(/"/g, '""')}"` : v;
+}
+export function downloadCsv(filename: string, rows: unknown[][]) {
+  const csv = "\uFEFF" + rows.map(r => r.map(csvCell).join(",")).join("\r\n");
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  a.download = filename; a.click();
+}
+
 type TabKey = "pca" | "mil" | "360";
 
 interface StudentRecord {
@@ -262,14 +277,12 @@ function MILReports({ student }: { student: StudentRecord }) {
   const downloadCognitive = async () => {
     setLoading("cognitive");
     try {
-      const blob = new Blob([JSON.stringify({
-        student: { name: student.name, email: student.email },
-        type: "MIL / LIA Profile",
-        generatedAt: new Date().toISOString(),
-        ...milData,
-      }, null, 2)], { type: "application/json" });
-      const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-      a.download = `MIL-Profile-${student.name.replace(/\s+/g, "-")}.json`; a.click();
+      const cp = (milData?.cognitiveProfile || {}) as Record<string, unknown>;
+      downloadCsv(`MIL-Profile-${student.name.replace(/\s+/g, "-")}.csv`, [
+        [t("school_admin:ui.reports.csv.subtest"), t("school_admin:ui.reports.csv.score")],
+        ...SUBTESTS.map(k => [t(`school_admin:ui.reports.domains.${k}`), Number(cp[k]) || 0]),
+        [t("school_admin:ui.reports.csv.overall"), milData?.overallScore ?? 0],
+      ]);
       toast.success(t("school_admin:ui.reports.milProfileDownloaded"));
     } catch { toast.error(t("school_admin:ui.reports.downloadFailed")); }
     setLoading(null);
@@ -280,14 +293,16 @@ function MILReports({ student }: { student: StudentRecord }) {
     try {
       const res = await apiRequest(`/api/v1/mil/results/${student.id}`);
       const data = res?.data || res;
-      const blob = new Blob([JSON.stringify({
-        student: { name: student.name, email: student.email },
-        type: "MIL Exam Results History",
-        generatedAt: new Date().toISOString(),
-        ...data,
-      }, null, 2)], { type: "application/json" });
-      const a = document.createElement("a"); a.href = URL.createObjectURL(blob);
-      a.download = `MIL-Exams-${student.name.replace(/\s+/g, "-")}.json`; a.click();
+      const results = (Array.isArray(data?.examResults) ? data.examResults : []) as Array<Record<string, unknown>>;
+      downloadCsv(`MIL-Exams-${student.name.replace(/\s+/g, "-")}.csv`, [
+        ["subtest", "status", "score", "correct", "incorrect", "total", "completedAt"].map(c => t(`school_admin:ui.reports.csv.${c}`)),
+        ...results.map(r => [
+          t(`school_admin:ui.reports.domains.${String(r.examType ?? r.examName)}`, { defaultValue: String(r.examName ?? "") }),
+          r.status === "completed" ? t("counselor:assessments.statusCompleted") : r.status === "in_progress" ? t("counselor:assessments.statusInProgress") : t("counselor:assessments.statusNotStarted"),
+          r.scorePercentage ?? 0, r.correctAnswers ?? "", r.incorrectAnswers ?? "", r.totalQuestions ?? "",
+          r.completedAt ? new Date(String(r.completedAt)).toLocaleDateString() : "",
+        ]),
+      ]);
       toast.success(t("school_admin:ui.reports.examHistoryDownloaded"));
     } catch { toast.error(t("school_admin:ui.reports.downloadFailed")); }
     setLoading(null);
@@ -315,7 +330,7 @@ function MILReports({ student }: { student: StudentRecord }) {
           </div>
         ) : (
           <>
-            <ReportRow icon={Brain} label={t("school_admin:ui.reports.milProfile")} desc={t("school_admin:ui.reports.milProfileDesc")} format="JSON" loading={loading === "cognitive"} onDownload={downloadCognitive}
+            <ReportRow icon={Brain} label={t("school_admin:ui.reports.milProfile")} desc={t("school_admin:ui.reports.milProfileDesc")} format="CSV" loading={loading === "cognitive"} onDownload={downloadCognitive}
               onPrint={() => {
                 const cp = (milData?.cognitiveProfile || {}) as Record<string, unknown>;
                 const labels: Record<string, string> = { PatternRecognition: t("school_admin:ui.reports.domains.PatternRecognition"), VerbalReasoning: t("school_admin:ui.reports.domains.VerbalReasoning"), WorkingMemory: t("school_admin:ui.reports.domains.WorkingMemory"), NumericVelocity: t("school_admin:ui.reports.domains.NumericVelocity"), VisualRotation: t("school_admin:ui.reports.domains.VisualRotation") };
@@ -331,7 +346,7 @@ function MILReports({ student }: { student: StudentRecord }) {
                 ]);
               }}
             />
-            <ReportRow icon={BarChart3} label={t("school_admin:ui.reports.examHistory")} desc={t("school_admin:ui.reports.examHistoryDesc")} format="JSON" loading={loading === "history"} onDownload={downloadExamHistory} />
+            <ReportRow icon={BarChart3} label={t("school_admin:ui.reports.examHistory")} desc={t("school_admin:ui.reports.examHistoryDesc")} format="CSV" loading={loading === "history"} onDownload={downloadExamHistory} />
             {milData?.overallScore != null && (
               <div style={{ fontSize: 11, color: "var(--admin-font-tertiary)", marginTop: 8 }}>
                 {t("school_admin:ui.reports.overallScoreLabel")} <span style={{ fontWeight: 600, color: "var(--admin-font-primary)" }}>{String(milData.overallScore)}%</span>

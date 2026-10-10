@@ -1497,7 +1497,7 @@
       "noMil": "No MIL/LIA Results",
       "noMilDesc": "This student hasn't completed the cognitive assessments yet.",
       "milProfile": "MIL Profile",
-      "milProfileDesc": "5 domains: Reasoning, Detection, Numeric, Memory, Orientation",
+      "milProfileDesc": "5 subtests: Pattern Recognition, Verbal Reasoning, Working Memory, Numeric Velocity, Visual Rotation",
       "domains": {
         "PatternRecognition": "Pattern Recognition",
         "VerbalReasoning": "Verbal Reasoning",
@@ -1515,7 +1515,8 @@
       "strengths": "Strengths",
       "areasForGrowth": "Areas for Growth",
       "examHistory": "Exam Results History",
-      "examHistoryDesc": "All exam attempts with scores, timing, and per-question data",
+      "examHistoryDesc": "Each subtest with status, score, answers and completion date",
+      "csv": {"subtest": "Subtest", "score": "Score (percentile)", "overall": "Overall", "status": "Status", "correct": "Correct", "incorrect": "Incorrect", "total": "Questions", "completedAt": "Completed"},
       "overallScoreLabel": "Overall Score:",
       "examsCompleted": "{{completed}}/{{total}} exams completed",
       "report360Downloaded": "360 report downloaded",

@@ -1497,7 +1497,7 @@
       "noMil": "Sin resultados MIL/LIA",
       "noMilDesc": "Este estudiante aún no ha completado las evaluaciones cognitivas.",
       "milProfile": "Perfil MIL",
-      "milProfileDesc": "5 dominios: razonamiento, detección, numérico, memoria, orientación",
+      "milProfileDesc": "5 subpruebas: reconocimiento de patrones, razonamiento verbal, memoria de trabajo, velocidad numérica y rotación visual",
       "domains": {
         "PatternRecognition": "Reconocimiento de patrones",
         "VerbalReasoning": "Razonamiento verbal",
@@ -1515,7 +1515,8 @@
       "strengths": "Fortalezas",
       "areasForGrowth": "Áreas de mejora",
       "examHistory": "Historial de resultados de exámenes",
-      "examHistoryDesc": "Todos los intentos de examen con puntajes, tiempos y datos por pregunta",
+      "examHistoryDesc": "Cada subprueba con estado, puntaje, respuestas y fecha de finalización",
+      "csv": {"subtest": "Subprueba", "score": "Puntaje (percentil)", "overall": "General", "status": "Estado", "correct": "Correctas", "incorrect": "Incorrectas", "total": "Preguntas", "completedAt": "Finalizada"},
       "overallScoreLabel": "Puntaje general:",
       "examsCompleted": "{{completed}}/{{total}} exámenes completados",
       "report360Downloaded": "Informe 360 descargado",
