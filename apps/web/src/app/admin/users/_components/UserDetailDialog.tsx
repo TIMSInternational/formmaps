@@ -13,6 +13,7 @@ import type { UserRecord } from "./UsersTable";
 import { UserStatusBadge } from "./UserStatusBadge";
 import { UserAccessEditor } from "./UserAccessEditor";
 import { displayStatus } from "./userStatus";
+import { ComplimentaryAccessPanel } from "@/components/admin/ComplimentaryAccessPanel";
 
 interface UserDetailDialogProps {
   user: UserRecord | null;
@@ -62,6 +63,11 @@ export function UserDetailDialog({ user, onClose, onDeactivate, onActivate, onRe
             </div>
 
             <UserAccessEditor user={user} onChanged={onChanged} />
+
+            {/* audit E5: free access for N days — students only (a school grant is on the Schools page). */}
+            {(user.role || "").toLowerCase() === "student" && (
+              <ComplimentaryAccessPanel targetType="student" targetId={user.id} targetName={user.name} />
+            )}
 
             <div className="border-t border-gray-100 p-4 space-y-2">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">{t("users.detailActions")}</p>

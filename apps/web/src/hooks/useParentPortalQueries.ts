@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   getParentProfile,
   getChildProgress,
+  getChildResults,
   getParentPendingEvaluations,
   getStudentParents,
   inviteParentToStudent,
@@ -69,6 +70,8 @@ export const parentKeys = {
   profile: () => [...parentKeys.all, "profile"] as const,
   childProgress: (studentId: string) =>
     [...parentKeys.all, "child-progress", studentId] as const,
+  childResults: (studentId: string, lang: string) =>
+    [...parentKeys.all, "child-results", studentId, lang] as const,
   pendingEvaluations: () =>
     [...parentKeys.all, "pending-evaluations"] as const,
   studentParents: (studentId: string) =>
@@ -137,6 +140,17 @@ export function useChildProgress(studentId?: string) {
     queryFn: () => getChildProgress(studentId!),
     enabled: !!studentId,
     staleTime: 2 * 60 * 1000,
+  });
+}
+
+/** The linked child's results (audit E1). A 402/403 is an answer, not a transient failure — don't retry it. */
+export function useChildResults(studentId: string | undefined, lang: "es" | "en") {
+  return useQuery({
+    queryKey: parentKeys.childResults(studentId ?? "", lang),
+    queryFn: () => getChildResults(studentId!, lang),
+    enabled: !!studentId,
+    staleTime: 2 * 60 * 1000,
+    retry: false,
   });
 }
 

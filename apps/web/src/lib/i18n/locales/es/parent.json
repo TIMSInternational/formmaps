@@ -45,7 +45,7 @@
     "childNotFound": "Estudiante no encontrado",
     "gpa": "Promedio",
     "credits": "Créditos",
-    "careerPath": "Área de interés",
+    "careerPath": "Meta profesional",
     "careerPathNotSet": "Sin definir",
     "assessments": "Evaluaciones",
     "assessmentPending": "Pendiente",
@@ -54,12 +54,9 @@
     "of": "de",
     "creditsRequired": "créditos requeridos para graduarse",
     "recentActivity": "Actividad reciente",
-    "pendingActions": "Acciones pendientes",
     "coursePlan": "Plan de cursos",
     "noActivity": "Sin actividad reciente",
-    "noActions": "Sin acciones pendientes",
-    "dueBy": "Fecha límite",
-    "action": "Acción"
+    "completedAssessment": "Completó {{title}}"
   },
   "evaluations": {
     "badge": "Padre/madre",
@@ -152,5 +149,23 @@
       "passwordMismatch": "Las contraseñas no coinciden"
     },
     "goToLogin": "Ir al inicio de sesión"
+  },
+  "results": {
+    "tab": "Resultados",
+    "reportTitle": "Informe de carrera y universidad",
+    "reportReady": "Un PDF completo con los resultados, carreras y universidades de su hijo/a.",
+    "reportNotReady": "Disponible cuando su hijo/a haya completado sus evaluaciones.",
+    "download": "Descargar informe",
+    "downloading": "Preparando…",
+    "downloadFailed": "No se pudo descargar el informe. Inténtelo de nuevo.",
+    "completedOn": "Completado el {{date}}",
+    "status": {
+      "completed": "Completado",
+      "in_progress": "En progreso",
+      "not_started": "Sin iniciar"
+    },
+    "lockedTitle": "Los resultados aún no están desbloqueados",
+    "lockedBody": "Los resultados completos de su hijo/a se desbloquean cuando se complete la compra de FormMaps.",
+    "unavailable": "Los resultados no están disponibles en este momento."
   }
 }

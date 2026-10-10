@@ -146,8 +146,43 @@ export default function SubscriptionsPage() {
         </p>
       </div>
 
+      {/* Complimentary access (audit E5): a Super Admin grant — no plan, no billing, nothing to cancel. */}
+      {subStatus?.isComplimentary && (
+        <div data-testid="complimentary-banner" style={{
+          display: "flex", alignItems: "center", gap: 12,
+          padding: "14px 16px", borderRadius: 8, marginBottom: 20,
+          background: "var(--admin-bg-card)", border: "1px solid var(--admin-border-default)",
+        }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: "50%",
+            background: "var(--admin-accent-bg-green)", border: "1px solid var(--admin-accent-border-green)",
+            display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+          }}>
+            <CheckCircle2 style={{ width: 18, height: 18, color: "var(--admin-accent-green)" }} />
+          </div>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "var(--admin-font-primary)" }}>
+              {t("coach:subscriptions.active.complimentaryTitle")}
+            </div>
+            {subStatus.expiryDate && (
+              <div style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginTop: 2 }}>
+                {t("coach:subscriptions.active.complimentaryUntil", { date: new Date(subStatus.expiryDate).toLocaleDateString() })}
+              </div>
+            )}
+          </div>
+          <Badge style={{
+            background: "var(--admin-accent-bg-green)",
+            color: "var(--admin-accent-green)",
+            border: "1px solid var(--admin-accent-border-green)",
+            fontSize: 11, fontWeight: 600,
+          }}>
+            {t("coach:subscriptions.active.complimentary")}
+          </Badge>
+        </div>
+      )}
+
       {/* Active subscription banner */}
-      {hasActive && currentPlanId && (
+      {hasActive && currentPlanId && !subStatus?.isComplimentary && (
         <div style={{
           display: "flex", alignItems: "center", gap: 12,
           padding: "14px 16px", borderRadius: 8, marginBottom: 20,

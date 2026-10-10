@@ -9,7 +9,6 @@ import {
   GraduationCap,
   TrendingUp,
   Target,
-  Clock,
   CheckCircle2,
   AlertTriangle,
   Award,
@@ -19,16 +18,29 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useChildProgress } from "@/hooks/useParentPortalQueries";
+import { useChildProgress, useChildResults } from "@/hooks/useParentPortalQueries";
+import { useChildCoursePlan } from "@/hooks/useGraduationPlanQueries";
 import { ChildPlanTab } from "./_components/ChildPlanTab";
+import { ChildResultsTab } from "./_components/ChildResultsTab";
 
 export default function ChildProgressPage() {
-  const { t } = useTranslation("parent");
+  const { t, i18n } = useTranslation("parent");
   const router = useRouter();
   const params = useParams();
   const studentId = params.id as string;
 
+  const lang: "es" | "en" = i18n.language?.startsWith("es") ? "es" : "en";
   const { data: progress, isLoading } = useChildProgress(studentId);
+  const results = useChildResults(studentId, lang);
+  // The goal the student set in their graduation plan — real data, or an honest "not set yet".
+  const { data: coursePlan } = useChildCoursePlan(studentId);
+  const careerGoal = coursePlan?.target
+    ? [coursePlan.target.major, coursePlan.target.universityName].filter(Boolean).join(" · ")
+    : "";
+  // Recent activity = the assessments the child finished, newest first (from the results above).
+  const recentActivity = (results.data?.assessments ?? [])
+    .filter((a) => a.status === "completed" && a.completedAt)
+    .sort((a, b) => new Date(b.completedAt!).getTime() - new Date(a.completedAt!).getTime());
 
   if (isLoading) {
     return (
@@ -137,7 +149,7 @@ export default function ChildProgressPage() {
             <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{t("progress.careerPath")}</span>
           </div>
           <p className="text-lg font-bold text-foreground tracking-tight truncate">
-            {progress.careerPath || t("progress.careerPathNotSet")}
+            {careerGoal || t("progress.careerPathNotSet")}
           </p>
         </div>
 
@@ -179,101 +191,51 @@ export default function ChildProgressPage() {
       </div>
 
       {/* Tabs */}
-      <Tabs defaultValue="activity">
+      <Tabs defaultValue="results">
         <TabsList>
+          <TabsTrigger value="results">{t("results.tab")}</TabsTrigger>
           <TabsTrigger value="activity">
             {t("progress.recentActivity")}
-          </TabsTrigger>
-          <TabsTrigger value="actions">
-            {t("progress.pendingActions")}
           </TabsTrigger>
           <TabsTrigger value="course-plan">
             {t("progress.coursePlan")}
           </TabsTrigger>
         </TabsList>
 
+        <ChildResultsTab
+          studentId={studentId}
+          lang={lang}
+          results={results.data}
+          isLoading={results.isLoading}
+          error={results.error}
+        />
+
         <TabsContent value="activity" className="mt-4">
           <div className="dash-card p-4">
-            {progress.recentActivity && progress.recentActivity.length > 0 ? (
+            {recentActivity.length > 0 ? (
               <div className="space-y-4">
-                {progress.recentActivity.map(
-                  (
-                    activity: { id: string; type: string; date: string; description: string },
-                    index: number
-                  ) => (
-                    <div
-                      key={activity.id || index}
-                      className="flex items-start gap-3 pb-3 border-b border-[var(--border)] last:border-0"
-                    >
-                      <div className="mt-1">
-                        <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground text-sm">
-                          {activity.description}
-                        </p>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          {new Date(activity.date).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="text-xs">
-                        {activity.type}
-                      </Badge>
+                {recentActivity.map((a) => (
+                  <div
+                    key={a.key}
+                    className="flex items-start gap-3 pb-3 border-b border-[var(--border)] last:border-0"
+                  >
+                    <div className="mt-1">
+                      <CheckCircle2 className="h-4 w-4 text-emerald-500" />
                     </div>
-                  )
-                )}
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground text-sm">
+                        {t("progress.completedAssessment", { title: a.title })}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {new Date(a.completedAt!).toLocaleDateString(i18n.language)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
               </div>
             ) : (
               <p className="text-muted-foreground text-center py-8">
                 {t("progress.noActivity")}
-              </p>
-            )}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="actions" className="mt-4">
-          <div className="dash-card p-4">
-            {progress.pendingActions && progress.pendingActions.length > 0 ? (
-              <div className="space-y-3">
-                {progress.pendingActions.map(
-                  (
-                    action: { id: string; type: string; title: string; description: string; deadline?: string; actionUrl?: string },
-                    index: number
-                  ) => (
-                    <div
-                      key={action.id || index}
-                      className="flex items-center justify-between p-3 bg-amber-500/10 rounded-lg"
-                    >
-                      <div className="flex items-center gap-3">
-                        <Clock className="h-4 w-4 text-amber-500" />
-                        <div>
-                          <p className="font-medium text-foreground text-sm">
-                            {action.title}
-                          </p>
-                          {action.deadline && (
-                            <p className="text-xs text-muted-foreground">
-                              {t("progress.dueBy")}:{" "}
-                              {new Date(action.deadline).toLocaleDateString()}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                      {action.actionUrl && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => router.push(action.actionUrl!)}
-                        >
-                          {t("progress.action")}
-                        </Button>
-                      )}
-                    </div>
-                  )
-                )}
-              </div>
-            ) : (
-              <p className="text-muted-foreground text-center py-8">
-                {t("progress.noActions")}
               </p>
             )}
           </div>

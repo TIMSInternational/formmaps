@@ -200,6 +200,9 @@ public static class DependencyInjection
         // A safety action must not depend on the actor being able to SEE the target in the tenant sense;
         // formmaps#80 is what happens when it does. See MessagesRepository.cs:518 for the long form.
         services.AddScoped<FormMaps.Application.Moderation.IModerationRepository, FormMaps.Infrastructure.Moderation.ModerationRepository>();
+        // Audit D3: manual monthly coach payouts (routes/admin.ts /payouts/monthly, /generate, /:id/approve). Caller's
+        // session; the endpoint admits Super Admins only, whose session is the bypass plan.
+        services.AddScoped<FormMaps.Application.Billing.Payouts.ICoachPayoutRepository, FormMaps.Infrastructure.Billing.CoachPayoutRepository>();
         // formmaps#65: product telemetry ingest (routes/telemetry.ts:45). Opens on the CALLER's Identity
         // session — telemetry_events IS policied in production (003-fk-users.sql) and every row it writes
         // belongs to the caller, so there is nothing here that wants a bypass.
@@ -487,6 +490,11 @@ public static class DependencyInjection
                 sp.GetRequiredService<SchoolContractCache>(),
                 sp.GetRequiredService<TimeProvider>(),
                 graceDays));
+        // audit E5: Super Admin complimentary grants (subscription status endpoint).
+        services.AddScoped<IComplimentaryAccessReader>(sp =>
+            new ComplimentaryAccessReader(
+                sp.GetRequiredService<IFormMapsDatabaseSessionFactory>(),
+                sp.GetRequiredService<TimeProvider>()));
 
         return services;
     }

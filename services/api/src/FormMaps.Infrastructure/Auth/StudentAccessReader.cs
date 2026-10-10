@@ -139,10 +139,18 @@ public sealed class StudentAccessReader(
             }
         }
 
-        return StudentAccessRules.Evaluate(sub, now, graceDays);
+        var fromSubscription = StudentAccessRules.Evaluate(sub, now, graceDays);
+        if (fromSubscription.FullPlatform && fromSubscription.PaidResults)
+        {
+            return fromSubscription;
+        }
+
+        return StudentAccessRules.WithComplimentary(
+            fromSubscription,
+            await ComplimentaryAccessReader.ReadActiveExpiryAsync(session, userId, schoolId, now, cancellationToken));
     }
 
-    private static DbCommand Create(FormMapsDatabaseSession session, string sql, string id)
+    internal static DbCommand Create(FormMapsDatabaseSession session, string sql, string id)
     {
         var command = session.Connection.CreateCommand();
         command.Transaction = session.Transaction;
@@ -160,7 +168,7 @@ public sealed class StudentAccessReader(
         return reader.IsDBNull(ordinal) ? null : reader.GetString(ordinal);
     }
 
-    private static DateTimeOffset? ReadNullableUtc(DbDataReader reader, string name)
+    internal static DateTimeOffset? ReadNullableUtc(DbDataReader reader, string name)
     {
         var ordinal = reader.GetOrdinal(name);
         if (reader.IsDBNull(ordinal))
@@ -170,5 +178,63 @@ public sealed class StudentAccessReader(
 
         var value = reader.GetDateTime(ordinal);
         return new DateTimeOffset(DateTime.SpecifyKind(value, DateTimeKind.Utc));
+    }
+}
+
+/// <summary>
+/// <see cref="IComplimentaryAccessReader"/> over raw Npgsql under the caller's read-only RLS session (audit E5). The
+/// SQL + window live here once; <see cref="StudentAccessReader"/> runs the same query in its own session.
+/// </summary>
+public sealed class ComplimentaryAccessReader(
+    IFormMapsDatabaseSessionFactory databaseSessionFactory,
+    TimeProvider timeProvider) : IComplimentaryAccessReader
+{
+    // audit E5: latest expiry among the active complimentary grants covering the student (own or school's). The
+    // same window as StudentAccessRules.IsComplimentaryGrantActive. RLS (prisma/rls/012) lets the student's own
+    // session read exactly these rows.
+    private const string ComplimentarySql = """
+        SELECT MAX("expiresAt") AS "expiresAt"
+        FROM "complimentary_access_grants"
+        WHERE "revokedAt" IS NULL AND "startsAt" <= @now AND "expiresAt" > @now
+          AND ("userId" = @id OR ("schoolId" IS NOT NULL AND "schoolId" = @school))
+        """;
+
+    public async Task<DateTimeOffset?> GetActiveExpiryAsync(
+        RequestContext context, string userId, string? schoolId, CancellationToken cancellationToken = default)
+    {
+        await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
+        return await ReadActiveExpiryAsync(session, userId, schoolId, timeProvider.GetUtcNow(), cancellationToken);
+    }
+
+    /// <summary>
+    /// Null when no grant covers the student. A missing table (the migration not applied yet, SQLSTATE 42P01) counts
+    /// as "no grant" — legacy findActiveComplimentaryExpiry fails soft the same way — so it can never lock anyone
+    /// out. Any other DB error propagates (the filter fails closed, 503). Callers run it as the LAST statement of
+    /// their session (a caught error aborts the transaction).
+    /// </summary>
+    public static async Task<DateTimeOffset?> ReadActiveExpiryAsync(
+        FormMapsDatabaseSession session, string userId, string? schoolId, DateTimeOffset now, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await using var command = StudentAccessReader.Create(session, ComplimentarySql, userId);
+            AddParameter(command, "school", (object?)schoolId ?? DBNull.Value);
+            // timestamp(3) without time zone holds UTC wall-clock: pass an Unspecified DateTime (Npgsql rejects Kind=Utc here).
+            AddParameter(command, "now", DateTime.SpecifyKind(now.UtcDateTime, DateTimeKind.Unspecified));
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            return await reader.ReadAsync(cancellationToken) ? StudentAccessReader.ReadNullableUtc(reader, "expiresAt") : null;
+        }
+        catch (DbException ex) when (ex.SqlState == "42P01")
+        {
+            return null;
+        }
+    }
+
+    private static void AddParameter(DbCommand command, string name, object value)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value;
+        command.Parameters.Add(parameter);
     }
 }

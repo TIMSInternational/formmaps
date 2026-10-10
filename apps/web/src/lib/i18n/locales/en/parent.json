@@ -45,7 +45,7 @@
     "childNotFound": "Child not found",
     "gpa": "GPA",
     "credits": "Credits",
-    "careerPath": "Career Path",
+    "careerPath": "Career Goal",
     "careerPathNotSet": "Not Set",
     "assessments": "Assessments",
     "assessmentPending": "Pending",
@@ -54,12 +54,9 @@
     "of": "of",
     "creditsRequired": "credits required for graduation",
     "recentActivity": "Recent Activity",
-    "pendingActions": "Pending Actions",
     "coursePlan": "Course Plan",
     "noActivity": "No recent activity",
-    "noActions": "No pending actions",
-    "dueBy": "Due by",
-    "action": "Action"
+    "completedAssessment": "Completed {{title}}"
   },
   "evaluations": {
     "badge": "Parent",
@@ -152,5 +149,23 @@
       "passwordMismatch": "Passwords do not match"
     },
     "goToLogin": "Go to Login"
+  },
+  "results": {
+    "tab": "Results",
+    "reportTitle": "Career & university report",
+    "reportReady": "A full PDF of your child's results, careers and universities.",
+    "reportNotReady": "Available once your child has completed their assessments.",
+    "download": "Download report",
+    "downloading": "Preparing…",
+    "downloadFailed": "The report could not be downloaded. Please try again.",
+    "completedOn": "Completed on {{date}}",
+    "status": {
+      "completed": "Completed",
+      "in_progress": "In progress",
+      "not_started": "Not started"
+    },
+    "lockedTitle": "Results not unlocked yet",
+    "lockedBody": "Your child's full results unlock once their FormMaps purchase is complete.",
+    "unavailable": "Results are not available right now."
   }
 }

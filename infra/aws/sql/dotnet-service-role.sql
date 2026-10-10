@@ -174,6 +174,9 @@ REVOKE CREATE ON SCHEMA public FROM formmaps_dotnet_svc;
 -- ---------------------------------------------------------------------------
 GRANT SELECT ON TABLE
     public."bookings",
+    -- audit E5: StudentAccessReader reads a student's (or their school's) unexpired grant for the paywall.
+    -- Grants are created/revoked only by the Node Super Admin routes, so SELECT is all .NET needs.
+    public."complimentary_access_grants",
     -- NOTE: "category_requirements" moved to its own SELECT/INSERT/DELETE tier below (issue #55) --
     -- the graduation-rules PUT replaces these rows wholesale (deleteMany + createMany), which needs
     -- DELETE. Read-only here would 42501 every rule-set edit.
@@ -201,6 +204,8 @@ GRANT SELECT ON TABLE
     -- replaces the rule set's CHILD rows, never the rule set itself.
     public."isams_sync_jobs",
     public."lia_questions",
+    -- audit D3: CoachPayoutRepository reads a booking's payment status (refund/dispute exclusion); never writes it.
+    public."payments",
     public."pca_evaluations",
     public."pca_exams",
     public."pca_questions",
@@ -338,6 +343,9 @@ GRANT SELECT, INSERT, UPDATE ON TABLE
     -- the only auth table the service DELETEs from.
     -- ---------------------------------------------------------------------
     public."password_reset_tokens",
+    -- audit D3: manual coach payouts. Generate INSERTs one row per coach/month/currency and re-syncs a
+    -- still-pending row (UPDATE); Mark-as-paid UPDATEs status/processedAt/transactionId. Never deleted.
+    public."payouts",
     public."pca_exam_answers",
     public."pca_exam_sessions",
     public."personality_assessment_sessions",

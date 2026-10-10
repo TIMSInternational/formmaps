@@ -209,6 +209,11 @@ public sealed class DbRoleGrantsTests(DbRoleDatabaseFixture fixture) : IClassFix
     // so this table moved out of the SELECT-only tier -- but to SELECT+UPDATE, NOT the SELECT/INSERT/UPDATE
     // tier: .NET has no code path that creates a subscription and must not be able to mint one.
     [InlineData("user_subscriptions", true, false, true, false)]
+    // audit D3: manual coach payouts write payouts (generate + mark paid, never delete) and only read payments.
+    [InlineData("payouts", true, true, true, false)]
+    [InlineData("payments", true, false, false, false)]
+    // audit E5: the paywall only reads complimentary grants; Node's Super Admin routes write them.
+    [InlineData("complimentary_access_grants", true, false, false, false)]
     public async Task Domain9a_billing_tables_have_exactly_the_privileges_the_service_needs(
         string table, bool canSelect, bool canInsert, bool canUpdate, bool canDelete)
     {

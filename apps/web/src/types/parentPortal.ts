@@ -16,25 +16,24 @@ export interface ChildProgressSummary {
     completed: number;
     total: number;
   };
-  careerPath: string;
-  recentActivity: ParentActivityItem[];
-  pendingActions: ParentPendingAction[];
 }
 
-export interface ParentActivityItem {
-  id: string;
-  date: string;
-  type: "grade" | "assessment" | "portfolio" | "career" | "course";
-  description: string;
-}
-
-export interface ParentPendingAction {
-  id: string;
-  type: "360_evaluation" | "consent" | "meeting";
+/** One assessment as a parent sees it (audit E1): status, date and score summary — never answers. */
+export interface ChildAssessmentResult {
+  key: string;
   title: string;
-  description: string;
-  deadline?: string;
-  actionUrl?: string;
+  status: "not_started" | "in_progress" | "completed";
+  completedAt: string | null;
+  summary: { label: string; value: string }[];
+}
+
+/** GET /api/v1/parent/children/:studentId/results. */
+export interface ChildResults {
+  student: { id: string; name: string; gradeLevel: string | null; schoolName: string | null };
+  generatedAt: string;
+  assessments: ChildAssessmentResult[];
+  /** Whether the career report PDF can be downloaded yet. */
+  report: { available: boolean };
 }
 
 export interface ParentProfile {

@@ -168,7 +168,8 @@ public static class BillingEndpoints
     /// </remarks>
     private static async Task<IResult> GetStatusAsync(
         IRequestContextAccessor accessor, IProtectedRequestGuard guard, ILiveSubscriptionReader reader,
-        ILiveSchoolAffiliationReader schoolReader, TimeProvider timeProvider, CancellationToken cancellationToken)
+        ILiveSchoolAffiliationReader schoolReader, IComplimentaryAccessReader complimentaryReader,
+        TimeProvider timeProvider, CancellationToken cancellationToken)
     {
         var context = accessor.Current;
         var decision = guard.RequireIdentity(context);
@@ -188,6 +189,27 @@ public static class BillingEndpoints
         var row = await reader.GetForUserAsync(context, userId, cancellationToken);
         var hasAccess = row is not null && SubscriptionAccess.GrantsAccess(
             row.Status, row.IsActive, row.NextBillingDate, timeProvider.GetUtcNow(), SubscriptionAccess.DefaultGraceDays);
+
+        // audit 2026-10-09 E5 (legacy user.ts "complimentary" branch): unless a PAID subscription already grants
+        // access, a Super Admin complimentary grant answers as full access with planId "complimentary" and its expiry.
+        // Never a subscription row, so nothing here can be charged or count as revenue.
+        if (!(hasAccess && string.Equals(row!.Status, "active", StringComparison.Ordinal)))
+        {
+            var compExpiresAt = await complimentaryReader.GetActiveExpiryAsync(context, userId, schoolId, cancellationToken);
+            if (compExpiresAt is { } expiresAt)
+            {
+                return Results.Ok(new
+                {
+                    success = true,
+                    data = new
+                    {
+                        hasActiveSubscription = true, hasFullPlatform = true, hasPaidAccess = true, scope = "full_platform",
+                        planId = "complimentary", status = "active", expiryDate = (DateTimeOffset?)expiresAt,
+                        isComplimentary = true, cancelAtPeriodEnd = false,
+                    },
+                });
+            }
+        }
 
         return Results.Ok(new
         {

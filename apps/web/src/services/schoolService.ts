@@ -27,6 +27,7 @@ export async function getSchools(
 // audit 2026-10-09 E4 — Super Admin coverage report (GET /api/v1/admin/coverage, Node).
 export type SchoolCoverageReason =
   | "active_contract"
+  | "complimentary"
   | "school_inactive"
   | "status_not_active"
   | "no_end_date"
@@ -43,9 +44,13 @@ export interface SchoolCoverageRow {
   timezone: string;
   covered: boolean;
   reason: SchoolCoverageReason;
+  /** audit E5: end of the school's active complimentary grant, or null. */
+  complimentaryUntil?: string | null;
   students: number;
   coveredBySchool: number;
   coveredBySubscription: number;
+  /** audit E5: students covered only by their own complimentary grant. */
+  coveredByComplimentary?: number;
   notCovered: number;
 }
 
