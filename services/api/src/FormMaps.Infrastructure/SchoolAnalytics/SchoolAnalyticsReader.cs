@@ -1,7 +1,10 @@
 using System.Data.Common;
 using FormMaps.Application.Auth;
 using FormMaps.Application.Data;
+using FormMaps.Application.Gradebook;
 using FormMaps.Application.SchoolAnalytics;
+using FormMaps.Infrastructure.Gradebook;
+using FormMaps.Infrastructure.SchoolAdmin;
 
 namespace FormMaps.Infrastructure.SchoolAnalytics;
 
@@ -49,35 +52,16 @@ public sealed class SchoolAnalyticsReader(IFormMapsDatabaseSessionFactory databa
 
         var ids = studentIds.ToArray();
 
-        // distinctPcaUserCount = COUNT(DISTINCT "userId") in pca_evaluations for these students (0 when none).
-        var distinctPcaUserCount = ids.Length == 0
-            ? 0
-            : await ScalarIntAsync(session, """
-                SELECT COUNT(DISTINCT "userId")::int FROM "pca_evaluations" WHERE "userId" = ANY(@ids)
-                """, ids, cancellationToken);
-        var assessmentCompletionRate = totalStudents > 0
-            ? (int)SchoolAnalyticsMath.JsRound(distinctPcaUserCount * 100.0 / totalStudents)
-            : 0;
+        // Audit D2: the same tally as the dashboard and the assessment-status card (was "has a pca_evaluations
+        // row" over every student account, deactivated ones included). JS Math.round(completionRate).
+        var counts = await SchoolAssessmentTally.ComputeAsync(session, schoolId, cancellationToken);
+        var assessmentCompletionRate = (int)SchoolAnalyticsMath.JsRound(counts.CompletionRate);
 
-        // GPA aggregate: raw (studentId, grade) rows -> per-student mean in the pure math (skip unmapped grades).
-        var gradeRows = new List<(string StudentId, string? Grade)>();
-        if (ids.Length > 0)
-        {
-            await using var command = Command(session, """
-                SELECT "studentId", "grade"
-                FROM "student_grades"
-                WHERE "schoolId" = @school AND "studentId" = ANY(@ids) AND "status" = 'completed' AND "grade" IS NOT NULL
-                """);
-            AddParameter(command, "school", schoolId);
-            AddParameter(command, "ids", ids);
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                gradeRows.Add((reader.GetString(0), reader.IsDBNull(1) ? null : reader.GetString(1)));
-            }
-        }
-
-        var gpa = SchoolAnalyticsMath.AggregateGpa(gradeRows);
+        // GPA aggregate through the school's configured GPA engine (audit D9).
+        var gpaByStudent = ids.Length == 0
+            ? new Dictionary<string, double>(StringComparer.Ordinal)
+            : await GpaByStudentAsync(session, schoolId, ids, cancellationToken);
+        var gpa = SchoolAnalyticsMath.AggregateStudentGpas(gpaByStudent.Values);
 
         // counselorCoverage = min(100, round(distinct-assigned-students * 100 / totalStudents)).
         var assignedDistinct = ids.Length == 0
@@ -205,35 +189,8 @@ public sealed class SchoolAnalyticsReader(IFormMapsDatabaseSessionFactory databa
 
         var ids = students.Select(s => s.Id).ToArray();
 
-        // per-student mapped-grade points (skip unmapped) -> mean (or 0 when the student has none).
-        var pointsByStudent = new Dictionary<string, List<double>>(StringComparer.Ordinal);
-        await using (var command = Command(session, """
-            SELECT "studentId", "grade"
-            FROM "student_grades"
-            WHERE "schoolId" = @school AND "studentId" = ANY(@ids) AND "status" = 'completed' AND "grade" IS NOT NULL
-            """))
-        {
-            AddParameter(command, "school", schoolId);
-            AddParameter(command, "ids", ids);
-            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
-            while (await reader.ReadAsync(cancellationToken))
-            {
-                var value = SchoolAnalyticsMath.MapGrade(reader.IsDBNull(1) ? null : reader.GetString(1));
-                if (value is null)
-                {
-                    continue;
-                }
-
-                var studentId = reader.GetString(0);
-                if (!pointsByStudent.TryGetValue(studentId, out var list))
-                {
-                    list = [];
-                    pointsByStudent[studentId] = list;
-                }
-
-                list.Add(value.Value);
-            }
-        }
+        // Per-student GPA through the configured engine (audit D9); 0 when the student has none.
+        var gpaByStudent = await GpaByStudentAsync(session, schoolId, ids, cancellationToken);
 
         var pcaUserIds = new HashSet<string>(StringComparer.Ordinal);
         await using (var command = Command(session, """
@@ -252,9 +209,7 @@ public sealed class SchoolAnalyticsReader(IFormMapsDatabaseSessionFactory databa
         // take top `limit`, drop gpa from the output.
         var scored = students.Select(s =>
         {
-            var gpa = pointsByStudent.TryGetValue(s.Id, out var points) && points.Count > 0
-                ? SchoolAnalyticsMath.Mean(points)
-                : 0.0;
+            var gpa = gpaByStudent.TryGetValue(s.Id, out var g) ? g : 0.0;
             return (
                 Row: new TopPerformer(
                     StudentId: s.Id,
@@ -310,6 +265,52 @@ public sealed class SchoolAnalyticsReader(IFormMapsDatabaseSessionFactory databa
                 sink.Add(reader.GetDateTime(0));
             }
         }
+    }
+
+    // Unweighted GPA per student via TranscriptDataQuery.ResolveGpaConfigAsync + GpaComputation.ComputeGpa — the
+    // numbers the transcript shows (port of Node gpaByStudent). A grade with no credits recorded counts as 1.
+    private static async Task<Dictionary<string, double>> GpaByStudentAsync(
+        FormMapsDatabaseSession session, string schoolId, string[] ids, CancellationToken cancellationToken)
+    {
+        var (unweighted, bonuses) = await TranscriptDataQuery.ResolveGpaConfigAsync(session, schoolId, cancellationToken);
+        var rows = new Dictionary<string, List<GpaGradeInput>>(StringComparer.Ordinal);
+        await using (var command = Command(session, """
+            SELECT "studentId", "grade", "credits"::float8, "courseLevel"
+            FROM "student_grades"
+            WHERE "schoolId" = @school AND "studentId" = ANY(@ids) AND "status" = 'completed' AND "grade" IS NOT NULL
+            """))
+        {
+            AddParameter(command, "school", schoolId);
+            AddParameter(command, "ids", ids);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+            while (await reader.ReadAsync(cancellationToken))
+            {
+                var studentId = reader.GetString(0);
+                var credits = reader.IsDBNull(2) ? 0 : reader.GetDouble(2);
+                if (!rows.TryGetValue(studentId, out var list))
+                {
+                    list = [];
+                    rows[studentId] = list;
+                }
+
+                list.Add(new GpaGradeInput(
+                    reader.IsDBNull(1) ? null : reader.GetString(1),
+                    credits > 0 ? credits : 1,
+                    reader.IsDBNull(3) ? null : reader.GetString(3)));
+            }
+        }
+
+        var result = new Dictionary<string, double>(StringComparer.Ordinal);
+        foreach (var (studentId, grades) in rows)
+        {
+            var gpa = GpaComputation.ComputeGpa(grades, unweighted, bonuses).GpaUnweighted;
+            if (gpa is not null)
+            {
+                result[studentId] = gpa.Value;
+            }
+        }
+
+        return result;
     }
 
     private static DbCommand Command(FormMapsDatabaseSession session, string sql)

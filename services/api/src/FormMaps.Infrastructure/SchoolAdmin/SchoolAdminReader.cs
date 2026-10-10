@@ -235,27 +235,10 @@ public sealed class SchoolAdminReader(
     {
         await using var session = await databaseSessionFactory.OpenReadOnlyAsync(context, cancellationToken);
 
-        // totalStudents = count of school students (no isActive filter — legacy omits it here).
-        var studentIds = await StudentIdsAsync(session, schoolId, activeOnly: false, cancellationToken);
-        var total = studentIds.Count;
-
-        var completed = 0;
-        if (total > 0)
-        {
-            // completedUserIds = distinct students with >=1 pca_evaluations row (EXISTENCE, not isCompleted).
-            await using var command = Command(session, """
-                SELECT COUNT(DISTINCT "userId") FROM "pca_evaluations" WHERE "userId" = ANY(@ids)
-                """);
-            AddArray(command, "ids", studentIds);
-            completed = Convert.ToInt32(await command.ExecuteScalarAsync(cancellationToken), CultureInfo.InvariantCulture);
-        }
-
-        var notStarted = total - completed;
-        var completionRate = total > 0
-            ? Math.Round(completed * 100d / total * 100, MidpointRounding.AwayFromZero) / 100
-            : 0d;
-
-        return new AssessmentStatus(total, notStarted, 0, completed, completionRate);
+        // Audit D2: was "has a pca_evaluations row" over every student account (deactivated included) with
+        // inProgress hardcoded to 0. Now the shared school tally (completed = AllDone over active students).
+        var c = await SchoolAssessmentTally.ComputeAsync(session, schoolId, cancellationToken);
+        return new AssessmentStatus(c.TotalStudents, c.NotStarted, c.InProgress, c.Completed, c.CompletionRate);
     }
 
     public async Task<IReadOnlyList<AssessmentScheduleRow>> GetSchedulesAsync(
@@ -612,32 +595,73 @@ public sealed class SchoolAdminReader(
             }
         }
 
-        var pipeline = students.Select(s =>
+        // Real PCA (TIMS DISC survey): a row = started, isCompleted = DISC results observed (insights-gate rule).
+        var pcaStatusByUser = new Dictionary<string, string>(StringComparer.Ordinal);
+        var personalityDone = new HashSet<string>(StringComparer.Ordinal);
+        if (ids.Length > 0)
         {
-            var pcaMap = pcaByUser.GetValueOrDefault(s.Id);
-            var pca = new Dictionary<string, string>(StringComparer.Ordinal);
-            foreach (var t in ExamTypes)
+            await using (var command = Command(session, """
+                SELECT "userId", "isCompleted" FROM "pca_evaluations"
+                WHERE "userId" = ANY(@ids) AND "isActive" = true
+                """))
             {
-                var status = pcaMap?.GetValueOrDefault(t);
-                pca[t] = status == "Completed" ? "done" : status == "InProgress" ? "in_progress" : "not_started";
+                AddArray(command, "ids", ids);
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    var userId = reader.GetString(0);
+                    if (reader.GetBoolean(1))
+                    {
+                        pcaStatusByUser[userId] = "done";
+                    }
+                    else
+                    {
+                        pcaStatusByUser.TryAdd(userId, "in_progress");
+                    }
+                }
             }
 
-            var milDone = ExamTypes.All(t => pcaMap?.GetValueOrDefault(t) == "Completed");
+            await using (var command = Command(session, """
+                SELECT DISTINCT "user_id" FROM "personality_assessment_sessions"
+                WHERE "user_id" = ANY(@ids) AND "status" = 'completed' AND "is_active" = true
+                """))
+            {
+                AddArray(command, "ids", ids);
+                await using var reader = await command.ExecuteReaderAsync(cancellationToken);
+                while (await reader.ReadAsync(cancellationToken))
+                {
+                    personalityDone.Add(reader.GetString(0));
+                }
+            }
+        }
+
+        var pipeline = students.Select(s =>
+        {
+            var liaMap = pcaByUser.GetValueOrDefault(s.Id);
+            var lia = new Dictionary<string, string>(StringComparer.Ordinal);
+            foreach (var t in ExamTypes)
+            {
+                var status = liaMap?.GetValueOrDefault(t);
+                lia[t] = status == "Completed" ? "done" : status == "InProgress" ? "in_progress" : "not_started";
+            }
+
             var hasEval = evalByUser.TryGetValue(s.Id, out var evalData);
+            // Done = the completion gate's threshold, min(total, 3) finished evaluations (audit D2).
             var eval360 = !hasEval
                 ? "not_started"
-                : evalData.Completed >= evalData.Total && evalData.Total > 0 ? "done" : "in_progress";
+                : evalData.Total > 0 && evalData.Completed >= Math.Min(evalData.Total, 3) ? "done" : "in_progress";
 
             return new PipelineRow(
                 Id: s.Id,
                 Name: s.Name,
                 Email: s.Email,
                 GradeLevel: s.GradeLevel,
-                Pca: pca,
-                Mil: milDone ? "done" : "not_started",
+                Lia: lia,
+                PcaStatus: pcaStatusByUser.GetValueOrDefault(s.Id) ?? "not_started",
                 Eval360: eval360,
                 Eval360Detail: new PipelineEvalDetail(
-                    hasEval ? evalData.Total : 0, hasEval ? evalData.Completed : 0));
+                    hasEval ? evalData.Total : 0, hasEval ? evalData.Completed : 0),
+                Personality: personalityDone.Contains(s.Id) ? "done" : "not_started");
         });
 
         // if (grade) -> gradeLevel === grade  (JS truthiness: null/0/NaN drop the filter).
@@ -649,7 +673,8 @@ public sealed class SchoolAdminReader(
         if (statusFilter == "incomplete")
         {
             pipeline = pipeline.Where(p =>
-                p.Pca.Values.Any(v => v != "done") || p.Mil != "done" || p.Eval360 != "done");
+                p.Lia.Values.Any(v => v != "done") || p.PcaStatus != "done" || p.Eval360 != "done"
+                || p.Personality != "done");
         }
 
         return pipeline.ToList();

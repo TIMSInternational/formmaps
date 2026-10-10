@@ -34,11 +34,20 @@ function AnimatedValue({ value }: { value: string | number }) {
 
   useEffect(() => {
     if (isNaN(target)) { setDisplay(numStr); return; }
+    // requestAnimationFrame never runs in a background tab, so a count-up started there stayed
+    // at "0" (the dashboard showed Total Users 0 and "-0%"). Skip the animation when it cannot
+    // be seen, and always land on the real value.
+    const reduceMotion = typeof window.matchMedia === "function"
+      && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (document.visibilityState !== "visible" || reduceMotion) { setDisplay(numStr); return; }
 
     const duration = 800;
     const start = performance.now();
+    let done = false;
+    let frame = 0;
 
     const tick = (now: number) => {
+      if (done) return;
       const elapsed = now - start;
       const progress = Math.min(elapsed / duration, 1);
       // ease out cubic
@@ -52,10 +61,14 @@ function AnimatedValue({ value }: { value: string | number }) {
         })
       );
 
-      if (progress < 1) requestAnimationFrame(tick);
+      if (progress < 1) frame = requestAnimationFrame(tick);
+      else done = true;
     };
 
-    requestAnimationFrame(tick);
+    frame = requestAnimationFrame(tick);
+    // If frames stop (tab hidden mid-animation), still end on the exact value.
+    const settle = window.setTimeout(() => { done = true; setDisplay(numStr); }, duration + 200);
+    return () => { done = true; cancelAnimationFrame(frame); window.clearTimeout(settle); };
   }, [target, numStr, decimalPlaces]);
 
   return <span>{prefix}{display}{suffix}</span>;

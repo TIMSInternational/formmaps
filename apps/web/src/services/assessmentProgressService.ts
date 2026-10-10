@@ -383,6 +383,19 @@ export async function getUserAssessmentProgress(
 /**
  * Get assessment progress summary for dashboard
  */
+/**
+ * "N of M assessments completed" — the one rule for the student dashboard card and the Assessments page
+ * header (audit D13: the page counted its own card statuses, the dashboard the server's verdict). A
+ * legacyUnlockGrandfathered student is 100% by the server while completedAssessments stays 3 of 4, so the
+ * fraction follows the percentage.
+ */
+export function completionFraction(summary?: { overallCompletion?: number; completedAssessments?: number; totalAssessments?: number } | null) {
+  const total = summary?.totalAssessments ?? 4;
+  const percent = summary?.overallCompletion ?? 0;
+  const completed = percent === 100 ? total : (summary?.completedAssessments ?? 0);
+  return { completed, total, percent };
+}
+
 export async function getDashboardAssessmentSummary(
   userId: string,
   language: "english" | "spanish" = "english"

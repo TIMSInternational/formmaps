@@ -132,7 +132,7 @@ public class SchoolReadsEndpointsTests
             Dashboard = new DashboardStats(
                 TotalStudents: 20, TotalCounselors: 3, TotalCourses: 12,
                 PendingRequests: 5, CompletedAssessments: 8,
-                AssessmentCompletionRate: 40.0, AverageScore: 81.3),
+                AssessmentCompletionRate: 40.0, AverageScore: 81.3, ActiveStudents: 17, PendingInvites: 3),
         };
         using var factory = new Factory(reader, new FakeScope(School));
         using var client = factory.CreateClient();
@@ -144,10 +144,10 @@ public class SchoolReadsEndpointsTests
         var data = doc.RootElement.GetProperty("data");
         Assert.Equal(10, data.EnumerateObject().Count());
         Assert.Equal(20, data.GetProperty("totalStudents").GetInt32());
-        Assert.Equal(20, data.GetProperty("activeStudents").GetInt32());    // = totalStudents
+        Assert.Equal(17, data.GetProperty("activeStudents").GetInt32());    // signed up (audit D2; was = totalStudents)
         Assert.Equal(3, data.GetProperty("totalCounselors").GetInt32());
         Assert.Equal(12, data.GetProperty("totalCourses").GetInt32());
-        Assert.Equal(5, data.GetProperty("pendingInvites").GetInt32());     // = pendingRequests
+        Assert.Equal(3, data.GetProperty("pendingInvites").GetInt32());     // not signed up (audit D2; was = pendingRequests)
         Assert.Equal(5, data.GetProperty("pendingRequests").GetInt32());
         Assert.Equal(8, data.GetProperty("completedAssessments").GetInt32());
         Assert.Equal(40.0, data.GetProperty("assessmentCompletionRate").GetDouble());

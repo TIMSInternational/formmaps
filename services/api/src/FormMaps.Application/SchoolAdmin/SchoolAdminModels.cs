@@ -114,18 +114,20 @@ public sealed record StudentReportEvalGroup(
     string? CompletedDate);
 
 /// <summary>
-/// One student's assessment-pipeline row (getAssessmentPipeline). <c>Pca</c> holds the five EXAM_TYPES in
-/// order, each "done" | "in_progress" | "not_started"; <c>Mil</c>/<c>Eval360</c> are the same-vocabulary
-/// rollups.
+/// One student's assessment-pipeline row (getAssessmentPipeline). <c>Lia</c> holds the five LIA/MIL subtests
+/// (EXAM_TYPES) in order, each "done" | "in_progress" | "not_started"; <c>PcaStatus</c> is the real PCA (TIMS
+/// DISC survey: a pca_evaluations row = started, isCompleted = done); <c>Eval360</c>/<c>Personality</c> use the
+/// same vocabulary. Audit D1: the subtests used to be returned as "pca" beside a "mil" rollup of the same five.
 /// </summary>
 public sealed record PipelineRow(
     string Id,
     string Name,
     string Email,
     int? GradeLevel,
-    IReadOnlyDictionary<string, string> Pca,
-    string Mil,
+    IReadOnlyDictionary<string, string> Lia,
+    string PcaStatus,
     string Eval360,
-    PipelineEvalDetail Eval360Detail);
+    PipelineEvalDetail Eval360Detail,
+    string Personality);
 
 public sealed record PipelineEvalDetail(int Total, int Completed);

@@ -15,8 +15,10 @@ export interface PipelineStudent {
   name: string;
   email: string;
   gradeLevel: number | null;
-  pca: Record<string, "done" | "in_progress" | "not_started">;
-  mil: "done" | "in_progress" | "not_started";
+  /** The five LIA (MIL) subtests. */
+  lia: Record<string, "done" | "in_progress" | "not_started">;
+  /** The real PCA (TIMS DISC survey). */
+  pcaStatus: "done" | "in_progress" | "not_started";
   eval360: "done" | "in_progress" | "not_started";
   eval360Detail: { total: number; completed: number };
   personality: "done" | "not_started";
@@ -25,10 +27,12 @@ export interface PipelineStudent {
 export interface InsightsData {
   hasEnoughData: boolean;
   message?: string;
+  /** Percent of students that must be complete before insights unlock (audit D8: 90 everywhere). */
+  threshold?: number;
   completion?: {
     total: number;
     complete: number;
-    byComponent: { lia: number; disc: number; eval360: number };
+    byComponent: { lia: number; disc: number; eval360: number; personality?: number };
   };
   aggregates?: {
     totalStudents: number;

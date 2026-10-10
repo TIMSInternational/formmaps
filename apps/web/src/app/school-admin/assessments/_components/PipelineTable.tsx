@@ -40,16 +40,17 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
   const { t } = useTranslation("school_admin");
   if (!student) return null;
 
-  const pcaEntries = Object.entries(student.pca);
-  const pcaDone = pcaEntries.filter(([, v]) => v === "done").length;
-  const pcaTotal = pcaEntries.length;
+  // The five subtests are the LIA (MIL); the PCA is the separate DISC survey (audit D1).
+  const liaEntries = Object.entries(student.lia);
+  const liaDone = liaEntries.filter(([, v]) => v === "done").length;
+  const liaTotal = liaEntries.length;
 
   const statusColor = (s: string) => s === "done" ? "#10b981" : s === "in_progress" ? "#f59e0b" : "#6b7280";
   const statusLabel = (s: string) => s === "done" ? t("counselor:assessments.statusCompleted") : s === "in_progress" ? t("counselor:assessments.statusInProgress") : t("counselor:assessments.statusNotStarted");
   const statusBg = (s: string) => s === "done" ? "rgba(16,185,129,0.1)" : s === "in_progress" ? "rgba(245,158,11,0.1)" : "rgba(107,114,128,0.1)";
 
-  const overallDone = pcaDone + (student.mil === "done" ? 1 : 0) + student.eval360Detail.completed + (student.personality === "done" ? 1 : 0);
-  const overallTotal = pcaTotal + 1 + (student.eval360Detail.total || 1) + 1;
+  const overallDone = liaDone + (student.pcaStatus === "done" ? 1 : 0) + student.eval360Detail.completed + (student.personality === "done" ? 1 : 0);
+  const overallTotal = liaTotal + 1 + (student.eval360Detail.total || 1) + 1;
   const overallPct = overallTotal > 0 ? Math.round((overallDone / overallTotal) * 100) : 0;
 
   return (
@@ -79,13 +80,13 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
             </div>
           </div>
 
-          {/* PCA Exams */}
+          {/* MIL / LIA subtests */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-              {t("counselor:assessments.pcaTitle")} ({pcaDone}/{pcaTotal})
+              {t("counselor:assessments.milTitle")} ({liaDone}/{liaTotal})
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {pcaEntries.map(([name, status]) => (
+              {liaEntries.map(([name, status]) => (
                 <div key={name} style={{
                   display: "flex", alignItems: "center", justifyContent: "space-between",
                   padding: "8px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
@@ -104,21 +105,21 @@ function StudentAssessmentDialog({ student, open, onOpenChange }: {
             </div>
           </div>
 
-          {/* MIL */}
+          {/* PCA (DISC survey) */}
           <div>
             <div style={{ fontSize: 11, fontWeight: 600, color: "var(--admin-font-tertiary)", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8 }}>
-              {t("counselor:assessments.milTitle")}
+              {t("counselor:assessments.pcaTitle")}
             </div>
             <div style={{
               display: "flex", alignItems: "center", justifyContent: "space-between",
               padding: "10px 12px", borderRadius: 6, border: "1px solid var(--admin-border-default)",
             }}>
-              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{t("pipeline.milName")}</span>
+              <span style={{ fontSize: 12, fontWeight: 500, color: "var(--admin-font-primary)" }}>{t("pipeline.pcaName")}</span>
               <span style={{
                 fontSize: 9, fontWeight: 600, padding: "2px 6px", borderRadius: 3,
-                background: statusBg(student.mil), color: statusColor(student.mil), textTransform: "uppercase",
+                background: statusBg(student.pcaStatus), color: statusColor(student.pcaStatus), textTransform: "uppercase",
               }}>
-                {statusLabel(student.mil)}
+                {statusLabel(student.pcaStatus)}
               </span>
             </div>
           </div>
@@ -209,8 +210,8 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
   if (gradeFilter) filtered = filtered.filter(s => s.gradeLevel === gradeFilter);
   if (showIncomplete) {
     filtered = filtered.filter(s => {
-      const pcaIncomplete = Object.values(s.pca).some(v => v !== "done");
-      return pcaIncomplete || s.mil !== "done" || s.eval360 !== "done" || s.personality !== "done";
+      const liaIncomplete = Object.values(s.lia).some(v => v !== "done");
+      return liaIncomplete || s.pcaStatus !== "done" || s.eval360 !== "done" || s.personality !== "done";
     });
   }
 
@@ -234,8 +235,9 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
   const pendingTypes: string[] = [];
   if (selectedIds.length > 0) {
     const selectedStudents = filtered.filter(s => selected.has(s.id));
-    const hasPcaIncomplete = selectedStudents.some(s => Object.values(s.pca).some(v => v !== "done"));
-    const hasMilIncomplete = selectedStudents.some(s => s.mil !== "done");
+    // "mil" = the LIA subtests, "pca" = the DISC survey — the codes the reminder email names.
+    const hasPcaIncomplete = selectedStudents.some(s => s.pcaStatus !== "done");
+    const hasMilIncomplete = selectedStudents.some(s => Object.values(s.lia).some(v => v !== "done"));
     const has360Incomplete = selectedStudents.some(s => s.eval360 !== "done");
     const hasPersonalityIncomplete = selectedStudents.some(s => s.personality !== "done");
     // Stable codes, not display text: both backends turn them into names in each STUDENT's
@@ -333,6 +335,12 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
       <div style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
           <thead>
+            {/* The five subtest columns are the MIL / LIA — named once above them (audit D1). */}
+            <tr style={{ background: "var(--admin-bg-hover)" }}>
+              <th colSpan={3} />
+              <th colSpan={EXAM_TYPES.length} style={{ ...thStyle, paddingBottom: 0 }}>{t("counselor:pipeline.groupLia")}</th>
+              <th colSpan={3} />
+            </tr>
             <tr style={{ background: "var(--admin-bg-hover)" }}>
               <th style={{ padding: "8px 10px", textAlign: "left", width: 32 }}>
                 <input
@@ -347,7 +355,7 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
               {EXAM_TYPES.map(ex => (
                 <th key={ex} style={thStyle} title={t(EXAM_SHORT[ex])}>{t(EXAM_SHORT[ex])}</th>
               ))}
-              <th style={thStyle}>{t("counselor:pipeline.colMil")}</th>
+              <th style={thStyle}>{t("counselor:pipeline.colPca")}</th>
               <th style={thStyle}>{t("counselor:pipeline.col360")}</th>
               <th style={thStyle}>{t("assessments.pipeline.colPersonality")}</th>
             </tr>
@@ -378,11 +386,11 @@ export function PipelineTable({ pipeline, onSendReminders, onSetup360, isSending
                 </td>
                 {EXAM_TYPES.map(ex => (
                   <td key={ex} style={{ padding: "6px 10px", textAlign: "center" }}>
-                    <StatusIcon status={s.pca[ex] || "not_started"} />
+                    <StatusIcon status={s.lia[ex] || "not_started"} />
                   </td>
                 ))}
                 <td style={{ padding: "6px 10px", textAlign: "center" }}>
-                  <StatusIcon status={s.mil} />
+                  <StatusIcon status={s.pcaStatus} />
                 </td>
                 <td style={{ padding: "6px 10px", textAlign: "center" }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }}>

@@ -15,6 +15,7 @@ import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { retryPendingSubmissions } from "@/services/milService";
 import { getSelfEvaluationUrl } from "@/services/evaluationService";
+import { completionFraction } from "@/services/assessmentProgressService";
 import {
   Brain,
   Target,
@@ -171,7 +172,8 @@ export default function AssessmentsPage() {
     },
   ];
 
-  const completedCount = assessments.filter((a) => a.status === "completed").length;
+  // Same rule as the dashboard card (audit D13) — the server's verdict, not this page's card statuses.
+  const { completed: completedCount, total: totalCount } = completionFraction(assessmentProgress);
 
   return (
     <div className="max-w-4xl mx-auto py-6">
@@ -215,7 +217,7 @@ export default function AssessmentsPage() {
                 {t("dashboard.overallProgress")}
               </span>
               <span className="text-xs text-muted-foreground tabular-nums">
-                {completedCount}/{assessments.length} {t("dashboard.completed")}
+                {completedCount}/{totalCount} {t("dashboard.completed")}
               </span>
             </div>
             <div className="flex gap-1.5">

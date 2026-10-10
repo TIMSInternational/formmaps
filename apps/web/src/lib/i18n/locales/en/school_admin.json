@@ -10,7 +10,10 @@
       "analyzingSubtitle": "Reviewing students, assessments, grades, and graduation progress",
       "label": "AI Briefing",
       "fullAnalysis": "Full Analysis",
-      "impactLabel": "{{impact}} impact"
+      "impactLabel": "{{impact}} impact",
+      "lockedTitle": "Not enough data yet",
+      "locked": "{{complete}} of {{total}} students have completed all assessments ({{percent}}%). The AI briefing unlocks at {{threshold}}%.",
+      "empty": "The briefing could not be generated right now. Try again later."
     },
     "atRisk": {
       "title": "Needs Attention",
@@ -300,7 +303,7 @@
     "card": {
       "studentsCompletedAll_one": "student completed all assessments",
       "studentsCompletedAll_other": "students completed all assessments",
-      "unlockHint": "Insights unlock when 100% of students finish.",
+      "unlockHint": "Insights unlock when {{threshold}}% of students finish.",
       "emptyFallback": "Insights will appear once enough students complete assessments.",
       "cached": "Cached",
       "refresh": "Refresh",
@@ -1506,7 +1509,7 @@
       "noMil": "No MIL/LIA Results",
       "noMilDesc": "This student hasn't completed the cognitive assessments yet.",
       "milProfile": "MIL Profile",
-      "milProfileDesc": "5 domains: Reasoning, Detection, Numeric, Memory, Orientation",
+      "milProfileDesc": "5 subtests: Pattern Recognition, Verbal Reasoning, Working Memory, Numeric Velocity, Visual Rotation",
       "domains": {
         "PatternRecognition": "Pattern Recognition",
         "VerbalReasoning": "Verbal Reasoning",
@@ -1524,7 +1527,8 @@
       "strengths": "Strengths",
       "areasForGrowth": "Areas for Growth",
       "examHistory": "Exam Results History",
-      "examHistoryDesc": "All exam attempts with scores, timing, and per-question data",
+      "examHistoryDesc": "Each subtest with status, score, answers and completion date",
+      "csv": {"subtest": "Subtest", "score": "Score (percentile)", "overall": "Overall", "status": "Status", "correct": "Correct", "incorrect": "Incorrect", "total": "Questions", "completedAt": "Completed"},
       "overallScoreLabel": "Overall Score:",
       "examsCompleted": "{{completed}}/{{total}} exams completed",
       "report360Downloaded": "360 report downloaded",
@@ -1897,7 +1901,7 @@
     }
   },
   "pipeline": {
-    "milName": "Labor Intelligence Measurement"
+    "pcaName": "Personal Competence Analysis (DISC)"
   },
   "actingSchool": {
     "viewing": "Super Admin · you are working in {{school}}. Everything you do here applies to this school.",

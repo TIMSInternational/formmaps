@@ -32,7 +32,8 @@ public sealed class SchoolReadsReaderTests : IClassFixture<SchoolReadsDatabaseFi
         await using var cmd = new NpgsqlCommand(
             """
             TRUNCATE "users","school_courses","course_change_requests","pca_evaluations","pca_exam_sessions",
-                     "counselor_student_assignments","counselor_sessions","counselor_notes"
+                     "counselor_student_assignments","counselor_sessions","counselor_notes",
+                     "lia_assessment_sessions","evaluation_groups","personality_assessment_sessions"
             """,
             conn);
         await cmd.ExecuteNonQueryAsync();
@@ -46,10 +47,12 @@ public sealed class SchoolReadsReaderTests : IClassFixture<SchoolReadsDatabaseFi
     public async Task Dashboard_computes_all_kpis()
     {
         await using var conn = await _dataSource.OpenConnectionAsync();
-        // students: 2 active (both-case roleName), 1 inactive (still excluded from active count), 1 other-school.
-        await SeedUser(conn, "s1", School, role: "Student");
+        // students: 3 active (both-case roleName; s4 a pending invite), 1 inactive (excluded), 1 other-school.
+        // Audit D2: s1 is AllDone (grandfathered); s2 only has a PCA row (started, NOT completed).
+        await SeedUser(conn, "s1", School, role: "Student", grandfathered: true);
         await SeedUser(conn, "s2", School, role: "student");
         await SeedUser(conn, "s3", School, role: "Student", isActive: false);
+        await SeedUser(conn, "s4", School, role: "Student", password: null);
         await SeedUser(conn, "sx", OtherSchool, role: "Student");
         // counselors: EXACT 'counselor' counted; 'Counselor' (capital) and inactive NOT counted.
         await SeedUser(conn, "c1", School, role: "counselor");
@@ -64,7 +67,7 @@ public sealed class SchoolReadsReaderTests : IClassFixture<SchoolReadsDatabaseFi
         await SeedChangeRequest(conn, "cr2", School, "pending");
         await SeedChangeRequest(conn, "cr3", School, "approved");
         await SeedChangeRequest(conn, "cr4", OtherSchool, "pending");
-        // PCA: s1 has TWO evals (de-dup to 1 distinct), s2 one -> distinct = 2. Inactive s3 not among active ids.
+        // PCA rows: existence is NOT completion (audit D2). Inactive s3 not among active ids.
         await SeedPca(conn, "p1", "s1");
         await SeedPca(conn, "p2", "s1");
         await SeedPca(conn, "p3", "s2");
@@ -78,12 +81,14 @@ public sealed class SchoolReadsReaderTests : IClassFixture<SchoolReadsDatabaseFi
 
         var stats = await Reader().GetDashboardStatsAsync(Ctx(), School);
 
-        Assert.Equal(2, stats.TotalStudents);        // active students only, both-case
+        Assert.Equal(3, stats.TotalStudents);        // active students only, both-case (incl. the pending invite)
         Assert.Equal(1, stats.TotalCounselors);      // EXACT 'counselor', active only
         Assert.Equal(1, stats.TotalCourses);
         Assert.Equal(2, stats.PendingRequests);
-        Assert.Equal(2, stats.CompletedAssessments); // distinct PCA users among active students
-        Assert.Equal(100.0, stats.AssessmentCompletionRate); // 2/2*100 = 100.0
+        Assert.Equal(1, stats.CompletedAssessments); // AllDone only — s2's PCA row is not completion
+        Assert.Equal(33.3, stats.AssessmentCompletionRate); // 1/3 -> 33.3
+        Assert.Equal(2, stats.ActiveStudents);       // signed up (was a copy of TotalStudents)
+        Assert.Equal(1, stats.PendingInvites);       // invited, not signed up (was the change-request count)
         Assert.Equal(81.3, stats.AverageScore);      // JsRound(81.3333*10)/10, Completed-only, school-scoped
     }
 
@@ -120,14 +125,12 @@ public sealed class SchoolReadsReaderTests : IClassFixture<SchoolReadsDatabaseFi
     public async Task Dashboard_completion_rate_is_one_decimal_jsround_half_up()
     {
         await using var conn = await _dataSource.OpenConnectionAsync();
-        // 16 active students, exactly ONE with a PCA eval -> 1/16*1000 = 62.5 (exact in double). JsRound half-up
-        // -> 63 -> 6.3. Banker's ToEven would give 62 -> 6.2, so this pins the reused SchoolAnalyticsMath.JsRound.
+        // 16 active students, exactly ONE complete (grandfathered) -> 1/16*1000 = 62.5 (exact in double). JsRound
+        // half-up -> 63 -> 6.3. Banker's ToEven would give 62 -> 6.2, so this pins SchoolAnalyticsMath.JsRound.
         for (var i = 0; i < 16; i++)
         {
-            await SeedUser(conn, $"s{i}", School, role: "Student");
+            await SeedUser(conn, $"s{i}", School, role: "Student", grandfathered: i == 0);
         }
-
-        await SeedPca(conn, "p1", "s0");
 
         var stats = await Reader().GetDashboardStatsAsync(Ctx(), School);
 
@@ -387,13 +390,16 @@ public sealed class SchoolReadsReaderTests : IClassFixture<SchoolReadsDatabaseFi
 
     private static async Task SeedUser(
         NpgsqlConnection conn, string id, string schoolId, string role = "Student",
-        bool isActive = true, int? gradeLevel = null, string? name = null)
+        bool isActive = true, int? gradeLevel = null, string? name = null, string? password = "hash",
+        bool grandfathered = false)
     {
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "users" ("id","name","email","roleName","schoolId","gradeLevel","isActive")
-            VALUES (@id,@n,@e,@r,@s,@g,@a)
+            INSERT INTO "users" ("id","name","email","roleName","schoolId","gradeLevel","isActive","password","legacyUnlockGrandfathered")
+            VALUES (@id,@n,@e,@r,@s,@g,@a,@pw,@lug)
             """, conn);
+        cmd.Parameters.AddWithValue("pw", (object?)password ?? DBNull.Value);
+        cmd.Parameters.AddWithValue("lug", grandfathered);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("n", name ?? $"Name {id}");
         cmd.Parameters.AddWithValue("e", $"{id}@e.st");

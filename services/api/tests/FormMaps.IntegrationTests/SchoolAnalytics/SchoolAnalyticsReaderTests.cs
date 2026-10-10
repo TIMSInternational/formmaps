@@ -1,3 +1,4 @@
+using FormMaps.Application.SchoolAnalytics;
 using FormMaps.Application.Auth;
 using FormMaps.Infrastructure.Data;
 using FormMaps.Infrastructure.SchoolAnalytics;
@@ -27,7 +28,7 @@ public sealed class SchoolAnalyticsReaderTests : IClassFixture<SchoolAnalyticsDa
         _dataSource = NpgsqlDataSource.Create(_fixture.ConnectionString);
         await using var conn = await _dataSource.OpenConnectionAsync();
         await using var cmd = new NpgsqlCommand(
-            """TRUNCATE "users","student_grades","pca_evaluations","pca_exam_sessions","evaluation_groups","counselor_student_assignments" """,
+            """TRUNCATE "users","student_grades","pca_evaluations","pca_exam_sessions","evaluation_groups","counselor_student_assignments","lia_assessment_sessions","personality_assessment_sessions","gpa_configurations" """,
             conn);
         await cmd.ExecuteNonQueryAsync();
     }
@@ -41,16 +42,17 @@ public sealed class SchoolAnalyticsReaderTests : IClassFixture<SchoolAnalyticsDa
     {
         await using var conn = await _dataSource.OpenConnectionAsync();
         // 3 students (2 active, 1 inactive) + one other-school student (excluded from every metric).
-        await SeedUser(conn, "s1", School, isActive: true);
+        // Audit D2: s1 is AllDone (grandfathered); s2 only has PCA rows (started, not completed).
+        await SeedUser(conn, "s1", School, isActive: true, grandfathered: true);
         await SeedUser(conn, "s2", School, isActive: true);
-        await SeedUser(conn, "s3", School, isActive: false);
+        await SeedUser(conn, "s3", School, isActive: false, grandfathered: true);
         await SeedUser(conn, "other", OtherSchool, isActive: true);
 
         // grades: s1 -> A (4.0), s2 -> D (1.0, at risk), s3 -> none. mean-of-means (4+1)/2 = 2.5 -> 62.5.
         await SeedGrade(conn, "g1", School, "s1", "A");
         await SeedGrade(conn, "g2", School, "s2", "D");
 
-        // PCA: s1 has TWO evaluations (must de-dup to 1 distinct user), s2 has one, s3 none -> distinct = 2.
+        // PCA rows: existence is not completion.
         await SeedPca(conn, "p1", "s1");
         await SeedPca(conn, "p2", "s1");
         await SeedPca(conn, "p3", "s2");
@@ -64,10 +66,36 @@ public sealed class SchoolAnalyticsReaderTests : IClassFixture<SchoolAnalyticsDa
 
         Assert.Equal(3, overview.TotalStudents);          // inactive s3 still counted
         Assert.Equal(2, overview.ActiveStudents);
-        Assert.Equal(67, overview.AssessmentCompletionRate); // round(2*100/3) = 67
+        Assert.Equal(50, overview.AssessmentCompletionRate); // shared tally: 1 AllDone of 2 active students (audit D2)
         Assert.Equal(62.5, overview.AverageProgressScore);
         Assert.Equal(1, overview.StudentsAtRisk);          // only s2 (mean 1.0 < 2.0)
         Assert.Equal(67, overview.CounselorCoverage);      // round(2*100/3) = 67
+    }
+
+    // Audit D9: GPA goes through the configured engine — A+/D- exist, credits weight, the school's scale wins.
+    [Fact]
+    public async Task Overview_gpa_uses_the_configured_gpa_engine()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUser(conn, "s1", School);
+        await SeedUser(conn, "s2", School);
+        await SeedGrade(conn, "g1", School, "s1", "A+", credits: 3);  // 4.0 x3
+        await SeedGrade(conn, "g2", School, "s1", "D-", credits: 1);  // 0.7 x1 -> (12+0.7)/4 = 3.175
+        await SeedGrade(conn, "g3", School, "s2", "D+");              // no credits -> counts as 1 -> 1.3 (at risk)
+
+        var overview = await Reader().GetOverviewAsync(Ctx(), School);
+        Assert.Equal(1, overview.StudentsAtRisk);
+        Assert.Equal(SchoolAnalyticsMath.ProgressScore((3.175 + 1.3) / 2), overview.AverageProgressScore);
+
+        await using (var cfg = new NpgsqlCommand(
+            """INSERT INTO "gpa_configurations" ("id","schoolId","unweightedMap") VALUES ('c1', @s, '{"D+": 2.5}'::jsonb)""", conn))
+        {
+            cfg.Parameters.AddWithValue("s", School);
+            await cfg.ExecuteNonQueryAsync();
+        }
+
+        var configured = await Reader().GetOverviewAsync(Ctx(), School);
+        Assert.Equal(0, configured.StudentsAtRisk);                   // school scale: D+ = 2.5; A+/D- unknown -> skipped
     }
 
     [Fact]
@@ -288,13 +316,14 @@ public sealed class SchoolAnalyticsReaderTests : IClassFixture<SchoolAnalyticsDa
 
     private static async Task SeedUser(
         NpgsqlConnection conn, string id, string schoolId, string role = "Student",
-        bool isActive = true, int? gradeLevel = null, DateTime? createdDate = null)
+        bool isActive = true, int? gradeLevel = null, DateTime? createdDate = null, bool grandfathered = false)
     {
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "users" ("id","name","email","roleName","schoolId","gradeLevel","isActive","createdDate")
-            VALUES (@id,@n,@e,@r,@s,@g,@a,@c)
+            INSERT INTO "users" ("id","name","email","roleName","schoolId","gradeLevel","isActive","createdDate","legacyUnlockGrandfathered")
+            VALUES (@id,@n,@e,@r,@s,@g,@a,@c,@lug)
             """, conn);
+        cmd.Parameters.AddWithValue("lug", grandfathered);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("n", $"Name {id}");
         cmd.Parameters.AddWithValue("e", $"{id}@e.st");
@@ -308,13 +337,14 @@ public sealed class SchoolAnalyticsReaderTests : IClassFixture<SchoolAnalyticsDa
 
     private static async Task SeedGrade(
         NpgsqlConnection conn, string id, string schoolId, string studentId, string? grade,
-        string status = "completed", bool isActive = true, DateTime? createdDate = null)
+        string status = "completed", bool isActive = true, DateTime? createdDate = null, decimal credits = 0)
     {
         await using var cmd = new NpgsqlCommand(
             """
-            INSERT INTO "student_grades" ("id","schoolId","studentId","grade","status","isActive","createdDate")
-            VALUES (@id,@s,@st,@g,@status,@a,@c)
+            INSERT INTO "student_grades" ("id","schoolId","studentId","grade","status","isActive","createdDate","credits")
+            VALUES (@id,@s,@st,@g,@status,@a,@c,@cr)
             """, conn);
+        cmd.Parameters.AddWithValue("cr", credits);
         cmd.Parameters.AddWithValue("id", id);
         cmd.Parameters.AddWithValue("s", schoolId);
         cmd.Parameters.AddWithValue("st", studentId);

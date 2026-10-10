@@ -1,22 +1,19 @@
 // Real i18next (English) so assertions read the rendered copy, not raw keys.
-import i18n from "@/lib/i18n";
+import "@/lib/i18n";
 import React from "react";
 import { render, fireEvent, screen } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { PipelineTable } from "../PipelineTable";
 import type { PipelineStudent } from "@/services/assessmentCommandService";
 
-// New keys ship through the locale patch (school_admin:pipeline.*); registered here so the test does
-// not depend on when that patch lands in the locale files.
-i18n.addResource("en", "school_admin", "pipeline.milName", "Labor Intelligence Measurement");
 
 const student: PipelineStudent = {
   id: "s1",
   name: "Ana Pérez",
   email: "ana@example.com",
   gradeLevel: 10,
-  pca: { PatternRecognition: "not_started", VerbalReasoning: "done" },
-  mil: "not_started",
+  lia: { PatternRecognition: "not_started", VerbalReasoning: "done" },
+  pcaStatus: "not_started",
   eval360: "in_progress",
   eval360Detail: { total: 3, completed: 1 },
   personality: "not_started",
@@ -51,7 +48,7 @@ describe("PipelineTable", () => {
     const onSendReminders = jest.fn();
     render(
       <PipelineTable
-        pipeline={[{ ...student, pca: { PatternRecognition: "done" }, mil: "done", personality: "done" }]}
+        pipeline={[{ ...student, lia: { PatternRecognition: "done" }, pcaStatus: "done", personality: "done" }]}
         onSendReminders={onSendReminders}
         onSetup360={jest.fn()}
         isSendingReminders={false}
@@ -63,10 +60,39 @@ describe("PipelineTable", () => {
     expect(onSendReminders).toHaveBeenCalledWith(["s1"], ["eval360"]);
   });
 
-  it("names MIL correctly in the student dialog (Labor Intelligence Measurement, not 'Multiple Intelligence Lens')", () => {
+  // Audit D1: the five subtests are the MIL / LIA; the PCA is the DISC survey, shown on its own.
+  it("labels the subtests MIL / LIA and shows the real PCA separately", () => {
     renderTable();
+    expect(screen.getByRole("columnheader", { name: "MIL / LIA" })).toBeInTheDocument();
+    expect(screen.getByRole("columnheader", { name: "PCA" })).toBeInTheDocument();
+    expect(screen.queryByRole("columnheader", { name: "MIL" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByText("Ana Pérez"));
-    expect(screen.getByText("Labor Intelligence Measurement")).toBeInTheDocument();
+    expect(screen.getByText(/MIL \/ LIA Assessment \(1\/2\)/)).toBeInTheDocument();
+    expect(screen.getByText("Personal Competence Analysis (DISC)")).toBeInTheDocument();
     expect(screen.queryByText("Multiple Intelligence Lens")).not.toBeInTheDocument();
+  });
+
+  it("asks for a PCA reminder when only the PCA is missing, and a MIL reminder when only the LIA is", () => {
+    const onSendReminders = jest.fn();
+    const done = { ...student, eval360: "done" as const, eval360Detail: { total: 1, completed: 1 }, personality: "done" as const };
+    render(
+      <PipelineTable
+        pipeline={[
+          { ...done, id: "a", name: "Only PCA missing", lia: { PatternRecognition: "done" }, pcaStatus: "in_progress" },
+          { ...done, id: "b", name: "Only LIA missing", lia: { PatternRecognition: "in_progress" }, pcaStatus: "done" },
+        ]}
+        onSendReminders={onSendReminders}
+        onSetup360={jest.fn()}
+        isSendingReminders={false}
+        isSettingUp360={false}
+      />,
+    );
+    fireEvent.click(screen.getAllByRole("checkbox")[1]);
+    fireEvent.click(screen.getByRole("button", { name: /Remind \(1\)/ }));
+    expect(onSendReminders).toHaveBeenLastCalledWith(["a"], ["pca"]);
+    fireEvent.click(screen.getAllByRole("checkbox")[1]);
+    fireEvent.click(screen.getAllByRole("checkbox")[2]);
+    fireEvent.click(screen.getByRole("button", { name: /Remind \(1\)/ }));
+    expect(onSendReminders).toHaveBeenLastCalledWith(["b"], ["mil"]);
   });
 });
