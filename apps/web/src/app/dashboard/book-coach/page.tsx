@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Search, MapPin, Star, Filter } from "lucide-react";
+import { Search, MapPin, Star } from "lucide-react";
 import Link from "next/link";
 import { Coach, CoachesResponse } from "@/types/coach";
 import { useTranslation } from "react-i18next";
@@ -32,6 +32,8 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 120, damping: 18 } },
 };
 
+const PAGE_SIZE = 12;
+
 export default function BookCoachPage() {
   const { t } = useTranslation();
   const [coaches, setCoaches] = useState<Coach[]>([]);
@@ -39,30 +41,55 @@ export default function BookCoachPage() {
   const [search, setSearch] = useState("");
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
+  // audit 2026-10-09 C15: search + specialty filter are sent to the API (which now honours both)
+  // and results page with "Load more" instead of silently stopping at the first 10.
+  const [specialty, setSpecialty] = useState("");
+  const [specialties, setSpecialties] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchCoaches = async () => {
       try {
         setFetchError(null);
         const { getCoaches } = await import("@/services/coachService");
-        const response: CoachesResponse = await getCoaches({ search });
-
-        setCoaches(unwrapList(response, "coaches"));
+        const response: CoachesResponse = await getCoaches({
+          search: search.trim() || undefined,
+          specialization: specialty || undefined,
+          page,
+          limit: PAGE_SIZE,
+        });
+        if (cancelled) return;
+        const list: Coach[] = unwrapList(response, "coaches");
+        const meta = (response as unknown as { data?: { totalPages?: number } })?.data;
+        setTotalPages(Math.max(1, Number(meta?.totalPages) || 1));
+        setCoaches((prev) => (page === 1 ? list : [...prev, ...list]));
+        // Filter options = specialties seen in unfiltered results (no separate taxonomy endpoint).
+        if (!specialty) {
+          setSpecialties((prev) => {
+            const next = new Set(prev);
+            list.forEach((c) => { if (c.specialization) next.add(c.specialization); });
+            return next.size === prev.length ? prev : Array.from(next).sort((a, b) => a.localeCompare(b));
+          });
+        }
       } catch (error) {
+        if (cancelled) return;
         console.error("Failed to fetch coaches:", error);
         setFetchError(t("coaching.find.fetchError", "Failed to load coaches. Please try again."));
       } finally {
-        setIsLoading(false);
+        if (!cancelled) { setIsLoading(false); setLoadingMore(false); }
       }
     };
 
-    // Debounce search
-    const timeoutId = setTimeout(() => {
-      fetchCoaches();
-    }, 500);
+    // Debounce typing; "Load more" fetches immediately.
+    const timeoutId = setTimeout(fetchCoaches, page === 1 ? 500 : 0);
 
-    return () => clearTimeout(timeoutId);
-  }, [search, retryCount]);
+    return () => { cancelled = true; clearTimeout(timeoutId); };
+  }, [search, specialty, page, retryCount, t]);
+
+  const resetTo = (apply: () => void) => { apply(); setPage(1); setIsLoading(true); };
 
   return (
     <div className="max-w-5xl mx-auto py-6 space-y-5">
@@ -83,12 +110,20 @@ export default function BookCoachPage() {
                 placeholder={t("coaching.find.searchPlaceholder")}
                 className="pl-9 rounded-xl border-border bg-card"
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => { const v = e.target.value; resetTo(() => setSearch(v)); }}
               />
             </div>
-            <Button variant="outline" size="icon" className="rounded-xl border-border">
-              <Filter className="h-4 w-4" />
-            </Button>
+            <select
+              aria-label={t("coaching.find.specialtyFilter")}
+              className="rounded-xl border border-border bg-card px-3 text-sm text-foreground"
+              value={specialty}
+              onChange={(e) => { const v = e.target.value; resetTo(() => setSpecialty(v)); }}
+            >
+              <option value="">{t("coaching.find.allSpecialties")}</option>
+              {specialties.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
           </div>
         </div>
 
@@ -181,6 +216,18 @@ export default function BookCoachPage() {
                 </div>
               </motion.div>
             ))}
+            {page < totalPages && (
+              <div className="col-span-full flex justify-center">
+                <Button
+                  variant="outline"
+                  className="rounded-xl"
+                  disabled={loadingMore}
+                  onClick={() => { setLoadingMore(true); setPage((p) => p + 1); }}
+                >
+                  {t("coaching.find.loadMore")}
+                </Button>
+              </div>
+            )}
           </motion.div>
         ) : (
           <div className="dash-card p-5 text-center py-12 border-dashed">

@@ -1186,6 +1186,9 @@
       "remote": "Remoto",
       "new": "Nuevo",
       "fetchError": "No se pudieron cargar los coaches. Inténtalo de nuevo.",
+      "specialtyFilter": "Filtrar por especialidad",
+      "allSpecialties": "Todas las especialidades",
+      "loadMore": "Cargar más coaches",
       "retry": "Reintentar"
     },
     "earnings": {

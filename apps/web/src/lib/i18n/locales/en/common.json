@@ -1845,6 +1845,9 @@
       "remote": "Remote",
       "new": "New",
       "fetchError": "Failed to load coaches. Please try again.",
+      "specialtyFilter": "Filter by specialty",
+      "allSpecialties": "All specialties",
+      "loadMore": "Load more coaches",
       "retry": "Retry"
     },
     "earnings": {
