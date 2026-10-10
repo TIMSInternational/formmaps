@@ -52,7 +52,9 @@ export default function CoursePlanPage() {
   const eligibilityQuery = useMyCourseEligibility();
   const catalogQuery = useQuery({
     queryKey: ["school-catalog", "course-plan"],
-    queryFn: () => apiRequest("/api/v1/school-admin/courses?limit=100"),
+    // audit 2026-10-09 D4: the catalog endpoint serves up to 500 per page; asking for 100 left every course past the
+    // first 100 nameless in the plan and missing from the picker.
+    queryFn: () => apiRequest("/api/v1/school-admin/courses?limit=500"),
     staleTime: 5 * 60 * 1000,
   });
 
@@ -153,7 +155,8 @@ export default function CoursePlanPage() {
     );
   }
 
-  if (planQuery.isError) {
+  // audit 2026-10-09 D4: a failed catalog load used to be swallowed, rendering the plan with blank course names.
+  if (planQuery.isError || catalogQuery.isError) {
     return (
       <div className="text-center py-16">
         <p className="text-sm mb-3" style={{ color: "var(--admin-font-secondary)" }}>
@@ -161,7 +164,7 @@ export default function CoursePlanPage() {
         </p>
         <button
           type="button"
-          onClick={() => planQuery.refetch()}
+          onClick={() => { if (planQuery.isError) planQuery.refetch(); if (catalogQuery.isError) catalogQuery.refetch(); }}
           className="px-4 py-2 rounded-md text-sm font-semibold"
           style={{ background: "var(--admin-accent-blue)", color: "#fff" }}
         >

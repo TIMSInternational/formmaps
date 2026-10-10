@@ -12,6 +12,7 @@ import {
   assignStudents,
   unassignStudents,
   getCounselorStudents,
+  getAllCounselorStudents,
   getAllCounselorAssignments,
   getMyCounselorStudents,
   getMyCounselorStudentDetail,
@@ -195,6 +196,7 @@ export function useUploadSchoolLogo() {
 
 export function useSchoolUsers(params?: {
   role?: string;
+  scope?: "staff";
   status?: string;
   search?: string;
   page?: number;
@@ -439,6 +441,16 @@ export function useUnassignStudents() {
 // ============================================
 // Counselor Student Hooks (SCRUM-145)
 // ============================================
+
+/** Every student assigned to the counselor (pages through the 50-per-page endpoint). */
+export function useAllCounselorStudents(counselorId: string) {
+  return useQuery({
+    queryKey: schoolProfileKeys.counselorStudents(counselorId, { all: true }),
+    queryFn: () => getAllCounselorStudents(counselorId),
+    enabled: !!counselorId,
+    staleTime: 0,
+  });
+}
 
 export function useCounselorStudents(
   counselorId: string,

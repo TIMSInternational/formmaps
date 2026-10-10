@@ -81,6 +81,7 @@ export function useAllGraduationProgress(params?: {
   limit?: number;
   status?: string;
   sortBy?: string;
+  search?: string;
 }) {
   return useQuery({
     queryKey: graduationKeys.progressList(params),

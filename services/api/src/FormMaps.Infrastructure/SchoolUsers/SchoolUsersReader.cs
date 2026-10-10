@@ -25,15 +25,36 @@ public sealed class SchoolUsersReader(IFormMapsDatabaseSessionFactory databaseSe
 
         // where = schoolId = @sid AND isActive; + optional roleName ILIKE (Prisma contains+insensitive, %/_ NOT
         // escaped — faithful); + optional (name ILIKE OR email ILIKE) over the same search term.
-        var where = "\"schoolId\" = @sid AND \"isActive\" = true";
+        // audit 2026-10-09 D5: `baseWhere` is everything but the role filter; the role counts are taken over it.
+        var baseWhere = "\"schoolId\" = @sid AND \"isActive\" = true";
+        if (query.StaffOnly)
+        {
+            baseWhere += " AND \"roleName\" = ANY(@staffRoles)";
+        }
+
+        if (!string.IsNullOrEmpty(query.Search))
+        {
+            baseWhere += " AND (\"name\" ILIKE @search OR \"email\" ILIKE @search)";
+        }
+
+        var where = baseWhere;
         if (!string.IsNullOrEmpty(query.Role))
         {
             where += " AND \"roleName\" ILIKE @role";
         }
 
-        if (!string.IsNullOrEmpty(query.Search))
+        var roleCounts = new Dictionary<string, int>();
+        await using (var groupCommand = Command(session, $"""
+            SELECT LOWER(COALESCE(NULLIF("roleName", ''), 'other')), COUNT(*)::int FROM "users" WHERE {baseWhere} GROUP BY 1
+            """))
         {
-            where += " AND (\"name\" ILIKE @search OR \"email\" ILIKE @search)";
+            AddUsersFilters(groupCommand, schoolId, query with { Role = null });
+            await using var groupReader = await groupCommand.ExecuteReaderAsync(cancellationToken);
+            while (await groupReader.ReadAsync(cancellationToken))
+            {
+                var key = groupReader.GetString(0);
+                roleCounts[key] = roleCounts.GetValueOrDefault(key) + groupReader.GetInt32(1);
+            }
         }
 
         int total;
@@ -71,7 +92,7 @@ public sealed class SchoolUsersReader(IFormMapsDatabaseSessionFactory databaseSe
             }
         }
 
-        return new SchoolUsersPage(rows, total, query.Page, query.Limit, TotalPages(total, query.Limit));
+        return new SchoolUsersPage(rows, total, query.Page, query.Limit, TotalPages(total, query.Limit), roleCounts);
     }
 
     public async Task<CounselorStudentsResult> GetCounselorStudentsAsync(
@@ -141,6 +162,11 @@ public sealed class SchoolUsersReader(IFormMapsDatabaseSessionFactory databaseSe
     private static void AddUsersFilters(DbCommand command, string schoolId, SchoolUsersQuery query)
     {
         AddParameter(command, "sid", schoolId);
+        if (query.StaffOnly)
+        {
+            AddParameter(command, "staffRoles", SchoolUsersQuery.StaffRoleNames);
+        }
+
         if (!string.IsNullOrEmpty(query.Role))
         {
             AddParameter(command, "role", "%" + query.Role + "%");

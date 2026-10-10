@@ -24,7 +24,7 @@ import {
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAssignStudents, useUnassignStudents, useCounselorStudents } from "@/hooks/useSchoolProfileQueries";
+import { useAssignStudents, useUnassignStudents, useAllCounselorStudents } from "@/hooks/useSchoolProfileQueries";
 import { useAllStudents } from "@/hooks/useSchoolAdmin";
 import type { SchoolUser } from "@/types/assessmentConfig";
 import { ReassignDialog } from "./ReassignDialog";
@@ -60,10 +60,7 @@ export function CounselorRow({
   const [search, setSearch] = useState("");
   const [gradeFilter, setGradeFilter] = useState<string>("all");
 
-  const { data: assignedStudents, isLoading: loadingAssigned } = useCounselorStudents(
-    counselor.id,
-    { limit: 1000 }
-  );
+  const { data: assignedStudents, isLoading: loadingAssigned } = useAllCounselorStudents(counselor.id);
   const { data: allStudents } = useAllStudents();
 
   const assign = useAssignStudents();

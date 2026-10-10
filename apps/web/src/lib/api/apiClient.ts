@@ -188,6 +188,10 @@ apiClient.interceptors.response.use(
       if (data?.code === 'AI_BUDGET_EXCEEDED') {
         message = i18n.t('components.apiClient.aiBudgetExceeded');
       }
+      if (data?.code === 'BROADCAST_TOO_LARGE') {
+        // audit 2026-10-09 D4: the API refuses the whole broadcast instead of silently reaching part of the group.
+        message = i18n.t('components.apiClient.broadcastTooLarge', { count: data?.recipientCount, max: data?.maxRecipients });
+      }
 
       if (status === 403 && data?.code !== 'SUBSCRIPTION_REQUIRED') {
         // Subscription-gate 403s are handled by AuthWrapper's /subscribe redirect;

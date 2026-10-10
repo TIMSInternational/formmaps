@@ -6,6 +6,7 @@ import {
   CourseCompletionPayload,
 } from "@/types/course";
 import { apiRequest } from "@/lib/api/apiClient";
+import { fetchAllPages } from "@/lib/api/fetchAllPages";
 
 export async function enrollInCourse(
   payload: CourseEnrollmentPayload
@@ -59,11 +60,15 @@ export async function getUserEnrollments(): Promise<CourseEnrollment[]> {
 
 // --- Course listing & admin ---
 // `lang` = the UI language: the API then returns only courses in that language
-// + English (#397). limit=100 is the API's max page size.
+// + English (#397). limit=100 is the API's max page size, so the whole catalog is
+// read page by page (audit 2026-10-09 D4: the catalog search only ever saw the first 100).
 export async function listCourses(lang?: "en" | "es") {
-  const response = await apiRequest(`/api/course?limit=100${lang ? `&lang=${lang}` : ""}`, { method: "GET" });
-  const data = response?.data ?? response;
-  return data;
+  const courses = await fetchAllPages<Course>(async (page, limit) => {
+    const response = await apiRequest(`/api/course?limit=${limit}&page=${page}${lang ? `&lang=${lang}` : ""}`, { method: "GET" });
+    const data = response?.data ?? response;
+    return { rows: data?.courses ?? data?.Courses ?? [], totalPages: data?.totalPages };
+  });
+  return { courses, total: courses.length };
 }
 
 export async function getRecommendedCourses(lang?: "en" | "es") {

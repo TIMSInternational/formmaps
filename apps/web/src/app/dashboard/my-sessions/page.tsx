@@ -17,7 +17,7 @@ import { es, enUS } from "date-fns/locale";
 import { motion } from "motion/react";
 import { toast } from "sonner";
 import Link from "next/link";
-import { getStudentCounselorSessions, cancelCounselorSession } from "@/services/counselorSessionService";
+import { getAllStudentCounselorSessions, cancelCounselorSession } from "@/services/counselorSessionService";
 import type { CounselorSession } from "@/services/counselorSessionService";
 import type { Coach } from "@/types/coach";
 
@@ -113,8 +113,8 @@ export default function MySessionsPage() {
   const fetchCounselorSessions = async () => {
     setIsCounselorLoading(true);
     try {
-      const res = await getStudentCounselorSessions({ limit: 100 });
-      setCounselorSessions(res.data);
+      // audit 2026-10-09 D4: `limit: 100` was clamped to 50.
+      setCounselorSessions(await getAllStudentCounselorSessions());
     } catch {
       // silently fail — counselor sessions are optional
     } finally {

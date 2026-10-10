@@ -81,7 +81,7 @@ public class SchoolStudentsParentsEndpointsTests
         {
             Parents = new ParentsListPage(
                 [new ParentGroup("l1", "Pat Parent", "pat@e.st", "u9", false, null, "2026-01-02T00:00:00.000Z",
-                    [new ParentStudent("s1", "Ada", "ada@e.st", 11), new ParentStudent("s2", "Bo", "bo@e.st", null)])],
+                    [new ParentStudent("s1", "Ada", "ada@e.st", 11, "l1", true), new ParentStudent("s2", "Bo", "bo@e.st", null, "l2", false)])],
                 Total: 2, TotalPages: 1, Page: 3, Stats: new ParentsStats(1, 2, 2)),
         };
         using var factory = new Factory(reader, new FakeScope(School));
@@ -93,7 +93,7 @@ public class SchoolStudentsParentsEndpointsTests
         using var doc = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         var root = doc.RootElement;
         Assert.True(root.GetProperty("success").GetBoolean());
-        Assert.Equal(2, root.GetProperty("total").GetInt32());       // LINK count (data has 1 grouped parent)
+        Assert.Equal(2, root.GetProperty("total").GetInt32());       // the reader's total, passed through
         Assert.Equal(1, root.GetProperty("totalPages").GetInt32());
         Assert.Equal(3, root.GetProperty("page").GetInt32());
         var stats = root.GetProperty("stats");
@@ -110,6 +110,10 @@ public class SchoolStudentsParentsEndpointsTests
         Assert.Equal(2, students.Length);
         Assert.Equal("Ada", students[0].GetProperty("name").GetString());
         Assert.Equal(JsonValueKind.Null, students[1].GetProperty("gradeLevel").ValueKind);
+        // audit 2026-10-09 D10: each child carries its own link.
+        Assert.Equal("l2", students[1].GetProperty("linkId").GetString());
+        Assert.True(students[0].GetProperty("isAccepted").GetBoolean());
+        Assert.False(students[1].GetProperty("isAccepted").GetBoolean());
         // clamp/trim forwarded.
         Assert.Equal(3, reader.LastQuery!.Page);
         Assert.Equal(25, reader.LastQuery.Limit);

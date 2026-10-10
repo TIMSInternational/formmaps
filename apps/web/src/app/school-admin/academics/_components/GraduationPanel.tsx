@@ -42,10 +42,18 @@ export function GraduationPanel() {
 
   const [statusFilter, setStatusFilter] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
+
+  // audit 2026-10-09 D6: the search used to filter only the 20 rows of the current page; it now searches the roster.
+  useEffect(() => {
+    const id = setTimeout(() => { setSearch(searchTerm.trim()); setPage(1); }, 300);
+    return () => clearTimeout(id);
+  }, [searchTerm]);
 
   const { data: progress, isLoading: progressLoading } = useAllGraduationProgress({
     page, limit: 20, status: statusFilter === "all" ? undefined : statusFilter, sortBy: "name",
+    search: search || undefined,
   });
 
   const createRules = useCreateGraduationRules();
@@ -114,20 +122,14 @@ export function GraduationPanel() {
     </div>
   );
 
-  // Compute summary stats from progress data
-  const allStudents = progress?.data || [];
-  const onTrack = allStudents.filter((s: any) => s.status === "on_track").length;
-  const atRisk = allStudents.filter((s: any) => s.status === "at_risk").length;
-  const offTrack = allStudents.filter((s: any) => s.status === "off_track").length;
-  const totalStudents = progress?.total || 0;
-  const avgProgress = allStudents.length > 0
-    ? Math.round(allStudents.reduce((sum: number, s: any) => sum + (s.progressPercent || 0), 0) / allStudents.length)
-    : 0;
-
-  // Filter by search
-  const filtered = searchTerm
-    ? allStudents.filter((s: any) => s.studentName?.toLowerCase().includes(searchTerm.toLowerCase()))
-    : allStudents;
+  // School-wide summary from the API (audit 2026-10-09 D6: these were computed from the 20 rows on screen).
+  const filtered = progress?.data || [];
+  const summary = progress?.summary;
+  const onTrack = summary?.onTrack ?? 0;
+  const atRisk = summary?.atRisk ?? 0;
+  const offTrack = summary?.offTrack ?? 0;
+  const totalStudents = summary?.total ?? progress?.total ?? 0;
+  const avgProgress = summary?.avgProgress ?? 0;
 
   return (
     <div className="space-y-6">

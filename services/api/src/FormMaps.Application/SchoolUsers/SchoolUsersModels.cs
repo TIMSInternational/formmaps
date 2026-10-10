@@ -7,7 +7,12 @@ namespace FormMaps.Application.SchoolUsers;
 /// unassignStudentsFromCounselor / getCounselorStudents). Every field is emitted camelCase on the wire; timestamps
 /// are ISO-Z (Prisma Date→JSON); gradeLevel is number|null.
 /// </summary>
-public sealed record SchoolUsersQuery(int Page, int Limit, long Skip, string? Role, string? Search);
+/// <remarks>audit 2026-10-09 D5: <see cref="StaffOnly"/> (?scope=staff) restricts the list to <see cref="StaffRoleNames"/> —
+/// the Staff tab's "All roles" used to list students and parents too. Mirrors Node STAFF_ROLE_NAMES.</remarks>
+public sealed record SchoolUsersQuery(int Page, int Limit, long Skip, string? Role, string? Search, bool StaffOnly = false)
+{
+    public static readonly string[] StaffRoleNames = ["school_admin", "counselor", "teacher", "staff", "coach"];
+}
 
 /// <summary>
 /// One listSchoolUsers row: the selected user columns plus the two derived fields the service spreads on
@@ -22,13 +27,16 @@ public sealed record SchoolUserRow(
     bool IsActive,
     string CreatedDate);
 
-/// <summary>listSchoolUsers result — the SERVICE shape { data, total, page, limit, totalPages }.</summary>
+/// <summary>listSchoolUsers result — the SERVICE shape { data, total, page, limit, totalPages, roleCounts }.</summary>
+/// <remarks>audit 2026-10-09 D5: <see cref="RoleCounts"/> (lower-cased roleName → count) covers every user matching the
+/// school/scope/search filters, ignoring the role filter and the page — the Staff tab's cards used to count the page.</remarks>
 public sealed record SchoolUsersPage(
     IReadOnlyList<SchoolUserRow> Data,
     int Total,
     int Page,
     int Limit,
-    int TotalPages);
+    int TotalPages,
+    IReadOnlyDictionary<string, int>? RoleCounts = null);
 
 /// <summary>updateUserGradeLevel outcome. CrossSchool = the legacy {error:"Cannot modify users from another school"} branch (→403); Updated = the row was updated (→200).</summary>
 public enum GradeLevelUpdateStatus

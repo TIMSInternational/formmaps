@@ -176,6 +176,31 @@ public sealed class GraduationRulesReaderTests(GraduationDatabaseFixture fixture
         Assert.Equal(2, pageTwo.TotalPages);
     }
 
+    // audit 2026-10-09 D6 -----------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task Progress_list_search_covers_the_roster_and_the_summary_is_school_wide()
+    {
+        await fixture.SeedAcademicYearAsync(Year, School);
+        await fixture.SeedRuleSetAsync("rs-1", School, Year, 10m);
+        await fixture.SeedCourseAsync("c-1", School, "ENG-9", "English 9", "English", 1m);
+        // progress: Zoe 100 (on track), Ada 60 (at risk), Mel 10 (off track), Mia 80 (on track)
+        foreach (var (id, name, credits) in new[] { ("stu-a", "Zoe", 10m), ("stu-b", "Ada", 6m), ("stu-c", "Mel", 1m), ("stu-d", "Mia", 8m) })
+        {
+            await fixture.SeedUserAsync(id, School, name: name);
+            await fixture.SeedGradeAsync($"g-{id}", School, id, "c-1", credits);
+        }
+
+        // page size 1, sorted by name: "Zoe" is last, so it is only found if the search runs before paging.
+        var zoe = await Reader().GetProgressListAsync(Ctx(Admin, School), School, 1, 1, null, "name", default, "zO");
+        Assert.Equal(1, zoe.Total);
+        Assert.Equal("Zoe", zoe.Data[0].StudentName);
+
+        // The summary ignores the page, the search and the status filter.
+        Assert.NotNull(zoe.Summary);
+        Assert.Equal(new GraduationProgressSummary(4, 2, 1, 1, 63), zoe.Summary); // avg (100+60+10+80)/4 = 62.5 -> 63
+    }
+
     /// <summary>
     /// The roster's ROLE predicate, with an adversary RLS genuinely admits.
     ///

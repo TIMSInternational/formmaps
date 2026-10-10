@@ -66,6 +66,43 @@ public sealed class SchoolUsersReaderTests : IClassFixture<SchoolUsersDatabaseFi
         Assert.All(page.Data, r => Assert.Contains("tudent", r.RoleName));
     }
 
+    // audit 2026-10-09 D5 ----------------------------------------------------------------------------------
+
+    [Fact]
+    public async Task List_staff_scope_lists_only_staff_roles()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        await SeedUser(conn, "a1", School, role: "school_admin");
+        await SeedUser(conn, "c1", School, role: "counselor");
+        await SeedUser(conn, "t1", School, role: "teacher");
+        await SeedUser(conn, "f1", School, role: "staff");
+        await SeedUser(conn, "s1", School, role: "student");
+        await SeedUser(conn, "p1", School, role: "parent");
+
+        var page = await Reader().ListSchoolUsersAsync(Ctx(), School, Query() with { StaffOnly = true });
+
+        Assert.Equal(4, page.Total);
+        Assert.Equal(new[] { "a1", "c1", "f1", "t1" }, page.Data.Select(r => r.Id).OrderBy(x => x));
+    }
+
+    [Fact]
+    public async Task List_role_counts_cover_the_whole_set_not_the_page_and_ignore_the_role_filter()
+    {
+        await using var conn = await _dataSource.OpenConnectionAsync();
+        for (var i = 0; i < 3; i++) await SeedUser(conn, $"c{i}", School, role: "counselor");
+        for (var i = 0; i < 4; i++) await SeedUser(conn, $"t{i}", School, role: "teacher");
+        await SeedUser(conn, "s1", School, role: "student");
+
+        var page = await Reader().ListSchoolUsersAsync(Ctx(), School, Query(limit: 2, role: "counselor") with { StaffOnly = true });
+
+        Assert.Equal(3, page.Total); // the list honours the role filter
+        Assert.Equal(2, page.Data.Count); // and the page size
+        Assert.NotNull(page.RoleCounts);
+        Assert.Equal(3, page.RoleCounts!["counselor"]);
+        Assert.Equal(4, page.RoleCounts["teacher"]);
+        Assert.False(page.RoleCounts.ContainsKey("student")); // outside the staff scope
+    }
+
     [Fact]
     public async Task List_search_matches_name_or_email()
     {

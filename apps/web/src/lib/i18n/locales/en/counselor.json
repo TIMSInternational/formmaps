@@ -300,6 +300,7 @@
     "confirm": "Confirm",
     "cancel": "Cancel",
     "statusUpcoming": "Upcoming",
+    "statusRescheduled": "Rescheduled",
     "statusCompleted": "Completed",
     "statusCancelled": "Cancelled",
     "actionJoin": "Join",

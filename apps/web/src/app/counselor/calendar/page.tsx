@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { ChevronLeft, ChevronRight, CalendarDays, X } from "lucide-react";
-import { apiRequest } from "@/lib/api/apiClient";
+import { getAllMyCounselorSessions } from "@/services/counselorSessionService";
 import { formatTimeOfDay } from "@/lib/dateUtils";
 import { useTranslation } from "react-i18next";
 
@@ -39,9 +39,8 @@ export default function CounselorCalendarPage() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await apiRequest("/api/v1/counselor/me/sessions?limit=100");
-        const data = res?.data?.data ?? res?.data ?? [];
-        setSessions(data);
+        // audit 2026-10-09 D4: `limit=100` was clamped to 50 — the calendar missed every session past the 50th.
+        setSessions((await getAllMyCounselorSessions()) as unknown as Session[]);
       } catch {}
       setLoading(false);
     })();

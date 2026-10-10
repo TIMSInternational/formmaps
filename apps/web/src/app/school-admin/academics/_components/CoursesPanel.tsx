@@ -19,6 +19,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { CourseDetailDialog } from "./CourseDetailDialog";
 import { AiImportReviewDialog } from "./AiImportReviewDialog";
 import { PrereqAnalysisDialog } from "./PrereqAnalysisDialog";
+import { parseCourseCsv } from "./courseCsv";
 
 const inputStyle: React.CSSProperties = {
   background: "var(--admin-bg-hover)", border: "1px solid var(--admin-border-default)",
@@ -102,38 +103,27 @@ export function CoursesPanel() {
     const file = e.target.files?.[0];
     if (fileRef.current) fileRef.current.value = "";
     if (!file) return;
-    const text = await file.text();
-    const lines = text.split(/\r?\n/).filter(Boolean);
-    if (lines.length < 2) { toast.error(t("school_admin:ui.courses.csvNoRows")); return; }
-    const headers = lines[0].split(",").map(h => h.trim().toLowerCase());
-    const col = (name: string) => headers.indexOf(name);
-    let success = 0, failed = 0;
+    const { rows, rejected } = parseCourseCsv(await file.text());
+    if (rows.length + rejected.length === 0) { toast.error(t("school_admin:ui.courses.csvNoRows")); return; }
+    let success = 0;
+    const failedLines: number[] = rejected.map((r) => r.line);
     setCsvImporting(true);
-    for (let i = 1; i < lines.length; i++) {
-      const row: string[] = []; let inQ = false, cell = "";
-      for (const ch of lines[i]) { if (ch === '"') inQ = !inQ; else if (ch === ',' && !inQ) { row.push(cell.trim()); cell = ""; } else cell += ch; }
-      row.push(cell.trim());
-      const code = col("code") >= 0 ? row[col("code")] : "";
-      const name = col("name") >= 0 ? row[col("name")] : "";
-      if (!code || !name) { failed++; continue; }
-      const description = col("description") >= 0 ? row[col("description")] : "";
-      const maxEnrollmentRaw = col("max_enrollment") >= 0 ? row[col("max_enrollment")] : (col("maxenrollment") >= 0 ? row[col("maxenrollment")] : (col("capacity") >= 0 ? row[col("capacity")] : ""));
-      const maxEnrollment = maxEnrollmentRaw ? parseInt(maxEnrollmentRaw, 10) || null : null;
-      const honorsRaw = col("honors") >= 0 ? row[col("honors")] : (col("ishonors") >= 0 ? row[col("ishonors")] : (col("is_honors") >= 0 ? row[col("is_honors")] : ""));
-      const isHonors = ["true", "yes", "1", "x", "honors"].includes(honorsRaw.toLowerCase());
-      const gradeLevelsRaw = col("grade_levels") >= 0 ? row[col("grade_levels")] : (col("gradelevels") >= 0 ? row[col("gradelevels")] : (col("grades") >= 0 ? row[col("grades")] : "9"));
-      const gradeLevels = gradeLevelsRaw.split(/[;|]/).map((s: string) => parseInt(s.trim(), 10)).filter((n: number) => !isNaN(n) && n >= 6 && n <= 12);
+    for (const { line, course } of rows) {
       try {
         await new Promise<void>((resolve, reject) => {
-          createCourse.mutate({ code, name, department: col("department") >= 0 ? row[col("department")] : "", credits: parseFloat(col("credits") >= 0 ? row[col("credits")] : "1") || 1, gradeLevels: gradeLevels.length ? gradeLevels : [9], description: description || undefined, maxEnrollment, isHonors },
-            { onSuccess: () => resolve(), onError: (err: unknown) => reject(err) });
+          createCourse.mutate(course, { onSuccess: () => resolve(), onError: (err: unknown) => reject(err) });
         });
         success++;
-      } catch { failed++; }
+      } catch { failedLines.push(line); }
     }
     setCsvImporting(false);
     queryClient.invalidateQueries({ queryKey: curriculumKeys.schoolCourses() });
-    toast.success(t("school_admin:ui.courses.csvImported", { success, failed }));
+    toast.success(t("school_admin:ui.courses.csvImported", { success, failed: failedLines.length }));
+    if (rejected.some((r) => r.reason === "missingDepartment")) toast.error(t("school_admin:ui.courses.csvMissingDepartment"));
+    if (failedLines.length > 0) {
+      const sorted = failedLines.sort((a, b) => a - b);
+      toast.error(t("school_admin:ui.courses.csvFailedLines", { lines: sorted.slice(0, 10).join(", ") + (sorted.length > 10 ? "…" : "") }));
+    }
   };
 
   const handleAiImport = async (e: React.ChangeEvent<HTMLInputElement>) => {

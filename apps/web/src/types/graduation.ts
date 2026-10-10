@@ -77,10 +77,20 @@ export interface GraduationProgressSummary {
   topGap: string;
 }
 
+/** School-wide counts behind the graduation cards (whole roster, not the page). */
+export interface GraduationRosterSummary {
+  total: number;
+  onTrack: number;
+  atRisk: number;
+  offTrack: number;
+  avgProgress: number;
+}
+
 export interface GraduationProgressResponse {
   data: GraduationProgressSummary[];
   total: number;
   page: number;
   limit: number;
   totalPages: number;
+  summary?: GraduationRosterSummary;
 }

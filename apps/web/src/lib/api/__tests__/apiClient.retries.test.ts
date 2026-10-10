@@ -79,3 +79,19 @@ describe("A5 — a spent AI budget says so, in the user's language", () => {
     expect(adapter).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("D4 — a broadcast to too large a group says so, with the numbers", () => {
+  it("maps BROADCAST_TOO_LARGE to the translated message carrying the group size and the maximum", async () => {
+    const adapter = failWith(400, {
+      success: false, code: "BROADCAST_TOO_LARGE", message: "server english", recipientCount: 2345, maxRecipients: 2000,
+    });
+    apiClient.defaults.adapter = adapter as never;
+
+    const err = (await settle(apiRequest("/api/v1/messages/broadcast", { method: "POST", data: {} }))) as Error & { status: number };
+
+    expect(err.status).toBe(400);
+    expect(err.message).toBe(i18n.t("components.apiClient.broadcastTooLarge", { count: 2345, max: 2000 }));
+    expect(err.message).toContain("2345");
+    expect(err.message).toContain("2000");
+  });
+});
