@@ -467,7 +467,40 @@
       "confirmTitle": "¿Marcar este pago como pagado?",
       "confirmDesc": "FormMaps no envía el dinero: primero págale a {{coach}} {{amount}} por tu cuenta (transferencia bancaria o Stripe) y luego márcalo aquí. Queda registrado en el registro de auditoría.",
       "confirmLabel": "Marcar como pagado",
-      "success": "Pago marcado como pagado"
+      "success": "Pago marcado como pagado",
+      "dialogDesc": "FormMaps no envía el dinero: primero págale a {{coach}} {{amount}} por tu cuenta (transferencia bancaria o Stripe) y luego regístralo aquí. Queda registrado en el registro de auditoría.",
+      "paidAtLabel": "Fecha de pago",
+      "referenceLabel": "Referencia (opcional)",
+      "referencePlaceholder": "ID de la transferencia o una nota",
+      "cancel": "Cancelar"
+    },
+    "monthly": {
+      "title": "Pagos mensuales a coaches",
+      "subtitle": "Lo que ganó cada coach en el mes: sesiones completadas y pagadas, menos reembolsos y la comisión de la plataforma.",
+      "monthLabel": "Mes",
+      "generate": "Generar pagos",
+      "generating": "Generando…",
+      "notEnded": "Puedes generar los pagos cuando el mes haya terminado.",
+      "confirmTitle": "¿Generar los pagos de {{month}}?",
+      "confirmDesc": "Crea un pago pendiente por coach para {{month}}. Volver a ejecutarlo nunca duplica un pago ni cambia uno ya pagado.",
+      "confirmLabel": "Generar",
+      "generated": "Pagos de {{month}}: {{created}} creados, {{updated}} actualizados, {{unchanged}} sin cambios",
+      "generateFailed": "No se pudieron generar los pagos",
+      "loadFailed": "No se pudo cargar el mes",
+      "empty": "No hay sesiones completadas y pagadas en este mes.",
+      "notGenerated": "Sin generar",
+      "difference": "Difiere del monto pagado en {{amount}}",
+      "paidOn": "Pagado el {{date}}",
+      "total": "Total",
+      "table": {
+        "coach": "Coach",
+        "sessions": "Sesiones",
+        "gross": "Bruto",
+        "commission": "Comisión",
+        "net": "Neto para el coach",
+        "status": "Estado",
+        "actions": "Acciones"
+      }
     },
     "pagination": {
       "showingPage": "Mostrando página {{page}} de {{total}}"

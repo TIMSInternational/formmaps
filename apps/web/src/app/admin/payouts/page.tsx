@@ -55,7 +55,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
-import { useConfirmDialog } from "@/components/ui/confirm-dialog";
+import { MonthlyPayoutsPanel } from "./_components/MonthlyPayoutsPanel";
+import { MarkPaidDialog, type MarkPaidTarget } from "./_components/MarkPaidDialog";
 
 export default function AdminPayoutsPage() {
   const router = useRouter();
@@ -67,7 +68,7 @@ export default function AdminPayoutsPage() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [page, setPage] = useState(1);
   const [actioningId, setActioningId] = useState<string | null>(null);
-  const { confirm, ConfirmDialog } = useConfirmDialog();
+  const [markPaid, setMarkPaid] = useState<MarkPaidTarget | null>(null);
 
   // Fetch Payouts with Pagination
   const { data: payoutsData, isLoading, refetch } = useQuery({
@@ -84,7 +85,7 @@ export default function AdminPayoutsPage() {
   });
 
   // Fetch Stats
-  const { data: statsData } = useQuery({
+  const { data: statsData, refetch: refetchStats } = useQuery({
     queryKey: ["adminPayoutStats"],
     queryFn: () => getCommissionStats(), // Fetches global stats
     enabled: isAdmin,
@@ -95,22 +96,26 @@ export default function AdminPayoutsPage() {
   const currency = statsData?.currency || "USD";
 
   // Handle Actions
-  // "Approve" only ever flipped the status — FormMaps sends no money. Say so, and confirm first.
-  const handleApprove = async (payout: AdminPayout, id: string) => {
-    const ok = await confirm({
-      title: tPO("payouts.markPaid.confirmTitle"),
-      description: tPO("payouts.markPaid.confirmDesc", {
-        coach: payout.coachName || payout.coachEmail || "",
-        amount: formatCurrency(Number(payout.amount) || 0, payout.currency || "USD"),
-      }),
-      confirmLabel: tPO("payouts.markPaid.confirmLabel"),
+  // "Mark as paid" only records the payment — FormMaps sends no money. The dialog says so and takes the day it
+  // was paid and an optional reference (audit D3).
+  const handleApprove = (payout: AdminPayout, id: string) => {
+    setMarkPaid({
+      payoutId: id,
+      coach: payout.coachName || payout.coachEmail || "",
+      amount: formatCurrency(Number(payout.netAmount ?? payout.amount) || 0, payout.currency || "USD"),
     });
-    if (!ok) return;
+  };
+
+  const confirmMarkPaid = async (details: { paidAt: string; reference: string }) => {
+    if (!markPaid) return;
+    const id = markPaid.payoutId;
     setActioningId(id);
     try {
-      await approveAdminPayout(id);
+      await approveAdminPayout(id, details);
       toast.success(tPO("payouts.markPaid.success"));
+      setMarkPaid(null);
       refetch();
+      refetchStats();
     } catch (error: any) {
       toast.error(error?.message || t("pages.admin.payouts.approveFailed"));
     } finally {
@@ -292,6 +297,8 @@ export default function AdminPayoutsPage() {
           ))}
         </div>
 
+        <MonthlyPayoutsPanel onChanged={() => { refetch(); refetchStats(); }} />
+
         {/* Payouts Table */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden hover:shadow-md transition-all duration-300">
           <Table>
@@ -451,7 +458,7 @@ export default function AdminPayoutsPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <ConfirmDialog />
+      <MarkPaidDialog target={markPaid} onClose={() => setMarkPaid(null)} onConfirm={confirmMarkPaid} />
     </div>
   );
 }

@@ -93,13 +93,81 @@ export async function getAdminPayouts(
   };
 }
 
+/** "Mark as paid" — FormMaps sends no money; this records the day it was paid and an optional reference. */
 export async function approveAdminPayout(
-  payoutId: string
+  payoutId: string,
+  details: { paidAt?: string; reference?: string } = {}
 ): Promise<AdminPayout> {
   const response = await apiRequest<ApiPayload>(`/api/v1/admin/payouts/${payoutId}/approve`, {
     method: "POST",
+    data: {
+      ...(details.paidAt ? { paidAt: details.paidAt } : {}),
+      ...(details.reference?.trim() ? { reference: details.reference.trim() } : {}),
+    },
   });
   return (response.data ?? response) as AdminPayout;
+}
+
+// --- Monthly coach payouts (audit D3): amounts are integer cents ---
+
+export interface MonthlyPayoutRecord {
+  id: string;
+  status: string;
+  grossCents: number;
+  commissionCents: number;
+  netCents: number;
+  requestedAt: string;
+  paidAt: string | null;
+  reference: string | null;
+}
+
+export interface MonthlyPayoutRow {
+  coachId: string;
+  coachName: string;
+  coachEmail: string;
+  currency: string;
+  sessions: number;
+  grossCents: number;
+  commissionPercent: number;
+  commissionCents: number;
+  netCents: number;
+  payout: MonthlyPayoutRecord | null;
+  /** A paid payout that no longer matches the month (a refund or a late payment after it was paid). */
+  differenceCents: number;
+}
+
+export interface MonthlyPayouts {
+  month: string;
+  periodStart: string;
+  periodEnd: string;
+  monthEnded: boolean;
+  rows: MonthlyPayoutRow[];
+  totals: { grossCents: number; commissionCents: number; netCents: number; sessions: number };
+}
+
+export interface GenerateMonthlyPayoutsResult {
+  month: string;
+  created: number;
+  updated: number;
+  unchanged: number;
+  locked: number;
+  payouts: MonthlyPayouts;
+}
+
+export async function getMonthlyPayouts(month: string): Promise<MonthlyPayouts> {
+  const response = await apiRequest<ApiPayload>(`/api/v1/admin/payouts/monthly?month=${encodeURIComponent(month)}`, { method: "GET" });
+  return (response.data ?? response) as unknown as MonthlyPayouts;
+}
+
+export async function generateMonthlyPayouts(month: string): Promise<GenerateMonthlyPayoutsResult> {
+  const response = await apiRequest<ApiPayload>(`/api/v1/admin/payouts/generate`, { method: "POST", data: { month } });
+  return (response.data ?? response) as unknown as GenerateMonthlyPayoutsResult;
+}
+
+/** The month before `now` as YYYY-MM (the first month that can be generated). */
+export function previousMonth(now: Date = new Date()): string {
+  const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
 }
 
 export async function rejectAdminPayout(
