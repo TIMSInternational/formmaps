@@ -345,9 +345,9 @@ export function CoachesTable({ onEdit }: CoachesTableProps) {
                             {t("admin.coaches.actions.copyEmail")}
                           </DropdownMenuItem>
                           <DropdownMenuSeparator className="bg-gray-100 my-1" />
-                          <DropdownMenuItem className="rounded-lg cursor-pointer focus:bg-gray-50">
-                            {t("admin.coaches.actions.viewDetails")}
-                          </DropdownMenuItem>
+                          {/* Audit F: "View details" and "Deactivate" were dead items (no onClick). There is no coach detail page,
+                              and coach deactivation is deliberately not an HTTP action (it must cancel and refund paid future
+                              bookings — authAdminService.deactivateCoach, formmaps#72), so both were removed. */}
                           <DropdownMenuItem
                             className="rounded-lg cursor-pointer focus:bg-gray-50"
                             onClick={() => onEdit?.(coach)}
@@ -377,9 +377,6 @@ export function CoachesTable({ onEdit }: CoachesTableProps) {
                               {t("admin.coaches.actions.resendInvite")}
                             </DropdownMenuItem>
                           )}
-                          <DropdownMenuItem className="rounded-lg cursor-pointer text-red-600 focus:text-red-700 focus:bg-red-50">
-                            {t("admin.coaches.actions.deactivate")}
-                          </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>

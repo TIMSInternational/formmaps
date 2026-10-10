@@ -179,7 +179,7 @@ function RecentStudents() {
           <UserPlus style={{ width: 14, height: 14, color: "#10b981" }} />
           <span style={{ fontSize: 11, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--admin-font-tertiary)" }}>{t("dashboard.recentStudents.title")}</span>
         </div>
-        <Link href="/school-admin/users" style={{ fontSize: 11, color: "var(--admin-font-tertiary)", textDecoration: "none" }}>{t("dashboard.recentStudents.viewAll")}</Link>
+        <Link href="/school-admin/students" style={{ fontSize: 11, color: "var(--admin-font-tertiary)", textDecoration: "none" }}>{t("dashboard.recentStudents.viewAll")}</Link>
       </div>
       <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {students.length > 0 ? students.map((s: any) => (
@@ -209,7 +209,7 @@ export default function SchoolAdminDashboard() {
   const { data: stats } = useSchoolAdminStats();
 
   const navCards = [
-    { label: t("dashboard.navCards.students.label"), sub: t("dashboard.navCards.students.sub"), icon: Users, href: "/school-admin/users", color: "var(--admin-accent-blue)" },
+    { label: t("dashboard.navCards.students.label"), sub: t("dashboard.navCards.students.sub"), icon: Users, href: "/school-admin/students", color: "var(--admin-accent-blue)" },
     { label: t("dashboard.navCards.academics.label"), sub: t("dashboard.navCards.academics.sub"), icon: BookOpen, href: "/school-admin/academics", color: "#10b981" },
     { label: t("dashboard.navCards.assessments.label"), sub: t("dashboard.navCards.assessments.sub"), icon: ClipboardCheck, href: "/school-admin/assessments", color: "#8b5cf6" },
     { label: t("dashboard.navCards.aiInsights.label"), sub: t("dashboard.navCards.aiInsights.sub"), icon: Sparkles, href: "/school-admin/insights", color: "#f59e0b" },

@@ -33,7 +33,8 @@ export const routeRules: RouteRule[] = [
   // Student dashboard — students only (coaches have /dashboard/coaching above)
   {
     path: "/dashboard",
-    allowed: [Roles.STUDENT, Roles.COACH],
+    // Audit F: coaches were allowed into the whole student dashboard; their portal is /dashboard/coaching above.
+    allowed: [Roles.STUDENT],
     redirect: "home",
   },
   // School admin portal
