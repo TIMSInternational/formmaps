@@ -269,4 +269,19 @@ describe("Student course plan page", () => {
     renderPage();
     expect(await screen.findByText(/needs ART100/i)).toBeInTheDocument();
   });
+  // audit 2026-10-09 D4
+  it("asks the catalog for 500 courses (the endpoint's page size), not 100", async () => {
+    renderPage();
+    await screen.findByText("Algebra I");
+    expect(mockApi).toHaveBeenCalledWith("/api/v1/school-admin/courses?limit=500");
+  });
+
+  it("shows the load error with retry when the catalog fails, instead of a plan with blank course names", async () => {
+    mockApi.mockRejectedValue(new Error("boom"));
+    renderPage();
+    expect(await screen.findByText("Failed to load your course plan.")).toBeInTheDocument();
+    mockApi.mockResolvedValue({ success: true, data: { data: catalog } });
+    fireEvent.click(screen.getByRole("button", { name: /retry|try again/i }));
+    expect(await screen.findByText("Algebra I")).toBeInTheDocument();
+  });
 });

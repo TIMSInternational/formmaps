@@ -11,7 +11,7 @@ import { useTranslation } from "react-i18next";
 import { useAdminAccess } from "@/hooks/useAdminAccess";
 import { useRecommendedCourses } from "@/hooks/useCourseQueries";
 import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/api/apiClient";
+import { listCourses } from "@/services/courseService";
 import { DashboardSkeleton } from "@/components/skeletons/DashboardSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { Course } from "@/types/course";
@@ -24,12 +24,13 @@ export default function CoursesPage() {
 
     const { data: catalogData, isLoading: catalogLoading } = useQuery({
         queryKey: ["courses", "admin-full-catalog"],
-        queryFn: () => apiRequest("/api/course?limit=1000", { method: "GET" }).then((r: any) => r?.data ?? r),
+        // audit 2026-10-09 D4: `limit=1000` was clamped to 100, so totals and search covered only the first 100 courses.
+        queryFn: () => listCourses(),
         staleTime: 10 * 60 * 1000,
     });
     const { data: recommendedData } = useRecommendedCourses();
 
-    const allCourses: Course[] = catalogData?.courses || catalogData?.Courses || [];
+    const allCourses: Course[] = catalogData?.courses || [];
     const recommendedCourses: Course[] = recommendedData?.courses || [];
 
     // Compute real stats from available data

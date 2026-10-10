@@ -99,7 +99,7 @@ export const STUDENTS_PAGE_MAX = 100;
  * returned the first 100 — students past that could not be assigned a counselor or managed in Evaluations. This walks
  * the pages instead (bounded at 50 pages = 5,000 students).
  */
-export async function getAllStudents(params: { search?: string; status?: string } = {}): Promise<StudentsResponse["data"]> {
+export async function getAllStudents(params: { search?: string; status?: string; sortBy?: string } = {}): Promise<StudentsResponse["data"]> {
   const all: StudentsResponse["data"] = [];
   for (let page = 1; page <= 50; page++) {
     const res = await getStudents({ ...params, page, limit: STUDENTS_PAGE_MAX });

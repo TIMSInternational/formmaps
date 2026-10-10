@@ -39,7 +39,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
-  getMyCounselorSessions,
+  getAllMyCounselorSessions,
+  sessionCounts,
+  UPCOMING_SESSION_STATUSES,
   completeCounselorSession,
   cancelCounselorSession,
   rescheduleCounselorSession,
@@ -69,14 +71,9 @@ export default function CounselorSessionsPage() {
   const fetchSessions = async () => {
     setIsLoading(true);
     try {
-      const res = await getMyCounselorSessions({ limit: 100 });
-      setSessions(res.data);
-      setStats({
-        total: res.total,
-        upcoming: res.upcoming,
-        completed: res.completed,
-        cancelled: res.cancelled,
-      });
+      const all = await getAllMyCounselorSessions();
+      setSessions(all);
+      setStats(sessionCounts(all));
     } catch {
       toast.error(t("sessions.failedToLoad", "Failed to load sessions"));
     } finally {
@@ -84,7 +81,7 @@ export default function CounselorSessionsPage() {
     }
   };
 
-  const upcoming = sessions.filter(s => s.status === "confirmed");
+  const upcoming = sessions.filter(s => UPCOMING_SESSION_STATUSES.includes(s.status));
   const past = sessions.filter(s => s.status === "completed" || s.status === "cancelled");
   const displayed = activeTab === "upcoming" ? upcoming : activeTab === "past" ? past : sessions;
 
@@ -139,6 +136,7 @@ export default function CounselorSessionsPage() {
 
   const StatusBadge = ({ status }: { status: string }) => {
     if (status === "confirmed") return <Badge className="bg-emerald-100 text-emerald-700 border-0"><CheckCircle2 className="h-3 w-3 mr-1" />{t("sessions.statusUpcoming", "Upcoming")}</Badge>;
+    if (status === "rescheduled") return <Badge className="bg-amber-100 text-amber-700 border-0"><Clock className="h-3 w-3 mr-1" />{t("sessions.statusRescheduled", "Rescheduled")}</Badge>;
     if (status === "completed") return <Badge className="bg-blue-100 text-blue-700 border-0"><CheckCircle2 className="h-3 w-3 mr-1" />{t("sessions.statusCompleted", "Completed")}</Badge>;
     if (status === "cancelled") return <Badge className="bg-red-100 text-red-700 border-0"><XCircle className="h-3 w-3 mr-1" />{t("sessions.statusCancelled", "Cancelled")}</Badge>;
     return <Badge variant="secondary">{status}</Badge>;
@@ -265,7 +263,7 @@ export default function CounselorSessionsPage() {
                         </div>
 
                         <div className="flex items-center gap-2 flex-shrink-0">
-                          {session.status === "confirmed" && (
+                          {UPCOMING_SESSION_STATUSES.includes(session.status) && (
                             <>
                               {session.meetingLink && (
                                 <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white h-8 px-3 text-xs rounded-lg" asChild>

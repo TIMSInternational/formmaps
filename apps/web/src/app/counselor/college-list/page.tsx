@@ -8,6 +8,7 @@ import { apiRequest } from "@/lib/api/apiClient";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { CollegeCard } from "./_components/CollegeCard";
+import { getAllMyCounselorStudents } from "@/services/schoolProfileService";
 
 interface Student { id: string; name: string; email: string; }
 
@@ -67,11 +68,7 @@ export default function CollegeListPage() {
 
   const { data: studentsData, isLoading: studentsLoading } = useQuery({
     queryKey: ["counselor-students"],
-    queryFn: async () => {
-      const res = await apiRequest("/api/v1/counselor/me/students?limit=50");
-      const items = res?.data?.data ?? res?.data ?? [];
-      return Array.isArray(items) ? items : [];
-    },
+    queryFn: () => getAllMyCounselorStudents<Student>(),
   });
   const students: Student[] = studentsData ?? [];
 

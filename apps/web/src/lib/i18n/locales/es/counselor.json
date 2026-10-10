@@ -295,6 +295,7 @@
     "confirm": "Confirmar",
     "cancel": "Cancelar",
     "statusUpcoming": "Próxima",
+    "statusRescheduled": "Reprogramada",
     "statusCompleted": "Completada",
     "statusCancelled": "Cancelada",
     "actionJoin": "Unirse",
