@@ -56,13 +56,15 @@ export function InsightsCard({ insights, onRefresh, isRefreshing }: {
               <div style={{ height: "100%", width: `${pct}%`, background: "#102B47", borderRadius: 4, transition: "width 0.3s ease" }} />
             </div>
             <p style={{ fontSize: 12, color: "var(--admin-font-tertiary)", marginBottom: 10 }}>
-              {t("insights.card.unlockHint")}
+              {t("insights.card.unlockHint", { threshold: insights?.threshold ?? 90 })}
             </p>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
               {[
                 { label: "MIL", value: completion.byComponent.lia },
                 { label: "PCA", value: completion.byComponent.disc },
                 { label: "360", value: completion.byComponent.eval360 },
+                // Personality is the 4th required assessment; its chip was missing.
+                { label: t("assessments.pipeline.colPersonality"), value: completion.byComponent.personality ?? 0 },
               ].map(c => (
                 <span key={c.label} style={{ fontSize: 11, padding: "2px 8px", borderRadius: 4, background: "var(--admin-bg-hover)", color: "var(--admin-font-secondary)" }}>
                   {c.label}: {c.value}/{completion.total}

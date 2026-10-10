@@ -10,7 +10,10 @@
       "analyzingSubtitle": "Reviewing students, assessments, grades, and graduation progress",
       "label": "AI Briefing",
       "fullAnalysis": "Full Analysis",
-      "impactLabel": "{{impact}} impact"
+      "impactLabel": "{{impact}} impact",
+      "lockedTitle": "Not enough data yet",
+      "locked": "{{complete}} of {{total}} students have completed all assessments ({{percent}}%). The AI briefing unlocks at {{threshold}}%.",
+      "empty": "The briefing could not be generated right now. Try again later."
     },
     "atRisk": {
       "title": "Needs Attention",
@@ -298,7 +301,7 @@
     "card": {
       "studentsCompletedAll_one": "student completed all assessments",
       "studentsCompletedAll_other": "students completed all assessments",
-      "unlockHint": "Insights unlock when 100% of students finish.",
+      "unlockHint": "Insights unlock when {{threshold}}% of students finish.",
       "emptyFallback": "Insights will appear once enough students complete assessments.",
       "cached": "Cached",
       "refresh": "Refresh",

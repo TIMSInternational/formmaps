@@ -27,10 +27,12 @@ export interface PipelineStudent {
 export interface InsightsData {
   hasEnoughData: boolean;
   message?: string;
+  /** Percent of students that must be complete before insights unlock (audit D8: 90 everywhere). */
+  threshold?: number;
   completion?: {
     total: number;
     complete: number;
-    byComponent: { lia: number; disc: number; eval360: number };
+    byComponent: { lia: number; disc: number; eval360: number; personality?: number };
   };
   aggregates?: {
     totalStudents: number;

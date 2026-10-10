@@ -10,7 +10,10 @@
       "analyzingSubtitle": "Revisando estudiantes, evaluaciones, calificaciones y progreso de graduación",
       "label": "Informe IA",
       "fullAnalysis": "Análisis completo",
-      "impactLabel": "impacto {{impact}}"
+      "impactLabel": "impacto {{impact}}",
+      "lockedTitle": "Aún no hay suficientes datos",
+      "locked": "{{complete}} de {{total}} estudiantes completaron todas las evaluaciones ({{percent}} %). El resumen de IA se activa al {{threshold}} %.",
+      "empty": "No se pudo generar el resumen en este momento. Inténtalo más tarde."
     },
     "atRisk": {
       "title": "Requiere atención",
@@ -298,7 +301,7 @@
     "card": {
       "studentsCompletedAll_one": "estudiante completó todas las evaluaciones",
       "studentsCompletedAll_other": "estudiantes completaron todas las evaluaciones",
-      "unlockHint": "Los análisis se activan cuando el 100 % de los estudiantes termina.",
+      "unlockHint": "Los análisis se activan cuando el {{threshold}} % de los estudiantes termina.",
       "emptyFallback": "Los análisis aparecerán cuando suficientes estudiantes completen las evaluaciones.",
       "cached": "En caché",
       "refresh": "Actualizar",
